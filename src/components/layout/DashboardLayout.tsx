@@ -2,6 +2,7 @@ import { ReactNode, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
+import { ThemeToggle } from '@/components/ThemeToggle';
 import { cn } from '@/lib/utils';
 import {
   ChefHat,
@@ -50,12 +51,15 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
           </div>
           <span className="font-bold text-lg text-foreground">ProcureResto</span>
         </Link>
-        <button
-          onClick={() => setSidebarOpen(!sidebarOpen)}
-          className="p-2 text-muted-foreground hover:text-foreground"
-        >
-          {sidebarOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-        </button>
+        <div className="flex items-center gap-2">
+          <ThemeToggle />
+          <button
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            className="p-2 text-muted-foreground hover:text-foreground"
+          >
+            {sidebarOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+          </button>
+        </div>
       </header>
 
       {/* Sidebar */}
@@ -68,11 +72,16 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
       >
         <div className="flex flex-col h-full">
           {/* Logo */}
-          <div className="h-16 flex items-center gap-2 px-6 border-b border-border">
-            <div className="w-9 h-9 rounded-lg bg-primary flex items-center justify-center">
-              <ChefHat className="w-5 h-5 text-primary-foreground" />
+          <div className="h-16 flex items-center justify-between px-6 border-b border-border">
+            <div className="flex items-center gap-2">
+              <div className="w-9 h-9 rounded-lg bg-primary flex items-center justify-center">
+                <ChefHat className="w-5 h-5 text-primary-foreground" />
+              </div>
+              <span className="font-bold text-xl text-foreground">ProcureResto</span>
             </div>
-            <span className="font-bold text-xl text-foreground">ProcureResto</span>
+            <div className="hidden lg:block">
+              <ThemeToggle />
+            </div>
           </div>
 
           {/* Navigation */}
