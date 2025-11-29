@@ -1,7 +1,9 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Mail, Send, Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { Mail, Send, Loader2, ChevronLeft, ChevronRight, Pencil, Check } from 'lucide-react';
 import { useState } from 'react';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -28,6 +30,7 @@ interface EmailPreviewDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   emailPreviews: EmailPreviewData[];
+  onEmailPreviewsChange: (previews: EmailPreviewData[]) => void;
   onConfirm: () => void;
   isSubmitting: boolean;
 }
@@ -36,16 +39,38 @@ export const EmailPreviewDialog = ({
   open,
   onOpenChange,
   emailPreviews,
+  onEmailPreviewsChange,
   onConfirm,
   isSubmitting,
 }: EmailPreviewDialogProps) => {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [isEditingNotes, setIsEditingNotes] = useState(false);
+  const [isEditingAddress, setIsEditingAddress] = useState(false);
   const currentEmail = emailPreviews[currentIndex];
 
   if (!currentEmail) return null;
 
-  const goNext = () => setCurrentIndex((i) => Math.min(i + 1, emailPreviews.length - 1));
-  const goPrev = () => setCurrentIndex((i) => Math.max(i - 1, 0));
+  const goNext = () => {
+    setCurrentIndex((i) => Math.min(i + 1, emailPreviews.length - 1));
+    setIsEditingNotes(false);
+    setIsEditingAddress(false);
+  };
+  const goPrev = () => {
+    setCurrentIndex((i) => Math.max(i - 1, 0));
+    setIsEditingNotes(false);
+    setIsEditingAddress(false);
+  };
+
+  const updateCurrentEmail = (updates: Partial<EmailPreviewData>) => {
+    const newPreviews = [...emailPreviews];
+    newPreviews[currentIndex] = { ...newPreviews[currentIndex], ...updates };
+    onEmailPreviewsChange(newPreviews);
+  };
+
+  const updateAllEmails = (updates: Partial<EmailPreviewData>) => {
+    const newPreviews = emailPreviews.map(preview => ({ ...preview, ...updates }));
+    onEmailPreviewsChange(newPreviews);
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -101,21 +126,92 @@ export const EmailPreviewDialog = ({
 
                 {/* Delivery Address */}
                 <div>
-                  <h3 className="font-semibold text-foreground mb-2">Lieferadresse</h3>
-                  <p className="text-sm text-muted-foreground whitespace-pre-line">
-                    {currentEmail.deliveryAddress}
-                  </p>
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="font-semibold text-foreground">Lieferadresse</h3>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setIsEditingAddress(!isEditingAddress)}
+                      className="h-7 px-2"
+                    >
+                      {isEditingAddress ? <Check className="w-4 h-4" /> : <Pencil className="w-4 h-4" />}
+                    </Button>
+                  </div>
+                  {isEditingAddress ? (
+                    <div className="space-y-2">
+                      <Textarea
+                        value={currentEmail.deliveryAddress}
+                        onChange={(e) => updateCurrentEmail({ deliveryAddress: e.target.value })}
+                        rows={4}
+                        className="text-sm"
+                      />
+                      {emailPreviews.length > 1 && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            updateAllEmails({ deliveryAddress: currentEmail.deliveryAddress });
+                            setIsEditingAddress(false);
+                          }}
+                        >
+                          Für alle Bestellungen übernehmen
+                        </Button>
+                      )}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground whitespace-pre-line">
+                      {currentEmail.deliveryAddress}
+                    </p>
+                  )}
                 </div>
 
                 {/* Notes */}
-                {currentEmail.notes && (
-                  <div className="bg-warning/10 border border-warning/20 rounded-lg p-3">
-                    <h3 className="font-semibold text-warning-foreground text-sm mb-1">📝 Notizen</h3>
-                    <p className="text-sm text-warning-foreground/80 whitespace-pre-line">
-                      {currentEmail.notes}
-                    </p>
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="font-semibold text-foreground">📝 Notizen</h3>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setIsEditingNotes(!isEditingNotes)}
+                      className="h-7 px-2"
+                    >
+                      {isEditingNotes ? <Check className="w-4 h-4" /> : <Pencil className="w-4 h-4" />}
+                    </Button>
                   </div>
-                )}
+                  {isEditingNotes ? (
+                    <div className="space-y-2">
+                      <Textarea
+                        value={currentEmail.notes || ''}
+                        onChange={(e) => updateCurrentEmail({ notes: e.target.value })}
+                        rows={4}
+                        placeholder="Notizen hinzufügen..."
+                        className="text-sm"
+                      />
+                      {emailPreviews.length > 1 && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            updateAllEmails({ notes: currentEmail.notes });
+                            setIsEditingNotes(false);
+                          }}
+                        >
+                          Für alle Bestellungen übernehmen
+                        </Button>
+                      )}
+                    </div>
+                  ) : currentEmail.notes ? (
+                    <div className="bg-warning/10 border border-warning/20 rounded-lg p-3">
+                      <p className="text-sm text-warning-foreground/80 whitespace-pre-line">
+                        {currentEmail.notes}
+                      </p>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground italic">
+                      Keine Notizen - Klicke auf den Stift um welche hinzuzufügen
+                    </p>
+                  )}
+                </div>
 
                 {/* Items Table */}
                 <div className="border border-border rounded-lg overflow-hidden">

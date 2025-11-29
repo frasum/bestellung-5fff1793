@@ -172,26 +172,19 @@ const Checkout = () => {
     const supplierOrders = Object.values(itemsBySupplier);
     const orderNumbers: string[] = [];
 
-    const selectedAddress = deliveryAddresses?.find(a => a.id === pendingOrderData.deliveryAddressId);
-    const formattedAddress = `${selectedAddress?.label}\n${formatAddress(selectedAddress!)}`;
-
-    const deliveryDateStr = format(pendingOrderData.deliveryDate, 'dd.MM.yyyy', { locale: de });
-    const timeWindowLabel = TIME_WINDOWS.find(t => t.value === pendingOrderData.deliveryTimeWindow)?.label || pendingOrderData.deliveryTimeWindow;
-    const deliveryInfo = `Gewünschtes Lieferdatum: ${deliveryDateStr}\nZeitfenster: ${timeWindowLabel}`;
-    const fullNotes = pendingOrderData.notes ? `${deliveryInfo}\n\n${pendingOrderData.notes}` : deliveryInfo;
-
     try {
       for (const preview of emailPreviews) {
         const supplier = supplierOrders.find(s => s.supplierName === preview.supplierName);
         if (!supplier) continue;
 
+        // Use edited data from preview
         const result = await createOrder.mutateAsync({
           supplierId: supplier.supplierId,
           supplierName: preview.supplierName,
           supplierEmail: preview.supplierEmail,
           items: supplier.items,
-          deliveryAddress: formattedAddress,
-          notes: fullNotes,
+          deliveryAddress: preview.deliveryAddress,
+          notes: preview.notes,
           restaurantName: preview.restaurantName,
         });
         orderNumbers.push(result.orderNumber);
@@ -470,6 +463,7 @@ const Checkout = () => {
         open={showEmailPreview}
         onOpenChange={setShowEmailPreview}
         emailPreviews={emailPreviews}
+        onEmailPreviewsChange={setEmailPreviews}
         onConfirm={handleConfirmOrders}
         isSubmitting={isSubmitting}
       />
