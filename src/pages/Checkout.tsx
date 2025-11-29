@@ -4,14 +4,14 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { useCreateOrder } from '@/hooks/useOrders';
-import { ArrowLeft, CalendarIcon, CheckCircle2, Clock, Loader2, Mail, MapPin, Send } from 'lucide-react';
+import { useDeliveryAddresses } from '@/hooks/useSettings';
+import { ArrowLeft, CalendarIcon, CheckCircle2, Clock, Loader2, Mail, MapPin, Send, Settings } from 'lucide-react';
 import { toast } from 'sonner';
 import { z } from 'zod';
 import { useForm, Controller } from 'react-hook-form';
@@ -29,7 +29,7 @@ const TIME_WINDOWS = [
 ];
 
 const checkoutSchema = z.object({
-  deliveryAddress: z.string().min(10, 'Bitte geben Sie eine vollständige Lieferadresse ein'),
+  deliveryAddressId: z.string().min(1, 'Bitte wählen Sie eine Lieferadresse'),
   deliveryDate: z.date({ required_error: 'Bitte wählen Sie ein Lieferdatum' }),
   deliveryTimeWindow: z.string({ required_error: 'Bitte wählen Sie ein Zeitfenster' }),
   notes: z.string().optional(),
@@ -42,13 +42,23 @@ const Checkout = () => {
   const navigate = useNavigate();
   const { items, getTotal, clearCart } = useCart();
   const createOrder = useCreateOrder();
+  const { data: deliveryAddresses, isLoading: addressesLoading } = useDeliveryAddresses();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [completedOrders, setCompletedOrders] = useState<string[]>([]);
 
+  const defaultAddress = deliveryAddresses?.find(a => a.is_default);
+
   const form = useForm<CheckoutFormData>({
     resolver: zodResolver(checkoutSchema),
-    defaultValues: { deliveryAddress: '', notes: '', deliveryTimeWindow: '' },
+    defaultValues: { deliveryAddressId: '', notes: '', deliveryTimeWindow: '' },
   });
+
+  // Set default address when loaded
+  useEffect(() => {
+    if (defaultAddress && !form.getValues('deliveryAddressId')) {
+      form.setValue('deliveryAddressId', defaultAddress.id);
+    }
+  }, [defaultAddress, form]);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -80,10 +90,28 @@ const Checkout = () => {
     return acc;
   }, {} as Record<string, { supplierId: string; supplierName: string; supplierEmail: string; items: typeof items; total: number }>);
 
+  const formatAddress = (address: typeof deliveryAddresses[0]) => {
+    const parts = [address.address_line1];
+    if (address.address_line2) parts.push(address.address_line2);
+    parts.push(`${address.postal_code} ${address.city}`);
+    parts.push(address.country);
+    return parts.join('\n');
+  };
+
   const handleSubmit = async (data: CheckoutFormData) => {
     setIsSubmitting(true);
     const supplierOrders = Object.values(itemsBySupplier);
     const orderNumbers: string[] = [];
+
+    // Get selected address
+    const selectedAddress = deliveryAddresses?.find(a => a.id === data.deliveryAddressId);
+    if (!selectedAddress) {
+      toast.error('Bitte wählen Sie eine Lieferadresse');
+      setIsSubmitting(false);
+      return;
+    }
+
+    const formattedAddress = `${selectedAddress.label}\n${formatAddress(selectedAddress)}`;
 
     try {
       // Fetch supplier emails
@@ -118,7 +146,7 @@ const Checkout = () => {
           supplierName: supplier.supplierName,
           supplierEmail: supplierEmails.get(supplier.supplierId) || '',
           items: supplier.items,
-          deliveryAddress: data.deliveryAddress,
+          deliveryAddress: formattedAddress,
           notes: fullNotes,
           restaurantName,
         });
@@ -235,19 +263,53 @@ const Checkout = () => {
               <h2 className="text-lg font-semibold text-foreground mb-4">Delivery Details</h2>
               <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="deliveryAddress">
+                  <Label>
                     <MapPin className="w-4 h-4 inline mr-1" />
-                    Delivery Address *
+                    Lieferadresse *
                   </Label>
-                  <Textarea
-                    id="deliveryAddress"
-                    {...form.register('deliveryAddress')}
-                    placeholder="Restaurant Name&#10;Street Address&#10;City, Postal Code"
-                    rows={4}
-                  />
-                  {form.formState.errors.deliveryAddress && (
+                  {addressesLoading ? (
+                    <div className="flex items-center gap-2 text-muted-foreground text-sm py-2">
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Lade Adressen...
+                    </div>
+                  ) : deliveryAddresses && deliveryAddresses.length > 0 ? (
+                    <Controller
+                      control={form.control}
+                      name="deliveryAddressId"
+                      render={({ field }) => (
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Adresse wählen" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {deliveryAddresses.map((address) => (
+                              <SelectItem key={address.id} value={address.id}>
+                                <span className="flex items-center gap-2">
+                                  {address.label}
+                                  {address.is_default && (
+                                    <span className="text-xs bg-primary/10 text-primary px-1.5 py-0.5 rounded">
+                                      Standard
+                                    </span>
+                                  )}
+                                </span>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
+                    />
+                  ) : (
+                    <div className="text-sm text-muted-foreground border border-dashed border-border rounded-md p-4 text-center">
+                      <p className="mb-2">Keine Lieferadressen hinterlegt</p>
+                      <Button variant="outline" size="sm" onClick={() => navigate('/settings')}>
+                        <Settings className="w-4 h-4 mr-2" />
+                        In Einstellungen hinzufügen
+                      </Button>
+                    </div>
+                  )}
+                  {form.formState.errors.deliveryAddressId && (
                     <p className="text-sm text-destructive">
-                      {form.formState.errors.deliveryAddress.message}
+                      {form.formState.errors.deliveryAddressId.message}
                     </p>
                   )}
                 </div>
