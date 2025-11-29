@@ -228,3 +228,67 @@ export const useUpsertNotificationPreferences = () => {
     onError: () => toast.error('Failed to save preferences'),
   });
 };
+
+export interface UserProfile {
+  id: string;
+  email: string;
+  full_name: string | null;
+}
+
+export const useUserProfile = () => {
+  const { user } = useAuth();
+
+  return useQuery({
+    queryKey: ['user-profile'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, email, full_name')
+        .eq('id', user!.id)
+        .single();
+
+      if (error) throw error;
+      return data as UserProfile;
+    },
+    enabled: !!user,
+  });
+};
+
+export const useUpdateUserProfile = () => {
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
+
+  return useMutation({
+    mutationFn: async ({ full_name }: { full_name: string }) => {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ full_name })
+        .eq('id', user!.id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['user-profile'] });
+      toast.success('Profile updated');
+    },
+    onError: () => toast.error('Failed to update profile'),
+  });
+};
+
+export const useUpdatePassword = () => {
+  return useMutation({
+    mutationFn: async ({ newPassword }: { newPassword: string }) => {
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword,
+      });
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success('Password updated successfully');
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || 'Failed to update password');
+    },
+  });
+};

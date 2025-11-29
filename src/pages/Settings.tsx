@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Building2, MapPin, Bell, Plus, Pencil, Trash2, Star } from 'lucide-react';
+import { Building2, MapPin, Bell, Plus, Pencil, Trash2, Star, User, Lock } from 'lucide-react';
 import {
   useOrganization,
   useUpdateOrganization,
@@ -18,6 +18,9 @@ import {
   useDeleteDeliveryAddress,
   useNotificationPreferences,
   useUpsertNotificationPreferences,
+  useUserProfile,
+  useUpdateUserProfile,
+  useUpdatePassword,
   DeliveryAddress,
 } from '@/hooks/useSettings';
 
@@ -30,8 +33,12 @@ const Settings = () => {
           <p className="text-muted-foreground">Manage your organization and preferences</p>
         </div>
 
-        <Tabs defaultValue="organization" className="space-y-6">
+        <Tabs defaultValue="profile" className="space-y-6">
           <TabsList>
+            <TabsTrigger value="profile" className="gap-2">
+              <User className="h-4 w-4" />
+              Profile
+            </TabsTrigger>
             <TabsTrigger value="organization" className="gap-2">
               <Building2 className="h-4 w-4" />
               Organization
@@ -45,6 +52,10 @@ const Settings = () => {
               Notifications
             </TabsTrigger>
           </TabsList>
+
+          <TabsContent value="profile">
+            <ProfileTab />
+          </TabsContent>
 
           <TabsContent value="organization">
             <OrganizationTab />
@@ -60,6 +71,135 @@ const Settings = () => {
         </Tabs>
       </div>
     </DashboardLayout>
+  );
+};
+
+const ProfileTab = () => {
+  const { data: profile, isLoading } = useUserProfile();
+  const updateProfile = useUpdateUserProfile();
+  const updatePassword = useUpdatePassword();
+  const [fullName, setFullName] = useState('');
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [passwordError, setPasswordError] = useState('');
+
+  const handleProfileSave = () => {
+    if (fullName.trim()) {
+      updateProfile.mutate({ full_name: fullName.trim() });
+    }
+  };
+
+  const handlePasswordChange = (e: React.FormEvent) => {
+    e.preventDefault();
+    setPasswordError('');
+
+    if (newPassword.length < 6) {
+      setPasswordError('Password must be at least 6 characters');
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      setPasswordError('Passwords do not match');
+      return;
+    }
+
+    updatePassword.mutate(
+      { newPassword },
+      {
+        onSuccess: () => {
+          setCurrentPassword('');
+          setNewPassword('');
+          setConfirmPassword('');
+        },
+      }
+    );
+  };
+
+  if (isLoading) {
+    return <Card><CardContent className="p-6">Loading...</CardContent></Card>;
+  }
+
+  return (
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>Profile Information</CardTitle>
+          <CardDescription>Update your personal details</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="email">Email</Label>
+            <Input
+              id="email"
+              value={profile?.email || ''}
+              disabled
+              className="bg-muted"
+            />
+            <p className="text-xs text-muted-foreground">Email cannot be changed</p>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="full-name">Full Name</Label>
+            <Input
+              id="full-name"
+              defaultValue={profile?.full_name || ''}
+              onChange={(e) => setFullName(e.target.value)}
+              placeholder="Enter your full name"
+            />
+          </div>
+
+          <Button onClick={handleProfileSave} disabled={updateProfile.isPending}>
+            {updateProfile.isPending ? 'Saving...' : 'Save Profile'}
+          </Button>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Lock className="h-5 w-5" />
+            Change Password
+          </CardTitle>
+          <CardDescription>Update your password to keep your account secure</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handlePasswordChange} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="new-password">New Password</Label>
+              <Input
+                id="new-password"
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                placeholder="Enter new password"
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="confirm-password">Confirm New Password</Label>
+              <Input
+                id="confirm-password"
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder="Confirm new password"
+                required
+              />
+            </div>
+
+            {passwordError && (
+              <p className="text-sm text-destructive">{passwordError}</p>
+            )}
+
+            <Button type="submit" disabled={updatePassword.isPending}>
+              {updatePassword.isPending ? 'Updating...' : 'Update Password'}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
+    </div>
   );
 };
 
