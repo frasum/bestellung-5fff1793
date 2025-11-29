@@ -32,7 +32,8 @@ import {
 } from '@/components/ui/alert-dialog';
 import { useArticles, useCreateArticle, useUpdateArticle, useDeleteArticle, Article, ArticleInput } from '@/hooks/useArticles';
 import { useSuppliers } from '@/hooks/useSuppliers';
-import { Plus, Pencil, Trash2, Search, ShoppingCart, Minus, Loader2, Package, Upload } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, ShoppingCart, Minus, Loader2, Package, Upload, LayoutGrid, List } from 'lucide-react';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useForm, Controller } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -77,6 +78,7 @@ const Articles = () => {
   const [isImportOpen, setIsImportOpen] = useState(false);
   const [editingArticle, setEditingArticle] = useState<Article | null>(null);
   const [deletingArticle, setDeletingArticle] = useState<Article | null>(null);
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
 
   const { data: articles, isLoading } = useArticles();
   const { data: suppliers } = useSuppliers();
@@ -367,6 +369,24 @@ const Articles = () => {
               ))}
             </SelectContent>
           </Select>
+          <div className="flex border border-border rounded-lg overflow-hidden">
+            <Button
+              variant={viewMode === 'list' ? 'default' : 'ghost'}
+              size="icon"
+              className="rounded-none h-10 w-10"
+              onClick={() => setViewMode('list')}
+            >
+              <List className="w-4 h-4" />
+            </Button>
+            <Button
+              variant={viewMode === 'grid' ? 'default' : 'ghost'}
+              size="icon"
+              className="rounded-none h-10 w-10"
+              onClick={() => setViewMode('grid')}
+            >
+              <LayoutGrid className="w-4 h-4" />
+            </Button>
+          </div>
         </div>
 
         {/* Articles Grid */}
@@ -383,7 +403,91 @@ const Articles = () => {
                 : 'No articles yet. Add your first article to get started.'}
             </p>
           </div>
+        ) : viewMode === 'list' ? (
+          /* List View - Optimized for ordering */
+          <div className="bg-card border border-border rounded-xl overflow-hidden">
+            <Table>
+              <TableHeader>
+                <TableRow className="hover:bg-transparent">
+                  <TableHead className="w-[35%]">Article</TableHead>
+                  <TableHead className="hidden sm:table-cell">Supplier</TableHead>
+                  <TableHead className="text-right">Price</TableHead>
+                  <TableHead className="text-center w-[140px]">Quantity</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredArticles?.map((article) => {
+                  const cartQty = getCartQuantity(article.id);
+                  return (
+                    <TableRow key={article.id} className="group">
+                      <TableCell>
+                        <div className="flex items-center gap-3">
+                          <div className="min-w-0 flex-1">
+                            <p className="font-medium text-foreground truncate">{article.name}</p>
+                            <p className="text-xs text-muted-foreground sm:hidden truncate">
+                              {article.suppliers?.name}
+                            </p>
+                          </div>
+                          <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7"
+                              onClick={() => {
+                                setEditingArticle(article);
+                                setIsDialogOpen(true);
+                              }}
+                            >
+                              <Pencil className="w-3 h-3" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7 text-destructive hover:text-destructive"
+                              onClick={() => setDeletingArticle(article)}
+                            >
+                              <Trash2 className="w-3 h-3" />
+                            </Button>
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell className="hidden sm:table-cell text-muted-foreground">
+                        {article.suppliers?.name}
+                      </TableCell>
+                      <TableCell className="text-right font-medium">
+                        €{Number(article.price).toFixed(2)}
+                        <span className="text-xs text-muted-foreground ml-1">/{article.unit}</span>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center justify-center gap-1">
+                          <Button
+                            size="icon"
+                            variant="outline"
+                            className="h-8 w-8"
+                            onClick={() => updateQuantity(article.id, cartQty - 1)}
+                            disabled={cartQty === 0}
+                          >
+                            <Minus className="w-3 h-3" />
+                          </Button>
+                          <span className="w-8 text-center font-medium text-foreground">{cartQty}</span>
+                          <Button
+                            size="icon"
+                            variant="outline"
+                            className="h-8 w-8"
+                            onClick={() => addItem(article, 1)}
+                          >
+                            <Plus className="w-3 h-3" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </div>
         ) : (
+          /* Grid View */
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {filteredArticles?.map((article) => {
               const cartQty = getCartQuantity(article.id);
