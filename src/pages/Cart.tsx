@@ -5,7 +5,8 @@ import { useCart } from '@/contexts/CartContext';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Trash2, Plus, Minus, ShoppingCart, ArrowRight, Loader2 } from 'lucide-react';
+import { Trash2, Plus, Minus, ShoppingCart, ArrowRight, Loader2, AlertTriangle } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 const Cart = () => {
   const { user, loading: authLoading } = useAuth();
@@ -36,11 +37,19 @@ const Cart = () => {
     return acc;
   }, {} as Record<string, typeof items>);
 
-  const supplierTotals = Object.entries(itemsBySupplier).map(([name, supplierItems]) => ({
-    name,
-    total: supplierItems.reduce((sum, item) => sum + Number(item.article.price) * item.quantity, 0),
-    items: supplierItems,
-  }));
+  const supplierTotals = Object.entries(itemsBySupplier).map(([name, supplierItems]) => {
+    const supplier = supplierItems[0]?.article.suppliers;
+    return {
+      name,
+      total: supplierItems.reduce((sum, item) => sum + Number(item.article.price) * item.quantity, 0),
+      items: supplierItems,
+      minimumOrderValue: supplier?.minimum_order_value ? Number(supplier.minimum_order_value) : 0,
+    };
+  });
+
+  const hasMinimumOrderWarning = supplierTotals.some(
+    ({ total, minimumOrderValue }) => minimumOrderValue > 0 && total < minimumOrderValue
+  );
 
   return (
     <DashboardLayout>
@@ -75,7 +84,7 @@ const Cart = () => {
           <div className="grid lg:grid-cols-3 gap-6">
             {/* Cart Items */}
             <div className="lg:col-span-2 space-y-6">
-              {supplierTotals.map(({ name, items: supplierItems, total }) => (
+              {supplierTotals.map(({ name, items: supplierItems, total, minimumOrderValue }) => (
                 <div key={name} className="bg-card border border-border rounded-xl overflow-hidden">
                   <div className="bg-muted/50 px-6 py-4 border-b border-border flex items-center justify-between">
                     <h3 className="font-semibold text-foreground">{name}</h3>
@@ -83,6 +92,14 @@ const Cart = () => {
                       Subtotal: €{total.toFixed(2)}
                     </span>
                   </div>
+                  {minimumOrderValue > 0 && total < minimumOrderValue && (
+                    <Alert variant="destructive" className="m-4 mb-0">
+                      <AlertTriangle className="h-4 w-4" />
+                      <AlertDescription>
+                        Mindestbestellwert nicht erreicht. Noch €{(minimumOrderValue - total).toFixed(2)} bis zum Minimum von €{minimumOrderValue.toFixed(2)}.
+                      </AlertDescription>
+                    </Alert>
+                  )}
                   <div className="divide-y divide-border">
                     {supplierItems.map((item) => (
                       <div key={item.article.id} className="p-4 flex items-center gap-4">
@@ -153,7 +170,19 @@ const Cart = () => {
                     <span className="font-bold text-xl text-foreground">€{getTotal().toFixed(2)}</span>
                   </div>
                 </div>
-                <Button className="w-full" size="lg" onClick={() => navigate('/checkout')}>
+                {hasMinimumOrderWarning && (
+                  <Alert variant="destructive" className="mb-4">
+                    <AlertTriangle className="h-4 w-4" />
+                    <AlertDescription className="text-xs">
+                      Nicht alle Lieferanten haben den Mindestbestellwert erreicht.
+                    </AlertDescription>
+                  </Alert>
+                )}
+                <Button 
+                  className="w-full" 
+                  size="lg" 
+                  onClick={() => navigate('/checkout')}
+                >
                   Proceed to Checkout
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>

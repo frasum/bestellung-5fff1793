@@ -23,7 +23,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { useSuppliers, useCreateSupplier, useUpdateSupplier, useDeleteSupplier, Supplier, SupplierInput } from '@/hooks/useSuppliers';
-import { Plus, Pencil, Trash2, Search, Mail, Phone, MapPin, User, Loader2, Upload, Hash } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, Mail, Phone, MapPin, User, Loader2, Upload, Hash, Euro } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { CsvImportDialog, ImportField } from '@/components/CsvImportDialog';
 import { useImportSuppliers } from '@/hooks/useImport';
@@ -38,6 +38,7 @@ const supplierSchema = z.object({
   address: z.string().optional(),
   contact_person: z.string().optional(),
   customer_number: z.string().optional(),
+  minimum_order_value: z.string().optional(),
 });
 
 type SupplierFormData = z.infer<typeof supplierSchema>;
@@ -49,6 +50,7 @@ const SUPPLIER_IMPORT_FIELDS: ImportField[] = [
   { name: 'address', label: 'Address', required: false },
   { name: 'contact_person', label: 'Contact Person', required: false },
   { name: 'customer_number', label: 'Customer Number', required: false },
+  { name: 'minimum_order_value', label: 'Minimum Order Value', required: false },
 ];
 
 const Suppliers = () => {
@@ -68,7 +70,7 @@ const Suppliers = () => {
 
   const form = useForm<SupplierFormData>({
     resolver: zodResolver(supplierSchema),
-    defaultValues: { name: '', email: '', phone: '', address: '', contact_person: '', customer_number: '' },
+    defaultValues: { name: '', email: '', phone: '', address: '', contact_person: '', customer_number: '', minimum_order_value: '' },
   });
 
   useEffect(() => {
@@ -86,9 +88,10 @@ const Suppliers = () => {
         address: editingSupplier.address || '',
         contact_person: editingSupplier.contact_person || '',
         customer_number: editingSupplier.customer_number || '',
+        minimum_order_value: editingSupplier.minimum_order_value?.toString() || '',
       });
     } else {
-      form.reset({ name: '', email: '', phone: '', address: '', contact_person: '', customer_number: '' });
+      form.reset({ name: '', email: '', phone: '', address: '', contact_person: '', customer_number: '', minimum_order_value: '' });
     }
   }, [editingSupplier, form]);
 
@@ -100,6 +103,7 @@ const Suppliers = () => {
       address: data.address || undefined,
       contact_person: data.contact_person || undefined,
       customer_number: data.customer_number || undefined,
+      minimum_order_value: data.minimum_order_value ? parseFloat(data.minimum_order_value) : undefined,
     };
 
     if (editingSupplier) {
@@ -206,6 +210,17 @@ const Suppliers = () => {
                 <div className="space-y-2">
                   <Label htmlFor="customer_number">Customer Number</Label>
                   <Input id="customer_number" {...form.register('customer_number')} placeholder="KD-12345" />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="minimum_order_value">Minimum Order Value (€)</Label>
+                  <Input 
+                    id="minimum_order_value" 
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    {...form.register('minimum_order_value')} 
+                    placeholder="50.00" 
+                  />
                 </div>
                 <div className="flex gap-3 pt-4">
                   <Button type="button" variant="outline" className="flex-1" onClick={() => {
@@ -330,6 +345,12 @@ const Suppliers = () => {
                     <div className="flex items-center gap-2 text-muted-foreground">
                       <Hash className="w-4 h-4" />
                       <span>Kd-Nr: {supplier.customer_number}</span>
+                    </div>
+                  )}
+                  {supplier.minimum_order_value && supplier.minimum_order_value > 0 && (
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <Euro className="w-4 h-4" />
+                      <span>Min: €{Number(supplier.minimum_order_value).toFixed(2)}</span>
                     </div>
                   )}
                 </div>

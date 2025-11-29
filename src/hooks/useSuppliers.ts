@@ -11,6 +11,7 @@ export interface Supplier {
   address: string | null;
   contact_person: string | null;
   customer_number: string | null;
+  minimum_order_value: number | null;
   is_active: boolean;
   created_at: string;
   updated_at: string;
@@ -23,6 +24,7 @@ export interface SupplierInput {
   address?: string;
   contact_person?: string;
   customer_number?: string;
+  minimum_order_value?: number;
   is_active?: boolean;
 }
 

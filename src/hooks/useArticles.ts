@@ -18,6 +18,7 @@ export interface Article {
   suppliers?: {
     id: string;
     name: string;
+    minimum_order_value: number | null;
   };
 }
 
@@ -38,7 +39,7 @@ export const useArticles = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('articles')
-        .select('*, suppliers(id, name)')
+        .select('*, suppliers(id, name, minimum_order_value)')
         .order('name');
 
       if (error) throw error;
@@ -53,7 +54,7 @@ export const useArticlesBySupplier = (supplierId: string | null) => {
     queryFn: async () => {
       let query = supabase
         .from('articles')
-        .select('*, suppliers(id, name)')
+        .select('*, suppliers(id, name, minimum_order_value)')
         .eq('is_active', true)
         .order('name');
 
