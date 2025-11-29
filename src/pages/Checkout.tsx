@@ -7,15 +7,31 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
 import { useCreateOrder } from '@/hooks/useOrders';
-import { ArrowLeft, CheckCircle2, Loader2, Mail, MapPin, Send } from 'lucide-react';
+import { ArrowLeft, CalendarIcon, CheckCircle2, Clock, Loader2, Mail, MapPin, Send } from 'lucide-react';
 import { toast } from 'sonner';
 import { z } from 'zod';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { format } from 'date-fns';
+import { de } from 'date-fns/locale';
+import { cn } from '@/lib/utils';
+
+const TIME_WINDOWS = [
+  { value: 'morning', label: '06:00 - 10:00 Uhr' },
+  { value: 'late-morning', label: '10:00 - 12:00 Uhr' },
+  { value: 'noon', label: '12:00 - 14:00 Uhr' },
+  { value: 'afternoon', label: '14:00 - 17:00 Uhr' },
+  { value: 'flexible', label: 'Flexibel' },
+];
 
 const checkoutSchema = z.object({
-  deliveryAddress: z.string().min(10, 'Please enter a complete delivery address'),
+  deliveryAddress: z.string().min(10, 'Bitte geben Sie eine vollständige Lieferadresse ein'),
+  deliveryDate: z.date({ required_error: 'Bitte wählen Sie ein Lieferdatum' }),
+  deliveryTimeWindow: z.string({ required_error: 'Bitte wählen Sie ein Zeitfenster' }),
   notes: z.string().optional(),
 });
 
@@ -31,7 +47,7 @@ const Checkout = () => {
 
   const form = useForm<CheckoutFormData>({
     resolver: zodResolver(checkoutSchema),
-    defaultValues: { deliveryAddress: '', notes: '' },
+    defaultValues: { deliveryAddress: '', notes: '', deliveryTimeWindow: '' },
   });
 
   useEffect(() => {
@@ -89,6 +105,12 @@ const Checkout = () => {
 
       const restaurantName = (profile?.organizations as any)?.name || 'Restaurant';
 
+      // Format delivery info for notes
+      const deliveryDateStr = format(data.deliveryDate, 'dd.MM.yyyy', { locale: de });
+      const timeWindowLabel = TIME_WINDOWS.find(t => t.value === data.deliveryTimeWindow)?.label || data.deliveryTimeWindow;
+      const deliveryInfo = `Gewünschtes Lieferdatum: ${deliveryDateStr}\nZeitfenster: ${timeWindowLabel}`;
+      const fullNotes = data.notes ? `${deliveryInfo}\n\n${data.notes}` : deliveryInfo;
+
       // Create orders for each supplier
       for (const supplier of supplierOrders) {
         const result = await createOrder.mutateAsync({
@@ -97,7 +119,7 @@ const Checkout = () => {
           supplierEmail: supplierEmails.get(supplier.supplierId) || '',
           items: supplier.items,
           deliveryAddress: data.deliveryAddress,
-          notes: data.notes,
+          notes: fullNotes,
           restaurantName,
         });
         orderNumbers.push(result.orderNumber);
@@ -231,11 +253,83 @@ const Checkout = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="notes">Notes (Optional)</Label>
+                  <Label>
+                    <CalendarIcon className="w-4 h-4 inline mr-1" />
+                    Lieferdatum *
+                  </Label>
+                  <Controller
+                    control={form.control}
+                    name="deliveryDate"
+                    render={({ field }) => (
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            className={cn(
+                              "w-full justify-start text-left font-normal",
+                              !field.value && "text-muted-foreground"
+                            )}
+                          >
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {field.value ? format(field.value, "PPP", { locale: de }) : "Datum wählen"}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={field.value}
+                            onSelect={field.onChange}
+                            disabled={(date) => date < new Date()}
+                            initialFocus
+                            className="pointer-events-auto"
+                          />
+                        </PopoverContent>
+                      </Popover>
+                    )}
+                  />
+                  {form.formState.errors.deliveryDate && (
+                    <p className="text-sm text-destructive">
+                      {form.formState.errors.deliveryDate.message}
+                    </p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label>
+                    <Clock className="w-4 h-4 inline mr-1" />
+                    Zeitfenster *
+                  </Label>
+                  <Controller
+                    control={form.control}
+                    name="deliveryTimeWindow"
+                    render={({ field }) => (
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Zeitfenster wählen" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {TIME_WINDOWS.map((tw) => (
+                            <SelectItem key={tw.value} value={tw.value}>
+                              {tw.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
+                  {form.formState.errors.deliveryTimeWindow && (
+                    <p className="text-sm text-destructive">
+                      {form.formState.errors.deliveryTimeWindow.message}
+                    </p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="notes">Notizen (Optional)</Label>
                   <Textarea
                     id="notes"
                     {...form.register('notes')}
-                    placeholder="Special instructions, delivery time preferences, etc."
+                    placeholder="Besondere Anweisungen, Hinweise zur Lieferung, etc."
                     rows={3}
                   />
                 </div>
