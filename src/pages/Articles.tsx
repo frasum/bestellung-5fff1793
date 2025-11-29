@@ -32,11 +32,13 @@ import {
 } from '@/components/ui/alert-dialog';
 import { useArticles, useCreateArticle, useUpdateArticle, useDeleteArticle, Article, ArticleInput } from '@/hooks/useArticles';
 import { useSuppliers } from '@/hooks/useSuppliers';
-import { Plus, Pencil, Trash2, Search, ShoppingCart, Minus, Loader2, Package } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, ShoppingCart, Minus, Loader2, Package, Upload } from 'lucide-react';
 import { useForm, Controller } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Badge } from '@/components/ui/badge';
+import { CsvImportDialog, ImportField } from '@/components/CsvImportDialog';
+import { useImportArticles } from '@/hooks/useImport';
 
 const articleSchema = z.object({
   supplier_id: z.string().min(1, 'Please select a supplier'),
@@ -53,6 +55,16 @@ type ArticleFormData = z.infer<typeof articleSchema>;
 const UNITS = ['kg', 'g', 'L', 'ml', 'pcs', 'box', 'bunch', 'pack'];
 const CATEGORIES = ['Vegetables', 'Fruits', 'Dairy', 'Meat', 'Seafood', 'Bakery', 'Beverages', 'Oils', 'Herbs', 'Cheese', 'Other'];
 
+const ARTICLE_IMPORT_FIELDS: ImportField[] = [
+  { name: 'name', label: 'Name', required: true },
+  { name: 'supplier', label: 'Supplier', required: true },
+  { name: 'price', label: 'Price', required: true },
+  { name: 'unit', label: 'Unit', required: false },
+  { name: 'sku', label: 'SKU', required: false },
+  { name: 'category', label: 'Category', required: false },
+  { name: 'description', label: 'Description', required: false },
+];
+
 const Articles = () => {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
@@ -61,6 +73,7 @@ const Articles = () => {
   const [selectedSupplier, setSelectedSupplier] = useState<string>('all');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isImportOpen, setIsImportOpen] = useState(false);
   const [editingArticle, setEditingArticle] = useState<Article | null>(null);
   const [deletingArticle, setDeletingArticle] = useState<Article | null>(null);
 
@@ -69,6 +82,7 @@ const Articles = () => {
   const createArticle = useCreateArticle();
   const updateArticle = useUpdateArticle();
   const deleteArticle = useDeleteArticle();
+  const importArticles = useImportArticles();
 
   const form = useForm<ArticleFormData>({
     resolver: zodResolver(articleSchema),
@@ -166,6 +180,10 @@ const Articles = () => {
                   {getItemCount()}
                 </Badge>
               )}
+            </Button>
+            <Button variant="outline" onClick={() => setIsImportOpen(true)}>
+              <Upload className="w-4 h-4 mr-2" />
+              Import CSV
             </Button>
             <Dialog open={isDialogOpen} onOpenChange={(open) => {
               setIsDialogOpen(open);
@@ -288,6 +306,17 @@ const Articles = () => {
             </Dialog>
           </div>
         </div>
+
+        <CsvImportDialog
+          open={isImportOpen}
+          onOpenChange={setIsImportOpen}
+          title="Import Articles"
+          fields={ARTICLE_IMPORT_FIELDS}
+          onImport={async (data) => {
+            await importArticles.mutateAsync(data);
+          }}
+          templateFileName="articles_template.csv"
+        />
 
         {/* Filters */}
         <div className="flex flex-col sm:flex-row gap-4">

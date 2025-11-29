@@ -23,8 +23,10 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { useSuppliers, useCreateSupplier, useUpdateSupplier, useDeleteSupplier, Supplier, SupplierInput } from '@/hooks/useSuppliers';
-import { Plus, Pencil, Trash2, Search, Mail, Phone, MapPin, User, Loader2 } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, Mail, Phone, MapPin, User, Loader2, Upload } from 'lucide-react';
 import { useForm } from 'react-hook-form';
+import { CsvImportDialog, ImportField } from '@/components/CsvImportDialog';
+import { useImportSuppliers } from '@/hooks/useImport';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 
@@ -38,11 +40,20 @@ const supplierSchema = z.object({
 
 type SupplierFormData = z.infer<typeof supplierSchema>;
 
+const SUPPLIER_IMPORT_FIELDS: ImportField[] = [
+  { name: 'name', label: 'Name', required: true },
+  { name: 'email', label: 'Email', required: true },
+  { name: 'phone', label: 'Phone', required: false },
+  { name: 'address', label: 'Address', required: false },
+  { name: 'contact_person', label: 'Contact Person', required: false },
+];
+
 const Suppliers = () => {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isImportOpen, setIsImportOpen] = useState(false);
   const [editingSupplier, setEditingSupplier] = useState<Supplier | null>(null);
   const [deletingSupplier, setDeletingSupplier] = useState<Supplier | null>(null);
 
@@ -50,6 +61,7 @@ const Suppliers = () => {
   const createSupplier = useCreateSupplier();
   const updateSupplier = useUpdateSupplier();
   const deleteSupplier = useDeleteSupplier();
+  const importSuppliers = useImportSuppliers();
 
   const form = useForm<SupplierFormData>({
     resolver: zodResolver(supplierSchema),
@@ -125,16 +137,21 @@ const Suppliers = () => {
             <h1 className="text-3xl font-bold text-foreground">Suppliers</h1>
             <p className="text-muted-foreground mt-1">Manage your suppliers and their contact information</p>
           </div>
-          <Dialog open={isDialogOpen} onOpenChange={(open) => {
-            setIsDialogOpen(open);
-            if (!open) setEditingSupplier(null);
-          }}>
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="w-4 h-4 mr-2" />
-                Add Supplier
-              </Button>
-            </DialogTrigger>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => setIsImportOpen(true)}>
+              <Upload className="w-4 h-4 mr-2" />
+              Import CSV
+            </Button>
+            <Dialog open={isDialogOpen} onOpenChange={(open) => {
+              setIsDialogOpen(open);
+              if (!open) setEditingSupplier(null);
+            }}>
+              <DialogTrigger asChild>
+                <Button>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Supplier
+                </Button>
+              </DialogTrigger>
             <DialogContent>
               <DialogHeader>
                 <DialogTitle>{editingSupplier ? 'Edit Supplier' : 'Add New Supplier'}</DialogTitle>
@@ -186,7 +203,19 @@ const Suppliers = () => {
               </form>
             </DialogContent>
           </Dialog>
+          </div>
         </div>
+
+        <CsvImportDialog
+          open={isImportOpen}
+          onOpenChange={setIsImportOpen}
+          title="Import Suppliers"
+          fields={SUPPLIER_IMPORT_FIELDS}
+          onImport={async (data) => {
+            await importSuppliers.mutateAsync(data);
+          }}
+          templateFileName="suppliers_template.csv"
+        />
 
         {/* Search */}
         <div className="relative max-w-md">
