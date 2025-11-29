@@ -128,29 +128,60 @@ export const useCreateInvitation = () => {
 
   return useMutation({
     mutationFn: async ({ email, role }: { email: string; role: TeamMember['role'] }) => {
-      // Get current user's organization
+      // Get current user's profile with organization info
       const { data: profile } = await supabase
         .from('profiles')
-        .select('organization_id')
+        .select('organization_id, full_name')
         .eq('id', user!.id)
         .single();
 
       if (!profile?.organization_id) throw new Error('No organization found');
 
-      const { error } = await supabase
+      // Get organization name
+      const { data: org } = await supabase
+        .from('organizations')
+        .select('name')
+        .eq('id', profile.organization_id)
+        .single();
+
+      // Insert invitation and get the token
+      const { data: invitation, error } = await supabase
         .from('team_invitations')
         .insert({
           organization_id: profile.organization_id,
           email: email.toLowerCase().trim(),
           role,
           invited_by: user!.id,
-        });
+        })
+        .select('token')
+        .single();
 
       if (error) {
         if (error.code === '23505') {
           throw new Error('This email has already been invited');
         }
         throw error;
+      }
+
+      // Send invitation email via edge function
+      try {
+        const { error: emailError } = await supabase.functions.invoke('send-invitation-email', {
+          body: {
+            inviteeEmail: email.toLowerCase().trim(),
+            inviterName: profile.full_name || user!.email || 'A team member',
+            organizationName: org?.name || 'the organization',
+            role,
+            inviteToken: invitation.token,
+          },
+        });
+
+        if (emailError) {
+          console.error('Failed to send invitation email:', emailError);
+          // Don't throw - invitation was created, just email failed
+        }
+      } catch (emailErr) {
+        console.error('Error calling send-invitation-email:', emailErr);
+        // Don't throw - invitation was created successfully
       }
     },
     onSuccess: () => {
