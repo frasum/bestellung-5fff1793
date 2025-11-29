@@ -74,6 +74,89 @@ export type Database = {
           },
         ]
       }
+      delivery_addresses: {
+        Row: {
+          address_line1: string
+          address_line2: string | null
+          city: string
+          country: string
+          created_at: string
+          id: string
+          is_default: boolean
+          label: string
+          organization_id: string
+          postal_code: string
+          updated_at: string
+        }
+        Insert: {
+          address_line1: string
+          address_line2?: string | null
+          city: string
+          country?: string
+          created_at?: string
+          id?: string
+          is_default?: boolean
+          label: string
+          organization_id: string
+          postal_code: string
+          updated_at?: string
+        }
+        Update: {
+          address_line1?: string
+          address_line2?: string | null
+          city?: string
+          country?: string
+          created_at?: string
+          id?: string
+          is_default?: boolean
+          label?: string
+          organization_id?: string
+          postal_code?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "delivery_addresses_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notification_preferences: {
+        Row: {
+          created_at: string
+          email_order_confirmation: boolean
+          email_order_status: boolean
+          email_supplier_updates: boolean
+          email_weekly_report: boolean
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          email_order_confirmation?: boolean
+          email_order_status?: boolean
+          email_supplier_updates?: boolean
+          email_weekly_report?: boolean
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          email_order_confirmation?: boolean
+          email_order_status?: boolean
+          email_supplier_updates?: boolean
+          email_weekly_report?: boolean
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       order_items: {
         Row: {
           article_id: string
