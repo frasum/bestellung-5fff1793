@@ -342,6 +342,7 @@ export type Database = {
           email: string
           id: string
           is_active: boolean
+          minimum_order_value: number | null
           name: string
           organization_id: string
           phone: string | null
@@ -355,6 +356,7 @@ export type Database = {
           email: string
           id?: string
           is_active?: boolean
+          minimum_order_value?: number | null
           name: string
           organization_id: string
           phone?: string | null
@@ -368,6 +370,7 @@ export type Database = {
           email?: string
           id?: string
           is_active?: boolean
+          minimum_order_value?: number | null
           name?: string
           organization_id?: string
           phone?: string | null
