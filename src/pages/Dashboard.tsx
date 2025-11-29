@@ -1,12 +1,12 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { Button } from '@/components/ui/button';
-import { ChefHat, LogOut, ShoppingCart, Users, BarChart3, Package } from 'lucide-react';
+import { DashboardLayout } from '@/components/layout/DashboardLayout';
+import { ShoppingCart, Users, BarChart3, Package, Loader2 } from 'lucide-react';
 import { dashboardStats } from '@/data/mockData';
 
 const Dashboard = () => {
-  const { user, signOut, loading } = useAuth();
+  const { user, loading } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -15,15 +15,10 @@ const Dashboard = () => {
     }
   }, [user, loading, navigate]);
 
-  const handleSignOut = async () => {
-    await signOut();
-    navigate('/');
-  };
-
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     );
   }
@@ -38,35 +33,15 @@ const Dashboard = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b border-border bg-card">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg bg-primary flex items-center justify-center">
-              <ChefHat className="w-5 h-5 text-primary-foreground" />
-            </div>
-            <span className="font-bold text-xl text-foreground">ProcureResto</span>
-          </div>
-          <div className="flex items-center gap-4">
-            <span className="text-sm text-muted-foreground hidden sm:block">{user.email}</span>
-            <Button variant="ghost" size="sm" onClick={handleSignOut}>
-              <LogOut className="w-4 h-4 mr-2" />
-              Sign Out
-            </Button>
-          </div>
-        </div>
-      </header>
-
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-8">
+    <DashboardLayout>
+      <div className="space-y-8">
+        <div>
           <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
           <p className="text-muted-foreground mt-1">Welcome back! Here's your procurement overview.</p>
         </div>
 
         {/* Stats Grid */}
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {stats.map((stat, index) => (
             <div key={index} className="bg-card border border-border rounded-xl p-6">
               <div className="flex items-center justify-between mb-4">
@@ -78,7 +53,7 @@ const Dashboard = () => {
           ))}
         </div>
 
-        {/* Charts placeholder */}
+        {/* Charts */}
         <div className="grid lg:grid-cols-2 gap-6">
           <div className="bg-card border border-border rounded-xl p-6">
             <h2 className="text-lg font-semibold text-foreground mb-4">Monthly Spending</h2>
@@ -86,7 +61,7 @@ const Dashboard = () => {
               {dashboardStats.monthlySpending.map((item, index) => (
                 <div key={index} className="flex-1 flex flex-col items-center gap-2">
                   <div 
-                    className="w-full bg-primary/60 rounded-t"
+                    className="w-full bg-primary/60 rounded-t transition-all hover:bg-primary"
                     style={{ height: `${(item.amount / 2500) * 100}%` }}
                   />
                   <span className="text-xs text-muted-foreground">{item.month}</span>
@@ -99,16 +74,24 @@ const Dashboard = () => {
             <h2 className="text-lg font-semibold text-foreground mb-4">Top Suppliers</h2>
             <div className="space-y-4">
               {dashboardStats.topSuppliers.map((supplier, index) => (
-                <div key={index} className="flex items-center justify-between">
-                  <span className="text-foreground">{supplier.name}</span>
-                  <span className="font-medium text-foreground">€{supplier.amount.toLocaleString()}</span>
+                <div key={index}>
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-foreground">{supplier.name}</span>
+                    <span className="font-medium text-foreground">€{supplier.amount.toLocaleString()}</span>
+                  </div>
+                  <div className="h-2 bg-muted rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-primary rounded-full"
+                      style={{ width: `${(supplier.amount / 5000) * 100}%` }}
+                    />
+                  </div>
                 </div>
               ))}
             </div>
           </div>
         </div>
-      </main>
-    </div>
+      </div>
+    </DashboardLayout>
   );
 };
 
