@@ -11,7 +11,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { useCreateOrder } from '@/hooks/useOrders';
 import { useDeliveryAddresses } from '@/hooks/useSettings';
-import { ArrowLeft, CalendarIcon, CheckCircle2, Clock, Loader2, Mail, MapPin, Send, Settings } from 'lucide-react';
+import { ArrowLeft, CalendarIcon, CheckCircle2, Clock, Eye, Loader2, Mail, MapPin, Send, Settings } from 'lucide-react';
 import { toast } from 'sonner';
 import { z } from 'zod';
 import { useForm, Controller } from 'react-hook-form';
@@ -19,6 +19,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
+import { EmailPreviewDialog, EmailPreviewData } from '@/components/checkout/EmailPreviewDialog';
 
 const TIME_WINDOWS = [
   { value: 'morning', label: '06:00 - 10:00 Uhr' },
@@ -45,6 +46,9 @@ const Checkout = () => {
   const { data: deliveryAddresses, isLoading: addressesLoading } = useDeliveryAddresses();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [completedOrders, setCompletedOrders] = useState<string[]>([]);
+  const [showEmailPreview, setShowEmailPreview] = useState(false);
+  const [emailPreviews, setEmailPreviews] = useState<EmailPreviewData[]>([]);
+  const [pendingOrderData, setPendingOrderData] = useState<CheckoutFormData | null>(null);
 
   const defaultAddress = deliveryAddresses?.find(a => a.is_default);
 
@@ -98,16 +102,13 @@ const Checkout = () => {
     return parts.join('\n');
   };
 
-  const handleSubmit = async (data: CheckoutFormData) => {
-    setIsSubmitting(true);
+  const handlePreviewEmails = async (data: CheckoutFormData) => {
     const supplierOrders = Object.values(itemsBySupplier);
-    const orderNumbers: string[] = [];
 
     // Get selected address
     const selectedAddress = deliveryAddresses?.find(a => a.id === data.deliveryAddressId);
     if (!selectedAddress) {
       toast.error('Bitte wählen Sie eine Lieferadresse');
-      setIsSubmitting(false);
       return;
     }
 
@@ -139,25 +140,69 @@ const Checkout = () => {
       const deliveryInfo = `Gewünschtes Lieferdatum: ${deliveryDateStr}\nZeitfenster: ${timeWindowLabel}`;
       const fullNotes = data.notes ? `${deliveryInfo}\n\n${data.notes}` : deliveryInfo;
 
-      // Create orders for each supplier
-      for (const supplier of supplierOrders) {
+      // Build email previews
+      const previews: EmailPreviewData[] = supplierOrders.map(supplier => ({
+        supplierName: supplier.supplierName,
+        supplierEmail: supplierEmails.get(supplier.supplierId) || '',
+        restaurantName,
+        deliveryAddress: formattedAddress,
+        items: supplier.items.map(item => ({
+          article_name: item.article.name,
+          quantity: item.quantity,
+          unit: item.article.unit,
+          unit_price: Number(item.article.price),
+          total_price: Number(item.article.price) * item.quantity,
+        })),
+        totalAmount: supplier.total,
+        notes: fullNotes,
+      }));
+
+      setEmailPreviews(previews);
+      setPendingOrderData(data);
+      setShowEmailPreview(true);
+    } catch (error: any) {
+      toast.error(error.message || 'Fehler beim Laden der Vorschau');
+    }
+  };
+
+  const handleConfirmOrders = async () => {
+    if (!pendingOrderData) return;
+    
+    setIsSubmitting(true);
+    const supplierOrders = Object.values(itemsBySupplier);
+    const orderNumbers: string[] = [];
+
+    const selectedAddress = deliveryAddresses?.find(a => a.id === pendingOrderData.deliveryAddressId);
+    const formattedAddress = `${selectedAddress?.label}\n${formatAddress(selectedAddress!)}`;
+
+    const deliveryDateStr = format(pendingOrderData.deliveryDate, 'dd.MM.yyyy', { locale: de });
+    const timeWindowLabel = TIME_WINDOWS.find(t => t.value === pendingOrderData.deliveryTimeWindow)?.label || pendingOrderData.deliveryTimeWindow;
+    const deliveryInfo = `Gewünschtes Lieferdatum: ${deliveryDateStr}\nZeitfenster: ${timeWindowLabel}`;
+    const fullNotes = pendingOrderData.notes ? `${deliveryInfo}\n\n${pendingOrderData.notes}` : deliveryInfo;
+
+    try {
+      for (const preview of emailPreviews) {
+        const supplier = supplierOrders.find(s => s.supplierName === preview.supplierName);
+        if (!supplier) continue;
+
         const result = await createOrder.mutateAsync({
           supplierId: supplier.supplierId,
-          supplierName: supplier.supplierName,
-          supplierEmail: supplierEmails.get(supplier.supplierId) || '',
+          supplierName: preview.supplierName,
+          supplierEmail: preview.supplierEmail,
           items: supplier.items,
           deliveryAddress: formattedAddress,
           notes: fullNotes,
-          restaurantName,
+          restaurantName: preview.restaurantName,
         });
         orderNumbers.push(result.orderNumber);
       }
 
       setCompletedOrders(orderNumbers);
       clearCart();
-      toast.success(`${orderNumbers.length} order(s) placed successfully!`);
+      setShowEmailPreview(false);
+      toast.success(`${orderNumbers.length} Bestellung(en) erfolgreich aufgegeben!`);
     } catch (error: any) {
-      toast.error(error.message || 'Failed to create orders');
+      toast.error(error.message || 'Fehler beim Erstellen der Bestellungen');
     } finally {
       setIsSubmitting(false);
     }
@@ -261,7 +306,7 @@ const Checkout = () => {
           <div className="lg:col-span-1">
             <div className="bg-card border border-border rounded-xl p-6 sticky top-6">
               <h2 className="text-lg font-semibold text-foreground mb-4">Delivery Details</h2>
-              <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+              <form onSubmit={form.handleSubmit(handlePreviewEmails)} className="space-y-4">
                 <div className="space-y-2">
                   <Label>
                     <MapPin className="w-4 h-4 inline mr-1" />
@@ -407,18 +452,9 @@ const Checkout = () => {
                   </div>
                 </div>
 
-                <Button type="submit" className="w-full" size="lg" disabled={isSubmitting}>
-                  {isSubmitting ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Placing Orders...
-                    </>
-                  ) : (
-                    <>
-                      <Send className="w-4 h-4 mr-2" />
-                      Place {Object.keys(itemsBySupplier).length} Order{Object.keys(itemsBySupplier).length > 1 ? 's' : ''}
-                    </>
-                  )}
+                <Button type="submit" className="w-full" size="lg">
+                  <Eye className="w-4 h-4 mr-2" />
+                  E-Mail Vorschau anzeigen
                 </Button>
 
                 <p className="text-xs text-muted-foreground text-center">
@@ -429,6 +465,14 @@ const Checkout = () => {
           </div>
         </div>
       </div>
+
+      <EmailPreviewDialog
+        open={showEmailPreview}
+        onOpenChange={setShowEmailPreview}
+        emailPreviews={emailPreviews}
+        onConfirm={handleConfirmOrders}
+        isSubmitting={isSubmitting}
+      />
     </DashboardLayout>
   );
 };
