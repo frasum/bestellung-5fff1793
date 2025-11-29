@@ -39,6 +39,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Badge } from '@/components/ui/badge';
 import { CsvImportDialog, ImportField } from '@/components/CsvImportDialog';
 import { useImportArticles } from '@/hooks/useImport';
+import { ExportMenu } from '@/components/ExportMenu';
 
 const articleSchema = z.object({
   supplier_id: z.string().min(1, 'Please select a supplier'),
@@ -181,6 +182,21 @@ const Articles = () => {
                 </Badge>
               )}
             </Button>
+            <ExportMenu
+              filename="articles"
+              title="Articles"
+              headers={['Name', 'Supplier', 'Price', 'Unit', 'SKU', 'Category', 'Status']}
+              getData={() => articles?.map(a => [
+                a.name,
+                a.suppliers?.name || '',
+                `€${Number(a.price).toFixed(2)}`,
+                a.unit,
+                a.sku || '',
+                a.category || '',
+                a.is_active ? 'Active' : 'Inactive'
+              ]) || []}
+              disabled={!articles?.length}
+            />
             <Button variant="outline" onClick={() => setIsImportOpen(true)}>
               <Upload className="w-4 h-4 mr-2" />
               Import

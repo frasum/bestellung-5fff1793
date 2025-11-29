@@ -27,6 +27,7 @@ import { Plus, Pencil, Trash2, Search, Mail, Phone, MapPin, User, Loader2, Uploa
 import { useForm } from 'react-hook-form';
 import { CsvImportDialog, ImportField } from '@/components/CsvImportDialog';
 import { useImportSuppliers } from '@/hooks/useImport';
+import { ExportMenu } from '@/components/ExportMenu';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 
@@ -138,6 +139,20 @@ const Suppliers = () => {
             <p className="text-muted-foreground mt-1">Manage your suppliers and their contact information</p>
           </div>
           <div className="flex gap-2">
+            <ExportMenu
+              filename="suppliers"
+              title="Suppliers"
+              headers={['Name', 'Email', 'Phone', 'Address', 'Contact Person', 'Status']}
+              getData={() => suppliers?.map(s => [
+                s.name,
+                s.email,
+                s.phone || '',
+                s.address || '',
+                s.contact_person || '',
+                s.is_active ? 'Active' : 'Inactive'
+              ]) || []}
+              disabled={!suppliers?.length}
+            />
             <Button variant="outline" onClick={() => setIsImportOpen(true)}>
               <Upload className="w-4 h-4 mr-2" />
               Import
