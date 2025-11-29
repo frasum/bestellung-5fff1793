@@ -1,0 +1,195 @@
+import { Supplier, Article, Order, DashboardStats, PricingPlan } from '@/types';
+
+export const suppliers: Supplier[] = [
+  {
+    id: '1',
+    name: 'Fresh Farms Italia',
+    email: 'orders@freshfarms.it',
+    phone: '+39 02 1234567',
+    address: 'Via Roma 123, Milano',
+    contactPerson: 'Marco Rossi',
+    organizationId: '1',
+    isActive: true,
+    createdAt: new Date('2024-01-15'),
+  },
+  {
+    id: '2',
+    name: 'Mediterranean Seafood',
+    email: 'info@medseafood.com',
+    phone: '+39 081 9876543',
+    address: 'Porto di Napoli, Napoli',
+    contactPerson: 'Giovanni Esposito',
+    organizationId: '1',
+    isActive: true,
+    createdAt: new Date('2024-02-20'),
+  },
+  {
+    id: '3',
+    name: 'Alpine Dairy Co.',
+    email: 'supply@alpinedairy.ch',
+    phone: '+41 44 5551234',
+    address: 'Bergstrasse 45, Zürich',
+    contactPerson: 'Hans Mueller',
+    organizationId: '1',
+    isActive: true,
+    createdAt: new Date('2024-03-10'),
+  },
+];
+
+export const articles: Article[] = [
+  // Fresh Farms Italia
+  { id: '1', name: 'San Marzano Tomatoes', description: 'Premium Italian tomatoes', unit: 'kg', price: 4.50, category: 'Vegetables', supplierId: '1', supplierName: 'Fresh Farms Italia', isActive: true },
+  { id: '2', name: 'Extra Virgin Olive Oil', description: 'Cold pressed Tuscan olive oil', unit: 'L', price: 12.00, category: 'Oils', supplierId: '1', supplierName: 'Fresh Farms Italia', isActive: true },
+  { id: '3', name: 'Fresh Basil', description: 'Organic basil leaves', unit: 'bunch', price: 2.50, category: 'Herbs', supplierId: '1', supplierName: 'Fresh Farms Italia', isActive: true },
+  { id: '4', name: 'Parmigiano Reggiano', description: '24-month aged', unit: 'kg', price: 22.00, category: 'Cheese', supplierId: '1', supplierName: 'Fresh Farms Italia', isActive: true },
+  // Mediterranean Seafood
+  { id: '5', name: 'Fresh Sea Bass', description: 'Wild caught Mediterranean', unit: 'kg', price: 28.00, category: 'Fish', supplierId: '2', supplierName: 'Mediterranean Seafood', isActive: true },
+  { id: '6', name: 'Tiger Prawns', description: 'Large, fresh prawns', unit: 'kg', price: 35.00, category: 'Seafood', supplierId: '2', supplierName: 'Mediterranean Seafood', isActive: true },
+  { id: '7', name: 'Fresh Mussels', description: 'Cleaned and ready', unit: 'kg', price: 8.50, category: 'Seafood', supplierId: '2', supplierName: 'Mediterranean Seafood', isActive: true },
+  { id: '8', name: 'Calamari', description: 'Fresh squid rings', unit: 'kg', price: 18.00, category: 'Seafood', supplierId: '2', supplierName: 'Mediterranean Seafood', isActive: true },
+  // Alpine Dairy Co.
+  { id: '9', name: 'Swiss Gruyère', description: 'Aged 12 months', unit: 'kg', price: 26.00, category: 'Cheese', supplierId: '3', supplierName: 'Alpine Dairy Co.', isActive: true },
+  { id: '10', name: 'Fresh Cream', description: 'Heavy cream 35%', unit: 'L', price: 6.50, category: 'Dairy', supplierId: '3', supplierName: 'Alpine Dairy Co.', isActive: true },
+  { id: '11', name: 'Butter', description: 'Unsalted premium butter', unit: 'kg', price: 14.00, category: 'Dairy', supplierId: '3', supplierName: 'Alpine Dairy Co.', isActive: true },
+  { id: '12', name: 'Fresh Milk', description: 'Whole milk', unit: 'L', price: 2.20, category: 'Dairy', supplierId: '3', supplierName: 'Alpine Dairy Co.', isActive: true },
+];
+
+export const orders: Order[] = [
+  {
+    id: '1',
+    orderNumber: 'ORD-2024-001',
+    organizationId: '1',
+    supplierId: '1',
+    supplierName: 'Fresh Farms Italia',
+    items: [
+      { id: '1', articleId: '1', articleName: 'San Marzano Tomatoes', quantity: 10, unitPrice: 4.50, totalPrice: 45.00, unit: 'kg' },
+      { id: '2', articleId: '2', articleName: 'Extra Virgin Olive Oil', quantity: 5, unitPrice: 12.00, totalPrice: 60.00, unit: 'L' },
+    ],
+    totalAmount: 105.00,
+    status: 'delivered',
+    deliveryAddress: 'Ristorante Bella Vista, Via Garibaldi 10, Milano',
+    createdAt: new Date('2024-11-01'),
+    updatedAt: new Date('2024-11-03'),
+  },
+  {
+    id: '2',
+    orderNumber: 'ORD-2024-002',
+    organizationId: '1',
+    supplierId: '2',
+    supplierName: 'Mediterranean Seafood',
+    items: [
+      { id: '3', articleId: '5', articleName: 'Fresh Sea Bass', quantity: 5, unitPrice: 28.00, totalPrice: 140.00, unit: 'kg' },
+      { id: '4', articleId: '6', articleName: 'Tiger Prawns', quantity: 3, unitPrice: 35.00, totalPrice: 105.00, unit: 'kg' },
+    ],
+    totalAmount: 245.00,
+    status: 'shipped',
+    deliveryAddress: 'Ristorante Bella Vista, Via Garibaldi 10, Milano',
+    createdAt: new Date('2024-11-15'),
+    updatedAt: new Date('2024-11-16'),
+  },
+  {
+    id: '3',
+    orderNumber: 'ORD-2024-003',
+    organizationId: '1',
+    supplierId: '3',
+    supplierName: 'Alpine Dairy Co.',
+    items: [
+      { id: '5', articleId: '9', articleName: 'Swiss Gruyère', quantity: 2, unitPrice: 26.00, totalPrice: 52.00, unit: 'kg' },
+      { id: '6', articleId: '10', articleName: 'Fresh Cream', quantity: 10, unitPrice: 6.50, totalPrice: 65.00, unit: 'L' },
+    ],
+    totalAmount: 117.00,
+    status: 'pending',
+    deliveryAddress: 'Ristorante Bella Vista, Via Garibaldi 10, Milano',
+    createdAt: new Date('2024-11-28'),
+    updatedAt: new Date('2024-11-28'),
+  },
+];
+
+export const dashboardStats: DashboardStats = {
+  totalOrders: 47,
+  totalSpent: 12450.00,
+  activeSuppliers: 3,
+  pendingOrders: 5,
+  monthlySpending: [
+    { month: 'Jun', amount: 1850 },
+    { month: 'Jul', amount: 2100 },
+    { month: 'Aug', amount: 1950 },
+    { month: 'Sep', amount: 2300 },
+    { month: 'Oct', amount: 2150 },
+    { month: 'Nov', amount: 2100 },
+  ],
+  topSuppliers: [
+    { name: 'Fresh Farms Italia', amount: 4500 },
+    { name: 'Mediterranean Seafood', amount: 4200 },
+    { name: 'Alpine Dairy Co.', amount: 3750 },
+  ],
+};
+
+export const pricingPlans: PricingPlan[] = [
+  {
+    id: 'free',
+    name: 'Free',
+    tier: 'free',
+    price: 0,
+    interval: 'month',
+    features: [
+      'Up to 5 orders per month',
+      '2 suppliers',
+      'Basic order management',
+      'Email notifications',
+      '30-day order history',
+    ],
+    limits: { ordersPerMonth: 5, suppliers: 2, users: 1 },
+  },
+  {
+    id: 'basic',
+    name: 'Basic',
+    tier: 'basic',
+    price: 29,
+    interval: 'month',
+    features: [
+      'Up to 50 orders per month',
+      '10 suppliers',
+      'CSV export',
+      'Extended reports',
+      '1-year order history',
+      'Email support',
+    ],
+    limits: { ordersPerMonth: 50, suppliers: 10, users: 3 },
+  },
+  {
+    id: 'pro',
+    name: 'Pro',
+    tier: 'pro',
+    price: 79,
+    interval: 'month',
+    features: [
+      'Unlimited orders',
+      'Unlimited suppliers',
+      'WhatsApp notifications',
+      'Budget limits & alerts',
+      'Multi-user with roles',
+      'Advanced analytics',
+      'Priority support',
+    ],
+    limits: { ordersPerMonth: 'unlimited', suppliers: 'unlimited', users: 10 },
+    isPopular: true,
+  },
+  {
+    id: 'enterprise',
+    name: 'Enterprise',
+    tier: 'enterprise',
+    price: 199,
+    interval: 'month',
+    features: [
+      'Everything in Pro',
+      'API access',
+      'Custom integrations',
+      'Dedicated account manager',
+      'SLA guarantee',
+      'Custom reporting',
+      'SSO / SAML',
+    ],
+    limits: { ordersPerMonth: 'unlimited', suppliers: 'unlimited', users: 'unlimited' },
+  },
+];
