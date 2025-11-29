@@ -10,6 +10,7 @@ export interface Supplier {
   phone: string | null;
   address: string | null;
   contact_person: string | null;
+  customer_number: string | null;
   is_active: boolean;
   created_at: string;
   updated_at: string;
@@ -21,6 +22,7 @@ export interface SupplierInput {
   phone?: string;
   address?: string;
   contact_person?: string;
+  customer_number?: string;
   is_active?: boolean;
 }
 
