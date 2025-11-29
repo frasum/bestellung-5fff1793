@@ -445,6 +445,7 @@ export type Database = {
     }
     Functions: {
       generate_order_number: { Args: never; Returns: string }
+      get_user_organization_id: { Args: { user_id: string }; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
