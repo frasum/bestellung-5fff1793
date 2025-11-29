@@ -140,7 +140,7 @@ const Suppliers = () => {
           <div className="flex gap-2">
             <Button variant="outline" onClick={() => setIsImportOpen(true)}>
               <Upload className="w-4 h-4 mr-2" />
-              Import CSV
+              Import
             </Button>
             <Dialog open={isDialogOpen} onOpenChange={(open) => {
               setIsDialogOpen(open);
