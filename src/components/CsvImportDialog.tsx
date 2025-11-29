@@ -18,6 +18,7 @@ import {
 import { Upload, FileText, AlertCircle, CheckCircle2, Loader2, Download } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import * as XLSX from 'xlsx';
 
 export interface ColumnMapping {
   csvHeader: string;
@@ -88,6 +89,31 @@ export const CsvImportDialog = ({
     return { headers, rows };
   };
 
+  const parseExcel = (buffer: ArrayBuffer): { headers: string[]; rows: Record<string, string>[] } => {
+    const workbook = XLSX.read(buffer, { type: 'array' });
+    const firstSheetName = workbook.SheetNames[0];
+    const worksheet = workbook.Sheets[firstSheetName];
+    
+    const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 }) as unknown[][];
+    if (jsonData.length === 0) throw new Error('Excel file is empty');
+
+    const headers = (jsonData[0] || []).map(h => String(h || '').trim());
+    const rows: Record<string, string>[] = [];
+
+    for (let i = 1; i < jsonData.length; i++) {
+      const rowData = jsonData[i] || [];
+      if (rowData.length > 0) {
+        const row: Record<string, string> = {};
+        headers.forEach((header, index) => {
+          row[header] = String(rowData[index] ?? '').trim();
+        });
+        rows.push(row);
+      }
+    }
+
+    return { headers, rows };
+  };
+
   const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
     if (!selectedFile) return;
@@ -95,16 +121,32 @@ export const CsvImportDialog = ({
     setError(null);
     setImportSuccess(false);
 
-    if (!selectedFile.name.endsWith('.csv')) {
-      setError('Please select a CSV file');
+    const fileName = selectedFile.name.toLowerCase();
+    const isCSV = fileName.endsWith('.csv');
+    const isExcel = fileName.endsWith('.xlsx') || fileName.endsWith('.xls');
+
+    if (!isCSV && !isExcel) {
+      setError('Please select a CSV or Excel file (.csv, .xlsx, .xls)');
       return;
     }
 
     const reader = new FileReader();
     reader.onload = (event) => {
       try {
-        const text = event.target?.result as string;
-        const { headers, rows } = parseCSV(text);
+        let headers: string[];
+        let rows: Record<string, string>[];
+
+        if (isCSV) {
+          const text = event.target?.result as string;
+          const parsed = parseCSV(text);
+          headers = parsed.headers;
+          rows = parsed.rows;
+        } else {
+          const buffer = event.target?.result as ArrayBuffer;
+          const parsed = parseExcel(buffer);
+          headers = parsed.headers;
+          rows = parsed.rows;
+        }
         
         // Validate required fields exist in headers
         const missingFields = fields
@@ -120,10 +162,15 @@ export const CsvImportDialog = ({
         setHeaders(headers);
         setParsedData(rows);
       } catch (err) {
-        setError('Failed to parse CSV file. Please check the format.');
+        setError('Failed to parse file. Please check the format.');
       }
     };
-    reader.readAsText(selectedFile);
+    
+    if (isCSV) {
+      reader.readAsText(selectedFile);
+    } else {
+      reader.readAsArrayBuffer(selectedFile);
+    }
   }, [fields]);
 
   const handleImport = async () => {
@@ -196,12 +243,15 @@ export const CsvImportDialog = ({
             <label className="border-2 border-dashed border-border rounded-lg p-8 text-center cursor-pointer hover:border-primary/50 transition-colors">
               <input
                 type="file"
-                accept=".csv"
+                accept=".csv,.xlsx,.xls"
                 onChange={handleFileChange}
                 className="hidden"
               />
               <Upload className="w-10 h-10 mx-auto text-muted-foreground mb-3" />
-              <p className="text-sm font-medium text-foreground">Click to upload CSV</p>
+              <p className="text-sm font-medium text-foreground">Click to upload CSV or Excel</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Supports .csv, .xlsx, .xls files
+              </p>
               <p className="text-xs text-muted-foreground mt-1">
                 Required columns: {fields.filter(f => f.required).map(f => f.label).join(', ')}
               </p>
