@@ -8,7 +8,8 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Building2, MapPin, Bell, Plus, Pencil, Trash2, Star, User, Lock } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Building2, MapPin, Bell, Plus, Pencil, Trash2, Star, User, Lock, Users, Mail, Clock, X } from 'lucide-react';
 import {
   useOrganization,
   useUpdateOrganization,
@@ -23,6 +24,17 @@ import {
   useUpdatePassword,
   DeliveryAddress,
 } from '@/hooks/useSettings';
+import {
+  useTeamMembers,
+  useUpdateMemberRole,
+  useRemoveMember,
+  useTeamInvitations,
+  useCreateInvitation,
+  useDeleteInvitation,
+  useUserRole,
+  TeamMember,
+} from '@/hooks/useTeam';
+import { useAuth } from '@/contexts/AuthContext';
 
 const Settings = () => {
   return (
@@ -34,7 +46,7 @@ const Settings = () => {
         </div>
 
         <Tabs defaultValue="profile" className="space-y-6">
-          <TabsList>
+          <TabsList className="flex-wrap">
             <TabsTrigger value="profile" className="gap-2">
               <User className="h-4 w-4" />
               Profile
@@ -42,6 +54,10 @@ const Settings = () => {
             <TabsTrigger value="organization" className="gap-2">
               <Building2 className="h-4 w-4" />
               Organization
+            </TabsTrigger>
+            <TabsTrigger value="team" className="gap-2">
+              <Users className="h-4 w-4" />
+              Team
             </TabsTrigger>
             <TabsTrigger value="addresses" className="gap-2">
               <MapPin className="h-4 w-4" />
@@ -59,6 +75,10 @@ const Settings = () => {
 
           <TabsContent value="organization">
             <OrganizationTab />
+          </TabsContent>
+
+          <TabsContent value="team">
+            <TeamTab />
           </TabsContent>
 
           <TabsContent value="addresses">
@@ -254,6 +274,200 @@ const OrganizationTab = () => {
         </Button>
       </CardContent>
     </Card>
+  );
+};
+
+const TeamTab = () => {
+  const { user } = useAuth();
+  const { data: currentUserRole } = useUserRole();
+  const { data: members = [], isLoading: membersLoading } = useTeamMembers();
+  const { data: invitations = [], isLoading: invitationsLoading } = useTeamInvitations();
+  const updateRole = useUpdateMemberRole();
+  const removeMember = useRemoveMember();
+  const createInvitation = useCreateInvitation();
+  const deleteInvitation = useDeleteInvitation();
+  const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState('');
+  const [inviteRole, setInviteRole] = useState<TeamMember['role']>('viewer');
+
+  const isAdmin = currentUserRole === 'admin';
+  const isLoading = membersLoading || invitationsLoading;
+
+  const handleInvite = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!inviteEmail.trim()) return;
+
+    createInvitation.mutate(
+      { email: inviteEmail.trim(), role: inviteRole },
+      {
+        onSuccess: () => {
+          setInviteEmail('');
+          setInviteRole('viewer');
+          setInviteDialogOpen(false);
+        },
+      }
+    );
+  };
+
+  const roleLabels: Record<TeamMember['role'], string> = {
+    admin: 'Admin',
+    manager: 'Manager',
+    purchaser: 'Purchaser',
+    viewer: 'Viewer',
+  };
+
+  if (isLoading) {
+    return <Card><CardContent className="p-6">Loading...</CardContent></Card>;
+  }
+
+  return (
+    <div className="space-y-6">
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <div>
+            <CardTitle>Team Members</CardTitle>
+            <CardDescription>Manage your organization's team members</CardDescription>
+          </div>
+          {isAdmin && (
+            <Dialog open={inviteDialogOpen} onOpenChange={setInviteDialogOpen}>
+              <DialogTrigger asChild>
+                <Button className="gap-2">
+                  <Plus className="h-4 w-4" />
+                  Invite Member
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Invite Team Member</DialogTitle>
+                </DialogHeader>
+                <form onSubmit={handleInvite} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="invite-email">Email Address</Label>
+                    <Input
+                      id="invite-email"
+                      type="email"
+                      value={inviteEmail}
+                      onChange={(e) => setInviteEmail(e.target.value)}
+                      placeholder="colleague@example.com"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="invite-role">Role</Label>
+                    <Select value={inviteRole} onValueChange={(v) => setInviteRole(v as TeamMember['role'])}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="viewer">Viewer - Can view orders and articles</SelectItem>
+                        <SelectItem value="purchaser">Purchaser - Can place orders</SelectItem>
+                        <SelectItem value="manager">Manager - Can manage suppliers and articles</SelectItem>
+                        <SelectItem value="admin">Admin - Full access</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <Button type="submit" className="w-full" disabled={createInvitation.isPending}>
+                    {createInvitation.isPending ? 'Sending...' : 'Send Invitation'}
+                  </Button>
+                </form>
+              </DialogContent>
+            </Dialog>
+          )}
+        </CardHeader>
+        <CardContent>
+          {members.length === 0 ? (
+            <p className="text-muted-foreground text-center py-8">No team members yet.</p>
+          ) : (
+            <div className="space-y-4">
+              {members.map((member) => (
+                <div key={member.id} className="flex items-center justify-between p-4 border rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                      <User className="h-5 w-5 text-primary" />
+                    </div>
+                    <div>
+                      <p className="font-medium">{member.full_name || 'No name'}</p>
+                      <p className="text-sm text-muted-foreground">{member.email}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {isAdmin && member.id !== user?.id ? (
+                      <>
+                        <Select
+                          value={member.role}
+                          onValueChange={(role) => updateRole.mutate({ userId: member.id, role: role as TeamMember['role'] })}
+                        >
+                          <SelectTrigger className="w-32">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="viewer">Viewer</SelectItem>
+                            <SelectItem value="purchaser">Purchaser</SelectItem>
+                            <SelectItem value="manager">Manager</SelectItem>
+                            <SelectItem value="admin">Admin</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => removeMember.mutate(member.id)}
+                          disabled={removeMember.isPending}
+                        >
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </>
+                    ) : (
+                      <Badge variant="secondary">{roleLabels[member.role]}</Badge>
+                    )}
+                    {member.id === user?.id && (
+                      <Badge variant="outline">You</Badge>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {isAdmin && invitations.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Mail className="h-5 w-5" />
+              Pending Invitations
+            </CardTitle>
+            <CardDescription>Invitations waiting to be accepted</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {invitations.map((invitation) => (
+                <div key={invitation.id} className="flex items-center justify-between p-4 border rounded-lg">
+                  <div className="space-y-1">
+                    <p className="font-medium">{invitation.email}</p>
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Badge variant="secondary">{roleLabels[invitation.role]}</Badge>
+                      <span className="flex items-center gap-1">
+                        <Clock className="h-3 w-3" />
+                        Expires {new Date(invitation.expires_at).toLocaleDateString()}
+                      </span>
+                    </div>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => deleteInvitation.mutate(invitation.id)}
+                    disabled={deleteInvitation.isPending}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+    </div>
   );
 };
 
