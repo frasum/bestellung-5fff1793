@@ -23,7 +23,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { useSuppliers, useCreateSupplier, useUpdateSupplier, useDeleteSupplier, Supplier, SupplierInput } from '@/hooks/useSuppliers';
-import { Plus, Pencil, Trash2, Search, Mail, Phone, MapPin, User, Loader2, Upload } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, Mail, Phone, MapPin, User, Loader2, Upload, Hash } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { CsvImportDialog, ImportField } from '@/components/CsvImportDialog';
 import { useImportSuppliers } from '@/hooks/useImport';
@@ -37,6 +37,7 @@ const supplierSchema = z.object({
   phone: z.string().optional(),
   address: z.string().optional(),
   contact_person: z.string().optional(),
+  customer_number: z.string().optional(),
 });
 
 type SupplierFormData = z.infer<typeof supplierSchema>;
@@ -47,6 +48,7 @@ const SUPPLIER_IMPORT_FIELDS: ImportField[] = [
   { name: 'phone', label: 'Phone', required: false },
   { name: 'address', label: 'Address', required: false },
   { name: 'contact_person', label: 'Contact Person', required: false },
+  { name: 'customer_number', label: 'Customer Number', required: false },
 ];
 
 const Suppliers = () => {
@@ -66,7 +68,7 @@ const Suppliers = () => {
 
   const form = useForm<SupplierFormData>({
     resolver: zodResolver(supplierSchema),
-    defaultValues: { name: '', email: '', phone: '', address: '', contact_person: '' },
+    defaultValues: { name: '', email: '', phone: '', address: '', contact_person: '', customer_number: '' },
   });
 
   useEffect(() => {
@@ -83,9 +85,10 @@ const Suppliers = () => {
         phone: editingSupplier.phone || '',
         address: editingSupplier.address || '',
         contact_person: editingSupplier.contact_person || '',
+        customer_number: editingSupplier.customer_number || '',
       });
     } else {
-      form.reset({ name: '', email: '', phone: '', address: '', contact_person: '' });
+      form.reset({ name: '', email: '', phone: '', address: '', contact_person: '', customer_number: '' });
     }
   }, [editingSupplier, form]);
 
@@ -96,6 +99,7 @@ const Suppliers = () => {
       phone: data.phone || undefined,
       address: data.address || undefined,
       contact_person: data.contact_person || undefined,
+      customer_number: data.customer_number || undefined,
     };
 
     if (editingSupplier) {
@@ -142,13 +146,14 @@ const Suppliers = () => {
             <ExportMenu
               filename="suppliers"
               title="Suppliers"
-              headers={['Name', 'Email', 'Phone', 'Address', 'Contact Person', 'Status']}
+              headers={['Name', 'Email', 'Phone', 'Address', 'Contact Person', 'Customer Number', 'Status']}
               getData={() => suppliers?.map(s => [
                 s.name,
                 s.email,
                 s.phone || '',
                 s.address || '',
                 s.contact_person || '',
+                s.customer_number || '',
                 s.is_active ? 'Active' : 'Inactive'
               ]) || []}
               disabled={!suppliers?.length}
@@ -197,6 +202,10 @@ const Suppliers = () => {
                 <div className="space-y-2">
                   <Label htmlFor="contact_person">Contact Person</Label>
                   <Input id="contact_person" {...form.register('contact_person')} placeholder="Marco Rossi" />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="customer_number">Customer Number</Label>
+                  <Input id="customer_number" {...form.register('customer_number')} placeholder="KD-12345" />
                 </div>
                 <div className="flex gap-3 pt-4">
                   <Button type="button" variant="outline" className="flex-1" onClick={() => {
@@ -315,6 +324,12 @@ const Suppliers = () => {
                     <div className="flex items-center gap-2 text-muted-foreground">
                       <User className="w-4 h-4" />
                       <span>{supplier.contact_person}</span>
+                    </div>
+                  )}
+                  {supplier.customer_number && (
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <Hash className="w-4 h-4" />
+                      <span>Kd-Nr: {supplier.customer_number}</span>
                     </div>
                   )}
                 </div>
