@@ -15,6 +15,7 @@ interface OrderItem {
   unit: string;
   unit_price: number;
   total_price: number;
+  sku?: string;
 }
 
 interface OrderEmailRequest {
@@ -30,14 +31,17 @@ interface OrderEmailRequest {
 }
 
 const generateEmailHtml = (data: OrderEmailRequest): string => {
-  const itemRows = data.items.map(item => `
+  const itemRows = data.items.map(item => {
+    const skuLine = item.sku ? `<br><span style="font-size: 12px; color: #6b7280;">SKU: ${item.sku}</span>` : '';
+    return `
     <tr>
-      <td style="padding: 12px; border-bottom: 1px solid #e5e7eb;">${item.article_name}</td>
+      <td style="padding: 12px; border-bottom: 1px solid #e5e7eb;">${item.article_name}${skuLine}</td>
       <td style="padding: 12px; border-bottom: 1px solid #e5e7eb; text-align: center;">${item.quantity} ${item.unit}</td>
       <td style="padding: 12px; border-bottom: 1px solid #e5e7eb; text-align: right;">€${item.unit_price.toFixed(2)}</td>
       <td style="padding: 12px; border-bottom: 1px solid #e5e7eb; text-align: right; font-weight: 600;">€${item.total_price.toFixed(2)}</td>
     </tr>
-  `).join('');
+  `;
+  }).join('');
 
   return `
     <!DOCTYPE html>
@@ -105,9 +109,10 @@ const generateEmailHtml = (data: OrderEmailRequest): string => {
 };
 
 const generatePlainText = (data: OrderEmailRequest): string => {
-  const itemLines = data.items.map(item => 
-    `- ${item.article_name}: ${item.quantity} ${item.unit} x €${item.unit_price.toFixed(2)} = €${item.total_price.toFixed(2)}`
-  ).join('\n');
+  const itemLines = data.items.map(item => {
+    const skuPart = item.sku ? ` (SKU: ${item.sku})` : '';
+    return `- ${item.article_name}${skuPart}: ${item.quantity} ${item.unit} x €${item.unit_price.toFixed(2)} = €${item.total_price.toFixed(2)}`;
+  }).join('\n');
 
   return `
 NEW ORDER RECEIVED

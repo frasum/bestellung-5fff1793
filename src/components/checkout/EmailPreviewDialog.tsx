@@ -15,6 +15,7 @@ interface OrderItem {
   unit: string;
   unit_price: number;
   total_price: number;
+  sku?: string;
 }
 
 export interface EmailPreviewData {
@@ -94,7 +95,10 @@ export const EmailPreviewDialog = ({
 
   const generateEmailBody = (email: EmailPreviewData) => {
     const itemsList = email.items
-      .map(item => `- ${item.article_name}: ${item.quantity} ${item.unit} à €${item.unit_price.toFixed(2)} = €${item.total_price.toFixed(2)}`)
+      .map(item => {
+        const skuPart = item.sku ? ` (SKU: ${item.sku})` : '';
+        return `- ${item.article_name}${skuPart}: ${item.quantity} ${item.unit} à €${item.unit_price.toFixed(2)} = €${item.total_price.toFixed(2)}`;
+      })
       .join('\n');
 
     const signatureText = template.signature.replace('{restaurant_name}', email.restaurantName);
@@ -303,7 +307,10 @@ ${signatureText}`;
                     <tbody className="divide-y divide-border">
                       {currentEmail.items.map((item, idx) => (
                         <tr key={idx}>
-                          <td className="p-3">{item.article_name}</td>
+                          <td className="p-3">
+                            <div>{item.article_name}</div>
+                            {item.sku && <div className="text-xs text-muted-foreground">SKU: {item.sku}</div>}
+                          </td>
                           <td className="p-3 text-center">{item.quantity} {item.unit}</td>
                           <td className="p-3 text-right">€{item.unit_price.toFixed(2)}</td>
                           <td className="p-3 text-right font-medium">€{item.total_price.toFixed(2)}</td>
