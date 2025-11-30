@@ -464,7 +464,7 @@ const Inventory = () => {
                               onChange={(e) =>
                                 handleItemChange(article.id, 'storage_1', e.target.value)
                               }
-                              className="w-24 text-right"
+                              className="w-24 text-right [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                               placeholder="0"
                             />
                           </TableCell>
@@ -477,7 +477,7 @@ const Inventory = () => {
                               onChange={(e) =>
                                 handleItemChange(article.id, 'storage_2', e.target.value)
                               }
-                              className="w-24 text-right"
+                              className="w-24 text-right [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                               placeholder="0"
                             />
                           </TableCell>
