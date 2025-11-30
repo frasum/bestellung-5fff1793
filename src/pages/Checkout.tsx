@@ -60,10 +60,19 @@ const Checkout = () => {
 
   // Set default address when loaded
   useEffect(() => {
-    if (defaultAddress && !form.getValues('deliveryAddressId')) {
-      form.setValue('deliveryAddressId', defaultAddress.id);
+    if (deliveryAddresses && deliveryAddresses.length > 0) {
+      const currentValue = form.getValues('deliveryAddressId');
+      if (!currentValue || currentValue === '') {
+        const defaultAddr = deliveryAddresses.find(a => a.is_default);
+        if (defaultAddr) {
+          form.setValue('deliveryAddressId', defaultAddr.id);
+        } else if (deliveryAddresses[0]) {
+          // Fall back to first address if no default
+          form.setValue('deliveryAddressId', deliveryAddresses[0].id);
+        }
+      }
     }
-  }, [defaultAddress, form]);
+  }, [deliveryAddresses, form]);
 
   useEffect(() => {
     if (!authLoading && !user) {
