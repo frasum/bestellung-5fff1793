@@ -100,6 +100,10 @@ const Inventory = () => {
   // Price editing state
   const [editingPriceId, setEditingPriceId] = useState<string | null>(null);
   const [editingPriceValue, setEditingPriceValue] = useState<string>('');
+  
+  // Unit editing state
+  const [editingUnitId, setEditingUnitId] = useState<string | null>(null);
+  const [editingUnitValue, setEditingUnitValue] = useState<string>('');
 
   const { data: articles, isLoading: articlesLoading } = useArticles();
   const { data: suppliers } = useSuppliers();
@@ -306,6 +310,31 @@ const Inventory = () => {
     }
   };
 
+  const handleStartUnitEdit = (articleId: string, currentUnit: string) => {
+    setEditingUnitId(articleId);
+    setEditingUnitValue(currentUnit);
+  };
+
+  const handleCancelUnitEdit = () => {
+    setEditingUnitId(null);
+    setEditingUnitValue('');
+  };
+
+  const handleSaveUnitEdit = async (articleId: string) => {
+    if (!editingUnitValue.trim()) {
+      toast.error('Einheit darf nicht leer sein');
+      return;
+    }
+    try {
+      await updateArticle.mutateAsync({ id: articleId, unit: editingUnitValue.trim() });
+      toast.success('Einheit aktualisiert');
+      setEditingUnitId(null);
+      setEditingUnitValue('');
+    } catch {
+      toast.error('Fehler beim Speichern');
+    }
+  };
+
   if (authLoading) {
     return (
       <DashboardLayout>
@@ -502,7 +531,45 @@ const Inventory = () => {
                               <TableCell className="text-muted-foreground">
                                 {article.suppliers?.name}
                               </TableCell>
-                              <TableCell>{article.unit}</TableCell>
+                              <TableCell>
+                                {editingUnitId === article.id ? (
+                                  <div className="flex items-center gap-1">
+                                    <Input
+                                      value={editingUnitValue}
+                                      onChange={(e) => setEditingUnitValue(e.target.value)}
+                                      className="w-20 h-8"
+                                      autoFocus
+                                      onKeyDown={(e) => {
+                                        if (e.key === 'Enter') handleSaveUnitEdit(article.id);
+                                        if (e.key === 'Escape') handleCancelUnitEdit();
+                                      }}
+                                    />
+                                    <Button
+                                      size="icon"
+                                      variant="ghost"
+                                      className="h-7 w-7"
+                                      onClick={() => handleSaveUnitEdit(article.id)}
+                                    >
+                                      <Check className="h-4 w-4 text-green-600" />
+                                    </Button>
+                                    <Button
+                                      size="icon"
+                                      variant="ghost"
+                                      className="h-7 w-7"
+                                      onClick={handleCancelUnitEdit}
+                                    >
+                                      <X className="h-4 w-4 text-destructive" />
+                                    </Button>
+                                  </div>
+                                ) : (
+                                  <span
+                                    className="cursor-pointer hover:text-primary hover:underline"
+                                    onClick={() => handleStartUnitEdit(article.id, article.unit)}
+                                  >
+                                    {article.unit}
+                                  </span>
+                                )}
+                              </TableCell>
                               <TableCell>
                                 <Input
                                   type="number"
