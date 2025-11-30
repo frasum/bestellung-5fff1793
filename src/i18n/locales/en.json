@@ -152,23 +152,6 @@
     "allSuppliers": "All Suppliers",
     "allCategories": "All Categories"
   },
-  "orders": {
-    "title": "Orders",
-    "description": "Order history and management",
-    "orderNumber": "Order Number",
-    "orderDate": "Order Date",
-    "deliveryAddress": "Delivery Address",
-    "notes": "Notes",
-    "noOrders": "No orders yet",
-    "status": {
-      "pending": "Pending",
-      "confirmed": "Confirmed",
-      "processing": "Processing",
-      "shipped": "Shipped",
-      "delivered": "Delivered",
-      "cancelled": "Cancelled"
-    }
-  },
   "cart": {
     "title": "Cart",
     "empty": "Your cart is empty",

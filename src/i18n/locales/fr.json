@@ -152,23 +152,6 @@
     "allSuppliers": "Tous les fournisseurs",
     "allCategories": "Toutes les catégories"
   },
-  "orders": {
-    "title": "Commandes",
-    "description": "Historique et gestion des commandes",
-    "orderNumber": "Numéro de commande",
-    "orderDate": "Date de commande",
-    "deliveryAddress": "Adresse de livraison",
-    "notes": "Notes",
-    "noOrders": "Pas encore de commandes",
-    "status": {
-      "pending": "En attente",
-      "confirmed": "Confirmée",
-      "processing": "En cours",
-      "shipped": "Expédiée",
-      "delivered": "Livrée",
-      "cancelled": "Annulée"
-    }
-  },
   "cart": {
     "title": "Panier",
     "empty": "Votre panier est vide",

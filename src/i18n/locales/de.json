@@ -152,23 +152,6 @@
     "allSuppliers": "Alle Lieferanten",
     "allCategories": "Alle Kategorien"
   },
-  "orders": {
-    "title": "Bestellungen",
-    "description": "Bestellhistorie und Verwaltung",
-    "orderNumber": "Bestellnummer",
-    "orderDate": "Bestelldatum",
-    "deliveryAddress": "Lieferadresse",
-    "notes": "Notizen",
-    "noOrders": "Noch keine Bestellungen",
-    "status": {
-      "pending": "Ausstehend",
-      "confirmed": "Bestätigt",
-      "processing": "In Bearbeitung",
-      "shipped": "Versendet",
-      "delivered": "Geliefert",
-      "cancelled": "Storniert"
-    }
-  },
   "cart": {
     "title": "Warenkorb",
     "empty": "Ihr Warenkorb ist leer",
