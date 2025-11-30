@@ -15,9 +15,12 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Upload, FileText, AlertCircle, CheckCircle2, Loader2, Download } from 'lucide-react';
+import { Upload, FileText, AlertCircle, CheckCircle2, Loader2, Download, Sparkles, Wand2 } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
+import { toast } from 'sonner';
 import * as XLSX from 'xlsx';
 
 export interface ColumnMapping {
@@ -39,6 +42,7 @@ interface CsvImportDialogProps {
   fields: ImportField[];
   onImport: (data: Record<string, string>[]) => Promise<void>;
   templateFileName: string;
+  enableAI?: boolean;
 }
 
 export const CsvImportDialog = ({
@@ -48,6 +52,7 @@ export const CsvImportDialog = ({
   fields,
   onImport,
   templateFileName,
+  enableAI = true,
 }: CsvImportDialogProps) => {
   const [file, setFile] = useState<File | null>(null);
   const [parsedData, setParsedData] = useState<Record<string, string>[]>([]);
@@ -55,6 +60,12 @@ export const CsvImportDialog = ({
   const [error, setError] = useState<string | null>(null);
   const [isImporting, setIsImporting] = useState(false);
   const [importSuccess, setImportSuccess] = useState(false);
+  
+  // AI features
+  const [useAI, setUseAI] = useState(true);
+  const [aiMapping, setAiMapping] = useState<Record<string, string>>({});
+  const [isAIProcessing, setIsAIProcessing] = useState(false);
+  const [aiStatus, setAiStatus] = useState<string | null>(null);
 
   const resetState = () => {
     setFile(null);
@@ -62,13 +73,14 @@ export const CsvImportDialog = ({
     setHeaders([]);
     setError(null);
     setImportSuccess(false);
+    setAiMapping({});
+    setAiStatus(null);
   };
 
   const parseCSV = (text: string): { headers: string[]; rows: Record<string, string>[] } => {
     const lines = text.split('\n').filter(line => line.trim());
     if (lines.length === 0) throw new Error('CSV file is empty');
 
-    // Detect delimiter (comma or semicolon)
     const firstLine = lines[0];
     const delimiter = firstLine.includes(';') ? ';' : ',';
 
@@ -114,12 +126,119 @@ export const CsvImportDialog = ({
     return { headers, rows };
   };
 
-  const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+  const runAIColumnMapping = async (csvHeaders: string[]) => {
+    setIsAIProcessing(true);
+    setAiStatus('KI analysiert Spalten...');
+    
+    try {
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-import-helper`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'map_columns',
+          headers: csvHeaders,
+          targetFields: fields,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'AI mapping failed');
+      }
+
+      const data = await response.json();
+      if (data.result?.mappings) {
+        setAiMapping(data.result.mappings);
+        toast.success('KI hat Spalten automatisch zugeordnet');
+      }
+    } catch (err) {
+      console.error('AI mapping error:', err);
+      toast.error('KI-Zuordnung fehlgeschlagen, verwende Standard-Zuordnung');
+    } finally {
+      setIsAIProcessing(false);
+      setAiStatus(null);
+    }
+  };
+
+  const runAIDataCleaning = async (data: Record<string, string>[]): Promise<Record<string, string>[]> => {
+    setAiStatus('KI bereinigt Daten...');
+    
+    try {
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-import-helper`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'clean_data',
+          data: data.slice(0, 20), // Limit to prevent timeout
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('AI cleaning failed');
+      }
+
+      const result = await response.json();
+      if (Array.isArray(result.result)) {
+        // Merge cleaned data with original
+        const cleanedMap = new Map<number, Record<string, string>>(
+          result.result.map((item: Record<string, string>, i: number) => [i, item])
+        );
+        return data.map((row, i) => {
+          const cleaned = cleanedMap.get(i);
+          return cleaned ? { ...row, ...cleaned } : row;
+        });
+      }
+    } catch (err) {
+      console.error('AI cleaning error:', err);
+    }
+    
+    return data;
+  };
+
+  const runAICategorization = async (data: Record<string, string>[]): Promise<Record<string, string>[]> => {
+    setAiStatus('KI kategorisiert Artikel...');
+    
+    try {
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-import-helper`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'categorize',
+          data: data.slice(0, 50),
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('AI categorization failed');
+      }
+
+      const result = await response.json();
+      if (Array.isArray(result.result)) {
+        const categoryMap = new Map<number, string>(
+          result.result.map((item: { index: number; category: string }) => [item.index, item.category])
+        );
+        return data.map((row, i) => {
+          const category = categoryMap.get(i);
+          if (category && !row.category && !row.Category && !row.Kategorie) {
+            return { ...row, category: category };
+          }
+          return row;
+        });
+      }
+    } catch (err) {
+      console.error('AI categorization error:', err);
+    }
+    
+    return data;
+  };
+
+  const handleFileChange = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
     if (!selectedFile) return;
 
     setError(null);
     setImportSuccess(false);
+    setAiMapping({});
 
     const fileName = selectedFile.name.toLowerCase();
     const isCSV = fileName.endsWith('.csv');
@@ -131,36 +250,31 @@ export const CsvImportDialog = ({
     }
 
     const reader = new FileReader();
-    reader.onload = (event) => {
+    reader.onload = async (event) => {
       try {
-        let headers: string[];
+        let csvHeaders: string[];
         let rows: Record<string, string>[];
 
         if (isCSV) {
           const text = event.target?.result as string;
           const parsed = parseCSV(text);
-          headers = parsed.headers;
+          csvHeaders = parsed.headers;
           rows = parsed.rows;
         } else {
           const buffer = event.target?.result as ArrayBuffer;
           const parsed = parseExcel(buffer);
-          headers = parsed.headers;
+          csvHeaders = parsed.headers;
           rows = parsed.rows;
-        }
-        
-        // Validate required fields exist in headers
-        const missingFields = fields
-          .filter(f => f.required)
-          .filter(f => !headers.some(h => h.toLowerCase() === f.name.toLowerCase()));
-
-        if (missingFields.length > 0) {
-          setError(`Missing required columns: ${missingFields.map(f => f.label).join(', ')}`);
-          return;
         }
 
         setFile(selectedFile);
-        setHeaders(headers);
+        setHeaders(csvHeaders);
         setParsedData(rows);
+
+        // Run AI column mapping if enabled
+        if (useAI && enableAI) {
+          await runAIColumnMapping(csvHeaders);
+        }
       } catch (err) {
         setError('Failed to parse file. Please check the format.');
       }
@@ -171,7 +285,7 @@ export const CsvImportDialog = ({
     } else {
       reader.readAsArrayBuffer(selectedFile);
     }
-  }, [fields]);
+  }, [fields, useAI, enableAI]);
 
   const handleImport = async () => {
     if (parsedData.length === 0) return;
@@ -180,13 +294,41 @@ export const CsvImportDialog = ({
     setError(null);
 
     try {
-      // Map CSV data to field names (case-insensitive matching)
-      const mappedData = parsedData.map(row => {
+      let dataToImport = [...parsedData];
+
+      // Run AI data cleaning if enabled
+      if (useAI && enableAI) {
+        dataToImport = await runAIDataCleaning(dataToImport);
+        
+        // Run AI categorization for articles (if category field exists)
+        const hasCategory = fields.some(f => f.name === 'category');
+        if (hasCategory) {
+          dataToImport = await runAICategorization(dataToImport);
+        }
+      }
+
+      setAiStatus(null);
+
+      // Map data to field names using AI mapping or case-insensitive matching
+      const mappedData = dataToImport.map(row => {
         const mapped: Record<string, string> = {};
         fields.forEach(field => {
+          // First check AI mapping
+          const aiMappedHeader = Object.entries(aiMapping).find(([_, target]) => target === field.name)?.[0];
+          if (aiMappedHeader && row[aiMappedHeader] !== undefined) {
+            mapped[field.name] = row[aiMappedHeader] || '';
+            return;
+          }
+          
+          // Fall back to case-insensitive matching
           const header = headers.find(h => h.toLowerCase() === field.name.toLowerCase());
           if (header) {
             mapped[field.name] = row[header] || '';
+          }
+          
+          // Check for category from AI categorization
+          if (field.name === 'category' && !mapped[field.name] && row.category) {
+            mapped[field.name] = row.category;
           }
         });
         return mapped;
@@ -202,22 +344,20 @@ export const CsvImportDialog = ({
       setError(err instanceof Error ? err.message : 'Import failed');
     } finally {
       setIsImporting(false);
+      setAiStatus(null);
     }
   };
 
   const downloadTemplate = () => {
-    const headers = fields.map(f => f.name);
+    const templateHeaders = fields.map(f => f.name);
     const example = fields.map(f => f.required ? `Example ${f.label}` : '');
     
-    const ws = XLSX.utils.aoa_to_sheet([headers, example]);
-    
-    // Set column widths
-    ws['!cols'] = headers.map(() => ({ wch: 20 }));
+    const ws = XLSX.utils.aoa_to_sheet([templateHeaders, example]);
+    ws['!cols'] = templateHeaders.map(() => ({ wch: 20 }));
     
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Template');
     
-    // Generate filename with .xlsx extension
     const filename = templateFileName.replace(/\.(csv|xlsx|xls)$/i, '') + '.xlsx';
     XLSX.writeFile(wb, filename);
   };
@@ -229,13 +369,36 @@ export const CsvImportDialog = ({
     }}>
       <DialogContent className="max-w-2xl max-h-[80vh] flex flex-col">
         <DialogHeader>
-          <DialogTitle>{title}</DialogTitle>
+          <DialogTitle className="flex items-center gap-2">
+            {title}
+            {enableAI && <Sparkles className="w-5 h-5 text-primary" />}
+          </DialogTitle>
           <DialogDescription>
-            Upload a CSV file to import multiple records at once
+            Upload a CSV or Excel file to import multiple records at once
           </DialogDescription>
         </DialogHeader>
 
         <div className="flex-1 overflow-hidden flex flex-col gap-4">
+          {/* AI Toggle */}
+          {enableAI && (
+            <div className="flex items-center justify-between p-3 bg-primary/5 rounded-lg border border-primary/20">
+              <div className="flex items-center gap-2">
+                <Wand2 className="w-4 h-4 text-primary" />
+                <div>
+                  <Label htmlFor="ai-toggle" className="font-medium">KI-Unterstützung</Label>
+                  <p className="text-xs text-muted-foreground">
+                    Automatische Spaltenzuordnung, Datenbereinigung & Kategorisierung
+                  </p>
+                </div>
+              </div>
+              <Switch
+                id="ai-toggle"
+                checked={useAI}
+                onCheckedChange={setUseAI}
+              />
+            </div>
+          )}
+
           {/* Template Download */}
           <Button variant="outline" size="sm" onClick={downloadTemplate} className="w-fit">
             <Download className="w-4 h-4 mr-2" />
@@ -260,6 +423,26 @@ export const CsvImportDialog = ({
                 Required columns: {fields.filter(f => f.required).map(f => f.label).join(', ')}
               </p>
             </label>
+          )}
+
+          {/* AI Processing Status */}
+          {isAIProcessing && aiStatus && (
+            <Alert className="border-primary/50 bg-primary/5">
+              <Sparkles className="h-4 w-4 text-primary animate-pulse" />
+              <AlertDescription className="text-primary">
+                {aiStatus}
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {/* AI Mapping Info */}
+          {Object.keys(aiMapping).length > 0 && (
+            <Alert className="border-green-500/50 bg-green-500/5">
+              <CheckCircle2 className="h-4 w-4 text-green-500" />
+              <AlertDescription className="text-green-600">
+                KI hat {Object.keys(aiMapping).length} Spalten automatisch zugeordnet
+              </AlertDescription>
+            </Alert>
           )}
 
           {/* Error */}
@@ -302,7 +485,14 @@ export const CsvImportDialog = ({
                     <TableRow>
                       {headers.slice(0, 5).map((header) => (
                         <TableHead key={header} className="whitespace-nowrap">
-                          {header}
+                          <div className="flex flex-col">
+                            <span>{header}</span>
+                            {aiMapping[header] && (
+                              <span className="text-xs text-primary font-normal">
+                                → {aiMapping[header]}
+                              </span>
+                            )}
+                          </div>
                         </TableHead>
                       ))}
                       {headers.length > 5 && <TableHead>...</TableHead>}
@@ -338,14 +528,17 @@ export const CsvImportDialog = ({
               <Button variant="outline" className="flex-1" onClick={() => onOpenChange(false)}>
                 Cancel
               </Button>
-              <Button className="flex-1" onClick={handleImport} disabled={isImporting}>
+              <Button className="flex-1" onClick={handleImport} disabled={isImporting || isAIProcessing}>
                 {isImporting ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Importing...
+                    {aiStatus || 'Importing...'}
                   </>
                 ) : (
-                  `Import ${parsedData.length} Records`
+                  <>
+                    {useAI && enableAI && <Sparkles className="w-4 h-4 mr-2" />}
+                    Import {parsedData.length} Records
+                  </>
                 )}
               </Button>
             </div>
