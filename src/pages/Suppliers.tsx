@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { useCart } from '@/contexts/CartContext';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -22,8 +23,14 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible';
 import { useSuppliers, useCreateSupplier, useUpdateSupplier, useDeleteSupplier, useDeactivateSupplier, Supplier, SupplierInput } from '@/hooks/useSuppliers';
-import { Plus, Pencil, Trash2, Search, Mail, Phone, MapPin, User, Loader2, Upload, Hash, Euro, Filter, RotateCcw, Power } from 'lucide-react';
+import { useArticles, Article } from '@/hooks/useArticles';
+import { Plus, Pencil, Trash2, Search, Mail, Phone, MapPin, User, Loader2, Upload, Hash, Euro, Filter, RotateCcw, Power, LayoutGrid, List, ChevronDown, ChevronRight, Minus, ShoppingCart } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -31,10 +38,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useForm } from 'react-hook-form';
 import { CsvImportDialog, ImportField } from '@/components/CsvImportDialog';
 import { useImportSuppliers, useImportArticles } from '@/hooks/useImport';
 import { ExportMenu } from '@/components/ExportMenu';
+import { Badge } from '@/components/ui/badge';
 import { Package } from 'lucide-react';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -73,8 +82,11 @@ const ARTICLE_IMPORT_FIELDS: ImportField[] = [
 const Suppliers = () => {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
+  const { addItem, updateQuantity, items: cartItems, getItemCount } = useCart();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
+  const [expandedSuppliers, setExpandedSuppliers] = useState<Set<string>>(new Set());
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isImportOpen, setIsImportOpen] = useState(false);
   const [editingSupplier, setEditingSupplier] = useState<Supplier | null>(null);
@@ -82,6 +94,7 @@ const Suppliers = () => {
   const [articleImportSupplierId, setArticleImportSupplierId] = useState<string | null>(null);
 
   const { data: suppliers, isLoading } = useSuppliers();
+  const { data: allArticles } = useArticles();
   const createSupplier = useCreateSupplier();
   const updateSupplier = useUpdateSupplier();
   const deleteSupplier = useDeleteSupplier();
@@ -89,6 +102,32 @@ const Suppliers = () => {
   const importSuppliers = useImportSuppliers();
   const importArticles = useImportArticles();
   const [showDeactivateOption, setShowDeactivateOption] = useState(false);
+
+  // Group articles by supplier
+  const articlesBySupplier = allArticles?.reduce((acc, article) => {
+    if (!acc[article.supplier_id]) {
+      acc[article.supplier_id] = [];
+    }
+    acc[article.supplier_id].push(article);
+    return acc;
+  }, {} as Record<string, Article[]>) || {};
+
+  const toggleSupplierExpanded = (supplierId: string) => {
+    setExpandedSuppliers(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(supplierId)) {
+        newSet.delete(supplierId);
+      } else {
+        newSet.add(supplierId);
+      }
+      return newSet;
+    });
+  };
+
+  const getCartQuantity = (articleId: string) => {
+    const item = cartItems.find((i) => i.article.id === articleId);
+    return item?.quantity || 0;
+  };
 
   const form = useForm<SupplierFormData>({
     resolver: zodResolver(supplierSchema),
@@ -349,19 +388,46 @@ const Suppliers = () => {
             />
           </div>
           <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as 'all' | 'active' | 'inactive')}>
-            <SelectTrigger className="w-full sm:w-[180px]">
+            <SelectTrigger className="w-full sm:w-[180px] bg-card">
               <Filter className="w-4 h-4 mr-2" />
               <SelectValue placeholder="Status" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="bg-card border border-border z-50">
               <SelectItem value="all">Alle Lieferanten</SelectItem>
               <SelectItem value="active">Nur Aktive</SelectItem>
               <SelectItem value="inactive">Nur Inaktive</SelectItem>
             </SelectContent>
           </Select>
+          <div className="flex border border-border rounded-lg overflow-hidden">
+            <Button
+              variant={viewMode === 'list' ? 'default' : 'ghost'}
+              size="icon"
+              className="rounded-none h-10 w-10"
+              onClick={() => setViewMode('list')}
+            >
+              <List className="w-4 h-4" />
+            </Button>
+            <Button
+              variant={viewMode === 'grid' ? 'default' : 'ghost'}
+              size="icon"
+              className="rounded-none h-10 w-10"
+              onClick={() => setViewMode('grid')}
+            >
+              <LayoutGrid className="w-4 h-4" />
+            </Button>
+          </div>
+          <Button variant="outline" onClick={() => navigate('/cart')} className="relative">
+            <ShoppingCart className="w-4 h-4 mr-2" />
+            Warenkorb
+            {getItemCount() > 0 && (
+              <Badge className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 text-xs">
+                {getItemCount()}
+              </Badge>
+            )}
+          </Button>
         </div>
 
-        {/* Suppliers Grid */}
+        {/* Suppliers */}
         {isLoading ? (
           <div className="flex items-center justify-center py-12">
             <Loader2 className="w-8 h-8 animate-spin text-primary" />
@@ -374,7 +440,180 @@ const Suppliers = () => {
                 : 'Noch keine Lieferanten. Fügen Sie Ihren ersten Lieferanten hinzu.'}
             </p>
           </div>
+        ) : viewMode === 'list' ? (
+          /* List View with expandable articles */
+          <div className="bg-card border border-border rounded-xl overflow-hidden">
+            <Table>
+              <TableHeader>
+                <TableRow className="hover:bg-transparent">
+                  <TableHead className="w-8"></TableHead>
+                  <TableHead>Lieferant</TableHead>
+                  <TableHead className="hidden md:table-cell">Kontakt</TableHead>
+                  <TableHead className="hidden lg:table-cell">Artikel</TableHead>
+                  <TableHead className="text-right">Aktionen</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredSuppliers?.map((supplier) => {
+                  const supplierArticles = articlesBySupplier[supplier.id] || [];
+                  const isExpanded = expandedSuppliers.has(supplier.id);
+                  return (
+                    <>
+                      <TableRow key={supplier.id} className={`group ${!supplier.is_active ? 'opacity-60' : ''}`}>
+                        <TableCell className="py-2">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7"
+                            onClick={() => toggleSupplierExpanded(supplier.id)}
+                            disabled={supplierArticles.length === 0}
+                          >
+                            {supplierArticles.length > 0 ? (
+                              isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />
+                            ) : (
+                              <span className="w-4 h-4" />
+                            )}
+                          </Button>
+                        </TableCell>
+                        <TableCell className="py-2">
+                          <div className="flex items-center gap-2">
+                            <div>
+                              <p className="font-medium text-foreground">{supplier.name}</p>
+                              <p className="text-xs text-muted-foreground">{supplier.email}</p>
+                            </div>
+                            <span className={`text-xs px-2 py-0.5 rounded-full ${
+                              supplier.is_active 
+                                ? 'bg-success/20 text-success' 
+                                : 'bg-muted text-muted-foreground'
+                            }`}>
+                              {supplier.is_active ? 'Aktiv' : 'Inaktiv'}
+                            </span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="hidden md:table-cell text-muted-foreground py-2">
+                          <div className="text-sm">
+                            {supplier.phone && <p>{supplier.phone}</p>}
+                            {supplier.contact_person && <p>{supplier.contact_person}</p>}
+                          </div>
+                        </TableCell>
+                        <TableCell className="hidden lg:table-cell py-2">
+                          <Badge variant="secondary">{supplierArticles.length} Artikel</Badge>
+                        </TableCell>
+                        <TableCell className="text-right py-2">
+                          <div className="flex justify-end gap-1">
+                            {!supplier.is_active ? (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7 text-success hover:text-success"
+                                onClick={() => handleReactivate(supplier)}
+                                title="Reaktivieren"
+                              >
+                                <RotateCcw className="w-3 h-3" />
+                              </Button>
+                            ) : (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7 text-muted-foreground hover:text-orange-500"
+                                onClick={() => handleDeactivateQuick(supplier)}
+                                title="Deaktivieren"
+                              >
+                                <Power className="w-3 h-3" />
+                              </Button>
+                            )}
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7"
+                              onClick={() => {
+                                setEditingSupplier(supplier);
+                                setIsDialogOpen(true);
+                              }}
+                            >
+                              <Pencil className="w-3 h-3" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7 text-destructive hover:text-destructive"
+                              onClick={() => setDeletingSupplier(supplier)}
+                            >
+                              <Trash2 className="w-3 h-3" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                      {/* Expanded articles section */}
+                      {isExpanded && supplierArticles.length > 0 && (
+                        <TableRow className="bg-muted/30">
+                          <TableCell colSpan={5} className="p-0">
+                            <div className="p-4 pl-12">
+                              <Table>
+                                <TableHeader>
+                                  <TableRow className="hover:bg-transparent border-b border-border/50">
+                                    <TableHead className="h-8 text-xs">Artikel</TableHead>
+                                    <TableHead className="h-8 text-xs hidden md:table-cell">Beschreibung</TableHead>
+                                    <TableHead className="h-8 text-xs text-right">Preis</TableHead>
+                                    <TableHead className="h-8 text-xs text-center w-[120px]">Menge</TableHead>
+                                  </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                  {supplierArticles.map((article) => {
+                                    const cartQty = getCartQuantity(article.id);
+                                    return (
+                                      <TableRow key={article.id} className="border-b border-border/30 hover:bg-muted/50">
+                                        <TableCell className="py-1.5">
+                                          <p className="text-sm font-medium">{article.name}</p>
+                                        </TableCell>
+                                        <TableCell className="py-1.5 hidden md:table-cell">
+                                          <p className="text-xs text-muted-foreground truncate max-w-[200px]" title={article.description || ''}>
+                                            {article.description || '-'}
+                                          </p>
+                                        </TableCell>
+                                        <TableCell className="py-1.5 text-right text-sm">
+                                          €{Number(article.price).toFixed(2)}
+                                          <span className="text-xs text-muted-foreground ml-1">/{article.unit}</span>
+                                        </TableCell>
+                                        <TableCell className="py-1.5">
+                                          <div className="flex items-center justify-center gap-1">
+                                            <Button
+                                              size="icon"
+                                              variant="outline"
+                                              className="h-7 w-7"
+                                              onClick={() => updateQuantity(article.id, cartQty - 1)}
+                                              disabled={cartQty === 0}
+                                            >
+                                              <Minus className="w-3 h-3" />
+                                            </Button>
+                                            <span className="w-6 text-center text-sm font-medium">{cartQty}</span>
+                                            <Button
+                                              size="icon"
+                                              variant="outline"
+                                              className="h-7 w-7"
+                                              onClick={() => addItem(article, 1)}
+                                            >
+                                              <Plus className="w-3 h-3" />
+                                            </Button>
+                                          </div>
+                                        </TableCell>
+                                      </TableRow>
+                                    );
+                                  })}
+                                </TableBody>
+                              </Table>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </div>
         ) : (
+          /* Grid View */
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
             {filteredSuppliers?.map((supplier) => (
               <div
@@ -470,6 +709,9 @@ const Suppliers = () => {
                       <span>Min: €{Number(supplier.minimum_order_value).toFixed(2)}</span>
                     </div>
                   )}
+                </div>
+                <div className="mt-4 pt-4 border-t border-border">
+                  <Badge variant="secondary">{articlesBySupplier[supplier.id]?.length || 0} Artikel</Badge>
                 </div>
               </div>
             ))}
