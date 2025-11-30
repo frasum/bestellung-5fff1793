@@ -1,0 +1,607 @@
+import { useState, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import { DashboardLayout } from '@/components/layout/DashboardLayout';
+import { useAuth } from '@/contexts/AuthContext';
+import { useArticles } from '@/hooks/useArticles';
+import { useSuppliers } from '@/hooks/useSuppliers';
+import {
+  useInventorySessions,
+  useInventorySession,
+  useInventoryItems,
+  useCreateInventorySession,
+  useUpdateInventorySession,
+  useBulkUpsertInventoryItems,
+  useDeleteInventorySession,
+  InventoryItem,
+} from '@/hooks/useInventory';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
+import {
+  Plus,
+  ClipboardList,
+  FileText,
+  FileSpreadsheet,
+  Search,
+  Save,
+  CheckCircle,
+  History,
+  Trash2,
+} from 'lucide-react';
+import { format } from 'date-fns';
+import { de } from 'date-fns/locale';
+import { generateInventoryListPdf, exportInventoryToExcel } from '@/lib/inventoryListPdf';
+
+interface LocalInventoryItem {
+  article_id: string;
+  storage_1: number;
+  storage_2: number;
+}
+
+const Inventory = () => {
+  const { t } = useTranslation();
+  const { user, loading: authLoading } = useAuth();
+  const navigate = useNavigate();
+
+  const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
+  const [showNewSessionDialog, setShowNewSessionDialog] = useState(false);
+  const [showHistoryDialog, setShowHistoryDialog] = useState(false);
+  const [deleteSessionId, setDeleteSessionId] = useState<string | null>(null);
+  const [newSessionName, setNewSessionName] = useState('');
+  const [supplierFilter, setSupplierFilter] = useState<string>('all');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [localItems, setLocalItems] = useState<Map<string, LocalInventoryItem>>(new Map());
+  const [hasChanges, setHasChanges] = useState(false);
+
+  const { data: articles, isLoading: articlesLoading } = useArticles();
+  const { data: suppliers } = useSuppliers();
+  const { data: sessions, isLoading: sessionsLoading } = useInventorySessions();
+  const { data: activeSession } = useInventorySession(activeSessionId);
+  const { data: inventoryItems } = useInventoryItems(activeSessionId);
+
+  const createSession = useCreateInventorySession();
+  const updateSession = useUpdateInventorySession();
+  const bulkUpsertItems = useBulkUpsertInventoryItems();
+  const deleteSession = useDeleteInventorySession();
+
+  // Auth check
+  useEffect(() => {
+    if (!authLoading && !user) {
+      navigate('/auth');
+    }
+  }, [user, authLoading, navigate]);
+
+  // Load inventory items into local state
+  useEffect(() => {
+    if (inventoryItems) {
+      const itemsMap = new Map<string, LocalInventoryItem>();
+      inventoryItems.forEach((item) => {
+        itemsMap.set(item.article_id, {
+          article_id: item.article_id,
+          storage_1: Number(item.storage_1),
+          storage_2: Number(item.storage_2),
+        });
+      });
+      setLocalItems(itemsMap);
+      setHasChanges(false);
+    }
+  }, [inventoryItems]);
+
+  // Check for active in-progress session
+  useEffect(() => {
+    if (sessions && !activeSessionId) {
+      const inProgressSession = sessions.find((s) => s.status === 'in_progress');
+      if (inProgressSession) {
+        setActiveSessionId(inProgressSession.id);
+      }
+    }
+  }, [sessions, activeSessionId]);
+
+  const filteredArticles = useMemo(() => {
+    if (!articles) return [];
+    let filtered = articles.filter((a) => a.is_active);
+
+    if (supplierFilter && supplierFilter !== 'all') {
+      filtered = filtered.filter((a) => a.supplier_id === supplierFilter);
+    }
+
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(
+        (a) =>
+          a.name.toLowerCase().includes(query) ||
+          a.sku?.toLowerCase().includes(query)
+      );
+    }
+
+    return filtered.sort((a, b) => a.name.localeCompare(b.name));
+  }, [articles, supplierFilter, searchQuery]);
+
+  const handleCreateSession = async () => {
+    if (!newSessionName.trim()) return;
+    const result = await createSession.mutateAsync({ name: newSessionName });
+    setActiveSessionId(result.id);
+    setShowNewSessionDialog(false);
+    setNewSessionName('');
+  };
+
+  const handleItemChange = (
+    articleId: string,
+    field: 'storage_1' | 'storage_2',
+    value: string
+  ) => {
+    const numValue = parseFloat(value) || 0;
+    setLocalItems((prev) => {
+      const newMap = new Map(prev);
+      const existing = newMap.get(articleId) || {
+        article_id: articleId,
+        storage_1: 0,
+        storage_2: 0,
+      };
+      newMap.set(articleId, { ...existing, [field]: numValue });
+      return newMap;
+    });
+    setHasChanges(true);
+  };
+
+  const handleSave = async () => {
+    if (!activeSessionId) return;
+    const items = Array.from(localItems.values()).filter(
+      (item) => item.storage_1 > 0 || item.storage_2 > 0
+    );
+    await bulkUpsertItems.mutateAsync({ session_id: activeSessionId, items });
+    setHasChanges(false);
+  };
+
+  const handleComplete = async () => {
+    if (!activeSessionId) return;
+    await handleSave();
+    await updateSession.mutateAsync({
+      id: activeSessionId,
+      status: 'completed',
+      completed_at: new Date().toISOString(),
+    });
+    setActiveSessionId(null);
+  };
+
+  const handleLoadSession = (sessionId: string) => {
+    setActiveSessionId(sessionId);
+    setShowHistoryDialog(false);
+  };
+
+  const handleDeleteSession = async () => {
+    if (!deleteSessionId) return;
+    await deleteSession.mutateAsync(deleteSessionId);
+    if (activeSessionId === deleteSessionId) {
+      setActiveSessionId(null);
+    }
+    setDeleteSessionId(null);
+  };
+
+  const handleExportPdf = () => {
+    const supplierName =
+      supplierFilter && supplierFilter !== 'all'
+        ? suppliers?.find((s) => s.id === supplierFilter)?.name
+        : undefined;
+
+    const itemsMap = new Map<string, InventoryItem>();
+    localItems.forEach((item, key) => {
+      itemsMap.set(key, {
+        ...item,
+        total: item.storage_1 + item.storage_2,
+      } as InventoryItem);
+    });
+
+    generateInventoryListPdf(filteredArticles, supplierName, itemsMap);
+  };
+
+  const handleExportExcel = () => {
+    const supplierName =
+      supplierFilter && supplierFilter !== 'all'
+        ? suppliers?.find((s) => s.id === supplierFilter)?.name
+        : undefined;
+
+    const itemsMap = new Map<string, InventoryItem>();
+    localItems.forEach((item, key) => {
+      itemsMap.set(key, {
+        ...item,
+        total: item.storage_1 + item.storage_2,
+      } as InventoryItem);
+    });
+
+    exportInventoryToExcel(filteredArticles, itemsMap, supplierName);
+  };
+
+  const getItemValues = (articleId: string) => {
+    const item = localItems.get(articleId);
+    return {
+      storage_1: item?.storage_1 || 0,
+      storage_2: item?.storage_2 || 0,
+      total: (item?.storage_1 || 0) + (item?.storage_2 || 0),
+    };
+  };
+
+  if (authLoading) {
+    return (
+      <DashboardLayout>
+        <div className="space-y-4">
+          <Skeleton className="h-8 w-48" />
+          <Skeleton className="h-96 w-full" />
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  return (
+    <DashboardLayout>
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">Inventur</h1>
+            <p className="text-muted-foreground">Bestandsaufnahme durchführen</p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Button variant="outline" onClick={() => setShowHistoryDialog(true)}>
+              <History className="w-4 h-4 mr-2" />
+              Historie
+            </Button>
+            {!activeSession && (
+              <Button onClick={() => setShowNewSessionDialog(true)}>
+                <Plus className="w-4 h-4 mr-2" />
+                Neue Inventur
+              </Button>
+            )}
+          </div>
+        </div>
+
+        {/* Active Session Info */}
+        {activeSession && (
+          <Card>
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <ClipboardList className="w-5 h-5 text-primary" />
+                  <div>
+                    <CardTitle className="text-lg">{activeSession.name}</CardTitle>
+                    <p className="text-sm text-muted-foreground">
+                      Gestartet am{' '}
+                      {format(new Date(activeSession.created_at), 'dd.MM.yyyy HH:mm', {
+                        locale: de,
+                      })}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleExportPdf}
+                  >
+                    <FileText className="w-4 h-4 mr-2" />
+                    PDF
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleExportExcel}
+                  >
+                    <FileSpreadsheet className="w-4 h-4 mr-2" />
+                    Excel
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleSave}
+                    disabled={!hasChanges || bulkUpsertItems.isPending}
+                  >
+                    <Save className="w-4 h-4 mr-2" />
+                    Speichern
+                  </Button>
+                  <Button size="sm" onClick={handleComplete}>
+                    <CheckCircle className="w-4 h-4 mr-2" />
+                    Abschließen
+                  </Button>
+                </div>
+              </div>
+            </CardHeader>
+          </Card>
+        )}
+
+        {/* Filters */}
+        <div className="flex flex-col sm:flex-row gap-4">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              placeholder="Artikel suchen..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9"
+            />
+          </div>
+          <Select value={supplierFilter} onValueChange={setSupplierFilter}>
+            <SelectTrigger className="w-full sm:w-64">
+              <SelectValue placeholder="Lieferant filtern" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Alle Lieferanten</SelectItem>
+              {suppliers?.map((supplier) => (
+                <SelectItem key={supplier.id} value={supplier.id}>
+                  {supplier.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Inventory Table */}
+        {!activeSession ? (
+          <Card>
+            <CardContent className="py-12 text-center">
+              <ClipboardList className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+              <h3 className="text-lg font-medium mb-2">Keine aktive Inventur</h3>
+              <p className="text-muted-foreground mb-4">
+                Starten Sie eine neue Inventur oder laden Sie eine aus der Historie.
+              </p>
+              <Button onClick={() => setShowNewSessionDialog(true)}>
+                <Plus className="w-4 h-4 mr-2" />
+                Neue Inventur starten
+              </Button>
+            </CardContent>
+          </Card>
+        ) : articlesLoading ? (
+          <Card>
+            <CardContent className="py-8">
+              <Skeleton className="h-64 w-full" />
+            </CardContent>
+          </Card>
+        ) : (
+          <Card>
+            <CardContent className="p-0">
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-12">Nr.</TableHead>
+                      <TableHead>Artikel</TableHead>
+                      <TableHead>Lieferant</TableHead>
+                      <TableHead className="w-24">Einheit</TableHead>
+                      <TableHead className="w-28 text-right">Lager 1</TableHead>
+                      <TableHead className="w-28 text-right">Lager 2</TableHead>
+                      <TableHead className="w-28 text-right">Gesamt</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredArticles.map((article, index) => {
+                      const values = getItemValues(article.id);
+                      return (
+                        <TableRow key={article.id}>
+                          <TableCell className="text-muted-foreground">
+                            {index + 1}
+                          </TableCell>
+                          <TableCell>
+                            <div>
+                              <span className="font-medium">{article.name}</span>
+                              {article.sku && (
+                                <span className="block text-xs text-muted-foreground">
+                                  {article.sku}
+                                </span>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-muted-foreground">
+                            {article.suppliers?.name}
+                          </TableCell>
+                          <TableCell>{article.unit}</TableCell>
+                          <TableCell>
+                            <Input
+                              type="number"
+                              min="0"
+                              step="0.01"
+                              value={values.storage_1 || ''}
+                              onChange={(e) =>
+                                handleItemChange(article.id, 'storage_1', e.target.value)
+                              }
+                              className="w-24 text-right"
+                              placeholder="0"
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <Input
+                              type="number"
+                              min="0"
+                              step="0.01"
+                              value={values.storage_2 || ''}
+                              onChange={(e) =>
+                                handleItemChange(article.id, 'storage_2', e.target.value)
+                              }
+                              className="w-24 text-right"
+                              placeholder="0"
+                            />
+                          </TableCell>
+                          <TableCell className="text-right font-medium">
+                            {values.total > 0 ? values.total.toFixed(2) : '-'}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
+              {filteredArticles.length === 0 && (
+                <div className="py-12 text-center text-muted-foreground">
+                  Keine Artikel gefunden
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
+      </div>
+
+      {/* New Session Dialog */}
+      <Dialog open={showNewSessionDialog} onOpenChange={setShowNewSessionDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Neue Inventur starten</DialogTitle>
+            <DialogDescription>
+              Geben Sie einen Namen für die Inventursitzung ein.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="session-name">Name</Label>
+              <Input
+                id="session-name"
+                value={newSessionName}
+                onChange={(e) => setNewSessionName(e.target.value)}
+                placeholder={`Inventur ${format(new Date(), 'dd.MM.yyyy')}`}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowNewSessionDialog(false)}>
+              Abbrechen
+            </Button>
+            <Button
+              onClick={handleCreateSession}
+              disabled={createSession.isPending}
+            >
+              Starten
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* History Dialog */}
+      <Dialog open={showHistoryDialog} onOpenChange={setShowHistoryDialog}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Inventur-Historie</DialogTitle>
+            <DialogDescription>
+              Vergangene Inventuren anzeigen und laden.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="max-h-96 overflow-y-auto">
+            {sessionsLoading ? (
+              <Skeleton className="h-32 w-full" />
+            ) : sessions && sessions.length > 0 ? (
+              <div className="space-y-2">
+                {sessions.map((session) => (
+                  <div
+                    key={session.id}
+                    className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50 transition-colors"
+                  >
+                    <div className="flex items-center gap-3">
+                      <ClipboardList className="w-5 h-5 text-muted-foreground" />
+                      <div>
+                        <p className="font-medium">{session.name}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {format(new Date(session.created_at), 'dd.MM.yyyy HH:mm', {
+                            locale: de,
+                          })}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Badge
+                        variant={
+                          session.status === 'completed' ? 'default' : 'secondary'
+                        }
+                      >
+                        {session.status === 'completed'
+                          ? 'Abgeschlossen'
+                          : 'In Bearbeitung'}
+                      </Badge>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleLoadSession(session.id)}
+                      >
+                        Laden
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setDeleteSessionId(session.id)}
+                      >
+                        <Trash2 className="w-4 h-4 text-destructive" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-center text-muted-foreground py-8">
+                Noch keine Inventuren durchgeführt.
+              </p>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation */}
+      <AlertDialog
+        open={!!deleteSessionId}
+        onOpenChange={() => setDeleteSessionId(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Inventur löschen?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Diese Aktion kann nicht rückgängig gemacht werden. Alle erfassten Daten
+              dieser Inventur werden gelöscht.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteSession}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Löschen
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </DashboardLayout>
+  );
+};
+
+export default Inventory;

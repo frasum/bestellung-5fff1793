@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 import { cn } from '@/lib/utils';
-import { ChefHat, LayoutDashboard, Users, Package, ShoppingCart, FileText, BarChart3, Settings, LogOut, Menu, X } from 'lucide-react';
+import { ChefHat, LayoutDashboard, Users, Package, ShoppingCart, FileText, BarChart3, Settings, LogOut, Menu, X, ClipboardList } from 'lucide-react';
 interface DashboardLayoutProps {
   children: ReactNode;
 }
@@ -44,6 +44,10 @@ export const DashboardLayout = ({
     label: t('nav.drafts'),
     icon: FileText
   }, {
+    href: '/inventory',
+    label: t('nav.inventory'),
+    icon: ClipboardList
+  }, {
     href: '/reports',
     label: t('nav.reports'),
     icon: BarChart3
@@ -63,7 +67,7 @@ export const DashboardLayout = ({
           <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
             <ChefHat className="w-4 h-4 text-primary-foreground" />
           </div>
-          <span className="font-bold text-lg text-foreground">ProcureResto</span>
+          <span className="font-bold text-lg text-foreground">OrderFox.pro</span>
         </Link>
         <div className="flex items-center gap-2">
           <LanguageSwitcher />
