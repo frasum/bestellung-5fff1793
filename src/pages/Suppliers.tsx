@@ -653,7 +653,13 @@ const Suppliers = () => {
                         <TableCell className="hidden md:table-cell text-muted-foreground py-2">
                           <div className="text-sm">
                             {supplier.phone && <p>{supplier.phone}</p>}
-                            {supplier.main_category && <p className="text-primary font-medium">{supplier.main_category}</p>}
+                            {(supplier.top_category || supplier.main_category) && (
+                              <p className="text-primary font-medium">
+                                {supplier.top_category && supplier.main_category 
+                                  ? `${supplier.top_category} > ${supplier.main_category}`
+                                  : supplier.top_category || supplier.main_category}
+                              </p>
+                            )}
                           </div>
                         </TableCell>
                         <TableCell className="hidden lg:table-cell py-2">
