@@ -422,8 +422,8 @@ const Articles = () => {
                 {filteredArticles?.map((article) => {
                   const cartQty = getCartQuantity(article.id);
                   return (
-                    <TableRow key={article.id} className="group">
-                      <TableCell>
+                    <TableRow key={article.id} className="group h-10">
+                      <TableCell className="py-2">
                         <div className="flex items-center gap-3">
                           <div className="min-w-0 flex-1">
                             <p className="font-medium text-foreground truncate">{article.name}</p>
@@ -454,19 +454,19 @@ const Articles = () => {
                           </div>
                         </div>
                       </TableCell>
-                      <TableCell className="hidden md:table-cell text-muted-foreground">
+                      <TableCell className="hidden md:table-cell text-muted-foreground py-2">
                         <p className="truncate max-w-[200px]" title={article.description || ''}>
                           {article.description || '-'}
                         </p>
                       </TableCell>
-                      <TableCell className="hidden sm:table-cell text-muted-foreground">
+                      <TableCell className="hidden sm:table-cell text-muted-foreground py-2">
                         {article.suppliers?.name}
                       </TableCell>
-                      <TableCell className="text-right font-medium">
+                      <TableCell className="text-right font-medium py-2">
                         €{Number(article.price).toFixed(2)}
                         <span className="text-xs text-muted-foreground ml-1">/{article.unit}</span>
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="py-2">
                         <div className="flex items-center justify-center gap-1">
                           <Button
                             size="icon"
