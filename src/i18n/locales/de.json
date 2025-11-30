@@ -58,6 +58,7 @@
     "loading": "Wird geladen...",
     "saving": "Speichern...",
     "noData": "Keine Daten vorhanden",
+    "noResults": "Keine Ergebnisse gefunden",
     "confirm": "Bestätigen",
     "close": "Schließen",
     "back": "Zurück",
@@ -81,7 +82,9 @@
     "category": "Kategorie",
     "active": "Aktiv",
     "inactive": "Inaktiv",
-    "you": "Sie"
+    "you": "Sie",
+    "keyboardShortcuts": "Tastaturkürzel",
+    "help": "Hilfe"
   },
 "nav": {
     "dashboard": "Dashboard",
@@ -97,7 +100,9 @@
     "pricing": "Preise",
     "about": "Über uns",
     "signIn": "Anmelden",
-    "getStarted": "Jetzt starten"
+    "getStarted": "Jetzt starten",
+    "pages": "Seiten",
+    "cart": "Warenkorb"
   },
   "auth": {
     "signIn": "Anmelden",

@@ -58,6 +58,7 @@
     "loading": "Loading...",
     "saving": "Saving...",
     "noData": "No data available",
+    "noResults": "No results found",
     "confirm": "Confirm",
     "close": "Close",
     "back": "Back",
@@ -81,7 +82,9 @@
     "category": "Category",
     "active": "Active",
     "inactive": "Inactive",
-    "you": "You"
+    "you": "You",
+    "keyboardShortcuts": "Keyboard Shortcuts",
+    "help": "Help"
   },
 "nav": {
     "dashboard": "Dashboard",
@@ -97,7 +100,9 @@
     "pricing": "Pricing",
     "about": "About",
     "signIn": "Sign In",
-    "getStarted": "Get Started"
+    "getStarted": "Get Started",
+    "pages": "Pages",
+    "cart": "Cart"
   },
   "auth": {
     "signIn": "Sign In",
