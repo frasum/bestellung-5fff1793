@@ -29,9 +29,9 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
-import { useSuppliers, useCreateSupplier, useUpdateSupplier, useDeleteSupplier, useDeactivateSupplier, Supplier, SupplierInput } from '@/hooks/useSuppliers';
+import { useSuppliers, useCreateSupplier, useUpdateSupplier, useDeleteSupplier, Supplier, SupplierInput } from '@/hooks/useSuppliers';
 import { useArticles, Article } from '@/hooks/useArticles';
-import { Plus, Pencil, Trash2, Search, Mail, Phone, MapPin, User, Loader2, Upload, Hash, Euro, Filter, RotateCcw, Power, LayoutGrid, List, ChevronDown, ChevronRight, Minus, ShoppingCart, FileText, Printer, CheckSquare, Square } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, Mail, Phone, MapPin, User, Loader2, Upload, Hash, Euro, LayoutGrid, List, ChevronDown, ChevronRight, Minus, ShoppingCart, FileText, Printer } from 'lucide-react';
 import { generateOrderListPdf, generateCombinedOrderListPdf } from '@/lib/orderListPdf';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -106,7 +106,6 @@ const Suppliers = () => {
   const navigate = useNavigate();
   const { addItem, updateQuantity, items: cartItems, getItemCount } = useCart();
   const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
   const [topCategoryFilter, setTopCategoryFilter] = useState<string>('all');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
@@ -125,10 +124,8 @@ const Suppliers = () => {
   const createSupplier = useCreateSupplier();
   const updateSupplier = useUpdateSupplier();
   const deleteSupplier = useDeleteSupplier();
-  const deactivateSupplier = useDeactivateSupplier();
   const importSuppliers = useImportSuppliers();
   const importArticles = useImportArticles();
-  const [showDeactivateOption, setShowDeactivateOption] = useState(false);
 
   // Extract unique categories from suppliers
   const existingCategories = [...new Set(
@@ -242,44 +239,18 @@ const Suppliers = () => {
 
   const handleDelete = async () => {
     if (deletingSupplier) {
-      try {
-        await deleteSupplier.mutateAsync(deletingSupplier.id);
-        setDeletingSupplier(null);
-        setShowDeactivateOption(false);
-      } catch (error: any) {
-        if (error.message === 'FOREIGN_KEY_CONSTRAINT') {
-          setShowDeactivateOption(true);
-        }
-      }
-    }
-  };
-
-  const handleDeactivate = async () => {
-    if (deletingSupplier) {
-      await deactivateSupplier.mutateAsync(deletingSupplier.id);
+      await deleteSupplier.mutateAsync(deletingSupplier.id);
       setDeletingSupplier(null);
-      setShowDeactivateOption(false);
     }
   };
 
   const filteredSuppliers = suppliers?.filter((supplier) => {
     const matchesSearch = supplier.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       supplier.email.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || 
-      (statusFilter === 'active' && supplier.is_active) ||
-      (statusFilter === 'inactive' && !supplier.is_active);
     const matchesTopCategory = topCategoryFilter === 'all' || supplier.top_category === topCategoryFilter;
     const matchesCategory = categoryFilter === 'all' || supplier.main_category === categoryFilter;
-    return matchesSearch && matchesStatus && matchesTopCategory && matchesCategory;
+    return matchesSearch && matchesTopCategory && matchesCategory;
   });
-
-  const handleReactivate = async (supplier: Supplier) => {
-    await updateSupplier.mutateAsync({ id: supplier.id, is_active: true });
-  };
-
-  const handleDeactivateQuick = async (supplier: Supplier) => {
-    await deactivateSupplier.mutateAsync(supplier.id);
-  };
 
   if (authLoading || !user) {
     return (
@@ -530,17 +501,6 @@ const Suppliers = () => {
               className="pl-10"
             />
           </div>
-          <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as 'all' | 'active' | 'inactive')}>
-            <SelectTrigger className="w-full sm:w-[180px] bg-card">
-              <Filter className="w-4 h-4 mr-2" />
-              <SelectValue placeholder="Status" />
-            </SelectTrigger>
-            <SelectContent className="bg-card border border-border z-50">
-              <SelectItem value="all">Alle Lieferanten</SelectItem>
-              <SelectItem value="active">Nur Aktive</SelectItem>
-              <SelectItem value="inactive">Nur Inaktive</SelectItem>
-            </SelectContent>
-          </Select>
           <Select value={topCategoryFilter} onValueChange={setTopCategoryFilter}>
             <SelectTrigger className="w-full sm:w-[180px] bg-card">
               <SelectValue placeholder="Oberkategorie" />
@@ -606,7 +566,7 @@ const Suppliers = () => {
         ) : filteredSuppliers?.length === 0 ? (
           <div className="text-center py-12 bg-card border border-border rounded-xl">
             <p className="text-muted-foreground">
-              {searchQuery || statusFilter !== 'all' || topCategoryFilter !== 'all' || categoryFilter !== 'all'
+              {searchQuery || topCategoryFilter !== 'all' || categoryFilter !== 'all'
                 ? 'Keine Lieferanten gefunden' 
                 : 'Noch keine Lieferanten. Fügen Sie Ihren ersten Lieferanten hinzu.'}
             </p>
@@ -637,7 +597,7 @@ const Suppliers = () => {
                   const hasArticles = supplierArticles.length > 0;
                   return (
                     <>
-                      <TableRow key={supplier.id} className={`group ${!supplier.is_active ? 'opacity-60' : ''}`}>
+                      <TableRow key={supplier.id} className="group">
                         <TableCell className="py-2">
                           {hasArticles && (
                             <Checkbox
@@ -662,18 +622,9 @@ const Suppliers = () => {
                           </Button>
                         </TableCell>
                         <TableCell className="py-2">
-                          <div className="flex items-center gap-2">
-                            <div>
-                              <p className="font-medium text-foreground">{supplier.name}</p>
-                              <p className="text-xs text-muted-foreground">{supplier.email}</p>
-                            </div>
-                            <span className={`text-xs px-2 py-0.5 rounded-full ${
-                              supplier.is_active 
-                                ? 'bg-success/20 text-success' 
-                                : 'bg-muted text-muted-foreground'
-                            }`}>
-                              {supplier.is_active ? 'Aktiv' : 'Inaktiv'}
-                            </span>
+                          <div>
+                            <p className="font-medium text-foreground">{supplier.name}</p>
+                            <p className="text-xs text-muted-foreground">{supplier.email}</p>
                           </div>
                         </TableCell>
                         <TableCell className="hidden md:table-cell text-muted-foreground py-2">
@@ -702,27 +653,6 @@ const Suppliers = () => {
                                 title="Bestellliste drucken"
                               >
                                 <FileText className="w-3 h-3" />
-                              </Button>
-                            )}
-                            {!supplier.is_active ? (
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-7 w-7 text-success hover:text-success"
-                                onClick={() => handleReactivate(supplier)}
-                                title="Reaktivieren"
-                              >
-                                <RotateCcw className="w-3 h-3" />
-                              </Button>
-                            ) : (
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-7 w-7 text-muted-foreground hover:text-orange-500"
-                                onClick={() => handleDeactivateQuick(supplier)}
-                                title="Deaktivieren"
-                              >
-                                <Power className="w-3 h-3" />
                               </Button>
                             )}
                             <Button
@@ -823,7 +753,7 @@ const Suppliers = () => {
               return (
               <div
                 key={supplier.id}
-                className={`bg-card border border-border rounded-xl p-6 hover:border-primary/50 transition-colors ${!supplier.is_active ? 'opacity-60' : ''} ${selectedSuppliers.has(supplier.id) ? 'ring-2 ring-primary' : ''}`}
+                className={`bg-card border border-border rounded-xl p-6 hover:border-primary/50 transition-colors ${selectedSuppliers.has(supplier.id) ? 'ring-2 ring-primary' : ''}`}
               >
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-start gap-3">
@@ -836,13 +766,6 @@ const Suppliers = () => {
                     )}
                     <div>
                       <h3 className="font-semibold text-foreground text-lg">{supplier.name}</h3>
-                      <span className={`text-xs px-2 py-0.5 rounded-full ${
-                        supplier.is_active 
-                          ? 'bg-success/20 text-success' 
-                          : 'bg-muted text-muted-foreground'
-                      }`}>
-                        {supplier.is_active ? 'Aktiv' : 'Inaktiv'}
-                      </span>
                     </div>
                   </div>
                   <div className="flex gap-1">
@@ -855,27 +778,6 @@ const Suppliers = () => {
                         title="Bestellliste drucken"
                       >
                         <FileText className="w-4 h-4" />
-                      </Button>
-                    )}
-                    {!supplier.is_active ? (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-success hover:text-success"
-                        onClick={() => handleReactivate(supplier)}
-                        title="Reaktivieren"
-                      >
-                        <RotateCcw className="w-4 h-4" />
-                      </Button>
-                    ) : (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-muted-foreground hover:text-orange-500"
-                        onClick={() => handleDeactivateQuick(supplier)}
-                        title="Deaktivieren"
-                      >
-                        <Power className="w-4 h-4" />
                       </Button>
                     )}
                     <Button
@@ -946,39 +848,22 @@ const Suppliers = () => {
       </div>
 
       {/* Delete Confirmation */}
-      <AlertDialog open={!!deletingSupplier} onOpenChange={() => {
-        setDeletingSupplier(null);
-        setShowDeactivateOption(false);
-      }}>
+      <AlertDialog open={!!deletingSupplier} onOpenChange={() => setDeletingSupplier(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>
-              {showDeactivateOption ? 'Lieferant deaktivieren?' : 'Lieferant löschen'}
-            </AlertDialogTitle>
+            <AlertDialogTitle>Lieferant löschen</AlertDialogTitle>
             <AlertDialogDescription>
-              {showDeactivateOption 
-                ? `"${deletingSupplier?.name}" kann nicht gelöscht werden, da noch Bestellungen existieren. Möchten Sie den Lieferanten stattdessen deaktivieren?`
-                : `Sind Sie sicher, dass Sie "${deletingSupplier?.name}" löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.`
-              }
+              Sind Sie sicher, dass Sie "{deletingSupplier?.name}" löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Abbrechen</AlertDialogCancel>
-            {showDeactivateOption ? (
-              <AlertDialogAction
-                onClick={handleDeactivate}
-                className="bg-warning text-warning-foreground hover:bg-warning/90"
-              >
-                {deactivateSupplier.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Deaktivieren'}
-              </AlertDialogAction>
-            ) : (
-              <AlertDialogAction
-                onClick={handleDelete}
-                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              >
-                {deleteSupplier.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Löschen'}
-              </AlertDialogAction>
-            )}
+            <AlertDialogAction
+              onClick={handleDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleteSupplier.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Löschen'}
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
