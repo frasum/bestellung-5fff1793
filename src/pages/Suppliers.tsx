@@ -107,6 +107,7 @@ const Suppliers = () => {
   const { addItem, updateQuantity, items: cartItems, getItemCount } = useCart();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
+  const [topCategoryFilter, setTopCategoryFilter] = useState<string>('all');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
   const [expandedSuppliers, setExpandedSuppliers] = useState<Set<string>>(new Set());
@@ -267,8 +268,9 @@ const Suppliers = () => {
     const matchesStatus = statusFilter === 'all' || 
       (statusFilter === 'active' && supplier.is_active) ||
       (statusFilter === 'inactive' && !supplier.is_active);
+    const matchesTopCategory = topCategoryFilter === 'all' || supplier.top_category === topCategoryFilter;
     const matchesCategory = categoryFilter === 'all' || supplier.main_category === categoryFilter;
-    return matchesSearch && matchesStatus && matchesCategory;
+    return matchesSearch && matchesStatus && matchesTopCategory && matchesCategory;
   });
 
   const handleReactivate = async (supplier: Supplier) => {
@@ -539,6 +541,17 @@ const Suppliers = () => {
               <SelectItem value="inactive">Nur Inaktive</SelectItem>
             </SelectContent>
           </Select>
+          <Select value={topCategoryFilter} onValueChange={setTopCategoryFilter}>
+            <SelectTrigger className="w-full sm:w-[180px] bg-card">
+              <SelectValue placeholder="Oberkategorie" />
+            </SelectTrigger>
+            <SelectContent className="bg-card border border-border z-50">
+              <SelectItem value="all">Alle Oberkategorien</SelectItem>
+              {TOP_CATEGORIES.map((cat) => (
+                <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <Select value={categoryFilter} onValueChange={setCategoryFilter}>
             <SelectTrigger className="w-full sm:w-[180px] bg-card">
               <SelectValue placeholder="Hauptkategorie" />
@@ -593,7 +606,7 @@ const Suppliers = () => {
         ) : filteredSuppliers?.length === 0 ? (
           <div className="text-center py-12 bg-card border border-border rounded-xl">
             <p className="text-muted-foreground">
-              {searchQuery || statusFilter !== 'all' || categoryFilter !== 'all'
+              {searchQuery || statusFilter !== 'all' || topCategoryFilter !== 'all' || categoryFilter !== 'all'
                 ? 'Keine Lieferanten gefunden' 
                 : 'Noch keine Lieferanten. Fügen Sie Ihren ersten Lieferanten hinzu.'}
             </p>
