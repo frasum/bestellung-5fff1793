@@ -306,15 +306,21 @@ export const CsvImportDialog = ({
 
     try {
       let dataToImport = [...parsedData];
+      
+      console.log('Import START - parsedData sample:', JSON.stringify(parsedData.slice(0, 2)));
+      console.log('Import START - parsedData keys:', Object.keys(parsedData[0] || {}));
 
       // Run AI data cleaning if enabled
       if (useAI && enableAI) {
+        console.log('Before AI cleaning:', JSON.stringify(dataToImport.slice(0, 2)));
         dataToImport = await runAIDataCleaning(dataToImport);
+        console.log('After AI cleaning:', JSON.stringify(dataToImport.slice(0, 2)));
         
         // Run AI categorization for articles (if category field exists)
         const hasCategory = fields.some(f => f.name === 'category');
         if (hasCategory) {
           dataToImport = await runAICategorization(dataToImport);
+          console.log('After AI categorization:', JSON.stringify(dataToImport.slice(0, 2)));
         }
       }
 
