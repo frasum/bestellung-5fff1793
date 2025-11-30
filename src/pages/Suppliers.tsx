@@ -7,53 +7,17 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from '@/components/ui/collapsible';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useSuppliers, useCreateSupplier, useUpdateSupplier, useDeleteSupplier, Supplier, SupplierInput } from '@/hooks/useSuppliers';
 import { useArticles, Article } from '@/hooks/useArticles';
 import { Plus, Pencil, Trash2, Search, Mail, Phone, MapPin, User, Loader2, Upload, Hash, Euro, LayoutGrid, List, ChevronDown, ChevronRight, Minus, ShoppingCart, FileText, Printer } from 'lucide-react';
 import { generateOrderListPdf, generateCombinedOrderListPdf } from '@/lib/orderListPdf';
 import { Checkbox } from '@/components/ui/checkbox';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from '@/components/ui/command';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Check, ChevronsUpDown } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useForm } from 'react-hook-form';
@@ -64,7 +28,6 @@ import { Badge } from '@/components/ui/badge';
 import { Package } from 'lucide-react';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-
 const supplierSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
   email: z.string().email('Please enter a valid email'),
@@ -74,37 +37,80 @@ const supplierSchema = z.object({
   customer_number: z.string().optional(),
   minimum_order_value: z.string().optional(),
   top_category: z.string().optional(),
-  main_category: z.string().optional(),
+  main_category: z.string().optional()
 });
-
 type SupplierFormData = z.infer<typeof supplierSchema>;
-
 const TOP_CATEGORIES = ['Küche', 'Getränke', 'Bedarfsartikel'] as const;
-
-const SUPPLIER_IMPORT_FIELDS: ImportField[] = [
-  { name: 'name', label: 'Name', required: true },
-  { name: 'email', label: 'Email', required: true },
-  { name: 'phone', label: 'Phone', required: false },
-  { name: 'address', label: 'Address', required: false },
-  { name: 'contact_person', label: 'Contact Person', required: false },
-  { name: 'customer_number', label: 'Customer Number', required: false },
-  { name: 'minimum_order_value', label: 'Minimum Order Value', required: false },
-  { name: 'main_category', label: 'Main Category', required: false },
-];
-
-const ARTICLE_IMPORT_FIELDS: ImportField[] = [
-  { name: 'name', label: 'Name', required: true },
-  { name: 'price', label: 'Price', required: true },
-  { name: 'unit', label: 'Unit', required: false },
-  { name: 'sku', label: 'SKU', required: false },
-  { name: 'category', label: 'Category', required: false },
-  { name: 'description', label: 'Description', required: false },
-];
-
+const SUPPLIER_IMPORT_FIELDS: ImportField[] = [{
+  name: 'name',
+  label: 'Name',
+  required: true
+}, {
+  name: 'email',
+  label: 'Email',
+  required: true
+}, {
+  name: 'phone',
+  label: 'Phone',
+  required: false
+}, {
+  name: 'address',
+  label: 'Address',
+  required: false
+}, {
+  name: 'contact_person',
+  label: 'Contact Person',
+  required: false
+}, {
+  name: 'customer_number',
+  label: 'Customer Number',
+  required: false
+}, {
+  name: 'minimum_order_value',
+  label: 'Minimum Order Value',
+  required: false
+}, {
+  name: 'main_category',
+  label: 'Main Category',
+  required: false
+}];
+const ARTICLE_IMPORT_FIELDS: ImportField[] = [{
+  name: 'name',
+  label: 'Name',
+  required: true
+}, {
+  name: 'price',
+  label: 'Price',
+  required: true
+}, {
+  name: 'unit',
+  label: 'Unit',
+  required: false
+}, {
+  name: 'sku',
+  label: 'SKU',
+  required: false
+}, {
+  name: 'category',
+  label: 'Category',
+  required: false
+}, {
+  name: 'description',
+  label: 'Description',
+  required: false
+}];
 const Suppliers = () => {
-  const { user, loading: authLoading } = useAuth();
+  const {
+    user,
+    loading: authLoading
+  } = useAuth();
   const navigate = useNavigate();
-  const { addItem, updateQuantity, items: cartItems, getItemCount } = useCart();
+  const {
+    addItem,
+    updateQuantity,
+    items: cartItems,
+    getItemCount
+  } = useCart();
   const [searchQuery, setSearchQuery] = useState('');
   const [topCategoryFilter, setTopCategoryFilter] = useState<string>('all');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
@@ -118,9 +124,13 @@ const Suppliers = () => {
   const [articleImportSupplierId, setArticleImportSupplierId] = useState<string | null>(null);
   const [categoryPopoverOpen, setCategoryPopoverOpen] = useState(false);
   const [customCategory, setCustomCategory] = useState('');
-
-  const { data: suppliers, isLoading } = useSuppliers();
-  const { data: allArticles } = useArticles();
+  const {
+    data: suppliers,
+    isLoading
+  } = useSuppliers();
+  const {
+    data: allArticles
+  } = useArticles();
   const createSupplier = useCreateSupplier();
   const updateSupplier = useUpdateSupplier();
   const deleteSupplier = useDeleteSupplier();
@@ -128,9 +138,7 @@ const Suppliers = () => {
   const importArticles = useImportArticles();
 
   // Extract unique categories from suppliers
-  const existingCategories = [...new Set(
-    suppliers?.map(s => s.main_category).filter(Boolean) as string[]
-  )].sort();
+  const existingCategories = [...new Set(suppliers?.map(s => s.main_category).filter(Boolean) as string[])].sort();
 
   // Group articles by supplier
   const articlesBySupplier = allArticles?.reduce((acc, article) => {
@@ -140,7 +148,6 @@ const Suppliers = () => {
     acc[article.supplier_id].push(article);
     return acc;
   }, {} as Record<string, Article[]>) || {};
-
   const toggleSupplierExpanded = (supplierId: string) => {
     setExpandedSuppliers(prev => {
       const newSet = new Set(prev);
@@ -152,7 +159,6 @@ const Suppliers = () => {
       return newSet;
     });
   };
-
   const toggleSupplierSelected = (supplierId: string) => {
     setSelectedSuppliers(prev => {
       const newSet = new Set(prev);
@@ -164,7 +170,6 @@ const Suppliers = () => {
       return newSet;
     });
   };
-
   const selectAllSuppliers = () => {
     const suppliersWithArticles = filteredSuppliers?.filter(s => (articlesBySupplier[s.id]?.length || 0) > 0) || [];
     if (selectedSuppliers.size === suppliersWithArticles.length) {
@@ -173,29 +178,34 @@ const Suppliers = () => {
       setSelectedSuppliers(new Set(suppliersWithArticles.map(s => s.id)));
     }
   };
-
   const handlePrintCombined = () => {
     const selectedSuppliersData = suppliers?.filter(s => selectedSuppliers.has(s.id)) || [];
     generateCombinedOrderListPdf(selectedSuppliersData, articlesBySupplier);
     setSelectedSuppliers(new Set());
   };
-
   const getCartQuantity = (articleId: string) => {
-    const item = cartItems.find((i) => i.article.id === articleId);
+    const item = cartItems.find(i => i.article.id === articleId);
     return item?.quantity || 0;
   };
-
   const form = useForm<SupplierFormData>({
     resolver: zodResolver(supplierSchema),
-    defaultValues: { name: '', email: '', phone: '', address: '', contact_person: '', customer_number: '', minimum_order_value: '', top_category: '', main_category: '' },
+    defaultValues: {
+      name: '',
+      email: '',
+      phone: '',
+      address: '',
+      contact_person: '',
+      customer_number: '',
+      minimum_order_value: '',
+      top_category: '',
+      main_category: ''
+    }
   });
-
   useEffect(() => {
     if (!authLoading && !user) {
       navigate('/auth');
     }
   }, [user, authLoading, navigate]);
-
   useEffect(() => {
     if (editingSupplier) {
       form.reset({
@@ -207,13 +217,22 @@ const Suppliers = () => {
         customer_number: editingSupplier.customer_number || '',
         minimum_order_value: editingSupplier.minimum_order_value?.toString() || '',
         top_category: editingSupplier.top_category || '',
-        main_category: editingSupplier.main_category || '',
+        main_category: editingSupplier.main_category || ''
       });
     } else {
-      form.reset({ name: '', email: '', phone: '', address: '', contact_person: '', customer_number: '', minimum_order_value: '', top_category: '', main_category: '' });
+      form.reset({
+        name: '',
+        email: '',
+        phone: '',
+        address: '',
+        contact_person: '',
+        customer_number: '',
+        minimum_order_value: '',
+        top_category: '',
+        main_category: ''
+      });
     }
   }, [editingSupplier, form]);
-
   const handleSubmit = async (data: SupplierFormData) => {
     const input: SupplierInput = {
       name: data.name,
@@ -224,11 +243,13 @@ const Suppliers = () => {
       customer_number: data.customer_number || undefined,
       minimum_order_value: data.minimum_order_value ? parseFloat(data.minimum_order_value) : undefined,
       top_category: data.top_category || undefined,
-      main_category: data.main_category || undefined,
+      main_category: data.main_category || undefined
     };
-
     if (editingSupplier) {
-      await updateSupplier.mutateAsync({ id: editingSupplier.id, ...input });
+      await updateSupplier.mutateAsync({
+        id: editingSupplier.id,
+        ...input
+      });
     } else {
       await createSupplier.mutateAsync(input);
     }
@@ -236,32 +257,24 @@ const Suppliers = () => {
     setEditingSupplier(null);
     form.reset();
   };
-
   const handleDelete = async () => {
     if (deletingSupplier) {
       await deleteSupplier.mutateAsync(deletingSupplier.id);
       setDeletingSupplier(null);
     }
   };
-
-  const filteredSuppliers = suppliers?.filter((supplier) => {
-    const matchesSearch = supplier.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      supplier.email.toLowerCase().includes(searchQuery.toLowerCase());
+  const filteredSuppliers = suppliers?.filter(supplier => {
+    const matchesSearch = supplier.name.toLowerCase().includes(searchQuery.toLowerCase()) || supplier.email.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesTopCategory = topCategoryFilter === 'all' || supplier.top_category === topCategoryFilter;
     const matchesCategory = categoryFilter === 'all' || supplier.main_category === categoryFilter;
     return matchesSearch && matchesTopCategory && matchesCategory;
   });
-
   if (authLoading || !user) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
+    return <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>
-    );
+      </div>;
   }
-
-  return (
-    <DashboardLayout>
+  return <DashboardLayout>
       <div className="space-y-6">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -270,29 +283,15 @@ const Suppliers = () => {
             <p className="text-muted-foreground mt-1">Manage your suppliers and their contact information</p>
           </div>
           <div className="flex gap-2">
-            <ExportMenu
-              filename="suppliers"
-              title="Suppliers"
-              headers={['Name', 'Email', 'Phone', 'Address', 'Contact Person', 'Customer Number', 'Status']}
-              getData={() => suppliers?.map(s => [
-                s.name,
-                s.email,
-                s.phone || '',
-                s.address || '',
-                s.contact_person || '',
-                s.customer_number || '',
-                s.is_active ? 'Active' : 'Inactive'
-              ]) || []}
-              disabled={!suppliers?.length}
-            />
+            <ExportMenu filename="suppliers" title="Suppliers" headers={['Name', 'Email', 'Phone', 'Address', 'Contact Person', 'Customer Number', 'Status']} getData={() => suppliers?.map(s => [s.name, s.email, s.phone || '', s.address || '', s.contact_person || '', s.customer_number || '', s.is_active ? 'Active' : 'Inactive']) || []} disabled={!suppliers?.length} />
             <Button variant="outline" onClick={() => setIsImportOpen(true)}>
               <Upload className="w-4 h-4 mr-2" />
               Import
             </Button>
-            <Dialog open={isDialogOpen} onOpenChange={(open) => {
-              setIsDialogOpen(open);
-              if (!open) setEditingSupplier(null);
-            }}>
+            <Dialog open={isDialogOpen} onOpenChange={open => {
+            setIsDialogOpen(open);
+            if (!open) setEditingSupplier(null);
+          }}>
               <DialogTrigger asChild>
                 <Button>
                   <Plus className="w-4 h-4 mr-2" />
@@ -307,16 +306,12 @@ const Suppliers = () => {
                 <div className="space-y-2">
                   <Label htmlFor="name">Company Name *</Label>
                   <Input id="name" {...form.register('name')} placeholder="Fresh Farms Italia" />
-                  {form.formState.errors.name && (
-                    <p className="text-sm text-destructive">{form.formState.errors.name.message}</p>
-                  )}
+                  {form.formState.errors.name && <p className="text-sm text-destructive">{form.formState.errors.name.message}</p>}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="email">Email *</Label>
                   <Input id="email" type="email" {...form.register('email')} placeholder="orders@supplier.com" />
-                  {form.formState.errors.email && (
-                    <p className="text-sm text-destructive">{form.formState.errors.email.message}</p>
-                  )}
+                  {form.formState.errors.email && <p className="text-sm text-destructive">{form.formState.errors.email.message}</p>}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="phone">Phone</Label>
@@ -336,28 +331,16 @@ const Suppliers = () => {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="minimum_order_value">Minimum Order Value (€)</Label>
-                  <Input 
-                    id="minimum_order_value" 
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    {...form.register('minimum_order_value')} 
-                    placeholder="50.00" 
-                  />
+                  <Input id="minimum_order_value" type="number" step="0.01" min="0" {...form.register('minimum_order_value')} placeholder="50.00" />
                 </div>
                 <div className="space-y-2">
                   <Label>Oberkategorie</Label>
-                  <Select
-                    value={form.watch('top_category') || ''}
-                    onValueChange={(value) => form.setValue('top_category', value)}
-                  >
+                  <Select value={form.watch('top_category') || ''} onValueChange={value => form.setValue('top_category', value)}>
                     <SelectTrigger>
                       <SelectValue placeholder="Oberkategorie auswählen..." />
                     </SelectTrigger>
                     <SelectContent className="bg-popover border border-border z-50">
-                      {TOP_CATEGORIES.map((cat) => (
-                        <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                      ))}
+                      {TOP_CATEGORIES.map(cat => <SelectItem key={cat} value={cat}>{cat}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 </div>
@@ -365,58 +348,32 @@ const Suppliers = () => {
                   <Label>Hauptkategorie</Label>
                   <Popover open={categoryPopoverOpen} onOpenChange={setCategoryPopoverOpen}>
                     <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        role="combobox"
-                        aria-expanded={categoryPopoverOpen}
-                        className="w-full justify-between font-normal"
-                      >
+                      <Button variant="outline" role="combobox" aria-expanded={categoryPopoverOpen} className="w-full justify-between font-normal">
                         {form.watch('main_category') || "Kategorie auswählen..."}
                         <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-full p-0 bg-popover border border-border z-50" align="start">
                       <Command>
-                        <CommandInput 
-                          placeholder="Kategorie suchen oder eingeben..." 
-                          value={customCategory}
-                          onValueChange={setCustomCategory}
-                        />
+                        <CommandInput placeholder="Kategorie suchen oder eingeben..." value={customCategory} onValueChange={setCustomCategory} />
                         <CommandList>
                           <CommandEmpty>
-                            {customCategory && (
-                              <button
-                                type="button"
-                                className="w-full px-2 py-1.5 text-left text-sm hover:bg-accent cursor-pointer"
-                                onClick={() => {
-                                  form.setValue('main_category', customCategory);
-                                  setCustomCategory('');
-                                  setCategoryPopoverOpen(false);
-                                }}
-                              >
+                            {customCategory && <button type="button" className="w-full px-2 py-1.5 text-left text-sm hover:bg-accent cursor-pointer" onClick={() => {
+                              form.setValue('main_category', customCategory);
+                              setCustomCategory('');
+                              setCategoryPopoverOpen(false);
+                            }}>
                                 "{customCategory}" hinzufügen
-                              </button>
-                            )}
+                              </button>}
                           </CommandEmpty>
                           <CommandGroup>
-                            {existingCategories.map((category) => (
-                              <CommandItem
-                                key={category}
-                                value={category}
-                                onSelect={() => {
-                                  form.setValue('main_category', category);
-                                  setCategoryPopoverOpen(false);
-                                }}
-                              >
-                                <Check
-                                  className={cn(
-                                    "mr-2 h-4 w-4",
-                                    form.watch('main_category') === category ? "opacity-100" : "opacity-0"
-                                  )}
-                                />
+                            {existingCategories.map(category => <CommandItem key={category} value={category} onSelect={() => {
+                              form.setValue('main_category', category);
+                              setCategoryPopoverOpen(false);
+                            }}>
+                                <Check className={cn("mr-2 h-4 w-4", form.watch('main_category') === category ? "opacity-100" : "opacity-0")} />
                                 {category}
-                              </CommandItem>
-                            ))}
+                              </CommandItem>)}
                           </CommandGroup>
                         </CommandList>
                       </Command>
@@ -425,22 +382,15 @@ const Suppliers = () => {
                 </div>
                 
                 {/* Article Import Button - only show when editing */}
-                {editingSupplier && (
-                  <div className="pt-2">
-                    <Button 
-                      type="button" 
-                      variant="outline" 
-                      className="w-full"
-                      onClick={() => {
-                        setArticleImportSupplierId(editingSupplier.id);
-                        setIsDialogOpen(false);
-                      }}
-                    >
+                {editingSupplier && <div className="pt-2">
+                    <Button type="button" variant="outline" className="w-full" onClick={() => {
+                    setArticleImportSupplierId(editingSupplier.id);
+                    setIsDialogOpen(false);
+                  }}>
                       <Package className="w-4 h-4 mr-2" />
                       Artikel für {editingSupplier.name} importieren
                     </Button>
-                  </div>
-                )}
+                  </div>}
                 
                 <div className="flex gap-3 pt-4">
                   <Button type="button" variant="outline" className="flex-1" onClick={() => {
@@ -449,14 +399,8 @@ const Suppliers = () => {
                   }}>
                     Cancel
                   </Button>
-                  <Button 
-                    type="submit" 
-                    className="flex-1"
-                    disabled={createSupplier.isPending || updateSupplier.isPending}
-                  >
-                    {(createSupplier.isPending || updateSupplier.isPending) ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : editingSupplier ? 'Update' : 'Create'}
+                  <Button type="submit" className="flex-1" disabled={createSupplier.isPending || updateSupplier.isPending}>
+                    {createSupplier.isPending || updateSupplier.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : editingSupplier ? 'Update' : 'Create'}
                   </Button>
                 </div>
               </form>
@@ -465,41 +409,25 @@ const Suppliers = () => {
           </div>
         </div>
 
-        <CsvImportDialog
-          open={isImportOpen}
-          onOpenChange={setIsImportOpen}
-          title="Import Suppliers"
-          fields={SUPPLIER_IMPORT_FIELDS}
-          onImport={async (data) => {
-            await importSuppliers.mutateAsync(data);
-          }}
-          templateFileName="suppliers_template.csv"
-        />
+        <CsvImportDialog open={isImportOpen} onOpenChange={setIsImportOpen} title="Import Suppliers" fields={SUPPLIER_IMPORT_FIELDS} onImport={async data => {
+        await importSuppliers.mutateAsync(data);
+      }} templateFileName="suppliers_template.csv" />
 
         {/* Article Import Dialog for specific supplier */}
-        <CsvImportDialog
-          open={!!articleImportSupplierId}
-          onOpenChange={(open) => !open && setArticleImportSupplierId(null)}
-          title={`Artikel importieren für ${suppliers?.find(s => s.id === articleImportSupplierId)?.name || 'Lieferant'}`}
-          fields={ARTICLE_IMPORT_FIELDS}
-          onImport={async (data) => {
-            if (articleImportSupplierId) {
-              await importArticles.mutateAsync({ articles: data, defaultSupplierId: articleImportSupplierId });
-            }
-          }}
-          templateFileName="articles_template.csv"
-        />
+        <CsvImportDialog open={!!articleImportSupplierId} onOpenChange={open => !open && setArticleImportSupplierId(null)} title={`Artikel importieren für ${suppliers?.find(s => s.id === articleImportSupplierId)?.name || 'Lieferant'}`} fields={ARTICLE_IMPORT_FIELDS} onImport={async data => {
+        if (articleImportSupplierId) {
+          await importArticles.mutateAsync({
+            articles: data,
+            defaultSupplierId: articleImportSupplierId
+          });
+        }
+      }} templateFileName="articles_template.csv" />
 
         {/* Search and Filter */}
         <div className="flex flex-col sm:flex-row gap-4">
           <div className="relative flex-1 max-w-md">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input
-              placeholder="Lieferanten suchen..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
-            />
+            <Input placeholder="Lieferanten suchen..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="pl-10" />
           </div>
           <Select value={topCategoryFilter} onValueChange={setTopCategoryFilter}>
             <SelectTrigger className="w-full sm:w-[180px] bg-card">
@@ -507,9 +435,7 @@ const Suppliers = () => {
             </SelectTrigger>
             <SelectContent className="bg-card border border-border z-50">
               <SelectItem value="all">Alle Oberkategorien</SelectItem>
-              {TOP_CATEGORIES.map((cat) => (
-                <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-              ))}
+              {TOP_CATEGORIES.map(cat => <SelectItem key={cat} value={cat}>{cat}</SelectItem>)}
             </SelectContent>
           </Select>
           <Select value={categoryFilter} onValueChange={setCategoryFilter}>
@@ -518,107 +444,65 @@ const Suppliers = () => {
             </SelectTrigger>
             <SelectContent className="bg-card border border-border z-50">
               <SelectItem value="all">Alle Kategorien</SelectItem>
-              {existingCategories.map((cat) => (
-                <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-              ))}
+              {existingCategories.map(cat => <SelectItem key={cat} value={cat}>{cat}</SelectItem>)}
             </SelectContent>
           </Select>
           <div className="flex border border-border rounded-lg overflow-hidden">
-            <Button
-              variant={viewMode === 'list' ? 'default' : 'ghost'}
-              size="icon"
-              className="rounded-none h-10 w-10"
-              onClick={() => setViewMode('list')}
-            >
+            <Button variant={viewMode === 'list' ? 'default' : 'ghost'} size="icon" className="rounded-none h-10 w-10" onClick={() => setViewMode('list')}>
               <List className="w-4 h-4" />
             </Button>
-            <Button
-              variant={viewMode === 'grid' ? 'default' : 'ghost'}
-              size="icon"
-              className="rounded-none h-10 w-10"
-              onClick={() => setViewMode('grid')}
-            >
+            <Button variant={viewMode === 'grid' ? 'default' : 'ghost'} size="icon" className="rounded-none h-10 w-10" onClick={() => setViewMode('grid')}>
               <LayoutGrid className="w-4 h-4" />
             </Button>
           </div>
-          {selectedSuppliers.size > 0 && (
-            <Button onClick={handlePrintCombined} variant="secondary">
+          {selectedSuppliers.size > 0 && <Button onClick={handlePrintCombined} variant="secondary">
               <Printer className="w-4 h-4 mr-2" />
               {selectedSuppliers.size} Listen drucken
-            </Button>
-          )}
+            </Button>}
           <Button variant="outline" onClick={() => navigate('/cart')} className="relative">
             <ShoppingCart className="w-4 h-4 mr-2" />
             Warenkorb
-            {getItemCount() > 0 && (
-              <Badge className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 text-xs">
+            {getItemCount() > 0 && <Badge className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 text-xs">
                 {getItemCount()}
-              </Badge>
-            )}
+              </Badge>}
           </Button>
         </div>
 
         {/* Suppliers */}
-        {isLoading ? (
-          <div className="flex items-center justify-center py-12">
+        {isLoading ? <div className="flex items-center justify-center py-12">
             <Loader2 className="w-8 h-8 animate-spin text-primary" />
-          </div>
-        ) : filteredSuppliers?.length === 0 ? (
-          <div className="text-center py-12 bg-card border border-border rounded-xl">
+          </div> : filteredSuppliers?.length === 0 ? <div className="text-center py-12 bg-card border border-border rounded-xl">
             <p className="text-muted-foreground">
-              {searchQuery || topCategoryFilter !== 'all' || categoryFilter !== 'all'
-                ? 'Keine Lieferanten gefunden' 
-                : 'Noch keine Lieferanten. Fügen Sie Ihren ersten Lieferanten hinzu.'}
+              {searchQuery || topCategoryFilter !== 'all' || categoryFilter !== 'all' ? 'Keine Lieferanten gefunden' : 'Noch keine Lieferanten. Fügen Sie Ihren ersten Lieferanten hinzu.'}
             </p>
-          </div>
-        ) : viewMode === 'list' ? (
-          /* List View with expandable articles */
-          <div className="bg-card border border-border rounded-xl overflow-hidden">
+          </div> : viewMode === 'list' ? (/* List View with expandable articles */
+      <div className="bg-card border border-border rounded-xl overflow-hidden">
             <Table>
               <TableHeader>
                 <TableRow className="hover:bg-transparent">
                   <TableHead className="w-10">
-                    <Checkbox
-                      checked={selectedSuppliers.size > 0 && selectedSuppliers.size === (filteredSuppliers?.filter(s => (articlesBySupplier[s.id]?.length || 0) > 0).length || 0)}
-                      onCheckedChange={selectAllSuppliers}
-                    />
+                    <Checkbox checked={selectedSuppliers.size > 0 && selectedSuppliers.size === (filteredSuppliers?.filter(s => (articlesBySupplier[s.id]?.length || 0) > 0).length || 0)} onCheckedChange={selectAllSuppliers} />
                   </TableHead>
                   <TableHead className="w-8"></TableHead>
                   <TableHead>Lieferant</TableHead>
-                  <TableHead className="hidden md:table-cell">Kategorie</TableHead>
+                  <TableHead className="hidden md:table-cell">Oberkategorie > Hauptkategorie</TableHead>
                   <TableHead className="hidden lg:table-cell">Artikel</TableHead>
                   <TableHead className="text-right">Aktionen</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredSuppliers?.map((supplier) => {
-                  const supplierArticles = articlesBySupplier[supplier.id] || [];
-                  const isExpanded = expandedSuppliers.has(supplier.id);
-                  const hasArticles = supplierArticles.length > 0;
-                  return (
-                    <>
+                {filteredSuppliers?.map(supplier => {
+              const supplierArticles = articlesBySupplier[supplier.id] || [];
+              const isExpanded = expandedSuppliers.has(supplier.id);
+              const hasArticles = supplierArticles.length > 0;
+              return <>
                       <TableRow key={supplier.id} className="group">
                         <TableCell className="py-2">
-                          {hasArticles && (
-                            <Checkbox
-                              checked={selectedSuppliers.has(supplier.id)}
-                              onCheckedChange={() => toggleSupplierSelected(supplier.id)}
-                            />
-                          )}
+                          {hasArticles && <Checkbox checked={selectedSuppliers.has(supplier.id)} onCheckedChange={() => toggleSupplierSelected(supplier.id)} />}
                         </TableCell>
                         <TableCell className="py-2">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-7 w-7"
-                            onClick={() => toggleSupplierExpanded(supplier.id)}
-                            disabled={supplierArticles.length === 0}
-                          >
-                            {supplierArticles.length > 0 ? (
-                              isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />
-                            ) : (
-                              <span className="w-4 h-4" />
-                            )}
+                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => toggleSupplierExpanded(supplier.id)} disabled={supplierArticles.length === 0}>
+                            {supplierArticles.length > 0 ? isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" /> : <span className="w-4 h-4" />}
                           </Button>
                         </TableCell>
                         <TableCell className="py-2">
@@ -629,9 +513,7 @@ const Suppliers = () => {
                         </TableCell>
                         <TableCell className="hidden md:table-cell text-muted-foreground py-2">
                           <p className="text-sm text-primary font-medium">
-                            {supplier.top_category && supplier.main_category 
-                              ? `${supplier.top_category} > ${supplier.main_category}`
-                              : supplier.top_category || supplier.main_category || '-'}
+                            {supplier.top_category && supplier.main_category ? `${supplier.top_category} > ${supplier.main_category}` : supplier.top_category || supplier.main_category || '-'}
                           </p>
                         </TableCell>
                         <TableCell className="hidden lg:table-cell py-2">
@@ -639,42 +521,23 @@ const Suppliers = () => {
                         </TableCell>
                         <TableCell className="text-right py-2">
                           <div className="flex justify-end gap-1">
-                            {supplierArticles.length > 0 && (
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-7 w-7 text-muted-foreground hover:text-primary"
-                                onClick={() => generateOrderListPdf(supplier, supplierArticles)}
-                                title="Bestellliste drucken"
-                              >
+                            {supplierArticles.length > 0 && <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-primary" onClick={() => generateOrderListPdf(supplier, supplierArticles)} title="Bestellliste drucken">
                                 <FileText className="w-3 h-3" />
-                              </Button>
-                            )}
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-7 w-7"
-                              onClick={() => {
-                                setEditingSupplier(supplier);
-                                setIsDialogOpen(true);
-                              }}
-                            >
+                              </Button>}
+                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => {
+                        setEditingSupplier(supplier);
+                        setIsDialogOpen(true);
+                      }}>
                               <Pencil className="w-3 h-3" />
                             </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-7 w-7 text-destructive hover:text-destructive"
-                              onClick={() => setDeletingSupplier(supplier)}
-                            >
+                            <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => setDeletingSupplier(supplier)}>
                               <Trash2 className="w-3 h-3" />
                             </Button>
                           </div>
                         </TableCell>
                       </TableRow>
                       {/* Expanded articles section */}
-                      {isExpanded && supplierArticles.length > 0 && (
-                        <TableRow className="bg-muted/30">
+                      {isExpanded && supplierArticles.length > 0 && <TableRow className="bg-muted/30">
                           <TableCell colSpan={6} className="p-0">
                             <div className="p-4 pl-16">
                               <Table>
@@ -687,10 +550,9 @@ const Suppliers = () => {
                                   </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                  {supplierArticles.map((article) => {
-                                    const cartQty = getCartQuantity(article.id);
-                                    return (
-                                      <TableRow key={article.id} className={`border-b border-border/30 hover:bg-muted/50 ${cartQty > 0 ? 'bg-destructive/10 text-destructive' : ''}`}>
+                                  {supplierArticles.map(article => {
+                            const cartQty = getCartQuantity(article.id);
+                            return <TableRow key={article.id} className={`border-b border-border/30 hover:bg-muted/50 ${cartQty > 0 ? 'bg-destructive/10 text-destructive' : ''}`}>
                                         <TableCell className="py-1.5">
                                           <p className="text-sm font-medium">{article.name}</p>
                                         </TableCell>
@@ -705,93 +567,49 @@ const Suppliers = () => {
                                         </TableCell>
                                         <TableCell className="py-1.5">
                                           <div className="flex items-center justify-center gap-1">
-                                            <Button
-                                              size="icon"
-                                              variant="outline"
-                                              className="h-7 w-7"
-                                              onClick={() => updateQuantity(article.id, cartQty - 1)}
-                                              disabled={cartQty === 0}
-                                            >
+                                            <Button size="icon" variant="outline" className="h-7 w-7" onClick={() => updateQuantity(article.id, cartQty - 1)} disabled={cartQty === 0}>
                                               <Minus className="w-3 h-3" />
                                             </Button>
                                             <span className={`w-6 text-center text-sm font-medium ${cartQty > 0 ? 'text-destructive' : ''}`}>{cartQty}</span>
-                                            <Button
-                                              size="icon"
-                                              variant="outline"
-                                              className="h-7 w-7"
-                                              onClick={() => addItem(article, 1)}
-                                            >
+                                            <Button size="icon" variant="outline" className="h-7 w-7" onClick={() => addItem(article, 1)}>
                                               <Plus className="w-3 h-3" />
                                             </Button>
                                           </div>
                                         </TableCell>
-                                      </TableRow>
-                                    );
-                                  })}
+                                      </TableRow>;
+                          })}
                                 </TableBody>
                               </Table>
                             </div>
                           </TableCell>
-                        </TableRow>
-                      )}
-                    </>
-                  );
-                })}
+                        </TableRow>}
+                    </>;
+            })}
               </TableBody>
             </Table>
-          </div>
-        ) : (
-          /* Grid View */
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredSuppliers?.map((supplier) => {
-              const hasArticles = (articlesBySupplier[supplier.id]?.length || 0) > 0;
-              return (
-              <div
-                key={supplier.id}
-                className={`bg-card border border-border rounded-xl p-6 hover:border-primary/50 transition-colors ${selectedSuppliers.has(supplier.id) ? 'ring-2 ring-primary' : ''}`}
-              >
+          </div>) : (/* Grid View */
+      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {filteredSuppliers?.map(supplier => {
+          const hasArticles = (articlesBySupplier[supplier.id]?.length || 0) > 0;
+          return <div key={supplier.id} className={`bg-card border border-border rounded-xl p-6 hover:border-primary/50 transition-colors ${selectedSuppliers.has(supplier.id) ? 'ring-2 ring-primary' : ''}`}>
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-start gap-3">
-                    {hasArticles && (
-                      <Checkbox
-                        checked={selectedSuppliers.has(supplier.id)}
-                        onCheckedChange={() => toggleSupplierSelected(supplier.id)}
-                        className="mt-1"
-                      />
-                    )}
+                    {hasArticles && <Checkbox checked={selectedSuppliers.has(supplier.id)} onCheckedChange={() => toggleSupplierSelected(supplier.id)} className="mt-1" />}
                     <div>
                       <h3 className="font-semibold text-foreground text-lg">{supplier.name}</h3>
                     </div>
                   </div>
                   <div className="flex gap-1">
-                    {hasArticles && (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-muted-foreground hover:text-primary"
-                        onClick={() => generateOrderListPdf(supplier, articlesBySupplier[supplier.id] || [])}
-                        title="Bestellliste drucken"
-                      >
+                    {hasArticles && <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary" onClick={() => generateOrderListPdf(supplier, articlesBySupplier[supplier.id] || [])} title="Bestellliste drucken">
                         <FileText className="w-4 h-4" />
-                      </Button>
-                    )}
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8"
-                      onClick={() => {
-                        setEditingSupplier(supplier);
-                        setIsDialogOpen(true);
-                      }}
-                    >
+                      </Button>}
+                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => {
+                  setEditingSupplier(supplier);
+                  setIsDialogOpen(true);
+                }}>
                       <Pencil className="w-4 h-4" />
                     </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 text-destructive hover:text-destructive"
-                      onClick={() => setDeletingSupplier(supplier)}
-                    >
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => setDeletingSupplier(supplier)}>
                       <Trash2 className="w-4 h-4" />
                     </Button>
                   </div>
@@ -801,45 +619,33 @@ const Suppliers = () => {
                     <Mail className="w-4 h-4" />
                     <span className="truncate">{supplier.email}</span>
                   </div>
-                  {supplier.phone && (
-                    <div className="flex items-center gap-2 text-muted-foreground">
+                  {supplier.phone && <div className="flex items-center gap-2 text-muted-foreground">
                       <Phone className="w-4 h-4" />
                       <span>{supplier.phone}</span>
-                    </div>
-                  )}
-                  {supplier.address && (
-                    <div className="flex items-center gap-2 text-muted-foreground">
+                    </div>}
+                  {supplier.address && <div className="flex items-center gap-2 text-muted-foreground">
                       <MapPin className="w-4 h-4" />
                       <span className="truncate">{supplier.address}</span>
-                    </div>
-                  )}
-                  {supplier.contact_person && (
-                    <div className="flex items-center gap-2 text-muted-foreground">
+                    </div>}
+                  {supplier.contact_person && <div className="flex items-center gap-2 text-muted-foreground">
                       <User className="w-4 h-4" />
                       <span>{supplier.contact_person}</span>
-                    </div>
-                  )}
-                  {supplier.customer_number && (
-                    <div className="flex items-center gap-2 text-muted-foreground">
+                    </div>}
+                  {supplier.customer_number && <div className="flex items-center gap-2 text-muted-foreground">
                       <Hash className="w-4 h-4" />
                       <span>Kd-Nr: {supplier.customer_number}</span>
-                    </div>
-                  )}
-                  {supplier.minimum_order_value && supplier.minimum_order_value > 0 && (
-                    <div className="flex items-center gap-2 text-muted-foreground">
+                    </div>}
+                  {supplier.minimum_order_value && supplier.minimum_order_value > 0 && <div className="flex items-center gap-2 text-muted-foreground">
                       <Euro className="w-4 h-4" />
                       <span>Min: €{Number(supplier.minimum_order_value).toFixed(2)}</span>
-                    </div>
-                  )}
+                    </div>}
                 </div>
                 <div className="mt-4 pt-4 border-t border-border">
                   <Badge variant="secondary">{articlesBySupplier[supplier.id]?.length || 0} Artikel</Badge>
                 </div>
-              </div>
-              );
-            })}
-          </div>
-        )}
+              </div>;
+        })}
+          </div>)}
       </div>
 
       {/* Delete Confirmation */}
@@ -853,17 +659,12 @@ const Suppliers = () => {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Abbrechen</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDelete}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
+            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
               {deleteSupplier.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Löschen'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </DashboardLayout>
-  );
+    </DashboardLayout>;
 };
-
 export default Suppliers;
