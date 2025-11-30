@@ -279,20 +279,41 @@ const Articles = () => {
                     <Controller
                       name="supplier_id"
                       control={form.control}
-                      render={({ field }) => (
-                        <Select onValueChange={field.onChange} value={field.value}>
-                          <SelectTrigger className="bg-card">
-                            <SelectValue placeholder="Select supplier" />
-                          </SelectTrigger>
-                          <SelectContent className="bg-card border border-border z-50">
-                            {suppliers?.map((supplier) => (
-                              <SelectItem key={supplier.id} value={supplier.id}>
-                                {supplier.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      )}
+                      render={({ field }) => {
+                        const selectedSupplierData = suppliers?.find(s => s.id === field.value);
+                        return (
+                          <>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                              <SelectTrigger className="bg-card">
+                                <SelectValue placeholder="Select supplier" />
+                              </SelectTrigger>
+                              <SelectContent className="bg-card border border-border z-50">
+                                {suppliers?.map((supplier) => (
+                                  <SelectItem key={supplier.id} value={supplier.id}>
+                                    {supplier.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            {selectedSupplierData && (selectedSupplierData.top_category || selectedSupplierData.main_category) && (
+                              <div className="grid grid-cols-2 gap-2 pt-1">
+                                {selectedSupplierData.top_category && (
+                                  <div className="text-xs">
+                                    <span className="text-muted-foreground">Oberkategorie: </span>
+                                    <span className="text-foreground">{selectedSupplierData.top_category}</span>
+                                  </div>
+                                )}
+                                {selectedSupplierData.main_category && (
+                                  <div className="text-xs">
+                                    <span className="text-muted-foreground">Hauptkategorie: </span>
+                                    <span className="text-foreground">{selectedSupplierData.main_category}</span>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </>
+                        );
+                      }}
                     />
                     {form.formState.errors.supplier_id && (
                       <p className="text-sm text-destructive">{form.formState.errors.supplier_id.message}</p>
