@@ -110,10 +110,10 @@ const Articles = () => {
   const bulkUpdateArticles = useBulkUpdateArticles();
   const importArticles = useImportArticles();
 
-  // Extract unique categories from articles
-  const existingCategories = [...new Set(
-    articles?.map(a => a.category).filter(Boolean) as string[]
-  )].sort();
+  // Extract unique categories from articles and combine with db categories
+  const articleCategories = articles?.map(a => a.category).filter(Boolean) as string[] || [];
+  const dbCategoryNames = dbCategories?.map(c => c.name) || [];
+  const allCategories = [...new Set([...articleCategories, ...dbCategoryNames])].sort();
 
   // Extract unique units from articles + defaults
   const existingUnits = [...new Set([
@@ -434,8 +434,8 @@ const Articles = () => {
                               <SelectValue placeholder="Select" />
                             </SelectTrigger>
                             <SelectContent className="bg-card border border-border z-50">
-                              {dbCategories?.map((cat) => (
-                                <SelectItem key={cat.id} value={cat.name}>{cat.name}</SelectItem>
+                              {allCategories.map((cat) => (
+                                <SelectItem key={cat} value={cat}>{cat}</SelectItem>
                               ))}
                             </SelectContent>
                           </Select>
@@ -569,7 +569,7 @@ const Articles = () => {
                       >
                         Kategorie entfernen
                       </CommandItem>
-                      {existingCategories.map((category) => (
+                      {allCategories.map((category) => (
                         <CommandItem
                           key={category}
                           value={category}
