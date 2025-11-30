@@ -1,10 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useOrders, useUpdateOrderStatus, Order } from '@/hooks/useOrders';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
@@ -12,13 +13,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { format } from 'date-fns';
+import { format, isAfter, isBefore, startOfDay, endOfDay, subDays, subMonths } from 'date-fns';
 import { de, enUS, fr } from 'date-fns/locale';
-import { Loader2, Package, Mail, CheckCircle2, Clock, Truck, XCircle, Eye } from 'lucide-react';
+import { Loader2, Package, CheckCircle2, Clock, Truck, XCircle, Eye, Search, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { OrderEmailViewDialog } from '@/components/orders/OrderEmailViewDialog';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
+
+type DateFilter = 'all' | 'today' | 'week' | 'month' | '3months';
 
 const localeMap = { de, en: enUS, fr };
 
@@ -50,6 +53,11 @@ const Orders = () => {
   const [emailDialogOpen, setEmailDialogOpen] = useState(false);
   const locale = localeMap[i18n.language as keyof typeof localeMap] || de;
 
+  // Filter states
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState<Order['status'] | 'all'>('all');
+  const [dateFilter, setDateFilter] = useState<DateFilter>('all');
+
   // Fetch organization name for email preview
   const { data: organization } = useQuery({
     queryKey: ['organization', user?.id],
@@ -63,6 +71,54 @@ const Orders = () => {
     },
     enabled: !!user?.id,
   });
+
+  // Filter orders
+  const filteredOrders = useMemo(() => {
+    if (!orders) return [];
+    
+    return orders.filter((order) => {
+      // Search filter
+      const searchLower = searchQuery.toLowerCase();
+      const matchesSearch = !searchQuery || 
+        order.order_number.toLowerCase().includes(searchLower) ||
+        order.suppliers?.name?.toLowerCase().includes(searchLower);
+      
+      // Status filter
+      const matchesStatus = statusFilter === 'all' || order.status === statusFilter;
+      
+      // Date filter
+      let matchesDate = true;
+      if (dateFilter !== 'all') {
+        const orderDate = new Date(order.created_at);
+        const now = new Date();
+        
+        switch (dateFilter) {
+          case 'today':
+            matchesDate = isAfter(orderDate, startOfDay(now)) && isBefore(orderDate, endOfDay(now));
+            break;
+          case 'week':
+            matchesDate = isAfter(orderDate, subDays(now, 7));
+            break;
+          case 'month':
+            matchesDate = isAfter(orderDate, subMonths(now, 1));
+            break;
+          case '3months':
+            matchesDate = isAfter(orderDate, subMonths(now, 3));
+            break;
+        }
+      }
+      
+      return matchesSearch && matchesStatus && matchesDate;
+    });
+  }, [orders, searchQuery, statusFilter, dateFilter]);
+
+  const hasActiveFilters = searchQuery || statusFilter !== 'all' || dateFilter !== 'all';
+
+  const clearFilters = () => {
+    setSearchQuery('');
+    setStatusFilter('all');
+    setDateFilter('all');
+  };
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -97,6 +153,50 @@ const Orders = () => {
           </Button>
         </div>
 
+        {/* Filters */}
+        <div className="flex flex-col sm:flex-row gap-3">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              placeholder={t('orders.searchPlaceholder')}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9"
+            />
+          </div>
+          <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as Order['status'] | 'all')}>
+            <SelectTrigger className="w-full sm:w-40">
+              <SelectValue placeholder={t('orders.filterByStatus')} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{t('orders.allStatuses')}</SelectItem>
+              <SelectItem value="pending">{t('orders.status.pending')}</SelectItem>
+              <SelectItem value="confirmed">{t('orders.status.confirmed')}</SelectItem>
+              <SelectItem value="processing">{t('orders.status.processing')}</SelectItem>
+              <SelectItem value="shipped">{t('orders.status.shipped')}</SelectItem>
+              <SelectItem value="delivered">{t('orders.status.delivered')}</SelectItem>
+              <SelectItem value="cancelled">{t('orders.status.cancelled')}</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={dateFilter} onValueChange={(v) => setDateFilter(v as DateFilter)}>
+            <SelectTrigger className="w-full sm:w-40">
+              <SelectValue placeholder={t('orders.filterByDate')} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{t('orders.allDates')}</SelectItem>
+              <SelectItem value="today">{t('orders.today')}</SelectItem>
+              <SelectItem value="week">{t('orders.lastWeek')}</SelectItem>
+              <SelectItem value="month">{t('orders.lastMonth')}</SelectItem>
+              <SelectItem value="3months">{t('orders.last3Months')}</SelectItem>
+            </SelectContent>
+          </Select>
+          {hasActiveFilters && (
+            <Button variant="ghost" size="icon" onClick={clearFilters} className="shrink-0">
+              <X className="w-4 h-4" />
+            </Button>
+          )}
+        </div>
+
         {isLoading ? (
           <div className="flex items-center justify-center py-12">
             <Loader2 className="w-8 h-8 animate-spin text-primary" />
@@ -108,9 +208,16 @@ const Orders = () => {
             <p className="text-muted-foreground mb-6">{t('orders.noOrdersDescription')}</p>
             <Button onClick={() => navigate('/articles')}>{t('orders.browseArticles')}</Button>
           </div>
+        ) : filteredOrders.length === 0 ? (
+          <div className="text-center py-16 bg-card border border-border rounded-xl">
+            <Search className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
+            <h2 className="text-xl font-semibold text-foreground mb-2">{t('orders.noResults')}</h2>
+            <p className="text-muted-foreground mb-6">{t('orders.noResultsDescription')}</p>
+            <Button variant="outline" onClick={clearFilters}>{t('orders.clearFilters')}</Button>
+          </div>
         ) : (
           <div className="space-y-4">
-            {orders?.map((order) => {
+            {filteredOrders.map((order) => {
               const StatusIcon = statusIcons[order.status];
               return (
                 <div key={order.id} className="bg-card border border-border rounded-xl overflow-hidden">
