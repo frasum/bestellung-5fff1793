@@ -1,6 +1,5 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Mail, Send, Loader2, ChevronLeft, ChevronRight, Pencil, Check } from 'lucide-react';
@@ -87,7 +86,7 @@ export const EmailPreviewDialog = ({
           </DialogTitle>
         </DialogHeader>
 
-        <ScrollArea className="flex-1 max-h-[60vh]">
+        <div className="flex-1 overflow-y-auto pr-2" style={{ maxHeight: 'calc(80vh - 180px)' }}>
           <div className="space-y-4">
             {/* Email Header */}
             <div className="bg-muted/50 rounded-lg p-4 space-y-2 text-sm">
@@ -245,7 +244,7 @@ export const EmailPreviewDialog = ({
               </div>
             </div>
           </div>
-        </ScrollArea>
+        </div>
 
         <DialogFooter className="flex-col sm:flex-row gap-2 mt-4">
           {emailPreviews.length > 1 && (
