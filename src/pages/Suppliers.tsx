@@ -33,8 +33,9 @@ import {
 } from '@/components/ui/select';
 import { useForm } from 'react-hook-form';
 import { CsvImportDialog, ImportField } from '@/components/CsvImportDialog';
-import { useImportSuppliers } from '@/hooks/useImport';
+import { useImportSuppliers, useImportArticles } from '@/hooks/useImport';
 import { ExportMenu } from '@/components/ExportMenu';
+import { Package } from 'lucide-react';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 
@@ -60,6 +61,15 @@ const SUPPLIER_IMPORT_FIELDS: ImportField[] = [
   { name: 'minimum_order_value', label: 'Minimum Order Value', required: false },
 ];
 
+const ARTICLE_IMPORT_FIELDS: ImportField[] = [
+  { name: 'name', label: 'Name', required: true },
+  { name: 'price', label: 'Price', required: true },
+  { name: 'unit', label: 'Unit', required: false },
+  { name: 'sku', label: 'SKU', required: false },
+  { name: 'category', label: 'Category', required: false },
+  { name: 'description', label: 'Description', required: false },
+];
+
 const Suppliers = () => {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
@@ -69,6 +79,7 @@ const Suppliers = () => {
   const [isImportOpen, setIsImportOpen] = useState(false);
   const [editingSupplier, setEditingSupplier] = useState<Supplier | null>(null);
   const [deletingSupplier, setDeletingSupplier] = useState<Supplier | null>(null);
+  const [articleImportSupplierId, setArticleImportSupplierId] = useState<string | null>(null);
 
   const { data: suppliers, isLoading } = useSuppliers();
   const createSupplier = useCreateSupplier();
@@ -76,6 +87,7 @@ const Suppliers = () => {
   const deleteSupplier = useDeleteSupplier();
   const deactivateSupplier = useDeactivateSupplier();
   const importSuppliers = useImportSuppliers();
+  const importArticles = useImportArticles();
   const [showDeactivateOption, setShowDeactivateOption] = useState(false);
 
   const form = useForm<SupplierFormData>({
@@ -258,6 +270,25 @@ const Suppliers = () => {
                     placeholder="50.00" 
                   />
                 </div>
+                
+                {/* Article Import Button - only show when editing */}
+                {editingSupplier && (
+                  <div className="pt-2">
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      className="w-full"
+                      onClick={() => {
+                        setArticleImportSupplierId(editingSupplier.id);
+                        setIsDialogOpen(false);
+                      }}
+                    >
+                      <Package className="w-4 h-4 mr-2" />
+                      Artikel für {editingSupplier.name} importieren
+                    </Button>
+                  </div>
+                )}
+                
                 <div className="flex gap-3 pt-4">
                   <Button type="button" variant="outline" className="flex-1" onClick={() => {
                     setIsDialogOpen(false);
@@ -290,6 +321,20 @@ const Suppliers = () => {
             await importSuppliers.mutateAsync(data);
           }}
           templateFileName="suppliers_template.csv"
+        />
+
+        {/* Article Import Dialog for specific supplier */}
+        <CsvImportDialog
+          open={!!articleImportSupplierId}
+          onOpenChange={(open) => !open && setArticleImportSupplierId(null)}
+          title={`Artikel importieren für ${suppliers?.find(s => s.id === articleImportSupplierId)?.name || 'Lieferant'}`}
+          fields={ARTICLE_IMPORT_FIELDS}
+          onImport={async (data) => {
+            if (articleImportSupplierId) {
+              await importArticles.mutateAsync({ articles: data, defaultSupplierId: articleImportSupplierId });
+            }
+          }}
+          templateFileName="articles_template.csv"
         />
 
         {/* Search and Filter */}
