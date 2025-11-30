@@ -86,6 +86,7 @@ const Inventory = () => {
   const [deleteSessionId, setDeleteSessionId] = useState<string | null>(null);
   const [newSessionName, setNewSessionName] = useState('');
   const [supplierFilter, setSupplierFilter] = useState<string>('all');
+  const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [localItems, setLocalItems] = useState<Map<string, LocalInventoryItem>>(new Map());
   const [hasChanges, setHasChanges] = useState(false);
@@ -134,12 +135,22 @@ const Inventory = () => {
     }
   }, [sessions, activeSessionId]);
 
+  const categories = useMemo(() => {
+    if (!articles) return [];
+    const cats = new Set(articles.filter(a => a.category).map(a => a.category));
+    return Array.from(cats).sort();
+  }, [articles]);
+
   const filteredArticles = useMemo(() => {
     if (!articles) return [];
     let filtered = articles.filter((a) => a.is_active);
 
     if (supplierFilter && supplierFilter !== 'all') {
       filtered = filtered.filter((a) => a.supplier_id === supplierFilter);
+    }
+
+    if (categoryFilter && categoryFilter !== 'all') {
+      filtered = filtered.filter((a) => a.category === categoryFilter);
     }
 
     if (searchQuery) {
@@ -152,7 +163,7 @@ const Inventory = () => {
     }
 
     return filtered.sort((a, b) => a.name.localeCompare(b.name));
-  }, [articles, supplierFilter, searchQuery]);
+  }, [articles, supplierFilter, categoryFilter, searchQuery]);
 
   const handleCreateSession = async () => {
     if (!newSessionName.trim()) return;
@@ -357,7 +368,7 @@ const Inventory = () => {
             />
           </div>
           <Select value={supplierFilter} onValueChange={setSupplierFilter}>
-            <SelectTrigger className="w-full sm:w-64">
+            <SelectTrigger className="w-full sm:w-48">
               <SelectValue placeholder="Lieferant filtern" />
             </SelectTrigger>
             <SelectContent>
@@ -365,6 +376,19 @@ const Inventory = () => {
               {suppliers?.map((supplier) => (
                 <SelectItem key={supplier.id} value={supplier.id}>
                   {supplier.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+            <SelectTrigger className="w-full sm:w-48">
+              <SelectValue placeholder="Kategorie filtern" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Alle Kategorien</SelectItem>
+              {categories.map((category) => (
+                <SelectItem key={category} value={category!}>
+                  {category}
                 </SelectItem>
               ))}
             </SelectContent>
