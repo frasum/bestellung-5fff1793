@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
+import { Input } from '@/components/ui/input';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -11,7 +12,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { useCreateOrder } from '@/hooks/useOrders';
 import { useDeliveryAddresses } from '@/hooks/useSettings';
-import { ArrowLeft, CalendarIcon, CheckCircle2, Clock, Eye, Loader2, Mail, MapPin, Send, Settings } from 'lucide-react';
+import { ArrowLeft, CalendarIcon, CheckCircle2, Clock, Eye, Loader2, Mail, MapPin, Minus, Plus, Send, Settings, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { z } from 'zod';
 import { useForm, Controller } from 'react-hook-form';
@@ -41,7 +42,7 @@ type CheckoutFormData = z.infer<typeof checkoutSchema>;
 const Checkout = () => {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
-  const { items, getTotal, clearCart } = useCart();
+  const { items, getTotal, clearCart, updateQuantity, removeItem } = useCart();
   const createOrder = useCreateOrder();
   const { data: deliveryAddresses, isLoading: addressesLoading } = useDeliveryAddresses();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -289,16 +290,54 @@ const Checkout = () => {
                 </div>
                 <div className="divide-y divide-border">
                   {supplierItems.map((item) => (
-                    <div key={item.article.id} className="p-4 flex items-center justify-between">
-                      <div>
-                        <p className="font-medium text-foreground">{item.article.name}</p>
+                    <div key={item.article.id} className="p-4 flex items-center justify-between gap-4">
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-foreground truncate">{item.article.name}</p>
                         <p className="text-sm text-muted-foreground">
-                          {item.quantity} {item.article.unit} × €{Number(item.article.price).toFixed(2)}
+                          {item.article.unit} × €{Number(item.article.price).toFixed(2)}
                         </p>
                       </div>
-                      <p className="font-semibold text-foreground">
-                        €{(Number(item.article.price) * item.quantity).toFixed(2)}
-                      </p>
+                      <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={() => updateQuantity(item.article.id, item.quantity - 1)}
+                          >
+                            <Minus className="h-3 w-3" />
+                          </Button>
+                          <Input
+                            type="number"
+                            min="1"
+                            value={item.quantity}
+                            onChange={(e) => updateQuantity(item.article.id, parseInt(e.target.value) || 1)}
+                            className="w-16 h-8 text-center"
+                          />
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={() => updateQuantity(item.article.id, item.quantity + 1)}
+                          >
+                            <Plus className="h-3 w-3" />
+                          </Button>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-destructive hover:text-destructive"
+                          onClick={() => removeItem(item.article.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                        <p className="font-semibold text-foreground w-20 text-right">
+                          €{(Number(item.article.price) * item.quantity).toFixed(2)}
+                        </p>
+                      </div>
                     </div>
                   ))}
                 </div>
