@@ -562,6 +562,7 @@ const Articles = () => {
                             <p className="font-medium text-foreground truncate">{article.name}</p>
                             <div className="flex items-center gap-2 text-xs text-muted-foreground">
                               <span className="sm:hidden truncate">{article.suppliers?.name}</span>
+                              {article.category && <span className="text-primary font-medium">{article.category}</span>}
                               {article.sku && <span className="text-muted-foreground">SKU: {article.sku}</span>}
                             </div>
                           </div>
