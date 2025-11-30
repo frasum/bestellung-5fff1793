@@ -116,15 +116,15 @@ const Checkout = () => {
     const formattedAddress = `${selectedAddress.label}\n${formatAddress(selectedAddress)}`;
 
     try {
-      // Fetch supplier emails
+      // Fetch supplier emails and customer numbers
       const { supabase } = await import('@/integrations/supabase/client');
       const supplierIds = supplierOrders.map(s => s.supplierId);
       const { data: suppliers } = await supabase
         .from('suppliers')
-        .select('id, email')
+        .select('id, email, customer_number')
         .in('id', supplierIds);
 
-      const supplierEmails = new Map(suppliers?.map(s => [s.id, s.email]) || []);
+      const supplierData = new Map(suppliers?.map(s => [s.id, { email: s.email, customerNumber: s.customer_number }]) || []);
 
       // Fetch organization name
       const { data: profile } = await supabase
@@ -142,21 +142,25 @@ const Checkout = () => {
       const fullNotes = data.notes ? `${deliveryInfo}\n\n${data.notes}` : deliveryInfo;
 
       // Build email previews
-      const previews: EmailPreviewData[] = supplierOrders.map(supplier => ({
-        supplierName: supplier.supplierName,
-        supplierEmail: supplierEmails.get(supplier.supplierId) || '',
-        restaurantName,
-        deliveryAddress: formattedAddress,
-        items: supplier.items.map(item => ({
-          article_name: item.article.name,
-          quantity: item.quantity,
-          unit: item.article.unit,
-          unit_price: Number(item.article.price),
-          total_price: Number(item.article.price) * item.quantity,
-        })),
-        totalAmount: supplier.total,
-        notes: fullNotes,
-      }));
+      const previews: EmailPreviewData[] = supplierOrders.map(supplier => {
+        const data = supplierData.get(supplier.supplierId);
+        return {
+          supplierName: supplier.supplierName,
+          supplierEmail: data?.email || '',
+          restaurantName,
+          deliveryAddress: formattedAddress,
+          items: supplier.items.map(item => ({
+            article_name: item.article.name,
+            quantity: item.quantity,
+            unit: item.article.unit,
+            unit_price: Number(item.article.price),
+            total_price: Number(item.article.price) * item.quantity,
+          })),
+          totalAmount: supplier.total,
+          notes: fullNotes,
+          customerNumber: data?.customerNumber || undefined,
+        };
+      });
 
       setEmailPreviews(previews);
       setPendingOrderData(data);

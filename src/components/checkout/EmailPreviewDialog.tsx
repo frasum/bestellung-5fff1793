@@ -23,6 +23,7 @@ export interface EmailPreviewData {
   items: OrderItem[];
   totalAmount: number;
   notes?: string;
+  customerNumber?: string;
 }
 
 interface EmailPreviewDialogProps {
@@ -100,7 +101,10 @@ export const EmailPreviewDialog = ({
               </div>
               <div className="flex gap-2">
                 <span className="text-muted-foreground w-12">Betreff:</span>
-                <span className="font-medium">Neue Bestellung von {currentEmail.restaurantName}</span>
+                <span className="font-medium">
+                  Neue Bestellung von {currentEmail.restaurantName}
+                  {currentEmail.customerNumber && ` (Kd-Nr: ${currentEmail.customerNumber})`}
+                </span>
               </div>
             </div>
 
