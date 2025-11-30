@@ -30,7 +30,23 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { useArticles, useCreateArticle, useUpdateArticle, useDeleteArticle, Article, ArticleInput } from '@/hooks/useArticles';
+import { useArticles, useCreateArticle, useUpdateArticle, useDeleteArticle, useBulkUpdateArticles, Article, ArticleInput } from '@/hooks/useArticles';
+import { Checkbox } from '@/components/ui/checkbox';
+import { cn } from '@/lib/utils';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from '@/components/ui/command';
+import { Check, ChevronsUpDown, Tags } from 'lucide-react';
 import { useSuppliers } from '@/hooks/useSuppliers';
 import { Plus, Pencil, Trash2, Search, ShoppingCart, Minus, Loader2, Package, Upload, LayoutGrid, List } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -79,13 +95,22 @@ const Articles = () => {
   const [editingArticle, setEditingArticle] = useState<Article | null>(null);
   const [deletingArticle, setDeletingArticle] = useState<Article | null>(null);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
+  const [selectedArticles, setSelectedArticles] = useState<Set<string>>(new Set());
+  const [categoryPopoverOpen, setCategoryPopoverOpen] = useState(false);
+  const [customCategory, setCustomCategory] = useState('');
 
   const { data: articles, isLoading } = useArticles();
   const { data: suppliers } = useSuppliers();
   const createArticle = useCreateArticle();
   const updateArticle = useUpdateArticle();
   const deleteArticle = useDeleteArticle();
+  const bulkUpdateArticles = useBulkUpdateArticles();
   const importArticles = useImportArticles();
+
+  // Extract unique categories from articles
+  const existingCategories = [...new Set(
+    articles?.map(a => a.category).filter(Boolean) as string[]
+  )].sort();
 
   const form = useForm<ArticleFormData>({
     resolver: zodResolver(articleSchema),
@@ -156,6 +181,37 @@ const Articles = () => {
   });
 
   const categories = [...new Set(articles?.map((a) => a.category).filter(Boolean) || [])];
+
+  const toggleArticleSelected = (articleId: string) => {
+    setSelectedArticles(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(articleId)) {
+        newSet.delete(articleId);
+      } else {
+        newSet.add(articleId);
+      }
+      return newSet;
+    });
+  };
+
+  const selectAllArticles = () => {
+    if (selectedArticles.size === (filteredArticles?.length || 0)) {
+      setSelectedArticles(new Set());
+    } else {
+      setSelectedArticles(new Set(filteredArticles?.map(a => a.id) || []));
+    }
+  };
+
+  const handleBulkCategoryAssign = async (category: string) => {
+    if (selectedArticles.size === 0) return;
+    await bulkUpdateArticles.mutateAsync({
+      ids: Array.from(selectedArticles),
+      updates: { category }
+    });
+    setSelectedArticles(new Set());
+    setCategoryPopoverOpen(false);
+    setCustomCategory('');
+  };
 
   if (authLoading || !user) {
     return (
@@ -391,6 +447,64 @@ const Articles = () => {
           </div>
         </div>
 
+        {/* Selection Toolbar */}
+        {selectedArticles.size > 0 && (
+          <div className="flex items-center gap-4 p-3 bg-primary/10 border border-primary/20 rounded-lg">
+            <span className="text-sm font-medium">
+              {selectedArticles.size} Artikel ausgewählt
+            </span>
+            <Popover open={categoryPopoverOpen} onOpenChange={setCategoryPopoverOpen}>
+              <PopoverTrigger asChild>
+                <Button variant="outline" size="sm">
+                  <Tags className="w-4 h-4 mr-2" />
+                  Kategorie zuweisen
+                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-64 p-0 bg-popover border border-border z-50" align="start">
+                <Command>
+                  <CommandInput 
+                    placeholder="Kategorie suchen oder eingeben..." 
+                    value={customCategory}
+                    onValueChange={setCustomCategory}
+                  />
+                  <CommandList>
+                    <CommandEmpty>
+                      {customCategory && (
+                        <button
+                          type="button"
+                          className="w-full px-2 py-1.5 text-left text-sm hover:bg-accent cursor-pointer"
+                          onClick={() => handleBulkCategoryAssign(customCategory)}
+                        >
+                          "{customCategory}" hinzufügen
+                        </button>
+                      )}
+                    </CommandEmpty>
+                    <CommandGroup>
+                      {existingCategories.map((category) => (
+                        <CommandItem
+                          key={category}
+                          value={category}
+                          onSelect={() => handleBulkCategoryAssign(category)}
+                        >
+                          {category}
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
+            <Button 
+              variant="ghost" 
+              size="sm"
+              onClick={() => setSelectedArticles(new Set())}
+            >
+              Auswahl aufheben
+            </Button>
+          </div>
+        )}
+
         {/* Articles Grid */}
         {isLoading ? (
           <div className="flex items-center justify-center py-12">
@@ -411,6 +525,12 @@ const Articles = () => {
             <Table>
               <TableHeader>
                 <TableRow className="hover:bg-transparent">
+                  <TableHead className="w-[40px]">
+                    <Checkbox
+                      checked={filteredArticles?.length > 0 && selectedArticles.size === filteredArticles?.length}
+                      onCheckedChange={selectAllArticles}
+                    />
+                  </TableHead>
                   <TableHead className="w-[25%]">Article</TableHead>
                   <TableHead className="hidden md:table-cell w-[25%]">Description</TableHead>
                   <TableHead className="hidden sm:table-cell">Supplier</TableHead>
@@ -423,6 +543,12 @@ const Articles = () => {
                   const cartQty = getCartQuantity(article.id);
                   return (
                     <TableRow key={article.id} className="group h-10">
+                      <TableCell className="py-2">
+                        <Checkbox
+                          checked={selectedArticles.has(article.id)}
+                          onCheckedChange={() => toggleArticleSelected(article.id)}
+                        />
+                      </TableCell>
                       <TableCell className="py-2">
                         <div className="flex items-center gap-3">
                           <div className="min-w-0 flex-1">
