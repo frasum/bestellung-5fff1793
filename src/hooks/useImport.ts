@@ -73,6 +73,9 @@ export const useImportArticles = () => {
 
       const supplierMap = new Map(suppliers?.map(s => [s.name.toLowerCase(), s.id]) || []);
 
+      console.log('Import articles - defaultSupplierId:', defaultSupplierId);
+      console.log('Import articles - sample data:', articles.slice(0, 3));
+
       const articlesToInsert = articles.map(a => {
         // Try to find supplier by name, fall back to default supplier
         let supplierId = a.supplier ? supplierMap.get(a.supplier.toLowerCase().trim()) : undefined;
