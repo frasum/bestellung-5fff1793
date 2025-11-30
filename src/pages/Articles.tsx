@@ -629,7 +629,7 @@ const Articles = () => {
                 {filteredArticles?.map((article) => {
                   const cartQty = getCartQuantity(article.id);
                   return (
-                    <TableRow key={article.id} className="group h-10">
+                    <TableRow key={article.id} className={cn("group h-10", cartQty > 0 && "bg-destructive/10")}>
                       <TableCell className="py-2">
                         <Checkbox
                           checked={selectedArticles.has(article.id)}
@@ -692,7 +692,7 @@ const Articles = () => {
                           >
                             <Minus className="w-3 h-3" />
                           </Button>
-                          <span className="w-8 text-center font-medium text-foreground">{cartQty}</span>
+                          <span className={cn("w-8 text-center font-medium", cartQty > 0 ? "text-destructive" : "text-foreground")}>{cartQty}</span>
                           <Button
                             size="icon"
                             variant="outline"
