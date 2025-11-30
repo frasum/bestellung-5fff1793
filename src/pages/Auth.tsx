@@ -95,7 +95,7 @@ const Auth = () => {
           <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
             <ChefHat className="w-6 h-6 text-primary-foreground" />
           </div>
-          <span className="font-bold text-2xl text-foreground">ProcureResto</span>
+          <span className="font-bold text-2xl text-foreground">OrderFox.pro</span>
         </Link>
 
         {/* Card */}
