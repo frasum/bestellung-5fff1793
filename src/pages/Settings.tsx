@@ -10,7 +10,8 @@ import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Building2, MapPin, Bell, Plus, Pencil, Trash2, Star, User, Lock, Users, Mail, Clock, X, Globe, FileText, RotateCcw } from 'lucide-react';
+import { Building2, MapPin, Bell, Plus, Pencil, Trash2, Star, User, Lock, Users, Mail, Clock, X, Globe, FileText, RotateCcw, Moon, Sun } from 'lucide-react';
+import { useTheme } from 'next-themes';
 import { Textarea } from '@/components/ui/textarea';
 import {
   useOrganization,
@@ -119,6 +120,7 @@ const ProfileTab = () => {
   const { data: profile, isLoading } = useUserProfile();
   const updateProfile = useUpdateUserProfile();
   const updatePassword = useUpdatePassword();
+  const { theme, setTheme } = useTheme();
   const [fullName, setFullName] = useState('');
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -193,6 +195,37 @@ const ProfileTab = () => {
           <Button onClick={handleProfileSave} disabled={updateProfile.isPending}>
             {updateProfile.isPending ? 'Saving...' : 'Save Profile'}
           </Button>
+
+          <div className="pt-4 border-t">
+            <Label className="mb-3 block">Theme</Label>
+            <div className="flex gap-2">
+              <Button
+                variant={theme === 'light' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setTheme('light')}
+                className="gap-2"
+              >
+                <Sun className="h-4 w-4" />
+                Light
+              </Button>
+              <Button
+                variant={theme === 'dark' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setTheme('dark')}
+                className="gap-2"
+              >
+                <Moon className="h-4 w-4" />
+                Dark
+              </Button>
+              <Button
+                variant={theme === 'system' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setTheme('system')}
+              >
+                System
+              </Button>
+            </div>
+          </div>
         </CardContent>
       </Card>
 

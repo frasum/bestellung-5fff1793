@@ -3,8 +3,6 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
-import { ThemeToggle } from '@/components/ThemeToggle';
-import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 import { cn } from '@/lib/utils';
 import { ChefHat, LayoutDashboard, Users, Package, ShoppingCart, FileText, BarChart3, Settings, LogOut, Menu, X, ClipboardList } from 'lucide-react';
 interface DashboardLayoutProps {
@@ -69,13 +67,9 @@ export const DashboardLayout = ({
           </div>
           <span className="font-bold text-lg text-foreground">OrderFox.pro</span>
         </Link>
-        <div className="flex items-center gap-2">
-          <LanguageSwitcher />
-          <ThemeToggle />
-          <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-2 text-muted-foreground hover:text-foreground">
-            {sidebarOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-          </button>
-        </div>
+        <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-2 text-muted-foreground hover:text-foreground">
+          {sidebarOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+        </button>
       </header>
 
       {/* Sidebar */}
@@ -88,10 +82,6 @@ export const DashboardLayout = ({
                 <ChefHat className="w-5 h-5 text-primary-foreground" />
               </div>
               <span className="font-bold text-xl text-foreground">OrderFox.pro</span>
-            </div>
-            <div className="hidden lg:flex items-center gap-1">
-              <ThemeToggle />
-              <LanguageSwitcher />
             </div>
           </div>
 
