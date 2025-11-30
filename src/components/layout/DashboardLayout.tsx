@@ -4,9 +4,10 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { ChefHat, LayoutDashboard, Users, Package, ShoppingCart, FileText, BarChart3, Settings, LogOut, Menu, X, ClipboardList } from 'lucide-react';
+import { LayoutDashboard, Users, Package, ShoppingCart, FileText, BarChart3, Settings, LogOut, Menu, X, ClipboardList } from 'lucide-react';
 import { GlobalSearch } from '@/components/GlobalSearch';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
+import logoImage from '@/assets/logo.png';
 interface DashboardLayoutProps {
   children: ReactNode;
 }
@@ -70,9 +71,7 @@ export const DashboardLayout = ({
       {/* Mobile Header */}
       <header className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-card border-b border-border h-16 flex items-center justify-between px-4">
         <Link to="/dashboard" className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-            <ChefHat className="w-4 h-4 text-primary-foreground" />
-          </div>
+          <img src={logoImage} alt="OrderFox.pro" className="w-8 h-8 rounded-lg object-cover" />
           <span className="font-bold text-lg text-foreground">OrderFox.pro</span>
         </Link>
         <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-2 text-muted-foreground hover:text-foreground">
@@ -99,9 +98,7 @@ export const DashboardLayout = ({
           {/* Logo */}
           <div className="h-16 flex items-center justify-between px-6 border-b border-border">
             <div className="flex items-center gap-2">
-              <div className="w-9 h-9 rounded-lg bg-primary flex items-center justify-center">
-                <ChefHat className="w-5 h-5 text-primary-foreground" />
-              </div>
+              <img src={logoImage} alt="OrderFox.pro" className="w-9 h-9 rounded-lg object-cover" />
               <span className="font-bold text-xl text-foreground">OrderFox.pro</span>
             </div>
           </div>
