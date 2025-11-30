@@ -30,7 +30,8 @@ import {
 } from '@/components/ui/collapsible';
 import { useSuppliers, useCreateSupplier, useUpdateSupplier, useDeleteSupplier, useDeactivateSupplier, Supplier, SupplierInput } from '@/hooks/useSuppliers';
 import { useArticles, Article } from '@/hooks/useArticles';
-import { Plus, Pencil, Trash2, Search, Mail, Phone, MapPin, User, Loader2, Upload, Hash, Euro, Filter, RotateCcw, Power, LayoutGrid, List, ChevronDown, ChevronRight, Minus, ShoppingCart } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, Mail, Phone, MapPin, User, Loader2, Upload, Hash, Euro, Filter, RotateCcw, Power, LayoutGrid, List, ChevronDown, ChevronRight, Minus, ShoppingCart, FileText } from 'lucide-react';
+import { generateOrderListPdf } from '@/lib/orderListPdf';
 import {
   Select,
   SelectContent,
@@ -501,6 +502,17 @@ const Suppliers = () => {
                         </TableCell>
                         <TableCell className="text-right py-2">
                           <div className="flex justify-end gap-1">
+                            {supplierArticles.length > 0 && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7 text-muted-foreground hover:text-primary"
+                                onClick={() => generateOrderListPdf(supplier, supplierArticles)}
+                                title="Bestellliste drucken"
+                              >
+                                <FileText className="w-3 h-3" />
+                              </Button>
+                            )}
                             {!supplier.is_active ? (
                               <Button
                                 variant="ghost"
@@ -632,6 +644,17 @@ const Suppliers = () => {
                     </span>
                   </div>
                   <div className="flex gap-1">
+                    {(articlesBySupplier[supplier.id]?.length || 0) > 0 && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-muted-foreground hover:text-primary"
+                        onClick={() => generateOrderListPdf(supplier, articlesBySupplier[supplier.id] || [])}
+                        title="Bestellliste drucken"
+                      >
+                        <FileText className="w-4 h-4" />
+                      </Button>
+                    )}
                     {!supplier.is_active ? (
                       <Button
                         variant="ghost"
