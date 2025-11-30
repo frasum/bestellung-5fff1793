@@ -586,7 +586,7 @@ const Suppliers = () => {
                                             >
                                               <Minus className="w-3 h-3" />
                                             </Button>
-                                            <span className="w-6 text-center text-sm font-medium">{cartQty}</span>
+                                            <span className={`w-6 text-center text-sm font-medium ${cartQty > 0 ? 'text-destructive' : ''}`}>{cartQty}</span>
                                             <Button
                                               size="icon"
                                               variant="outline"
