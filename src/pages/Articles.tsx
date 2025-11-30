@@ -70,7 +70,7 @@ const articleSchema = z.object({
 
 type ArticleFormData = z.infer<typeof articleSchema>;
 
-const UNITS = ['kg', 'g', 'L', 'ml', 'pcs', 'box', 'bunch', 'pack'];
+const DEFAULT_UNITS = ['kg', 'g', 'L', 'ml', 'pcs', 'box', 'bunch', 'pack'];
 const CATEGORIES: string[] = [];
 
 const ARTICLE_IMPORT_FIELDS: ImportField[] = [
@@ -98,6 +98,8 @@ const Articles = () => {
   const [selectedArticles, setSelectedArticles] = useState<Set<string>>(new Set());
   const [categoryPopoverOpen, setCategoryPopoverOpen] = useState(false);
   const [customCategory, setCustomCategory] = useState('');
+  const [unitPopoverOpen, setUnitPopoverOpen] = useState(false);
+  const [customUnit, setCustomUnit] = useState('');
 
   const { data: articles, isLoading } = useArticles();
   const { data: suppliers } = useSuppliers();
@@ -111,6 +113,12 @@ const Articles = () => {
   const existingCategories = [...new Set(
     articles?.map(a => a.category).filter(Boolean) as string[]
   )].sort();
+
+  // Extract unique units from articles + defaults
+  const existingUnits = [...new Set([
+    ...DEFAULT_UNITS,
+    ...(articles?.map(a => a.unit).filter(Boolean) as string[] || [])
+  ])].sort();
 
   const form = useForm<ArticleFormData>({
     resolver: zodResolver(articleSchema),
@@ -344,16 +352,67 @@ const Articles = () => {
                         name="unit"
                         control={form.control}
                         render={({ field }) => (
-                          <Select onValueChange={field.onChange} value={field.value}>
-                            <SelectTrigger className="bg-card">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent className="bg-card border border-border z-50">
-                              {UNITS.map((unit) => (
-                                <SelectItem key={unit} value={unit}>{unit}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
+                          <Popover open={unitPopoverOpen} onOpenChange={setUnitPopoverOpen}>
+                            <PopoverTrigger asChild>
+                              <Button
+                                variant="outline"
+                                role="combobox"
+                                aria-expanded={unitPopoverOpen}
+                                className="w-full justify-between bg-card"
+                              >
+                                {field.value || "Select"}
+                                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-[200px] p-0" align="start">
+                              <Command>
+                                <CommandInput 
+                                  placeholder="Einheit suchen..." 
+                                  value={customUnit}
+                                  onValueChange={setCustomUnit}
+                                />
+                                <CommandList>
+                                  <CommandEmpty>
+                                    {customUnit && (
+                                      <Button
+                                        variant="ghost"
+                                        className="w-full justify-start"
+                                        onClick={() => {
+                                          field.onChange(customUnit);
+                                          setUnitPopoverOpen(false);
+                                          setCustomUnit('');
+                                        }}
+                                      >
+                                        <Plus className="mr-2 h-4 w-4" />
+                                        "{customUnit}" hinzufügen
+                                      </Button>
+                                    )}
+                                  </CommandEmpty>
+                                  <CommandGroup>
+                                    {existingUnits.map((unit) => (
+                                      <CommandItem
+                                        key={unit}
+                                        value={unit}
+                                        onSelect={() => {
+                                          field.onChange(unit);
+                                          setUnitPopoverOpen(false);
+                                          setCustomUnit('');
+                                        }}
+                                      >
+                                        <Check
+                                          className={cn(
+                                            "mr-2 h-4 w-4",
+                                            field.value === unit ? "opacity-100" : "opacity-0"
+                                          )}
+                                        />
+                                        {unit}
+                                      </CommandItem>
+                                    ))}
+                                  </CommandGroup>
+                                </CommandList>
+                              </Command>
+                            </PopoverContent>
+                          </Popover>
                         )}
                       />
                     </div>
