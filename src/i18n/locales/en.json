@@ -257,7 +257,19 @@
     "supplierUpdates": "Supplier Updates",
     "supplierUpdatesDesc": "Receive email for important supplier changes",
     "weeklyReport": "Weekly Report",
-    "weeklyReportDesc": "Weekly summary of spending and orders"
+    "weeklyReportDesc": "Weekly summary of spending and orders",
+    "emailTemplates": "Email Templates",
+    "emailTemplateTitle": "Order Email Template",
+    "emailTemplateDescription": "Customize the email template for orders to suppliers",
+    "subjectTemplate": "Subject Line",
+    "subjectTemplateHelp": "Available variables: {restaurant_name}, {customer_number_suffix}",
+    "greeting": "Greeting",
+    "introduction": "Introduction",
+    "closing": "Closing Text",
+    "signature": "Signature",
+    "signatureHelp": "Available variables: {restaurant_name}",
+    "resetToDefault": "Reset to Default",
+    "templatePreview": "Preview"
   },
   "landing": {
     "heroTitle": "Smart Procurement for Restaurants",

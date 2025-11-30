@@ -257,7 +257,19 @@
     "supplierUpdates": "Mises à jour fournisseurs",
     "supplierUpdatesDesc": "Recevoir un e-mail pour les changements importants",
     "weeklyReport": "Rapport hebdomadaire",
-    "weeklyReportDesc": "Résumé hebdomadaire des dépenses et commandes"
+    "weeklyReportDesc": "Résumé hebdomadaire des dépenses et commandes",
+    "emailTemplates": "Modèles d'e-mail",
+    "emailTemplateTitle": "Modèle d'e-mail de commande",
+    "emailTemplateDescription": "Personnalisez le modèle d'e-mail pour les commandes aux fournisseurs",
+    "subjectTemplate": "Ligne d'objet",
+    "subjectTemplateHelp": "Variables disponibles: {restaurant_name}, {customer_number_suffix}",
+    "greeting": "Salutation",
+    "introduction": "Introduction",
+    "closing": "Texte de clôture",
+    "signature": "Signature",
+    "signatureHelp": "Variables disponibles: {restaurant_name}",
+    "resetToDefault": "Réinitialiser par défaut",
+    "templatePreview": "Aperçu"
   },
   "landing": {
     "heroTitle": "Approvisionnement intelligent pour restaurants",

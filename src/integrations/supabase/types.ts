@@ -124,6 +124,53 @@ export type Database = {
           },
         ]
       }
+      email_templates: {
+        Row: {
+          closing: string
+          created_at: string
+          greeting: string
+          id: string
+          introduction: string
+          organization_id: string
+          signature: string
+          subject_template: string
+          template_type: string
+          updated_at: string
+        }
+        Insert: {
+          closing?: string
+          created_at?: string
+          greeting?: string
+          id?: string
+          introduction?: string
+          organization_id: string
+          signature?: string
+          subject_template?: string
+          template_type?: string
+          updated_at?: string
+        }
+        Update: {
+          closing?: string
+          created_at?: string
+          greeting?: string
+          id?: string
+          introduction?: string
+          organization_id?: string
+          signature?: string
+          subject_template?: string
+          template_type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_templates_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notification_preferences: {
         Row: {
           created_at: string
