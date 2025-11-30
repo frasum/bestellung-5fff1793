@@ -117,7 +117,34 @@ export const CsvImportDialog = ({
     const firstSheetName = workbook.SheetNames[0];
     const worksheet = workbook.Sheets[firstSheetName];
     
+    console.log('Excel parsing - Sheet name:', firstSheetName);
+    console.log('Excel parsing - Worksheet keys:', Object.keys(worksheet).slice(0, 20));
+    
+    // Try sheet_to_json with default options first (uses first row as headers automatically)
+    const jsonDataWithHeaders = XLSX.utils.sheet_to_json(worksheet) as Record<string, unknown>[];
+    console.log('Excel parsing - JSON with headers sample:', JSON.stringify(jsonDataWithHeaders.slice(0, 3)));
+    
+    if (jsonDataWithHeaders.length > 0) {
+      // Extract headers from the first object's keys
+      const headers = Object.keys(jsonDataWithHeaders[0]);
+      console.log('Excel parsing - Detected headers:', headers);
+      
+      const rows: Record<string, string>[] = jsonDataWithHeaders.map(row => {
+        const stringRow: Record<string, string> = {};
+        headers.forEach(header => {
+          stringRow[header] = String(row[header] ?? '').trim();
+        });
+        return stringRow;
+      });
+      
+      console.log('Excel parsing - Rows sample:', JSON.stringify(rows.slice(0, 3)));
+      return { headers, rows };
+    }
+    
+    // Fallback to header: 1 approach
     const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 }) as unknown[][];
+    console.log('Excel parsing fallback - Raw data sample:', JSON.stringify(jsonData.slice(0, 3)));
+    
     if (jsonData.length === 0) throw new Error('Excel file is empty');
 
     const headers = (jsonData[0] || []).map(h => String(h || '').trim());
