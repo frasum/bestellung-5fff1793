@@ -53,7 +53,7 @@ export const useImportArticles = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (articles: Record<string, string>[]) => {
+    mutationFn: async ({ articles, defaultSupplierId }: { articles: Record<string, string>[], defaultSupplierId?: string }) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
@@ -74,7 +74,14 @@ export const useImportArticles = () => {
       const supplierMap = new Map(suppliers?.map(s => [s.name.toLowerCase(), s.id]) || []);
 
       const articlesToInsert = articles.map(a => {
-        const supplierId = supplierMap.get(a.supplier?.toLowerCase().trim());
+        // Try to find supplier by name, fall back to default supplier
+        let supplierId = a.supplier ? supplierMap.get(a.supplier.toLowerCase().trim()) : undefined;
+        
+        // If no supplier found by name and we have a default, use it
+        if (!supplierId && defaultSupplierId) {
+          supplierId = defaultSupplierId;
+        }
+        
         if (!supplierId) return null;
 
         return {
@@ -91,7 +98,7 @@ export const useImportArticles = () => {
       }).filter((a): a is NonNullable<typeof a> => a !== null && !!a.name && a.price > 0);
 
       if (articlesToInsert.length === 0) {
-        throw new Error('No valid articles to import. Make sure supplier names match existing suppliers.');
+        throw new Error('No valid articles to import. Make sure to select a supplier or that supplier names match existing suppliers.');
       }
 
       const { error } = await supabase
