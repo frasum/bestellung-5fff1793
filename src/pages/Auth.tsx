@@ -3,12 +3,13 @@ import { useNavigate, Link } from 'react-router-dom';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { ChefHat, Mail, Lock, User, Building2, ArrowRight, Loader2 } from 'lucide-react';
+import { Mail, Lock, User, Building2, ArrowRight, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
+import logoImage from '@/assets/logo.png';
 
 const loginSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
@@ -92,9 +93,7 @@ const Auth = () => {
       <div className="w-full max-w-md">
         {/* Logo */}
         <Link to="/" className="flex items-center justify-center gap-2 mb-8">
-          <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
-            <ChefHat className="w-6 h-6 text-primary-foreground" />
-          </div>
+          <img src={logoImage} alt="OrderFox.pro" className="w-10 h-10 rounded-lg object-cover" />
           <span className="font-bold text-2xl text-foreground">OrderFox.pro</span>
         </Link>
 
