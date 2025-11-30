@@ -206,16 +206,20 @@ export const CsvImportDialog = ({
   };
 
   const downloadTemplate = () => {
-    const headers = fields.map(f => f.name).join(',');
-    const example = fields.map(f => f.required ? `Example ${f.label}` : '').join(',');
-    const csv = `${headers}\n${example}`;
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = templateFileName;
-    a.click();
-    URL.revokeObjectURL(url);
+    const headers = fields.map(f => f.name);
+    const example = fields.map(f => f.required ? `Example ${f.label}` : '');
+    
+    const ws = XLSX.utils.aoa_to_sheet([headers, example]);
+    
+    // Set column widths
+    ws['!cols'] = headers.map(() => ({ wch: 20 }));
+    
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Template');
+    
+    // Generate filename with .xlsx extension
+    const filename = templateFileName.replace(/\.(csv|xlsx|xls)$/i, '') + '.xlsx';
+    XLSX.writeFile(wb, filename);
   };
 
   return (
