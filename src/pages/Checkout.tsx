@@ -155,6 +155,7 @@ const Checkout = () => {
             unit: item.article.unit,
             unit_price: Number(item.article.price),
             total_price: Number(item.article.price) * item.quantity,
+            sku: item.article.sku || undefined,
           })),
           totalAmount: supplier.total,
           notes: fullNotes,
