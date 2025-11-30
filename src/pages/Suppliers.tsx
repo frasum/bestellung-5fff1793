@@ -73,10 +73,13 @@ const supplierSchema = z.object({
   contact_person: z.string().optional(),
   customer_number: z.string().optional(),
   minimum_order_value: z.string().optional(),
+  top_category: z.string().optional(),
   main_category: z.string().optional(),
 });
 
 type SupplierFormData = z.infer<typeof supplierSchema>;
+
+const TOP_CATEGORIES = ['Küche', 'Bar', 'Bedarfsartikel'] as const;
 
 const SUPPLIER_IMPORT_FIELDS: ImportField[] = [
   { name: 'name', label: 'Name', required: true },
@@ -185,7 +188,7 @@ const Suppliers = () => {
 
   const form = useForm<SupplierFormData>({
     resolver: zodResolver(supplierSchema),
-    defaultValues: { name: '', email: '', phone: '', address: '', contact_person: '', customer_number: '', minimum_order_value: '', main_category: '' },
+    defaultValues: { name: '', email: '', phone: '', address: '', contact_person: '', customer_number: '', minimum_order_value: '', top_category: '', main_category: '' },
   });
 
   useEffect(() => {
@@ -204,10 +207,11 @@ const Suppliers = () => {
         contact_person: editingSupplier.contact_person || '',
         customer_number: editingSupplier.customer_number || '',
         minimum_order_value: editingSupplier.minimum_order_value?.toString() || '',
+        top_category: editingSupplier.top_category || '',
         main_category: editingSupplier.main_category || '',
       });
     } else {
-      form.reset({ name: '', email: '', phone: '', address: '', contact_person: '', customer_number: '', minimum_order_value: '', main_category: '' });
+      form.reset({ name: '', email: '', phone: '', address: '', contact_person: '', customer_number: '', minimum_order_value: '', top_category: '', main_category: '' });
     }
   }, [editingSupplier, form]);
 
@@ -220,6 +224,7 @@ const Suppliers = () => {
       contact_person: data.contact_person || undefined,
       customer_number: data.customer_number || undefined,
       minimum_order_value: data.minimum_order_value ? parseFloat(data.minimum_order_value) : undefined,
+      top_category: data.top_category || undefined,
       main_category: data.main_category || undefined,
     };
 
@@ -364,6 +369,22 @@ const Suppliers = () => {
                     {...form.register('minimum_order_value')} 
                     placeholder="50.00" 
                   />
+                </div>
+                <div className="space-y-2">
+                  <Label>Oberkategorie</Label>
+                  <Select
+                    value={form.watch('top_category') || ''}
+                    onValueChange={(value) => form.setValue('top_category', value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Oberkategorie auswählen..." />
+                    </SelectTrigger>
+                    <SelectContent className="bg-popover border border-border z-50">
+                      {TOP_CATEGORIES.map((cat) => (
+                        <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="space-y-2">
                   <Label>Hauptkategorie</Label>
