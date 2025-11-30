@@ -1,12 +1,15 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Menu, X, ChefHat } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 
 export const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const { user } = useAuth();
+  const { t } = useTranslation();
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-lg border-b border-border">
@@ -23,29 +26,30 @@ export const Navbar = () => {
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-8">
             <a href="#features" className="text-muted-foreground hover:text-foreground transition-colors">
-              Features
+              {t('nav.features')}
             </a>
             <a href="#pricing" className="text-muted-foreground hover:text-foreground transition-colors">
-              Pricing
+              {t('nav.pricing')}
             </a>
             <a href="#about" className="text-muted-foreground hover:text-foreground transition-colors">
-              About
+              {t('nav.about')}
             </a>
           </div>
 
           {/* Desktop CTA */}
           <div className="hidden md:flex items-center gap-3">
+            <LanguageSwitcher />
             {user ? (
               <Button asChild>
-                <Link to="/dashboard">Dashboard</Link>
+                <Link to="/dashboard">{t('nav.dashboard')}</Link>
               </Button>
             ) : (
               <>
                 <Button variant="ghost" asChild>
-                  <Link to="/auth">Sign In</Link>
+                  <Link to="/auth">{t('nav.signIn')}</Link>
                 </Button>
                 <Button asChild>
-                  <Link to="/auth">Get Started</Link>
+                  <Link to="/auth">{t('nav.getStarted')}</Link>
                 </Button>
               </>
             )}
@@ -70,34 +74,37 @@ export const Navbar = () => {
                 className="text-muted-foreground hover:text-foreground transition-colors px-2 py-2"
                 onClick={() => setIsOpen(false)}
               >
-                Features
+                {t('nav.features')}
               </a>
               <a 
                 href="#pricing" 
                 className="text-muted-foreground hover:text-foreground transition-colors px-2 py-2"
                 onClick={() => setIsOpen(false)}
               >
-                Pricing
+                {t('nav.pricing')}
               </a>
               <a 
                 href="#about" 
                 className="text-muted-foreground hover:text-foreground transition-colors px-2 py-2"
                 onClick={() => setIsOpen(false)}
               >
-                About
+                {t('nav.about')}
               </a>
+              <div className="flex items-center gap-2 px-2 py-2">
+                <LanguageSwitcher variant="full" />
+              </div>
               <div className="flex flex-col gap-2 pt-4 border-t border-border">
                 {user ? (
                   <Button asChild>
-                    <Link to="/dashboard">Dashboard</Link>
+                    <Link to="/dashboard">{t('nav.dashboard')}</Link>
                   </Button>
                 ) : (
                   <>
                     <Button variant="ghost" asChild className="justify-start">
-                      <Link to="/auth">Sign In</Link>
+                      <Link to="/auth">{t('nav.signIn')}</Link>
                     </Button>
                     <Button asChild>
-                      <Link to="/auth">Get Started</Link>
+                      <Link to="/auth">{t('nav.getStarted')}</Link>
                     </Button>
                   </>
                 )}

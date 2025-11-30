@@ -1,8 +1,10 @@
 import { ReactNode, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 import { cn } from '@/lib/utils';
 import {
   ChefHat,
@@ -21,20 +23,21 @@ interface DashboardLayoutProps {
   children: ReactNode;
 }
 
-const navItems = [
-  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/suppliers', label: 'Suppliers', icon: Users },
-  { href: '/articles', label: 'Articles', icon: Package },
-  { href: '/orders', label: 'Orders', icon: ShoppingCart },
-  { href: '/reports', label: 'Reports', icon: BarChart3 },
-  { href: '/settings', label: 'Settings', icon: Settings },
-];
-
 export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { user, signOut } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
+  const { t } = useTranslation();
+
+  const navItems = [
+    { href: '/dashboard', label: t('nav.dashboard'), icon: LayoutDashboard },
+    { href: '/suppliers', label: t('nav.suppliers'), icon: Users },
+    { href: '/articles', label: t('nav.articles'), icon: Package },
+    { href: '/orders', label: t('nav.orders'), icon: ShoppingCart },
+    { href: '/reports', label: t('nav.reports'), icon: BarChart3 },
+    { href: '/settings', label: t('nav.settings'), icon: Settings },
+  ];
 
   const handleSignOut = async () => {
     await signOut();
@@ -52,6 +55,7 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
           <span className="font-bold text-lg text-foreground">ProcureResto</span>
         </Link>
         <div className="flex items-center gap-2">
+          <LanguageSwitcher />
           <ThemeToggle />
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -79,7 +83,8 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
               </div>
               <span className="font-bold text-xl text-foreground">ProcureResto</span>
             </div>
-            <div className="hidden lg:block">
+            <div className="hidden lg:flex items-center gap-2">
+              <LanguageSwitcher />
               <ThemeToggle />
             </div>
           </div>
@@ -121,7 +126,7 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
             </div>
             <Button variant="ghost" className="w-full justify-start" onClick={handleSignOut}>
               <LogOut className="w-4 h-4 mr-2" />
-              Sign Out
+              {t('nav.signOut')}
             </Button>
           </div>
         </div>

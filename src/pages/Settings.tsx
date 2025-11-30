@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,7 +10,7 @@ import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Building2, MapPin, Bell, Plus, Pencil, Trash2, Star, User, Lock, Users, Mail, Clock, X } from 'lucide-react';
+import { Building2, MapPin, Bell, Plus, Pencil, Trash2, Star, User, Lock, Users, Mail, Clock, X, Globe } from 'lucide-react';
 import {
   useOrganization,
   useUpdateOrganization,
@@ -37,35 +38,41 @@ import {
 import { useAuth } from '@/contexts/AuthContext';
 
 const Settings = () => {
+  const { t } = useTranslation();
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Settings</h1>
-          <p className="text-muted-foreground">Manage your organization and preferences</p>
+          <h1 className="text-3xl font-bold text-foreground">{t('settings.title')}</h1>
+          <p className="text-muted-foreground">{t('settings.description')}</p>
         </div>
 
         <Tabs defaultValue="profile" className="space-y-6">
           <TabsList className="flex-wrap">
             <TabsTrigger value="profile" className="gap-2">
               <User className="h-4 w-4" />
-              Profile
+              {t('settings.profile')}
             </TabsTrigger>
             <TabsTrigger value="organization" className="gap-2">
               <Building2 className="h-4 w-4" />
-              Organization
+              {t('settings.organization')}
             </TabsTrigger>
             <TabsTrigger value="team" className="gap-2">
               <Users className="h-4 w-4" />
-              Team
+              {t('settings.team')}
             </TabsTrigger>
             <TabsTrigger value="addresses" className="gap-2">
               <MapPin className="h-4 w-4" />
-              Addresses
+              {t('settings.addresses')}
             </TabsTrigger>
             <TabsTrigger value="notifications" className="gap-2">
               <Bell className="h-4 w-4" />
-              Notifications
+              {t('settings.notifications')}
+            </TabsTrigger>
+            <TabsTrigger value="language" className="gap-2">
+              <Globe className="h-4 w-4" />
+              {t('settings.language')}
             </TabsTrigger>
           </TabsList>
 
@@ -87,6 +94,10 @@ const Settings = () => {
 
           <TabsContent value="notifications">
             <NotificationsTab />
+          </TabsContent>
+
+          <TabsContent value="language">
+            <LanguageTab />
           </TabsContent>
         </Tabs>
       </div>
@@ -764,6 +775,50 @@ const NotificationsTab = () => {
               onCheckedChange={() => handleToggle('email_supplier_updates')}
             />
           </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
+
+const LanguageTab = () => {
+  const { t, i18n } = useTranslation();
+
+  const languages = [
+    { code: 'de', label: 'Deutsch', flag: '🇩🇪' },
+    { code: 'en', label: 'English', flag: '🇬🇧' },
+    { code: 'fr', label: 'Français', flag: '🇫🇷' },
+  ];
+
+  const handleLanguageChange = (languageCode: string) => {
+    i18n.changeLanguage(languageCode);
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Globe className="h-5 w-5" />
+          {t('language.selectLanguage')}
+        </CardTitle>
+        <CardDescription>{t('settings.description')}</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="grid gap-4 sm:grid-cols-3">
+          {languages.map((lang) => (
+            <button
+              key={lang.code}
+              onClick={() => handleLanguageChange(lang.code)}
+              className={`flex items-center gap-3 p-4 rounded-lg border-2 transition-all ${
+                i18n.language === lang.code
+                  ? 'border-primary bg-primary/5'
+                  : 'border-border hover:border-primary/50'
+              }`}
+            >
+              <span className="text-2xl">{lang.flag}</span>
+              <span className="font-medium">{lang.label}</span>
+            </button>
+          ))}
         </div>
       </CardContent>
     </Card>
