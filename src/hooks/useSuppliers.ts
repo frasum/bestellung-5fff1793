@@ -118,11 +118,43 @@ export const useDeleteSupplier = () => {
         .delete()
         .eq('id', id);
 
+      if (error) {
+        // Check if it's a foreign key constraint error
+        if (error.code === '23503') {
+          throw new Error('FOREIGN_KEY_CONSTRAINT');
+        }
+        throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['suppliers'] });
+      toast.success('Lieferant erfolgreich gelöscht');
+    },
+    onError: (error: Error) => {
+      if (error.message === 'FOREIGN_KEY_CONSTRAINT') {
+        toast.error('Dieser Lieferant kann nicht gelöscht werden, da noch Bestellungen existieren. Möchten Sie ihn stattdessen deaktivieren?');
+      } else {
+        toast.error(error.message);
+      }
+    },
+  });
+};
+
+export const useDeactivateSupplier = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('suppliers')
+        .update({ is_active: false })
+        .eq('id', id);
+
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['suppliers'] });
-      toast.success('Supplier deleted successfully');
+      toast.success('Lieferant erfolgreich deaktiviert');
     },
     onError: (error: Error) => {
       toast.error(error.message);

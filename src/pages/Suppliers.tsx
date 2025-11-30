@@ -22,7 +22,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { useSuppliers, useCreateSupplier, useUpdateSupplier, useDeleteSupplier, Supplier, SupplierInput } from '@/hooks/useSuppliers';
+import { useSuppliers, useCreateSupplier, useUpdateSupplier, useDeleteSupplier, useDeactivateSupplier, Supplier, SupplierInput } from '@/hooks/useSuppliers';
 import { Plus, Pencil, Trash2, Search, Mail, Phone, MapPin, User, Loader2, Upload, Hash, Euro } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { CsvImportDialog, ImportField } from '@/components/CsvImportDialog';
@@ -66,7 +66,9 @@ const Suppliers = () => {
   const createSupplier = useCreateSupplier();
   const updateSupplier = useUpdateSupplier();
   const deleteSupplier = useDeleteSupplier();
+  const deactivateSupplier = useDeactivateSupplier();
   const importSuppliers = useImportSuppliers();
+  const [showDeactivateOption, setShowDeactivateOption] = useState(false);
 
   const form = useForm<SupplierFormData>({
     resolver: zodResolver(supplierSchema),
@@ -118,8 +120,23 @@ const Suppliers = () => {
 
   const handleDelete = async () => {
     if (deletingSupplier) {
-      await deleteSupplier.mutateAsync(deletingSupplier.id);
+      try {
+        await deleteSupplier.mutateAsync(deletingSupplier.id);
+        setDeletingSupplier(null);
+        setShowDeactivateOption(false);
+      } catch (error: any) {
+        if (error.message === 'FOREIGN_KEY_CONSTRAINT') {
+          setShowDeactivateOption(true);
+        }
+      }
+    }
+  };
+
+  const handleDeactivate = async () => {
+    if (deletingSupplier) {
+      await deactivateSupplier.mutateAsync(deletingSupplier.id);
       setDeletingSupplier(null);
+      setShowDeactivateOption(false);
     }
   };
 
@@ -361,22 +378,39 @@ const Suppliers = () => {
       </div>
 
       {/* Delete Confirmation */}
-      <AlertDialog open={!!deletingSupplier} onOpenChange={() => setDeletingSupplier(null)}>
+      <AlertDialog open={!!deletingSupplier} onOpenChange={() => {
+        setDeletingSupplier(null);
+        setShowDeactivateOption(false);
+      }}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Supplier</AlertDialogTitle>
+            <AlertDialogTitle>
+              {showDeactivateOption ? 'Lieferant deaktivieren?' : 'Lieferant löschen'}
+            </AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete "{deletingSupplier?.name}"? This action cannot be undone.
+              {showDeactivateOption 
+                ? `"${deletingSupplier?.name}" kann nicht gelöscht werden, da noch Bestellungen existieren. Möchten Sie den Lieferanten stattdessen deaktivieren?`
+                : `Sind Sie sicher, dass Sie "${deletingSupplier?.name}" löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.`
+              }
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDelete}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              {deleteSupplier.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Delete'}
-            </AlertDialogAction>
+            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+            {showDeactivateOption ? (
+              <AlertDialogAction
+                onClick={handleDeactivate}
+                className="bg-warning text-warning-foreground hover:bg-warning/90"
+              >
+                {deactivateSupplier.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Deaktivieren'}
+              </AlertDialogAction>
+            ) : (
+              <AlertDialogAction
+                onClick={handleDelete}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                {deleteSupplier.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Löschen'}
+              </AlertDialogAction>
+            )}
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
