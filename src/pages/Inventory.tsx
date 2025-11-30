@@ -105,6 +105,9 @@ const Inventory = () => {
   const [editingUnitId, setEditingUnitId] = useState<string | null>(null);
   const [editingUnitValue, setEditingUnitValue] = useState<string>('');
 
+  // Common units for dropdown
+  const commonUnits = ['kg', 'g', 'Stück', 'Stk', 'Liter', 'l', '0,75l', '1,0l', 'ml', 'Pg.', 'Ka.', 'Kt.', 'Fl.', 'Dose', 'Bund', 'Beutel', 'Pack'];
+
   const { data: articles, isLoading: articlesLoading } = useArticles();
   const { data: suppliers } = useSuppliers();
   const { data: sessions, isLoading: sessionsLoading } = useInventorySessions();
@@ -320,13 +323,14 @@ const Inventory = () => {
     setEditingUnitValue('');
   };
 
-  const handleSaveUnitEdit = async (articleId: string) => {
-    if (!editingUnitValue.trim()) {
+  const handleSaveUnitEdit = async (articleId: string, value?: string) => {
+    const unitValue = value ?? editingUnitValue;
+    if (!unitValue.trim()) {
       toast.error('Einheit darf nicht leer sein');
       return;
     }
     try {
-      await updateArticle.mutateAsync({ id: articleId, unit: editingUnitValue.trim() });
+      await updateArticle.mutateAsync({ id: articleId, unit: unitValue.trim() });
       toast.success('Einheit aktualisiert');
       setEditingUnitId(null);
       setEditingUnitValue('');
@@ -534,32 +538,28 @@ const Inventory = () => {
                               <TableCell>
                                 {editingUnitId === article.id ? (
                                   <div className="flex items-center gap-1">
-                                    <Input
+                                    <Select
                                       value={editingUnitValue}
-                                      onChange={(e) => setEditingUnitValue(e.target.value)}
-                                      className="w-20 h-8"
-                                      autoFocus
-                                      onKeyDown={(e) => {
-                                        if (e.key === 'Enter') handleSaveUnitEdit(article.id);
-                                        if (e.key === 'Escape') handleCancelUnitEdit();
+                                      onValueChange={(value) => {
+                                        setEditingUnitValue(value);
+                                        handleSaveUnitEdit(article.id, value);
                                       }}
-                                    />
-                                    <Button
-                                      size="icon"
-                                      variant="ghost"
-                                      className="h-7 w-7"
-                                      onClick={() => handleSaveUnitEdit(article.id)}
+                                      open={true}
+                                      onOpenChange={(open) => {
+                                        if (!open) handleCancelUnitEdit();
+                                      }}
                                     >
-                                      <Check className="h-4 w-4 text-green-600" />
-                                    </Button>
-                                    <Button
-                                      size="icon"
-                                      variant="ghost"
-                                      className="h-7 w-7"
-                                      onClick={handleCancelUnitEdit}
-                                    >
-                                      <X className="h-4 w-4 text-destructive" />
-                                    </Button>
+                                      <SelectTrigger className="w-24 h-8">
+                                        <SelectValue />
+                                      </SelectTrigger>
+                                      <SelectContent className="bg-background z-50">
+                                        {commonUnits.map((unit) => (
+                                          <SelectItem key={unit} value={unit}>
+                                            {unit}
+                                          </SelectItem>
+                                        ))}
+                                      </SelectContent>
+                                    </Select>
                                   </div>
                                 ) : (
                                   <span
@@ -664,32 +664,28 @@ const Inventory = () => {
                             <TableCell>
                               {editingUnitId === article.id ? (
                                 <div className="flex items-center gap-1">
-                                  <Input
+                                  <Select
                                     value={editingUnitValue}
-                                    onChange={(e) => setEditingUnitValue(e.target.value)}
-                                    className="w-20 h-8"
-                                    autoFocus
-                                    onKeyDown={(e) => {
-                                      if (e.key === 'Enter') handleSaveUnitEdit(article.id);
-                                      if (e.key === 'Escape') handleCancelUnitEdit();
+                                    onValueChange={(value) => {
+                                      setEditingUnitValue(value);
+                                      handleSaveUnitEdit(article.id, value);
                                     }}
-                                  />
-                                  <Button
-                                    size="icon"
-                                    variant="ghost"
-                                    className="h-7 w-7"
-                                    onClick={() => handleSaveUnitEdit(article.id)}
+                                    open={true}
+                                    onOpenChange={(open) => {
+                                      if (!open) handleCancelUnitEdit();
+                                    }}
                                   >
-                                    <Check className="h-4 w-4 text-green-600" />
-                                  </Button>
-                                  <Button
-                                    size="icon"
-                                    variant="ghost"
-                                    className="h-7 w-7"
-                                    onClick={handleCancelUnitEdit}
-                                  >
-                                    <X className="h-4 w-4 text-destructive" />
-                                  </Button>
+                                    <SelectTrigger className="w-24 h-8">
+                                      <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent className="bg-background z-50">
+                                      {commonUnits.map((unit) => (
+                                        <SelectItem key={unit} value={unit}>
+                                          {unit}
+                                        </SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
                                 </div>
                               ) : (
                                 <span
