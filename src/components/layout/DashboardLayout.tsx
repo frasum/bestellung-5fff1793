@@ -85,9 +85,9 @@ export const DashboardLayout = ({
               </div>
               <span className="font-bold text-xl text-foreground">OrderFox.pro</span>
             </div>
-            <div className="hidden lg:flex items-center gap-2">
-              <LanguageSwitcher />
+            <div className="hidden lg:flex items-center gap-1">
               <ThemeToggle />
+              <LanguageSwitcher />
             </div>
           </div>
 
