@@ -485,7 +485,7 @@ const Suppliers = () => {
                   </TableHead>
                   <TableHead className="w-8"></TableHead>
                   <TableHead>Lieferant</TableHead>
-                  <TableHead className="hidden md:table-cell">Oberkategorie > Hauptkategorie</TableHead>
+                  <TableHead className="hidden md:table-cell">Kategorie</TableHead>
                   <TableHead className="hidden lg:table-cell">Artikel</TableHead>
                   <TableHead className="text-right">Aktionen</TableHead>
                 </TableRow>
@@ -513,7 +513,7 @@ const Suppliers = () => {
                         </TableCell>
                         <TableCell className="hidden md:table-cell text-muted-foreground py-2">
                           <p className="text-sm text-primary font-medium">
-                            {supplier.top_category && supplier.main_category ? `${supplier.top_category} > ${supplier.main_category}` : supplier.top_category || supplier.main_category || '-'}
+                            {supplier.top_category && supplier.main_category ? `${supplier.top_category} › ${supplier.main_category}` : supplier.top_category || supplier.main_category || '-'}
                           </p>
                         </TableCell>
                         <TableCell className="hidden lg:table-cell py-2">
