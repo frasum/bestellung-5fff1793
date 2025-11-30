@@ -55,7 +55,7 @@ const articleSchema = z.object({
 type ArticleFormData = z.infer<typeof articleSchema>;
 
 const UNITS = ['kg', 'g', 'L', 'ml', 'pcs', 'box', 'bunch', 'pack'];
-const CATEGORIES = ['Vegetables', 'Fruits', 'Dairy', 'Meat', 'Seafood', 'Bakery', 'Beverages', 'Oils', 'Herbs', 'Cheese', 'Other'];
+const CATEGORIES: string[] = [];
 
 const ARTICLE_IMPORT_FIELDS: ImportField[] = [
   { name: 'name', label: 'Name', required: true },
