@@ -2,10 +2,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Mail, Send, Loader2, ChevronLeft, ChevronRight, Pencil, Check } from 'lucide-react';
+import { Mail, Send, Loader2, ChevronLeft, ChevronRight, Pencil, Check, ExternalLink } from 'lucide-react';
 import { useState } from 'react';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
+import { toast } from 'sonner';
 
 interface OrderItem {
   article_name: string;
@@ -70,6 +71,52 @@ export const EmailPreviewDialog = ({
   const updateAllEmails = (updates: Partial<EmailPreviewData>) => {
     const newPreviews = emailPreviews.map(preview => ({ ...preview, ...updates }));
     onEmailPreviewsChange(newPreviews);
+  };
+
+  const generateEmailBody = (email: EmailPreviewData) => {
+    const itemsList = email.items
+      .map(item => `- ${item.article_name}: ${item.quantity} ${item.unit} à €${item.unit_price.toFixed(2)} = €${item.total_price.toFixed(2)}`)
+      .join('\n');
+
+    return `Neue Bestellung von ${email.restaurantName}
+
+Bestelldetails:
+Von: ${email.restaurantName}
+An: ${email.supplierName}
+Datum: ${format(new Date(), 'PPP', { locale: de })}
+
+Lieferadresse:
+${email.deliveryAddress}
+
+${email.notes ? `Notizen:\n${email.notes}\n\n` : ''}Bestellte Artikel:
+${itemsList}
+
+Gesamtbetrag: €${email.totalAmount.toFixed(2)}
+
+---
+Diese Bestellung wurde über ProcureResto erstellt.`;
+  };
+
+  const generateMailtoLink = (email: EmailPreviewData) => {
+    const subject = `Neue Bestellung von ${email.restaurantName}${email.customerNumber ? ` (Kd-Nr: ${email.customerNumber})` : ''}`;
+    const body = generateEmailBody(email);
+    return `mailto:${email.supplierEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  };
+
+  const handleOpenInEmailClient = () => {
+    const mailtoLink = generateMailtoLink(currentEmail);
+    window.open(mailtoLink, '_blank');
+    toast.success(`E-Mail an ${currentEmail.supplierName} wird geöffnet`);
+  };
+
+  const handleOpenAllInEmailClient = () => {
+    emailPreviews.forEach((email, index) => {
+      setTimeout(() => {
+        const mailtoLink = generateMailtoLink(email);
+        window.open(mailtoLink, '_blank');
+      }, index * 500); // Delay to prevent browser blocking
+    });
+    toast.success(`${emailPreviews.length} E-Mail(s) werden geöffnet`);
   };
 
   return (
@@ -265,6 +312,13 @@ export const EmailPreviewDialog = ({
           )}
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isSubmitting}>
             Abbrechen
+          </Button>
+          <Button 
+            variant="secondary" 
+            onClick={emailPreviews.length > 1 ? handleOpenAllInEmailClient : handleOpenInEmailClient}
+          >
+            <ExternalLink className="w-4 h-4 mr-2" />
+            Per E-Mail-Programm
           </Button>
           <Button onClick={onConfirm} disabled={isSubmitting}>
             {isSubmitting ? (
