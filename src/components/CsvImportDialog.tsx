@@ -320,6 +320,12 @@ export const CsvImportDialog = ({
 
       setAiStatus(null);
 
+      // Extract headers directly from data (in case state headers are empty)
+      const effectiveHeaders = headers.length > 0 ? headers : Object.keys(dataToImport[0] || {});
+      
+      console.log('Import - Effective headers:', effectiveHeaders);
+      console.log('Import - Raw data sample:', dataToImport.slice(0, 2));
+
       // Common column name aliases (German -> English field names)
       const columnAliases: Record<string, string[]> = {
         name: ['name', 'artikelname', 'artikel', 'produkt', 'bezeichnung', 'produktname', 'article', 'product'],
@@ -340,6 +346,8 @@ export const CsvImportDialog = ({
       // Map data to field names using AI mapping, aliases, or case-insensitive matching
       const mappedData = dataToImport.map(row => {
         const mapped: Record<string, string> = {};
+        const rowKeys = Object.keys(row);
+        
         fields.forEach(field => {
           // First check AI mapping
           const aiMappedHeader = Object.entries(aiMapping).find(([_, target]) => target === field.name)?.[0];
@@ -348,20 +356,20 @@ export const CsvImportDialog = ({
             return;
           }
           
-          // Check column aliases
+          // Check column aliases against actual row keys
           const aliases = columnAliases[field.name] || [field.name];
           for (const alias of aliases) {
-            const matchingHeader = headers.find(h => h.toLowerCase().replace(/[^a-z0-9]/g, '') === alias.toLowerCase().replace(/[^a-z0-9]/g, ''));
-            if (matchingHeader && row[matchingHeader] !== undefined) {
-              mapped[field.name] = row[matchingHeader] || '';
+            const matchingKey = rowKeys.find(k => k.toLowerCase().replace(/[^a-z0-9äöüß]/g, '') === alias.toLowerCase().replace(/[^a-z0-9äöüß]/g, ''));
+            if (matchingKey && row[matchingKey] !== undefined && row[matchingKey] !== '') {
+              mapped[field.name] = row[matchingKey] || '';
               return;
             }
           }
           
-          // Fall back to case-insensitive matching
-          const header = headers.find(h => h.toLowerCase() === field.name.toLowerCase());
-          if (header) {
-            mapped[field.name] = row[header] || '';
+          // Fall back to exact case-insensitive matching
+          const exactMatch = rowKeys.find(k => k.toLowerCase() === field.name.toLowerCase());
+          if (exactMatch && row[exactMatch]) {
+            mapped[field.name] = row[exactMatch] || '';
           }
           
           // Check for category from AI categorization
@@ -373,7 +381,6 @@ export const CsvImportDialog = ({
       });
 
       console.log('Import - Mapped data sample:', mappedData.slice(0, 3));
-      console.log('Import - Headers from file:', headers);
 
       await onImport(mappedData, selectedSupplierId || undefined);
       setImportSuccess(true);
