@@ -411,7 +411,8 @@ const Articles = () => {
             <Table>
               <TableHeader>
                 <TableRow className="hover:bg-transparent">
-                  <TableHead className="w-[35%]">Article</TableHead>
+                  <TableHead className="w-[25%]">Article</TableHead>
+                  <TableHead className="hidden md:table-cell w-[25%]">Description</TableHead>
                   <TableHead className="hidden sm:table-cell">Supplier</TableHead>
                   <TableHead className="text-right">Price</TableHead>
                   <TableHead className="text-center w-[140px]">Quantity</TableHead>
@@ -452,6 +453,11 @@ const Articles = () => {
                             </Button>
                           </div>
                         </div>
+                      </TableCell>
+                      <TableCell className="hidden md:table-cell text-muted-foreground">
+                        <p className="truncate max-w-[200px]" title={article.description || ''}>
+                          {article.description || '-'}
+                        </p>
                       </TableCell>
                       <TableCell className="hidden sm:table-cell text-muted-foreground">
                         {article.suppliers?.name}
