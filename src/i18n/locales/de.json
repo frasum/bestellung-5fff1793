@@ -158,7 +158,7 @@
     "empty": "Ihr Warenkorb ist leer",
     "emptyDescription": "Fügen Sie Artikel hinzu, um eine Bestellung aufzugeben",
     "browseArticles": "Artikel durchsuchen",
-    "checkout": "Zur Kasse",
+    "checkout": "BESTELLEN",
     "subtotal": "Zwischensumme",
     "itemCount": "{{count}} Artikel",
     "minimumOrderWarning": "Mindestbestellwert nicht erreicht",
