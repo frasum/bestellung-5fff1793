@@ -206,6 +206,7 @@ export type Database = {
       }
       email_templates: {
         Row: {
+          article_list_format: string
           closing: string
           created_at: string
           greeting: string
@@ -218,6 +219,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          article_list_format?: string
           closing?: string
           created_at?: string
           greeting?: string
@@ -230,6 +232,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          article_list_format?: string
           closing?: string
           created_at?: string
           greeting?: string
