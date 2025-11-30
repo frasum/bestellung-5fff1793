@@ -48,6 +48,7 @@ import {
 } from '@/components/ui/command';
 import { Check, ChevronsUpDown, Tags } from 'lucide-react';
 import { useSuppliers } from '@/hooks/useSuppliers';
+import { useCategories } from '@/hooks/useCategories';
 import { Plus, Pencil, Trash2, Search, ShoppingCart, Minus, Loader2, Package, Upload, LayoutGrid, List } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useForm, Controller } from 'react-hook-form';
@@ -71,7 +72,6 @@ const articleSchema = z.object({
 type ArticleFormData = z.infer<typeof articleSchema>;
 
 const DEFAULT_UNITS = ['kg', 'g', 'L', 'ml', 'pcs', 'box', 'bunch', 'pack'];
-const CATEGORIES: string[] = [];
 
 const ARTICLE_IMPORT_FIELDS: ImportField[] = [
   { name: 'name', label: 'Name', required: true },
@@ -103,6 +103,7 @@ const Articles = () => {
 
   const { data: articles, isLoading } = useArticles();
   const { data: suppliers } = useSuppliers();
+  const { data: dbCategories } = useCategories();
   const createArticle = useCreateArticle();
   const updateArticle = useUpdateArticle();
   const deleteArticle = useDeleteArticle();
@@ -433,8 +434,8 @@ const Articles = () => {
                               <SelectValue placeholder="Select" />
                             </SelectTrigger>
                             <SelectContent className="bg-card border border-border z-50">
-                              {CATEGORIES.map((cat) => (
-                                <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                              {dbCategories?.map((cat) => (
+                                <SelectItem key={cat.id} value={cat.name}>{cat.name}</SelectItem>
                               ))}
                             </SelectContent>
                           </Select>
