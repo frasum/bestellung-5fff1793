@@ -320,7 +320,24 @@ export const CsvImportDialog = ({
 
       setAiStatus(null);
 
-      // Map data to field names using AI mapping or case-insensitive matching
+      // Common column name aliases (German -> English field names)
+      const columnAliases: Record<string, string[]> = {
+        name: ['name', 'artikelname', 'artikel', 'produkt', 'bezeichnung', 'produktname', 'article', 'product'],
+        price: ['price', 'preis', 'vk', 'ek', 'einzelpreis', 'verkaufspreis', 'einkaufspreis', 'betrag'],
+        unit: ['unit', 'einheit', 'me', 'mengeneinheit'],
+        sku: ['sku', 'artikelnummer', 'artnr', 'art.nr.', 'artikelnr', 'nummer', 'produktnummer'],
+        category: ['category', 'kategorie', 'warengruppe', 'gruppe', 'productgroup'],
+        description: ['description', 'beschreibung', 'beschr.', 'info', 'details'],
+        supplier: ['supplier', 'lieferant', 'lieferantenname', 'supplier_name', 'anbieter'],
+        email: ['email', 'e-mail', 'mail', 'emailadresse', 'email_address'],
+        phone: ['phone', 'telefon', 'tel', 'telefonnummer', 'phone_number', 'mobil'],
+        address: ['address', 'adresse', 'anschrift', 'strasse', 'straße'],
+        contact_person: ['contact_person', 'ansprechpartner', 'kontakt', 'kontaktperson'],
+        customer_number: ['customer_number', 'kundennummer', 'kd-nr', 'kdnr', 'kundenummer'],
+        minimum_order_value: ['minimum_order_value', 'mindestbestellwert', 'mbw', 'min_order'],
+      };
+
+      // Map data to field names using AI mapping, aliases, or case-insensitive matching
       const mappedData = dataToImport.map(row => {
         const mapped: Record<string, string> = {};
         fields.forEach(field => {
@@ -329,6 +346,16 @@ export const CsvImportDialog = ({
           if (aiMappedHeader && row[aiMappedHeader] !== undefined) {
             mapped[field.name] = row[aiMappedHeader] || '';
             return;
+          }
+          
+          // Check column aliases
+          const aliases = columnAliases[field.name] || [field.name];
+          for (const alias of aliases) {
+            const matchingHeader = headers.find(h => h.toLowerCase().replace(/[^a-z0-9]/g, '') === alias.toLowerCase().replace(/[^a-z0-9]/g, ''));
+            if (matchingHeader && row[matchingHeader] !== undefined) {
+              mapped[field.name] = row[matchingHeader] || '';
+              return;
+            }
           }
           
           // Fall back to case-insensitive matching
@@ -344,6 +371,9 @@ export const CsvImportDialog = ({
         });
         return mapped;
       });
+
+      console.log('Import - Mapped data sample:', mappedData.slice(0, 3));
+      console.log('Import - Headers from file:', headers);
 
       await onImport(mappedData, selectedSupplierId || undefined);
       setImportSuccess(true);
