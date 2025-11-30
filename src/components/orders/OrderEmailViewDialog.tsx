@@ -22,7 +22,7 @@ interface OrderEmailViewDialogProps {
     delivery_address: string;
     notes?: string | null;
     total_amount: number;
-    suppliers?: { name: string; email: string } | null;
+    suppliers?: { name: string; email: string; customer_number?: string | null } | null;
     order_items?: OrderItem[] | null;
   } | null;
   restaurantName: string;
@@ -78,7 +78,11 @@ export const OrderEmailViewDialog = ({
               {/* Header */}
               <div className="bg-primary px-6 py-4">
                 <h2 className="text-primary-foreground text-xl font-semibold">{t('orders.newOrderReceived')}</h2>
-                <p className="text-primary-foreground/80 text-sm mt-1">{order.order_number}</p>
+                <p className="text-primary-foreground/80 text-sm mt-1">
+                  {order.suppliers?.customer_number 
+                    ? `${t('suppliers.customerNumber')}: ${order.suppliers.customer_number}`
+                    : order.order_number}
+                </p>
               </div>
 
               <div className="p-6 space-y-6 bg-card">
