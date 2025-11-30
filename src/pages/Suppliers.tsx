@@ -23,7 +23,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { useSuppliers, useCreateSupplier, useUpdateSupplier, useDeleteSupplier, useDeactivateSupplier, Supplier, SupplierInput } from '@/hooks/useSuppliers';
-import { Plus, Pencil, Trash2, Search, Mail, Phone, MapPin, User, Loader2, Upload, Hash, Euro, Filter, RotateCcw } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, Mail, Phone, MapPin, User, Loader2, Upload, Hash, Euro, Filter, RotateCcw, Power } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -159,6 +159,10 @@ const Suppliers = () => {
 
   const handleReactivate = async (supplier: Supplier) => {
     await updateSupplier.mutateAsync({ id: supplier.id, is_active: true });
+  };
+
+  const handleDeactivateQuick = async (supplier: Supplier) => {
+    await deactivateSupplier.mutateAsync(supplier.id);
   };
 
   if (authLoading || !user) {
@@ -344,7 +348,7 @@ const Suppliers = () => {
                     </span>
                   </div>
                   <div className="flex gap-1">
-                    {!supplier.is_active && (
+                    {!supplier.is_active ? (
                       <Button
                         variant="ghost"
                         size="icon"
@@ -353,6 +357,16 @@ const Suppliers = () => {
                         title="Reaktivieren"
                       >
                         <RotateCcw className="w-4 h-4" />
+                      </Button>
+                    ) : (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-muted-foreground hover:text-orange-500"
+                        onClick={() => handleDeactivateQuick(supplier)}
+                        title="Deaktivieren"
+                      >
+                        <Power className="w-4 h-4" />
                       </Button>
                     )}
                     <Button
