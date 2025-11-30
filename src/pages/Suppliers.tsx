@@ -562,7 +562,7 @@ const Suppliers = () => {
                                   {supplierArticles.map((article) => {
                                     const cartQty = getCartQuantity(article.id);
                                     return (
-                                      <TableRow key={article.id} className="border-b border-border/30 hover:bg-muted/50">
+                                      <TableRow key={article.id} className={`border-b border-border/30 hover:bg-muted/50 ${cartQty > 0 ? 'bg-destructive/10 text-destructive' : ''}`}>
                                         <TableCell className="py-1.5">
                                           <p className="text-sm font-medium">{article.name}</p>
                                         </TableCell>
