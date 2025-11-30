@@ -39,6 +39,10 @@ export const OrderEmailViewDialog = ({
   const { t, i18n } = useTranslation();
   const locale = localeMap[i18n.language as keyof typeof localeMap] || de;
 
+  // Debug logging
+  console.log('OrderEmailViewDialog - order:', order);
+  console.log('OrderEmailViewDialog - order_items:', order?.order_items);
+
   if (!order) return null;
 
   return (
