@@ -21,6 +21,7 @@ export interface Order {
     id: string;
     name: string;
     email: string;
+    customer_number?: string | null;
   };
   order_items?: OrderItem[];
 }
@@ -53,7 +54,7 @@ export const useOrders = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('orders')
-        .select('*, suppliers(id, name, email), order_items(*)')
+        .select('*, suppliers(id, name, email, customer_number), order_items(*)')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
