@@ -314,7 +314,7 @@ const Checkout = () => {
                             min="1"
                             value={item.quantity}
                             onChange={(e) => updateQuantity(item.article.id, parseInt(e.target.value) || 1)}
-                            className="w-16 h-8 text-center"
+                            className="w-16 h-8 text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                           />
                           <Button
                             type="button"
