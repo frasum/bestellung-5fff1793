@@ -120,14 +120,22 @@ export const OrderEmailViewDialog = ({
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-border">
-                      {order.order_items?.map((item, idx) => (
-                        <tr key={idx}>
-                          <td className="p-3">{item.article_name}</td>
-                          <td className="p-3 text-center">{item.quantity} {item.unit}</td>
-                          <td className="p-3 text-right">€{Number(item.unit_price).toFixed(2)}</td>
-                          <td className="p-3 text-right font-medium">€{Number(item.total_price).toFixed(2)}</td>
+                      {order.order_items && order.order_items.length > 0 ? (
+                        order.order_items.map((item, idx) => (
+                          <tr key={idx}>
+                            <td className="p-3">{item.article_name}</td>
+                            <td className="p-3 text-center">{item.quantity} {item.unit}</td>
+                            <td className="p-3 text-right">€{Number(item.unit_price).toFixed(2)}</td>
+                            <td className="p-3 text-right font-medium">€{Number(item.total_price).toFixed(2)}</td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td colSpan={4} className="p-3 text-center text-muted-foreground">
+                            {t('common.noData')}
+                          </td>
                         </tr>
-                      ))}
+                      )}
                     </tbody>
                     <tfoot>
                       <tr className="bg-primary text-primary-foreground">
