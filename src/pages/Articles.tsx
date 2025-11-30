@@ -330,10 +330,12 @@ const Articles = () => {
           onOpenChange={setIsImportOpen}
           title="Import Articles"
           fields={ARTICLE_IMPORT_FIELDS}
-          onImport={async (data) => {
-            await importArticles.mutateAsync(data);
+          onImport={async (data, defaultSupplierId) => {
+            await importArticles.mutateAsync({ articles: data, defaultSupplierId });
           }}
           templateFileName="articles_template.csv"
+          suppliers={suppliers?.map(s => ({ id: s.id, name: s.name }))}
+          showSupplierSelect={true}
         />
 
         {/* Filters */}

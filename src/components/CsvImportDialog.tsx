@@ -35,14 +35,21 @@ export interface ImportField {
   required: boolean;
 }
 
+interface SupplierOption {
+  id: string;
+  name: string;
+}
+
 interface CsvImportDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   title: string;
   fields: ImportField[];
-  onImport: (data: Record<string, string>[]) => Promise<void>;
+  onImport: (data: Record<string, string>[], defaultSupplierId?: string) => Promise<void>;
   templateFileName: string;
   enableAI?: boolean;
+  suppliers?: SupplierOption[];
+  showSupplierSelect?: boolean;
 }
 
 export const CsvImportDialog = ({
@@ -53,6 +60,8 @@ export const CsvImportDialog = ({
   onImport,
   templateFileName,
   enableAI = true,
+  suppliers,
+  showSupplierSelect = false,
 }: CsvImportDialogProps) => {
   const [file, setFile] = useState<File | null>(null);
   const [parsedData, setParsedData] = useState<Record<string, string>[]>([]);
@@ -60,6 +69,7 @@ export const CsvImportDialog = ({
   const [error, setError] = useState<string | null>(null);
   const [isImporting, setIsImporting] = useState(false);
   const [importSuccess, setImportSuccess] = useState(false);
+  const [selectedSupplierId, setSelectedSupplierId] = useState<string>('');
   
   // AI features
   const [useAI, setUseAI] = useState(true);
@@ -75,6 +85,7 @@ export const CsvImportDialog = ({
     setImportSuccess(false);
     setAiMapping({});
     setAiStatus(null);
+    setSelectedSupplierId('');
   };
 
   const parseCSV = (text: string): { headers: string[]; rows: Record<string, string>[] } => {
@@ -334,7 +345,7 @@ export const CsvImportDialog = ({
         return mapped;
       });
 
-      await onImport(mappedData);
+      await onImport(mappedData, selectedSupplierId || undefined);
       setImportSuccess(true);
       setTimeout(() => {
         onOpenChange(false);
@@ -396,6 +407,27 @@ export const CsvImportDialog = ({
                 checked={useAI}
                 onCheckedChange={setUseAI}
               />
+            </div>
+          )}
+
+          {/* Supplier Select for Article Import */}
+          {showSupplierSelect && suppliers && suppliers.length > 0 && (
+            <div className="space-y-2">
+              <Label htmlFor="default-supplier" className="font-medium">Standard-Lieferant</Label>
+              <p className="text-xs text-muted-foreground">
+                Wähle einen Lieferanten für alle importierten Artikel (wenn keine Lieferanten-Spalte vorhanden ist)
+              </p>
+              <select
+                id="default-supplier"
+                value={selectedSupplierId}
+                onChange={(e) => setSelectedSupplierId(e.target.value)}
+                className="w-full px-3 py-2 rounded-md border border-input bg-background text-foreground"
+              >
+                <option value="">-- Lieferant auswählen --</option>
+                {suppliers.map((s) => (
+                  <option key={s.id} value={s.id}>{s.name}</option>
+                ))}
+              </select>
             </div>
           )}
 
