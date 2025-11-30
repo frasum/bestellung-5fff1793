@@ -155,3 +155,25 @@ export const useDeleteArticle = () => {
     },
   });
 };
+
+export const useBulkUpdateArticles = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ ids, updates }: { ids: string[]; updates: Partial<ArticleInput> }) => {
+      const { error } = await supabase
+        .from('articles')
+        .update(updates)
+        .in('id', ids);
+
+      if (error) throw error;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['articles'] });
+      toast.success(`${variables.ids.length} Artikel aktualisiert`);
+    },
+    onError: (error: Error) => {
+      toast.error(error.message);
+    },
+  });
+};
