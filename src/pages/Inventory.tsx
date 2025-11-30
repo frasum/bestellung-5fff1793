@@ -406,6 +406,7 @@ const Inventory = () => {
                       <TableHead className="w-28 text-right">Lager 1</TableHead>
                       <TableHead className="w-28 text-right">Lager 2</TableHead>
                       <TableHead className="w-28 text-right">Gesamt</TableHead>
+                      <TableHead className="w-32 text-right">Gesamtwert</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -458,6 +459,9 @@ const Inventory = () => {
                           </TableCell>
                           <TableCell className="text-right font-medium">
                             {values.total > 0 ? values.total.toFixed(2) : '-'}
+                          </TableCell>
+                          <TableCell className="text-right font-medium">
+                            {values.total > 0 ? `€${(values.total * article.price).toFixed(2)}` : '-'}
                           </TableCell>
                         </TableRow>
                       );
