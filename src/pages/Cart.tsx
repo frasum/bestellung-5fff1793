@@ -1,17 +1,32 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
+import { useCreateCartDraft } from '@/hooks/useCartDrafts';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Trash2, Plus, Minus, ShoppingCart, ArrowRight, Loader2, AlertTriangle } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Trash2, Plus, Minus, ShoppingCart, ArrowRight, Loader2, AlertTriangle, Save } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
 const Cart = () => {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { items, removeItem, updateQuantity, getTotal, clearCart } = useCart();
+  const createDraft = useCreateCartDraft();
+  
+  const [saveDialogOpen, setSaveDialogOpen] = useState(false);
+  const [draftName, setDraftName] = useState('');
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -50,6 +65,25 @@ const Cart = () => {
   const hasMinimumOrderWarning = supplierTotals.some(
     ({ total, minimumOrderValue }) => minimumOrderValue > 0 && total < minimumOrderValue
   );
+
+  const handleSaveDraft = () => {
+    if (!draftName.trim()) return;
+    
+    createDraft.mutate({
+      name: draftName.trim(),
+      items: items.map(item => ({
+        articleId: item.article.id,
+        quantity: item.quantity,
+      })),
+    }, {
+      onSuccess: () => {
+        setSaveDialogOpen(false);
+        setDraftName('');
+        clearCart();
+        navigate('/drafts');
+      },
+    });
+  };
 
   return (
     <DashboardLayout>
@@ -178,14 +212,24 @@ const Cart = () => {
                     </AlertDescription>
                   </Alert>
                 )}
-                <Button 
-                  className="w-full" 
-                  size="lg" 
-                  onClick={() => navigate('/checkout')}
-                >
-                  Proceed to Checkout
-                  <ArrowRight className="w-4 h-4 ml-2" />
-                </Button>
+                <div className="space-y-2">
+                  <Button 
+                    className="w-full" 
+                    size="lg" 
+                    onClick={() => navigate('/checkout')}
+                  >
+                    {t('cart.checkout')}
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </Button>
+                  <Button 
+                    variant="outline"
+                    className="w-full" 
+                    onClick={() => setSaveDialogOpen(true)}
+                  >
+                    <Save className="w-4 h-4 mr-2" />
+                    {t('cart.saveAsDraft')}
+                  </Button>
+                </div>
                 <p className="text-xs text-muted-foreground text-center mt-4">
                   Orders will be sent separately to each supplier
                 </p>
@@ -193,6 +237,42 @@ const Cart = () => {
             </div>
           </div>
         )}
+
+        {/* Save as Draft Dialog */}
+        <Dialog open={saveDialogOpen} onOpenChange={setSaveDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>{t('cart.saveAsDraft')}</DialogTitle>
+              <DialogDescription>
+                {t('drafts.emptyDescription')}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="py-4">
+              <Input
+                placeholder={t('cart.draftName')}
+                value={draftName}
+                onChange={(e) => setDraftName(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleSaveDraft()}
+              />
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setSaveDialogOpen(false)}>
+                {t('common.cancel')}
+              </Button>
+              <Button 
+                onClick={handleSaveDraft}
+                disabled={!draftName.trim() || createDraft.isPending}
+              >
+                {createDraft.isPending ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <Save className="w-4 h-4 mr-2" />
+                )}
+                {t('common.save')}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </DashboardLayout>
   );

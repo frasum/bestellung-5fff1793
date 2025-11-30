@@ -83,11 +83,12 @@
     "inactive": "Inaktiv",
     "you": "Sie"
   },
-  "nav": {
+"nav": {
     "dashboard": "Dashboard",
     "suppliers": "Lieferanten",
     "articles": "Artikel",
     "orders": "Bestellungen",
+    "drafts": "Entwürfe",
     "reports": "Berichte",
     "settings": "Einstellungen",
     "signOut": "Abmelden",
@@ -152,7 +153,7 @@
     "allSuppliers": "Alle Lieferanten",
     "allCategories": "Alle Kategorien"
   },
-  "cart": {
+"cart": {
     "title": "Warenkorb",
     "empty": "Ihr Warenkorb ist leer",
     "emptyDescription": "Fügen Sie Artikel hinzu, um eine Bestellung aufzugeben",
@@ -162,7 +163,10 @@
     "itemCount": "{{count}} Artikel",
     "minimumOrderWarning": "Mindestbestellwert nicht erreicht",
     "minimumOrderMessage": "Der Mindestbestellwert bei {{supplier}} beträgt {{amount}}. Es fehlen noch {{remaining}}.",
-    "cannotCheckout": "Sie können nicht zur Kasse gehen, bis alle Mindestbestellwerte erreicht sind."
+    "cannotCheckout": "Sie können nicht zur Kasse gehen, bis alle Mindestbestellwerte erreicht sind.",
+    "saveAsDraft": "Als Entwurf speichern",
+    "draftName": "Entwurfsname",
+    "draftSaved": "Entwurf gespeichert"
   },
   "checkout": {
     "title": "Kasse",
@@ -289,10 +293,29 @@
     "pricingTitle": "Einfache Preisgestaltung",
     "pricingSubtitle": "Wählen Sie den Plan, der zu Ihrem Restaurant passt"
   },
-  "language": {
+"language": {
     "de": "Deutsch",
     "en": "English",
     "fr": "Français",
     "selectLanguage": "Sprache wählen"
+  },
+  "drafts": {
+    "title": "Entwürfe",
+    "description": "Gespeicherte Bestellungsentwürfe verwalten",
+    "searchPlaceholder": "Entwurf suchen...",
+    "empty": "Keine Entwürfe vorhanden",
+    "emptyDescription": "Speichern Sie Ihren Warenkorb als Entwurf, um ihn später zu bearbeiten",
+    "browseArticles": "Artikel durchsuchen",
+    "noResults": "Keine Entwürfe gefunden",
+    "noResultsDescription": "Versuchen Sie andere Suchkriterien",
+    "items": "Artikel",
+    "total": "Gesamtsumme",
+    "loadToCart": "In Warenkorb laden",
+    "deleteTitle": "Entwurf löschen",
+    "deleteDescription": "Möchten Sie den Entwurf \"{{name}}\" wirklich löschen?",
+    "loadTitle": "Entwurf laden",
+    "loadDescription": "Der aktuelle Warenkorb wird durch den Entwurf ersetzt. Möchten Sie fortfahren?",
+    "replaceCart": "Warenkorb ersetzen",
+    "more": "weitere"
   }
 }

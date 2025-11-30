@@ -12,6 +12,7 @@ import {
   Users,
   Package,
   ShoppingCart,
+  FileText,
   BarChart3,
   Settings,
   LogOut,
@@ -35,6 +36,7 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
     { href: '/suppliers', label: t('nav.suppliers'), icon: Users },
     { href: '/articles', label: t('nav.articles'), icon: Package },
     { href: '/orders', label: t('nav.orders'), icon: ShoppingCart },
+    { href: '/drafts', label: t('nav.drafts'), icon: FileText },
     { href: '/reports', label: t('nav.reports'), icon: BarChart3 },
     { href: '/settings', label: t('nav.settings'), icon: Settings },
   ];

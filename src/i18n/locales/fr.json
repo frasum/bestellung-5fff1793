@@ -83,11 +83,12 @@
     "inactive": "Inactif",
     "you": "Vous"
   },
-  "nav": {
+"nav": {
     "dashboard": "Tableau de bord",
     "suppliers": "Fournisseurs",
     "articles": "Articles",
     "orders": "Commandes",
+    "drafts": "Brouillons",
     "reports": "Rapports",
     "settings": "Paramètres",
     "signOut": "Déconnexion",
@@ -152,7 +153,7 @@
     "allSuppliers": "Tous les fournisseurs",
     "allCategories": "Toutes les catégories"
   },
-  "cart": {
+"cart": {
     "title": "Panier",
     "empty": "Votre panier est vide",
     "emptyDescription": "Ajoutez des articles pour passer une commande",
@@ -162,7 +163,10 @@
     "itemCount": "{{count}} articles",
     "minimumOrderWarning": "Valeur minimum non atteinte",
     "minimumOrderMessage": "La valeur minimum de commande chez {{supplier}} est de {{amount}}. Il manque encore {{remaining}}.",
-    "cannotCheckout": "Vous ne pouvez pas passer à la caisse tant que toutes les valeurs minimums ne sont pas atteintes."
+    "cannotCheckout": "Vous ne pouvez pas passer à la caisse tant que toutes les valeurs minimums ne sont pas atteintes.",
+    "saveAsDraft": "Enregistrer comme brouillon",
+    "draftName": "Nom du brouillon",
+    "draftSaved": "Brouillon enregistré"
   },
   "checkout": {
     "title": "Caisse",
@@ -289,10 +293,29 @@
     "pricingTitle": "Tarification simple",
     "pricingSubtitle": "Choisissez le plan adapté à votre restaurant"
   },
-  "language": {
+"language": {
     "de": "Deutsch",
     "en": "English",
     "fr": "Français",
     "selectLanguage": "Choisir la langue"
+  },
+  "drafts": {
+    "title": "Brouillons",
+    "description": "Gérez les brouillons de commandes enregistrés",
+    "searchPlaceholder": "Rechercher des brouillons...",
+    "empty": "Aucun brouillon disponible",
+    "emptyDescription": "Enregistrez votre panier comme brouillon pour le modifier plus tard",
+    "browseArticles": "Parcourir les articles",
+    "noResults": "Aucun brouillon trouvé",
+    "noResultsDescription": "Essayez d'autres critères de recherche",
+    "items": "articles",
+    "total": "Total",
+    "loadToCart": "Charger dans le panier",
+    "deleteTitle": "Supprimer le brouillon",
+    "deleteDescription": "Êtes-vous sûr de vouloir supprimer le brouillon \"{{name}}\" ?",
+    "loadTitle": "Charger le brouillon",
+    "loadDescription": "Votre panier actuel sera remplacé par ce brouillon. Voulez-vous continuer ?",
+    "replaceCart": "Remplacer le panier",
+    "more": "autres"
   }
 }
