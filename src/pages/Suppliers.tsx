@@ -107,6 +107,7 @@ const Suppliers = () => {
   const { addItem, updateQuantity, items: cartItems, getItemCount } = useCart();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
+  const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
   const [expandedSuppliers, setExpandedSuppliers] = useState<Set<string>>(new Set());
   const [selectedSuppliers, setSelectedSuppliers] = useState<Set<string>>(new Set());
@@ -266,7 +267,8 @@ const Suppliers = () => {
     const matchesStatus = statusFilter === 'all' || 
       (statusFilter === 'active' && supplier.is_active) ||
       (statusFilter === 'inactive' && !supplier.is_active);
-    return matchesSearch && matchesStatus;
+    const matchesCategory = categoryFilter === 'all' || supplier.main_category === categoryFilter;
+    return matchesSearch && matchesStatus && matchesCategory;
   });
 
   const handleReactivate = async (supplier: Supplier) => {
@@ -537,6 +539,17 @@ const Suppliers = () => {
               <SelectItem value="inactive">Nur Inaktive</SelectItem>
             </SelectContent>
           </Select>
+          <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+            <SelectTrigger className="w-full sm:w-[180px] bg-card">
+              <SelectValue placeholder="Hauptkategorie" />
+            </SelectTrigger>
+            <SelectContent className="bg-card border border-border z-50">
+              <SelectItem value="all">Alle Kategorien</SelectItem>
+              {existingCategories.map((cat) => (
+                <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <div className="flex border border-border rounded-lg overflow-hidden">
             <Button
               variant={viewMode === 'list' ? 'default' : 'ghost'}
@@ -580,7 +593,7 @@ const Suppliers = () => {
         ) : filteredSuppliers?.length === 0 ? (
           <div className="text-center py-12 bg-card border border-border rounded-xl">
             <p className="text-muted-foreground">
-              {searchQuery || statusFilter !== 'all' 
+              {searchQuery || statusFilter !== 'all' || categoryFilter !== 'all'
                 ? 'Keine Lieferanten gefunden' 
                 : 'Noch keine Lieferanten. Fügen Sie Ihren ersten Lieferanten hinzu.'}
             </p>
