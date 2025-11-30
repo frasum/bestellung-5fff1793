@@ -7,6 +7,7 @@ import { useState } from 'react';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { toast } from 'sonner';
+import { useEmailTemplate, getDefaultTemplate } from '@/hooks/useEmailTemplates';
 
 interface OrderItem {
   article_name: string;
@@ -47,9 +48,20 @@ export const EmailPreviewDialog = ({
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isEditingNotes, setIsEditingNotes] = useState(false);
   const [isEditingAddress, setIsEditingAddress] = useState(false);
+  const { data: emailTemplate } = useEmailTemplate();
+  const defaultTemplate = getDefaultTemplate();
   const currentEmail = emailPreviews[currentIndex];
 
   if (!currentEmail) return null;
+
+  // Get template values (use saved or defaults)
+  const template = {
+    subject_template: emailTemplate?.subject_template || defaultTemplate.subject_template || '',
+    greeting: emailTemplate?.greeting || defaultTemplate.greeting || '',
+    introduction: emailTemplate?.introduction || defaultTemplate.introduction || '',
+    closing: emailTemplate?.closing || defaultTemplate.closing || '',
+    signature: emailTemplate?.signature || defaultTemplate.signature || '',
+  };
 
   const goNext = () => {
     setCurrentIndex((i) => Math.min(i + 1, emailPreviews.length - 1));
@@ -73,12 +85,23 @@ export const EmailPreviewDialog = ({
     onEmailPreviewsChange(newPreviews);
   };
 
+  const generateEmailSubject = (email: EmailPreviewData) => {
+    const customerNumberSuffix = email.customerNumber ? ` (Kd-Nr: ${email.customerNumber})` : '';
+    return template.subject_template
+      .replace('{restaurant_name}', email.restaurantName)
+      .replace('{customer_number_suffix}', customerNumberSuffix);
+  };
+
   const generateEmailBody = (email: EmailPreviewData) => {
     const itemsList = email.items
       .map(item => `- ${item.article_name}: ${item.quantity} ${item.unit} à €${item.unit_price.toFixed(2)} = €${item.total_price.toFixed(2)}`)
       .join('\n');
 
-    return `Neue Bestellung von ${email.restaurantName}
+    const signatureText = template.signature.replace('{restaurant_name}', email.restaurantName);
+
+    return `${template.greeting}
+
+${template.introduction}
 
 Bestelldetails:
 Von: ${email.restaurantName}
@@ -93,12 +116,13 @@ ${itemsList}
 
 Gesamtbetrag: €${email.totalAmount.toFixed(2)}
 
----
-Diese Bestellung wurde über ProcureResto erstellt.`;
+${template.closing}
+
+${signatureText}`;
   };
 
   const generateMailtoLink = (email: EmailPreviewData) => {
-    const subject = `Neue Bestellung von ${email.restaurantName}${email.customerNumber ? ` (Kd-Nr: ${email.customerNumber})` : ''}`;
+    const subject = generateEmailSubject(email);
     const body = generateEmailBody(email);
     return `mailto:${email.supplierEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
   };
@@ -149,8 +173,7 @@ Diese Bestellung wurde über ProcureResto erstellt.`;
               <div className="flex gap-2">
                 <span className="text-muted-foreground w-12">Betreff:</span>
                 <span className="font-medium">
-                  Neue Bestellung von {currentEmail.restaurantName}
-                  {currentEmail.customerNumber && ` (Kd-Nr: ${currentEmail.customerNumber})`}
+                  {generateEmailSubject(currentEmail)}
                 </span>
               </div>
             </div>
@@ -159,11 +182,14 @@ Diese Bestellung wurde über ProcureResto erstellt.`;
             <div className="border border-border rounded-lg overflow-hidden">
               {/* Header */}
               <div className="bg-primary px-6 py-4">
-                <h2 className="text-primary-foreground text-xl font-semibold">Neue Bestellung erhalten</h2>
-                <p className="text-primary-foreground/80 text-sm mt-1">Bestellung wird generiert...</p>
+                <h2 className="text-primary-foreground text-xl font-semibold">{generateEmailSubject(currentEmail)}</h2>
+                <p className="text-primary-foreground/80 text-sm mt-1">{template.greeting}</p>
               </div>
 
               <div className="p-6 space-y-6 bg-card">
+                {/* Introduction */}
+                <p className="text-sm text-muted-foreground">{template.introduction}</p>
+
                 {/* Order Details */}
                 <div>
                   <h3 className="font-semibold text-foreground mb-2">Bestelldetails</h3>
@@ -291,6 +317,14 @@ Diese Bestellung wurde über ProcureResto erstellt.`;
                       </tr>
                     </tfoot>
                   </table>
+                </div>
+
+                {/* Closing and Signature */}
+                <div className="space-y-2 pt-4 border-t">
+                  <p className="text-sm text-muted-foreground">{template.closing}</p>
+                  <p className="text-sm text-muted-foreground whitespace-pre-line">
+                    {template.signature.replace('{restaurant_name}', currentEmail.restaurantName)}
+                  </p>
                 </div>
               </div>
             </div>

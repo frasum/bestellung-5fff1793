@@ -10,7 +10,8 @@ import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Building2, MapPin, Bell, Plus, Pencil, Trash2, Star, User, Lock, Users, Mail, Clock, X, Globe } from 'lucide-react';
+import { Building2, MapPin, Bell, Plus, Pencil, Trash2, Star, User, Lock, Users, Mail, Clock, X, Globe, FileText, RotateCcw } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
 import {
   useOrganization,
   useUpdateOrganization,
@@ -36,6 +37,7 @@ import {
   TeamMember,
 } from '@/hooks/useTeam';
 import { useAuth } from '@/contexts/AuthContext';
+import { useEmailTemplate, useUpsertEmailTemplate, getDefaultTemplate } from '@/hooks/useEmailTemplates';
 
 const Settings = () => {
   const { t } = useTranslation();
@@ -70,6 +72,10 @@ const Settings = () => {
               <Bell className="h-4 w-4" />
               {t('settings.notifications')}
             </TabsTrigger>
+            <TabsTrigger value="email-templates" className="gap-2">
+              <FileText className="h-4 w-4" />
+              {t('settings.emailTemplates')}
+            </TabsTrigger>
             <TabsTrigger value="language" className="gap-2">
               <Globe className="h-4 w-4" />
               {t('settings.language')}
@@ -94,6 +100,10 @@ const Settings = () => {
 
           <TabsContent value="notifications">
             <NotificationsTab />
+          </TabsContent>
+
+          <TabsContent value="email-templates">
+            <EmailTemplateTab />
           </TabsContent>
 
           <TabsContent value="language">
@@ -819,6 +829,150 @@ const LanguageTab = () => {
               <span className="font-medium">{lang.label}</span>
             </button>
           ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
+
+const EmailTemplateTab = () => {
+  const { t } = useTranslation();
+  const { data: template, isLoading } = useEmailTemplate();
+  const upsertTemplate = useUpsertEmailTemplate();
+  const defaultTemplate = getDefaultTemplate();
+
+  const [formData, setFormData] = useState({
+    subject_template: '',
+    greeting: '',
+    introduction: '',
+    closing: '',
+    signature: '',
+  });
+
+  // Initialize form with template data or defaults
+  useState(() => {
+    if (template) {
+      setFormData({
+        subject_template: template.subject_template,
+        greeting: template.greeting,
+        introduction: template.introduction,
+        closing: template.closing,
+        signature: template.signature,
+      });
+    } else {
+      setFormData({
+        subject_template: defaultTemplate.subject_template || '',
+        greeting: defaultTemplate.greeting || '',
+        introduction: defaultTemplate.introduction || '',
+        closing: defaultTemplate.closing || '',
+        signature: defaultTemplate.signature || '',
+      });
+    }
+  });
+
+  const currentData = template ? {
+    subject_template: template.subject_template,
+    greeting: template.greeting,
+    introduction: template.introduction,
+    closing: template.closing,
+    signature: template.signature,
+  } : formData;
+
+  const handleChange = (field: keyof typeof formData, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleSave = () => {
+    upsertTemplate.mutate(formData);
+  };
+
+  const handleReset = () => {
+    setFormData({
+      subject_template: defaultTemplate.subject_template || '',
+      greeting: defaultTemplate.greeting || '',
+      introduction: defaultTemplate.introduction || '',
+      closing: defaultTemplate.closing || '',
+      signature: defaultTemplate.signature || '',
+    });
+  };
+
+  if (isLoading) {
+    return <Card><CardContent className="p-6">Loading...</CardContent></Card>;
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <FileText className="h-5 w-5" />
+          {t('settings.emailTemplateTitle')}
+        </CardTitle>
+        <CardDescription>{t('settings.emailTemplateDescription')}</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        <div className="space-y-2">
+          <Label htmlFor="subject-template">{t('settings.subjectTemplate')}</Label>
+          <Input
+            id="subject-template"
+            value={formData.subject_template || currentData.subject_template}
+            onChange={(e) => handleChange('subject_template', e.target.value)}
+            placeholder="Neue Bestellung von {restaurant_name}"
+          />
+          <p className="text-xs text-muted-foreground">{t('settings.subjectTemplateHelp')}</p>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="greeting">{t('settings.greeting')}</Label>
+          <Input
+            id="greeting"
+            value={formData.greeting || currentData.greeting}
+            onChange={(e) => handleChange('greeting', e.target.value)}
+            placeholder="Guten Tag,"
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="introduction">{t('settings.introduction')}</Label>
+          <Textarea
+            id="introduction"
+            value={formData.introduction || currentData.introduction}
+            onChange={(e) => handleChange('introduction', e.target.value)}
+            placeholder="hiermit senden wir Ihnen unsere Bestellung:"
+            rows={2}
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="closing">{t('settings.closing')}</Label>
+          <Textarea
+            id="closing"
+            value={formData.closing || currentData.closing}
+            onChange={(e) => handleChange('closing', e.target.value)}
+            placeholder="Vielen Dank für Ihre Zusammenarbeit."
+            rows={2}
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="signature">{t('settings.signature')}</Label>
+          <Textarea
+            id="signature"
+            value={formData.signature || currentData.signature}
+            onChange={(e) => handleChange('signature', e.target.value)}
+            placeholder="Mit freundlichen Grüßen,&#10;{restaurant_name}"
+            rows={3}
+          />
+          <p className="text-xs text-muted-foreground">{t('settings.signatureHelp')}</p>
+        </div>
+
+        <div className="flex gap-3">
+          <Button onClick={handleSave} disabled={upsertTemplate.isPending}>
+            {upsertTemplate.isPending ? t('common.saving') : t('common.save')}
+          </Button>
+          <Button variant="outline" onClick={handleReset}>
+            <RotateCcw className="h-4 w-4 mr-2" />
+            {t('settings.resetToDefault')}
+          </Button>
         </div>
       </CardContent>
     </Card>

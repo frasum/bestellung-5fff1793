@@ -257,7 +257,19 @@
     "supplierUpdates": "Lieferanten-Updates",
     "supplierUpdatesDesc": "E-Mail erhalten bei wichtigen Lieferanten-Änderungen",
     "weeklyReport": "Wochenbericht",
-    "weeklyReportDesc": "Wöchentliche Zusammenfassung der Ausgaben und Bestellungen"
+    "weeklyReportDesc": "Wöchentliche Zusammenfassung der Ausgaben und Bestellungen",
+    "emailTemplates": "E-Mail-Vorlagen",
+    "emailTemplateTitle": "Bestellungs-E-Mail-Vorlage",
+    "emailTemplateDescription": "Passen Sie die E-Mail-Vorlage für Bestellungen an Lieferanten an",
+    "subjectTemplate": "Betreffzeile",
+    "subjectTemplateHelp": "Verfügbare Variablen: {restaurant_name}, {customer_number_suffix}",
+    "greeting": "Begrüßung",
+    "introduction": "Einleitung",
+    "closing": "Abschlusstext",
+    "signature": "Signatur",
+    "signatureHelp": "Verfügbare Variablen: {restaurant_name}",
+    "resetToDefault": "Auf Standard zurücksetzen",
+    "templatePreview": "Vorschau"
   },
   "landing": {
     "heroTitle": "Intelligente Beschaffung für Restaurants",
