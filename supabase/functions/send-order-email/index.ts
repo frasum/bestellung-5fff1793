@@ -137,7 +137,7 @@ const generateEmailHtml = (data: OrderEmailRequest): string => {
 
           <div style="text-align: center; padding-top: 24px; border-top: 1px solid #e5e7eb;">
             <p style="color: #9ca3af; font-size: 12px; margin: 0;">
-              Diese Bestellung wurde über ProcureResto aufgegeben.<br>
+              Diese Bestellung wurde über OrderFox.pro aufgegeben.<br>
               Bitte bestätigen Sie den Eingang und bearbeiten Sie die Bestellung entsprechend.
             </p>
           </div>
@@ -175,7 +175,7 @@ ${itemLines}
 TOTAL: €${data.totalAmount.toFixed(2)}
 
 ---
-This order was placed through ProcureResto.
+This order was placed through OrderFox.pro.
 Please confirm receipt and process accordingly.
   `.trim();
 };
@@ -192,7 +192,7 @@ serve(async (req) => {
     console.log(`Sending order email for order ${data.orderNumber} to ${data.supplierEmail}`);
 
     const emailResponse = await resend.emails.send({
-      from: "ProcureResto <onboarding@resend.dev>",
+      from: "OrderFox.pro <onboarding@resend.dev>",
       to: [data.supplierEmail],
       subject: `New Order #${data.orderNumber} from ${data.restaurantName}`,
       html: generateEmailHtml(data),
