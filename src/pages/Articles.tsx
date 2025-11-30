@@ -202,11 +202,11 @@ const Articles = () => {
     }
   };
 
-  const handleBulkCategoryAssign = async (category: string) => {
+  const handleBulkCategoryAssign = async (category: string | null) => {
     if (selectedArticles.size === 0) return;
     await bulkUpdateArticles.mutateAsync({
       ids: Array.from(selectedArticles),
-      updates: { category }
+      updates: { category: category || undefined }
     });
     setSelectedArticles(new Set());
     setCategoryPopoverOpen(false);
@@ -481,6 +481,13 @@ const Articles = () => {
                       )}
                     </CommandEmpty>
                     <CommandGroup>
+                      <CommandItem
+                        value="__remove__"
+                        onSelect={() => handleBulkCategoryAssign(null)}
+                        className="text-destructive"
+                      >
+                        Kategorie entfernen
+                      </CommandItem>
                       {existingCategories.map((category) => (
                         <CommandItem
                           key={category}
