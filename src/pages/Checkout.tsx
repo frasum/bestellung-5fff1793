@@ -294,6 +294,7 @@ const Checkout = () => {
                       <div className="flex-1 min-w-0">
                         <p className="font-medium text-foreground truncate">{item.article.name}</p>
                         <p className="text-sm text-muted-foreground">
+                          {item.article.sku && <span className="mr-2">SKU: {item.article.sku}</span>}
                           {item.article.unit} × €{Number(item.article.price).toFixed(2)}
                         </p>
                       </div>
