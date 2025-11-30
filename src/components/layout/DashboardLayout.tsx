@@ -5,6 +5,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { ChefHat, LayoutDashboard, Users, Package, ShoppingCart, FileText, BarChart3, Settings, LogOut, Menu, X, ClipboardList } from 'lucide-react';
+import { GlobalSearch } from '@/components/GlobalSearch';
+import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 interface DashboardLayoutProps {
   children: ReactNode;
 }
@@ -21,6 +23,9 @@ export const DashboardLayout = ({
   const {
     t
   } = useTranslation();
+  
+  // Enable keyboard shortcuts
+  useKeyboardShortcuts();
   const navItems = [{
     href: '/dashboard',
     label: t('nav.dashboard'),
@@ -59,6 +64,9 @@ export const DashboardLayout = ({
     navigate('/');
   };
   return <div className="min-h-screen bg-muted/30">
+      {/* Global Search */}
+      <GlobalSearch />
+      
       {/* Mobile Header */}
       <header className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-card border-b border-border h-16 flex items-center justify-between px-4">
         <Link to="/dashboard" className="flex items-center gap-2">
@@ -71,6 +79,19 @@ export const DashboardLayout = ({
           {sidebarOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
         </button>
       </header>
+
+      {/* Desktop Top Bar */}
+      <div className="hidden lg:flex fixed top-0 left-64 right-0 z-30 h-14 bg-card/80 backdrop-blur-sm border-b border-border items-center justify-between px-6">
+        <div className="flex items-center gap-4">
+          <GlobalSearch />
+        </div>
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          <kbd className="px-1.5 py-0.5 rounded border border-border bg-muted">Shift</kbd>
+          <span>+</span>
+          <kbd className="px-1.5 py-0.5 rounded border border-border bg-muted">?</kbd>
+          <span className="ml-1">Hilfe</span>
+        </div>
+      </div>
 
       {/* Sidebar */}
       <aside className={cn('fixed top-0 left-0 z-40 h-full w-64 bg-card border-r border-border transition-transform duration-300', 'lg:translate-x-0', sidebarOpen ? 'translate-x-0' : '-translate-x-full')}>
@@ -120,7 +141,7 @@ export const DashboardLayout = ({
       {sidebarOpen && <div className="fixed inset-0 bg-background/80 z-30 lg:hidden" onClick={() => setSidebarOpen(false)} />}
 
       {/* Main Content */}
-      <main className="lg:ml-64 pt-16 lg:pt-0 min-h-screen">
+      <main className="lg:ml-64 pt-16 lg:pt-14 min-h-screen">
         <div className="p-6 lg:p-8">{children}</div>
       </main>
     </div>;

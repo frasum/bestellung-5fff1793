@@ -58,6 +58,7 @@
     "loading": "Chargement...",
     "saving": "Enregistrement...",
     "noData": "Aucune donnée disponible",
+    "noResults": "Aucun résultat trouvé",
     "confirm": "Confirmer",
     "close": "Fermer",
     "back": "Retour",
@@ -81,7 +82,9 @@
     "category": "Catégorie",
     "active": "Actif",
     "inactive": "Inactif",
-    "you": "Vous"
+    "you": "Vous",
+    "keyboardShortcuts": "Raccourcis clavier",
+    "help": "Aide"
   },
 "nav": {
     "dashboard": "Tableau de bord",
@@ -97,7 +100,9 @@
     "pricing": "Tarifs",
     "about": "À propos",
     "signIn": "Connexion",
-    "getStarted": "Commencer"
+    "getStarted": "Commencer",
+    "pages": "Pages",
+    "cart": "Panier"
   },
   "auth": {
     "signIn": "Connexion",
