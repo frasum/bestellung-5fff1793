@@ -427,9 +427,10 @@ const Articles = () => {
                         <div className="flex items-center gap-3">
                           <div className="min-w-0 flex-1">
                             <p className="font-medium text-foreground truncate">{article.name}</p>
-                            <p className="text-xs text-muted-foreground sm:hidden truncate">
-                              {article.suppliers?.name}
-                            </p>
+                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                              <span className="sm:hidden truncate">{article.suppliers?.name}</span>
+                              {article.sku && <span className="text-muted-foreground">SKU: {article.sku}</span>}
+                            </div>
                           </div>
                           <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                             <Button
