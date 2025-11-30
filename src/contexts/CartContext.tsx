@@ -16,6 +16,7 @@ interface CartContextType {
   getTotal: () => number;
   getItemCount: () => number;
   getItemsBySupplier: () => Map<string, CartItem[]>;
+  loadFromDraft: (draftItems: CartItem[]) => void;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -90,6 +91,11 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     return supplierMap;
   }, [items]);
 
+  const loadFromDraft = useCallback((draftItems: CartItem[]) => {
+    setItems(draftItems);
+    toast.success('Entwurf in den Warenkorb geladen');
+  }, []);
+
   return (
     <CartContext.Provider
       value={{
@@ -101,6 +107,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         getTotal,
         getItemCount,
         getItemsBySupplier,
+        loadFromDraft,
       }}
     >
       {children}

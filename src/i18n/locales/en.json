@@ -83,11 +83,12 @@
     "inactive": "Inactive",
     "you": "You"
   },
-  "nav": {
+"nav": {
     "dashboard": "Dashboard",
     "suppliers": "Suppliers",
     "articles": "Articles",
     "orders": "Orders",
+    "drafts": "Drafts",
     "reports": "Reports",
     "settings": "Settings",
     "signOut": "Sign Out",
@@ -152,7 +153,7 @@
     "allSuppliers": "All Suppliers",
     "allCategories": "All Categories"
   },
-  "cart": {
+"cart": {
     "title": "Cart",
     "empty": "Your cart is empty",
     "emptyDescription": "Add articles to place an order",
@@ -162,7 +163,10 @@
     "itemCount": "{{count}} items",
     "minimumOrderWarning": "Minimum order value not reached",
     "minimumOrderMessage": "The minimum order value at {{supplier}} is {{amount}}. You need {{remaining}} more.",
-    "cannotCheckout": "You cannot proceed to checkout until all minimum order values are met."
+    "cannotCheckout": "You cannot proceed to checkout until all minimum order values are met.",
+    "saveAsDraft": "Save as Draft",
+    "draftName": "Draft Name",
+    "draftSaved": "Draft saved"
   },
   "checkout": {
     "title": "Checkout",
@@ -289,10 +293,29 @@
     "pricingTitle": "Simple Pricing",
     "pricingSubtitle": "Choose the plan that fits your restaurant"
   },
-  "language": {
+"language": {
     "de": "Deutsch",
     "en": "English",
     "fr": "Français",
     "selectLanguage": "Select Language"
+  },
+  "drafts": {
+    "title": "Drafts",
+    "description": "Manage saved order drafts",
+    "searchPlaceholder": "Search drafts...",
+    "empty": "No drafts available",
+    "emptyDescription": "Save your cart as a draft to edit it later",
+    "browseArticles": "Browse Articles",
+    "noResults": "No drafts found",
+    "noResultsDescription": "Try different search criteria",
+    "items": "items",
+    "total": "Total",
+    "loadToCart": "Load to Cart",
+    "deleteTitle": "Delete Draft",
+    "deleteDescription": "Are you sure you want to delete the draft \"{{name}}\"?",
+    "loadTitle": "Load Draft",
+    "loadDescription": "Your current cart will be replaced with this draft. Do you want to continue?",
+    "replaceCart": "Replace Cart",
+    "more": "more"
   }
 }

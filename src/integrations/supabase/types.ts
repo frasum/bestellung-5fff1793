@@ -74,6 +74,86 @@ export type Database = {
           },
         ]
       }
+      cart_draft_items: {
+        Row: {
+          article_id: string
+          created_at: string
+          draft_id: string
+          id: string
+          quantity: number
+        }
+        Insert: {
+          article_id: string
+          created_at?: string
+          draft_id: string
+          id?: string
+          quantity?: number
+        }
+        Update: {
+          article_id?: string
+          created_at?: string
+          draft_id?: string
+          id?: string
+          quantity?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cart_draft_items_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: false
+            referencedRelation: "articles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cart_draft_items_draft_id_fkey"
+            columns: ["draft_id"]
+            isOneToOne: false
+            referencedRelation: "cart_drafts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cart_drafts: {
+        Row: {
+          created_at: string
+          delivery_address: string | null
+          id: string
+          name: string
+          notes: string | null
+          organization_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          delivery_address?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          organization_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          delivery_address?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          organization_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cart_drafts_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       delivery_addresses: {
         Row: {
           address_line1: string
@@ -510,6 +590,7 @@ export type Database = {
     Enums: {
       app_role: "admin" | "manager" | "purchaser" | "viewer"
       order_status:
+        | "draft"
         | "pending"
         | "confirmed"
         | "processing"
@@ -645,6 +726,7 @@ export const Constants = {
     Enums: {
       app_role: ["admin", "manager", "purchaser", "viewer"],
       order_status: [
+        "draft",
         "pending",
         "confirmed",
         "processing",
