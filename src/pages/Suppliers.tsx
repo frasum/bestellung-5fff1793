@@ -624,7 +624,7 @@ const Suppliers = () => {
                         <TableCell className="py-2">
                           <div>
                             <p className="font-medium text-foreground">{supplier.name}</p>
-                            <p className="text-xs text-muted-foreground">{supplier.email}</p>
+                            <p className="text-xs text-muted-foreground">{supplier.phone || '-'}</p>
                           </div>
                         </TableCell>
                         <TableCell className="hidden md:table-cell text-muted-foreground py-2">
