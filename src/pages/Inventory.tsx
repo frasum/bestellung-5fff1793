@@ -661,7 +661,45 @@ const Inventory = () => {
                             <TableCell className="text-muted-foreground">
                               {article.suppliers?.name}
                             </TableCell>
-                            <TableCell>{article.unit}</TableCell>
+                            <TableCell>
+                              {editingUnitId === article.id ? (
+                                <div className="flex items-center gap-1">
+                                  <Input
+                                    value={editingUnitValue}
+                                    onChange={(e) => setEditingUnitValue(e.target.value)}
+                                    className="w-20 h-8"
+                                    autoFocus
+                                    onKeyDown={(e) => {
+                                      if (e.key === 'Enter') handleSaveUnitEdit(article.id);
+                                      if (e.key === 'Escape') handleCancelUnitEdit();
+                                    }}
+                                  />
+                                  <Button
+                                    size="icon"
+                                    variant="ghost"
+                                    className="h-7 w-7"
+                                    onClick={() => handleSaveUnitEdit(article.id)}
+                                  >
+                                    <Check className="h-4 w-4 text-green-600" />
+                                  </Button>
+                                  <Button
+                                    size="icon"
+                                    variant="ghost"
+                                    className="h-7 w-7"
+                                    onClick={handleCancelUnitEdit}
+                                  >
+                                    <X className="h-4 w-4 text-destructive" />
+                                  </Button>
+                                </div>
+                              ) : (
+                                <span
+                                  className="cursor-pointer hover:text-primary hover:underline"
+                                  onClick={() => handleStartUnitEdit(article.id, article.unit)}
+                                >
+                                  {article.unit}
+                                </span>
+                              )}
+                            </TableCell>
                             <TableCell className="text-right">
                               {editingPriceId === article.id ? (
                                 <div className="flex items-center justify-end gap-1">
