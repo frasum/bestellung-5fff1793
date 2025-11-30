@@ -15,6 +15,7 @@ import {
   useDeleteInventorySession,
   InventoryItem,
 } from '@/hooks/useInventory';
+import { useUnits, useCreateUnit, useUpdateUnit, useDeleteUnit } from '@/hooks/useUnits';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -68,6 +69,8 @@ import {
   Euro,
   Check,
   X,
+  Pencil,
+  Ruler,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -79,6 +82,9 @@ interface LocalInventoryItem {
   storage_1: number;
   storage_2: number;
 }
+
+// Default units if no custom units exist
+const DEFAULT_UNITS = ['kg', 'g', 'Stück', 'Stk', 'Liter', 'l', '0,75l', '1,0l', 'ml', 'Pg.', 'Ka.', 'Kt.', 'Fl.', 'Dose', 'Bund', 'Beutel', 'Pack'];
 
 const Inventory = () => {
   const { t } = useTranslation();
@@ -105,20 +111,35 @@ const Inventory = () => {
   const [editingUnitId, setEditingUnitId] = useState<string | null>(null);
   const [editingUnitValue, setEditingUnitValue] = useState<string>('');
 
-  // Common units for dropdown
-  const commonUnits = ['kg', 'g', 'Stück', 'Stk', 'Liter', 'l', '0,75l', '1,0l', 'ml', 'Pg.', 'Ka.', 'Kt.', 'Fl.', 'Dose', 'Bund', 'Beutel', 'Pack'];
+  // Unit management state
+  const [newUnitName, setNewUnitName] = useState('');
+  const [editingUnitDbId, setEditingUnitDbId] = useState<string | null>(null);
+  const [editingUnitDbName, setEditingUnitDbName] = useState('');
+  const [deleteUnitId, setDeleteUnitId] = useState<string | null>(null);
 
   const { data: articles, isLoading: articlesLoading } = useArticles();
   const { data: suppliers } = useSuppliers();
   const { data: sessions, isLoading: sessionsLoading } = useInventorySessions();
   const { data: activeSession } = useInventorySession(activeSessionId);
   const { data: inventoryItems } = useInventoryItems(activeSessionId);
+  const { data: units, isLoading: unitsLoading } = useUnits();
 
   const createSession = useCreateInventorySession();
   const updateSession = useUpdateInventorySession();
   const bulkUpsertItems = useBulkUpsertInventoryItems();
   const deleteSession = useDeleteInventorySession();
   const updateArticle = useUpdateArticle();
+  const createUnit = useCreateUnit();
+  const updateUnit = useUpdateUnit();
+  const deleteUnit = useDeleteUnit();
+
+  // Compute available units - use from DB or defaults
+  const commonUnits = useMemo(() => {
+    if (units && units.length > 0) {
+      return units.map(u => u.name);
+    }
+    return DEFAULT_UNITS;
+  }, [units]);
 
   // Auth check
   useEffect(() => {
@@ -387,6 +408,10 @@ const Inventory = () => {
             <TabsTrigger value="prices" className="gap-2">
               <Euro className="w-4 h-4" />
               Artikelpreise
+            </TabsTrigger>
+            <TabsTrigger value="units" className="gap-2">
+              <Ruler className="w-4 h-4" />
+              Einheiten
             </TabsTrigger>
           </TabsList>
 
@@ -753,6 +778,154 @@ const Inventory = () => {
               </CardContent>
             </Card>
           </TabsContent>
+
+          {/* Units Tab Content */}
+          <TabsContent value="units" className="mt-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Ruler className="w-5 h-5" />
+                  Einheiten verwalten
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {/* Add new unit */}
+                <div className="flex gap-2 mb-6">
+                  <Input
+                    placeholder="Neue Einheit eingeben..."
+                    value={newUnitName}
+                    onChange={(e) => setNewUnitName(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && newUnitName.trim()) {
+                        createUnit.mutate(newUnitName.trim());
+                        setNewUnitName('');
+                      }
+                    }}
+                    className="max-w-xs"
+                  />
+                  <Button
+                    onClick={() => {
+                      if (newUnitName.trim()) {
+                        createUnit.mutate(newUnitName.trim());
+                        setNewUnitName('');
+                      }
+                    }}
+                    disabled={!newUnitName.trim() || createUnit.isPending}
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Hinzufügen
+                  </Button>
+                </div>
+
+                {/* Units list */}
+                {unitsLoading ? (
+                  <div className="space-y-2">
+                    <Skeleton className="h-10 w-full" />
+                    <Skeleton className="h-10 w-full" />
+                    <Skeleton className="h-10 w-full" />
+                  </div>
+                ) : units && units.length > 0 ? (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Einheit</TableHead>
+                        <TableHead className="w-32 text-right">Aktionen</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {units.map((unit) => (
+                        <TableRow key={unit.id}>
+                          <TableCell>
+                            {editingUnitDbId === unit.id ? (
+                              <div className="flex items-center gap-2">
+                                <Input
+                                  value={editingUnitDbName}
+                                  onChange={(e) => setEditingUnitDbName(e.target.value)}
+                                  className="max-w-xs"
+                                  autoFocus
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter' && editingUnitDbName.trim()) {
+                                      updateUnit.mutate({ id: unit.id, name: editingUnitDbName.trim() });
+                                      setEditingUnitDbId(null);
+                                      setEditingUnitDbName('');
+                                    }
+                                    if (e.key === 'Escape') {
+                                      setEditingUnitDbId(null);
+                                      setEditingUnitDbName('');
+                                    }
+                                  }}
+                                />
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  className="h-8 w-8"
+                                  onClick={() => {
+                                    if (editingUnitDbName.trim()) {
+                                      updateUnit.mutate({ id: unit.id, name: editingUnitDbName.trim() });
+                                      setEditingUnitDbId(null);
+                                      setEditingUnitDbName('');
+                                    }
+                                  }}
+                                >
+                                  <Check className="w-4 h-4 text-green-600" />
+                                </Button>
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  className="h-8 w-8"
+                                  onClick={() => {
+                                    setEditingUnitDbId(null);
+                                    setEditingUnitDbName('');
+                                  }}
+                                >
+                                  <X className="w-4 h-4 text-destructive" />
+                                </Button>
+                              </div>
+                            ) : (
+                              <span className="font-medium">{unit.name}</span>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            {editingUnitDbId !== unit.id && (
+                              <div className="flex justify-end gap-1">
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  className="h-8 w-8"
+                                  onClick={() => {
+                                    setEditingUnitDbId(unit.id);
+                                    setEditingUnitDbName(unit.name);
+                                  }}
+                                >
+                                  <Pencil className="w-4 h-4" />
+                                </Button>
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  className="h-8 w-8 text-destructive hover:text-destructive"
+                                  onClick={() => setDeleteUnitId(unit.id)}
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              </div>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                ) : (
+                  <div className="py-8 text-center text-muted-foreground">
+                    <Ruler className="w-10 h-10 mx-auto mb-3 opacity-50" />
+                    <p>Keine benutzerdefinierten Einheiten vorhanden.</p>
+                    <p className="text-sm mt-1">
+                      Standard-Einheiten werden verwendet: {DEFAULT_UNITS.slice(0, 5).join(', ')}...
+                    </p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
         </Tabs>
       </div>
 
@@ -874,6 +1047,32 @@ const Inventory = () => {
             <AlertDialogCancel>Abbrechen</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeleteSession}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Löschen
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Delete Unit Alert Dialog */}
+      <AlertDialog open={!!deleteUnitId} onOpenChange={(open) => !open && setDeleteUnitId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Einheit löschen?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Diese Einheit wird dauerhaft gelöscht. Artikel mit dieser Einheit behalten ihre aktuelle Einheit.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (deleteUnitId) {
+                  deleteUnit.mutate(deleteUnitId);
+                  setDeleteUnitId(null);
+                }
+              }}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               Löschen
