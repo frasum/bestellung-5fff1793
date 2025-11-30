@@ -79,7 +79,7 @@ const supplierSchema = z.object({
 
 type SupplierFormData = z.infer<typeof supplierSchema>;
 
-const TOP_CATEGORIES = ['Küche', 'Bar', 'Bedarfsartikel'] as const;
+const TOP_CATEGORIES = ['Küche', 'Getränke', 'Bedarfsartikel'] as const;
 
 const SUPPLIER_IMPORT_FIELDS: ImportField[] = [
   { name: 'name', label: 'Name', required: true },
