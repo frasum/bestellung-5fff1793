@@ -49,6 +49,7 @@ const Checkout = () => {
   const [showEmailPreview, setShowEmailPreview] = useState(false);
   const [emailPreviews, setEmailPreviews] = useState<EmailPreviewData[]>([]);
   const [pendingOrderData, setPendingOrderData] = useState<CheckoutFormData | null>(null);
+  const [calendarOpen, setCalendarOpen] = useState(false);
 
   const defaultAddress = deliveryAddresses?.find(a => a.is_default);
 
@@ -361,7 +362,7 @@ const Checkout = () => {
                     control={form.control}
                     name="deliveryDate"
                     render={({ field }) => (
-                      <Popover>
+                      <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
                         <PopoverTrigger asChild>
                           <Button
                             variant="outline"
@@ -378,7 +379,10 @@ const Checkout = () => {
                           <Calendar
                             mode="single"
                             selected={field.value}
-                            onSelect={field.onChange}
+                            onSelect={(date) => {
+                              field.onChange(date);
+                              setCalendarOpen(false);
+                            }}
                             disabled={(date) => date < new Date()}
                             initialFocus
                             className="pointer-events-auto"
