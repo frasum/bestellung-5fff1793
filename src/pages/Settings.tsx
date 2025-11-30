@@ -847,6 +847,7 @@ const EmailTemplateTab = () => {
     introduction: '',
     closing: '',
     signature: '',
+    article_list_format: '',
   });
 
   // Initialize form with template data or defaults
@@ -858,6 +859,7 @@ const EmailTemplateTab = () => {
         introduction: template.introduction,
         closing: template.closing,
         signature: template.signature,
+        article_list_format: template.article_list_format,
       });
     } else {
       setFormData({
@@ -866,6 +868,7 @@ const EmailTemplateTab = () => {
         introduction: defaultTemplate.introduction || '',
         closing: defaultTemplate.closing || '',
         signature: defaultTemplate.signature || '',
+        article_list_format: defaultTemplate.article_list_format || '',
       });
     }
   });
@@ -876,6 +879,7 @@ const EmailTemplateTab = () => {
     introduction: template.introduction,
     closing: template.closing,
     signature: template.signature,
+    article_list_format: template.article_list_format,
   } : formData;
 
   const handleChange = (field: keyof typeof formData, value: string) => {
@@ -893,6 +897,7 @@ const EmailTemplateTab = () => {
       introduction: defaultTemplate.introduction || '',
       closing: defaultTemplate.closing || '',
       signature: defaultTemplate.signature || '',
+      article_list_format: defaultTemplate.article_list_format || '',
     });
   };
 
@@ -963,6 +968,18 @@ const EmailTemplateTab = () => {
             rows={3}
           />
           <p className="text-xs text-muted-foreground">{t('settings.signatureHelp')}</p>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="article-list-format">{t('settings.articleListFormat')}</Label>
+          <Textarea
+            id="article-list-format"
+            value={formData.article_list_format || currentData.article_list_format}
+            onChange={(e) => handleChange('article_list_format', e.target.value)}
+            placeholder="- {article_name}{sku_suffix}: {quantity} {unit} à €{unit_price} = €{total_price}"
+            rows={2}
+          />
+          <p className="text-xs text-muted-foreground">{t('settings.articleListFormatHelp')}</p>
         </div>
 
         <div className="flex gap-3">

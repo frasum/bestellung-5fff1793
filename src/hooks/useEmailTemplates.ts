@@ -12,6 +12,7 @@ export interface EmailTemplate {
   introduction: string;
   closing: string;
   signature: string;
+  article_list_format: string;
   created_at: string;
   updated_at: string;
 }
@@ -22,6 +23,7 @@ export interface EmailTemplateUpdate {
   introduction?: string;
   closing?: string;
   signature?: string;
+  article_list_format?: string;
 }
 
 export const useEmailTemplate = () => {
@@ -119,4 +121,5 @@ export const getDefaultTemplate = (): EmailTemplateUpdate => ({
   introduction: 'hiermit senden wir Ihnen unsere Bestellung:',
   closing: 'Vielen Dank für Ihre Zusammenarbeit.',
   signature: 'Mit freundlichen Grüßen,\n{restaurant_name}',
+  article_list_format: '- {article_name}{sku_suffix}: {quantity} {unit} à €{unit_price} = €{total_price}',
 });

@@ -272,6 +272,8 @@
     "closing": "Closing Text",
     "signature": "Signature",
     "signatureHelp": "Available variables: {restaurant_name}",
+    "articleListFormat": "Article List Format",
+    "articleListFormatHelp": "Variables: {article_name}, {sku_suffix}, {quantity}, {unit}, {unit_price}, {total_price}",
     "resetToDefault": "Reset to Default",
     "templatePreview": "Preview"
   },

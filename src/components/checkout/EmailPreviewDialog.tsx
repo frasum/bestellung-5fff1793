@@ -62,6 +62,7 @@ export const EmailPreviewDialog = ({
     introduction: emailTemplate?.introduction || defaultTemplate.introduction || '',
     closing: emailTemplate?.closing || defaultTemplate.closing || '',
     signature: emailTemplate?.signature || defaultTemplate.signature || '',
+    article_list_format: emailTemplate?.article_list_format || defaultTemplate.article_list_format || '- {article_name}{sku_suffix}: {quantity} {unit} à €{unit_price} = €{total_price}',
   };
 
   const goNext = () => {
@@ -96,8 +97,14 @@ export const EmailPreviewDialog = ({
   const generateEmailBody = (email: EmailPreviewData) => {
     const itemsList = email.items
       .map(item => {
-        const skuPart = item.sku ? ` (SKU: ${item.sku})` : '';
-        return `- ${item.article_name}${skuPart}: ${item.quantity} ${item.unit} à €${item.unit_price.toFixed(2)} = €${item.total_price.toFixed(2)}`;
+        const skuSuffix = item.sku ? ` (SKU: ${item.sku})` : '';
+        return template.article_list_format
+          .replace('{article_name}', item.article_name)
+          .replace('{sku_suffix}', skuSuffix)
+          .replace('{quantity}', item.quantity.toString())
+          .replace('{unit}', item.unit)
+          .replace('{unit_price}', item.unit_price.toFixed(2))
+          .replace('{total_price}', item.total_price.toFixed(2));
       })
       .join('\n');
 
