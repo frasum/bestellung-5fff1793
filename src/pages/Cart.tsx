@@ -15,8 +15,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Trash2, Plus, Minus, ShoppingCart, ArrowRight, Loader2, AlertTriangle, Save } from 'lucide-react';
+import { Trash2, Plus, Minus, ShoppingCart, ArrowRight, Loader2, AlertTriangle, Save, Camera } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { ScanOrderListDialog } from '@/components/cart/ScanOrderListDialog';
 
 const Cart = () => {
   const { user, loading: authLoading } = useAuth();
@@ -27,6 +28,7 @@ const Cart = () => {
   
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const [draftName, setDraftName] = useState('');
+  const [scanDialogOpen, setScanDialogOpen] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -98,11 +100,17 @@ const Cart = () => {
                 : `${items.length} item${items.length > 1 ? 's' : ''} in your cart`}
             </p>
           </div>
-          {items.length > 0 && (
-            <Button variant="outline" onClick={clearCart}>
-              Clear Cart
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => setScanDialogOpen(true)}>
+              <Camera className="w-4 h-4 mr-2" />
+              Liste scannen
             </Button>
-          )}
+            {items.length > 0 && (
+              <Button variant="outline" onClick={clearCart}>
+                Clear Cart
+              </Button>
+            )}
+          </div>
         </div>
 
         {items.length === 0 ? (
@@ -273,6 +281,12 @@ const Cart = () => {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        {/* Scan Order List Dialog */}
+        <ScanOrderListDialog 
+          open={scanDialogOpen} 
+          onOpenChange={setScanDialogOpen} 
+        />
       </div>
     </DashboardLayout>
   );
