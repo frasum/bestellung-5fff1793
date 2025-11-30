@@ -561,6 +561,7 @@ export type Database = {
           email: string
           id: string
           is_active: boolean
+          main_category: string | null
           minimum_order_value: number | null
           name: string
           organization_id: string
@@ -575,6 +576,7 @@ export type Database = {
           email: string
           id?: string
           is_active?: boolean
+          main_category?: string | null
           minimum_order_value?: number | null
           name: string
           organization_id: string
@@ -589,6 +591,7 @@ export type Database = {
           email?: string
           id?: string
           is_active?: boolean
+          main_category?: string | null
           minimum_order_value?: number | null
           name?: string
           organization_id?: string

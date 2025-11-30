@@ -58,6 +58,7 @@ const supplierSchema = z.object({
   contact_person: z.string().optional(),
   customer_number: z.string().optional(),
   minimum_order_value: z.string().optional(),
+  main_category: z.string().optional(),
 });
 
 type SupplierFormData = z.infer<typeof supplierSchema>;
@@ -70,6 +71,7 @@ const SUPPLIER_IMPORT_FIELDS: ImportField[] = [
   { name: 'contact_person', label: 'Contact Person', required: false },
   { name: 'customer_number', label: 'Customer Number', required: false },
   { name: 'minimum_order_value', label: 'Minimum Order Value', required: false },
+  { name: 'main_category', label: 'Main Category', required: false },
 ];
 
 const ARTICLE_IMPORT_FIELDS: ImportField[] = [
@@ -161,7 +163,7 @@ const Suppliers = () => {
 
   const form = useForm<SupplierFormData>({
     resolver: zodResolver(supplierSchema),
-    defaultValues: { name: '', email: '', phone: '', address: '', contact_person: '', customer_number: '', minimum_order_value: '' },
+    defaultValues: { name: '', email: '', phone: '', address: '', contact_person: '', customer_number: '', minimum_order_value: '', main_category: '' },
   });
 
   useEffect(() => {
@@ -180,9 +182,10 @@ const Suppliers = () => {
         contact_person: editingSupplier.contact_person || '',
         customer_number: editingSupplier.customer_number || '',
         minimum_order_value: editingSupplier.minimum_order_value?.toString() || '',
+        main_category: editingSupplier.main_category || '',
       });
     } else {
-      form.reset({ name: '', email: '', phone: '', address: '', contact_person: '', customer_number: '', minimum_order_value: '' });
+      form.reset({ name: '', email: '', phone: '', address: '', contact_person: '', customer_number: '', minimum_order_value: '', main_category: '' });
     }
   }, [editingSupplier, form]);
 
@@ -195,6 +198,7 @@ const Suppliers = () => {
       contact_person: data.contact_person || undefined,
       customer_number: data.customer_number || undefined,
       minimum_order_value: data.minimum_order_value ? parseFloat(data.minimum_order_value) : undefined,
+      main_category: data.main_category || undefined,
     };
 
     if (editingSupplier) {
@@ -337,6 +341,14 @@ const Suppliers = () => {
                     min="0"
                     {...form.register('minimum_order_value')} 
                     placeholder="50.00" 
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="main_category">Hauptkategorie</Label>
+                  <Input 
+                    id="main_category" 
+                    {...form.register('main_category')} 
+                    placeholder="z.B. Gemüse, Fleisch, Getränke" 
                   />
                 </div>
                 
