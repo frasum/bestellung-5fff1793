@@ -6,6 +6,7 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { cn } from '@/lib/utils';
 import {
   Dialog,
   DialogContent,
@@ -40,6 +41,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from '@/components/ui/command';
+import { Check, ChevronsUpDown } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useForm } from 'react-hook-form';
 import { CsvImportDialog, ImportField } from '@/components/CsvImportDialog';
@@ -97,6 +112,8 @@ const Suppliers = () => {
   const [editingSupplier, setEditingSupplier] = useState<Supplier | null>(null);
   const [deletingSupplier, setDeletingSupplier] = useState<Supplier | null>(null);
   const [articleImportSupplierId, setArticleImportSupplierId] = useState<string | null>(null);
+  const [categoryPopoverOpen, setCategoryPopoverOpen] = useState(false);
+  const [customCategory, setCustomCategory] = useState('');
 
   const { data: suppliers, isLoading } = useSuppliers();
   const { data: allArticles } = useArticles();
@@ -107,6 +124,11 @@ const Suppliers = () => {
   const importSuppliers = useImportSuppliers();
   const importArticles = useImportArticles();
   const [showDeactivateOption, setShowDeactivateOption] = useState(false);
+
+  // Extract unique categories from suppliers
+  const existingCategories = [...new Set(
+    suppliers?.map(s => s.main_category).filter(Boolean) as string[]
+  )].sort();
 
   // Group articles by supplier
   const articlesBySupplier = allArticles?.reduce((acc, article) => {
@@ -344,12 +366,66 @@ const Suppliers = () => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="main_category">Hauptkategorie</Label>
-                  <Input 
-                    id="main_category" 
-                    {...form.register('main_category')} 
-                    placeholder="z.B. Gemüse, Fleisch, Getränke" 
-                  />
+                  <Label>Hauptkategorie</Label>
+                  <Popover open={categoryPopoverOpen} onOpenChange={setCategoryPopoverOpen}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        role="combobox"
+                        aria-expanded={categoryPopoverOpen}
+                        className="w-full justify-between font-normal"
+                      >
+                        {form.watch('main_category') || "Kategorie auswählen..."}
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-full p-0 bg-popover border border-border z-50" align="start">
+                      <Command>
+                        <CommandInput 
+                          placeholder="Kategorie suchen oder eingeben..." 
+                          value={customCategory}
+                          onValueChange={setCustomCategory}
+                        />
+                        <CommandList>
+                          <CommandEmpty>
+                            {customCategory && (
+                              <button
+                                type="button"
+                                className="w-full px-2 py-1.5 text-left text-sm hover:bg-accent cursor-pointer"
+                                onClick={() => {
+                                  form.setValue('main_category', customCategory);
+                                  setCustomCategory('');
+                                  setCategoryPopoverOpen(false);
+                                }}
+                              >
+                                "{customCategory}" hinzufügen
+                              </button>
+                            )}
+                          </CommandEmpty>
+                          <CommandGroup>
+                            {existingCategories.map((category) => (
+                              <CommandItem
+                                key={category}
+                                value={category}
+                                onSelect={() => {
+                                  form.setValue('main_category', category);
+                                  setCategoryPopoverOpen(false);
+                                }}
+                              >
+                                <Check
+                                  className={cn(
+                                    "mr-2 h-4 w-4",
+                                    form.watch('main_category') === category ? "opacity-100" : "opacity-0"
+                                  )}
+                                />
+                                {category}
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
                 </div>
                 
                 {/* Article Import Button - only show when editing */}
