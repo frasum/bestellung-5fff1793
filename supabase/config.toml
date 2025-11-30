@@ -5,3 +5,6 @@ verify_jwt = true
 
 [functions.send-invitation-email]
 verify_jwt = true
+
+[functions.ai-import-helper]
+verify_jwt = false
