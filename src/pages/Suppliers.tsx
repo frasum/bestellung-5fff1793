@@ -23,7 +23,14 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { useSuppliers, useCreateSupplier, useUpdateSupplier, useDeleteSupplier, useDeactivateSupplier, Supplier, SupplierInput } from '@/hooks/useSuppliers';
-import { Plus, Pencil, Trash2, Search, Mail, Phone, MapPin, User, Loader2, Upload, Hash, Euro } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, Mail, Phone, MapPin, User, Loader2, Upload, Hash, Euro, Filter, RotateCcw } from 'lucide-react';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { useForm } from 'react-hook-form';
 import { CsvImportDialog, ImportField } from '@/components/CsvImportDialog';
 import { useImportSuppliers } from '@/hooks/useImport';
@@ -57,6 +64,7 @@ const Suppliers = () => {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isImportOpen, setIsImportOpen] = useState(false);
   const [editingSupplier, setEditingSupplier] = useState<Supplier | null>(null);
@@ -140,11 +148,18 @@ const Suppliers = () => {
     }
   };
 
-  const filteredSuppliers = suppliers?.filter(
-    (supplier) =>
-      supplier.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      supplier.email.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredSuppliers = suppliers?.filter((supplier) => {
+    const matchesSearch = supplier.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      supplier.email.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesStatus = statusFilter === 'all' || 
+      (statusFilter === 'active' && supplier.is_active) ||
+      (statusFilter === 'inactive' && !supplier.is_active);
+    return matchesSearch && matchesStatus;
+  });
+
+  const handleReactivate = async (supplier: Supplier) => {
+    await updateSupplier.mutateAsync({ id: supplier.id, is_active: true });
+  };
 
   if (authLoading || !user) {
     return (
@@ -273,15 +288,28 @@ const Suppliers = () => {
           templateFileName="suppliers_template.csv"
         />
 
-        {/* Search */}
-        <div className="relative max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input
-            placeholder="Search suppliers..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10"
-          />
+        {/* Search and Filter */}
+        <div className="flex flex-col sm:flex-row gap-4">
+          <div className="relative flex-1 max-w-md">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              placeholder="Lieferanten suchen..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+          <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as 'all' | 'active' | 'inactive')}>
+            <SelectTrigger className="w-full sm:w-[180px]">
+              <Filter className="w-4 h-4 mr-2" />
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Alle Lieferanten</SelectItem>
+              <SelectItem value="active">Nur Aktive</SelectItem>
+              <SelectItem value="inactive">Nur Inaktive</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         {/* Suppliers Grid */}
@@ -292,7 +320,9 @@ const Suppliers = () => {
         ) : filteredSuppliers?.length === 0 ? (
           <div className="text-center py-12 bg-card border border-border rounded-xl">
             <p className="text-muted-foreground">
-              {searchQuery ? 'No suppliers found matching your search' : 'No suppliers yet. Add your first supplier to get started.'}
+              {searchQuery || statusFilter !== 'all' 
+                ? 'Keine Lieferanten gefunden' 
+                : 'Noch keine Lieferanten. Fügen Sie Ihren ersten Lieferanten hinzu.'}
             </p>
           </div>
         ) : (
@@ -300,7 +330,7 @@ const Suppliers = () => {
             {filteredSuppliers?.map((supplier) => (
               <div
                 key={supplier.id}
-                className="bg-card border border-border rounded-xl p-6 hover:border-primary/50 transition-colors"
+                className={`bg-card border border-border rounded-xl p-6 hover:border-primary/50 transition-colors ${!supplier.is_active ? 'opacity-60' : ''}`}
               >
                 <div className="flex items-start justify-between mb-4">
                   <div>
@@ -310,10 +340,21 @@ const Suppliers = () => {
                         ? 'bg-success/20 text-success' 
                         : 'bg-muted text-muted-foreground'
                     }`}>
-                      {supplier.is_active ? 'Active' : 'Inactive'}
+                      {supplier.is_active ? 'Aktiv' : 'Inaktiv'}
                     </span>
                   </div>
                   <div className="flex gap-1">
+                    {!supplier.is_active && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-success hover:text-success"
+                        onClick={() => handleReactivate(supplier)}
+                        title="Reaktivieren"
+                      >
+                        <RotateCcw className="w-4 h-4" />
+                      </Button>
+                    )}
                     <Button
                       variant="ghost"
                       size="icon"

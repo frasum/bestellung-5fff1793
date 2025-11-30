@@ -87,7 +87,7 @@ export const useUpdateSupplier = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, ...input }: SupplierInput & { id: string }) => {
+    mutationFn: async ({ id, ...input }: Partial<SupplierInput> & { id: string }) => {
       const { data, error } = await supabase
         .from('suppliers')
         .update(input)
@@ -100,7 +100,7 @@ export const useUpdateSupplier = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['suppliers'] });
-      toast.success('Supplier updated successfully');
+      toast.success('Lieferant erfolgreich aktualisiert');
     },
     onError: (error: Error) => {
       toast.error(error.message);
