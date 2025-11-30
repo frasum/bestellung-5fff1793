@@ -47,7 +47,7 @@ export const OrderEmailViewDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col">
+      <DialogContent className="max-w-2xl h-[85vh] flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Mail className="w-5 h-5 text-primary" />
@@ -55,7 +55,7 @@ export const OrderEmailViewDialog = ({
           </DialogTitle>
         </DialogHeader>
 
-        <ScrollArea className="flex-1 max-h-[70vh]">
+        <ScrollArea className="flex-1 overflow-y-auto" style={{ maxHeight: 'calc(80vh - 120px)' }}>
           <div className="space-y-4">
             {/* Email Header */}
             <div className="bg-muted/50 rounded-lg p-4 space-y-2 text-sm">
