@@ -334,12 +334,12 @@ export const CsvImportDialog = ({
 
       // Common column name aliases (German -> English field names)
       const columnAliases: Record<string, string[]> = {
-        name: ['name', 'artikelname', 'artikel', 'produkt', 'bezeichnung', 'produktname', 'article', 'product'],
+        name: ['name', 'artikelname', 'artikel', 'produkt', 'bezeichnung', 'produktname', 'article', 'product', 'deutsche bezeichnung', 'deutschebezeichnung'],
         price: ['price', 'preis', 'vk', 'ek', 'einzelpreis', 'verkaufspreis', 'einkaufspreis', 'betrag'],
         unit: ['unit', 'einheit', 'me', 'mengeneinheit'],
         sku: ['sku', 'artikelnummer', 'artnr', 'art.nr.', 'artikelnr', 'nummer', 'produktnummer'],
         category: ['category', 'kategorie', 'warengruppe', 'gruppe', 'productgroup'],
-        description: ['description', 'beschreibung', 'beschr.', 'info', 'details'],
+        description: ['description', 'beschreibung', 'beschr.', 'info', 'details', 'thailändische übersetzung', 'thailändischeübersetzung', 'thai', 'übersetzung'],
         supplier: ['supplier', 'lieferant', 'lieferantenname', 'supplier_name', 'anbieter'],
         email: ['email', 'e-mail', 'mail', 'emailadresse', 'email_address'],
         phone: ['phone', 'telefon', 'tel', 'telefonnummer', 'phone_number', 'mobil'],

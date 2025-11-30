@@ -98,7 +98,7 @@ export const useImportArticles = () => {
           category: a.category?.trim() || null,
           is_active: true,
         };
-      }).filter((a): a is NonNullable<typeof a> => a !== null && !!a.name && a.price > 0);
+      }).filter((a): a is NonNullable<typeof a> => a !== null && !!a.name);
 
       if (articlesToInsert.length === 0) {
         throw new Error('No valid articles to import. Make sure to select a supplier or that supplier names match existing suppliers.');
