@@ -10,6 +10,7 @@ interface OrderListArticle {
 }
 
 interface OrderListSupplier {
+  id: string;
   name: string;
 }
 
@@ -98,5 +99,96 @@ export const generateOrderListPdf = (
 
   // Save the file
   const filename = `Bestellliste_${supplier.name.replace(/[^a-zA-Z0-9]/g, '_')}_${format(new Date(), 'dd-MM-yyyy')}.pdf`;
+  doc.save(filename);
+};
+
+// Compact combined order list for multiple suppliers
+export const generateCombinedOrderListPdf = (
+  suppliers: OrderListSupplier[],
+  articlesBySupplier: Record<string, OrderListArticle[]>
+) => {
+  const doc = new jsPDF();
+  const today = format(new Date(), 'dd.MM.yyyy', { locale: de });
+  const pageWidth = doc.internal.pageSize.width;
+  const pageHeight = doc.internal.pageSize.height;
+  
+  let currentY = 15;
+  
+  suppliers.forEach((supplier, supplierIndex) => {
+    const articles = articlesBySupplier[supplier.id] || [];
+    if (articles.length === 0) return;
+    
+    // Check if we need a new page (minimum 60pt for header + few rows)
+    if (currentY > pageHeight - 80 && supplierIndex > 0) {
+      doc.addPage();
+      currentY = 15;
+    }
+    
+    // Compact supplier header
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(0);
+    doc.text(supplier.name, 10, currentY);
+    
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(100);
+    doc.text(`${articles.length} Artikel`, pageWidth - 10, currentY, { align: 'right' });
+    
+    currentY += 3;
+    
+    // Compact table
+    const tableData = articles.map((article) => [
+      article.sku ? `${article.name} (${article.sku})` : article.name,
+      article.unit,
+      '', // Menge
+    ]);
+
+    autoTable(doc, {
+      head: [['Artikel', 'Einh.', 'Menge']],
+      body: tableData,
+      startY: currentY,
+      margin: { left: 10, right: 10 },
+      styles: {
+        fontSize: 8,
+        cellPadding: 2,
+        lineColor: [180, 180, 180],
+        lineWidth: 0.3,
+        overflow: 'linebreak',
+      },
+      headStyles: {
+        fillColor: [60, 60, 60],
+        textColor: 255,
+        fontStyle: 'bold',
+        fontSize: 7,
+        cellPadding: 1.5,
+      },
+      columnStyles: {
+        0: { cellWidth: 'auto' },
+        1: { cellWidth: 18, halign: 'center' },
+        2: { cellWidth: 22, halign: 'center' },
+      },
+      alternateRowStyles: {
+        fillColor: [248, 248, 248],
+      },
+      didDrawPage: () => {
+        // Reset for next supplier section on new page
+      },
+    });
+    
+    currentY = (doc as any).lastAutoTable.finalY + 10;
+  });
+  
+  // Add page numbers and date
+  const pageCount = doc.getNumberOfPages();
+  for (let i = 1; i <= pageCount; i++) {
+    doc.setPage(i);
+    doc.setFontSize(7);
+    doc.setTextColor(128);
+    doc.text(today, 10, pageHeight - 8);
+    doc.text(`Seite ${i}/${pageCount}`, pageWidth - 10, pageHeight - 8, { align: 'right' });
+  }
+
+  const filename = `Bestelllisten_${format(new Date(), 'dd-MM-yyyy')}.pdf`;
   doc.save(filename);
 };

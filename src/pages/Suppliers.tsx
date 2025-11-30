@@ -30,8 +30,9 @@ import {
 } from '@/components/ui/collapsible';
 import { useSuppliers, useCreateSupplier, useUpdateSupplier, useDeleteSupplier, useDeactivateSupplier, Supplier, SupplierInput } from '@/hooks/useSuppliers';
 import { useArticles, Article } from '@/hooks/useArticles';
-import { Plus, Pencil, Trash2, Search, Mail, Phone, MapPin, User, Loader2, Upload, Hash, Euro, Filter, RotateCcw, Power, LayoutGrid, List, ChevronDown, ChevronRight, Minus, ShoppingCart, FileText } from 'lucide-react';
-import { generateOrderListPdf } from '@/lib/orderListPdf';
+import { Plus, Pencil, Trash2, Search, Mail, Phone, MapPin, User, Loader2, Upload, Hash, Euro, Filter, RotateCcw, Power, LayoutGrid, List, ChevronDown, ChevronRight, Minus, ShoppingCart, FileText, Printer, CheckSquare, Square } from 'lucide-react';
+import { generateOrderListPdf, generateCombinedOrderListPdf } from '@/lib/orderListPdf';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Select,
   SelectContent,
@@ -88,6 +89,7 @@ const Suppliers = () => {
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
   const [expandedSuppliers, setExpandedSuppliers] = useState<Set<string>>(new Set());
+  const [selectedSuppliers, setSelectedSuppliers] = useState<Set<string>>(new Set());
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isImportOpen, setIsImportOpen] = useState(false);
   const [editingSupplier, setEditingSupplier] = useState<Supplier | null>(null);
@@ -123,6 +125,33 @@ const Suppliers = () => {
       }
       return newSet;
     });
+  };
+
+  const toggleSupplierSelected = (supplierId: string) => {
+    setSelectedSuppliers(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(supplierId)) {
+        newSet.delete(supplierId);
+      } else {
+        newSet.add(supplierId);
+      }
+      return newSet;
+    });
+  };
+
+  const selectAllSuppliers = () => {
+    const suppliersWithArticles = filteredSuppliers?.filter(s => (articlesBySupplier[s.id]?.length || 0) > 0) || [];
+    if (selectedSuppliers.size === suppliersWithArticles.length) {
+      setSelectedSuppliers(new Set());
+    } else {
+      setSelectedSuppliers(new Set(suppliersWithArticles.map(s => s.id)));
+    }
+  };
+
+  const handlePrintCombined = () => {
+    const selectedSuppliersData = suppliers?.filter(s => selectedSuppliers.has(s.id)) || [];
+    generateCombinedOrderListPdf(selectedSuppliersData, articlesBySupplier);
+    setSelectedSuppliers(new Set());
   };
 
   const getCartQuantity = (articleId: string) => {
@@ -417,6 +446,12 @@ const Suppliers = () => {
               <LayoutGrid className="w-4 h-4" />
             </Button>
           </div>
+          {selectedSuppliers.size > 0 && (
+            <Button onClick={handlePrintCombined} variant="secondary">
+              <Printer className="w-4 h-4 mr-2" />
+              {selectedSuppliers.size} Listen drucken
+            </Button>
+          )}
           <Button variant="outline" onClick={() => navigate('/cart')} className="relative">
             <ShoppingCart className="w-4 h-4 mr-2" />
             Warenkorb
@@ -447,6 +482,12 @@ const Suppliers = () => {
             <Table>
               <TableHeader>
                 <TableRow className="hover:bg-transparent">
+                  <TableHead className="w-10">
+                    <Checkbox
+                      checked={selectedSuppliers.size > 0 && selectedSuppliers.size === (filteredSuppliers?.filter(s => (articlesBySupplier[s.id]?.length || 0) > 0).length || 0)}
+                      onCheckedChange={selectAllSuppliers}
+                    />
+                  </TableHead>
                   <TableHead className="w-8"></TableHead>
                   <TableHead>Lieferant</TableHead>
                   <TableHead className="hidden md:table-cell">Kontakt</TableHead>
@@ -458,9 +499,18 @@ const Suppliers = () => {
                 {filteredSuppliers?.map((supplier) => {
                   const supplierArticles = articlesBySupplier[supplier.id] || [];
                   const isExpanded = expandedSuppliers.has(supplier.id);
+                  const hasArticles = supplierArticles.length > 0;
                   return (
                     <>
                       <TableRow key={supplier.id} className={`group ${!supplier.is_active ? 'opacity-60' : ''}`}>
+                        <TableCell className="py-2">
+                          {hasArticles && (
+                            <Checkbox
+                              checked={selectedSuppliers.has(supplier.id)}
+                              onCheckedChange={() => toggleSupplierSelected(supplier.id)}
+                            />
+                          )}
+                        </TableCell>
                         <TableCell className="py-2">
                           <Button
                             variant="ghost"
@@ -559,8 +609,8 @@ const Suppliers = () => {
                       {/* Expanded articles section */}
                       {isExpanded && supplierArticles.length > 0 && (
                         <TableRow className="bg-muted/30">
-                          <TableCell colSpan={5} className="p-0">
-                            <div className="p-4 pl-12">
+                          <TableCell colSpan={6} className="p-0">
+                            <div className="p-4 pl-16">
                               <Table>
                                 <TableHeader>
                                   <TableRow className="hover:bg-transparent border-b border-border/50">
@@ -627,24 +677,35 @@ const Suppliers = () => {
         ) : (
           /* Grid View */
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredSuppliers?.map((supplier) => (
+            {filteredSuppliers?.map((supplier) => {
+              const hasArticles = (articlesBySupplier[supplier.id]?.length || 0) > 0;
+              return (
               <div
                 key={supplier.id}
-                className={`bg-card border border-border rounded-xl p-6 hover:border-primary/50 transition-colors ${!supplier.is_active ? 'opacity-60' : ''}`}
+                className={`bg-card border border-border rounded-xl p-6 hover:border-primary/50 transition-colors ${!supplier.is_active ? 'opacity-60' : ''} ${selectedSuppliers.has(supplier.id) ? 'ring-2 ring-primary' : ''}`}
               >
                 <div className="flex items-start justify-between mb-4">
-                  <div>
-                    <h3 className="font-semibold text-foreground text-lg">{supplier.name}</h3>
-                    <span className={`text-xs px-2 py-0.5 rounded-full ${
-                      supplier.is_active 
-                        ? 'bg-success/20 text-success' 
-                        : 'bg-muted text-muted-foreground'
-                    }`}>
-                      {supplier.is_active ? 'Aktiv' : 'Inaktiv'}
-                    </span>
+                  <div className="flex items-start gap-3">
+                    {hasArticles && (
+                      <Checkbox
+                        checked={selectedSuppliers.has(supplier.id)}
+                        onCheckedChange={() => toggleSupplierSelected(supplier.id)}
+                        className="mt-1"
+                      />
+                    )}
+                    <div>
+                      <h3 className="font-semibold text-foreground text-lg">{supplier.name}</h3>
+                      <span className={`text-xs px-2 py-0.5 rounded-full ${
+                        supplier.is_active 
+                          ? 'bg-success/20 text-success' 
+                          : 'bg-muted text-muted-foreground'
+                      }`}>
+                        {supplier.is_active ? 'Aktiv' : 'Inaktiv'}
+                      </span>
+                    </div>
                   </div>
                   <div className="flex gap-1">
-                    {(articlesBySupplier[supplier.id]?.length || 0) > 0 && (
+                    {hasArticles && (
                       <Button
                         variant="ghost"
                         size="icon"
@@ -737,7 +798,8 @@ const Suppliers = () => {
                   <Badge variant="secondary">{articlesBySupplier[supplier.id]?.length || 0} Artikel</Badge>
                 </div>
               </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
