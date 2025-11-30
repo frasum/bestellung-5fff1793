@@ -39,10 +39,6 @@ export const OrderEmailViewDialog = ({
   const { t, i18n } = useTranslation();
   const locale = localeMap[i18n.language as keyof typeof localeMap] || de;
 
-  // Debug logging
-  console.log('OrderEmailViewDialog - order:', order);
-  console.log('OrderEmailViewDialog - order_items:', order?.order_items);
-
   if (!order) return null;
 
   return (
@@ -65,7 +61,7 @@ export const OrderEmailViewDialog = ({
               </div>
               <div className="flex gap-2">
                 <span className="text-muted-foreground w-12">{t('orders.emailFrom')}:</span>
-                <span>ProcureResto &lt;onboarding@resend.dev&gt;</span>
+                <span>OrderFox.pro &lt;onboarding@resend.dev&gt;</span>
               </div>
               <div className="flex gap-2">
                 <span className="text-muted-foreground w-12">{t('orders.emailSubject')}:</span>
