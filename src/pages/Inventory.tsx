@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useAuth } from '@/contexts/AuthContext';
-import { useArticles } from '@/hooks/useArticles';
+import { useArticles, useUpdateArticle } from '@/hooks/useArticles';
 import { useSuppliers } from '@/hooks/useSuppliers';
 import {
   useInventorySessions,
@@ -54,6 +54,7 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Plus,
   ClipboardList,
@@ -64,10 +65,14 @@ import {
   CheckCircle,
   History,
   Trash2,
+  Euro,
+  Check,
+  X,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { generateInventoryListPdf, exportInventoryToExcel } from '@/lib/inventoryListPdf';
+import { toast } from 'sonner';
 
 interface LocalInventoryItem {
   article_id: string;
@@ -80,6 +85,7 @@ const Inventory = () => {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
 
+  const [activeTab, setActiveTab] = useState<string>('inventory');
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
   const [showNewSessionDialog, setShowNewSessionDialog] = useState(false);
   const [showHistoryDialog, setShowHistoryDialog] = useState(false);
@@ -90,6 +96,10 @@ const Inventory = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [localItems, setLocalItems] = useState<Map<string, LocalInventoryItem>>(new Map());
   const [hasChanges, setHasChanges] = useState(false);
+  
+  // Price editing state
+  const [editingPriceId, setEditingPriceId] = useState<string | null>(null);
+  const [editingPriceValue, setEditingPriceValue] = useState<string>('');
 
   const { data: articles, isLoading: articlesLoading } = useArticles();
   const { data: suppliers } = useSuppliers();
@@ -101,6 +111,7 @@ const Inventory = () => {
   const updateSession = useUpdateInventorySession();
   const bulkUpsertItems = useBulkUpsertInventoryItems();
   const deleteSession = useDeleteInventorySession();
+  const updateArticle = useUpdateArticle();
 
   // Auth check
   useEffect(() => {
@@ -269,6 +280,32 @@ const Inventory = () => {
     };
   };
 
+  const handleStartPriceEdit = (articleId: string, currentPrice: number) => {
+    setEditingPriceId(articleId);
+    setEditingPriceValue(currentPrice.toString());
+  };
+
+  const handleCancelPriceEdit = () => {
+    setEditingPriceId(null);
+    setEditingPriceValue('');
+  };
+
+  const handleSavePriceEdit = async (articleId: string) => {
+    const newPrice = parseFloat(editingPriceValue);
+    if (isNaN(newPrice) || newPrice < 0) {
+      toast.error('Ungültiger Preis');
+      return;
+    }
+    try {
+      await updateArticle.mutateAsync({ id: articleId, price: newPrice });
+      toast.success('Preis aktualisiert');
+      setEditingPriceId(null);
+      setEditingPriceValue('');
+    } catch {
+      toast.error('Fehler beim Speichern');
+    }
+  };
+
   if (authLoading) {
     return (
       <DashboardLayout>
@@ -287,220 +324,335 @@ const Inventory = () => {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold text-foreground">Inventur</h1>
-            <p className="text-muted-foreground">Bestandsaufnahme durchführen</p>
+            <p className="text-muted-foreground">Bestandsaufnahme & Artikelpreise</p>
           </div>
           <div className="flex flex-wrap gap-2">
-            <Button variant="outline" onClick={() => setShowHistoryDialog(true)}>
-              <History className="w-4 h-4 mr-2" />
-              Historie
-            </Button>
-            {!activeSession && (
-              <Button onClick={() => setShowNewSessionDialog(true)}>
-                <Plus className="w-4 h-4 mr-2" />
-                Neue Inventur
-              </Button>
+            {activeTab === 'inventory' && (
+              <>
+                <Button variant="outline" onClick={() => setShowHistoryDialog(true)}>
+                  <History className="w-4 h-4 mr-2" />
+                  Historie
+                </Button>
+                {!activeSession && (
+                  <Button onClick={() => setShowNewSessionDialog(true)}>
+                    <Plus className="w-4 h-4 mr-2" />
+                    Neue Inventur
+                  </Button>
+                )}
+              </>
             )}
           </div>
         </div>
 
-        {/* Active Session Info */}
-        {activeSession && (
-          <Card>
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <ClipboardList className="w-5 h-5 text-primary" />
-                  <div>
-                    <CardTitle className="text-lg">{activeSession.name}</CardTitle>
-                    <p className="text-sm text-muted-foreground">
-                      Gestartet am{' '}
-                      {format(new Date(activeSession.created_at), 'dd.MM.yyyy HH:mm', {
-                        locale: de,
-                      })}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleExportPdf}
-                  >
-                    <FileText className="w-4 h-4 mr-2" />
-                    PDF
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleExportExcel}
-                  >
-                    <FileSpreadsheet className="w-4 h-4 mr-2" />
-                    Excel
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleSave}
-                    disabled={!hasChanges || bulkUpsertItems.isPending}
-                  >
-                    <Save className="w-4 h-4 mr-2" />
-                    Speichern
-                  </Button>
-                  <Button size="sm" onClick={handleComplete}>
-                    <CheckCircle className="w-4 h-4 mr-2" />
-                    Abschließen
-                  </Button>
-                </div>
-              </div>
-            </CardHeader>
-          </Card>
-        )}
+        {/* Tabs */}
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList>
+            <TabsTrigger value="inventory" className="gap-2">
+              <ClipboardList className="w-4 h-4" />
+              Inventur
+            </TabsTrigger>
+            <TabsTrigger value="prices" className="gap-2">
+              <Euro className="w-4 h-4" />
+              Artikelpreise
+            </TabsTrigger>
+          </TabsList>
 
-        {/* Filters */}
-        <div className="flex flex-col sm:flex-row gap-4">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input
-              placeholder="Artikel suchen..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9"
-            />
+          {/* Filters - shared between tabs */}
+          <div className="flex flex-col sm:flex-row gap-4 mt-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                placeholder="Artikel suchen..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+            <Select value={supplierFilter} onValueChange={setSupplierFilter}>
+              <SelectTrigger className="w-full sm:w-48">
+                <SelectValue placeholder="Lieferant filtern" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Alle Lieferanten</SelectItem>
+                {suppliers?.map((supplier) => (
+                  <SelectItem key={supplier.id} value={supplier.id}>
+                    {supplier.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+              <SelectTrigger className="w-full sm:w-48">
+                <SelectValue placeholder="Kategorie filtern" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Alle Kategorien</SelectItem>
+                {categories.map((category) => (
+                  <SelectItem key={category} value={category!}>
+                    {category}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
-          <Select value={supplierFilter} onValueChange={setSupplierFilter}>
-            <SelectTrigger className="w-full sm:w-48">
-              <SelectValue placeholder="Lieferant filtern" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Alle Lieferanten</SelectItem>
-              {suppliers?.map((supplier) => (
-                <SelectItem key={supplier.id} value={supplier.id}>
-                  {supplier.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-            <SelectTrigger className="w-full sm:w-48">
-              <SelectValue placeholder="Kategorie filtern" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Alle Kategorien</SelectItem>
-              {categories.map((category) => (
-                <SelectItem key={category} value={category!}>
-                  {category}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
 
-        {/* Inventory Table */}
-        {!activeSession ? (
-          <Card>
-            <CardContent className="py-12 text-center">
-              <ClipboardList className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-              <h3 className="text-lg font-medium mb-2">Keine aktive Inventur</h3>
-              <p className="text-muted-foreground mb-4">
-                Starten Sie eine neue Inventur oder laden Sie eine aus der Historie.
-              </p>
-              <Button onClick={() => setShowNewSessionDialog(true)}>
-                <Plus className="w-4 h-4 mr-2" />
-                Neue Inventur starten
-              </Button>
-            </CardContent>
-          </Card>
-        ) : articlesLoading ? (
-          <Card>
-            <CardContent className="py-8">
-              <Skeleton className="h-64 w-full" />
-            </CardContent>
-          </Card>
-        ) : (
-          <Card>
-            <CardContent className="p-0">
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="w-12">Nr.</TableHead>
-                      <TableHead>Artikel</TableHead>
-                      <TableHead>Lieferant</TableHead>
-                      <TableHead className="w-24">Einheit</TableHead>
-                      <TableHead className="w-28 text-right">Lager 1</TableHead>
-                      <TableHead className="w-28 text-right">Lager 2</TableHead>
-                      <TableHead className="w-28 text-right">Gesamt</TableHead>
-                      <TableHead className="w-32 text-right">Gesamtwert</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredArticles.map((article, index) => {
-                      const values = getItemValues(article.id);
-                      return (
-                        <TableRow key={article.id}>
-                          <TableCell className="text-muted-foreground">
-                            {index + 1}
-                          </TableCell>
-                          <TableCell>
-                            <div>
-                              <span className="font-medium">{article.name}</span>
-                              {article.sku && (
-                                <span className="block text-xs text-muted-foreground">
-                                  {article.sku}
-                                </span>
-                              )}
-                            </div>
-                          </TableCell>
-                          <TableCell className="text-muted-foreground">
-                            {article.suppliers?.name}
-                          </TableCell>
-                          <TableCell>{article.unit}</TableCell>
-                          <TableCell>
-                            <Input
-                              type="number"
-                              min="0"
-                              step="0.01"
-                              value={values.storage_1 || ''}
-                              onChange={(e) =>
-                                handleItemChange(article.id, 'storage_1', e.target.value)
-                              }
-                              className="w-24 text-right [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                              placeholder="0"
-                            />
-                          </TableCell>
-                          <TableCell>
-                            <Input
-                              type="number"
-                              min="0"
-                              step="0.01"
-                              value={values.storage_2 || ''}
-                              onChange={(e) =>
-                                handleItemChange(article.id, 'storage_2', e.target.value)
-                              }
-                              className="w-24 text-right [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                              placeholder="0"
-                            />
-                          </TableCell>
-                          <TableCell className="text-right font-medium">
-                            {values.total > 0 ? values.total.toFixed(2) : '-'}
-                          </TableCell>
-                          <TableCell className="text-right font-medium">
-                            {values.total > 0 ? `€${(values.total * article.price).toFixed(2)}` : '-'}
-                          </TableCell>
+          {/* Inventory Tab Content */}
+          <TabsContent value="inventory" className="space-y-4 mt-4">
+            {/* Active Session Info */}
+            {activeSession && (
+              <Card>
+                <CardHeader className="pb-3">
+                  <div className="flex items-center justify-between flex-wrap gap-2">
+                    <div className="flex items-center gap-3">
+                      <ClipboardList className="w-5 h-5 text-primary" />
+                      <div>
+                        <CardTitle className="text-lg">{activeSession.name}</CardTitle>
+                        <p className="text-sm text-muted-foreground">
+                          Gestartet am{' '}
+                          {format(new Date(activeSession.created_at), 'dd.MM.yyyy HH:mm', {
+                            locale: de,
+                          })}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      <Button variant="outline" size="sm" onClick={handleExportPdf}>
+                        <FileText className="w-4 h-4 mr-2" />
+                        PDF
+                      </Button>
+                      <Button variant="outline" size="sm" onClick={handleExportExcel}>
+                        <FileSpreadsheet className="w-4 h-4 mr-2" />
+                        Excel
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleSave}
+                        disabled={!hasChanges || bulkUpsertItems.isPending}
+                      >
+                        <Save className="w-4 h-4 mr-2" />
+                        Speichern
+                      </Button>
+                      <Button size="sm" onClick={handleComplete}>
+                        <CheckCircle className="w-4 h-4 mr-2" />
+                        Abschließen
+                      </Button>
+                    </div>
+                  </div>
+                </CardHeader>
+              </Card>
+            )}
+
+            {/* Inventory Table */}
+            {!activeSession ? (
+              <Card>
+                <CardContent className="py-12 text-center">
+                  <ClipboardList className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+                  <h3 className="text-lg font-medium mb-2">Keine aktive Inventur</h3>
+                  <p className="text-muted-foreground mb-4">
+                    Starten Sie eine neue Inventur oder laden Sie eine aus der Historie.
+                  </p>
+                  <Button onClick={() => setShowNewSessionDialog(true)}>
+                    <Plus className="w-4 h-4 mr-2" />
+                    Neue Inventur starten
+                  </Button>
+                </CardContent>
+              </Card>
+            ) : articlesLoading ? (
+              <Card>
+                <CardContent className="py-8">
+                  <Skeleton className="h-64 w-full" />
+                </CardContent>
+              </Card>
+            ) : (
+              <Card>
+                <CardContent className="p-0">
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="w-12">Nr.</TableHead>
+                          <TableHead>Artikel</TableHead>
+                          <TableHead>Lieferant</TableHead>
+                          <TableHead className="w-24">Einheit</TableHead>
+                          <TableHead className="w-28 text-right">Lager 1</TableHead>
+                          <TableHead className="w-28 text-right">Lager 2</TableHead>
+                          <TableHead className="w-28 text-right">Gesamt</TableHead>
+                          <TableHead className="w-32 text-right">Gesamtwert</TableHead>
                         </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
-              </div>
-              {filteredArticles.length === 0 && (
-                <div className="py-12 text-center text-muted-foreground">
-                  Keine Artikel gefunden
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        )}
+                      </TableHeader>
+                      <TableBody>
+                        {filteredArticles.map((article, index) => {
+                          const values = getItemValues(article.id);
+                          return (
+                            <TableRow key={article.id}>
+                              <TableCell className="text-muted-foreground">
+                                {index + 1}
+                              </TableCell>
+                              <TableCell>
+                                <div>
+                                  <span className="font-medium">{article.name}</span>
+                                  {article.sku && (
+                                    <span className="block text-xs text-muted-foreground">
+                                      {article.sku}
+                                    </span>
+                                  )}
+                                </div>
+                              </TableCell>
+                              <TableCell className="text-muted-foreground">
+                                {article.suppliers?.name}
+                              </TableCell>
+                              <TableCell>{article.unit}</TableCell>
+                              <TableCell>
+                                <Input
+                                  type="number"
+                                  min="0"
+                                  step="0.01"
+                                  value={values.storage_1 || ''}
+                                  onChange={(e) =>
+                                    handleItemChange(article.id, 'storage_1', e.target.value)
+                                  }
+                                  className="w-24 text-right [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                  placeholder="0"
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <Input
+                                  type="number"
+                                  min="0"
+                                  step="0.01"
+                                  value={values.storage_2 || ''}
+                                  onChange={(e) =>
+                                    handleItemChange(article.id, 'storage_2', e.target.value)
+                                  }
+                                  className="w-24 text-right [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                  placeholder="0"
+                                />
+                              </TableCell>
+                              <TableCell className="text-right font-medium">
+                                {values.total > 0 ? values.total.toFixed(2) : '-'}
+                              </TableCell>
+                              <TableCell className="text-right font-medium">
+                                {values.total > 0 ? `€${(values.total * article.price).toFixed(2)}` : '-'}
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
+                      </TableBody>
+                    </Table>
+                  </div>
+                  {filteredArticles.length === 0 && (
+                    <div className="py-12 text-center text-muted-foreground">
+                      Keine Artikel gefunden
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
+
+          {/* Prices Tab Content */}
+          <TabsContent value="prices" className="mt-4">
+            <Card>
+              <CardContent className="p-0">
+                {articlesLoading ? (
+                  <div className="py-8">
+                    <Skeleton className="h-64 w-full" />
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="w-12">Nr.</TableHead>
+                          <TableHead>Artikel</TableHead>
+                          <TableHead>Kategorie</TableHead>
+                          <TableHead>Lieferant</TableHead>
+                          <TableHead className="w-24">Einheit</TableHead>
+                          <TableHead className="w-36 text-right">Preis (€)</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {filteredArticles.map((article, index) => (
+                          <TableRow key={article.id}>
+                            <TableCell className="text-muted-foreground">
+                              {index + 1}
+                            </TableCell>
+                            <TableCell>
+                              <div>
+                                <span className="font-medium">{article.name}</span>
+                                {article.sku && (
+                                  <span className="block text-xs text-muted-foreground">
+                                    {article.sku}
+                                  </span>
+                                )}
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-muted-foreground">
+                              {article.category || '-'}
+                            </TableCell>
+                            <TableCell className="text-muted-foreground">
+                              {article.suppliers?.name}
+                            </TableCell>
+                            <TableCell>{article.unit}</TableCell>
+                            <TableCell className="text-right">
+                              {editingPriceId === article.id ? (
+                                <div className="flex items-center justify-end gap-1">
+                                  <Input
+                                    type="number"
+                                    min="0"
+                                    step="0.01"
+                                    value={editingPriceValue}
+                                    onChange={(e) => setEditingPriceValue(e.target.value)}
+                                    onKeyDown={(e) => {
+                                      if (e.key === 'Enter') handleSavePriceEdit(article.id);
+                                      if (e.key === 'Escape') handleCancelPriceEdit();
+                                    }}
+                                    className="w-24 text-right [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                    autoFocus
+                                  />
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8"
+                                    onClick={() => handleSavePriceEdit(article.id)}
+                                    disabled={updateArticle.isPending}
+                                  >
+                                    <Check className="w-4 h-4 text-green-600" />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8"
+                                    onClick={handleCancelPriceEdit}
+                                  >
+                                    <X className="w-4 h-4 text-destructive" />
+                                  </Button>
+                                </div>
+                              ) : (
+                                <button
+                                  onClick={() => handleStartPriceEdit(article.id, article.price)}
+                                  className="font-medium hover:text-primary cursor-pointer transition-colors px-2 py-1 rounded hover:bg-muted"
+                                >
+                                  €{article.price.toFixed(2)}
+                                </button>
+                              )}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
+                {filteredArticles.length === 0 && !articlesLoading && (
+                  <div className="py-12 text-center text-muted-foreground">
+                    Keine Artikel gefunden
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
 
       {/* New Session Dialog */}
