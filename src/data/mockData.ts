@@ -161,7 +161,7 @@ export const pricingPlans: PricingPlan[] = [
     id: 'pro',
     name: 'Pro',
     tier: 'pro',
-    price: 79,
+    price: 19,
     interval: 'month',
     features: [
       'Unlimited orders',
