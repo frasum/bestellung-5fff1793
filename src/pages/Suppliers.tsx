@@ -585,7 +585,7 @@ const Suppliers = () => {
                   </TableHead>
                   <TableHead className="w-8"></TableHead>
                   <TableHead>Lieferant</TableHead>
-                  <TableHead className="hidden md:table-cell">Kontakt</TableHead>
+                  <TableHead className="hidden md:table-cell">Kategorie</TableHead>
                   <TableHead className="hidden lg:table-cell">Artikel</TableHead>
                   <TableHead className="text-right">Aktionen</TableHead>
                 </TableRow>
@@ -628,16 +628,11 @@ const Suppliers = () => {
                           </div>
                         </TableCell>
                         <TableCell className="hidden md:table-cell text-muted-foreground py-2">
-                          <div className="text-sm">
-                            {supplier.phone && <p>{supplier.phone}</p>}
-                            {(supplier.top_category || supplier.main_category) && (
-                              <p className="text-primary font-medium">
-                                {supplier.top_category && supplier.main_category 
-                                  ? `${supplier.top_category} > ${supplier.main_category}`
-                                  : supplier.top_category || supplier.main_category}
-                              </p>
-                            )}
-                          </div>
+                          <p className="text-sm text-primary font-medium">
+                            {supplier.top_category && supplier.main_category 
+                              ? `${supplier.top_category} > ${supplier.main_category}`
+                              : supplier.top_category || supplier.main_category || '-'}
+                          </p>
                         </TableCell>
                         <TableCell className="hidden lg:table-cell py-2">
                           <Badge variant="secondary">{supplierArticles.length} Artikel</Badge>
