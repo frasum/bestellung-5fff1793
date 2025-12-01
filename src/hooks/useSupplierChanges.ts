@@ -101,10 +101,15 @@ export const useApproveChange = () => {
 
       if (fetchError || !change) throw new Error('Change not found');
 
-      // Apply the change to the article
+      // Apply the change to the article - convert price to number
+      let valueToUpdate: any = change.new_value;
+      if (change.field_name === 'price' && change.new_value !== null) {
+        valueToUpdate = parseFloat(change.new_value);
+      }
+      
       const { error: updateError } = await supabase
         .from('articles')
-        .update({ [change.field_name]: change.new_value })
+        .update({ [change.field_name]: valueToUpdate })
         .eq('id', change.article_id);
 
       if (updateError) throw updateError;
@@ -175,10 +180,15 @@ export const useApproveAllChanges = () => {
 
         if (fetchError || !change) continue;
 
-        // Apply the change to the article
+        // Apply the change to the article - convert price to number
+        let valueToUpdate: any = change.new_value;
+        if (change.field_name === 'price' && change.new_value !== null) {
+          valueToUpdate = parseFloat(change.new_value);
+        }
+        
         await supabase
           .from('articles')
-          .update({ [change.field_name]: change.new_value })
+          .update({ [change.field_name]: valueToUpdate })
           .eq('id', change.article_id);
 
         // Mark change as approved
