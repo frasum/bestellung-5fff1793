@@ -14,6 +14,54 @@ export type Database = {
   }
   public: {
     Tables: {
+      article_price_history: {
+        Row: {
+          article_id: string
+          change_source: string
+          changed_at: string
+          changed_by: string | null
+          id: string
+          new_price: number
+          old_price: number
+          organization_id: string
+        }
+        Insert: {
+          article_id: string
+          change_source?: string
+          changed_at?: string
+          changed_by?: string | null
+          id?: string
+          new_price: number
+          old_price: number
+          organization_id: string
+        }
+        Update: {
+          article_id?: string
+          change_source?: string
+          changed_at?: string
+          changed_by?: string | null
+          id?: string
+          new_price?: number
+          old_price?: number
+          organization_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "article_price_history_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: false
+            referencedRelation: "articles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "article_price_history_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       articles: {
         Row: {
           category: string | null
