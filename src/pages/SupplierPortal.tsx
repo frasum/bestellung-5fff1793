@@ -169,10 +169,14 @@ const SupplierPortal = () => {
     return pendingChanges.filter(c => c.article_id === articleId && c.status === 'pending');
   };
 
-  const hasPendingChange = (articleId: string, fieldName: string) => {
-    return pendingChanges.some(
+  const getPendingChangeForField = (articleId: string, fieldName: string) => {
+    return pendingChanges.find(
       c => c.article_id === articleId && c.field_name === fieldName && c.status === 'pending'
     );
+  };
+
+  const hasPendingChange = (articleId: string, fieldName: string) => {
+    return !!getPendingChangeForField(articleId, fieldName);
   };
 
   const filteredArticles = articles.filter(a =>
@@ -283,8 +287,13 @@ const SupplierPortal = () => {
                                 onChange={(e) => handleFieldChange(article.id, 'name', e.target.value)}
                                 className={`h-8 ${hasPendingChange(article.id, 'name') ? 'border-amber-500' : ''}`}
                               />
-                              {hasPendingChange(article.id, 'name') && (
-                                <span className="text-xs text-amber-600">Ausstehend</span>
+                              {getPendingChangeForField(article.id, 'name') && (
+                                <div className="text-xs">
+                                  <span className="text-amber-600">Ausstehend</span>
+                                  <span className="text-muted-foreground ml-1">
+                                    (vorher: {getPendingChangeForField(article.id, 'name')?.old_value || '-'})
+                                  </span>
+                                </div>
                               )}
                             </div>
                           </TableCell>
@@ -296,8 +305,13 @@ const SupplierPortal = () => {
                                 className={`h-8 ${hasPendingChange(article.id, 'sku') ? 'border-amber-500' : ''}`}
                                 placeholder="-"
                               />
-                              {hasPendingChange(article.id, 'sku') && (
-                                <span className="text-xs text-amber-600">Ausstehend</span>
+                              {getPendingChangeForField(article.id, 'sku') && (
+                                <div className="text-xs">
+                                  <span className="text-amber-600">Ausstehend</span>
+                                  <span className="text-muted-foreground ml-1">
+                                    (vorher: {getPendingChangeForField(article.id, 'sku')?.old_value || '-'})
+                                  </span>
+                                </div>
                               )}
                             </div>
                           </TableCell>
@@ -309,8 +323,13 @@ const SupplierPortal = () => {
                                 className={`h-8 ${hasPendingChange(article.id, 'description') ? 'border-amber-500' : ''}`}
                                 placeholder="-"
                               />
-                              {hasPendingChange(article.id, 'description') && (
-                                <span className="text-xs text-amber-600">Ausstehend</span>
+                              {getPendingChangeForField(article.id, 'description') && (
+                                <div className="text-xs">
+                                  <span className="text-amber-600">Ausstehend</span>
+                                  <span className="text-muted-foreground ml-1">
+                                    (vorher: {getPendingChangeForField(article.id, 'description')?.old_value || '-'})
+                                  </span>
+                                </div>
                               )}
                             </div>
                           </TableCell>
@@ -321,8 +340,13 @@ const SupplierPortal = () => {
                                 onChange={(e) => handleFieldChange(article.id, 'unit', e.target.value)}
                                 className={`h-8 ${hasPendingChange(article.id, 'unit') ? 'border-amber-500' : ''}`}
                               />
-                              {hasPendingChange(article.id, 'unit') && (
-                                <span className="text-xs text-amber-600">Ausstehend</span>
+                              {getPendingChangeForField(article.id, 'unit') && (
+                                <div className="text-xs">
+                                  <span className="text-amber-600">Ausstehend</span>
+                                  <span className="text-muted-foreground ml-1">
+                                    (vorher: {getPendingChangeForField(article.id, 'unit')?.old_value || '-'})
+                                  </span>
+                                </div>
                               )}
                             </div>
                           </TableCell>
@@ -335,8 +359,13 @@ const SupplierPortal = () => {
                                 onChange={(e) => handleFieldChange(article.id, 'price', parseFloat(e.target.value) || 0)}
                                 className={`h-8 ${hasPendingChange(article.id, 'price') ? 'border-amber-500' : ''}`}
                               />
-                              {hasPendingChange(article.id, 'price') && (
-                                <span className="text-xs text-amber-600">Ausstehend</span>
+                              {getPendingChangeForField(article.id, 'price') && (
+                                <div className="text-xs">
+                                  <span className="text-amber-600">Ausstehend</span>
+                                  <span className="text-muted-foreground ml-1">
+                                    (vorher: {getPendingChangeForField(article.id, 'price')?.old_value || '-'} €)
+                                  </span>
+                                </div>
                               )}
                             </div>
                           </TableCell>
@@ -348,8 +377,13 @@ const SupplierPortal = () => {
                                 className={`h-8 ${hasPendingChange(article.id, 'category') ? 'border-amber-500' : ''}`}
                                 placeholder="-"
                               />
-                              {hasPendingChange(article.id, 'category') && (
-                                <span className="text-xs text-amber-600">Ausstehend</span>
+                              {getPendingChangeForField(article.id, 'category') && (
+                                <div className="text-xs">
+                                  <span className="text-amber-600">Ausstehend</span>
+                                  <span className="text-muted-foreground ml-1">
+                                    (vorher: {getPendingChangeForField(article.id, 'category')?.old_value || '-'})
+                                  </span>
+                                </div>
                               )}
                             </div>
                           </TableCell>
