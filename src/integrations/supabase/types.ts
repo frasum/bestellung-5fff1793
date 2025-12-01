@@ -236,6 +236,7 @@ export type Database = {
           id: string
           is_default: boolean
           label: string
+          location_id: string | null
           organization_id: string
           postal_code: string
           updated_at: string
@@ -249,6 +250,7 @@ export type Database = {
           id?: string
           is_default?: boolean
           label: string
+          location_id?: string | null
           organization_id: string
           postal_code: string
           updated_at?: string
@@ -262,11 +264,19 @@ export type Database = {
           id?: string
           is_default?: boolean
           label?: string
+          location_id?: string | null
           organization_id?: string
           postal_code?: string
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "delivery_addresses_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "delivery_addresses_organization_id_fkey"
             columns: ["organization_id"]
@@ -415,6 +425,44 @@ export type Database = {
           },
         ]
       }
+      locations: {
+        Row: {
+          created_at: string
+          id: string
+          is_default: boolean
+          name: string
+          organization_id: string
+          short_code: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_default?: boolean
+          name: string
+          organization_id: string
+          short_code?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_default?: boolean
+          name?: string
+          organization_id?: string
+          short_code?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "locations_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notification_preferences: {
         Row: {
           created_at: string
@@ -506,6 +554,7 @@ export type Database = {
           email_sent: boolean
           email_sent_at: string | null
           id: string
+          location_id: string | null
           notes: string | null
           order_number: string
           organization_id: string
@@ -521,6 +570,7 @@ export type Database = {
           email_sent?: boolean
           email_sent_at?: string | null
           id?: string
+          location_id?: string | null
           notes?: string | null
           order_number: string
           organization_id: string
@@ -536,6 +586,7 @@ export type Database = {
           email_sent?: boolean
           email_sent_at?: string | null
           id?: string
+          location_id?: string | null
           notes?: string | null
           order_number?: string
           organization_id?: string
@@ -546,6 +597,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "orders_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "orders_organization_id_fkey"
             columns: ["organization_id"]
@@ -681,6 +739,54 @@ export type Database = {
           },
           {
             foreignKeyName: "supplier_article_changes_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      supplier_locations: {
+        Row: {
+          created_at: string
+          customer_number: string | null
+          id: string
+          is_active: boolean
+          location_id: string
+          minimum_order_value: number | null
+          supplier_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          customer_number?: string | null
+          id?: string
+          is_active?: boolean
+          location_id: string
+          minimum_order_value?: number | null
+          supplier_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          customer_number?: string | null
+          id?: string
+          is_active?: boolean
+          location_id?: string
+          minimum_order_value?: number | null
+          supplier_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supplier_locations_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supplier_locations_supplier_id_fkey"
             columns: ["supplier_id"]
             isOneToOne: false
             referencedRelation: "suppliers"
