@@ -22,47 +22,40 @@ const SupplierAuth = () => {
       }
 
       try {
-        // Fetch the token
-        const { data: tokenData, error: tokenError } = await supabase
-          .from('supplier_portal_tokens')
-          .select('*, supplier:suppliers(*)')
-          .eq('token', token)
-          .single();
+        // Use edge function to verify token (bypasses RLS)
+        const { data, error } = await supabase.functions.invoke('verify-supplier-token', {
+          body: { token },
+        });
 
-        if (tokenError || !tokenData) {
+        if (error) {
+          console.error('Token verification error:', error);
           setStatus('error');
-          setErrorMessage('Ungültiger Token');
+          setErrorMessage('Fehler bei der Überprüfung');
           return;
         }
 
-        // Check if token is expired
-        if (new Date(tokenData.expires_at) < new Date()) {
+        if (data.status === 'expired') {
           setStatus('expired');
           setErrorMessage('Dieser Link ist abgelaufen. Bitte fordern Sie einen neuen Link an.');
           return;
         }
 
-        // Check if token was already used
-        if (tokenData.used_at) {
+        if (data.status === 'error' || !data.supplierId) {
           setStatus('error');
-          setErrorMessage('Dieser Link wurde bereits verwendet.');
+          setErrorMessage(data.error || 'Ungültiger Token');
           return;
         }
 
-        // Mark token as used
-        await supabase
-          .from('supplier_portal_tokens')
-          .update({ used_at: new Date().toISOString() })
-          .eq('id', tokenData.id);
-
         // Store supplier session in localStorage
         const supplierSession = {
-          supplierId: tokenData.supplier_id,
-          supplierName: tokenData.supplier?.name || 'Lieferant',
-          organizationId: tokenData.supplier?.organization_id,
+          supplierId: data.supplierId,
+          supplierName: data.supplierName,
+          organizationId: data.organizationId,
           expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // 24 hours
         };
         localStorage.setItem('supplierSession', JSON.stringify(supplierSession));
+
+        console.log('Supplier session created:', supplierSession);
 
         setStatus('success');
         
