@@ -41,6 +41,9 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useEmailTemplate, useUpsertEmailTemplate, getDefaultTemplate } from '@/hooks/useEmailTemplates';
 import { useUnits, useCreateUnit, useUpdateUnit, useDeleteUnit } from '@/hooks/useUnits';
 import { useArticles } from '@/hooks/useArticles';
+import { supabase } from '@/integrations/supabase/client';
+import { useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 
 const Settings = () => {
   const { t } = useTranslation();
@@ -1016,6 +1019,8 @@ const EmailTemplateTab = () => {
 };
 
 const UnitsTab = () => {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
   const { data: units = [], isLoading: unitsLoading } = useUnits();
   const { data: articles = [], isLoading: articlesLoading } = useArticles();
   const createUnit = useCreateUnit();
@@ -1025,6 +1030,7 @@ const UnitsTab = () => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
+  const [isAddingAll, setIsAddingAll] = useState(false);
 
   // Get unique units from articles that are not in the database
   const dbUnitNames = new Set(units.map(u => u.name.toLowerCase()));
@@ -1039,6 +1045,44 @@ const UnitsTab = () => {
   const filteredArticleUnits = articleUnits.filter(u => 
     u.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const handleAddAllUnits = async () => {
+    if (articleUnits.length === 0) return;
+    
+    setIsAddingAll(true);
+    try {
+      // Get user's organization_id
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('organization_id')
+        .eq('id', user?.id)
+        .single();
+
+      if (!profile?.organization_id) {
+        toast.error('Keine Organisation gefunden');
+        return;
+      }
+
+      // Insert all units at once
+      const unitsToInsert = articleUnits.map(name => ({
+        name,
+        organization_id: profile.organization_id,
+      }));
+
+      const { error } = await supabase
+        .from('units')
+        .insert(unitsToInsert);
+
+      if (error) throw error;
+
+      queryClient.invalidateQueries({ queryKey: ['units'] });
+      toast.success(`${articleUnits.length} Einheiten hinzugefügt`);
+    } catch (error: any) {
+      toast.error('Fehler beim Hinzufügen: ' + error.message);
+    } finally {
+      setIsAddingAll(false);
+    }
+  };
 
   const handleAddUnit = (unitName?: string) => {
     const name = unitName || newUnitName;
@@ -1167,13 +1211,11 @@ const UnitsTab = () => {
               <Button 
                 size="sm" 
                 variant="outline"
-                onClick={() => {
-                  articleUnits.forEach(unit => createUnit.mutate(unit));
-                }}
-                disabled={createUnit.isPending}
+                onClick={handleAddAllUnits}
+                disabled={isAddingAll}
               >
                 <Plus className="h-4 w-4 mr-2" />
-                Alle hinzufügen
+                {isAddingAll ? 'Wird hinzugefügt...' : 'Alle hinzufügen'}
               </Button>
             </div>
             <p className="text-xs text-muted-foreground">Diese Einheiten werden in Artikeln verwendet, aber noch nicht zentral gespeichert.</p>
