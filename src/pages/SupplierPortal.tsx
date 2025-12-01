@@ -353,10 +353,17 @@ const SupplierPortal = () => {
                           <TableCell>
                             <div className="space-y-1">
                               <Input
-                                type="number"
-                                step="0.01"
-                                value={getDisplayValue(article, 'price') as number}
-                                onChange={(e) => handleFieldChange(article.id, 'price', parseFloat(e.target.value) || 0)}
+                                type="text"
+                                inputMode="decimal"
+                                value={editedArticles[article.id]?.price !== undefined 
+                                  ? String(editedArticles[article.id].price).replace('.', ',')
+                                  : String(article.price).replace('.', ',')}
+                                onChange={(e) => {
+                                  // Replace comma with dot for parsing, allow both formats
+                                  const value = e.target.value.replace(',', '.');
+                                  const parsed = parseFloat(value);
+                                  handleFieldChange(article.id, 'price', isNaN(parsed) ? 0 : parsed);
+                                }}
                                 className={`h-8 ${hasPendingChange(article.id, 'price') ? 'border-amber-500' : ''}`}
                               />
                               {getPendingChangeForField(article.id, 'price') && (
