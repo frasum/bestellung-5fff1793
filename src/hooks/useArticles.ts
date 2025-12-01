@@ -114,6 +114,28 @@ export const useUpdateArticle = () => {
 
   return useMutation({
     mutationFn: async ({ id, ...input }: Partial<ArticleInput> & { id: string }) => {
+      // If price is being updated, first get the current price for history
+      if (input.price !== undefined) {
+        const { data: currentArticle } = await supabase
+          .from('articles')
+          .select('price, organization_id')
+          .eq('id', id)
+          .single();
+
+        if (currentArticle && currentArticle.price !== input.price) {
+          // Record price history
+          await supabase
+            .from('article_price_history')
+            .insert({
+              article_id: id,
+              organization_id: currentArticle.organization_id,
+              old_price: currentArticle.price,
+              new_price: input.price,
+              change_source: 'manual',
+            });
+        }
+      }
+
       const { data, error } = await supabase
         .from('articles')
         .update(input)
@@ -126,6 +148,7 @@ export const useUpdateArticle = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['articles'] });
+      queryClient.invalidateQueries({ queryKey: ['price-history'] });
       toast.success('Article updated successfully');
     },
     onError: (error: Error) => {
