@@ -47,6 +47,7 @@ const SupplierPortal = () => {
   const [saving, setSaving] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [editedArticles, setEditedArticles] = useState<Record<string, Partial<Article>>>({});
+  const [priceInputs, setPriceInputs] = useState<Record<string, string>>({});
 
   useEffect(() => {
     const checkSession = () => {
@@ -116,8 +117,19 @@ const SupplierPortal = () => {
   };
 
   const handleSave = async (articleId: string) => {
-    const changes = editedArticles[articleId];
-    if (!changes || !session) return;
+    const changes = { ...editedArticles[articleId] };
+    if (!session) return;
+    
+    // Parse price from input string if it was edited
+    if (priceInputs[articleId] !== undefined) {
+      const priceValue = priceInputs[articleId].replace(',', '.');
+      const parsed = parseFloat(priceValue);
+      if (!isNaN(parsed)) {
+        changes.price = parsed;
+      }
+    }
+    
+    if (!changes || Object.keys(changes).length === 0) return;
 
     setSaving(articleId);
     try {
@@ -144,6 +156,11 @@ const SupplierPortal = () => {
         delete newState[articleId];
         return newState;
       });
+      setPriceInputs(prev => {
+        const newState = { ...prev };
+        delete newState[articleId];
+        return newState;
+      });
 
       toast.success('Änderungen zur Genehmigung eingereicht');
     } catch (error: any) {
@@ -162,7 +179,9 @@ const SupplierPortal = () => {
   };
 
   const hasChanges = (articleId: string) => {
-    return !!editedArticles[articleId] && Object.keys(editedArticles[articleId]).length > 0;
+    const hasFieldChanges = !!editedArticles[articleId] && Object.keys(editedArticles[articleId]).length > 0;
+    const hasPriceChange = priceInputs[articleId] !== undefined;
+    return hasFieldChanges || hasPriceChange;
   };
 
   const getPendingChangesForArticle = (articleId: string) => {
@@ -355,14 +374,14 @@ const SupplierPortal = () => {
                               <Input
                                 type="text"
                                 inputMode="decimal"
-                                value={editedArticles[article.id]?.price !== undefined 
-                                  ? String(editedArticles[article.id].price).replace('.', ',')
+                                value={priceInputs[article.id] !== undefined 
+                                  ? priceInputs[article.id]
                                   : String(article.price).replace('.', ',')}
                                 onChange={(e) => {
-                                  // Replace comma with dot for parsing, allow both formats
-                                  const value = e.target.value.replace(',', '.');
-                                  const parsed = parseFloat(value);
-                                  handleFieldChange(article.id, 'price', isNaN(parsed) ? 0 : parsed);
+                                  setPriceInputs(prev => ({
+                                    ...prev,
+                                    [article.id]: e.target.value
+                                  }));
                                 }}
                                 className={`h-8 ${hasPendingChange(article.id, 'price') ? 'border-amber-500' : ''}`}
                               />
