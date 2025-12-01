@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 export interface DeliveryAddress {
   id: string;
   organization_id: string;
+  location_id: string | null;
   label: string;
   address_line1: string;
   address_line2: string | null;
@@ -80,16 +81,22 @@ export const useUpdateOrganization = () => {
   });
 };
 
-export const useDeliveryAddresses = () => {
+export const useDeliveryAddresses = (locationId?: string | null) => {
   const { user } = useAuth();
 
   return useQuery({
-    queryKey: ['delivery-addresses'],
+    queryKey: ['delivery-addresses', locationId],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from('delivery_addresses')
         .select('*')
         .order('is_default', { ascending: false });
+
+      if (locationId) {
+        query = query.eq('location_id', locationId);
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
       return data as DeliveryAddress[];
@@ -112,12 +119,13 @@ export const useCreateDeliveryAddress = () => {
 
       if (!profile?.organization_id) throw new Error('No organization found');
 
-      // If setting as default, unset other defaults first
-      if (address.is_default) {
+      // If setting as default, unset other defaults first (within the same location)
+      if (address.is_default && address.location_id) {
         await supabase
           .from('delivery_addresses')
           .update({ is_default: false })
-          .eq('organization_id', profile.organization_id);
+          .eq('organization_id', profile.organization_id)
+          .eq('location_id', address.location_id);
       }
 
       const { error } = await supabase
@@ -139,19 +147,25 @@ export const useUpdateDeliveryAddress = () => {
 
   return useMutation({
     mutationFn: async ({ id, ...updates }: Partial<DeliveryAddress> & { id: string }) => {
-      // If setting as default, unset other defaults first
+      // If setting as default, unset other defaults first (within the same location)
       if (updates.is_default) {
         const { data: address } = await supabase
           .from('delivery_addresses')
-          .select('organization_id')
+          .select('organization_id, location_id')
           .eq('id', id)
           .single();
 
         if (address) {
-          await supabase
+          let query = supabase
             .from('delivery_addresses')
             .update({ is_default: false })
             .eq('organization_id', address.organization_id);
+          
+          if (address.location_id) {
+            query = query.eq('location_id', address.location_id);
+          }
+          
+          await query;
         }
       }
 

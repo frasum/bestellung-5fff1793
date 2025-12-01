@@ -39,6 +39,7 @@ import {
   TeamMember,
 } from '@/hooks/useTeam';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLocationContext } from '@/contexts/LocationContext';
 import { useEmailTemplate, useUpsertEmailTemplate, getDefaultTemplate } from '@/hooks/useEmailTemplates';
 import { useUnits, useCreateUnit, useUpdateUnit, useDeleteUnit } from '@/hooks/useUnits';
 import { useArticles } from '@/hooks/useArticles';
@@ -568,7 +569,8 @@ const TeamTab = () => {
 };
 
 const AddressesTab = () => {
-  const { data: addresses = [], isLoading } = useDeliveryAddresses();
+  const { activeLocation } = useLocationContext();
+  const { data: addresses = [], isLoading } = useDeliveryAddresses(activeLocation?.id);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingAddress, setEditingAddress] = useState<DeliveryAddress | null>(null);
 
@@ -591,7 +593,9 @@ const AddressesTab = () => {
       <CardHeader className="flex flex-row items-center justify-between">
         <div>
           <CardTitle>Delivery Addresses</CardTitle>
-          <CardDescription>Manage your organization's delivery addresses</CardDescription>
+          <CardDescription>
+            Lieferadressen für {activeLocation?.name || 'diesen Standort'} verwalten
+          </CardDescription>
         </div>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
@@ -606,6 +610,7 @@ const AddressesTab = () => {
             </DialogHeader>
             <AddressForm
               address={editingAddress}
+              locationId={activeLocation?.id || null}
               onSuccess={() => setDialogOpen(false)}
             />
           </DialogContent>
@@ -613,7 +618,9 @@ const AddressesTab = () => {
       </CardHeader>
       <CardContent>
         {addresses.length === 0 ? (
-          <p className="text-muted-foreground text-center py-8">No addresses yet. Add your first delivery address.</p>
+          <p className="text-muted-foreground text-center py-8">
+            Noch keine Adressen für {activeLocation?.name || 'diesen Standort'}. Füge die erste Lieferadresse hinzu.
+          </p>
         ) : (
           <div className="space-y-4">
             {addresses.map((address) => (
@@ -676,7 +683,7 @@ const AddressCard = ({ address, onEdit }: { address: DeliveryAddress; onEdit: ()
   );
 };
 
-const AddressForm = ({ address, onSuccess }: { address: DeliveryAddress | null; onSuccess: () => void }) => {
+const AddressForm = ({ address, locationId, onSuccess }: { address: DeliveryAddress | null; locationId: string | null; onSuccess: () => void }) => {
   const createAddress = useCreateDeliveryAddress();
   const updateAddress = useUpdateDeliveryAddress();
   const [formData, setFormData] = useState({
@@ -687,6 +694,7 @@ const AddressForm = ({ address, onSuccess }: { address: DeliveryAddress | null; 
     postal_code: address?.postal_code || '',
     country: address?.country || 'Germany',
     is_default: address?.is_default || false,
+    location_id: address?.location_id || locationId,
   });
 
   const handleSubmit = (e: React.FormEvent) => {
