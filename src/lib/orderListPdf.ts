@@ -71,18 +71,8 @@ export const generateOrderListPdf = (
     },
   });
 
-  // Get the final Y position after the table
-  const finalY = (doc as any).lastAutoTable.finalY || 200;
-  
-  // Footer with signature fields
-  const pageHeight = doc.internal.pageSize.height;
-  const footerY = Math.min(finalY + 30, pageHeight - 40);
-  
-  doc.setFontSize(10);
-  doc.text('Datum: _______________________', 14, footerY);
-  doc.text('Unterschrift: _______________________', 14, footerY + 10);
-
   // Add page numbers
+  const pageHeight = doc.internal.pageSize.height;
   const pageCount = doc.getNumberOfPages();
   for (let i = 1; i <= pageCount; i++) {
     doc.setPage(i);
