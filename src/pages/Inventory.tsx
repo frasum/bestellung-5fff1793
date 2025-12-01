@@ -133,13 +133,13 @@ const Inventory = () => {
   const createUnit = useCreateUnit();
   const deleteUnit = useDeleteUnit();
 
-  // Compute available units - use from DB or defaults
+  // Compute available units - combine DB units with article units
   const commonUnits = useMemo(() => {
-    if (units && units.length > 0) {
-      return units.map(u => u.name);
-    }
-    return DEFAULT_UNITS;
-  }, [units]);
+    const dbUnits = units?.map(u => u.name) || [];
+    const articleUnits = articles?.map(a => a.unit).filter(Boolean) || [];
+    const allUnits = [...new Set([...dbUnits, ...articleUnits])];
+    return allUnits.length > 0 ? allUnits.sort() : DEFAULT_UNITS;
+  }, [units, articles]);
 
   // Auth check
   useEffect(() => {
