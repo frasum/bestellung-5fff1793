@@ -53,10 +53,9 @@ export const generateInventoryListPdf = (
   doc.text(`${articles.length} Artikel`, pageWidth - 14, 38, { align: 'right' });
 
   // Table data
-  const tableData = articles.map((article, index) => {
+  const tableData = articles.map((article) => {
     const existingItem = existingItems?.get(article.id);
     return [
-      (index + 1).toString(),
       article.name,
       article.unit,
       existingItem ? existingItem.storage_1.toString() : '',
@@ -68,7 +67,7 @@ export const generateInventoryListPdf = (
   // Generate table
   autoTable(doc, {
     startY: 45,
-    head: [['Nr.', 'Artikel', 'Einheit', 'Lager 1', 'Lager 2', 'Gesamt']],
+    head: [['Artikel', 'Einheit', 'Lager 1', 'Lager 2', 'Gesamt']],
     body: tableData,
     styles: {
       fontSize: 9,
@@ -80,12 +79,11 @@ export const generateInventoryListPdf = (
       fontStyle: 'bold',
     },
     columnStyles: {
-      0: { cellWidth: 12, halign: 'center' },
-      1: { cellWidth: 'auto' },
-      2: { cellWidth: 25 },
+      0: { cellWidth: 'auto' },
+      1: { cellWidth: 25 },
+      2: { cellWidth: 25, halign: 'right' },
       3: { cellWidth: 25, halign: 'right' },
       4: { cellWidth: 25, halign: 'right' },
-      5: { cellWidth: 25, halign: 'right' },
     },
     alternateRowStyles: {
       fillColor: [245, 245, 245],
@@ -134,10 +132,9 @@ export const exportInventoryToExcel = async (
 ) => {
   const XLSX = await import('xlsx');
   
-  const data = articles.map((article, index) => {
+  const data = articles.map((article) => {
     const item = inventoryItems.get(article.id);
     return {
-      'Nr.': index + 1,
       'Artikel': article.name,
       'Artikelnummer': article.sku || '',
       'Lieferant': article.supplier?.name || '',
