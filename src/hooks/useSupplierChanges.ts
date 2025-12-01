@@ -105,6 +105,17 @@ export const useApproveChange = () => {
       let valueToUpdate: any = change.new_value;
       if (change.field_name === 'price' && change.new_value !== null) {
         valueToUpdate = parseFloat(change.new_value);
+        
+        // Save price history
+        await supabase
+          .from('article_price_history')
+          .insert({
+            article_id: change.article_id,
+            organization_id: change.organization_id,
+            old_price: parseFloat(change.old_value || '0'),
+            new_price: valueToUpdate,
+            change_source: 'supplier_portal',
+          });
       }
       
       const { error: updateError } = await supabase
@@ -131,6 +142,7 @@ export const useApproveChange = () => {
       queryClient.invalidateQueries({ queryKey: ['supplier-pending-changes'] });
       queryClient.invalidateQueries({ queryKey: ['supplier-pending-changes-count'] });
       queryClient.invalidateQueries({ queryKey: ['articles'] });
+      queryClient.invalidateQueries({ queryKey: ['price-history'] });
       toast.success('Änderung übernommen');
     },
     onError: (error: any) => {
@@ -184,6 +196,17 @@ export const useApproveAllChanges = () => {
         let valueToUpdate: any = change.new_value;
         if (change.field_name === 'price' && change.new_value !== null) {
           valueToUpdate = parseFloat(change.new_value);
+          
+          // Save price history
+          await supabase
+            .from('article_price_history')
+            .insert({
+              article_id: change.article_id,
+              organization_id: change.organization_id,
+              old_price: parseFloat(change.old_value || '0'),
+              new_price: valueToUpdate,
+              change_source: 'supplier_portal',
+            });
         }
         
         await supabase
@@ -205,6 +228,7 @@ export const useApproveAllChanges = () => {
       queryClient.invalidateQueries({ queryKey: ['supplier-pending-changes'] });
       queryClient.invalidateQueries({ queryKey: ['supplier-pending-changes-count'] });
       queryClient.invalidateQueries({ queryKey: ['articles'] });
+      queryClient.invalidateQueries({ queryKey: ['price-history'] });
       toast.success('Alle Änderungen übernommen');
     },
     onError: (error: any) => {
