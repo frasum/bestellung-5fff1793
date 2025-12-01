@@ -18,6 +18,9 @@ import Drafts from "./pages/Drafts";
 import Reports from "./pages/Reports";
 import Settings from "./pages/Settings";
 import Inventory from "./pages/Inventory";
+import SupplierLogin from "./pages/SupplierLogin";
+import SupplierAuth from "./pages/SupplierAuth";
+import SupplierPortal from "./pages/SupplierPortal";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -46,6 +49,9 @@ const App = () => (
                 <Route path="/reports" element={<Reports />} />
                 <Route path="/inventory" element={<Inventory />} />
                 <Route path="/settings" element={<Settings />} />
+                <Route path="/supplier-login" element={<SupplierLogin />} />
+                <Route path="/supplier-auth" element={<SupplierAuth />} />
+                <Route path="/supplier-portal" element={<SupplierPortal />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
