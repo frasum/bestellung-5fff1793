@@ -38,8 +38,7 @@ export const generateOrderListPdf = (
   doc.text(`Artikel: ${articles.length}`, 14, 46);
   
   // Table with articles - empty columns for quantity and notes
-  const tableData = articles.map((article, index) => [
-    '', // Nr. - leave empty for manual numbering
+  const tableData = articles.map((article) => [
     article.sku ? `${article.name} (${article.sku})` : article.name,
     article.unit,
     '', // Menge (quantity) - empty for filling in
@@ -47,7 +46,7 @@ export const generateOrderListPdf = (
   ]);
 
   autoTable(doc, {
-    head: [['Nr.', 'Artikel', 'Einheit', 'Menge', 'Notiz']],
+    head: [['Artikel', 'Einheit', 'Menge', 'Notiz']],
     body: tableData,
     startY: 54,
     styles: {
@@ -62,11 +61,10 @@ export const generateOrderListPdf = (
       fontStyle: 'bold',
     },
     columnStyles: {
-      0: { cellWidth: 15, halign: 'center' },
-      1: { cellWidth: 'auto' },
-      2: { cellWidth: 25 },
-      3: { cellWidth: 25, halign: 'center' },
-      4: { cellWidth: 40 },
+      0: { cellWidth: 'auto' },
+      1: { cellWidth: 25 },
+      2: { cellWidth: 25, halign: 'center' },
+      3: { cellWidth: 40 },
     },
     alternateRowStyles: {
       fillColor: [250, 250, 250],
