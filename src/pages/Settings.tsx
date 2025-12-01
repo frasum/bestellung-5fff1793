@@ -10,7 +10,7 @@ import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Building2, MapPin, Bell, Plus, Pencil, Trash2, Star, User, Lock, Users, Mail, Clock, X, Globe, FileText, RotateCcw, Moon, Sun } from 'lucide-react';
+import { Building2, MapPin, Bell, Plus, Pencil, Trash2, Star, User, Lock, Users, Mail, Clock, X, Globe, FileText, RotateCcw, Moon, Sun, Ruler, Check } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { Textarea } from '@/components/ui/textarea';
 import {
@@ -39,6 +39,7 @@ import {
 } from '@/hooks/useTeam';
 import { useAuth } from '@/contexts/AuthContext';
 import { useEmailTemplate, useUpsertEmailTemplate, getDefaultTemplate } from '@/hooks/useEmailTemplates';
+import { useUnits, useCreateUnit, useUpdateUnit, useDeleteUnit } from '@/hooks/useUnits';
 
 const Settings = () => {
   const { t } = useTranslation();
@@ -77,6 +78,10 @@ const Settings = () => {
               <FileText className="h-4 w-4" />
               {t('settings.emailTemplates')}
             </TabsTrigger>
+            <TabsTrigger value="units" className="gap-2">
+              <Ruler className="h-4 w-4" />
+              Einheiten
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="profile">
@@ -101,6 +106,10 @@ const Settings = () => {
 
           <TabsContent value="email-templates">
             <EmailTemplateTab />
+          </TabsContent>
+
+          <TabsContent value="units">
+            <UnitsTab />
           </TabsContent>
         </Tabs>
       </div>
@@ -999,6 +1008,124 @@ const EmailTemplateTab = () => {
             <RotateCcw className="h-4 w-4 mr-2" />
             {t('settings.resetToDefault')}
           </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
+
+const UnitsTab = () => {
+  const { data: units = [], isLoading } = useUnits();
+  const createUnit = useCreateUnit();
+  const updateUnit = useUpdateUnit();
+  const deleteUnit = useDeleteUnit();
+  const [newUnitName, setNewUnitName] = useState('');
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingName, setEditingName] = useState('');
+
+  const handleAddUnit = () => {
+    if (newUnitName.trim()) {
+      createUnit.mutate(newUnitName.trim(), {
+        onSuccess: () => setNewUnitName(''),
+      });
+    }
+  };
+
+  const handleStartEdit = (unit: { id: string; name: string }) => {
+    setEditingId(unit.id);
+    setEditingName(unit.name);
+  };
+
+  const handleSaveEdit = () => {
+    if (editingId && editingName.trim()) {
+      updateUnit.mutate({ id: editingId, name: editingName.trim() }, {
+        onSuccess: () => {
+          setEditingId(null);
+          setEditingName('');
+        },
+      });
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingId(null);
+    setEditingName('');
+  };
+
+  const handleDelete = (id: string) => {
+    if (confirm('Einheit wirklich löschen?')) {
+      deleteUnit.mutate(id);
+    }
+  };
+
+  if (isLoading) {
+    return <Card><CardContent className="p-6">Loading...</CardContent></Card>;
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Ruler className="h-5 w-5" />
+          Einheiten verwalten
+        </CardTitle>
+        <CardDescription>Erstellen und verwalten Sie Ihre Mengeneinheiten</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        <div className="flex gap-2">
+          <Input
+            value={newUnitName}
+            onChange={(e) => setNewUnitName(e.target.value)}
+            placeholder="Neue Einheit hinzufügen..."
+            onKeyDown={(e) => e.key === 'Enter' && handleAddUnit()}
+          />
+          <Button onClick={handleAddUnit} disabled={createUnit.isPending || !newUnitName.trim()}>
+            <Plus className="h-4 w-4 mr-2" />
+            Hinzufügen
+          </Button>
+        </div>
+
+        <div className="space-y-2">
+          {units.length === 0 ? (
+            <p className="text-muted-foreground text-center py-4">Keine Einheiten vorhanden</p>
+          ) : (
+            units.map((unit) => (
+              <div key={unit.id} className="flex items-center justify-between p-3 border rounded-lg">
+                {editingId === unit.id ? (
+                  <div className="flex items-center gap-2 flex-1">
+                    <Input
+                      value={editingName}
+                      onChange={(e) => setEditingName(e.target.value)}
+                      className="flex-1"
+                      autoFocus
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') handleSaveEdit();
+                        if (e.key === 'Escape') handleCancelEdit();
+                      }}
+                    />
+                    <Button size="sm" onClick={handleSaveEdit} disabled={updateUnit.isPending}>
+                      <Check className="h-4 w-4" />
+                    </Button>
+                    <Button size="sm" variant="ghost" onClick={handleCancelEdit}>
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ) : (
+                  <>
+                    <span className="font-medium">{unit.name}</span>
+                    <div className="flex items-center gap-1">
+                      <Button size="sm" variant="ghost" onClick={() => handleStartEdit(unit)}>
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button size="sm" variant="ghost" onClick={() => handleDelete(unit.id)} className="text-destructive hover:text-destructive">
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </>
+                )}
+              </div>
+            ))
+          )}
         </div>
       </CardContent>
     </Card>
