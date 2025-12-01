@@ -26,8 +26,8 @@ export const LocationSwitcher = ({ className, showIcon = true }: LocationSwitche
       <DropdownMenuTrigger asChild>
         <Button variant="outline" size="sm" className={cn("gap-2", className)}>
           {showIcon && <MapPin className="h-4 w-4" />}
-          <span className="max-w-[120px] truncate">
-            {activeLocation?.short_code || activeLocation?.name || 'Standort'}
+          <span className="max-w-[150px] truncate">
+            {activeLocation?.name || 'Standort'}
           </span>
           <ChevronDown className="h-3 w-3 opacity-50" />
         </Button>
