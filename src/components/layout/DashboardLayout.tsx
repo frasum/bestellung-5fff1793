@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils';
 import { LayoutDashboard, Users, Package, ShoppingCart, FileText, BarChart3, Settings, LogOut, Menu, X, ClipboardList } from 'lucide-react';
 import { GlobalSearch } from '@/components/GlobalSearch';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
+import { LocationSwitcher } from '@/components/LocationSwitcher';
 import logoImage from '@/assets/logo.png';
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -83,6 +84,7 @@ export const DashboardLayout = ({
       <div className="hidden lg:flex fixed top-0 left-64 right-0 z-30 h-14 bg-card/80 backdrop-blur-sm border-b border-border items-center justify-between px-6">
         <div className="flex items-center gap-4">
           <GlobalSearch />
+          <LocationSwitcher />
         </div>
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
           <kbd className="px-1.5 py-0.5 rounded border border-border bg-muted">Shift</kbd>

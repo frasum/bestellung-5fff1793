@@ -12,7 +12,8 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useSuppliers, useCreateSupplier, useUpdateSupplier, useDeleteSupplier, Supplier, SupplierInput } from '@/hooks/useSuppliers';
 import { useArticles, Article } from '@/hooks/useArticles';
-import { Plus, Pencil, Trash2, Search, Mail, Phone, MapPin, User, Loader2, Upload, Hash, Euro, LayoutGrid, List, ChevronDown, ChevronRight, Minus, ShoppingCart, FileText, Printer, Send, Bell } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, Mail, Phone, MapPin, User, Loader2, Upload, Hash, Euro, LayoutGrid, List, ChevronDown, ChevronRight, Minus, ShoppingCart, FileText, Printer, Send, Bell, Store } from 'lucide-react';
+import { SupplierLocationsDialog } from '@/components/suppliers/SupplierLocationsDialog';
 import { useSendSupplierInvitation } from '@/hooks/useSupplierPortal';
 import { generateOrderListPdf, generateCombinedOrderListPdf } from '@/lib/orderListPdf';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -144,6 +145,7 @@ const Suppliers = () => {
   const [invitingSupplierId, setInvitingSupplierId] = useState<string | null>(null);
   const [organizationName, setOrganizationName] = useState<string>('');
   const [changesDialogSupplier, setChangesDialogSupplier] = useState<Supplier | null>(null);
+  const [locationsDialogSupplier, setLocationsDialogSupplier] = useState<Supplier | null>(null);
   const { data: pendingChanges } = useSupplierPendingChanges();
   
   // Group pending changes by supplier
@@ -577,6 +579,9 @@ const Suppliers = () => {
                         </TableCell>
                         <TableCell className="text-right py-2">
                           <div className="flex justify-end gap-1">
+                            <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-primary" onClick={() => setLocationsDialogSupplier(supplier)} title="Standort-Zuordnungen">
+                              <Store className="w-3 h-3" />
+                            </Button>
                             <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-primary" onClick={() => handleSendInvitation(supplier)} disabled={invitingSupplierId === supplier.id || sendingInvitation} title="Einladung zum Lieferantenportal senden">
                               {invitingSupplierId === supplier.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Send className="w-3 h-3" />}
                             </Button>
@@ -669,6 +674,9 @@ const Suppliers = () => {
                     </div>
                   </div>
                   <div className="flex gap-1">
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary" onClick={() => setLocationsDialogSupplier(supplier)} title="Standort-Zuordnungen">
+                      <Store className="w-4 h-4" />
+                    </Button>
                     <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary" onClick={() => handleSendInvitation(supplier)} disabled={invitingSupplierId === supplier.id || sendingInvitation} title="Einladung zum Lieferantenportal senden">
                       {invitingSupplierId === supplier.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
                     </Button>
@@ -745,6 +753,15 @@ const Suppliers = () => {
         supplierId={changesDialogSupplier?.id || null}
         supplierName={changesDialogSupplier?.name || ''}
       />
+
+      {/* Supplier Locations Dialog */}
+      {locationsDialogSupplier && (
+        <SupplierLocationsDialog
+          open={!!locationsDialogSupplier}
+          onOpenChange={(open) => !open && setLocationsDialogSupplier(null)}
+          supplier={locationsDialogSupplier}
+        />
+      )}
     </DashboardLayout>;
 };
 export default Suppliers;

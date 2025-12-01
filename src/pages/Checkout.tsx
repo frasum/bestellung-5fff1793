@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
+import { useLocationContext } from '@/contexts/LocationContext';
 import { Input } from '@/components/ui/input';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
@@ -12,7 +13,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { useCreateOrder } from '@/hooks/useOrders';
 import { useDeliveryAddresses } from '@/hooks/useSettings';
-import { ArrowLeft, CalendarIcon, CheckCircle2, Clock, Eye, Loader2, Mail, MapPin, Minus, Plus, Send, Settings, Trash2 } from 'lucide-react';
+import { ArrowLeft, CalendarIcon, CheckCircle2, Clock, Eye, Loader2, Mail, MapPin, Minus, Plus, Send, Settings, Store, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { z } from 'zod';
 import { useForm, Controller } from 'react-hook-form';
@@ -43,6 +44,7 @@ const Checkout = () => {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const { items, getTotal, clearCart, updateQuantity, removeItem } = useCart();
+  const { activeLocation } = useLocationContext();
   const createOrder = useCreateOrder();
   const { data: deliveryAddresses, isLoading: addressesLoading } = useDeliveryAddresses();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -126,15 +128,38 @@ const Checkout = () => {
     const formattedAddress = `${selectedAddress.label}\n${formatAddress(selectedAddress)}`;
 
     try {
-      // Fetch supplier emails and customer numbers
+      // Fetch supplier emails and customer numbers (location-specific)
       const { supabase } = await import('@/integrations/supabase/client');
       const supplierIds = supplierOrders.map(s => s.supplierId);
+      
+      // First get suppliers
       const { data: suppliers } = await supabase
         .from('suppliers')
         .select('id, email, customer_number')
         .in('id', supplierIds);
 
-      const supplierData = new Map(suppliers?.map(s => [s.id, { email: s.email, customerNumber: s.customer_number }]) || []);
+      // Then get location-specific customer numbers if we have an active location
+      let supplierLocationsMap = new Map<string, { customerNumber: string | null }>();
+      if (activeLocation) {
+        const { data: supplierLocations } = await supabase
+          .from('supplier_locations')
+          .select('supplier_id, customer_number')
+          .eq('location_id', activeLocation.id)
+          .in('supplier_id', supplierIds);
+        
+        supplierLocations?.forEach(sl => {
+          supplierLocationsMap.set(sl.supplier_id, { customerNumber: sl.customer_number });
+        });
+      }
+
+      // Build supplier data map - prefer location-specific customer number
+      const supplierData = new Map(suppliers?.map(s => {
+        const locationData = supplierLocationsMap.get(s.id);
+        return [s.id, { 
+          email: s.email, 
+          customerNumber: locationData?.customerNumber || s.customer_number 
+        }];
+      }) || []);
 
       // Fetch organization name
       const { data: profile } = await supabase
