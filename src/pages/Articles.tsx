@@ -46,8 +46,9 @@ import {
   CommandItem,
   CommandList,
 } from '@/components/ui/command';
-import { Check, ChevronsUpDown, Tags } from 'lucide-react';
+import { Check, ChevronsUpDown, Tags, History } from 'lucide-react';
 import { useSuppliers } from '@/hooks/useSuppliers';
+import { PriceHistoryPopover } from '@/components/suppliers/PriceHistoryPopover';
 import { useCategories } from '@/hooks/useCategories';
 import { Plus, Pencil, Trash2, Search, ShoppingCart, Minus, Loader2, Package, Upload, LayoutGrid, List } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -679,8 +680,13 @@ const Articles = () => {
                         {article.suppliers?.name}
                       </TableCell>
                       <TableCell className="text-right font-medium py-2">
-                        €{Number(article.price).toFixed(2)}
-                        <span className="text-xs text-muted-foreground ml-1">/{article.unit}</span>
+                        <div className="flex items-center justify-end gap-1">
+                          <span>
+                            €{Number(article.price).toFixed(2)}
+                            <span className="text-xs text-muted-foreground ml-1">/{article.unit}</span>
+                          </span>
+                          <PriceHistoryPopover articleId={article.id} articleName={article.name} />
+                        </div>
                       </TableCell>
                       <TableCell className="py-2">
                         <div className="flex items-center justify-center gap-1">
@@ -765,9 +771,12 @@ const Articles = () => {
 
                   <div className="mt-auto">
                     <div className="flex items-center justify-between mb-3">
-                      <span className="text-2xl font-bold text-foreground">
-                        €{Number(article.price).toFixed(2)}
-                      </span>
+                      <div className="flex items-center gap-1">
+                        <span className="text-2xl font-bold text-foreground">
+                          €{Number(article.price).toFixed(2)}
+                        </span>
+                        <PriceHistoryPopover articleId={article.id} articleName={article.name} />
+                      </div>
                       <span className="text-sm text-muted-foreground">/{article.unit}</span>
                     </div>
 

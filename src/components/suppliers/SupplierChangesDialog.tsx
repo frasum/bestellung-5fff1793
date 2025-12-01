@@ -10,7 +10,6 @@ import {
   useApproveAllChanges,
   useRejectAllChanges 
 } from '@/hooks/useSupplierChanges';
-import { PriceHistoryPopover } from './PriceHistoryPopover';
 
 interface SupplierChangesDialogProps {
   open: boolean;
@@ -116,19 +115,11 @@ export const SupplierChangesDialog = ({
                   <TableBody>
                     {articleChanges.map((change) => (
                       <TableRow key={change.id}>
-                                        <TableCell>
-                                          <div className="flex items-center gap-1">
-                                            <Badge variant="outline">
-                                              {FIELD_LABELS[change.field_name] || change.field_name}
-                                            </Badge>
-                                            {change.field_name === 'price' && (
-                                              <PriceHistoryPopover 
-                                                articleId={change.article_id} 
-                                                articleName={change.articles?.name || 'Artikel'} 
-                                              />
-                                            )}
-                                          </div>
-                                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline">
+                            {FIELD_LABELS[change.field_name] || change.field_name}
+                          </Badge>
+                        </TableCell>
                         <TableCell className="text-muted-foreground">
                           {change.old_value || '-'}
                         </TableCell>
