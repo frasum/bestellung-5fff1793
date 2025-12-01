@@ -107,8 +107,20 @@ serve(async (req) => {
       for (const [field, newValue] of Object.entries(changes)) {
         const oldValue = currentArticle[field];
         
-        // Only create a record if the value actually changed
-        if (String(oldValue) !== String(newValue)) {
+        // For price field, compare as numbers to avoid floating point string issues
+        let hasChanged = false;
+        if (field === 'price') {
+          const oldNum = oldValue !== null && oldValue !== undefined ? Number(oldValue) : null;
+          const newNum = newValue !== null && newValue !== undefined ? Number(newValue) : null;
+          hasChanged = oldNum !== newNum;
+        } else {
+          // For other fields, compare as strings
+          const oldStr = oldValue !== null && oldValue !== undefined ? String(oldValue) : null;
+          const newStr = newValue !== null && newValue !== undefined ? String(newValue) : null;
+          hasChanged = oldStr !== newStr;
+        }
+        
+        if (hasChanged) {
           changeRecords.push({
             supplier_id: supplierId,
             organization_id: organizationId,
