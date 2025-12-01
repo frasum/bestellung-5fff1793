@@ -22,7 +22,14 @@ serve(async (req: Request): Promise<Response> => {
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const resendApiKey = Deno.env.get("RESEND_API_KEY")!;
+    const resendApiKey = Deno.env.get("RESEND_API_KEY");
+    
+    if (!resendApiKey) {
+      throw new Error("RESEND_API_KEY is not configured");
+    }
+    
+    // Clean the API key of any invisible/non-ASCII characters
+    const cleanedApiKey = resendApiKey.trim().replace(/[^\x20-\x7E]/g, '');
     
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
