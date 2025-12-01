@@ -713,72 +713,80 @@ const Inventory = () => {
                                   <div className="p-2 border-b">
                                     <div className="flex gap-1">
                                       <Input
-                                        placeholder="Neue Einheit..."
+                                        placeholder="Suchen oder hinzufügen..."
                                         value={newUnitName}
                                         onChange={(e) => setNewUnitName(e.target.value)}
                                         onKeyDown={(e) => {
                                           if (e.key === 'Enter' && newUnitName.trim()) {
-                                            createUnit.mutate(newUnitName.trim(), {
-                                              onSuccess: () => {
-                                                handleSaveUnitEdit(article.id, newUnitName.trim());
-                                                setNewUnitName('');
-                                              }
-                                            });
+                                            const exactMatch = commonUnits.find(u => u.toLowerCase() === newUnitName.trim().toLowerCase());
+                                            if (exactMatch) {
+                                              handleSaveUnitEdit(article.id, exactMatch);
+                                              setNewUnitName('');
+                                            } else {
+                                              createUnit.mutate(newUnitName.trim(), {
+                                                onSuccess: () => {
+                                                  handleSaveUnitEdit(article.id, newUnitName.trim());
+                                                  setNewUnitName('');
+                                                }
+                                              });
+                                            }
                                           }
                                         }}
                                         className="h-8 text-sm"
                                       />
-                                      <Button
-                                        size="icon"
-                                        variant="ghost"
-                                        className="h-8 w-8 shrink-0"
-                                        disabled={!newUnitName.trim() || createUnit.isPending}
-                                        onClick={() => {
-                                          if (newUnitName.trim()) {
+                                      {newUnitName.trim() && !commonUnits.some(u => u.toLowerCase() === newUnitName.trim().toLowerCase()) && (
+                                        <Button
+                                          size="icon"
+                                          variant="ghost"
+                                          className="h-8 w-8 shrink-0"
+                                          disabled={createUnit.isPending}
+                                          onClick={() => {
                                             createUnit.mutate(newUnitName.trim(), {
                                               onSuccess: () => {
                                                 handleSaveUnitEdit(article.id, newUnitName.trim());
                                                 setNewUnitName('');
                                               }
                                             });
-                                          }
-                                        }}
-                                      >
-                                        <Plus className="w-4 h-4" />
-                                      </Button>
+                                          }}
+                                        >
+                                          <Plus className="w-4 h-4" />
+                                        </Button>
+                                      )}
                                     </div>
                                   </div>
                                   <div className="max-h-48 overflow-y-auto p-1">
-                                    {commonUnits.map((unit) => {
-                                      const dbUnit = units?.find(u => u.name === unit);
-                                      return (
-                                        <div
-                                          key={unit}
-                                          className="flex items-center justify-between px-2 py-1.5 rounded hover:bg-muted cursor-pointer group"
-                                          onClick={() => {
-                                            handleSaveUnitEdit(article.id, unit);
-                                            setNewUnitName('');
-                                          }}
-                                        >
-                                          <span className={`text-sm ${article.unit === unit ? 'font-medium text-primary' : ''}`}>
-                                            {unit}
-                                          </span>
-                                          {dbUnit && (
-                                            <Button
-                                              size="icon"
-                                              variant="ghost"
-                                              className="h-6 w-6 opacity-0 group-hover:opacity-100 text-destructive hover:text-destructive"
-                                              onClick={(e) => {
-                                                e.stopPropagation();
-                                                deleteUnit.mutate(dbUnit.id);
-                                              }}
-                                            >
-                                              <Trash2 className="w-3 h-3" />
-                                            </Button>
-                                          )}
-                                        </div>
-                                      );
-                                    })}
+                                    {commonUnits
+                                      .filter(unit => !newUnitName.trim() || unit.toLowerCase().includes(newUnitName.toLowerCase()))
+                                      .map((unit) => {
+                                        const dbUnit = units?.find(u => u.name === unit);
+                                        return (
+                                          <div
+                                            key={unit}
+                                            className="flex items-center justify-between px-2 py-1.5 rounded hover:bg-muted cursor-pointer group"
+                                            onClick={() => {
+                                              handleSaveUnitEdit(article.id, unit);
+                                              setNewUnitName('');
+                                            }}
+                                          >
+                                            <span className={`text-sm ${article.unit === unit ? 'font-medium text-primary' : ''}`}>
+                                              {unit}
+                                            </span>
+                                            {dbUnit && (
+                                              <Button
+                                                size="icon"
+                                                variant="ghost"
+                                                className="h-6 w-6 opacity-0 group-hover:opacity-100 text-destructive hover:text-destructive"
+                                                onClick={(e) => {
+                                                  e.stopPropagation();
+                                                  deleteUnit.mutate(dbUnit.id);
+                                                }}
+                                              >
+                                                <Trash2 className="w-3 h-3" />
+                                              </Button>
+                                            )}
+                                          </div>
+                                        );
+                                      })}
                                   </div>
                                 </PopoverContent>
                               </Popover>
