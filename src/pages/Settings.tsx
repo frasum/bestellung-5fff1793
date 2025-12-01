@@ -77,10 +77,6 @@ const Settings = () => {
               <FileText className="h-4 w-4" />
               {t('settings.emailTemplates')}
             </TabsTrigger>
-            <TabsTrigger value="language" className="gap-2">
-              <Globe className="h-4 w-4" />
-              {t('settings.language')}
-            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="profile">
@@ -106,10 +102,6 @@ const Settings = () => {
           <TabsContent value="email-templates">
             <EmailTemplateTab />
           </TabsContent>
-
-          <TabsContent value="language">
-            <LanguageTab />
-          </TabsContent>
         </Tabs>
       </div>
     </DashboardLayout>
@@ -117,6 +109,7 @@ const Settings = () => {
 };
 
 const ProfileTab = () => {
+  const { t, i18n } = useTranslation();
   const { data: profile, isLoading } = useUserProfile();
   const updateProfile = useUpdateUserProfile();
   const updatePassword = useUpdatePassword();
@@ -126,6 +119,12 @@ const ProfileTab = () => {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [passwordError, setPasswordError] = useState('');
+
+  const languages = [
+    { code: 'de', label: 'Deutsch', flag: '🇩🇪' },
+    { code: 'en', label: 'English', flag: '🇬🇧' },
+    { code: 'fr', label: 'Français', flag: '🇫🇷' },
+  ];
 
   const handleProfileSave = () => {
     if (fullName.trim()) {
@@ -224,6 +223,27 @@ const ProfileTab = () => {
               >
                 System
               </Button>
+            </div>
+          </div>
+
+          <div className="pt-4 border-t">
+            <Label className="mb-3 block flex items-center gap-2">
+              <Globe className="h-4 w-4" />
+              {t('language.selectLanguage')}
+            </Label>
+            <div className="flex gap-2 flex-wrap">
+              {languages.map((lang) => (
+                <Button
+                  key={lang.code}
+                  variant={i18n.language === lang.code ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => i18n.changeLanguage(lang.code)}
+                  className="gap-2"
+                >
+                  <span>{lang.flag}</span>
+                  {lang.label}
+                </Button>
+              ))}
             </div>
           </div>
         </CardContent>
@@ -818,50 +838,6 @@ const NotificationsTab = () => {
               onCheckedChange={() => handleToggle('email_supplier_updates')}
             />
           </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
-};
-
-const LanguageTab = () => {
-  const { t, i18n } = useTranslation();
-
-  const languages = [
-    { code: 'de', label: 'Deutsch', flag: '🇩🇪' },
-    { code: 'en', label: 'English', flag: '🇬🇧' },
-    { code: 'fr', label: 'Français', flag: '🇫🇷' },
-  ];
-
-  const handleLanguageChange = (languageCode: string) => {
-    i18n.changeLanguage(languageCode);
-  };
-
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Globe className="h-5 w-5" />
-          {t('language.selectLanguage')}
-        </CardTitle>
-        <CardDescription>{t('settings.description')}</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="grid gap-4 sm:grid-cols-3">
-          {languages.map((lang) => (
-            <button
-              key={lang.code}
-              onClick={() => handleLanguageChange(lang.code)}
-              className={`flex items-center gap-3 p-4 rounded-lg border-2 transition-all ${
-                i18n.language === lang.code
-                  ? 'border-primary bg-primary/5'
-                  : 'border-border hover:border-primary/50'
-              }`}
-            >
-              <span className="text-2xl">{lang.flag}</span>
-              <span className="font-medium">{lang.label}</span>
-            </button>
-          ))}
         </div>
       </CardContent>
     </Card>
