@@ -1162,7 +1162,20 @@ const UnitsTab = () => {
         {/* Units from Articles (not yet in database) */}
         {filteredArticleUnits.length > 0 && (
           <div className="space-y-2">
-            <h3 className="text-sm font-medium text-muted-foreground">Einheiten aus Artikeln ({filteredArticleUnits.length})</h3>
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-medium text-muted-foreground">Einheiten aus Artikeln ({articleUnits.length})</h3>
+              <Button 
+                size="sm" 
+                variant="outline"
+                onClick={() => {
+                  articleUnits.forEach(unit => createUnit.mutate(unit));
+                }}
+                disabled={createUnit.isPending}
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Alle hinzufügen
+              </Button>
+            </div>
             <p className="text-xs text-muted-foreground">Diese Einheiten werden in Artikeln verwendet, aber noch nicht zentral gespeichert.</p>
             <div className="flex flex-wrap gap-2">
               {filteredArticleUnits.map((unit) => (
