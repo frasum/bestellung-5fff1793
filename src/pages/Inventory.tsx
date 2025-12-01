@@ -726,6 +726,7 @@ const Inventory = () => {
                                     step="0.01"
                                     value={editingPriceValue}
                                     onChange={(e) => setEditingPriceValue(e.target.value)}
+                                    onFocus={(e) => e.target.select()}
                                     onKeyDown={(e) => {
                                       if (e.key === 'Enter') handleSavePriceEdit(article.id);
                                       if (e.key === 'Escape') handleCancelPriceEdit();
