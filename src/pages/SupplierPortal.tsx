@@ -376,7 +376,8 @@ const SupplierPortal = () => {
                                 inputMode="decimal"
                                 value={priceInputs[article.id] !== undefined 
                                   ? priceInputs[article.id]
-                                  : String(article.price).replace('.', ',')}
+                                  : getPendingChangeForField(article.id, 'price')?.new_value?.replace('.', ',') 
+                                    ?? String(article.price).replace('.', ',')}
                                 onChange={(e) => {
                                   setPriceInputs(prev => ({
                                     ...prev,
@@ -389,7 +390,7 @@ const SupplierPortal = () => {
                                 <div className="text-xs">
                                   <span className="text-amber-600">Ausstehend</span>
                                   <span className="text-muted-foreground ml-1">
-                                    (vorher: {getPendingChangeForField(article.id, 'price')?.old_value || '-'} €)
+                                    (vorher: {getPendingChangeForField(article.id, 'price')?.old_value?.replace('.', ',') || '-'} €)
                                   </span>
                                 </div>
                               )}
