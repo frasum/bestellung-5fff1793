@@ -15,7 +15,7 @@ import {
   useDeleteInventorySession,
   InventoryItem,
 } from '@/hooks/useInventory';
-import { useUnits } from '@/hooks/useUnits';
+import { useUnits, useCreateUnit, useDeleteUnit } from '@/hooks/useUnits';
 import { useCategories } from '@/hooks/useCategories';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -46,6 +46,11 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 import {
   Table,
   TableBody,
@@ -110,6 +115,7 @@ const Inventory = () => {
   // Unit editing state
   const [editingUnitId, setEditingUnitId] = useState<string | null>(null);
   const [editingUnitValue, setEditingUnitValue] = useState<string>('');
+  const [newUnitName, setNewUnitName] = useState('');
 
   const { data: articles, isLoading: articlesLoading } = useArticles();
   const { data: suppliers } = useSuppliers();
@@ -124,6 +130,8 @@ const Inventory = () => {
   const bulkUpsertItems = useBulkUpsertInventoryItems();
   const deleteSession = useDeleteInventorySession();
   const updateArticle = useUpdateArticle();
+  const createUnit = useCreateUnit();
+  const deleteUnit = useDeleteUnit();
 
   // Compute available units - use from DB or defaults
   const commonUnits = useMemo(() => {
@@ -683,39 +691,97 @@ const Inventory = () => {
                               {article.suppliers?.name}
                             </TableCell>
                             <TableCell>
-                              {editingUnitId === article.id ? (
-                                <div className="flex items-center gap-1">
-                                  <Select
-                                    value={editingUnitValue}
-                                    onValueChange={(value) => {
-                                      setEditingUnitValue(value);
-                                      handleSaveUnitEdit(article.id, value);
-                                    }}
-                                    open={true}
-                                    onOpenChange={(open) => {
-                                      if (!open) handleCancelUnitEdit();
-                                    }}
+                              <Popover 
+                                open={editingUnitId === article.id}
+                                onOpenChange={(open) => {
+                                  if (open) {
+                                    handleStartUnitEdit(article.id, article.unit);
+                                  } else {
+                                    handleCancelUnitEdit();
+                                    setNewUnitName('');
+                                  }
+                                }}
+                              >
+                                <PopoverTrigger asChild>
+                                  <span
+                                    className="cursor-pointer hover:text-primary hover:underline"
                                   >
-                                    <SelectTrigger className="w-24 h-8">
-                                      <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent className="bg-background z-50">
-                                      {commonUnits.map((unit) => (
-                                        <SelectItem key={unit} value={unit}>
-                                          {unit}
-                                        </SelectItem>
-                                      ))}
-                                    </SelectContent>
-                                  </Select>
-                                </div>
-                              ) : (
-                                <span
-                                  className="cursor-pointer hover:text-primary hover:underline"
-                                  onClick={() => handleStartUnitEdit(article.id, article.unit)}
-                                >
-                                  {article.unit}
-                                </span>
-                              )}
+                                    {article.unit}
+                                  </span>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-56 p-0" align="start">
+                                  <div className="p-2 border-b">
+                                    <div className="flex gap-1">
+                                      <Input
+                                        placeholder="Neue Einheit..."
+                                        value={newUnitName}
+                                        onChange={(e) => setNewUnitName(e.target.value)}
+                                        onKeyDown={(e) => {
+                                          if (e.key === 'Enter' && newUnitName.trim()) {
+                                            createUnit.mutate(newUnitName.trim(), {
+                                              onSuccess: () => {
+                                                handleSaveUnitEdit(article.id, newUnitName.trim());
+                                                setNewUnitName('');
+                                              }
+                                            });
+                                          }
+                                        }}
+                                        className="h-8 text-sm"
+                                      />
+                                      <Button
+                                        size="icon"
+                                        variant="ghost"
+                                        className="h-8 w-8 shrink-0"
+                                        disabled={!newUnitName.trim() || createUnit.isPending}
+                                        onClick={() => {
+                                          if (newUnitName.trim()) {
+                                            createUnit.mutate(newUnitName.trim(), {
+                                              onSuccess: () => {
+                                                handleSaveUnitEdit(article.id, newUnitName.trim());
+                                                setNewUnitName('');
+                                              }
+                                            });
+                                          }
+                                        }}
+                                      >
+                                        <Plus className="w-4 h-4" />
+                                      </Button>
+                                    </div>
+                                  </div>
+                                  <div className="max-h-48 overflow-y-auto p-1">
+                                    {commonUnits.map((unit) => {
+                                      const dbUnit = units?.find(u => u.name === unit);
+                                      return (
+                                        <div
+                                          key={unit}
+                                          className="flex items-center justify-between px-2 py-1.5 rounded hover:bg-muted cursor-pointer group"
+                                          onClick={() => {
+                                            handleSaveUnitEdit(article.id, unit);
+                                            setNewUnitName('');
+                                          }}
+                                        >
+                                          <span className={`text-sm ${article.unit === unit ? 'font-medium text-primary' : ''}`}>
+                                            {unit}
+                                          </span>
+                                          {dbUnit && (
+                                            <Button
+                                              size="icon"
+                                              variant="ghost"
+                                              className="h-6 w-6 opacity-0 group-hover:opacity-100 text-destructive hover:text-destructive"
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                deleteUnit.mutate(dbUnit.id);
+                                              }}
+                                            >
+                                              <Trash2 className="w-3 h-3" />
+                                            </Button>
+                                          )}
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                </PopoverContent>
+                              </Popover>
                             </TableCell>
                             <TableCell className="text-right">
                               {editingPriceId === article.id ? (
