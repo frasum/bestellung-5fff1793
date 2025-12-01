@@ -40,6 +40,7 @@ import {
 import { useAuth } from '@/contexts/AuthContext';
 import { useEmailTemplate, useUpsertEmailTemplate, getDefaultTemplate } from '@/hooks/useEmailTemplates';
 import { useUnits, useCreateUnit, useUpdateUnit, useDeleteUnit } from '@/hooks/useUnits';
+import { useArticles } from '@/hooks/useArticles';
 
 const Settings = () => {
   const { t } = useTranslation();
@@ -1015,17 +1016,34 @@ const EmailTemplateTab = () => {
 };
 
 const UnitsTab = () => {
-  const { data: units = [], isLoading } = useUnits();
+  const { data: units = [], isLoading: unitsLoading } = useUnits();
+  const { data: articles = [], isLoading: articlesLoading } = useArticles();
   const createUnit = useCreateUnit();
   const updateUnit = useUpdateUnit();
   const deleteUnit = useDeleteUnit();
   const [newUnitName, setNewUnitName] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
 
-  const handleAddUnit = () => {
-    if (newUnitName.trim()) {
-      createUnit.mutate(newUnitName.trim(), {
+  // Get unique units from articles that are not in the database
+  const dbUnitNames = new Set(units.map(u => u.name.toLowerCase()));
+  const articleUnits = [...new Set(articles.map(a => a.unit).filter(Boolean))]
+    .filter(unit => !dbUnitNames.has(unit.toLowerCase()))
+    .sort((a, b) => a.localeCompare(b));
+
+  // Filter units based on search
+  const filteredDbUnits = units.filter(u => 
+    u.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+  const filteredArticleUnits = articleUnits.filter(u => 
+    u.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const handleAddUnit = (unitName?: string) => {
+    const name = unitName || newUnitName;
+    if (name.trim()) {
+      createUnit.mutate(name.trim(), {
         onSuccess: () => setNewUnitName(''),
       });
     }
@@ -1058,6 +1076,8 @@ const UnitsTab = () => {
     }
   };
 
+  const isLoading = unitsLoading || articlesLoading;
+
   if (isLoading) {
     return <Card><CardContent className="p-6">Loading...</CardContent></Card>;
   }
@@ -1079,17 +1099,28 @@ const UnitsTab = () => {
             placeholder="Neue Einheit hinzufügen..."
             onKeyDown={(e) => e.key === 'Enter' && handleAddUnit()}
           />
-          <Button onClick={handleAddUnit} disabled={createUnit.isPending || !newUnitName.trim()}>
+          <Button onClick={() => handleAddUnit()} disabled={createUnit.isPending || !newUnitName.trim()}>
             <Plus className="h-4 w-4 mr-2" />
             Hinzufügen
           </Button>
         </div>
 
+        <div>
+          <Input
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            placeholder="Einheiten suchen..."
+            className="mb-4"
+          />
+        </div>
+
+        {/* Database Units */}
         <div className="space-y-2">
-          {units.length === 0 ? (
-            <p className="text-muted-foreground text-center py-4">Keine Einheiten vorhanden</p>
+          <h3 className="text-sm font-medium text-muted-foreground">Gespeicherte Einheiten ({filteredDbUnits.length})</h3>
+          {filteredDbUnits.length === 0 ? (
+            <p className="text-muted-foreground text-center py-4 text-sm">Keine gespeicherten Einheiten</p>
           ) : (
-            units.map((unit) => (
+            filteredDbUnits.map((unit) => (
               <div key={unit.id} className="flex items-center justify-between p-3 border rounded-lg">
                 {editingId === unit.id ? (
                   <div className="flex items-center gap-2 flex-1">
@@ -1127,6 +1158,27 @@ const UnitsTab = () => {
             ))
           )}
         </div>
+
+        {/* Units from Articles (not yet in database) */}
+        {filteredArticleUnits.length > 0 && (
+          <div className="space-y-2">
+            <h3 className="text-sm font-medium text-muted-foreground">Einheiten aus Artikeln ({filteredArticleUnits.length})</h3>
+            <p className="text-xs text-muted-foreground">Diese Einheiten werden in Artikeln verwendet, aber noch nicht zentral gespeichert.</p>
+            <div className="flex flex-wrap gap-2">
+              {filteredArticleUnits.map((unit) => (
+                <Badge 
+                  key={unit} 
+                  variant="outline" 
+                  className="cursor-pointer hover:bg-primary hover:text-primary-foreground transition-colors"
+                  onClick={() => handleAddUnit(unit)}
+                >
+                  <Plus className="h-3 w-3 mr-1" />
+                  {unit}
+                </Badge>
+              ))}
+            </div>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
