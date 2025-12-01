@@ -66,14 +66,16 @@ const SupplierPortal = () => {
       if (!session) return;
 
       try {
-        const { data, error } = await supabase
-          .from('articles')
-          .select('*')
-          .eq('supplier_id', session.supplierId)
-          .order('name');
+        const { data, error } = await supabase.functions.invoke('supplier-portal-articles', {
+          body: {
+            action: 'list',
+            supplierId: session.supplierId,
+            organizationId: session.organizationId,
+          },
+        });
 
         if (error) throw error;
-        setArticles(data || []);
+        setArticles(data?.articles || []);
       } catch (error: any) {
         console.error('Error fetching articles:', error);
         toast.error('Fehler beim Laden der Artikel');
@@ -103,14 +105,19 @@ const SupplierPortal = () => {
 
   const handleSave = async (articleId: string) => {
     const changes = editedArticles[articleId];
-    if (!changes) return;
+    if (!changes || !session) return;
 
     setSaving(articleId);
     try {
-      const { error } = await supabase
-        .from('articles')
-        .update(changes)
-        .eq('id', articleId);
+      const { data, error } = await supabase.functions.invoke('supplier-portal-articles', {
+        body: {
+          action: 'update',
+          supplierId: session.supplierId,
+          organizationId: session.organizationId,
+          articleId,
+          changes,
+        },
+      });
 
       if (error) throw error;
 
