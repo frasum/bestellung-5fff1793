@@ -102,21 +102,6 @@ export const generateInventoryListPdf = (
     },
   });
 
-  // Signature section at the end
-  const finalY = (doc as any).lastAutoTable.finalY || 200;
-  const remainingSpace = doc.internal.pageSize.height - finalY;
-
-  if (remainingSpace > 50) {
-    doc.setDrawColor(200);
-    doc.line(14, finalY + 30, 80, finalY + 30);
-    doc.line(pageWidth - 80, finalY + 30, pageWidth - 14, finalY + 30);
-
-    doc.setFontSize(9);
-    doc.setTextColor(100);
-    doc.text('Datum', 14, finalY + 36);
-    doc.text('Unterschrift', pageWidth - 80, finalY + 36);
-  }
-
   // Download
   const filename = supplierName
     ? `Inventur-Liste_${supplierName}_${format(new Date(), 'dd-MM-yyyy')}.pdf`
