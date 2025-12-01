@@ -12,7 +12,8 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useSuppliers, useCreateSupplier, useUpdateSupplier, useDeleteSupplier, Supplier, SupplierInput } from '@/hooks/useSuppliers';
 import { useArticles, Article } from '@/hooks/useArticles';
-import { Plus, Pencil, Trash2, Search, Mail, Phone, MapPin, User, Loader2, Upload, Hash, Euro, LayoutGrid, List, ChevronDown, ChevronRight, Minus, ShoppingCart, FileText, Printer } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, Mail, Phone, MapPin, User, Loader2, Upload, Hash, Euro, LayoutGrid, List, ChevronDown, ChevronRight, Minus, ShoppingCart, FileText, Printer, Send } from 'lucide-react';
+import { useSendSupplierInvitation } from '@/hooks/useSupplierPortal';
 import { generateOrderListPdf, generateCombinedOrderListPdf } from '@/lib/orderListPdf';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -23,6 +24,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { useForm } from 'react-hook-form';
 import { CsvImportDialog, ImportField } from '@/components/CsvImportDialog';
 import { useImportSuppliers, useImportArticles } from '@/hooks/useImport';
+import { supabase } from '@/integrations/supabase/client';
 import { ExportMenu } from '@/components/ExportMenu';
 import { Badge } from '@/components/ui/badge';
 import { Package } from 'lucide-react';
@@ -136,6 +138,37 @@ const Suppliers = () => {
   const deleteSupplier = useDeleteSupplier();
   const importSuppliers = useImportSuppliers();
   const importArticles = useImportArticles();
+  const { sendInvitation, loading: sendingInvitation } = useSendSupplierInvitation();
+  const [invitingSupplierId, setInvitingSupplierId] = useState<string | null>(null);
+  const [organizationName, setOrganizationName] = useState<string>('');
+
+  // Fetch organization name for invitation emails
+  useEffect(() => {
+    const fetchOrgName = async () => {
+      if (!user) return;
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('organization_id')
+        .eq('id', user.id)
+        .single();
+      
+      if (profile?.organization_id) {
+        const { data: org } = await supabase
+          .from('organizations')
+          .select('name')
+          .eq('id', profile.organization_id)
+          .single();
+        if (org) setOrganizationName(org.name);
+      }
+    };
+    fetchOrgName();
+  }, [user]);
+
+  const handleSendInvitation = async (supplier: Supplier) => {
+    setInvitingSupplierId(supplier.id);
+    await sendInvitation(supplier.id, supplier.email, supplier.name, organizationName);
+    setInvitingSupplierId(null);
+  };
 
   // Extract unique categories from suppliers
   const existingCategories = [...new Set(suppliers?.map(s => s.main_category).filter(Boolean) as string[])].sort();
@@ -521,6 +554,9 @@ const Suppliers = () => {
                         </TableCell>
                         <TableCell className="text-right py-2">
                           <div className="flex justify-end gap-1">
+                            <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-primary" onClick={() => handleSendInvitation(supplier)} disabled={invitingSupplierId === supplier.id || sendingInvitation} title="Einladung zum Lieferantenportal senden">
+                              {invitingSupplierId === supplier.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Send className="w-3 h-3" />}
+                            </Button>
                             {supplierArticles.length > 0 && <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-primary" onClick={() => generateOrderListPdf(supplier, supplierArticles)} title="Bestellliste drucken">
                                 <FileText className="w-3 h-3" />
                               </Button>}
@@ -600,6 +636,9 @@ const Suppliers = () => {
                     </div>
                   </div>
                   <div className="flex gap-1">
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary" onClick={() => handleSendInvitation(supplier)} disabled={invitingSupplierId === supplier.id || sendingInvitation} title="Einladung zum Lieferantenportal senden">
+                      {invitingSupplierId === supplier.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                    </Button>
                     {hasArticles && <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary" onClick={() => generateOrderListPdf(supplier, articlesBySupplier[supplier.id] || [])} title="Bestellliste drucken">
                         <FileText className="w-4 h-4" />
                       </Button>}
