@@ -62,9 +62,23 @@ serve(async (req) => {
         throw articlesError;
       }
 
+      // Fetch pending changes for this supplier
+      const { data: pendingChanges, error: pendingError } = await supabase
+        .from('supplier_article_changes')
+        .select('*')
+        .eq('supplier_id', supplierId)
+        .eq('status', 'pending');
+
+      if (pendingError) {
+        console.error('Error fetching pending changes:', pendingError);
+      }
+
       console.log(`Found ${articles?.length || 0} articles for supplier ${supplierId}`);
 
-      return new Response(JSON.stringify({ articles }), {
+      return new Response(JSON.stringify({ 
+        articles, 
+        pendingChanges: pendingChanges || [] 
+      }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
@@ -74,24 +88,74 @@ serve(async (req) => {
         throw new Error('Missing articleId or changes for update');
       }
 
-      // Update article - verify it belongs to this supplier
-      const { data: updatedArticle, error: updateError } = await supabase
+      // Fetch the current article to get old values
+      const { data: currentArticle, error: fetchError } = await supabase
         .from('articles')
-        .update(changes)
+        .select('*')
         .eq('id', articleId)
         .eq('supplier_id', supplierId)
         .eq('organization_id', organizationId)
-        .select()
         .single();
 
-      if (updateError) {
-        console.error('Error updating article:', updateError);
-        throw updateError;
+      if (fetchError || !currentArticle) {
+        console.error('Error fetching article:', fetchError);
+        throw new Error('Article not found');
       }
 
-      console.log(`Updated article ${articleId}`);
+      // Create pending change records for each changed field
+      const changeRecords = [];
+      for (const [field, newValue] of Object.entries(changes)) {
+        const oldValue = currentArticle[field];
+        
+        // Only create a record if the value actually changed
+        if (String(oldValue) !== String(newValue)) {
+          changeRecords.push({
+            supplier_id: supplierId,
+            organization_id: organizationId,
+            article_id: articleId,
+            field_name: field,
+            old_value: oldValue !== null && oldValue !== undefined ? String(oldValue) : null,
+            new_value: newValue !== null && newValue !== undefined ? String(newValue) : null,
+            status: 'pending',
+          });
+        }
+      }
 
-      return new Response(JSON.stringify({ article: updatedArticle }), {
+      if (changeRecords.length === 0) {
+        return new Response(JSON.stringify({ 
+          message: 'No changes detected',
+          pendingChanges: [] 
+        }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      // Delete any existing pending changes for this article's fields
+      const fieldsToUpdate = changeRecords.map(c => c.field_name);
+      await supabase
+        .from('supplier_article_changes')
+        .delete()
+        .eq('article_id', articleId)
+        .eq('status', 'pending')
+        .in('field_name', fieldsToUpdate);
+
+      // Insert the new pending changes
+      const { data: insertedChanges, error: insertError } = await supabase
+        .from('supplier_article_changes')
+        .insert(changeRecords)
+        .select();
+
+      if (insertError) {
+        console.error('Error inserting changes:', insertError);
+        throw insertError;
+      }
+
+      console.log(`Created ${insertedChanges?.length || 0} pending change(s) for article ${articleId}`);
+
+      return new Response(JSON.stringify({ 
+        message: 'Änderungen zur Genehmigung eingereicht',
+        pendingChanges: insertedChanges 
+      }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }

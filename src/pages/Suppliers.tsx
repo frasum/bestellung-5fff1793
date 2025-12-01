@@ -12,7 +12,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useSuppliers, useCreateSupplier, useUpdateSupplier, useDeleteSupplier, Supplier, SupplierInput } from '@/hooks/useSuppliers';
 import { useArticles, Article } from '@/hooks/useArticles';
-import { Plus, Pencil, Trash2, Search, Mail, Phone, MapPin, User, Loader2, Upload, Hash, Euro, LayoutGrid, List, ChevronDown, ChevronRight, Minus, ShoppingCart, FileText, Printer, Send } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, Mail, Phone, MapPin, User, Loader2, Upload, Hash, Euro, LayoutGrid, List, ChevronDown, ChevronRight, Minus, ShoppingCart, FileText, Printer, Send, Bell } from 'lucide-react';
 import { useSendSupplierInvitation } from '@/hooks/useSupplierPortal';
 import { generateOrderListPdf, generateCombinedOrderListPdf } from '@/lib/orderListPdf';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -28,6 +28,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { ExportMenu } from '@/components/ExportMenu';
 import { Badge } from '@/components/ui/badge';
 import { Package } from 'lucide-react';
+import { useSupplierPendingChanges } from '@/hooks/useSupplierChanges';
+import { SupplierChangesDialog } from '@/components/suppliers/SupplierChangesDialog';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 const supplierSchema = z.object({
@@ -141,6 +143,15 @@ const Suppliers = () => {
   const { sendInvitation, loading: sendingInvitation } = useSendSupplierInvitation();
   const [invitingSupplierId, setInvitingSupplierId] = useState<string | null>(null);
   const [organizationName, setOrganizationName] = useState<string>('');
+  const [changesDialogSupplier, setChangesDialogSupplier] = useState<Supplier | null>(null);
+  const { data: pendingChanges } = useSupplierPendingChanges();
+  
+  // Group pending changes by supplier
+  const pendingChangesBySupplier = pendingChanges?.reduce((acc, change) => {
+    if (!acc[change.supplier_id]) acc[change.supplier_id] = 0;
+    acc[change.supplier_id]++;
+    return acc;
+  }, {} as Record<string, number>) || {};
 
   // Fetch organization name for invitation emails
   useEffect(() => {
@@ -539,9 +550,21 @@ const Suppliers = () => {
                           </Button>
                         </TableCell>
                         <TableCell className="py-2">
-                          <div>
-                            <p className="font-medium text-foreground">{supplier.name}</p>
-                            <p className="text-xs text-muted-foreground">{supplier.phone || '-'}</p>
+                          <div className="flex items-center gap-2">
+                            <div>
+                              <p className="font-medium text-foreground">{supplier.name}</p>
+                              <p className="text-xs text-muted-foreground">{supplier.phone || '-'}</p>
+                            </div>
+                            {pendingChangesBySupplier[supplier.id] > 0 && (
+                              <Badge 
+                                variant="destructive" 
+                                className="cursor-pointer animate-pulse"
+                                onClick={() => setChangesDialogSupplier(supplier)}
+                              >
+                                <Bell className="w-3 h-3 mr-1" />
+                                {pendingChangesBySupplier[supplier.id]}
+                              </Badge>
+                            )}
                           </div>
                         </TableCell>
                         <TableCell className="hidden md:table-cell text-muted-foreground py-2">
@@ -631,8 +654,18 @@ const Suppliers = () => {
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-start gap-3">
                     {hasArticles && <Checkbox checked={selectedSuppliers.has(supplier.id)} onCheckedChange={() => toggleSupplierSelected(supplier.id)} className="mt-1" />}
-                    <div>
+                    <div className="flex items-center gap-2">
                       <h3 className="font-semibold text-foreground text-lg">{supplier.name}</h3>
+                      {pendingChangesBySupplier[supplier.id] > 0 && (
+                        <Badge 
+                          variant="destructive" 
+                          className="cursor-pointer animate-pulse"
+                          onClick={() => setChangesDialogSupplier(supplier)}
+                        >
+                          <Bell className="w-3 h-3 mr-1" />
+                          {pendingChangesBySupplier[supplier.id]}
+                        </Badge>
+                      )}
                     </div>
                   </div>
                   <div className="flex gap-1">
@@ -704,6 +737,14 @@ const Suppliers = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Supplier Changes Dialog */}
+      <SupplierChangesDialog
+        open={!!changesDialogSupplier}
+        onOpenChange={(open) => !open && setChangesDialogSupplier(null)}
+        supplierId={changesDialogSupplier?.id || null}
+        supplierName={changesDialogSupplier?.name || ''}
+      />
     </DashboardLayout>;
 };
 export default Suppliers;
