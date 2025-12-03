@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -92,10 +92,10 @@ const Auth = () => {
     <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-accent/5 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         {/* Logo */}
-        <Link to="/" className="flex items-center justify-center gap-2 mb-8">
+        <div className="flex items-center justify-center gap-2 mb-8">
           <img src={logoImage} alt="OrderFox.pro" className="w-10 h-10 rounded-lg object-cover" />
           <span className="font-bold text-2xl text-foreground">OrderFox.pro</span>
-        </Link>
+        </div>
 
         {/* Card */}
         <div className="bg-card border border-border rounded-2xl shadow-lg p-8">
@@ -274,9 +274,9 @@ const Auth = () => {
 
           <p className="text-center text-sm text-muted-foreground mt-6">
             By continuing, you agree to our{' '}
-            <Link to="/terms" className="text-primary hover:underline">Terms</Link>
+            <span className="text-primary">Terms</span>
             {' '}and{' '}
-            <Link to="/privacy" className="text-primary hover:underline">Privacy Policy</Link>
+            <span className="text-primary">Privacy Policy</span>
           </p>
         </div>
       </div>
