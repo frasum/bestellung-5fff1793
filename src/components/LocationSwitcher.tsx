@@ -17,8 +17,18 @@ interface LocationSwitcherProps {
 export const LocationSwitcher = ({ className, showIcon = true }: LocationSwitcherProps) => {
   const { locations, activeLocation, setActiveLocation, isLoading } = useLocationContext();
 
-  if (isLoading || locations.length <= 1) {
+  if (isLoading || locations.length === 0) {
     return null;
+  }
+
+  // If only one location, show it without dropdown
+  if (locations.length === 1) {
+    return (
+      <div className={cn("flex items-center gap-2 px-4 py-3 text-muted-foreground", className)}>
+        {showIcon && <MapPin className="h-4 w-4" />}
+        <span className="truncate">{activeLocation?.name || locations[0]?.name}</span>
+      </div>
+    );
   }
 
   return (
