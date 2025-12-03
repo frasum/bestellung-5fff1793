@@ -58,7 +58,8 @@ export const useOrders = (locationId?: string) => {
         .order('created_at', { ascending: false });
 
       if (locationId) {
-        query = query.eq('location_id', locationId);
+        // Show orders for this location OR orders without location (backward compatibility)
+        query = query.or(`location_id.eq.${locationId},location_id.is.null`);
       }
 
       const { data, error } = await query;

@@ -72,7 +72,8 @@ export const useCartDrafts = (locationId?: string) => {
         .order('updated_at', { ascending: false });
 
       if (locationId) {
-        query = query.eq('location_id', locationId);
+        // Show drafts for this location OR drafts without location (backward compatibility)
+        query = query.or(`location_id.eq.${locationId},location_id.is.null`);
       }
 
       const { data, error } = await query;
