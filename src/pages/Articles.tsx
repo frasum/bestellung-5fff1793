@@ -90,7 +90,8 @@ const Articles = () => {
   const navigate = useNavigate();
   const { addItem, updateQuantity, items: cartItems, getItemCount } = useCart();
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedSupplier, setSelectedSupplier] = useState<string>('all');
+  const [selectedSuppliers, setSelectedSuppliers] = useState<string[]>([]);
+  const [supplierPopoverOpen, setSupplierPopoverOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isImportOpen, setIsImportOpen] = useState(false);
@@ -186,7 +187,7 @@ const Articles = () => {
   const filteredArticles = articles?.filter((article) => {
     const matchesSearch = article.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       article.description?.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesSupplier = selectedSupplier === 'all' || article.supplier_id === selectedSupplier;
+    const matchesSupplier = selectedSuppliers.length === 0 || selectedSuppliers.includes(article.supplier_id);
     const matchesCategory = selectedCategory === 'all' || article.category === selectedCategory;
     return matchesSearch && matchesSupplier && matchesCategory;
   });
@@ -489,17 +490,62 @@ const Articles = () => {
               className="pl-10"
             />
           </div>
-          <Select value={selectedSupplier} onValueChange={setSelectedSupplier}>
-            <SelectTrigger className="w-full sm:w-48 bg-card">
-              <SelectValue placeholder="All Suppliers" />
-            </SelectTrigger>
-            <SelectContent className="bg-card border border-border z-50">
-              <SelectItem value="all">All Suppliers</SelectItem>
-              {suppliers?.map((supplier) => (
-                <SelectItem key={supplier.id} value={supplier.id}>{supplier.name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <Popover open={supplierPopoverOpen} onOpenChange={setSupplierPopoverOpen}>
+            <PopoverTrigger asChild>
+              <Button variant="outline" className="w-full sm:w-56 justify-between bg-card">
+                {selectedSuppliers.length === 0 
+                  ? "Alle Lieferanten" 
+                  : `${selectedSuppliers.length} Lieferant${selectedSuppliers.length > 1 ? 'en' : ''}`}
+                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-64 p-0 bg-popover border border-border z-50" align="start">
+              <Command>
+                <CommandInput placeholder="Lieferanten suchen..." />
+                <CommandList>
+                  <CommandEmpty>Keine Lieferanten gefunden</CommandEmpty>
+                  <CommandGroup>
+                    <CommandItem
+                      onSelect={() => {
+                        if (selectedSuppliers.length === (suppliers?.length || 0)) {
+                          setSelectedSuppliers([]);
+                        } else {
+                          setSelectedSuppliers(suppliers?.map(s => s.id) || []);
+                        }
+                      }}
+                    >
+                      <Checkbox
+                        checked={selectedSuppliers.length === (suppliers?.length || 0) && suppliers?.length > 0}
+                        className="mr-2"
+                      />
+                      Alle auswählen
+                    </CommandItem>
+                  </CommandGroup>
+                  <CommandGroup>
+                    {suppliers?.sort((a, b) => a.name.localeCompare(b.name)).map((supplier) => (
+                      <CommandItem
+                        key={supplier.id}
+                        value={supplier.name}
+                        onSelect={() => {
+                          setSelectedSuppliers(prev => 
+                            prev.includes(supplier.id)
+                              ? prev.filter(id => id !== supplier.id)
+                              : [...prev, supplier.id]
+                          );
+                        }}
+                      >
+                        <Checkbox
+                          checked={selectedSuppliers.includes(supplier.id)}
+                          className="mr-2"
+                        />
+                        {supplier.name}
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                </CommandList>
+              </Command>
+            </PopoverContent>
+          </Popover>
           <CategoryFilterDropdown 
             value={selectedCategory} 
             onValueChange={setSelectedCategory}
@@ -599,7 +645,7 @@ const Articles = () => {
           <div className="text-center py-12 bg-card border border-border rounded-xl">
             <Package className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
             <p className="text-muted-foreground">
-              {searchQuery || selectedSupplier !== 'all' || selectedCategory !== 'all'
+              {searchQuery || selectedSuppliers.length > 0 || selectedCategory !== 'all'
                 ? 'No articles found matching your filters'
                 : 'No articles yet. Add your first article to get started.'}
             </p>
