@@ -50,6 +50,7 @@ import { Check, ChevronsUpDown, Tags, History } from 'lucide-react';
 import { useSuppliers } from '@/hooks/useSuppliers';
 import { PriceHistoryPopover } from '@/components/suppliers/PriceHistoryPopover';
 import { useCategories } from '@/hooks/useCategories';
+import { CategoryFilterDropdown } from '@/components/CategoryFilterDropdown';
 import { Plus, Pencil, Trash2, Search, ShoppingCart, Minus, Loader2, Package, Upload, LayoutGrid, List } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useForm, Controller } from 'react-hook-form';
@@ -112,9 +113,9 @@ const Articles = () => {
   const importArticles = useImportArticles();
 
   // Extract unique categories from articles and combine with db categories
-  const articleCategories = articles?.map(a => a.category).filter(Boolean) as string[] || [];
+  const articleDerivedCategories = articles?.map(a => a.category).filter(Boolean) as string[] || [];
   const dbCategoryNames = dbCategories?.map(c => c.name) || [];
-  const allCategories = [...new Set([...articleCategories, ...dbCategoryNames])].sort();
+  const allCategories = [...new Set([...articleDerivedCategories, ...dbCategoryNames])].sort();
 
   // Extract unique units from articles + defaults
   const existingUnits = [...new Set([
@@ -190,7 +191,8 @@ const Articles = () => {
     return matchesSearch && matchesSupplier && matchesCategory;
   });
 
-  const categories = [...new Set(articles?.map((a) => a.category).filter(Boolean) || [])];
+  // Extract categories from articles for backward compatibility (used in CategoryFilterDropdown)
+  const articleCategoriesForFilter = (articles?.map((a) => a.category).filter(Boolean) || []) as string[];
 
   const toggleArticleSelected = (articleId: string) => {
     setSelectedArticles(prev => {
@@ -498,17 +500,11 @@ const Articles = () => {
               ))}
             </SelectContent>
           </Select>
-          <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-            <SelectTrigger className="w-full sm:w-40 bg-card">
-              <SelectValue placeholder="All Categories" />
-            </SelectTrigger>
-            <SelectContent className="bg-card border border-border z-50">
-              <SelectItem value="all">All Categories</SelectItem>
-              {categories.map((cat) => (
-                <SelectItem key={cat} value={cat!}>{cat}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <CategoryFilterDropdown 
+            value={selectedCategory} 
+            onValueChange={setSelectedCategory}
+            articleCategories={articleCategoriesForFilter}
+          />
           <div className="flex border border-border rounded-lg overflow-hidden">
             <Button
               variant={viewMode === 'list' ? 'default' : 'ghost'}
