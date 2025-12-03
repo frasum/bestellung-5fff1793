@@ -51,7 +51,7 @@ import { useSuppliers } from '@/hooks/useSuppliers';
 import { PriceHistoryPopover } from '@/components/suppliers/PriceHistoryPopover';
 import { useCategories } from '@/hooks/useCategories';
 import { CategoryFilterDropdown } from '@/components/CategoryFilterDropdown';
-import { Plus, Pencil, Trash2, Search, ShoppingCart, Minus, Loader2, Package, Upload, LayoutGrid, List } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, ShoppingCart, Minus, Loader2, Package, Upload, LayoutGrid, List, X } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useForm, Controller } from 'react-hook-form';
 import { z } from 'zod';
@@ -551,6 +551,20 @@ const Articles = () => {
             onValueChange={setSelectedCategory}
             articleCategories={articleCategoriesForFilter}
           />
+          {(searchQuery || selectedSuppliers.length > 0 || selectedCategory !== 'all') && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => {
+                setSearchQuery('');
+                setSelectedSuppliers([]);
+                setSelectedCategory('all');
+              }}
+              title="Filter zurücksetzen"
+            >
+              <X className="w-4 h-4" />
+            </Button>
+          )}
           <div className="flex border border-border rounded-lg overflow-hidden">
             <Button
               variant={viewMode === 'list' ? 'default' : 'ghost'}
