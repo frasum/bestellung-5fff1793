@@ -192,6 +192,15 @@ const Articles = () => {
     return matchesSearch && matchesSupplier && matchesCategory;
   });
 
+  // Sort by supplier name (primary), then by article name (secondary)
+  const sortedArticles = filteredArticles?.slice().sort((a, b) => {
+    const supplierA = suppliers?.find(s => s.id === a.supplier_id)?.name || '';
+    const supplierB = suppliers?.find(s => s.id === b.supplier_id)?.name || '';
+    const supplierCompare = supplierA.localeCompare(supplierB, 'de');
+    if (supplierCompare !== 0) return supplierCompare;
+    return a.name.localeCompare(b.name, 'de');
+  });
+
   // Extract categories from articles for backward compatibility (used in CategoryFilterDropdown)
   const articleCategoriesForFilter = (articles?.map((a) => a.category).filter(Boolean) || []) as string[];
 
@@ -208,10 +217,10 @@ const Articles = () => {
   };
 
   const selectAllArticles = () => {
-    if (selectedArticles.size === (filteredArticles?.length || 0)) {
+    if (selectedArticles.size === (sortedArticles?.length || 0)) {
       setSelectedArticles(new Set());
     } else {
-      setSelectedArticles(new Set(filteredArticles?.map(a => a.id) || []));
+      setSelectedArticles(new Set(sortedArticles?.map(a => a.id) || []));
     }
   };
 
@@ -655,7 +664,7 @@ const Articles = () => {
           <div className="flex items-center justify-center py-12">
             <Loader2 className="w-8 h-8 animate-spin text-primary" />
           </div>
-        ) : filteredArticles?.length === 0 ? (
+        ) : sortedArticles?.length === 0 ? (
           <div className="text-center py-12 bg-card border border-border rounded-xl">
             <Package className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
             <p className="text-muted-foreground">
@@ -672,7 +681,7 @@ const Articles = () => {
                 <TableRow className="hover:bg-transparent">
                   <TableHead className="w-[40px]">
                     <Checkbox
-                      checked={filteredArticles?.length > 0 && selectedArticles.size === filteredArticles?.length}
+                      checked={sortedArticles?.length > 0 && selectedArticles.size === sortedArticles?.length}
                       onCheckedChange={selectAllArticles}
                     />
                   </TableHead>
@@ -684,7 +693,7 @@ const Articles = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredArticles?.map((article) => {
+                {sortedArticles?.map((article) => {
                   const cartQty = getCartQuantity(article.id);
                   return (
                     <TableRow key={article.id} className={cn("group h-10", cartQty > 0 && "bg-destructive/10")}>
@@ -775,7 +784,7 @@ const Articles = () => {
         ) : (
           /* Grid View */
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {filteredArticles?.map((article) => {
+            {sortedArticles?.map((article) => {
               const cartQty = getCartQuantity(article.id);
               return (
                 <div
