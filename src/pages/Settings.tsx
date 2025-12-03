@@ -10,7 +10,7 @@ import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Building2, MapPin, Bell, Plus, Pencil, Trash2, Star, User, Lock, Users, Mail, Clock, X, Globe, FileText, RotateCcw, Moon, Sun, Ruler, Check, Store } from 'lucide-react';
+import { Building2, MapPin, Bell, Plus, Pencil, Trash2, Star, User, Lock, Users, Mail, Clock, X, Globe, FileText, RotateCcw, Moon, Sun, Ruler, Check, Store, Merge } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { Textarea } from '@/components/ui/textarea';
 import { useLocations, useCreateLocation, useUpdateLocation, useDeleteLocation, Location } from '@/hooks/useLocations';
@@ -1458,11 +1458,15 @@ const CategoriesTab = () => {
   const createCategory = useCreateCategory();
   const updateCategory = useUpdateCategory();
   const deleteCategory = useDeleteCategory();
+  const queryClient = useQueryClient();
   
   const [newCategoryName, setNewCategoryName] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState('');
   const [deletingCategory, setDeletingCategory] = useState<{ id: string; name: string } | null>(null);
+  const [mergingCategory, setMergingCategory] = useState<{ id: string; name: string } | null>(null);
+  const [mergeTargetId, setMergeTargetId] = useState<string>('');
+  const [isMerging, setIsMerging] = useState(false);
 
   // Get categories from articles that are not in the database
   const articleCategories = [...new Set(articles?.map((a) => a.category).filter(Boolean) || [])] as string[];
@@ -1511,10 +1515,51 @@ const CategoriesTab = () => {
     });
   };
 
+  const handleMergeConfirm = async () => {
+    if (!mergingCategory || !mergeTargetId) return;
+    
+    const targetCategory = categories.find(c => c.id === mergeTargetId);
+    if (!targetCategory) return;
+
+    setIsMerging(true);
+    try {
+      // Update all articles from source category to target category
+      const { error: updateError } = await supabase
+        .from('articles')
+        .update({ category: targetCategory.name })
+        .eq('category', mergingCategory.name);
+
+      if (updateError) throw updateError;
+
+      // Delete the source category
+      const { error: deleteError } = await supabase
+        .from('categories')
+        .delete()
+        .eq('id', mergingCategory.id);
+
+      if (deleteError) throw deleteError;
+
+      // Invalidate queries to refresh data
+      queryClient.invalidateQueries({ queryKey: ['categories'] });
+      queryClient.invalidateQueries({ queryKey: ['articles'] });
+
+      toast.success(`"${mergingCategory.name}" wurde mit "${targetCategory.name}" zusammengeführt`);
+      setMergingCategory(null);
+      setMergeTargetId('');
+    } catch (error) {
+      toast.error('Fehler beim Zusammenführen der Kategorien');
+    } finally {
+      setIsMerging(false);
+    }
+  };
+
   // Sort categories alphabetically
   const sortedCategories = [...categories].sort((a, b) => 
     a.name.localeCompare(b.name, 'de')
   );
+
+  // Available merge targets (all categories except the one being merged)
+  const mergeTargets = sortedCategories.filter(c => c.id !== mergingCategory?.id);
 
   if (isLoading) {
     return <Card><CardContent className="p-6">Loading...</CardContent></Card>;
@@ -1611,6 +1656,18 @@ const CategoriesTab = () => {
                       <Button
                         size="sm"
                         variant="ghost"
+                        onClick={() => {
+                          setMergingCategory({ id: category.id, name: category.name });
+                          setMergeTargetId('');
+                        }}
+                        title="Zusammenführen"
+                        disabled={sortedCategories.length < 2}
+                      >
+                        <Merge className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
                         onClick={() => handleStartEdit(category)}
                       >
                         <Pencil className="h-4 w-4" />
@@ -1649,6 +1706,42 @@ const CategoriesTab = () => {
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               Löschen
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Merge confirmation dialog */}
+      <AlertDialog open={!!mergingCategory} onOpenChange={(open) => !open && setMergingCategory(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Kategorien zusammenführen</AlertDialogTitle>
+            <AlertDialogDescription className="space-y-4">
+              <p>
+                Wählen Sie die Zielkategorie, mit der "{mergingCategory?.name}" zusammengeführt werden soll.
+                Alle Artikel mit der Kategorie "{mergingCategory?.name}" werden zur Zielkategorie verschoben.
+              </p>
+              <Select value={mergeTargetId} onValueChange={setMergeTargetId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Zielkategorie auswählen..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {mergeTargets.map((cat) => (
+                    <SelectItem key={cat.id} value={cat.id}>
+                      {cat.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleMergeConfirm}
+              disabled={!mergeTargetId || isMerging}
+            >
+              {isMerging ? 'Wird zusammengeführt...' : 'Zusammenführen'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
