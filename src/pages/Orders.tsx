@@ -1,6 +1,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLocationContext } from '@/contexts/LocationContext';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useOrders, useUpdateOrderStatus, Order } from '@/hooks/useOrders';
 import { Badge } from '@/components/ui/badge';
@@ -45,9 +46,10 @@ const statusIcons: Record<Order['status'], typeof Clock> = {
 
 const Orders = () => {
   const { user, loading: authLoading } = useAuth();
+  const { activeLocation } = useLocationContext();
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
-  const { data: orders, isLoading } = useOrders();
+  const { data: orders, isLoading } = useOrders(activeLocation?.id);
   const updateStatus = useUpdateOrderStatus();
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [emailDialogOpen, setEmailDialogOpen] = useState(false);

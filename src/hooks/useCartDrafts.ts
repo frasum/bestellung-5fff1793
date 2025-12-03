@@ -42,11 +42,11 @@ export interface CartDraftItem {
   };
 }
 
-export const useCartDrafts = () => {
+export const useCartDrafts = (locationId?: string) => {
   return useQuery({
-    queryKey: ['cart-drafts'],
+    queryKey: ['cart-drafts', locationId],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from('cart_drafts')
         .select(`
           *,
@@ -71,6 +71,12 @@ export const useCartDrafts = () => {
         `)
         .order('updated_at', { ascending: false });
 
+      if (locationId) {
+        query = query.eq('location_id', locationId);
+      }
+
+      const { data, error } = await query;
+
       if (error) throw error;
       return data as CartDraft[];
     },
@@ -86,12 +92,14 @@ export const useCreateCartDraft = () => {
       name, 
       notes, 
       deliveryAddress, 
-      items 
+      items,
+      locationId 
     }: { 
       name: string; 
       notes?: string; 
       deliveryAddress?: string;
       items: { articleId: string; quantity: number }[];
+      locationId?: string;
     }) => {
       if (!user) throw new Error('User not authenticated');
 
@@ -113,6 +121,7 @@ export const useCreateCartDraft = () => {
           name,
           notes: notes || null,
           delivery_address: deliveryAddress || null,
+          location_id: locationId || null,
         })
         .select()
         .single();

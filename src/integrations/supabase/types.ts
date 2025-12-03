@@ -166,6 +166,7 @@ export type Database = {
           created_at: string
           delivery_address: string | null
           id: string
+          location_id: string | null
           name: string
           notes: string | null
           organization_id: string
@@ -176,6 +177,7 @@ export type Database = {
           created_at?: string
           delivery_address?: string | null
           id?: string
+          location_id?: string | null
           name?: string
           notes?: string | null
           organization_id: string
@@ -186,6 +188,7 @@ export type Database = {
           created_at?: string
           delivery_address?: string | null
           id?: string
+          location_id?: string | null
           name?: string
           notes?: string | null
           organization_id?: string
@@ -193,6 +196,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "cart_drafts_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "cart_drafts_organization_id_fkey"
             columns: ["organization_id"]

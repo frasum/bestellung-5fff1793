@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLocationContext } from '@/contexts/LocationContext';
 import { useCart } from '@/contexts/CartContext';
 import { useCreateCartDraft } from '@/hooks/useCartDrafts';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
@@ -21,6 +22,7 @@ import { ScanOrderListDialog } from '@/components/cart/ScanOrderListDialog';
 
 const Cart = () => {
   const { user, loading: authLoading } = useAuth();
+  const { activeLocation } = useLocationContext();
   const navigate = useNavigate();
   const { t } = useTranslation();
   const { items, removeItem, updateQuantity, getTotal, clearCart } = useCart();
@@ -77,6 +79,7 @@ const Cart = () => {
         articleId: item.article.id,
         quantity: item.quantity,
       })),
+      locationId: activeLocation?.id,
     }, {
       onSuccess: () => {
         setSaveDialogOpen(false);

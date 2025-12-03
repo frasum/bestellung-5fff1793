@@ -48,14 +48,20 @@ interface CreateOrderInput {
   restaurantName: string;
 }
 
-export const useOrders = () => {
+export const useOrders = (locationId?: string) => {
   return useQuery({
-    queryKey: ['orders'],
+    queryKey: ['orders', locationId],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from('orders')
         .select('*, suppliers(id, name, email, customer_number), order_items(*)')
         .order('created_at', { ascending: false });
+
+      if (locationId) {
+        query = query.eq('location_id', locationId);
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
       return data as Order[];
