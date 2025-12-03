@@ -83,7 +83,6 @@ export const DashboardLayout = ({
       {/* Desktop Top Bar */}
       <div className="hidden lg:flex fixed top-0 left-64 right-0 z-30 h-14 bg-card/80 backdrop-blur-sm border-b border-border items-center justify-between px-6">
         <div className="flex items-center gap-4">
-          <LocationSwitcher />
           <GlobalSearch />
         </div>
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -107,6 +106,11 @@ export const DashboardLayout = ({
 
           {/* Navigation */}
           <nav className="flex-1 p-4 space-y-1">
+            {/* Location Switcher */}
+            <div className="mb-3">
+              <LocationSwitcher className="w-full justify-start" />
+            </div>
+            
             {navItems.map(item => {
             const isActive = location.pathname === item.href;
             return <Link key={item.href} to={item.href} onClick={() => setSidebarOpen(false)} className={cn('flex items-center gap-3 px-4 py-3 rounded-lg transition-colors', isActive ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-muted')}>
