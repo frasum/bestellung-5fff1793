@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLocationContext } from '@/contexts/LocationContext';
 import { useCart } from '@/contexts/CartContext';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useCartDrafts, useDeleteCartDraft, CartDraft } from '@/hooks/useCartDrafts';
@@ -37,9 +38,10 @@ const localeMap: Record<string, Locale> = {
 
 const Drafts = () => {
   const { user, loading: authLoading } = useAuth();
+  const { activeLocation } = useLocationContext();
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
-  const { data: drafts, isLoading } = useCartDrafts();
+  const { data: drafts, isLoading } = useCartDrafts(activeLocation?.id);
   const deleteDraft = useDeleteCartDraft();
   const { loadFromDraft, items: cartItems } = useCart();
   
