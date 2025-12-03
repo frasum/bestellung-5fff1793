@@ -43,6 +43,9 @@ import { useLocationContext } from '@/contexts/LocationContext';
 import { useEmailTemplate, useUpsertEmailTemplate, getDefaultTemplate } from '@/hooks/useEmailTemplates';
 import { useUnits, useCreateUnit, useUpdateUnit, useDeleteUnit } from '@/hooks/useUnits';
 import { useArticles } from '@/hooks/useArticles';
+import { useCategories, useCreateCategory, useUpdateCategory, useDeleteCategory } from '@/hooks/useCategories';
+import { Tag } from 'lucide-react';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -92,6 +95,10 @@ const Settings = () => {
               <Store className="h-4 w-4" />
               Standorte
             </TabsTrigger>
+            <TabsTrigger value="categories" className="gap-2">
+              <Tag className="h-4 w-4" />
+              Kategorien
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="profile">
@@ -124,6 +131,10 @@ const Settings = () => {
 
           <TabsContent value="locations">
             <LocationsTab />
+          </TabsContent>
+
+          <TabsContent value="categories">
+            <CategoriesTab />
           </TabsContent>
         </Tabs>
       </div>
@@ -1437,6 +1448,211 @@ const LocationsTab = () => {
           </div>
         )}
       </CardContent>
+    </Card>
+  );
+};
+
+const CategoriesTab = () => {
+  const { data: categories = [], isLoading } = useCategories();
+  const { data: articles = [] } = useArticles();
+  const createCategory = useCreateCategory();
+  const updateCategory = useUpdateCategory();
+  const deleteCategory = useDeleteCategory();
+  
+  const [newCategoryName, setNewCategoryName] = useState('');
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingName, setEditingName] = useState('');
+  const [deletingCategory, setDeletingCategory] = useState<{ id: string; name: string } | null>(null);
+
+  // Get categories from articles that are not in the database
+  const articleCategories = [...new Set(articles?.map((a) => a.category).filter(Boolean) || [])] as string[];
+  const dbCategoryNames = categories.map(c => c.name);
+  const missingCategories = articleCategories.filter(c => !dbCategoryNames.includes(c));
+
+  const handleAddCategory = () => {
+    if (!newCategoryName.trim()) return;
+    createCategory.mutate(newCategoryName.trim(), {
+      onSuccess: () => setNewCategoryName(''),
+    });
+  };
+
+  const handleStartEdit = (category: { id: string; name: string }) => {
+    setEditingId(category.id);
+    setEditingName(category.name);
+  };
+
+  const handleSaveEdit = () => {
+    if (!editingId || !editingName.trim()) return;
+    updateCategory.mutate(
+      { id: editingId, name: editingName.trim() },
+      { onSuccess: () => setEditingId(null) }
+    );
+  };
+
+  const handleCancelEdit = () => {
+    setEditingId(null);
+    setEditingName('');
+  };
+
+  const handleDeleteConfirm = () => {
+    if (!deletingCategory) return;
+    deleteCategory.mutate(deletingCategory.id, {
+      onSuccess: () => setDeletingCategory(null),
+    });
+  };
+
+  const handleAddMissingCategory = (name: string) => {
+    createCategory.mutate(name);
+  };
+
+  const handleAddAllMissingCategories = () => {
+    missingCategories.forEach((name) => {
+      createCategory.mutate(name);
+    });
+  };
+
+  // Sort categories alphabetically
+  const sortedCategories = [...categories].sort((a, b) => 
+    a.name.localeCompare(b.name, 'de')
+  );
+
+  if (isLoading) {
+    return <Card><CardContent className="p-6">Loading...</CardContent></Card>;
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Tag className="h-5 w-5" />
+          Kategorien verwalten
+        </CardTitle>
+        <CardDescription>
+          Verwalten Sie die Kategorien für Ihre Artikel
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        {/* Add new category */}
+        <div className="flex gap-2">
+          <Input
+            placeholder="Neue Kategorie..."
+            value={newCategoryName}
+            onChange={(e) => setNewCategoryName(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleAddCategory()}
+          />
+          <Button onClick={handleAddCategory} disabled={createCategory.isPending || !newCategoryName.trim()}>
+            <Plus className="h-4 w-4 mr-2" />
+            Hinzufügen
+          </Button>
+        </div>
+
+        {/* Missing categories from articles */}
+        {missingCategories.length > 0 && (
+          <div className="p-4 border rounded-lg bg-muted/50 space-y-3">
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-muted-foreground">
+                {missingCategories.length} Kategorie(n) aus Artikeln noch nicht in der Datenbank:
+              </p>
+              <Button size="sm" variant="outline" onClick={handleAddAllMissingCategories}>
+                Alle hinzufügen
+              </Button>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {missingCategories.sort((a, b) => a.localeCompare(b, 'de')).map((name) => (
+                <Badge
+                  key={name}
+                  variant="secondary"
+                  className="cursor-pointer hover:bg-primary hover:text-primary-foreground"
+                  onClick={() => handleAddMissingCategory(name)}
+                >
+                  <Plus className="h-3 w-3 mr-1" />
+                  {name}
+                </Badge>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Categories list */}
+        {sortedCategories.length === 0 ? (
+          <p className="text-muted-foreground text-center py-8">
+            Noch keine Kategorien vorhanden.
+          </p>
+        ) : (
+          <div className="space-y-2">
+            {sortedCategories.map((category) => (
+              <div
+                key={category.id}
+                className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50"
+              >
+                {editingId === category.id ? (
+                  <div className="flex items-center gap-2 flex-1">
+                    <Input
+                      value={editingName}
+                      onChange={(e) => setEditingName(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') handleSaveEdit();
+                        if (e.key === 'Escape') handleCancelEdit();
+                      }}
+                      className="h-8"
+                      autoFocus
+                    />
+                    <Button size="sm" variant="ghost" onClick={handleSaveEdit}>
+                      <Check className="h-4 w-4 text-green-600" />
+                    </Button>
+                    <Button size="sm" variant="ghost" onClick={handleCancelEdit}>
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ) : (
+                  <>
+                    <span className="font-medium">{category.name}</span>
+                    <div className="flex items-center gap-1">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => handleStartEdit(category)}
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="text-destructive hover:text-destructive"
+                        onClick={() => setDeletingCategory({ id: category.id, name: category.name })}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </CardContent>
+
+      {/* Delete confirmation dialog */}
+      <AlertDialog open={!!deletingCategory} onOpenChange={(open) => !open && setDeletingCategory(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Kategorie löschen?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Möchten Sie die Kategorie "{deletingCategory?.name}" wirklich löschen?
+              Diese Aktion kann nicht rückgängig gemacht werden.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteConfirm}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Löschen
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 };
