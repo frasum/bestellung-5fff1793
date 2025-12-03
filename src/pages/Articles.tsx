@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { Fragment, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
@@ -693,10 +693,22 @@ const Articles = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {sortedArticles?.map((article) => {
+                {sortedArticles?.map((article, index) => {
                   const cartQty = getCartQuantity(article.id);
+                  const prevArticle = index > 0 ? sortedArticles[index - 1] : null;
+                  const isNewSupplierGroup = !prevArticle || prevArticle.supplier_id !== article.supplier_id;
+                  const supplierName = article.suppliers?.name || 'Unbekannt';
+                  
                   return (
-                    <TableRow key={article.id} className={cn("group h-10", cartQty > 0 && "bg-destructive/10")}>
+                    <Fragment key={article.id}>
+                      {isNewSupplierGroup && (
+                        <TableRow className="bg-muted/50 hover:bg-muted/50">
+                          <TableCell colSpan={6} className="py-2 px-4">
+                            <span className="font-semibold text-sm text-foreground">{supplierName}</span>
+                          </TableCell>
+                        </TableRow>
+                      )}
+                      <TableRow className={cn("group h-10", cartQty > 0 && "bg-destructive/10")}>
                       <TableCell className="py-2">
                         <Checkbox
                           checked={selectedArticles.has(article.id)}
@@ -776,6 +788,7 @@ const Articles = () => {
                         </div>
                       </TableCell>
                     </TableRow>
+                    </Fragment>
                   );
                 })}
               </TableBody>
