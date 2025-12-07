@@ -822,24 +822,43 @@ const Suppliers = () => {
                                         return (
                                           <TableRow key={article.id} className={`border-b border-border/30 hover:bg-muted/50 ${cartQty > 0 ? 'bg-destructive/10 text-destructive' : ''}`}>
                                             <TableCell className="py-1.5">
-                                              <Input
-                                                type="text"
-                                                inputMode="numeric"
-                                                value={cartQty || ''}
-                                                onChange={(e) => {
-                                                  const val = parseInt(e.target.value) || 0;
-                                                  if (val === 0) {
-                                                    updateQuantity(article.id, 0);
-                                                  } else if (cartQty === 0) {
-                                                    addItem(article, val);
-                                                  } else {
-                                                    updateQuantity(article.id, val);
-                                                  }
-                                                }}
-                                                onFocus={(e) => e.target.select()}
-                                                className={`w-16 h-8 text-center text-sm ${cartQty > 0 ? 'border-destructive bg-destructive/10 text-destructive font-medium' : ''}`}
-                                                placeholder="0"
-                                              />
+                                              <div className="flex items-center justify-center gap-1">
+                                                <Button 
+                                                  size="icon" 
+                                                  variant="outline" 
+                                                  className="h-8 w-8" 
+                                                  onClick={() => updateQuantity(article.id, cartQty - 1)} 
+                                                  disabled={cartQty === 0}
+                                                >
+                                                  <Minus className="w-3 h-3" />
+                                                </Button>
+                                                <Input
+                                                  type="text"
+                                                  inputMode="numeric"
+                                                  value={cartQty || ''}
+                                                  onChange={(e) => {
+                                                    const val = parseInt(e.target.value) || 0;
+                                                    if (val === 0) {
+                                                      updateQuantity(article.id, 0);
+                                                    } else if (cartQty === 0) {
+                                                      addItem(article, val);
+                                                    } else {
+                                                      updateQuantity(article.id, val);
+                                                    }
+                                                  }}
+                                                  onFocus={(e) => e.target.select()}
+                                                  className={`w-12 h-8 text-center text-sm ${cartQty > 0 ? 'border-destructive bg-destructive/10 text-destructive font-medium' : ''}`}
+                                                  placeholder="0"
+                                                />
+                                                <Button 
+                                                  size="icon" 
+                                                  variant="outline" 
+                                                  className="h-8 w-8" 
+                                                  onClick={() => cartQty === 0 ? addItem(article, 1) : updateQuantity(article.id, cartQty + 1)}
+                                                >
+                                                  <Plus className="w-3 h-3" />
+                                                </Button>
+                                              </div>
                                             </TableCell>
                                             <TableCell className="py-1.5">
                                               <p className="text-sm font-medium">{article.name}</p>
