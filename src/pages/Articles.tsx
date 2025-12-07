@@ -726,7 +726,25 @@ const Articles = () => {
                           >
                             <Minus className="w-3 h-3" />
                           </Button>
-                          <span className={cn("w-8 text-center font-medium", cartQty > 0 ? "text-destructive" : "text-foreground")}>{cartQty}</span>
+                          <input
+                            type="text"
+                            inputMode="numeric"
+                            value={cartQty}
+                            onChange={(e) => {
+                              const val = parseInt(e.target.value, 10);
+                              if (!isNaN(val) && val >= 0) {
+                                updateQuantity(article.id, val);
+                              } else if (e.target.value === '') {
+                                updateQuantity(article.id, 0);
+                              }
+                            }}
+                            onFocus={(e) => e.target.select()}
+                            className={cn(
+                              "w-12 h-8 text-center font-medium rounded-md border border-input bg-background",
+                              "focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1",
+                              cartQty > 0 ? "text-destructive" : "text-foreground"
+                            )}
+                          />
                           <Button
                             size="icon"
                             variant="outline"
