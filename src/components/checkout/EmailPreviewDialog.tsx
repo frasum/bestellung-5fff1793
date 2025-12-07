@@ -2,8 +2,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Mail, Send, Loader2, ChevronLeft, ChevronRight, Pencil, Check, ExternalLink } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { toast } from 'sonner';
@@ -50,9 +51,36 @@ export const EmailPreviewDialog = ({
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isEditingNotes, setIsEditingNotes] = useState(false);
   const [isEditingAddress, setIsEditingAddress] = useState(false);
+  const [confirmedEmails, setConfirmedEmails] = useState<Set<number>>(new Set());
   const { data: emailTemplate } = useEmailTemplate();
   const defaultTemplate = getDefaultTemplate();
   const currentEmail = emailPreviews[currentIndex];
+
+  // Reset state when dialog closes
+  useEffect(() => {
+    if (!open) {
+      setConfirmedEmails(new Set());
+      setCurrentIndex(0);
+      setIsEditingNotes(false);
+      setIsEditingAddress(false);
+    }
+  }, [open]);
+
+  // Check if all emails are confirmed
+  const allEmailsConfirmed = confirmedEmails.size === emailPreviews.length;
+
+  // Toggle current email confirmation
+  const toggleCurrentEmailConfirmed = () => {
+    setConfirmedEmails(prev => {
+      const next = new Set(prev);
+      if (next.has(currentIndex)) {
+        next.delete(currentIndex);
+      } else {
+        next.add(currentIndex);
+      }
+      return next;
+    });
+  };
 
   if (!currentEmail) return null;
 
@@ -164,7 +192,7 @@ ${signatureText}`;
             E-Mail Vorschau
             {emailPreviews.length > 1 && (
               <span className="text-sm font-normal text-muted-foreground ml-2">
-                ({currentIndex + 1} von {emailPreviews.length})
+                ({currentIndex + 1} von {emailPreviews.length} | {confirmedEmails.size}/{emailPreviews.length} geprüft)
               </span>
             )}
           </DialogTitle>
@@ -188,6 +216,32 @@ ${signatureText}`;
                   {generateEmailSubject(currentEmail)}
                 </span>
               </div>
+            </div>
+
+            {/* Confirmation Checkbox */}
+            <div 
+              className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
+                confirmedEmails.has(currentIndex) 
+                  ? 'border-green-500/50 bg-green-500/10' 
+                  : 'border-primary/30 bg-primary/5 hover:bg-primary/10'
+              }`}
+              onClick={toggleCurrentEmailConfirmed}
+            >
+              <Checkbox 
+                id={`confirm-email-${currentIndex}`}
+                checked={confirmedEmails.has(currentIndex)}
+                onCheckedChange={toggleCurrentEmailConfirmed}
+                className="h-5 w-5"
+              />
+              <Label 
+                htmlFor={`confirm-email-${currentIndex}`} 
+                className="text-sm font-medium cursor-pointer flex-1"
+              >
+                E-Mail an {currentEmail.supplierName} geprüft
+              </Label>
+              {confirmedEmails.has(currentIndex) && (
+                <span className="text-xs text-green-600 dark:text-green-400 font-medium">✓ Bestätigt</span>
+              )}
             </div>
 
             {/* Email Body Preview */}
@@ -369,16 +423,25 @@ ${signatureText}`;
             <ExternalLink className="w-4 h-4 mr-2" />
             Per E-Mail-Programm
           </Button>
-          <Button onClick={onConfirm} disabled={isSubmitting}>
+          <Button 
+            onClick={onConfirm} 
+            disabled={isSubmitting || !allEmailsConfirmed}
+            title={!allEmailsConfirmed ? `Bitte alle ${emailPreviews.length} E-Mails prüfen` : undefined}
+          >
             {isSubmitting ? (
               <>
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                 Sende Bestellungen...
               </>
-            ) : (
+            ) : allEmailsConfirmed ? (
               <>
                 <Send className="w-4 h-4 mr-2" />
                 {emailPreviews.length} Bestellung{emailPreviews.length > 1 ? 'en' : ''} absenden
+              </>
+            ) : (
+              <>
+                <Check className="w-4 h-4 mr-2" />
+                {confirmedEmails.size}/{emailPreviews.length} geprüft
               </>
             )}
           </Button>
