@@ -20,3 +20,6 @@ verify_jwt = false
 
 [functions.verify-supplier-token]
 verify_jwt = false
+
+[functions.confirm-order]
+verify_jwt = false

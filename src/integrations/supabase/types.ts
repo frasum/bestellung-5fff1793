@@ -506,6 +506,41 @@ export type Database = {
         }
         Relationships: []
       }
+      order_confirmation_tokens: {
+        Row: {
+          confirmed_at: string | null
+          created_at: string
+          expires_at: string
+          id: string
+          order_id: string
+          token: string
+        }
+        Insert: {
+          confirmed_at?: string | null
+          created_at?: string
+          expires_at?: string
+          id?: string
+          order_id: string
+          token?: string
+        }
+        Update: {
+          confirmed_at?: string | null
+          created_at?: string
+          expires_at?: string
+          id?: string
+          order_id?: string
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_confirmation_tokens_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       order_items: {
         Row: {
           article_id: string
