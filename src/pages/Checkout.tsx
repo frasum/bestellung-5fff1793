@@ -48,7 +48,7 @@ const Checkout = () => {
   const createOrder = useCreateOrder();
   const { data: deliveryAddresses, isLoading: addressesLoading } = useDeliveryAddresses();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [completedOrders, setCompletedOrders] = useState<string[]>([]);
+  const [completedOrders, setCompletedOrders] = useState<{orderNumber: string; supplierName: string}[]>([]);
   const [showEmailPreview, setShowEmailPreview] = useState(false);
   const [emailPreviews, setEmailPreviews] = useState<EmailPreviewData[]>([]);
   const [pendingOrderData, setPendingOrderData] = useState<CheckoutFormData | null>(null);
@@ -213,7 +213,7 @@ const Checkout = () => {
     
     setIsSubmitting(true);
     const supplierOrders = Object.values(itemsBySupplier);
-    const orderNumbers: string[] = [];
+    const orderNumbers: {orderNumber: string; supplierName: string}[] = [];
 
     try {
       for (const preview of emailPreviews) {
@@ -231,7 +231,7 @@ const Checkout = () => {
           restaurantName: preview.restaurantName,
           isTestOrder: preview.isTestMode || false,
         });
-        orderNumbers.push(result.orderNumber);
+        orderNumbers.push({ orderNumber: result.orderNumber, supplierName: preview.supplierName });
       }
 
       setCompletedOrders(orderNumbers);
@@ -268,12 +268,15 @@ const Checkout = () => {
           <div className="bg-card border border-border rounded-xl p-6 mb-8">
             <h2 className="font-semibold text-foreground mb-4">Order Numbers</h2>
             <div className="space-y-2">
-              {completedOrders.map((orderNumber) => (
-                <div key={orderNumber} className="flex items-center justify-center gap-2 text-sm">
-                  <Mail className="w-4 h-4 text-primary" />
-                  <span className="font-mono text-foreground">{orderNumber}</span>
-                </div>
-              ))}
+              {completedOrders.map((order) => {
+                const displayNumber = order.orderNumber.replace(/^ORD/, order.supplierName);
+                return (
+                  <div key={order.orderNumber} className="flex items-center justify-center gap-2 text-sm">
+                    <Mail className="w-4 h-4 text-primary" />
+                    <span className="font-mono text-foreground">{displayNumber}</span>
+                  </div>
+                );
+              })}
             </div>
           </div>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
