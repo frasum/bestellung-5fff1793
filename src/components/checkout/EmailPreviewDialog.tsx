@@ -232,6 +232,7 @@ ${signatureText}`;
                 id={`confirm-email-${currentIndex}`}
                 checked={confirmedEmails.has(currentIndex)}
                 onCheckedChange={toggleCurrentEmailConfirmed}
+                onClick={(e) => e.stopPropagation()}
                 className="h-5 w-5"
               />
               <Label 
