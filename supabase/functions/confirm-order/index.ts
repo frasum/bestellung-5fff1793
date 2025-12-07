@@ -9,6 +9,17 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Helper function to create HTML responses with proper headers
+const createHtmlResponse = (html: string, status: number = 200): Response => {
+  const headers = new Headers();
+  headers.set("Content-Type", "text/html; charset=utf-8");
+  headers.set("Access-Control-Allow-Origin", "*");
+  headers.set("Access-Control-Allow-Headers", "authorization, x-client-info, apikey, content-type");
+  headers.set("Cache-Control", "no-cache, no-store, must-revalidate");
+  
+  return new Response(html, { status, headers });
+};
+
 interface OrderItem {
   article_name: string;
   quantity: number;
@@ -413,10 +424,7 @@ serve(async (req) => {
     const token = url.searchParams.get("token");
 
     if (!token) {
-      return new Response(generateErrorHtml("Kein Bestätigungstoken angegeben."), {
-        status: 400,
-        headers: { "Content-Type": "text/html; charset=utf-8", ...corsHeaders },
-      });
+      return createHtmlResponse(generateErrorHtml("Kein Bestätigungstoken angegeben."), 400);
     }
 
     console.log(`Processing confirmation for token: ${token.substring(0, 10)}...`);
@@ -435,28 +443,19 @@ serve(async (req) => {
 
     if (tokenError || !tokenData) {
       console.error("Token not found:", tokenError);
-      return new Response(generateErrorHtml("Ungültiger oder nicht gefundener Bestätigungstoken."), {
-        status: 404,
-        headers: { "Content-Type": "text/html; charset=utf-8", ...corsHeaders },
-      });
+      return createHtmlResponse(generateErrorHtml("Ungültiger oder nicht gefundener Bestätigungstoken."), 404);
     }
 
     // Check if already confirmed
     if (tokenData.confirmed_at) {
       console.log("Token already used");
-      return new Response(generateAlreadyConfirmedHtml(tokenData.orders?.order_number || ""), {
-        status: 200,
-        headers: { "Content-Type": "text/html; charset=utf-8", ...corsHeaders },
-      });
+      return createHtmlResponse(generateAlreadyConfirmedHtml(tokenData.orders?.order_number || ""));
     }
 
     // Check if expired
     if (new Date(tokenData.expires_at) < new Date()) {
       console.log("Token expired");
-      return new Response(generateErrorHtml("Dieser Bestätigungslink ist abgelaufen. Bitte kontaktieren Sie den Besteller."), {
-        status: 410,
-        headers: { "Content-Type": "text/html; charset=utf-8", ...corsHeaders },
-      });
+      return createHtmlResponse(generateErrorHtml("Dieser Bestätigungslink ist abgelaufen. Bitte kontaktieren Sie den Besteller."), 410);
     }
 
     // Update order status to confirmed
@@ -467,10 +466,7 @@ serve(async (req) => {
 
     if (updateOrderError) {
       console.error("Error updating order:", updateOrderError);
-      return new Response(generateErrorHtml("Fehler beim Aktualisieren der Bestellung."), {
-        status: 500,
-        headers: { "Content-Type": "text/html; charset=utf-8", ...corsHeaders },
-      });
+      return createHtmlResponse(generateErrorHtml("Fehler beim Aktualisieren der Bestellung."), 500);
     }
 
     // Mark token as used
@@ -508,21 +504,14 @@ serve(async (req) => {
       }
     }
 
-    return new Response(
+    return createHtmlResponse(
       generateSuccessHtml(
         tokenData.orders?.order_number || "",
         tokenData.orders?.suppliers?.name || "Lieferant"
-      ),
-      {
-        status: 200,
-        headers: { "Content-Type": "text/html; charset=utf-8", ...corsHeaders },
-      }
+      )
     );
   } catch (error: any) {
     console.error("Error in confirm-order function:", error);
-    return new Response(generateErrorHtml("Ein unerwarteter Fehler ist aufgetreten."), {
-      status: 500,
-      headers: { "Content-Type": "text/html; charset=utf-8", ...corsHeaders },
-    });
+    return createHtmlResponse(generateErrorHtml("Ein unerwarteter Fehler ist aufgetreten."), 500);
   }
 });
