@@ -14,6 +14,7 @@ interface SupplierSession {
   supplierId: string;
   supplierName: string;
   organizationId: string;
+  sessionToken: string;
   expiresAt: string;
 }
 
@@ -83,6 +84,7 @@ const SupplierPortal = () => {
             action: 'list',
             supplierId: session.supplierId,
             organizationId: session.organizationId,
+            sessionToken: session.sessionToken,
           },
         });
 
@@ -138,6 +140,7 @@ const SupplierPortal = () => {
           action: 'update',
           supplierId: session.supplierId,
           organizationId: session.organizationId,
+          sessionToken: session.sessionToken,
           articleId,
           changes,
         },

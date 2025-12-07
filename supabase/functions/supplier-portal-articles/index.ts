@@ -10,6 +10,7 @@ interface ArticleUpdateRequest {
   action: 'list' | 'update';
   supplierId: string;
   organizationId: string;
+  sessionToken: string; // Required session token for authentication
   articleId?: string;
   changes?: Record<string, any>;
 }
@@ -27,12 +28,59 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     const body: ArticleUpdateRequest = await req.json();
-    const { action, supplierId, organizationId, articleId, changes } = body;
+    const { action, supplierId, organizationId, sessionToken, articleId, changes } = body;
 
     console.log(`Supplier portal request: action=${action}, supplierId=${supplierId}`);
 
+    // Validate required parameters
     if (!supplierId || !organizationId) {
-      throw new Error('Missing supplierId or organizationId');
+      return new Response(
+        JSON.stringify({ error: 'Missing supplierId or organizationId' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // SECURITY: Validate session token
+    if (!sessionToken) {
+      console.error('No session token provided');
+      return new Response(
+        JSON.stringify({ error: 'Authentication required' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Verify session token matches the supplier
+    // Session token format: supplierId:organizationId:timestamp:randomHash
+    // We validate that the token contains the correct supplierId and organizationId
+    const tokenParts = sessionToken.split(':');
+    if (tokenParts.length < 3) {
+      console.error('Invalid session token format');
+      return new Response(
+        JSON.stringify({ error: 'Invalid session token' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const [tokenSupplierId, tokenOrgId, tokenTimestamp] = tokenParts;
+    
+    // Validate token matches the requested supplier and organization
+    if (tokenSupplierId !== supplierId || tokenOrgId !== organizationId) {
+      console.error('Session token does not match supplier/organization');
+      return new Response(
+        JSON.stringify({ error: 'Session token mismatch' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Validate token is not too old (24 hours max session)
+    const tokenAge = Date.now() - parseInt(tokenTimestamp, 10);
+    const maxTokenAge = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+    if (isNaN(tokenAge) || tokenAge > maxTokenAge) {
+      console.error('Session token expired');
+      return new Response(
+        JSON.stringify({ error: 'Session expired' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     // Verify supplier exists and belongs to the organization
@@ -45,7 +93,10 @@ serve(async (req) => {
 
     if (supplierError || !supplier) {
       console.error('Supplier verification failed:', supplierError);
-      throw new Error('Invalid supplier or organization');
+      return new Response(
+        JSON.stringify({ error: 'Invalid supplier or organization' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     if (action === 'list') {
@@ -85,7 +136,10 @@ serve(async (req) => {
 
     if (action === 'update') {
       if (!articleId || !changes) {
-        throw new Error('Missing articleId or changes for update');
+        return new Response(
+          JSON.stringify({ error: 'Missing articleId or changes for update' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
       }
 
       // Fetch the current article to get old values
@@ -99,7 +153,10 @@ serve(async (req) => {
 
       if (fetchError || !currentArticle) {
         console.error('Error fetching article:', fetchError);
-        throw new Error('Article not found');
+        return new Response(
+          JSON.stringify({ error: 'Article not found' }),
+          { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
       }
 
       // Create pending change records for each changed field
@@ -172,14 +229,17 @@ serve(async (req) => {
       });
     }
 
-    throw new Error('Invalid action');
+    return new Response(
+      JSON.stringify({ error: 'Invalid action' }),
+      { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
 
   } catch (error: any) {
     console.error('Error in supplier-portal-articles:', error);
     return new Response(
       JSON.stringify({ error: error.message }),
       { 
-        status: 400, 
+        status: 500, 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
       }
     );
