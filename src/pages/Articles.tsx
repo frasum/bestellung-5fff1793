@@ -90,7 +90,7 @@ const ARTICLE_IMPORT_FIELDS: ImportField[] = [
 const Articles = () => {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
-  const { addItem, updateQuantity, items: cartItems, getItemCount } = useCart();
+  const { addItem, updateQuantity, items: cartItems, getItemCount, getItemsBySupplier } = useCart();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedSuppliers, setSelectedSuppliers] = useState<string[]>([]);
   const [supplierPopoverOpen, setSupplierPopoverOpen] = useState(false);
@@ -768,11 +768,17 @@ const Articles = () => {
                   >
                     <Fragment>
                       <CollapsibleTrigger asChild>
-                        <TableRow className="bg-muted/50 cursor-pointer">
+                        <TableRow className={cn(
+                          "bg-muted/50 cursor-pointer",
+                          getItemsBySupplier().has(group.supplier.id) && "bg-destructive/20"
+                        )}>
                           <TableCell colSpan={advancedViewEnabled ? 6 : 5} className="py-2 px-4">
                             <div className="flex items-center gap-2">
                               <ChevronRight className={cn("h-4 w-4 transition-transform", openSuppliers.has(group.supplier.id) && "rotate-90")} />
-                              <span className="font-semibold text-sm text-foreground">{group.supplier.name}</span>
+                              <span className={cn(
+                                "font-semibold text-sm",
+                                getItemsBySupplier().has(group.supplier.id) ? "text-destructive" : "text-foreground"
+                              )}>{group.supplier.name}</span>
                               <span className="text-xs text-muted-foreground">({group.articles?.length || 0} Artikel)</span>
                             </div>
                           </TableCell>
