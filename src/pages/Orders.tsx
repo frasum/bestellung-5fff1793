@@ -146,6 +146,8 @@ const Orders = () => {
 
   // Track which supplier groups are open (default: all closed)
   const [openSuppliers, setOpenSuppliers] = useState<Set<string>>(new Set());
+  // Track which individual orders are open (default: all closed)
+  const [openOrders, setOpenOrders] = useState<Set<string>>(new Set());
 
   const toggleSupplier = (supplierName: string) => {
     const newOpen = new Set(openSuppliers);
@@ -155,6 +157,16 @@ const Orders = () => {
       newOpen.add(supplierName);
     }
     setOpenSuppliers(newOpen);
+  };
+
+  const toggleOrder = (orderId: string) => {
+    const newOpen = new Set(openOrders);
+    if (newOpen.has(orderId)) {
+      newOpen.delete(orderId);
+    } else {
+      newOpen.add(orderId);
+    }
+    setOpenOrders(newOpen);
   };
 
   const hasActiveFilters = searchQuery || statusFilter !== 'all' || dateFilter !== 'all';
@@ -289,45 +301,79 @@ const Orders = () => {
                   
                   {/* Orders for this Supplier */}
                   <CollapsibleContent>
-                    <div className="space-y-3 pl-4 mt-2">
+                    <div className="space-y-2 pl-4 mt-2">
                       {supplierOrders.map((order) => {
                         const StatusIcon = statusIcons[order.status];
+                        const isOrderOpen = openOrders.has(order.id);
+                        
                         return (
-                          <div key={order.id} className="bg-card border border-border rounded-xl overflow-hidden">
-                            {/* Order Header */}
-                            <div className="p-4 sm:p-6 border-b border-border">
-                              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                                <div className="flex items-start gap-4">
-                                  <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                                    <StatusIcon className="w-5 h-5 text-primary" />
-                                  </div>
-                                  <div>
-                                    <div className="flex items-center gap-2">
-                                      <h3 className="font-semibold text-foreground">{order.order_number}</h3>
-                                      <Badge className={statusColors[order.status]}>
-                                        {t(`orders.status.${order.status}`)}
-                                      </Badge>
-                                    </div>
-                                    <p className="text-sm text-muted-foreground">
-                                      {format(new Date(order.created_at), 'PPp', { locale })}
-                                    </p>
-                                  </div>
+                          <Collapsible
+                            key={order.id}
+                            open={isOrderOpen}
+                            onOpenChange={() => toggleOrder(order.id)}
+                          >
+                            {/* Compact Order Header */}
+                            <CollapsibleTrigger className="w-full">
+                              <div className="flex items-center justify-between p-3 bg-card border border-border rounded-lg hover:bg-muted/50 transition-colors">
+                                <div className="flex items-center gap-3">
+                                  <ChevronDown className={cn(
+                                    "w-4 h-4 text-muted-foreground transition-transform duration-200",
+                                    isOrderOpen && "rotate-180"
+                                  )} />
+                                  <StatusIcon className="w-4 h-4 text-primary" />
+                                  <span className="font-medium text-foreground">{order.order_number}</span>
+                                  <Badge className={cn(statusColors[order.status], "text-xs")}>
+                                    {t(`orders.status.${order.status}`)}
+                                  </Badge>
                                 </div>
-                                <div className="flex items-center gap-2 sm:gap-4">
-                                  {order.email_sent && (
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleViewEmail(order);
-                                      }}
-                                      className="text-success hover:text-success"
-                                    >
-                                      <Eye className="w-4 h-4 mr-1" />
-                                      <span className="hidden sm:inline">{t('orders.viewEmail')}</span>
-                                    </Button>
-                                  )}
+                                <div className="flex items-center gap-4">
+                                  <span className="text-sm text-muted-foreground hidden sm:inline">
+                                    {format(new Date(order.created_at), 'dd.MM.yyyy', { locale })}
+                                  </span>
+                                  <span className="font-bold text-foreground">€{Number(order.total_amount).toFixed(2)}</span>
+                                </div>
+                              </div>
+                            </CollapsibleTrigger>
+                            
+                            {/* Order Details */}
+                            <CollapsibleContent>
+                              <div className="mt-1 p-4 bg-muted/30 border border-border rounded-lg space-y-4">
+                                {/* Order Items */}
+                                <div className="space-y-2">
+                                  {order.order_items?.map((item) => (
+                                    <div key={item.id} className="flex items-center justify-between text-sm">
+                                      <span className="text-foreground">{item.article_name}</span>
+                                      <span className="text-muted-foreground">
+                                        {item.quantity} {item.unit} • €{Number(item.total_price).toFixed(2)}
+                                      </span>
+                                    </div>
+                                  ))}
+                                </div>
+                                
+                                {/* Delivery Address */}
+                                <div className="pt-3 border-t border-border">
+                                  <p className="text-sm text-muted-foreground">
+                                    {order.delivery_address.split('\n').join(' • ')}
+                                  </p>
+                                </div>
+                                
+                                {/* Actions */}
+                                <div className="flex items-center justify-between pt-3 border-t border-border">
+                                  <div className="flex items-center gap-2">
+                                    {order.email_sent && (
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleViewEmail(order);
+                                        }}
+                                      >
+                                        <Eye className="w-4 h-4 mr-1" />
+                                        {t('orders.viewEmail')}
+                                      </Button>
+                                    )}
+                                  </div>
                                   <Select
                                     value={order.status}
                                     onValueChange={(value) => updateStatus.mutate({ orderId: order.id, status: value as Order['status'] })}
@@ -346,37 +392,8 @@ const Orders = () => {
                                   </Select>
                                 </div>
                               </div>
-                            </div>
-
-                            {/* Order Items */}
-                            <div className="p-4 sm:p-6">
-                              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-4">
-                                {order.order_items?.slice(0, 6).map((item) => (
-                                  <div key={item.id} className="flex items-center justify-between bg-muted/30 rounded-lg px-3 py-2">
-                                    <span className="text-sm text-foreground truncate">{item.article_name}</span>
-                                    <span className="text-sm text-muted-foreground ml-2">
-                                      {item.quantity} {item.unit}
-                                    </span>
-                                  </div>
-                                ))}
-                                {(order.order_items?.length || 0) > 6 && (
-                                  <div className="flex items-center justify-center bg-muted/30 rounded-lg px-3 py-2">
-                                    <span className="text-sm text-muted-foreground">
-                                      {t('orders.moreItems', { count: (order.order_items?.length || 0) - 6 })}
-                                    </span>
-                                  </div>
-                                )}
-                              </div>
-                              <div className="flex items-center justify-between pt-4 border-t border-border">
-                                <div className="text-sm text-muted-foreground">
-                                  {order.order_items?.length} {t('orders.items')} • {order.delivery_address.split('\n')[0]}
-                                </div>
-                                <div className="text-xl font-bold text-foreground">
-                                  €{Number(order.total_amount).toFixed(2)}
-                                </div>
-                              </div>
-                            </div>
-                          </div>
+                            </CollapsibleContent>
+                          </Collapsible>
                         );
                       })}
                     </div>
