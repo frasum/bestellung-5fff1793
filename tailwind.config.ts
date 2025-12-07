@@ -84,10 +84,27 @@ export default {
             height: "0",
           },
         },
+        "pulse-cart": {
+          "0%, 100%": {
+            transform: "scale(1)",
+            boxShadow: "0 10px 15px -3px rgb(0 0 0 / 0.1)",
+          },
+          "50%": {
+            transform: "scale(1.15)",
+            boxShadow: "0 20px 25px -5px rgb(0 0 0 / 0.2)",
+          },
+        },
+        "wiggle": {
+          "0%, 100%": { transform: "rotate(0deg)" },
+          "25%": { transform: "rotate(-12deg)" },
+          "75%": { transform: "rotate(12deg)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
+        "pulse-cart": "pulse-cart 0.6s ease-in-out",
+        "wiggle": "wiggle 0.3s ease-in-out",
       },
     },
   },
