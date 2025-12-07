@@ -9,11 +9,33 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+interface OrderItem {
+  article_name: string;
+  quantity: number;
+  unit: string;
+  unit_price: number;
+  total_price: number;
+}
+
 const generateConfirmationNotificationHtml = (
   orderNumber: string,
   supplierName: string,
-  confirmedAt: string
+  confirmedAt: string,
+  items: OrderItem[],
+  totalAmount: number
 ): string => {
+  const itemRows = items.map((item, index) => {
+    const bgColor = index % 2 === 0 ? '#ffffff' : '#f9fafb';
+    return `
+      <tr style="background: ${bgColor};">
+        <td style="padding: 12px 10px; border-bottom: 1px solid #e5e7eb; font-size: 14px; color: #1f2937;">${item.article_name}</td>
+        <td style="padding: 12px 10px; border-bottom: 1px solid #e5e7eb; text-align: center; font-weight: 600; color: #1e40af;">${item.quantity} ${item.unit}</td>
+        <td style="padding: 12px 10px; border-bottom: 1px solid #e5e7eb; text-align: right; color: #6b7280;">€${item.unit_price.toFixed(2)}</td>
+        <td style="padding: 12px 10px; border-bottom: 1px solid #e5e7eb; text-align: right; font-weight: 600; color: #1f2937;">€${item.total_price.toFixed(2)}</td>
+      </tr>
+    `;
+  }).join('');
+
   return `
     <!DOCTYPE html>
     <html>
@@ -21,9 +43,10 @@ const generateConfirmationNotificationHtml = (
         <meta charset="utf-8">
         <title>Bestellung bestätigt</title>
       </head>
-      <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #1f2937; max-width: 600px; margin: 0 auto; padding: 20px; background: #f3f4f6;">
+      <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #1f2937; max-width: 650px; margin: 0 auto; padding: 20px; background: #f3f4f6;">
         <div style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); padding: 32px; border-radius: 16px 16px 0 0;">
           <h1 style="color: white; margin: 0; font-size: 24px; font-weight: 700;">✅ Bestellung bestätigt!</h1>
+          <p style="color: rgba(255,255,255,0.9); margin: 8px 0 0 0; font-size: 14px;">${orderNumber}</p>
         </div>
         
         <div style="background: #ffffff; padding: 32px; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 16px 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
@@ -34,10 +57,6 @@ const generateConfirmationNotificationHtml = (
           <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 12px; padding: 20px; margin-bottom: 24px;">
             <table style="width: 100%; font-size: 14px;">
               <tr>
-                <td style="padding: 6px 0; color: #6b7280;">Bestellnummer:</td>
-                <td style="padding: 6px 0; color: #1f2937; font-weight: 600;">${orderNumber}</td>
-              </tr>
-              <tr>
                 <td style="padding: 6px 0; color: #6b7280;">Lieferant:</td>
                 <td style="padding: 6px 0; color: #1f2937; font-weight: 600;">${supplierName}</td>
               </tr>
@@ -45,6 +64,30 @@ const generateConfirmationNotificationHtml = (
                 <td style="padding: 6px 0; color: #6b7280;">Bestätigt am:</td>
                 <td style="padding: 6px 0; color: #1f2937; font-weight: 600;">${confirmedAt}</td>
               </tr>
+            </table>
+          </div>
+
+          <!-- Order Items Table -->
+          <div style="margin-bottom: 24px;">
+            <h2 style="color: #1f2937; font-size: 14px; margin: 0 0 16px 0; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;">🛒 Bestellte Artikel</h2>
+            <table style="width: 100%; border-collapse: collapse; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+              <thead>
+                <tr style="background: #1e3a5f;">
+                  <th style="padding: 12px 10px; text-align: left; font-weight: 600; color: white; font-size: 12px;">Artikel</th>
+                  <th style="padding: 12px 10px; text-align: center; font-weight: 600; color: white; font-size: 12px;">Menge</th>
+                  <th style="padding: 12px 10px; text-align: right; font-weight: 600; color: white; font-size: 12px;">Stückpreis</th>
+                  <th style="padding: 12px 10px; text-align: right; font-weight: 600; color: white; font-size: 12px;">Gesamt</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${itemRows}
+              </tbody>
+              <tfoot>
+                <tr style="background: linear-gradient(135deg, #059669 0%, #10b981 100%);">
+                  <td colspan="3" style="padding: 14px 10px; color: white; font-weight: 700; font-size: 14px;">Gesamtbetrag</td>
+                  <td style="padding: 14px 10px; text-align: right; color: white; font-weight: 800; font-size: 16px;">€${totalAmount.toFixed(2)}</td>
+                </tr>
+              </tfoot>
             </table>
           </div>
           
@@ -66,7 +109,9 @@ const generateConfirmationNotificationHtml = (
 async function sendConfirmationNotification(
   recipientEmail: string,
   orderNumber: string,
-  supplierName: string
+  supplierName: string,
+  items: OrderItem[],
+  totalAmount: number
 ): Promise<void> {
   const confirmedAt = new Date().toLocaleDateString('de-DE', {
     weekday: 'long',
@@ -82,7 +127,7 @@ async function sendConfirmationNotification(
       from: "OrderFox.pro <onboarding@resend.dev>",
       to: [recipientEmail],
       subject: `✅ Bestellung ${orderNumber} wurde von ${supplierName} bestätigt`,
-      html: generateConfirmationNotificationHtml(orderNumber, supplierName, confirmedAt),
+      html: generateConfirmationNotificationHtml(orderNumber, supplierName, confirmedAt, items, totalAmount),
     });
 
     if (error) {
@@ -381,10 +426,10 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
-    // Find the token with order and user details
+    // Find the token with order, user details and order items
     const { data: tokenData, error: tokenError } = await supabase
       .from("order_confirmation_tokens")
-      .select("*, orders(id, order_number, status, user_id, suppliers(name))")
+      .select("*, orders(id, order_number, status, user_id, total_amount, suppliers(name), order_items(article_name, quantity, unit, unit_price, total_price))")
       .eq("token", token)
       .single();
 
@@ -449,11 +494,16 @@ serve(async (req) => {
         .single();
 
       if (profile?.email) {
+        const orderItems = tokenData.orders.order_items || [];
+        const totalAmount = Number(tokenData.orders.total_amount) || 0;
+        
         // Send email notification (don't await to not block response)
         sendConfirmationNotification(
           profile.email,
           tokenData.orders.order_number || "",
-          tokenData.orders.suppliers?.name || "Lieferant"
+          tokenData.orders.suppliers?.name || "Lieferant",
+          orderItems,
+          totalAmount
         );
       }
     }
