@@ -100,6 +100,7 @@
     "dashboard": "Dashboard",
     "suppliers": "Suppliers",
     "articles": "Articles",
+    "catalog": "Catalog",
     "orders": "Orders",
     "drafts": "Drafts",
     "inventory": "Inventory",
