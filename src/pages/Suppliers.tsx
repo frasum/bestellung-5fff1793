@@ -810,10 +810,10 @@ const Suppliers = () => {
                                   <Table>
                                     <TableHeader>
                                       <TableRow className="hover:bg-transparent border-b border-border/50">
+                                        <TableHead className="h-8 text-xs text-center w-[80px]">Menge</TableHead>
                                         <TableHead className="h-8 text-xs">Artikel</TableHead>
                                         <TableHead className="h-8 text-xs hidden md:table-cell">Beschreibung</TableHead>
                                         <TableHead className="h-8 text-xs text-right">Preis</TableHead>
-                                        <TableHead className="h-8 text-xs text-center w-[120px]">Menge</TableHead>
                                       </TableRow>
                                     </TableHeader>
                                     <TableBody>
@@ -821,6 +821,26 @@ const Suppliers = () => {
                                         const cartQty = getCartQuantity(article.id);
                                         return (
                                           <TableRow key={article.id} className={`border-b border-border/30 hover:bg-muted/50 ${cartQty > 0 ? 'bg-destructive/10 text-destructive' : ''}`}>
+                                            <TableCell className="py-1.5">
+                                              <Input
+                                                type="text"
+                                                inputMode="numeric"
+                                                value={cartQty || ''}
+                                                onChange={(e) => {
+                                                  const val = parseInt(e.target.value) || 0;
+                                                  if (val === 0) {
+                                                    updateQuantity(article.id, 0);
+                                                  } else if (cartQty === 0) {
+                                                    addItem(article, val);
+                                                  } else {
+                                                    updateQuantity(article.id, val);
+                                                  }
+                                                }}
+                                                onFocus={(e) => e.target.select()}
+                                                className={`w-16 h-8 text-center text-sm ${cartQty > 0 ? 'border-destructive bg-destructive/10 text-destructive font-medium' : ''}`}
+                                                placeholder="0"
+                                              />
+                                            </TableCell>
                                             <TableCell className="py-1.5">
                                               <p className="text-sm font-medium">{article.name}</p>
                                             </TableCell>
@@ -832,17 +852,6 @@ const Suppliers = () => {
                                             <TableCell className="py-1.5 text-right text-sm">
                                               €{Number(article.price).toFixed(2)}
                                               <span className="text-xs text-muted-foreground ml-1">/{article.unit}</span>
-                                            </TableCell>
-                                            <TableCell className="py-1.5">
-                                              <div className="flex items-center justify-center gap-1">
-                                                <Button size="icon" variant="outline" className="h-7 w-7" onClick={() => updateQuantity(article.id, cartQty - 1)} disabled={cartQty === 0}>
-                                                  <Minus className="w-3 h-3" />
-                                                </Button>
-                                                <span className={`w-6 text-center text-sm font-medium ${cartQty > 0 ? 'text-destructive' : ''}`}>{cartQty}</span>
-                                                <Button size="icon" variant="outline" className="h-7 w-7" onClick={() => addItem(article, 1)}>
-                                                  <Plus className="w-3 h-3" />
-                                                </Button>
-                                              </div>
                                             </TableCell>
                                           </TableRow>
                                         );
