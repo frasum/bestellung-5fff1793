@@ -148,11 +148,11 @@ const Reports = () => {
   const exportToCSV = () => {
     if (!stats?.filteredOrders) return;
 
-    const headers = ['Order Number', 'Date', 'Supplier', 'Items', 'Total', 'Status'];
+    const headers = ['Bestellnummer', 'Datum', 'Lieferant', 'Artikel', 'Gesamt', 'Status'];
     const rows = stats.filteredOrders.map((order) => [
       order.order_number,
       format(new Date(order.created_at), 'yyyy-MM-dd HH:mm'),
-      order.suppliers?.name || 'Unknown',
+      order.suppliers?.name || 'Unbekannt',
       order.order_items?.length || 0,
       `€${Number(order.total_amount).toFixed(2)}`,
       order.status,
@@ -162,7 +162,7 @@ const Reports = () => {
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
-    link.download = `procureresto-report-${format(new Date(), 'yyyy-MM-dd')}.csv`;
+    link.download = `orderfox-bericht-${format(new Date(), 'yyyy-MM-dd')}.csv`;
     link.click();
   };
 
@@ -180,8 +180,8 @@ const Reports = () => {
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">Reports</h1>
-            <p className="text-muted-foreground mt-1">Analyze your procurement spending and trends</p>
+            <h1 className="text-3xl font-bold text-foreground">Berichte</h1>
+            <p className="text-muted-foreground mt-1">Analysieren Sie Ihre Beschaffungsausgaben und Trends</p>
           </div>
           <div className="flex items-center gap-3">
             <Select value={timeRange} onValueChange={setTimeRange}>
@@ -189,14 +189,14 @@ const Reports = () => {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent className="bg-card border border-border z-50">
-                <SelectItem value="3">Last 3 months</SelectItem>
-                <SelectItem value="6">Last 6 months</SelectItem>
-                <SelectItem value="12">Last 12 months</SelectItem>
+                <SelectItem value="3">Letzte 3 Monate</SelectItem>
+                <SelectItem value="6">Letzte 6 Monate</SelectItem>
+                <SelectItem value="12">Letzte 12 Monate</SelectItem>
               </SelectContent>
             </Select>
             <Button onClick={exportToCSV} disabled={!stats?.filteredOrders?.length}>
               <Download className="w-4 h-4 mr-2" />
-              Export CSV
+              CSV exportieren
             </Button>
           </div>
         </div>
@@ -208,11 +208,11 @@ const Reports = () => {
         ) : !stats || stats.totalOrders === 0 ? (
           <div className="text-center py-16 bg-card border border-border rounded-xl">
             <TrendingUp className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
-            <h2 className="text-xl font-semibold text-foreground mb-2">No data yet</h2>
+            <h2 className="text-xl font-semibold text-foreground mb-2">Noch keine Daten</h2>
             <p className="text-muted-foreground mb-6">
-              Start placing orders to see your spending analytics
+              Beginnen Sie mit Bestellungen, um Ihre Ausgabenanalyse zu sehen
             </p>
-            <Button onClick={() => navigate('/articles')}>Browse Articles</Button>
+            <Button onClick={() => navigate('/articles')}>Artikel durchsuchen</Button>
           </div>
         ) : (
           <>
@@ -230,28 +230,28 @@ const Reports = () => {
                     )}
                   </div>
                   <p className="text-2xl font-bold text-foreground mt-4">€{stats.totalSpent.toLocaleString('de-DE', { minimumFractionDigits: 2 })}</p>
-                  <p className="text-sm text-muted-foreground">Total Spent</p>
+                  <p className="text-sm text-muted-foreground">Gesamtausgaben</p>
                 </CardContent>
               </Card>
               <Card>
                 <CardContent className="p-6">
                   <ShoppingCart className="w-8 h-8 text-accent" />
                   <p className="text-2xl font-bold text-foreground mt-4">{stats.totalOrders}</p>
-                  <p className="text-sm text-muted-foreground">Total Orders</p>
+                  <p className="text-sm text-muted-foreground">Bestellungen</p>
                 </CardContent>
               </Card>
               <Card>
                 <CardContent className="p-6">
                   <Euro className="w-8 h-8 text-success" />
                   <p className="text-2xl font-bold text-foreground mt-4">€{stats.avgOrderValue.toFixed(2)}</p>
-                  <p className="text-sm text-muted-foreground">Average Order</p>
+                  <p className="text-sm text-muted-foreground">Ø Bestellwert</p>
                 </CardContent>
               </Card>
               <Card>
                 <CardContent className="p-6">
                   <Users className="w-8 h-8 text-warning" />
                   <p className="text-2xl font-bold text-foreground mt-4">{stats.supplierBreakdown.length}</p>
-                  <p className="text-sm text-muted-foreground">Active Suppliers</p>
+                  <p className="text-sm text-muted-foreground">Aktive Lieferanten</p>
                 </CardContent>
               </Card>
             </div>
@@ -261,7 +261,7 @@ const Reports = () => {
               {/* Monthly Spending Chart */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-lg">Monthly Spending</CardTitle>
+                  <CardTitle className="text-lg">Monatliche Ausgaben</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="h-72">
@@ -276,7 +276,7 @@ const Reports = () => {
                             border: '1px solid hsl(var(--border))',
                             borderRadius: '8px',
                           }}
-                          formatter={(value: number) => [`€${value.toFixed(2)}`, 'Spent']}
+                          formatter={(value: number) => [`€${value.toFixed(2)}`, 'Ausgaben']}
                         />
                         <Bar dataKey="amount" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
                       </BarChart>
@@ -288,7 +288,7 @@ const Reports = () => {
               {/* Supplier Breakdown */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-lg">Spending by Supplier</CardTitle>
+                  <CardTitle className="text-lg">Ausgaben nach Lieferant</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="h-72 flex items-center">
@@ -338,7 +338,7 @@ const Reports = () => {
               {/* Spending Trend */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-lg">Spending Trend</CardTitle>
+                  <CardTitle className="text-lg">Ausgabentrend</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="h-64">
@@ -353,7 +353,7 @@ const Reports = () => {
                             border: '1px solid hsl(var(--border))',
                             borderRadius: '8px',
                           }}
-                          formatter={(value: number) => [`€${value.toFixed(2)}`, 'Spent']}
+                          formatter={(value: number) => [`€${value.toFixed(2)}`, 'Ausgaben']}
                         />
                         <Line
                           type="monotone"
@@ -371,12 +371,12 @@ const Reports = () => {
               {/* Top Articles */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-lg">Top Articles by Spending</CardTitle>
+                  <CardTitle className="text-lg">Top Artikel nach Ausgaben</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3">
                     {stats.topArticles.length === 0 ? (
-                      <p className="text-muted-foreground text-center py-8">No article data available</p>
+                      <p className="text-muted-foreground text-center py-8">Keine Artikeldaten verfügbar</p>
                     ) : (
                       stats.topArticles.map((article, i) => (
                         <div key={i} className="flex items-center justify-between">
@@ -384,7 +384,7 @@ const Reports = () => {
                             <span className="text-sm font-medium text-muted-foreground w-6">{i + 1}.</span>
                             <div>
                               <p className="text-sm font-medium text-foreground">{article.name}</p>
-                              <p className="text-xs text-muted-foreground">{article.quantity} units ordered</p>
+                              <p className="text-xs text-muted-foreground">{article.quantity} Einheiten bestellt</p>
                             </div>
                           </div>
                           <span className="font-semibold text-foreground">€{article.spent.toFixed(2)}</span>

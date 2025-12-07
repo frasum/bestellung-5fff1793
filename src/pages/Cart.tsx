@@ -48,7 +48,7 @@ const Cart = () => {
 
   // Group items by supplier
   const itemsBySupplier = items.reduce((acc, item) => {
-    const supplierName = item.article.suppliers?.name || 'Unknown Supplier';
+    const supplierName = item.article.suppliers?.name || 'Unbekannter Lieferant';
     if (!acc[supplierName]) {
       acc[supplierName] = [];
     }
@@ -99,8 +99,8 @@ const Cart = () => {
             <h1 className="text-3xl font-bold text-foreground">Shopping Cart</h1>
             <p className="text-muted-foreground mt-1">
               {items.length === 0 
-                ? 'Your cart is empty' 
-                : `${items.length} item${items.length > 1 ? 's' : ''} in your cart`}
+                ? 'Ihr Warenkorb ist leer' 
+                : `${items.length} Artikel in Ihrem Warenkorb`}
             </p>
           </div>
           <div className="flex gap-2">
@@ -110,7 +110,7 @@ const Cart = () => {
             </Button>
             {items.length > 0 && (
               <Button variant="outline" onClick={clearCart}>
-                Clear Cart
+                Warenkorb leeren
               </Button>
             )}
           </div>
@@ -119,10 +119,10 @@ const Cart = () => {
         {items.length === 0 ? (
           <div className="text-center py-16 bg-card border border-border rounded-xl">
             <ShoppingCart className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
-            <h2 className="text-xl font-semibold text-foreground mb-2">Your cart is empty</h2>
-            <p className="text-muted-foreground mb-6">Browse articles and add items to your cart</p>
+            <h2 className="text-xl font-semibold text-foreground mb-2">Ihr Warenkorb ist leer</h2>
+            <p className="text-muted-foreground mb-6">Durchstöbern Sie Artikel und fügen Sie sie Ihrem Warenkorb hinzu</p>
             <Button onClick={() => navigate('/articles')}>
-              Browse Articles
+              Artikel durchsuchen
             </Button>
           </div>
         ) : (
@@ -202,7 +202,7 @@ const Cart = () => {
             {/* Order Summary */}
             <div className="lg:col-span-1">
               <div className="bg-card border border-border rounded-xl p-6 sticky top-6">
-                <h3 className="text-lg font-semibold text-foreground mb-4">Order Summary</h3>
+                <h3 className="text-lg font-semibold text-foreground mb-4">Bestellübersicht</h3>
                 <div className="space-y-3 mb-6">
                   {supplierTotals.map(({ name, total }) => (
                     <div key={name} className="flex justify-between text-sm">
@@ -211,7 +211,7 @@ const Cart = () => {
                     </div>
                   ))}
                   <div className="border-t border-border pt-3 flex justify-between">
-                    <span className="font-semibold text-foreground">Total</span>
+                    <span className="font-semibold text-foreground">Gesamt</span>
                     <span className="font-bold text-xl text-foreground">€{getTotal().toFixed(2)}</span>
                   </div>
                 </div>
@@ -242,7 +242,7 @@ const Cart = () => {
                   </Button>
                 </div>
                 <p className="text-xs text-muted-foreground text-center mt-4">
-                  Orders will be sent separately to each supplier
+                  Bestellungen werden separat an jeden Lieferanten gesendet
                 </p>
               </div>
             </div>
