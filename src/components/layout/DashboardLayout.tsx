@@ -39,12 +39,8 @@ export const DashboardLayout = ({
     icon: LayoutDashboard
   }, {
     href: '/suppliers',
-    label: t('nav.suppliers'),
+    label: t('nav.catalog'),
     icon: Users
-  }, {
-    href: '/articles',
-    label: t('nav.articles'),
-    icon: Package
   }, {
     href: '/orders',
     label: t('nav.orders'),
