@@ -12,7 +12,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useSuppliers, useCreateSupplier, useUpdateSupplier, useDeleteSupplier, Supplier, SupplierInput } from '@/hooks/useSuppliers';
 import { useArticles, Article } from '@/hooks/useArticles';
-import { Plus, Pencil, Trash2, Search, Mail, Phone, MapPin, User, Loader2, Upload, Hash, Euro, LayoutGrid, List, ChevronDown, ChevronRight, Minus, ShoppingCart, FileText, Printer, Send, Bell, Store } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, Loader2, Upload, ChevronDown, ChevronRight, Minus, FileText, Printer, Send, Bell, Store } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { SupplierLocationsDialog } from '@/components/suppliers/SupplierLocationsDialog';
 import { useSendSupplierInvitation } from '@/hooks/useSupplierPortal';
@@ -120,7 +120,7 @@ const Suppliers = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [topCategoryFilter, setTopCategoryFilter] = useState<string>('all');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
+  
   const [expandedSuppliers, setExpandedSuppliers] = useState<Set<string>>(new Set());
   const [selectedSuppliers, setSelectedSuppliers] = useState<Set<string>>(new Set());
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -522,14 +522,6 @@ const Suppliers = () => {
               Mehrfachauswahl
             </Label>
           </div>
-          <div className="flex border border-border rounded-lg overflow-hidden">
-            <Button variant={viewMode === 'list' ? 'default' : 'ghost'} size="icon" className="rounded-none h-10 w-10" onClick={() => setViewMode('list')}>
-              <List className="w-4 h-4" />
-            </Button>
-            <Button variant={viewMode === 'grid' ? 'default' : 'ghost'} size="icon" className="rounded-none h-10 w-10" onClick={() => setViewMode('grid')}>
-              <LayoutGrid className="w-4 h-4" />
-            </Button>
-          </div>
           {multiSelectEnabled && selectedSuppliers.size > 0 && <Button onClick={handlePrintCombined} variant="secondary">
               <Printer className="w-4 h-4 mr-2" />
               {selectedSuppliers.size} Listen drucken
@@ -543,7 +535,7 @@ const Suppliers = () => {
             <p className="text-muted-foreground">
               {searchQuery || topCategoryFilter !== 'all' || categoryFilter !== 'all' ? 'Keine Lieferanten gefunden' : 'Noch keine Lieferanten. Fügen Sie Ihren ersten Lieferanten hinzu.'}
             </p>
-          </div> : viewMode === 'list' ? (/* List View with expandable articles */
+          </div> : (
       <div className="bg-card border border-border rounded-xl overflow-hidden">
             <Table>
               <TableHeader>
@@ -677,80 +669,6 @@ const Suppliers = () => {
             })}
               </TableBody>
             </Table>
-          </div>) : (/* Grid View */
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredSuppliers?.map(supplier => {
-          const hasArticles = (articlesBySupplier[supplier.id]?.length || 0) > 0;
-          return <div key={supplier.id} className={`bg-card border border-border rounded-xl p-6 hover:border-primary/50 transition-colors ${selectedSuppliers.has(supplier.id) ? 'ring-2 ring-primary' : ''}`}>
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-start gap-3">
-                    {multiSelectEnabled && hasArticles && <Checkbox checked={selectedSuppliers.has(supplier.id)} onCheckedChange={() => toggleSupplierSelected(supplier.id)} className="mt-1" />}
-                    <div className="flex items-center gap-2">
-                      <h3 className="font-semibold text-foreground text-lg">{supplier.name}</h3>
-                      {pendingChangesBySupplier[supplier.id] > 0 && (
-                        <Badge 
-                          variant="destructive" 
-                          className="cursor-pointer animate-pulse"
-                          onClick={() => setChangesDialogSupplier(supplier)}
-                        >
-                          <Bell className="w-3 h-3 mr-1" />
-                          {pendingChangesBySupplier[supplier.id]}
-                        </Badge>
-                      )}
-                    </div>
-                  </div>
-                  <div className="flex gap-1">
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary" onClick={() => setLocationsDialogSupplier(supplier)} title="Standort-Zuordnungen">
-                      <Store className="w-4 h-4" />
-                    </Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary" onClick={() => handleSendInvitation(supplier)} disabled={invitingSupplierId === supplier.id || sendingInvitation} title="Einladung zum Lieferantenportal senden">
-                      {invitingSupplierId === supplier.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-                    </Button>
-                    {hasArticles && <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary" onClick={() => generateOrderListPdf(supplier, articlesBySupplier[supplier.id] || [])} title="Bestellliste drucken">
-                        <FileText className="w-4 h-4" />
-                      </Button>}
-                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => {
-                  setEditingSupplier(supplier);
-                  setIsDialogOpen(true);
-                }}>
-                      <Pencil className="w-4 h-4" />
-                    </Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => setDeletingSupplier(supplier)}>
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </div>
-                <div className="space-y-2 text-sm">
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <Mail className="w-4 h-4" />
-                    <span className="truncate">{supplier.email}</span>
-                  </div>
-                  {supplier.phone && <div className="flex items-center gap-2 text-muted-foreground">
-                      <Phone className="w-4 h-4" />
-                      <span>{supplier.phone}</span>
-                    </div>}
-                  {supplier.address && <div className="flex items-center gap-2 text-muted-foreground">
-                      <MapPin className="w-4 h-4" />
-                      <span className="truncate">{supplier.address}</span>
-                    </div>}
-                  {supplier.contact_person && <div className="flex items-center gap-2 text-muted-foreground">
-                      <User className="w-4 h-4" />
-                      <span>{supplier.contact_person}</span>
-                    </div>}
-                  {supplier.customer_number && <div className="flex items-center gap-2 text-muted-foreground">
-                      <Hash className="w-4 h-4" />
-                      <span>Kd-Nr: {supplier.customer_number}</span>
-                    </div>}
-                  {supplier.minimum_order_value && supplier.minimum_order_value > 0 && <div className="flex items-center gap-2 text-muted-foreground">
-                      <Euro className="w-4 h-4" />
-                      <span>Min: €{Number(supplier.minimum_order_value).toFixed(2)}</span>
-                    </div>}
-                </div>
-                <div className="mt-4 pt-4 border-t border-border">
-                  <Badge variant="secondary">{articlesBySupplier[supplier.id]?.length || 0} Artikel</Badge>
-                </div>
-              </div>;
-        })}
           </div>)}
       </div>
 
