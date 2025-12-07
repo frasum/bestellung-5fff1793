@@ -388,7 +388,7 @@ const Orders = () => {
                           >
                             {/* Compact Order Header */}
                             <CollapsibleTrigger className="w-full">
-                              <div className="flex items-center justify-between p-3 bg-card border border-border rounded-lg hover:bg-muted/50 transition-colors">
+                              <div className="flex items-center justify-between p-3 bg-card border border-border rounded-lg">
                                 <div className="flex items-center gap-3">
                                   <ChevronDown className={cn(
                                     "w-4 h-4 text-muted-foreground transition-transform duration-200",
