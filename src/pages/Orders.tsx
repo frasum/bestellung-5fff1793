@@ -325,6 +325,9 @@ const Orders = () => {
                                   <Badge className={cn(statusColors[order.status], "text-xs")}>
                                     {t(`orders.status.${order.status}`)}
                                   </Badge>
+                                  <span className="text-xs text-muted-foreground hidden sm:inline">
+                                    {order.order_items?.length || 0} {t('orders.items')}
+                                  </span>
                                 </div>
                                 <div className="flex items-center gap-4">
                                   <span className="text-sm text-muted-foreground hidden sm:inline">
