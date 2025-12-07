@@ -23,3 +23,6 @@ verify_jwt = false
 
 [functions.confirm-order]
 verify_jwt = false
+
+[functions.get-order-details]
+verify_jwt = false
