@@ -21,10 +21,11 @@ interface OrderItem {
 }
 
 // Helper function to create redirect response
-const createRedirectResponse = (status: string, orderNumber: string = "", supplierName: string = ""): Response => {
+const createRedirectResponse = (status: string, orderNumber: string = "", supplierName: string = "", orderId: string = ""): Response => {
   const params = new URLSearchParams({ status });
   if (orderNumber) params.set("order", orderNumber);
   if (supplierName) params.set("supplier", supplierName);
+  if (orderId) params.set("orderId", orderId);
   
   const redirectUrl = `${APP_URL}/order-confirmed?${params.toString()}`;
   console.log("Redirecting to:", redirectUrl);
@@ -283,7 +284,7 @@ serve(async (req) => {
     }
 
     console.log("=== CONFIRM-ORDER SUCCESS ===");
-    return createRedirectResponse("success", orderNumber, supplierName);
+    return createRedirectResponse("success", orderNumber, supplierName, tokenData.order_id);
 
   } catch (error: any) {
     console.error("Unhandled error in confirm-order:", error);
