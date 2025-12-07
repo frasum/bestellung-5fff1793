@@ -9,7 +9,7 @@ import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { toast } from 'sonner';
 import { useEmailTemplate, getDefaultTemplate } from '@/hooks/useEmailTemplates';
-import { useOrganization } from '@/hooks/useSettings';
+
 
 interface OrderItem {
   article_name: string;
@@ -54,10 +54,8 @@ export const EmailPreviewDialog = ({
   const [isEditingAddress, setIsEditingAddress] = useState(false);
   const [confirmedEmails, setConfirmedEmails] = useState<Set<number>>(new Set());
   const { data: emailTemplate } = useEmailTemplate();
-  const { data: organization } = useOrganization();
   const defaultTemplate = getDefaultTemplate();
   const currentEmail = emailPreviews[currentIndex];
-  const advancedViewEnabled = organization?.advanced_view_enabled || false;
 
   // Reset state when dialog closes
   useEffect(() => {
@@ -69,8 +67,8 @@ export const EmailPreviewDialog = ({
     }
   }, [open]);
 
-  // Check if all emails are confirmed (or advanced view is disabled)
-  const allEmailsConfirmed = !advancedViewEnabled || confirmedEmails.size === emailPreviews.length;
+  // Check if all emails are confirmed
+  const allEmailsConfirmed = confirmedEmails.size === emailPreviews.length;
 
   // Toggle current email confirmation
   const toggleCurrentEmailConfirmed = () => {
@@ -195,7 +193,7 @@ ${signatureText}`;
             E-Mail Vorschau
             {emailPreviews.length > 1 && (
               <span className="text-sm font-normal text-muted-foreground ml-2">
-                ({currentIndex + 1} von {emailPreviews.length}{advancedViewEnabled ? ` | ${confirmedEmails.size}/${emailPreviews.length} geprüft` : ''})
+                ({currentIndex + 1} von {emailPreviews.length} | {confirmedEmails.size}/{emailPreviews.length} geprüft)
               </span>
             )}
           </DialogTitle>
@@ -221,33 +219,31 @@ ${signatureText}`;
               </div>
             </div>
 
-            {/* Confirmation Checkbox - only shown when advanced view is enabled */}
-            {advancedViewEnabled && (
-              <div 
-                className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
-                  confirmedEmails.has(currentIndex) 
-                    ? 'border-green-500/50 bg-green-500/10' 
-                    : 'border-primary/30 bg-primary/5 hover:bg-primary/10'
-                }`}
-                onClick={toggleCurrentEmailConfirmed}
+            {/* Confirmation Checkbox */}
+            <div 
+              className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
+                confirmedEmails.has(currentIndex) 
+                  ? 'border-green-500/50 bg-green-500/10' 
+                  : 'border-primary/30 bg-primary/5 hover:bg-primary/10'
+              }`}
+              onClick={toggleCurrentEmailConfirmed}
+            >
+              <Checkbox 
+                id={`confirm-email-${currentIndex}`}
+                checked={confirmedEmails.has(currentIndex)}
+                onCheckedChange={toggleCurrentEmailConfirmed}
+                className="h-5 w-5"
+              />
+              <Label 
+                htmlFor={`confirm-email-${currentIndex}`} 
+                className="text-sm font-medium cursor-pointer flex-1"
               >
-                <Checkbox 
-                  id={`confirm-email-${currentIndex}`}
-                  checked={confirmedEmails.has(currentIndex)}
-                  onCheckedChange={toggleCurrentEmailConfirmed}
-                  className="h-5 w-5"
-                />
-                <Label 
-                  htmlFor={`confirm-email-${currentIndex}`} 
-                  className="text-sm font-medium cursor-pointer flex-1"
-                >
-                  E-Mail an {currentEmail.supplierName} geprüft
-                </Label>
-                {confirmedEmails.has(currentIndex) && (
-                  <span className="text-xs text-green-600 dark:text-green-400 font-medium">✓ Bestätigt</span>
-                )}
-              </div>
-            )}
+                E-Mail an {currentEmail.supplierName} geprüft
+              </Label>
+              {confirmedEmails.has(currentIndex) && (
+                <span className="text-xs text-green-600 dark:text-green-400 font-medium">✓ Bestätigt</span>
+              )}
+            </div>
 
             {/* Email Body Preview */}
             <div className="border border-border rounded-lg overflow-hidden">
@@ -431,14 +427,14 @@ ${signatureText}`;
           <Button 
             onClick={onConfirm} 
             disabled={isSubmitting || !allEmailsConfirmed}
-            title={advancedViewEnabled && !allEmailsConfirmed ? `Bitte alle ${emailPreviews.length} E-Mails prüfen` : undefined}
+            title={!allEmailsConfirmed ? `Bitte alle ${emailPreviews.length} E-Mails prüfen` : undefined}
           >
             {isSubmitting ? (
               <>
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                 Sende Bestellungen...
               </>
-            ) : advancedViewEnabled && !allEmailsConfirmed ? (
+            ) : !allEmailsConfirmed ? (
               <>
                 <Check className="w-4 h-4 mr-2" />
                 {confirmedEmails.size}/{emailPreviews.length} geprüft
