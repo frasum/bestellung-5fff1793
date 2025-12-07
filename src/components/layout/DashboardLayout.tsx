@@ -4,10 +4,12 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { LayoutDashboard, Users, Package, ShoppingCart, FileText, BarChart3, Settings, LogOut, Menu, X, ClipboardList } from 'lucide-react';
+import { LayoutDashboard, Users, Package, ShoppingCart, FileText, BarChart3, Settings, LogOut, Menu, X, ClipboardList, FlaskConical } from 'lucide-react';
 import { GlobalSearch } from '@/components/GlobalSearch';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import { LocationSwitcher } from '@/components/LocationSwitcher';
+import { useOrganization } from '@/hooks/useSettings';
+import { Badge } from '@/components/ui/badge';
 import logoImage from '@/assets/logo.png';
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -28,6 +30,8 @@ export const DashboardLayout = ({
   
   // Enable keyboard shortcuts
   useKeyboardShortcuts();
+  
+  const { data: organization } = useOrganization();
   const navItems = [{
     href: '/dashboard',
     label: t('nav.dashboard'),
@@ -75,9 +79,21 @@ export const DashboardLayout = ({
           <img src={logoImage} alt="OrderFox.pro" className="w-8 h-8 rounded-lg object-cover" />
           <span className="font-bold text-lg text-foreground">OrderFox.pro</span>
         </Link>
-        <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-2 text-muted-foreground hover:text-foreground">
-          {sidebarOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-        </button>
+        <div className="flex items-center gap-2">
+          {organization?.test_mode_enabled && (
+            <Badge 
+              variant="outline" 
+              className="bg-amber-500/10 text-amber-600 border-amber-500/30 cursor-pointer hover:bg-amber-500/20"
+              onClick={() => navigate('/settings')}
+            >
+              <FlaskConical className="w-3 h-3 mr-1" />
+              Test
+            </Badge>
+          )}
+          <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-2 text-muted-foreground hover:text-foreground">
+            {sidebarOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+          </button>
+        </div>
       </header>
 
       {/* Desktop Top Bar */}
@@ -85,11 +101,23 @@ export const DashboardLayout = ({
         <div className="flex items-center gap-4">
           <GlobalSearch />
         </div>
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          <kbd className="px-1.5 py-0.5 rounded border border-border bg-muted">Shift</kbd>
-          <span>+</span>
-          <kbd className="px-1.5 py-0.5 rounded border border-border bg-muted">?</kbd>
-          <span className="ml-1">Hilfe</span>
+        <div className="flex items-center gap-3">
+          {organization?.test_mode_enabled && (
+            <Badge 
+              variant="outline" 
+              className="bg-amber-500/10 text-amber-600 border-amber-500/30 cursor-pointer hover:bg-amber-500/20"
+              onClick={() => navigate('/settings')}
+            >
+              <FlaskConical className="w-3 h-3 mr-1" />
+              Testmodus aktiv
+            </Badge>
+          )}
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <kbd className="px-1.5 py-0.5 rounded border border-border bg-muted">Shift</kbd>
+            <span>+</span>
+            <kbd className="px-1.5 py-0.5 rounded border border-border bg-muted">?</kbd>
+            <span className="ml-1">Hilfe</span>
+          </div>
         </div>
       </div>
 
