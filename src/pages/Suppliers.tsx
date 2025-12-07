@@ -35,8 +35,8 @@ import { SupplierChangesDialog } from '@/components/suppliers/SupplierChangesDia
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 const supplierSchema = z.object({
-  name: z.string().min(2, 'Name must be at least 2 characters'),
-  email: z.string().email('Please enter a valid email'),
+  name: z.string().min(2, 'Name muss mindestens 2 Zeichen haben'),
+  email: z.string().email('Bitte geben Sie eine gültige E-Mail-Adresse ein'),
   phone: z.string().optional(),
   address: z.string().optional(),
   contact_person: z.string().optional(),
@@ -344,14 +344,14 @@ const Suppliers = () => {
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">Suppliers</h1>
-            <p className="text-muted-foreground mt-1">Manage your suppliers and their contact information</p>
+            <h1 className="text-3xl font-bold text-foreground">Lieferanten</h1>
+            <p className="text-muted-foreground mt-1">Verwalten Sie Ihre Lieferanten und deren Kontaktdaten</p>
           </div>
           <div className="flex gap-2">
-            <ExportMenu filename="suppliers" title="Suppliers" headers={['Name', 'Email', 'Phone', 'Address', 'Contact Person', 'Customer Number', 'Status']} getData={() => suppliers?.map(s => [s.name, s.email, s.phone || '', s.address || '', s.contact_person || '', s.customer_number || '', s.is_active ? 'Active' : 'Inactive']) || []} disabled={!suppliers?.length} />
+            <ExportMenu filename="suppliers" title="Lieferanten" headers={['Name', 'Email', 'Telefon', 'Adresse', 'Ansprechpartner', 'Kundennummer', 'Status']} getData={() => suppliers?.map(s => [s.name, s.email, s.phone || '', s.address || '', s.contact_person || '', s.customer_number || '', s.is_active ? 'Aktiv' : 'Inaktiv']) || []} disabled={!suppliers?.length} />
             <Button variant="outline" onClick={() => setIsImportOpen(true)}>
               <Upload className="w-4 h-4 mr-2" />
-              Import
+              Importieren
             </Button>
             <Dialog open={isDialogOpen} onOpenChange={open => {
             setIsDialogOpen(open);
@@ -360,16 +360,16 @@ const Suppliers = () => {
               <DialogTrigger asChild>
                 <Button>
                   <Plus className="w-4 h-4 mr-2" />
-                  Add Supplier
+                  Lieferant hinzufügen
                 </Button>
               </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>{editingSupplier ? 'Edit Supplier' : 'Add New Supplier'}</DialogTitle>
+                <DialogTitle>{editingSupplier ? 'Lieferant bearbeiten' : 'Neuer Lieferant'}</DialogTitle>
               </DialogHeader>
               <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="name">Company Name *</Label>
+                  <Label htmlFor="name">Firmenname *</Label>
                   <Input id="name" {...form.register('name')} placeholder="Fresh Farms Italia" />
                   {form.formState.errors.name && <p className="text-sm text-destructive">{form.formState.errors.name.message}</p>}
                 </div>
@@ -379,23 +379,23 @@ const Suppliers = () => {
                   {form.formState.errors.email && <p className="text-sm text-destructive">{form.formState.errors.email.message}</p>}
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="phone">Phone</Label>
+                  <Label htmlFor="phone">Telefon</Label>
                   <Input id="phone" {...form.register('phone')} placeholder="+39 02 1234567" />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="address">Address</Label>
+                  <Label htmlFor="address">Adresse</Label>
                   <Input id="address" {...form.register('address')} placeholder="Via Roma 123, Milano" />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="contact_person">Contact Person</Label>
+                  <Label htmlFor="contact_person">Ansprechpartner</Label>
                   <Input id="contact_person" {...form.register('contact_person')} placeholder="Marco Rossi" />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="customer_number">Customer Number</Label>
+                  <Label htmlFor="customer_number">Kundennummer</Label>
                   <Input id="customer_number" {...form.register('customer_number')} placeholder="KD-12345" />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="minimum_order_value">Minimum Order Value (€)</Label>
+                  <Label htmlFor="minimum_order_value">Mindestbestellwert (€)</Label>
                   <Input id="minimum_order_value" type="number" step="0.01" min="0" {...form.register('minimum_order_value')} placeholder="50.00" />
                 </div>
                 <div className="space-y-2">
@@ -462,10 +462,10 @@ const Suppliers = () => {
                     setIsDialogOpen(false);
                     setEditingSupplier(null);
                   }}>
-                    Cancel
+                    Abbrechen
                   </Button>
                   <Button type="submit" className="flex-1" disabled={createSupplier.isPending || updateSupplier.isPending}>
-                    {createSupplier.isPending || updateSupplier.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : editingSupplier ? 'Update' : 'Create'}
+                    {createSupplier.isPending || updateSupplier.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : editingSupplier ? 'Speichern' : 'Erstellen'}
                   </Button>
                 </div>
               </form>
@@ -474,7 +474,7 @@ const Suppliers = () => {
           </div>
         </div>
 
-        <CsvImportDialog open={isImportOpen} onOpenChange={setIsImportOpen} title="Import Suppliers" fields={SUPPLIER_IMPORT_FIELDS} onImport={async data => {
+        <CsvImportDialog open={isImportOpen} onOpenChange={setIsImportOpen} title="Lieferanten importieren" fields={SUPPLIER_IMPORT_FIELDS} onImport={async data => {
         await importSuppliers.mutateAsync(data);
       }} templateFileName="suppliers_template.csv" />
 

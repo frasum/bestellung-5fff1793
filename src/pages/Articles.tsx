@@ -64,18 +64,18 @@ import { useImportArticles } from '@/hooks/useImport';
 import { ExportMenu } from '@/components/ExportMenu';
 
 const articleSchema = z.object({
-  supplier_id: z.string().min(1, 'Please select a supplier'),
-  name: z.string().min(2, 'Name must be at least 2 characters'),
+  supplier_id: z.string().min(1, 'Bitte wählen Sie einen Lieferanten'),
+  name: z.string().min(2, 'Name muss mindestens 2 Zeichen haben'),
   description: z.string().optional(),
   sku: z.string().optional(),
-  unit: z.string().min(1, 'Unit is required'),
-  price: z.string().min(1, 'Price is required').refine((val) => !isNaN(Number(val)) && Number(val) > 0, 'Price must be a positive number'),
+  unit: z.string().min(1, 'Einheit ist erforderlich'),
+  price: z.string().min(1, 'Preis ist erforderlich').refine((val) => !isNaN(Number(val)) && Number(val) > 0, 'Preis muss eine positive Zahl sein'),
   category: z.string().optional(),
 });
 
 type ArticleFormData = z.infer<typeof articleSchema>;
 
-const DEFAULT_UNITS = ['kg', 'g', 'L', 'ml', 'pcs', 'box', 'bunch', 'pack'];
+const DEFAULT_UNITS = ['kg', 'g', 'L', 'ml', 'Stk', 'Karton', 'Bund', 'Packung'];
 
 const ARTICLE_IMPORT_FIELDS: ImportField[] = [
   { name: 'name', label: 'Name', required: true },
@@ -303,14 +303,14 @@ const Articles = () => {
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">Articles</h1>
-            <p className="text-muted-foreground mt-1">Browse and manage your product catalog</p>
+            <h1 className="text-3xl font-bold text-foreground">Artikel</h1>
+            <p className="text-muted-foreground mt-1">Verwalten Sie Ihren Produktkatalog</p>
           </div>
           <div className="flex items-center gap-3">
             <ExportMenu
               filename="articles"
-              title="Articles"
-              headers={['Name', 'Supplier', 'Price', 'Unit', 'SKU', 'Category', 'Status']}
+              title="Artikel"
+              headers={['Name', 'Lieferant', 'Preis', 'Einheit', 'SKU', 'Kategorie', 'Status']}
               getData={() => articles?.map(a => [
                 a.name,
                 a.suppliers?.name || '',
@@ -318,13 +318,13 @@ const Articles = () => {
                 a.unit,
                 a.sku || '',
                 a.category || '',
-                a.is_active ? 'Active' : 'Inactive'
+                a.is_active ? 'Aktiv' : 'Inaktiv'
               ]) || []}
               disabled={!articles?.length}
             />
             <Button variant="outline" onClick={() => setIsImportOpen(true)}>
               <Upload className="w-4 h-4 mr-2" />
-              Import
+              Importieren
             </Button>
             <Dialog open={isDialogOpen} onOpenChange={(open) => {
               setIsDialogOpen(open);
@@ -333,16 +333,16 @@ const Articles = () => {
               <DialogTrigger asChild>
                 <Button>
                   <Plus className="w-4 h-4 mr-2" />
-                  Add Article
+                  Artikel hinzufügen
                 </Button>
               </DialogTrigger>
               <DialogContent className="max-w-md">
                 <DialogHeader>
-                  <DialogTitle>{editingArticle ? 'Edit Article' : 'Add New Article'}</DialogTitle>
+                  <DialogTitle>{editingArticle ? 'Artikel bearbeiten' : 'Neuer Artikel'}</DialogTitle>
                 </DialogHeader>
                 <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
                   <div className="space-y-2">
-                    <Label>Supplier *</Label>
+                    <Label>Lieferant *</Label>
                     <Controller
                       name="supplier_id"
                       control={form.control}
@@ -352,7 +352,7 @@ const Articles = () => {
                           <>
                             <Select onValueChange={field.onChange} value={field.value}>
                               <SelectTrigger className="bg-card">
-                                <SelectValue placeholder="Select supplier" />
+                                <SelectValue placeholder="Lieferant auswählen" />
                               </SelectTrigger>
                               <SelectContent className="bg-card border border-border z-50">
                                 {suppliers?.map((supplier) => (
@@ -394,19 +394,19 @@ const Articles = () => {
                     )}
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="description">Description</Label>
-                    <Input id="description" {...form.register('description')} placeholder="Premium Italian tomatoes" />
+                    <Label htmlFor="description">Beschreibung</Label>
+                    <Input id="description" {...form.register('description')} placeholder="Premium italienische Tomaten" />
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="price">Price (€) *</Label>
+                      <Label htmlFor="price">Preis (€) *</Label>
                       <Input id="price" type="number" step="0.01" {...form.register('price')} placeholder="4.50" />
                       {form.formState.errors.price && (
                         <p className="text-sm text-destructive">{form.formState.errors.price.message}</p>
                       )}
                     </div>
                     <div className="space-y-2">
-                      <Label>Unit *</Label>
+                      <Label>Einheit *</Label>
                       <Controller
                         name="unit"
                         control={form.control}
@@ -419,7 +419,7 @@ const Articles = () => {
                                 aria-expanded={unitPopoverOpen}
                                 className="w-full justify-between bg-card"
                               >
-                                {field.value || "Select"}
+                                {field.value || "Auswählen"}
                                 <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                               </Button>
                             </PopoverTrigger>
@@ -482,14 +482,14 @@ const Articles = () => {
                       <Input id="sku" {...form.register('sku')} placeholder="TOM-001" />
                     </div>
                     <div className="space-y-2">
-                      <Label>Category</Label>
+                      <Label>Kategorie</Label>
                       <Controller
                         name="category"
                         control={form.control}
                         render={({ field }) => (
                           <Select onValueChange={field.onChange} value={field.value || ''}>
                             <SelectTrigger className="bg-card">
-                              <SelectValue placeholder="Select" />
+                              <SelectValue placeholder="Auswählen" />
                             </SelectTrigger>
                             <SelectContent className="bg-card border border-border z-50">
                               {allCategories.map((cat) => (
@@ -506,12 +506,12 @@ const Articles = () => {
                       setIsDialogOpen(false);
                       setEditingArticle(null);
                     }}>
-                      Cancel
+                      Abbrechen
                     </Button>
                     <Button type="submit" className="flex-1" disabled={createArticle.isPending || updateArticle.isPending}>
                       {(createArticle.isPending || updateArticle.isPending) ? (
                         <Loader2 className="w-4 h-4 animate-spin" />
-                      ) : editingArticle ? 'Update' : 'Create'}
+                      ) : editingArticle ? 'Speichern' : 'Erstellen'}
                     </Button>
                   </div>
                 </form>
@@ -523,7 +523,7 @@ const Articles = () => {
         <CsvImportDialog
           open={isImportOpen}
           onOpenChange={setIsImportOpen}
-          title="Import Articles"
+          title="Artikel importieren"
           fields={ARTICLE_IMPORT_FIELDS}
           onImport={async (data, defaultSupplierId) => {
             await importArticles.mutateAsync({ articles: data, defaultSupplierId });
@@ -538,7 +538,7 @@ const Articles = () => {
           <div className="relative flex-1 max-w-md">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
-              placeholder="Search articles..."
+              placeholder="Artikel suchen..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10"
@@ -724,8 +724,8 @@ const Articles = () => {
             <Package className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
             <p className="text-muted-foreground">
               {searchQuery || selectedSuppliers.length > 0 || selectedCategory !== 'all'
-                ? 'No articles found matching your filters'
-                : 'No articles yet. Add your first article to get started.'}
+                ? 'Keine Artikel gefunden'
+                : 'Noch keine Artikel. Fügen Sie Ihren ersten Artikel hinzu.'}
             </p>
           </div>
         ) : viewMode === 'list' ? (
@@ -742,11 +742,11 @@ const Articles = () => {
                       />
                     </TableHead>
                   )}
-                  <TableHead className="text-center w-[140px]">Quantity</TableHead>
-                  <TableHead className="w-[25%]">Article</TableHead>
-                  <TableHead className="hidden md:table-cell w-[25%]">Description</TableHead>
-                  <TableHead className="hidden sm:table-cell">Supplier</TableHead>
-                  <TableHead className="text-right">Price</TableHead>
+                  <TableHead className="text-center w-[140px]">Menge</TableHead>
+                  <TableHead className="w-[25%]">Artikel</TableHead>
+                  <TableHead className="hidden md:table-cell w-[25%]">Beschreibung</TableHead>
+                  <TableHead className="hidden sm:table-cell">Lieferant</TableHead>
+                  <TableHead className="text-right">Preis</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>

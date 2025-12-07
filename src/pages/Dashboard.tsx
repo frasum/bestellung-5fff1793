@@ -38,7 +38,7 @@ const Dashboard = () => {
   const now = new Date();
   const monthlySpending = Array.from({ length: 6 }, (_, i) => {
     const date = new Date(now.getFullYear(), now.getMonth() - (5 - i), 1);
-    const monthName = date.toLocaleDateString('en-US', { month: 'short' });
+    const monthName = date.toLocaleDateString('de-DE', { month: 'short' });
     const monthOrders = orders.filter(order => {
       const orderDate = new Date(order.created_at);
       return orderDate.getMonth() === date.getMonth() && 
@@ -67,10 +67,10 @@ const Dashboard = () => {
   const maxMonthlyAmount = Math.max(...monthlySpending.map(m => m.amount), 1);
 
   const stats = [
-    { label: 'Total Orders', value: totalOrders, icon: ShoppingCart, color: 'text-primary' },
-    { label: 'Total Spent', value: `€${totalSpent.toLocaleString()}`, icon: BarChart3, color: 'text-success' },
-    { label: 'Active Suppliers', value: activeSuppliers, icon: Users, color: 'text-accent' },
-    { label: 'Pending Orders', value: pendingOrders, icon: Package, color: 'text-warning' },
+    { label: 'Bestellungen', value: totalOrders, icon: ShoppingCart, color: 'text-primary' },
+    { label: 'Gesamtausgaben', value: `€${totalSpent.toLocaleString('de-DE')}`, icon: BarChart3, color: 'text-success' },
+    { label: 'Aktive Lieferanten', value: activeSuppliers, icon: Users, color: 'text-accent' },
+    { label: 'Ausstehend', value: pendingOrders, icon: Package, color: 'text-warning' },
   ];
 
   return (
@@ -78,7 +78,7 @@ const Dashboard = () => {
       <div className="space-y-8">
         <div>
           <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
-          <p className="text-muted-foreground mt-1">Welcome back! Here's your procurement overview.</p>
+          <p className="text-muted-foreground mt-1">Willkommen zurück! Hier ist Ihre Beschaffungsübersicht.</p>
         </div>
 
         {/* Stats Grid */}
@@ -97,7 +97,7 @@ const Dashboard = () => {
         {/* Charts */}
         <div className="grid lg:grid-cols-2 gap-6">
           <div className="bg-card border border-border rounded-xl p-6">
-            <h2 className="text-lg font-semibold text-foreground mb-4">Monthly Spending</h2>
+            <h2 className="text-lg font-semibold text-foreground mb-4">Monatliche Ausgaben</h2>
             <div className="h-48 flex items-end justify-between gap-2">
               {monthlySpending.map((item, index) => (
                 <div key={index} className="flex-1 flex flex-col items-center gap-2">
@@ -112,9 +112,9 @@ const Dashboard = () => {
           </div>
 
           <div className="bg-card border border-border rounded-xl p-6">
-            <h2 className="text-lg font-semibold text-foreground mb-4">Top Suppliers</h2>
+            <h2 className="text-lg font-semibold text-foreground mb-4">Top Lieferanten</h2>
             {topSuppliers.length === 0 ? (
-              <p className="text-muted-foreground text-sm">No orders yet</p>
+              <p className="text-muted-foreground text-sm">Noch keine Bestellungen</p>
             ) : (
               <div className="space-y-4">
                 {topSuppliers.map((supplier, index) => (
