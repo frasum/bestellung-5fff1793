@@ -109,12 +109,6 @@ export const DashboardLayout = ({
               Testmodus aktiv
             </Badge>
           )}
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <kbd className="px-1.5 py-0.5 rounded border border-border bg-muted">Shift</kbd>
-            <span>+</span>
-            <kbd className="px-1.5 py-0.5 rounded border border-border bg-muted">?</kbd>
-            <span className="ml-1">Hilfe</span>
-          </div>
         </div>
       </div>
 
