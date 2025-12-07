@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLocationContext } from '@/contexts/LocationContext';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
-import { useOrders, useUpdateOrderStatus, Order } from '@/hooks/useOrders';
+import { useOrders, useUpdateOrderStatus, useDeleteTestOrders, Order } from '@/hooks/useOrders';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -19,9 +19,20 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { format, isAfter, isBefore, startOfDay, endOfDay, subDays, subMonths } from 'date-fns';
 import { de, enUS, fr } from 'date-fns/locale';
-import { Loader2, Package, CheckCircle2, Clock, Truck, XCircle, Eye, Search, X, ChevronDown } from 'lucide-react';
+import { Loader2, Package, CheckCircle2, Clock, Truck, XCircle, Eye, Search, X, ChevronDown, Trash2, FlaskConical } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { OrderEmailViewDialog } from '@/components/orders/OrderEmailViewDialog';
 import { supabase } from '@/integrations/supabase/client';
@@ -57,28 +68,39 @@ const Orders = () => {
   const { t, i18n } = useTranslation();
   const { data: orders, isLoading } = useOrders(activeLocation?.id);
   const updateStatus = useUpdateOrderStatus();
+  const deleteTestOrders = useDeleteTestOrders();
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [emailDialogOpen, setEmailDialogOpen] = useState(false);
   const locale = localeMap[i18n.language as keyof typeof localeMap] || de;
+
+  // Fetch organization info for test mode
+  const { data: orgData } = useQuery({
+    queryKey: ['organization-test-mode', user?.id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('profiles')
+        .select('organization_id, organizations(name, test_mode_enabled, test_email)')
+        .eq('id', user?.id)
+        .maybeSingle();
+      return {
+        name: data?.organizations?.name || 'Restaurant',
+        testModeEnabled: data?.organizations?.test_mode_enabled || false,
+        testEmail: data?.organizations?.test_email || '',
+      };
+    },
+    enabled: !!user?.id,
+  });
 
   // Filter states
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<Order['status'] | 'all'>('all');
   const [dateFilter, setDateFilter] = useState<DateFilter>('all');
 
-  // Fetch organization name for email preview
-  const { data: organization } = useQuery({
-    queryKey: ['organization', user?.id],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from('profiles')
-        .select('organization_id, organizations(name)')
-        .eq('id', user?.id)
-        .maybeSingle();
-      return data?.organizations?.name || 'Restaurant';
-    },
-    enabled: !!user?.id,
-  });
+  // Count test orders
+  const testOrdersCount = useMemo(() => {
+    if (!orders) return 0;
+    return orders.filter(order => order.is_test_order).length;
+  }, [orders]);
 
   // Filter orders
   const filteredOrders = useMemo(() => {
@@ -210,6 +232,58 @@ const Orders = () => {
           </Button>
         </div>
 
+        {/* Test Mode Banner */}
+        {orgData?.testModeEnabled && (
+          <div className="bg-warning/10 border border-warning/30 rounded-lg p-4">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <FlaskConical className="w-5 h-5 text-warning" />
+                <div>
+                  <p className="font-medium text-warning">{t('orders.testMode.banner')}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {t('orders.testMode.bannerDescription', { email: orgData.testEmail })}
+                  </p>
+                </div>
+              </div>
+              {testOrdersCount > 0 ? (
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="destructive" size="sm">
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      {t('orders.testMode.deleteAll')} ({testOrdersCount})
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>{t('orders.testMode.deleteConfirmTitle')}</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        {t('orders.testMode.deleteConfirmDescription', { count: testOrdersCount })}
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={() => deleteTestOrders.mutate()}
+                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                      >
+                        {deleteTestOrders.isPending ? (
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        ) : (
+                          <Trash2 className="w-4 h-4 mr-2" />
+                        )}
+                        {t('common.delete')}
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              ) : (
+                <span className="text-sm text-muted-foreground">
+                  {t('orders.testMode.noTestOrders')}
+                </span>
+              )}
+            </div>
+          </div>
+        )}
         {/* Filters */}
         <div className="flex flex-col sm:flex-row gap-3">
           <div className="relative flex-1">
@@ -322,6 +396,12 @@ const Orders = () => {
                                   )} />
                                   <StatusIcon className="w-4 h-4 text-primary" />
                                   <span className="font-medium text-foreground">{order.order_number}</span>
+                                  {order.is_test_order && (
+                                    <Badge className="bg-warning/20 text-warning text-xs">
+                                      <FlaskConical className="w-3 h-3 mr-1" />
+                                      {t('orders.testMode.badge')}
+                                    </Badge>
+                                  )}
                                   <Badge className={cn(statusColors[order.status], "text-xs")}>
                                     {t(`orders.status.${order.status}`)}
                                   </Badge>
@@ -412,7 +492,7 @@ const Orders = () => {
         open={emailDialogOpen}
         onOpenChange={setEmailDialogOpen}
         order={selectedOrder}
-        restaurantName={organization || 'Restaurant'}
+        restaurantName={orgData?.name || 'Restaurant'}
       />
     </DashboardLayout>
   );

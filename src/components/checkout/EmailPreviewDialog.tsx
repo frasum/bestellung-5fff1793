@@ -27,6 +27,7 @@ export interface EmailPreviewData {
   totalAmount: number;
   notes?: string;
   customerNumber?: string;
+  isTestMode?: boolean;
 }
 
 interface EmailPreviewDialogProps {

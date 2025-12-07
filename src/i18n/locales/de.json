@@ -47,7 +47,16 @@
       "delivered": "Geliefert",
       "cancelled": "Storniert"
     },
-    "ordersCount": "Bestellungen"
+    "ordersCount": "Bestellungen",
+    "testMode": {
+      "banner": "Testmodus aktiv",
+      "bannerDescription": "Test-Bestellungen werden an {{email}} gesendet",
+      "deleteAll": "Alle Test-Bestellungen löschen",
+      "deleteConfirmTitle": "Test-Bestellungen löschen",
+      "deleteConfirmDescription": "Möchten Sie wirklich alle {{count}} Test-Bestellungen unwiderruflich löschen?",
+      "badge": "TEST",
+      "noTestOrders": "Keine Test-Bestellungen vorhanden"
+    }
   },
   "common": {
     "save": "Speichern",

@@ -599,6 +599,7 @@ export type Database = {
           email_sent: boolean
           email_sent_at: string | null
           id: string
+          is_test_order: boolean
           location_id: string | null
           notes: string | null
           order_number: string
@@ -615,6 +616,7 @@ export type Database = {
           email_sent?: boolean
           email_sent_at?: string | null
           id?: string
+          is_test_order?: boolean
           location_id?: string | null
           notes?: string | null
           order_number: string
@@ -631,6 +633,7 @@ export type Database = {
           email_sent?: boolean
           email_sent_at?: string | null
           id?: string
+          is_test_order?: boolean
           location_id?: string | null
           notes?: string | null
           order_number?: string

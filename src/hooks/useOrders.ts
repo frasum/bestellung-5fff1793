@@ -17,6 +17,7 @@ export interface Order {
   email_sent_at: string | null;
   created_at: string;
   updated_at: string;
+  is_test_order: boolean;
   suppliers?: {
     id: string;
     name: string;
@@ -46,6 +47,7 @@ interface CreateOrderInput {
   deliveryAddress: string;
   notes?: string;
   restaurantName: string;
+  isTestOrder?: boolean;
 }
 
 export const useOrders = (locationId?: string) => {
@@ -109,6 +111,7 @@ export const useCreateOrder = () => {
           total_amount: totalAmount,
           delivery_address: input.deliveryAddress,
           notes: input.notes || null,
+          is_test_order: input.isTestOrder || false,
         })
         .select()
         .single();
@@ -206,6 +209,60 @@ export const useUpdateOrderStatus = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['orders'] });
       toast.success('Order status updated');
+    },
+    onError: (error: Error) => {
+      toast.error(error.message);
+    },
+  });
+};
+
+export const useDeleteTestOrders = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async () => {
+      // First, get all test orders for the organization
+      const { data: testOrders, error: fetchError } = await supabase
+        .from('orders')
+        .select('id')
+        .eq('is_test_order', true);
+
+      if (fetchError) throw fetchError;
+      if (!testOrders || testOrders.length === 0) return { deletedCount: 0 };
+
+      const orderIds = testOrders.map(o => o.id);
+
+      // Delete confirmation tokens first
+      const { error: tokenError } = await supabase
+        .from('order_confirmation_tokens')
+        .delete()
+        .in('order_id', orderIds);
+
+      if (tokenError) {
+        console.error('Error deleting confirmation tokens:', tokenError);
+      }
+
+      // Delete order items
+      const { error: itemsError } = await supabase
+        .from('order_items')
+        .delete()
+        .in('order_id', orderIds);
+
+      if (itemsError) throw itemsError;
+
+      // Delete orders
+      const { error: ordersError } = await supabase
+        .from('orders')
+        .delete()
+        .eq('is_test_order', true);
+
+      if (ordersError) throw ordersError;
+
+      return { deletedCount: testOrders.length };
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+      toast.success(`${data.deletedCount} Test-Bestellungen gelöscht`);
     },
     onError: (error: Error) => {
       toast.error(error.message);
