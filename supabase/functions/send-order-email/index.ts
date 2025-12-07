@@ -203,24 +203,73 @@ serve(async (req) => {
   try {
     const data: OrderEmailRequest = await req.json();
     
-    console.log(`Sending order email for order ${data.orderNumber} to ${data.supplierEmail}`);
-
-    const emailResponse = await resend.emails.send({
-      from: "OrderFox.pro <onboarding@resend.dev>",
-      to: [data.supplierEmail],
-      subject: `New Order #${data.orderNumber} from ${data.restaurantName}`,
-      html: generateEmailHtml(data),
-      text: generatePlainText(data),
-    });
-
-    console.log("Email sent successfully:", emailResponse);
-
-    // Update the order to mark email as sent
+    // Create Supabase client to fetch organization settings
     const supabaseClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
+    // Fetch test mode settings from organization
+    const { data: order } = await supabaseClient
+      .from("orders")
+      .select("organization_id")
+      .eq("id", data.orderId)
+      .single();
+
+    let isTestMode = false;
+    let testEmail: string | null = null;
+    let originalSupplierEmail = data.supplierEmail;
+
+    if (order?.organization_id) {
+      const { data: org } = await supabaseClient
+        .from("organizations")
+        .select("test_mode_enabled, test_email")
+        .eq("id", order.organization_id)
+        .single();
+
+      if (org?.test_mode_enabled && org?.test_email) {
+        isTestMode = true;
+        testEmail = org.test_email;
+        console.log(`Test mode enabled - redirecting email from ${data.supplierEmail} to ${testEmail}`);
+      }
+    }
+
+    const recipientEmail = isTestMode && testEmail ? testEmail : data.supplierEmail;
+    const subjectPrefix = isTestMode ? "[TEST] " : "";
+    
+    // Add test mode notice to email content if in test mode
+    let emailHtml = generateEmailHtml(data);
+    let emailText = generatePlainText(data);
+    
+    if (isTestMode) {
+      const testNotice = `
+        <div style="background: #fef3c7; border: 2px solid #f59e0b; border-radius: 8px; padding: 16px; margin-bottom: 20px;">
+          <p style="margin: 0; color: #92400e; font-weight: 600;">🧪 TESTMODUS</p>
+          <p style="margin: 8px 0 0 0; color: #78350f; font-size: 14px;">
+            Dies ist eine Test-E-Mail. Im Produktivmodus würde diese an <strong>${originalSupplierEmail}</strong> gesendet werden.
+          </p>
+        </div>
+      `;
+      emailHtml = emailHtml.replace(
+        '<div style="background: linear-gradient(135deg, #1e3a5f 0%, #2563eb 100%);',
+        testNotice + '<div style="background: linear-gradient(135deg, #1e3a5f 0%, #2563eb 100%);'
+      );
+      emailText = `[TESTMODUS] Diese E-Mail würde im Produktivmodus an ${originalSupplierEmail} gesendet werden.\n\n` + emailText;
+    }
+    
+    console.log(`Sending order email for order ${data.orderNumber} to ${recipientEmail}${isTestMode ? ' (TEST MODE)' : ''}`);
+
+    const emailResponse = await resend.emails.send({
+      from: "OrderFox.pro <onboarding@resend.dev>",
+      to: [recipientEmail],
+      subject: `${subjectPrefix}New Order #${data.orderNumber} from ${data.restaurantName}`,
+      html: emailHtml,
+      text: emailText,
+    });
+
+    console.log("Email sent successfully:", emailResponse);
+
+    // Update the order to mark email as sent
     const { error: updateError } = await supabaseClient
       .from("orders")
       .update({ 
