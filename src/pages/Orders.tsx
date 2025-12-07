@@ -331,7 +331,7 @@ const Orders = () => {
                                 </div>
                                 <div className="flex items-center gap-4">
                                   <span className="text-sm text-muted-foreground hidden sm:inline">
-                                    {format(new Date(order.created_at), 'dd.MM.yyyy', { locale })}
+                                    {format(new Date(order.created_at), 'EEEE d. MMM yyyy', { locale })}
                                   </span>
                                   <span className="font-bold text-foreground">€{Number(order.total_amount).toFixed(2)}</span>
                                 </div>
