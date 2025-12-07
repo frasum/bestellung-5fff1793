@@ -670,6 +670,7 @@ export type Database = {
       }
       organizations: {
         Row: {
+          advanced_view_enabled: boolean
           created_at: string
           id: string
           name: string
@@ -680,6 +681,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          advanced_view_enabled?: boolean
           created_at?: string
           id?: string
           name: string
@@ -690,6 +692,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          advanced_view_enabled?: boolean
           created_at?: string
           id?: string
           name?: string

@@ -34,6 +34,7 @@ export interface Organization {
   trial_ends_at: string | null;
   test_mode_enabled: boolean;
   test_email: string | null;
+  advanced_view_enabled: boolean;
 }
 
 export const useOrganization = () => {
@@ -67,7 +68,7 @@ export const useUpdateOrganization = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (updates: { id: string; name?: string; test_mode_enabled?: boolean; test_email?: string | null }) => {
+    mutationFn: async (updates: { id: string; name?: string; test_mode_enabled?: boolean; test_email?: string | null; advanced_view_enabled?: boolean }) => {
       const { id, ...data } = updates;
       const { error } = await supabase
         .from('organizations')
