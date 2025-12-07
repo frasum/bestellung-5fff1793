@@ -335,6 +335,17 @@ const OrganizationTab = () => {
   const { data: organization, isLoading } = useOrganization();
   const updateOrganization = useUpdateOrganization();
   const [name, setName] = useState('');
+  const [testModeEnabled, setTestModeEnabled] = useState(false);
+  const [testEmail, setTestEmail] = useState('');
+  const [testEmailError, setTestEmailError] = useState('');
+
+  // Initialize test mode state when organization loads
+  useState(() => {
+    if (organization) {
+      setTestModeEnabled(organization.test_mode_enabled || false);
+      setTestEmail(organization.test_email || '');
+    }
+  });
 
   const handleSave = () => {
     if (organization && name.trim()) {
@@ -342,46 +353,159 @@ const OrganizationTab = () => {
     }
   };
 
+  const validateEmail = (email: string): boolean => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
+  const handleTestModeToggle = (enabled: boolean) => {
+    if (!organization) return;
+    
+    if (enabled && !testEmail) {
+      setTestEmailError('Bitte geben Sie eine Test-E-Mail-Adresse ein');
+      return;
+    }
+    
+    if (enabled && !validateEmail(testEmail)) {
+      setTestEmailError('Bitte geben Sie eine gültige E-Mail-Adresse ein');
+      return;
+    }
+
+    setTestEmailError('');
+    setTestModeEnabled(enabled);
+    updateOrganization.mutate({ 
+      id: organization.id, 
+      test_mode_enabled: enabled,
+      test_email: enabled ? testEmail : organization.test_email
+    });
+  };
+
+  const handleTestEmailSave = () => {
+    if (!organization) return;
+    
+    if (!validateEmail(testEmail)) {
+      setTestEmailError('Bitte geben Sie eine gültige E-Mail-Adresse ein');
+      return;
+    }
+
+    setTestEmailError('');
+    updateOrganization.mutate({ 
+      id: organization.id, 
+      test_email: testEmail 
+    });
+  };
+
   if (isLoading) {
     return <Card><CardContent className="p-6">Loading...</CardContent></Card>;
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Organization Profile</CardTitle>
-        <CardDescription>Manage your organization details</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        <div className="space-y-2">
-          <Label htmlFor="org-name">Organization Name</Label>
-          <Input
-            id="org-name"
-            defaultValue={organization?.name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Enter organization name"
-          />
-        </div>
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>Organization Profile</CardTitle>
+          <CardDescription>Manage your organization details</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="space-y-2">
+            <Label htmlFor="org-name">Organization Name</Label>
+            <Input
+              id="org-name"
+              defaultValue={organization?.name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Enter organization name"
+            />
+          </div>
 
-        <div className="space-y-2">
-          <Label>Subscription</Label>
-          <div className="flex items-center gap-2">
-            <Badge variant="secondary" className="capitalize">
-              {organization?.subscription_tier || 'free'}
-            </Badge>
-            {organization?.trial_ends_at && (
-              <span className="text-sm text-muted-foreground">
-                Trial ends: {new Date(organization.trial_ends_at).toLocaleDateString()}
-              </span>
+          <div className="space-y-2">
+            <Label>Subscription</Label>
+            <div className="flex items-center gap-2">
+              <Badge variant="secondary" className="capitalize">
+                {organization?.subscription_tier || 'free'}
+              </Badge>
+              {organization?.trial_ends_at && (
+                <span className="text-sm text-muted-foreground">
+                  Trial ends: {new Date(organization.trial_ends_at).toLocaleDateString()}
+                </span>
+              )}
+            </div>
+          </div>
+
+          <Button onClick={handleSave} disabled={updateOrganization.isPending}>
+            {updateOrganization.isPending ? 'Saving...' : 'Save Changes'}
+          </Button>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Mail className="h-5 w-5" />
+            E-Mail Testmodus
+          </CardTitle>
+          <CardDescription>
+            Im Testmodus werden alle Bestellungen an eine Test-E-Mail-Adresse gesendet, nicht an die Lieferanten
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg border">
+            <div className="space-y-0.5">
+              <Label htmlFor="test-mode" className="text-base font-medium">
+                Testmodus aktivieren
+              </Label>
+              <p className="text-sm text-muted-foreground">
+                E-Mails werden an die Test-Adresse statt an Lieferanten gesendet
+              </p>
+            </div>
+            <Switch
+              id="test-mode"
+              checked={organization?.test_mode_enabled || false}
+              onCheckedChange={handleTestModeToggle}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="test-email">Test-E-Mail-Adresse</Label>
+            <div className="flex gap-2">
+              <Input
+                id="test-email"
+                type="email"
+                value={testEmail || organization?.test_email || ''}
+                onChange={(e) => {
+                  setTestEmail(e.target.value);
+                  setTestEmailError('');
+                }}
+                placeholder="test@beispiel.de"
+                className="flex-1"
+              />
+              <Button 
+                onClick={handleTestEmailSave} 
+                disabled={updateOrganization.isPending || !testEmail}
+                variant="outline"
+              >
+                Speichern
+              </Button>
+            </div>
+            {testEmailError && (
+              <p className="text-sm text-destructive">{testEmailError}</p>
             )}
           </div>
-        </div>
 
-        <Button onClick={handleSave} disabled={updateOrganization.isPending}>
-          {updateOrganization.isPending ? 'Saving...' : 'Save Changes'}
-        </Button>
-      </CardContent>
-    </Card>
+          {organization?.test_mode_enabled && (
+            <div className="flex items-start gap-3 p-4 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg">
+              <span className="text-xl">⚠️</span>
+              <div>
+                <p className="font-medium text-amber-800 dark:text-amber-200">Testmodus ist aktiv</p>
+                <p className="text-sm text-amber-700 dark:text-amber-300 mt-1">
+                  Alle E-Mail-Bestellungen werden an <strong>{organization.test_email}</strong> gesendet.
+                  Deaktivieren Sie den Testmodus, um E-Mails an echte Lieferanten zu senden.
+                </p>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
   );
 };
 
