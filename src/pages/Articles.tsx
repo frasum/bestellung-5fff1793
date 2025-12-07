@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useState } from 'react';
+import { Fragment, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
@@ -47,7 +47,7 @@ import {
   CommandItem,
   CommandList,
 } from '@/components/ui/command';
-import { Check, ChevronsUpDown, Tags, History } from 'lucide-react';
+import { Check, ChevronsUpDown, Tags, History, ChevronRight } from 'lucide-react';
 import { useSuppliers } from '@/hooks/useSuppliers';
 import { PriceHistoryPopover } from '@/components/suppliers/PriceHistoryPopover';
 import { useCategories } from '@/hooks/useCategories';
@@ -58,6 +58,7 @@ import { useForm, Controller } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Badge } from '@/components/ui/badge';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { CsvImportDialog, ImportField } from '@/components/CsvImportDialog';
 import { useImportArticles } from '@/hooks/useImport';
 import { ExportMenu } from '@/components/ExportMenu';
@@ -104,6 +105,7 @@ const Articles = () => {
   const [customCategory, setCustomCategory] = useState('');
   const [unitPopoverOpen, setUnitPopoverOpen] = useState(false);
   const [customUnit, setCustomUnit] = useState('');
+  const [openSuppliers, setOpenSuppliers] = useState<Set<string>>(new Set());
 
   const { data: articles, isLoading } = useArticles();
   const { data: suppliers } = useSuppliers();
@@ -219,6 +221,39 @@ const Articles = () => {
     if (supplierCompare !== 0) return supplierCompare;
     return a.name.localeCompare(b.name, 'de');
   });
+
+  // Group articles by supplier
+  const groupedBySupplier = useMemo(() => {
+    const groups: { supplier: { id: string; name: string }; articles: typeof sortedArticles }[] = [];
+    const groupMap = new Map<string, typeof sortedArticles>();
+    
+    sortedArticles?.forEach(article => {
+      const supplierId = article.supplier_id;
+      if (!groupMap.has(supplierId)) {
+        groupMap.set(supplierId, []);
+      }
+      groupMap.get(supplierId)!.push(article);
+    });
+    
+    groupMap.forEach((articles, supplierId) => {
+      const supplierName = articles[0]?.suppliers?.name || 'Unbekannt';
+      groups.push({ supplier: { id: supplierId, name: supplierName }, articles });
+    });
+    
+    return groups.sort((a, b) => a.supplier.name.localeCompare(b.supplier.name, 'de'));
+  }, [sortedArticles]);
+
+  const toggleSupplier = (supplierId: string) => {
+    setOpenSuppliers(prev => {
+      const next = new Set(prev);
+      if (next.has(supplierId)) {
+        next.delete(supplierId);
+      } else {
+        next.add(supplierId);
+      }
+      return next;
+    });
+  };
 
   // Extract categories from articles for backward compatibility (used in CategoryFilterDropdown)
   const articleCategoriesForFilter = (articles?.map((a) => a.category).filter(Boolean) || []) as string[];
@@ -724,127 +759,141 @@ const Articles = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {sortedArticles?.map((article, index) => {
-                  const cartQty = getCartQuantity(article.id);
-                  const prevArticle = index > 0 ? sortedArticles[index - 1] : null;
-                  const isNewSupplierGroup = !prevArticle || prevArticle.supplier_id !== article.supplier_id;
-                  const supplierName = article.suppliers?.name || 'Unbekannt';
-                  
-                  return (
-                    <Fragment key={article.id}>
-                      {isNewSupplierGroup && (
-                        <TableRow className="bg-muted/50 hover:bg-muted/50">
+                {groupedBySupplier.map((group) => (
+                  <Collapsible
+                    key={group.supplier.id}
+                    open={openSuppliers.has(group.supplier.id)}
+                    onOpenChange={() => toggleSupplier(group.supplier.id)}
+                    asChild
+                  >
+                    <Fragment>
+                      <CollapsibleTrigger asChild>
+                        <TableRow className="bg-muted/50 cursor-pointer">
                           <TableCell colSpan={advancedViewEnabled ? 6 : 5} className="py-2 px-4">
-                            <span className="font-semibold text-sm text-foreground">{supplierName}</span>
+                            <div className="flex items-center gap-2">
+                              <ChevronRight className={cn("h-4 w-4 transition-transform", openSuppliers.has(group.supplier.id) && "rotate-90")} />
+                              <span className="font-semibold text-sm text-foreground">{group.supplier.name}</span>
+                              <span className="text-xs text-muted-foreground">({group.articles?.length || 0} Artikel)</span>
+                            </div>
                           </TableCell>
                         </TableRow>
-                      )}
-                      <TableRow className={cn("group h-10", cartQty > 0 && "bg-destructive/10")}>
-                      {advancedViewEnabled && (
-                        <TableCell className="py-2">
-                          <Checkbox
-                            checked={selectedArticles.has(article.id)}
-                            onCheckedChange={() => toggleArticleSelected(article.id)}
-                          />
-                        </TableCell>
-                      )}
-                      <TableCell className="py-2">
-                        <div className="flex items-center justify-center gap-1">
-                          <Button
-                            size="icon"
-                            variant="outline"
-                            className="h-8 w-8"
-                            onClick={() => updateQuantity(article.id, cartQty - 1)}
-                            disabled={cartQty === 0}
-                          >
-                            <Minus className="w-3 h-3" />
-                          </Button>
-                          <input
-                            type="text"
-                            inputMode="numeric"
-                            value={cartQty}
-                            onChange={(e) => {
-                              const val = parseInt(e.target.value, 10);
-                              if (!isNaN(val) && val >= 0) {
-                                updateQuantity(article.id, val);
-                              } else if (e.target.value === '') {
-                                updateQuantity(article.id, 0);
-                              }
-                            }}
-                            onFocus={(e) => {
-                              const target = e.target;
-                              setTimeout(() => target.select(), 0);
-                            }}
-                            className={cn(
-                              "w-12 h-8 text-center font-medium rounded-md border border-input bg-background",
-                              "focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1",
-                              cartQty > 0 ? "text-destructive" : "text-foreground"
-                            )}
-                          />
-                          <Button
-                            size="icon"
-                            variant="outline"
-                            className="h-8 w-8"
-                            onClick={() => addItem(article, 1)}
-                          >
-                            <Plus className="w-3 h-3" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                      <TableCell className="py-2">
-                        <div className="flex items-center gap-3">
-                          <div className="min-w-0 flex-1">
-                            <p className="font-medium text-foreground truncate">{article.name}</p>
-                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                              <span className="sm:hidden truncate">{article.suppliers?.name}</span>
-                              {article.category && <span className="text-primary font-medium">{article.category}</span>}
-                              {article.sku && <span className="text-muted-foreground">SKU: {article.sku}</span>}
-                            </div>
-                          </div>
-                          <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-7 w-7"
-                              onClick={() => {
-                                setEditingArticle(article);
-                                setIsDialogOpen(true);
-                              }}
-                            >
-                              <Pencil className="w-3 h-3" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-7 w-7 text-destructive hover:text-destructive"
-                              onClick={() => setDeletingArticle(article)}
-                            >
-                              <Trash2 className="w-3 h-3" />
-                            </Button>
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell className="hidden md:table-cell text-muted-foreground py-2">
-                        <p className="truncate max-w-[200px]" title={article.description || ''}>
-                          {article.description || '-'}
-                        </p>
-                      </TableCell>
-                      <TableCell className="hidden sm:table-cell text-muted-foreground py-2">
-                        {article.suppliers?.name}
-                      </TableCell>
-                      <TableCell className="text-right font-medium py-2">
-                        <div className="flex items-center justify-end gap-1">
-                          <span>
-                            €{Number(article.price).toFixed(2)}
-                            <span className="text-xs text-muted-foreground ml-1">/{article.unit}</span>
-                          </span>
-                          <PriceHistoryPopover articleId={article.id} articleName={article.name} />
-                        </div>
-                      </TableCell>
-                    </TableRow>
+                      </CollapsibleTrigger>
+                      <CollapsibleContent asChild>
+                        <Fragment>
+                          {group.articles?.map((article) => {
+                            const cartQty = getCartQuantity(article.id);
+                            
+                            return (
+                              <TableRow key={article.id} className={cn("group h-10", cartQty > 0 && "bg-destructive/10")}>
+                                {advancedViewEnabled && (
+                                  <TableCell className="py-2">
+                                    <Checkbox
+                                      checked={selectedArticles.has(article.id)}
+                                      onCheckedChange={() => toggleArticleSelected(article.id)}
+                                    />
+                                  </TableCell>
+                                )}
+                                <TableCell className="py-2">
+                                  <div className="flex items-center justify-center gap-1">
+                                    <Button
+                                      size="icon"
+                                      variant="outline"
+                                      className="h-8 w-8"
+                                      onClick={() => updateQuantity(article.id, cartQty - 1)}
+                                      disabled={cartQty === 0}
+                                    >
+                                      <Minus className="w-3 h-3" />
+                                    </Button>
+                                    <input
+                                      type="text"
+                                      inputMode="numeric"
+                                      value={cartQty}
+                                      onChange={(e) => {
+                                        const val = parseInt(e.target.value, 10);
+                                        if (!isNaN(val) && val >= 0) {
+                                          updateQuantity(article.id, val);
+                                        } else if (e.target.value === '') {
+                                          updateQuantity(article.id, 0);
+                                        }
+                                      }}
+                                      onFocus={(e) => {
+                                        const target = e.target;
+                                        setTimeout(() => target.select(), 0);
+                                      }}
+                                      className={cn(
+                                        "w-12 h-8 text-center font-medium rounded-md border border-input bg-background",
+                                        "focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1",
+                                        cartQty > 0 ? "text-destructive" : "text-foreground"
+                                      )}
+                                    />
+                                    <Button
+                                      size="icon"
+                                      variant="outline"
+                                      className="h-8 w-8"
+                                      onClick={() => addItem(article, 1)}
+                                    >
+                                      <Plus className="w-3 h-3" />
+                                    </Button>
+                                  </div>
+                                </TableCell>
+                                <TableCell className="py-2">
+                                  <div className="flex items-center gap-3">
+                                    <div className="min-w-0 flex-1">
+                                      <p className="font-medium text-foreground truncate">{article.name}</p>
+                                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                        <span className="sm:hidden truncate">{article.suppliers?.name}</span>
+                                        {article.category && <span className="text-primary font-medium">{article.category}</span>}
+                                        {article.sku && <span className="text-muted-foreground">SKU: {article.sku}</span>}
+                                      </div>
+                                    </div>
+                                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-7 w-7"
+                                        onClick={() => {
+                                          setEditingArticle(article);
+                                          setIsDialogOpen(true);
+                                        }}
+                                      >
+                                        <Pencil className="w-3 h-3" />
+                                      </Button>
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-7 w-7 text-destructive hover:text-destructive"
+                                        onClick={() => setDeletingArticle(article)}
+                                      >
+                                        <Trash2 className="w-3 h-3" />
+                                      </Button>
+                                    </div>
+                                  </div>
+                                </TableCell>
+                                <TableCell className="hidden md:table-cell text-muted-foreground py-2">
+                                  <p className="truncate max-w-[200px]" title={article.description || ''}>
+                                    {article.description || '-'}
+                                  </p>
+                                </TableCell>
+                                <TableCell className="hidden sm:table-cell text-muted-foreground py-2">
+                                  {article.suppliers?.name}
+                                </TableCell>
+                                <TableCell className="text-right font-medium py-2">
+                                  <div className="flex items-center justify-end gap-1">
+                                    <span>
+                                      €{Number(article.price).toFixed(2)}
+                                      <span className="text-xs text-muted-foreground ml-1">/{article.unit}</span>
+                                    </span>
+                                    <PriceHistoryPopover articleId={article.id} articleName={article.name} />
+                                  </div>
+                                </TableCell>
+                              </TableRow>
+                            );
+                          })}
+                        </Fragment>
+                      </CollapsibleContent>
                     </Fragment>
-                  );
-                })}
+                  </Collapsible>
+                ))}
               </TableBody>
             </Table>
           </div>
