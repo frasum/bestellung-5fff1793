@@ -1,10 +1,99 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { Resend } from "https://esm.sh/resend@2.0.0";
+
+const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
+
+const generateConfirmationNotificationHtml = (
+  orderNumber: string,
+  supplierName: string,
+  confirmedAt: string
+): string => {
+  return `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <meta charset="utf-8">
+        <title>Bestellung bestätigt</title>
+      </head>
+      <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #1f2937; max-width: 600px; margin: 0 auto; padding: 20px; background: #f3f4f6;">
+        <div style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); padding: 32px; border-radius: 16px 16px 0 0;">
+          <h1 style="color: white; margin: 0; font-size: 24px; font-weight: 700;">✅ Bestellung bestätigt!</h1>
+        </div>
+        
+        <div style="background: #ffffff; padding: 32px; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 16px 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
+          <p style="font-size: 16px; margin-bottom: 24px;">
+            Gute Nachrichten! <strong>${supplierName}</strong> hat Ihre Bestellung bestätigt.
+          </p>
+          
+          <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 12px; padding: 20px; margin-bottom: 24px;">
+            <table style="width: 100%; font-size: 14px;">
+              <tr>
+                <td style="padding: 6px 0; color: #6b7280;">Bestellnummer:</td>
+                <td style="padding: 6px 0; color: #1f2937; font-weight: 600;">${orderNumber}</td>
+              </tr>
+              <tr>
+                <td style="padding: 6px 0; color: #6b7280;">Lieferant:</td>
+                <td style="padding: 6px 0; color: #1f2937; font-weight: 600;">${supplierName}</td>
+              </tr>
+              <tr>
+                <td style="padding: 6px 0; color: #6b7280;">Bestätigt am:</td>
+                <td style="padding: 6px 0; color: #1f2937; font-weight: 600;">${confirmedAt}</td>
+              </tr>
+            </table>
+          </div>
+          
+          <p style="color: #6b7280; font-size: 14px;">
+            Der Lieferant wird Ihre Bestellung nun bearbeiten. Sie können den Status jederzeit in OrderFox.pro einsehen.
+          </p>
+          
+          <div style="text-align: center; padding-top: 24px; border-top: 1px solid #e5e7eb; margin-top: 24px;">
+            <p style="color: #9ca3af; font-size: 12px; margin: 0;">
+              Diese Benachrichtigung wurde automatisch von OrderFox.pro versendet.
+            </p>
+          </div>
+        </div>
+      </body>
+    </html>
+  `;
+};
+
+async function sendConfirmationNotification(
+  recipientEmail: string,
+  orderNumber: string,
+  supplierName: string
+): Promise<void> {
+  const confirmedAt = new Date().toLocaleDateString('de-DE', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+
+  try {
+    const { error } = await resend.emails.send({
+      from: "OrderFox.pro <onboarding@resend.dev>",
+      to: [recipientEmail],
+      subject: `✅ Bestellung ${orderNumber} wurde von ${supplierName} bestätigt`,
+      html: generateConfirmationNotificationHtml(orderNumber, supplierName, confirmedAt),
+    });
+
+    if (error) {
+      console.error("Failed to send confirmation notification:", error);
+    } else {
+      console.log(`Confirmation notification sent to ${recipientEmail}`);
+    }
+  } catch (err) {
+    console.error("Error sending confirmation notification:", err);
+  }
+}
 
 const generateSuccessHtml = (orderNumber: string, supplierName: string): string => {
   return `
@@ -292,10 +381,10 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
-    // Find the token
+    // Find the token with order and user details
     const { data: tokenData, error: tokenError } = await supabase
       .from("order_confirmation_tokens")
-      .select("*, orders(id, order_number, status, suppliers(name))")
+      .select("*, orders(id, order_number, status, user_id, suppliers(name))")
       .eq("token", token)
       .single();
 
@@ -350,6 +439,24 @@ serve(async (req) => {
     }
 
     console.log(`Order ${tokenData.orders?.order_number} confirmed successfully`);
+
+    // Send notification to the order creator (restaurant)
+    if (tokenData.orders?.user_id) {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("email")
+        .eq("id", tokenData.orders.user_id)
+        .single();
+
+      if (profile?.email) {
+        // Send email notification (don't await to not block response)
+        sendConfirmationNotification(
+          profile.email,
+          tokenData.orders.order_number || "",
+          tokenData.orders.suppliers?.name || "Lieferant"
+        );
+      }
+    }
 
     return new Response(
       generateSuccessHtml(
