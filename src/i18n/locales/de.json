@@ -46,7 +46,8 @@
       "shipped": "Versendet",
       "delivered": "Geliefert",
       "cancelled": "Storniert"
-    }
+    },
+    "ordersCount": "Bestellungen"
   },
   "common": {
     "save": "Speichern",

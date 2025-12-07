@@ -46,7 +46,8 @@
       "shipped": "Shipped",
       "delivered": "Delivered",
       "cancelled": "Cancelled"
-    }
+    },
+    "ordersCount": "orders"
   },
   "common": {
     "save": "Save",
