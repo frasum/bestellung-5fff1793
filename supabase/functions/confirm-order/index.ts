@@ -9,16 +9,8 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Helper function to create HTML responses with proper headers
-const createHtmlResponse = (html: string, status: number = 200): Response => {
-  const headers = new Headers();
-  headers.set("Content-Type", "text/html; charset=utf-8");
-  headers.set("Access-Control-Allow-Origin", "*");
-  headers.set("Access-Control-Allow-Headers", "authorization, x-client-info, apikey, content-type");
-  headers.set("Cache-Control", "no-cache, no-store, must-revalidate");
-  
-  return new Response(html, { status, headers });
-};
+// App URL for redirects
+const APP_URL = "https://orderfox.lovable.app";
 
 interface OrderItem {
   article_name: string;
@@ -27,6 +19,25 @@ interface OrderItem {
   unit_price: number;
   total_price: number;
 }
+
+// Helper function to create redirect response
+const createRedirectResponse = (status: string, orderNumber: string = "", supplierName: string = ""): Response => {
+  const params = new URLSearchParams({ status });
+  if (orderNumber) params.set("order", orderNumber);
+  if (supplierName) params.set("supplier", supplierName);
+  
+  const redirectUrl = `${APP_URL}/order-confirmed?${params.toString()}`;
+  console.log("Redirecting to:", redirectUrl);
+  
+  return new Response(null, {
+    status: 302,
+    headers: {
+      ...corsHeaders,
+      "Location": redirectUrl,
+      "Cache-Control": "no-cache, no-store, must-revalidate",
+    },
+  });
+};
 
 const generateConfirmationNotificationHtml = (
   orderNumber: string,
@@ -151,273 +162,10 @@ async function sendConfirmationNotification(
   }
 }
 
-const generateSuccessHtml = (orderNumber: string, supplierName: string): string => {
-  return `
-    <!DOCTYPE html>
-    <html lang="de">
-      <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>Bestellung bestätigt - OrderFox.pro</title>
-        <style>
-          * { margin: 0; padding: 0; box-sizing: border-box; }
-          body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-          }
-          .container {
-            background: white;
-            border-radius: 24px;
-            padding: 48px;
-            max-width: 500px;
-            text-align: center;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
-          }
-          .icon {
-            width: 80px;
-            height: 80px;
-            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 24px;
-            font-size: 40px;
-          }
-          h1 {
-            color: #1f2937;
-            font-size: 28px;
-            margin-bottom: 16px;
-          }
-          .order-info {
-            background: #f0fdf4;
-            border: 1px solid #bbf7d0;
-            border-radius: 12px;
-            padding: 16px;
-            margin: 24px 0;
-          }
-          .order-number {
-            font-size: 14px;
-            color: #6b7280;
-          }
-          .order-value {
-            font-size: 20px;
-            font-weight: 700;
-            color: #059669;
-          }
-          p {
-            color: #6b7280;
-            line-height: 1.6;
-            margin-bottom: 16px;
-          }
-          .footer {
-            margin-top: 32px;
-            padding-top: 24px;
-            border-top: 1px solid #e5e7eb;
-            color: #9ca3af;
-            font-size: 12px;
-          }
-        </style>
-      </head>
-      <body>
-        <div class="container">
-          <div class="icon">✓</div>
-          <h1>Bestellung bestätigt!</h1>
-          <p>Vielen Dank, ${supplierName}! Sie haben die Bestellung erfolgreich bestätigt.</p>
-          <div class="order-info">
-            <div class="order-number">Bestellnummer</div>
-            <div class="order-value">${orderNumber}</div>
-          </div>
-          <p>Der Kunde wurde über Ihre Bestätigung informiert. Bitte bearbeiten Sie die Bestellung entsprechend.</p>
-          <div class="footer">
-            Powered by OrderFox.pro
-          </div>
-        </div>
-      </body>
-    </html>
-  `;
-};
-
-const generateErrorHtml = (message: string): string => {
-  return `
-    <!DOCTYPE html>
-    <html lang="de">
-      <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>Fehler - OrderFox.pro</title>
-        <style>
-          * { margin: 0; padding: 0; box-sizing: border-box; }
-          body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-          }
-          .container {
-            background: white;
-            border-radius: 24px;
-            padding: 48px;
-            max-width: 500px;
-            text-align: center;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
-          }
-          .icon {
-            width: 80px;
-            height: 80px;
-            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 24px;
-            font-size: 40px;
-          }
-          h1 {
-            color: #1f2937;
-            font-size: 28px;
-            margin-bottom: 16px;
-          }
-          .error-box {
-            background: #fef2f2;
-            border: 1px solid #fecaca;
-            border-radius: 12px;
-            padding: 16px;
-            margin: 24px 0;
-            color: #dc2626;
-          }
-          p {
-            color: #6b7280;
-            line-height: 1.6;
-          }
-          .footer {
-            margin-top: 32px;
-            padding-top: 24px;
-            border-top: 1px solid #e5e7eb;
-            color: #9ca3af;
-            font-size: 12px;
-          }
-        </style>
-      </head>
-      <body>
-        <div class="container">
-          <div class="icon">✕</div>
-          <h1>Bestätigung fehlgeschlagen</h1>
-          <div class="error-box">${message}</div>
-          <p>Bitte kontaktieren Sie den Besteller für weitere Informationen.</p>
-          <div class="footer">
-            Powered by OrderFox.pro
-          </div>
-        </div>
-      </body>
-    </html>
-  `;
-};
-
-const generateAlreadyConfirmedHtml = (orderNumber: string): string => {
-  return `
-    <!DOCTYPE html>
-    <html lang="de">
-      <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>Bereits bestätigt - OrderFox.pro</title>
-        <style>
-          * { margin: 0; padding: 0; box-sizing: border-box; }
-          body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-          }
-          .container {
-            background: white;
-            border-radius: 24px;
-            padding: 48px;
-            max-width: 500px;
-            text-align: center;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
-          }
-          .icon {
-            width: 80px;
-            height: 80px;
-            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 24px;
-            font-size: 40px;
-          }
-          h1 {
-            color: #1f2937;
-            font-size: 28px;
-            margin-bottom: 16px;
-          }
-          .info-box {
-            background: #fffbeb;
-            border: 1px solid #fde68a;
-            border-radius: 12px;
-            padding: 16px;
-            margin: 24px 0;
-          }
-          .order-number {
-            font-size: 14px;
-            color: #6b7280;
-          }
-          .order-value {
-            font-size: 20px;
-            font-weight: 700;
-            color: #d97706;
-          }
-          p {
-            color: #6b7280;
-            line-height: 1.6;
-          }
-          .footer {
-            margin-top: 32px;
-            padding-top: 24px;
-            border-top: 1px solid #e5e7eb;
-            color: #9ca3af;
-            font-size: 12px;
-          }
-        </style>
-      </head>
-      <body>
-        <div class="container">
-          <div class="icon">ℹ</div>
-          <h1>Bereits bestätigt</h1>
-          <p>Diese Bestellung wurde bereits bestätigt.</p>
-          <div class="info-box">
-            <div class="order-number">Bestellnummer</div>
-            <div class="order-value">${orderNumber}</div>
-          </div>
-          <p>Es ist keine weitere Aktion erforderlich.</p>
-          <div class="footer">
-            Powered by OrderFox.pro
-          </div>
-        </div>
-      </body>
-    </html>
-  `;
-};
-
 serve(async (req) => {
   console.log("=== CONFIRM-ORDER DEBUG START ===");
   console.log("Request method:", req.method);
   console.log("Request URL:", req.url);
-  console.log("Request headers:", JSON.stringify(Object.fromEntries(req.headers.entries())));
 
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
@@ -428,15 +176,11 @@ serve(async (req) => {
   try {
     const url = new URL(req.url);
     const token = url.searchParams.get("token");
-    console.log("Parsed URL:", url.toString());
     console.log("Token from query params:", token ? `${token.substring(0, 10)}... (length: ${token.length})` : "NULL");
 
     if (!token) {
       console.log("ERROR: No token provided");
-      const response = createHtmlResponse(generateErrorHtml("Kein Bestätigungstoken angegeben."), 400);
-      console.log("Response status:", response.status);
-      console.log("Response headers:", JSON.stringify(Object.fromEntries(response.headers.entries())));
-      return response;
+      return createRedirectResponse("error");
     }
 
     console.log(`Processing confirmation for token: ${token.substring(0, 10)}...`);
@@ -444,7 +188,7 @@ serve(async (req) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     console.log("SUPABASE_URL configured:", supabaseUrl ? "YES" : "NO");
-    console.log("SERVICE_ROLE_KEY configured:", serviceRoleKey ? "YES (length: " + serviceRoleKey.length + ")" : "NO");
+    console.log("SERVICE_ROLE_KEY configured:", serviceRoleKey ? "YES" : "NO");
 
     const supabase = createClient(
       supabaseUrl ?? "",
@@ -464,22 +208,23 @@ serve(async (req) => {
 
     if (tokenError || !tokenData) {
       console.error("Token not found:", tokenError);
-      const response = createHtmlResponse(generateErrorHtml("Ungültiger oder nicht gefundener Bestätigungstoken."), 404);
-      console.log("Returning 404 response");
-      console.log("Response Content-Type:", response.headers.get("Content-Type"));
-      return response;
+      return createRedirectResponse("not_found");
     }
 
+    const order = tokenData.orders;
+    const orderNumber = order?.order_number || "";
+    const supplierName = order?.suppliers?.name || "";
+    
     console.log("Token found! Order ID:", tokenData.order_id);
+    console.log("Order number:", orderNumber);
+    console.log("Supplier:", supplierName);
     console.log("Token expires_at:", tokenData.expires_at);
     console.log("Token confirmed_at:", tokenData.confirmed_at);
 
     // Check if already confirmed
     if (tokenData.confirmed_at) {
       console.log("Token already used at:", tokenData.confirmed_at);
-      const response = createHtmlResponse(generateAlreadyConfirmedHtml(tokenData.orders?.order_number || ""));
-      console.log("Response Content-Type:", response.headers.get("Content-Type"));
-      return response;
+      return createRedirectResponse("already_confirmed", orderNumber, supplierName);
     }
 
     // Check if expired
@@ -487,93 +232,61 @@ serve(async (req) => {
     const now = new Date();
     console.log("Token expires at:", expiresAt.toISOString());
     console.log("Current time:", now.toISOString());
-    console.log("Token expired?", expiresAt < now);
-
-    if (expiresAt < now) {
-      console.log("Token expired");
-      const response = createHtmlResponse(generateErrorHtml("Dieser Bestätigungslink ist abgelaufen. Bitte kontaktieren Sie den Besteller."), 410);
-      console.log("Response Content-Type:", response.headers.get("Content-Type"));
-      return response;
+    console.log("Token expired?", now > expiresAt);
+    
+    if (now > expiresAt) {
+      console.log("Token has expired");
+      return createRedirectResponse("expired", orderNumber, supplierName);
     }
 
     // Update order status to confirmed
     console.log("Updating order status to 'confirmed'...");
-    const { error: updateOrderError } = await supabase
+    const { error: updateError } = await supabase
       .from("orders")
       .update({ status: "confirmed" })
       .eq("id", tokenData.order_id);
 
-    if (updateOrderError) {
-      console.error("Error updating order:", updateOrderError);
-      const response = createHtmlResponse(generateErrorHtml("Fehler beim Aktualisieren der Bestellung."), 500);
-      console.log("Response Content-Type:", response.headers.get("Content-Type"));
-      return response;
+    if (updateError) {
+      console.error("Failed to update order:", updateError);
+      return createRedirectResponse("error", orderNumber, supplierName);
     }
     console.log("Order status updated successfully");
 
     // Mark token as used
     console.log("Marking token as used...");
-    const { error: updateTokenError } = await supabase
+    await supabase
       .from("order_confirmation_tokens")
       .update({ confirmed_at: new Date().toISOString() })
       .eq("id", tokenData.id);
+    console.log("Token marked as used");
 
-    if (updateTokenError) {
-      console.error("Error updating token:", updateTokenError);
-    } else {
-      console.log("Token marked as used");
+    console.log(`Order ${orderNumber} confirmed successfully`);
+
+    // Send notification email to order creator
+    console.log("Fetching order creator profile for notification...");
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("email")
+      .eq("id", order.user_id)
+      .single();
+
+    if (profile?.email) {
+      console.log("Sending confirmation notification to:", profile.email);
+      const items = order.order_items || [];
+      await sendConfirmationNotification(
+        profile.email,
+        orderNumber,
+        supplierName,
+        items,
+        order.total_amount
+      );
     }
 
-    console.log(`Order ${tokenData.orders?.order_number} confirmed successfully`);
-
-    // Send notification to the order creator (restaurant)
-    if (tokenData.orders?.user_id) {
-      console.log("Fetching order creator profile for notification...");
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("email")
-        .eq("id", tokenData.orders.user_id)
-        .single();
-
-      if (profile?.email) {
-        console.log("Sending confirmation notification to:", profile.email);
-        const orderItems = tokenData.orders.order_items || [];
-        const totalAmount = Number(tokenData.orders.total_amount) || 0;
-        
-        // Send email notification (don't await to not block response)
-        sendConfirmationNotification(
-          profile.email,
-          tokenData.orders.order_number || "",
-          tokenData.orders.suppliers?.name || "Lieferant",
-          orderItems,
-          totalAmount
-        );
-      } else {
-        console.log("No email found for order creator");
-      }
-    }
-
-    console.log("=== RETURNING SUCCESS HTML ===");
-    const successResponse = createHtmlResponse(
-      generateSuccessHtml(
-        tokenData.orders?.order_number || "",
-        tokenData.orders?.suppliers?.name || "Lieferant"
-      )
-    );
-    console.log("Success response status:", successResponse.status);
-    console.log("Success response Content-Type:", successResponse.headers.get("Content-Type"));
-    console.log("Success response headers:", JSON.stringify(Object.fromEntries(successResponse.headers.entries())));
-    console.log("=== CONFIRM-ORDER DEBUG END ===");
-    return successResponse;
+    console.log("=== CONFIRM-ORDER SUCCESS ===");
+    return createRedirectResponse("success", orderNumber, supplierName);
 
   } catch (error: any) {
-    console.error("=== UNHANDLED ERROR ===");
-    console.error("Error type:", error?.constructor?.name);
-    console.error("Error message:", error?.message);
-    console.error("Error stack:", error?.stack);
-    const errorResponse = createHtmlResponse(generateErrorHtml("Ein unerwarteter Fehler ist aufgetreten."), 500);
-    console.log("Error response Content-Type:", errorResponse.headers.get("Content-Type"));
-    console.log("=== CONFIRM-ORDER DEBUG END ===");
-    return errorResponse;
+    console.error("Unhandled error in confirm-order:", error);
+    return createRedirectResponse("error");
   }
 });
