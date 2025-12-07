@@ -7,6 +7,10 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
+  console.log("=== GET-ORDER-DETAILS START ===");
+  console.log("Request URL:", req.url);
+  console.log("Request method:", req.method);
+
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -16,7 +20,10 @@ serve(async (req) => {
     const url = new URL(req.url);
     const orderId = url.searchParams.get("orderId");
 
+    console.log("Order ID from params:", orderId);
+
     if (!orderId) {
+      console.error("No orderId provided");
       return new Response(
         JSON.stringify({ error: "Order ID required" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -27,6 +34,8 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
+
+    console.log("Fetching order from database...");
 
     // Fetch order with details - only return confirmed orders for security
     const { data: order, error } = await supabase
@@ -55,11 +64,15 @@ serve(async (req) => {
     }
 
     if (!order) {
+      console.error("Order not found or not confirmed");
       return new Response(
         JSON.stringify({ error: "Order not found or not confirmed" }),
         { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
+
+    console.log("Order found:", order.order_number);
+    console.log("Order items count:", order.order_items?.length || 0);
 
     // Format the response - handle suppliers as relation
     const supplierData = order.suppliers as unknown as { name: string } | null;
@@ -72,6 +85,9 @@ serve(async (req) => {
       confirmedAt: new Date().toISOString(),
       items: order.order_items || [],
     };
+
+    console.log("Returning response with", response.items.length, "items");
+    console.log("=== GET-ORDER-DETAILS SUCCESS ===");
 
     return new Response(
       JSON.stringify(response),
