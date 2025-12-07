@@ -46,11 +46,18 @@ const SupplierAuth = () => {
           return;
         }
 
+        // Generate session token for API authentication
+        // Format: supplierId:organizationId:timestamp:randomHash
+        const timestamp = Date.now();
+        const randomHash = Math.random().toString(36).substring(2, 15);
+        const sessionToken = `${data.supplierId}:${data.organizationId}:${timestamp}:${randomHash}`;
+        
         // Store supplier session in localStorage
         const supplierSession = {
           supplierId: data.supplierId,
           supplierName: data.supplierName,
           organizationId: data.organizationId,
+          sessionToken, // Include token for API calls
           expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // 24 hours
         };
         localStorage.setItem('supplierSession', JSON.stringify(supplierSession));
