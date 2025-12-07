@@ -13,6 +13,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { useSuppliers, useCreateSupplier, useUpdateSupplier, useDeleteSupplier, Supplier, SupplierInput } from '@/hooks/useSuppliers';
 import { useArticles, Article } from '@/hooks/useArticles';
 import { Plus, Pencil, Trash2, Search, Mail, Phone, MapPin, User, Loader2, Upload, Hash, Euro, LayoutGrid, List, ChevronDown, ChevronRight, Minus, ShoppingCart, FileText, Printer, Send, Bell, Store } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
 import { SupplierLocationsDialog } from '@/components/suppliers/SupplierLocationsDialog';
 import { useSendSupplierInvitation } from '@/hooks/useSupplierPortal';
 import { generateOrderListPdf, generateCombinedOrderListPdf } from '@/lib/orderListPdf';
@@ -147,6 +148,24 @@ const Suppliers = () => {
   const [changesDialogSupplier, setChangesDialogSupplier] = useState<Supplier | null>(null);
   const [locationsDialogSupplier, setLocationsDialogSupplier] = useState<Supplier | null>(null);
   const { data: pendingChanges } = useSupplierPendingChanges();
+
+  // Lokaler State für Mehrfachauswahl
+  const [multiSelectEnabled, setMultiSelectEnabled] = useState(() => {
+    const saved = localStorage.getItem('suppliers-multi-select');
+    return saved === 'true';
+  });
+
+  // Bei Änderung im localStorage speichern
+  useEffect(() => {
+    localStorage.setItem('suppliers-multi-select', String(multiSelectEnabled));
+  }, [multiSelectEnabled]);
+
+  // Auswahl zurücksetzen wenn Mehrfachauswahl deaktiviert wird
+  useEffect(() => {
+    if (!multiSelectEnabled) {
+      setSelectedSuppliers(new Set());
+    }
+  }, [multiSelectEnabled]);
   
   // Group pending changes by supplier
   const pendingChangesBySupplier = pendingChanges?.reduce((acc, change) => {
@@ -493,6 +512,16 @@ const Suppliers = () => {
               {existingCategories.map(cat => <SelectItem key={cat} value={cat}>{cat}</SelectItem>)}
             </SelectContent>
           </Select>
+          <div className="flex items-center gap-2">
+            <Switch
+              id="multi-select"
+              checked={multiSelectEnabled}
+              onCheckedChange={setMultiSelectEnabled}
+            />
+            <Label htmlFor="multi-select" className="text-sm cursor-pointer whitespace-nowrap">
+              Mehrfachauswahl
+            </Label>
+          </div>
           <div className="flex border border-border rounded-lg overflow-hidden">
             <Button variant={viewMode === 'list' ? 'default' : 'ghost'} size="icon" className="rounded-none h-10 w-10" onClick={() => setViewMode('list')}>
               <List className="w-4 h-4" />
@@ -501,7 +530,7 @@ const Suppliers = () => {
               <LayoutGrid className="w-4 h-4" />
             </Button>
           </div>
-          {selectedSuppliers.size > 0 && <Button onClick={handlePrintCombined} variant="secondary">
+          {multiSelectEnabled && selectedSuppliers.size > 0 && <Button onClick={handlePrintCombined} variant="secondary">
               <Printer className="w-4 h-4 mr-2" />
               {selectedSuppliers.size} Listen drucken
             </Button>}
@@ -526,9 +555,11 @@ const Suppliers = () => {
             <Table>
               <TableHeader>
                 <TableRow className="hover:bg-transparent">
-                  <TableHead className="w-10">
-                    <Checkbox checked={selectedSuppliers.size > 0 && selectedSuppliers.size === (filteredSuppliers?.filter(s => (articlesBySupplier[s.id]?.length || 0) > 0).length || 0)} onCheckedChange={selectAllSuppliers} />
-                  </TableHead>
+                  {multiSelectEnabled && (
+                    <TableHead className="w-10">
+                      <Checkbox checked={selectedSuppliers.size > 0 && selectedSuppliers.size === (filteredSuppliers?.filter(s => (articlesBySupplier[s.id]?.length || 0) > 0).length || 0)} onCheckedChange={selectAllSuppliers} />
+                    </TableHead>
+                  )}
                   <TableHead className="w-8"></TableHead>
                   <TableHead>Lieferant</TableHead>
                   <TableHead className="hidden md:table-cell">Kategorie</TableHead>
@@ -543,9 +574,11 @@ const Suppliers = () => {
               const hasArticles = supplierArticles.length > 0;
               return <>
                       <TableRow key={supplier.id} className="group">
-                        <TableCell className="py-2">
-                          {hasArticles && <Checkbox checked={selectedSuppliers.has(supplier.id)} onCheckedChange={() => toggleSupplierSelected(supplier.id)} />}
-                        </TableCell>
+                        {multiSelectEnabled && (
+                          <TableCell className="py-2">
+                            {hasArticles && <Checkbox checked={selectedSuppliers.has(supplier.id)} onCheckedChange={() => toggleSupplierSelected(supplier.id)} />}
+                          </TableCell>
+                        )}
                         <TableCell className="py-2">
                           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => toggleSupplierExpanded(supplier.id)} disabled={supplierArticles.length === 0}>
                             {supplierArticles.length > 0 ? isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" /> : <span className="w-4 h-4" />}
@@ -658,7 +691,7 @@ const Suppliers = () => {
           return <div key={supplier.id} className={`bg-card border border-border rounded-xl p-6 hover:border-primary/50 transition-colors ${selectedSuppliers.has(supplier.id) ? 'ring-2 ring-primary' : ''}`}>
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-start gap-3">
-                    {hasArticles && <Checkbox checked={selectedSuppliers.has(supplier.id)} onCheckedChange={() => toggleSupplierSelected(supplier.id)} className="mt-1" />}
+                    {multiSelectEnabled && hasArticles && <Checkbox checked={selectedSuppliers.has(supplier.id)} onCheckedChange={() => toggleSupplierSelected(supplier.id)} className="mt-1" />}
                     <div className="flex items-center gap-2">
                       <h3 className="font-semibold text-foreground text-lg">{supplier.name}</h3>
                       {pendingChangesBySupplier[supplier.id] > 0 && (
