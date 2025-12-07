@@ -307,15 +307,6 @@ const Articles = () => {
             <p className="text-muted-foreground mt-1">Browse and manage your product catalog</p>
           </div>
           <div className="flex items-center gap-3">
-            <Button variant="outline" onClick={() => navigate('/cart')} className="relative">
-              <ShoppingCart className="w-4 h-4 mr-2" />
-              Cart
-              {getItemCount() > 0 && (
-                <Badge className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 text-xs">
-                  {getItemCount()}
-                </Badge>
-              )}
-            </Button>
             <ExportMenu
               filename="articles"
               title="Articles"
