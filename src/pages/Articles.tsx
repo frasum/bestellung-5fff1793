@@ -738,7 +738,10 @@ const Articles = () => {
                                 updateQuantity(article.id, 0);
                               }
                             }}
-                            onFocus={(e) => e.target.select()}
+                            onFocus={(e) => {
+                              const target = e.target;
+                              setTimeout(() => target.select(), 0);
+                            }}
                             className={cn(
                               "w-12 h-8 text-center font-medium rounded-md border border-input bg-background",
                               "focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1",
