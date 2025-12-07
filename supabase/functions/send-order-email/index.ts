@@ -260,7 +260,7 @@ serve(async (req) => {
     console.log(`Sending order email for order ${data.orderNumber} to ${recipientEmail}${isTestMode ? ' (TEST MODE)' : ''}`);
 
     const emailResponse = await resend.emails.send({
-      from: "OrderFox.pro <onboarding@resend.dev>",
+      from: "OrderFox.pro <bestellung@yum.orderfox.pro>",
       to: [recipientEmail],
       subject: `${subjectPrefix}New Order #${data.orderNumber} from ${data.restaurantName}`,
       html: emailHtml,
