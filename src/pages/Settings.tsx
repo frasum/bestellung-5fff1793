@@ -10,7 +10,7 @@ import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Building2, MapPin, Bell, Plus, Pencil, Trash2, Star, User, Lock, Users, Mail, Clock, X, Globe, FileText, RotateCcw, Moon, Sun, Ruler, Check, Store, Merge, Eye } from 'lucide-react';
+import { Building2, MapPin, Bell, Plus, Pencil, Trash2, Star, User, Lock, Users, Mail, Clock, X, Globe, FileText, RotateCcw, Moon, Sun, Ruler, Check, Store, Merge } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { Textarea } from '@/components/ui/textarea';
 import { useLocations, useCreateLocation, useUpdateLocation, useDeleteLocation, Location } from '@/hooks/useLocations';
@@ -506,41 +506,6 @@ const OrganizationTab = () => {
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Eye className="h-5 w-5" />
-            Erweiterte Ansicht
-          </CardTitle>
-          <CardDescription>
-            Aktiviere zusätzliche Prüfungsschritte und Kontrollmöglichkeiten
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg border">
-            <div className="space-y-0.5">
-              <Label htmlFor="advanced-view" className="text-base font-medium">
-                Erweiterte Ansicht aktivieren
-              </Label>
-              <p className="text-sm text-muted-foreground">
-                Zeigt zusätzliche Prüf- und Kontrolloptionen beim Checkout an
-              </p>
-            </div>
-            <Switch
-              id="advanced-view"
-              checked={organization?.advanced_view_enabled || false}
-              onCheckedChange={(enabled) => {
-                if (organization) {
-                  updateOrganization.mutate({ 
-                    id: organization.id, 
-                    advanced_view_enabled: enabled 
-                  });
-                }
-              }}
-            />
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 };
