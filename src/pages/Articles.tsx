@@ -2,7 +2,7 @@ import { Fragment, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
-import { useOrganization } from '@/hooks/useSettings';
+import { Switch } from '@/components/ui/switch';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -108,8 +108,17 @@ const Articles = () => {
   const { data: articles, isLoading } = useArticles();
   const { data: suppliers } = useSuppliers();
   const { data: dbCategories } = useCategories();
-  const { data: organization } = useOrganization();
-  const advancedViewEnabled = organization?.advanced_view_enabled || false;
+  
+  // Lokaler State für Mehrfachauswahl (statt organization.advanced_view_enabled)
+  const [advancedViewEnabled, setAdvancedViewEnabled] = useState(() => {
+    const saved = localStorage.getItem('articles-advanced-view');
+    return saved === 'true';
+  });
+
+  // Bei Änderung im localStorage speichern
+  useEffect(() => {
+    localStorage.setItem('articles-advanced-view', String(advancedViewEnabled));
+  }, [advancedViewEnabled]);
   const createArticle = useCreateArticle();
   const updateArticle = useUpdateArticle();
   const deleteArticle = useDeleteArticle();
@@ -584,6 +593,16 @@ const Articles = () => {
               <X className="w-4 h-4" />
             </Button>
           )}
+          <div className="flex items-center gap-2">
+            <Switch
+              id="advanced-view"
+              checked={advancedViewEnabled}
+              onCheckedChange={setAdvancedViewEnabled}
+            />
+            <Label htmlFor="advanced-view" className="text-sm cursor-pointer whitespace-nowrap">
+              Mehrfachauswahl
+            </Label>
+          </div>
           <div className="flex border border-border rounded-lg overflow-hidden">
             <Button
               variant={viewMode === 'list' ? 'default' : 'ghost'}
