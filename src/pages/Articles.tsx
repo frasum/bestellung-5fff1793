@@ -685,11 +685,11 @@ const Articles = () => {
                       onCheckedChange={selectAllArticles}
                     />
                   </TableHead>
+                  <TableHead className="text-center w-[140px]">Quantity</TableHead>
                   <TableHead className="w-[25%]">Article</TableHead>
                   <TableHead className="hidden md:table-cell w-[25%]">Description</TableHead>
                   <TableHead className="hidden sm:table-cell">Supplier</TableHead>
                   <TableHead className="text-right">Price</TableHead>
-                  <TableHead className="text-center w-[140px]">Quantity</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -714,6 +714,28 @@ const Articles = () => {
                           checked={selectedArticles.has(article.id)}
                           onCheckedChange={() => toggleArticleSelected(article.id)}
                         />
+                      </TableCell>
+                      <TableCell className="py-2">
+                        <div className="flex items-center justify-center gap-1">
+                          <Button
+                            size="icon"
+                            variant="outline"
+                            className="h-8 w-8"
+                            onClick={() => updateQuantity(article.id, cartQty - 1)}
+                            disabled={cartQty === 0}
+                          >
+                            <Minus className="w-3 h-3" />
+                          </Button>
+                          <span className={cn("w-8 text-center font-medium", cartQty > 0 ? "text-destructive" : "text-foreground")}>{cartQty}</span>
+                          <Button
+                            size="icon"
+                            variant="outline"
+                            className="h-8 w-8"
+                            onClick={() => addItem(article, 1)}
+                          >
+                            <Plus className="w-3 h-3" />
+                          </Button>
+                        </div>
                       </TableCell>
                       <TableCell className="py-2">
                         <div className="flex items-center gap-3">
@@ -763,28 +785,6 @@ const Articles = () => {
                             <span className="text-xs text-muted-foreground ml-1">/{article.unit}</span>
                           </span>
                           <PriceHistoryPopover articleId={article.id} articleName={article.name} />
-                        </div>
-                      </TableCell>
-                      <TableCell className="py-2">
-                        <div className="flex items-center justify-center gap-1">
-                          <Button
-                            size="icon"
-                            variant="outline"
-                            className="h-8 w-8"
-                            onClick={() => updateQuantity(article.id, cartQty - 1)}
-                            disabled={cartQty === 0}
-                          >
-                            <Minus className="w-3 h-3" />
-                          </Button>
-                          <span className={cn("w-8 text-center font-medium", cartQty > 0 ? "text-destructive" : "text-foreground")}>{cartQty}</span>
-                          <Button
-                            size="icon"
-                            variant="outline"
-                            className="h-8 w-8"
-                            onClick={() => addItem(article, 1)}
-                          >
-                            <Plus className="w-3 h-3" />
-                          </Button>
                         </div>
                       </TableCell>
                     </TableRow>
