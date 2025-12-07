@@ -161,14 +161,15 @@ const Checkout = () => {
         }];
       }) || []);
 
-      // Fetch organization name
+      // Fetch organization info (name and test mode)
       const { data: profile } = await supabase
         .from('profiles')
-        .select('organization_id, organizations(name)')
+        .select('organization_id, organizations(name, test_mode_enabled)')
         .eq('id', user!.id)
         .single();
 
       const restaurantName = (profile?.organizations as any)?.name || 'Restaurant';
+      const isTestMode = (profile?.organizations as any)?.test_mode_enabled || false;
 
       // Format delivery info for notes
       const deliveryDateStr = format(data.deliveryDate, 'dd.MM.yyyy', { locale: de });
@@ -195,6 +196,7 @@ const Checkout = () => {
           totalAmount: supplier.total,
           notes: fullNotes,
           customerNumber: data?.customerNumber || undefined,
+          isTestMode,
         };
       });
 
@@ -227,6 +229,7 @@ const Checkout = () => {
           deliveryAddress: preview.deliveryAddress,
           notes: preview.notes,
           restaurantName: preview.restaurantName,
+          isTestOrder: preview.isTestMode || false,
         });
         orderNumbers.push(result.orderNumber);
       }

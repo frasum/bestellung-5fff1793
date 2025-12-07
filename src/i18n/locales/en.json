@@ -47,7 +47,16 @@
       "delivered": "Delivered",
       "cancelled": "Cancelled"
     },
-    "ordersCount": "orders"
+    "ordersCount": "orders",
+    "testMode": {
+      "banner": "Test Mode Active",
+      "bannerDescription": "Test orders are sent to {{email}}",
+      "deleteAll": "Delete All Test Orders",
+      "deleteConfirmTitle": "Delete Test Orders",
+      "deleteConfirmDescription": "Are you sure you want to permanently delete all {{count}} test orders?",
+      "badge": "TEST",
+      "noTestOrders": "No test orders available"
+    }
   },
   "common": {
     "save": "Save",

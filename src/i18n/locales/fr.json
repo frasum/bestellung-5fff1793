@@ -47,7 +47,16 @@
       "delivered": "Livrée",
       "cancelled": "Annulée"
     },
-    "ordersCount": "commandes"
+    "ordersCount": "commandes",
+    "testMode": {
+      "banner": "Mode test actif",
+      "bannerDescription": "Les commandes test sont envoyées à {{email}}",
+      "deleteAll": "Supprimer toutes les commandes test",
+      "deleteConfirmTitle": "Supprimer les commandes test",
+      "deleteConfirmDescription": "Êtes-vous sûr de vouloir supprimer définitivement les {{count}} commandes test ?",
+      "badge": "TEST",
+      "noTestOrders": "Aucune commande test disponible"
+    }
   },
   "common": {
     "save": "Enregistrer",
