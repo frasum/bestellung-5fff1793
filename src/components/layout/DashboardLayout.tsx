@@ -10,6 +10,7 @@ import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import { LocationSwitcher } from '@/components/LocationSwitcher';
 import { useOrganization } from '@/hooks/useSettings';
 import { Badge } from '@/components/ui/badge';
+import { FloatingCartButton } from '@/components/FloatingCartButton';
 import logoImage from '@/assets/logo.png';
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -175,5 +176,8 @@ export const DashboardLayout = ({
       <main className="lg:ml-64 pt-16 lg:pt-14 min-h-screen">
         <div className="p-6 lg:p-8">{children}</div>
       </main>
+
+      {/* Floating Cart Button */}
+      <FloatingCartButton />
     </div>;
 };
