@@ -14,13 +14,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible';
 import { format, isAfter, isBefore, startOfDay, endOfDay, subDays, subMonths } from 'date-fns';
 import { de, enUS, fr } from 'date-fns/locale';
-import { Loader2, Package, CheckCircle2, Clock, Truck, XCircle, Eye, Search, X } from 'lucide-react';
+import { Loader2, Package, CheckCircle2, Clock, Truck, XCircle, Eye, Search, X, ChevronDown } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { OrderEmailViewDialog } from '@/components/orders/OrderEmailViewDialog';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
+import { cn } from '@/lib/utils';
 
 type DateFilter = 'all' | 'today' | 'week' | 'month' | '3months';
 
@@ -113,6 +119,43 @@ const Orders = () => {
       return matchesSearch && matchesStatus && matchesDate;
     });
   }, [orders, searchQuery, statusFilter, dateFilter]);
+
+  // Group orders by supplier and sort by date within each group
+  const groupedOrders = useMemo(() => {
+    if (!filteredOrders.length) return new Map<string, Order[]>();
+    
+    const grouped = filteredOrders.reduce((acc, order) => {
+      const supplierName = order.suppliers?.name || 'Unbekannt';
+      if (!acc.has(supplierName)) {
+        acc.set(supplierName, []);
+      }
+      acc.get(supplierName)!.push(order);
+      return acc;
+    }, new Map<string, Order[]>());
+    
+    // Sort orders within each group by date (newest first)
+    grouped.forEach((supplierOrders) => {
+      supplierOrders.sort((a, b) => 
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      );
+    });
+    
+    // Sort suppliers alphabetically
+    return new Map([...grouped.entries()].sort((a, b) => a[0].localeCompare(b[0])));
+  }, [filteredOrders]);
+
+  // Track which supplier groups are open (default: all closed)
+  const [openSuppliers, setOpenSuppliers] = useState<Set<string>>(new Set());
+
+  const toggleSupplier = (supplierName: string) => {
+    const newOpen = new Set(openSuppliers);
+    if (newOpen.has(supplierName)) {
+      newOpen.delete(supplierName);
+    } else {
+      newOpen.add(supplierName);
+    }
+    setOpenSuppliers(newOpen);
+  };
 
   const hasActiveFilters = searchQuery || statusFilter !== 'all' || dateFilter !== 'all';
 
@@ -218,91 +261,127 @@ const Orders = () => {
             <Button variant="outline" onClick={clearFilters}>{t('orders.clearFilters')}</Button>
           </div>
         ) : (
-          <div className="space-y-4">
-            {filteredOrders.map((order) => {
-              const StatusIcon = statusIcons[order.status];
+          <div className="space-y-3">
+            {Array.from(groupedOrders.entries()).map(([supplierName, supplierOrders]) => {
+              const isOpen = openSuppliers.has(supplierName);
+              const totalAmount = supplierOrders.reduce((sum, o) => sum + Number(o.total_amount), 0);
+              
               return (
-                <div key={order.id} className="bg-card border border-border rounded-xl overflow-hidden">
-                  {/* Order Header */}
-                  <div className="p-4 sm:p-6 border-b border-border">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                      <div className="flex items-start gap-4">
-                        <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                          <StatusIcon className="w-5 h-5 text-primary" />
-                        </div>
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <h3 className="font-semibold text-foreground">{order.order_number}</h3>
-                            <Badge className={statusColors[order.status]}>
-                              {t(`orders.status.${order.status}`)}
-                            </Badge>
-                          </div>
-                          <p className="text-sm text-muted-foreground">
-                            {order.suppliers?.name} • {format(new Date(order.created_at), 'PPp', { locale })}
-                          </p>
-                        </div>
+                <Collapsible
+                  key={supplierName}
+                  open={isOpen}
+                  onOpenChange={() => toggleSupplier(supplierName)}
+                >
+                  {/* Supplier Header */}
+                  <CollapsibleTrigger className="w-full">
+                    <div className="flex items-center justify-between p-4 bg-card border border-border rounded-lg hover:bg-muted/50 transition-colors">
+                      <div className="flex items-center gap-3">
+                        <ChevronDown className={cn(
+                          "w-5 h-5 text-muted-foreground transition-transform duration-200",
+                          isOpen && "rotate-180"
+                        )} />
+                        <span className="font-semibold text-foreground">{supplierName}</span>
+                        <Badge variant="secondary">{supplierOrders.length} {t('orders.ordersCount')}</Badge>
                       </div>
-                      <div className="flex items-center gap-2 sm:gap-4">
-                        {order.email_sent && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleViewEmail(order)}
-                            className="text-success hover:text-success"
-                          >
-                            <Eye className="w-4 h-4 mr-1" />
-                            <span className="hidden sm:inline">{t('orders.viewEmail')}</span>
-                          </Button>
-                        )}
-                        <Select
-                          value={order.status}
-                          onValueChange={(value) => updateStatus.mutate({ orderId: order.id, status: value as Order['status'] })}
-                        >
-                          <SelectTrigger className="w-36 bg-card">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent className="bg-card border border-border z-50">
-                            <SelectItem value="pending">{t('orders.status.pending')}</SelectItem>
-                            <SelectItem value="confirmed">{t('orders.status.confirmed')}</SelectItem>
-                            <SelectItem value="processing">{t('orders.status.processing')}</SelectItem>
-                            <SelectItem value="shipped">{t('orders.status.shipped')}</SelectItem>
-                            <SelectItem value="delivered">{t('orders.status.delivered')}</SelectItem>
-                            <SelectItem value="cancelled">{t('orders.status.cancelled')}</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
+                      <span className="font-bold text-foreground">€{totalAmount.toFixed(2)}</span>
                     </div>
-                  </div>
+                  </CollapsibleTrigger>
+                  
+                  {/* Orders for this Supplier */}
+                  <CollapsibleContent>
+                    <div className="space-y-3 pl-4 mt-2">
+                      {supplierOrders.map((order) => {
+                        const StatusIcon = statusIcons[order.status];
+                        return (
+                          <div key={order.id} className="bg-card border border-border rounded-xl overflow-hidden">
+                            {/* Order Header */}
+                            <div className="p-4 sm:p-6 border-b border-border">
+                              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                                <div className="flex items-start gap-4">
+                                  <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                                    <StatusIcon className="w-5 h-5 text-primary" />
+                                  </div>
+                                  <div>
+                                    <div className="flex items-center gap-2">
+                                      <h3 className="font-semibold text-foreground">{order.order_number}</h3>
+                                      <Badge className={statusColors[order.status]}>
+                                        {t(`orders.status.${order.status}`)}
+                                      </Badge>
+                                    </div>
+                                    <p className="text-sm text-muted-foreground">
+                                      {format(new Date(order.created_at), 'PPp', { locale })}
+                                    </p>
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-2 sm:gap-4">
+                                  {order.email_sent && (
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleViewEmail(order);
+                                      }}
+                                      className="text-success hover:text-success"
+                                    >
+                                      <Eye className="w-4 h-4 mr-1" />
+                                      <span className="hidden sm:inline">{t('orders.viewEmail')}</span>
+                                    </Button>
+                                  )}
+                                  <Select
+                                    value={order.status}
+                                    onValueChange={(value) => updateStatus.mutate({ orderId: order.id, status: value as Order['status'] })}
+                                  >
+                                    <SelectTrigger className="w-36 bg-card" onClick={(e) => e.stopPropagation()}>
+                                      <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent className="bg-card border border-border z-50">
+                                      <SelectItem value="pending">{t('orders.status.pending')}</SelectItem>
+                                      <SelectItem value="confirmed">{t('orders.status.confirmed')}</SelectItem>
+                                      <SelectItem value="processing">{t('orders.status.processing')}</SelectItem>
+                                      <SelectItem value="shipped">{t('orders.status.shipped')}</SelectItem>
+                                      <SelectItem value="delivered">{t('orders.status.delivered')}</SelectItem>
+                                      <SelectItem value="cancelled">{t('orders.status.cancelled')}</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+                              </div>
+                            </div>
 
-                  {/* Order Items */}
-                  <div className="p-4 sm:p-6">
-                    <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-4">
-                      {order.order_items?.slice(0, 6).map((item) => (
-                        <div key={item.id} className="flex items-center justify-between bg-muted/30 rounded-lg px-3 py-2">
-                          <span className="text-sm text-foreground truncate">{item.article_name}</span>
-                          <span className="text-sm text-muted-foreground ml-2">
-                            {item.quantity} {item.unit}
-                          </span>
-                        </div>
-                      ))}
-                      {(order.order_items?.length || 0) > 6 && (
-                        <div className="flex items-center justify-center bg-muted/30 rounded-lg px-3 py-2">
-                          <span className="text-sm text-muted-foreground">
-                            {t('orders.moreItems', { count: (order.order_items?.length || 0) - 6 })}
-                          </span>
-                        </div>
-                      )}
+                            {/* Order Items */}
+                            <div className="p-4 sm:p-6">
+                              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-4">
+                                {order.order_items?.slice(0, 6).map((item) => (
+                                  <div key={item.id} className="flex items-center justify-between bg-muted/30 rounded-lg px-3 py-2">
+                                    <span className="text-sm text-foreground truncate">{item.article_name}</span>
+                                    <span className="text-sm text-muted-foreground ml-2">
+                                      {item.quantity} {item.unit}
+                                    </span>
+                                  </div>
+                                ))}
+                                {(order.order_items?.length || 0) > 6 && (
+                                  <div className="flex items-center justify-center bg-muted/30 rounded-lg px-3 py-2">
+                                    <span className="text-sm text-muted-foreground">
+                                      {t('orders.moreItems', { count: (order.order_items?.length || 0) - 6 })}
+                                    </span>
+                                  </div>
+                                )}
+                              </div>
+                              <div className="flex items-center justify-between pt-4 border-t border-border">
+                                <div className="text-sm text-muted-foreground">
+                                  {order.order_items?.length} {t('orders.items')} • {order.delivery_address.split('\n')[0]}
+                                </div>
+                                <div className="text-xl font-bold text-foreground">
+                                  €{Number(order.total_amount).toFixed(2)}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
-                    <div className="flex items-center justify-between pt-4 border-t border-border">
-                      <div className="text-sm text-muted-foreground">
-                        {order.order_items?.length} {t('orders.items')} • {order.delivery_address.split('\n')[0]}
-                      </div>
-                      <div className="text-xl font-bold text-foreground">
-                        €{Number(order.total_amount).toFixed(2)}
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                  </CollapsibleContent>
+                </Collapsible>
               );
             })}
           </div>

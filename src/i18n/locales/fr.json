@@ -46,7 +46,8 @@
       "shipped": "Expédiée",
       "delivered": "Livrée",
       "cancelled": "Annulée"
-    }
+    },
+    "ordersCount": "commandes"
   },
   "common": {
     "save": "Enregistrer",
