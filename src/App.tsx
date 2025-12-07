@@ -21,6 +21,7 @@ import Inventory from "./pages/Inventory";
 import SupplierLogin from "./pages/SupplierLogin";
 import SupplierAuth from "./pages/SupplierAuth";
 import SupplierPortal from "./pages/SupplierPortal";
+import OrderConfirmed from "./pages/OrderConfirmed";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -50,6 +51,7 @@ const App = () => (
                 <Route path="/supplier-login" element={<SupplierLogin />} />
                 <Route path="/supplier-auth" element={<SupplierAuth />} />
                 <Route path="/supplier-portal" element={<SupplierPortal />} />
+                <Route path="/order-confirmed" element={<OrderConfirmed />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
