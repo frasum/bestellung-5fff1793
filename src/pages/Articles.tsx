@@ -2,6 +2,7 @@ import { Fragment, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
+import { useOrganization } from '@/hooks/useSettings';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -107,6 +108,8 @@ const Articles = () => {
   const { data: articles, isLoading } = useArticles();
   const { data: suppliers } = useSuppliers();
   const { data: dbCategories } = useCategories();
+  const { data: organization } = useOrganization();
+  const advancedViewEnabled = organization?.advanced_view_enabled || false;
   const createArticle = useCreateArticle();
   const updateArticle = useUpdateArticle();
   const deleteArticle = useDeleteArticle();
@@ -134,6 +137,13 @@ const Articles = () => {
       navigate('/auth');
     }
   }, [user, authLoading, navigate]);
+
+  // Clear selection when advanced view is disabled
+  useEffect(() => {
+    if (!advancedViewEnabled) {
+      setSelectedArticles(new Set());
+    }
+  }, [advancedViewEnabled]);
 
   useEffect(() => {
     if (editingArticle) {
@@ -595,7 +605,7 @@ const Articles = () => {
         </div>
 
         {/* Selection Toolbar */}
-        {selectedArticles.size > 0 && (
+        {advancedViewEnabled && selectedArticles.size > 0 && (
           <div className="flex items-center gap-4 p-3 bg-primary/10 border border-primary/20 rounded-lg">
             <span className="text-sm font-medium">
               {selectedArticles.size} Artikel ausgewählt
@@ -679,12 +689,14 @@ const Articles = () => {
             <Table>
               <TableHeader>
                 <TableRow className="hover:bg-transparent">
-                  <TableHead className="w-[40px]">
-                    <Checkbox
-                      checked={sortedArticles?.length > 0 && selectedArticles.size === sortedArticles?.length}
-                      onCheckedChange={selectAllArticles}
-                    />
-                  </TableHead>
+                  {advancedViewEnabled && (
+                    <TableHead className="w-[40px]">
+                      <Checkbox
+                        checked={sortedArticles?.length > 0 && selectedArticles.size === sortedArticles?.length}
+                        onCheckedChange={selectAllArticles}
+                      />
+                    </TableHead>
+                  )}
                   <TableHead className="text-center w-[140px]">Quantity</TableHead>
                   <TableHead className="w-[25%]">Article</TableHead>
                   <TableHead className="hidden md:table-cell w-[25%]">Description</TableHead>
@@ -703,18 +715,20 @@ const Articles = () => {
                     <Fragment key={article.id}>
                       {isNewSupplierGroup && (
                         <TableRow className="bg-muted/50 hover:bg-muted/50">
-                          <TableCell colSpan={6} className="py-2 px-4">
+                          <TableCell colSpan={advancedViewEnabled ? 6 : 5} className="py-2 px-4">
                             <span className="font-semibold text-sm text-foreground">{supplierName}</span>
                           </TableCell>
                         </TableRow>
                       )}
                       <TableRow className={cn("group h-10", cartQty > 0 && "bg-destructive/10")}>
-                      <TableCell className="py-2">
-                        <Checkbox
-                          checked={selectedArticles.has(article.id)}
-                          onCheckedChange={() => toggleArticleSelected(article.id)}
-                        />
-                      </TableCell>
+                      {advancedViewEnabled && (
+                        <TableCell className="py-2">
+                          <Checkbox
+                            checked={selectedArticles.has(article.id)}
+                            onCheckedChange={() => toggleArticleSelected(article.id)}
+                          />
+                        </TableCell>
+                      )}
                       <TableCell className="py-2">
                         <div className="flex items-center justify-center gap-1">
                           <Button
