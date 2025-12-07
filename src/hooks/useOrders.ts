@@ -115,6 +115,19 @@ export const useCreateOrder = () => {
 
       if (orderError) throw orderError;
 
+      // Create confirmation token for this order
+      const { data: tokenData, error: tokenError } = await supabase
+        .from('order_confirmation_tokens')
+        .insert({
+          order_id: order.id,
+        })
+        .select('token')
+        .single();
+
+      if (tokenError) {
+        console.error('Failed to create confirmation token:', tokenError);
+      }
+
       // Create order items
       const orderItems = input.items.map((item) => ({
         order_id: order.id,
@@ -151,6 +164,7 @@ export const useCreateOrder = () => {
             })),
             totalAmount,
             notes: input.notes,
+            confirmationToken: tokenData?.token,
           },
         });
 

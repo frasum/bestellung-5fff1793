@@ -28,6 +28,7 @@ interface OrderEmailRequest {
   items: OrderItem[];
   totalAmount: number;
   notes?: string;
+  confirmationToken?: string;
 }
 
 const generateEmailHtml = (data: OrderEmailRequest): string => {
@@ -109,6 +110,19 @@ const generateEmailHtml = (data: OrderEmailRequest): string => {
               <h2 style="color: #92400e; font-size: 14px; margin: 0 0 8px 0; font-weight: 600;">📝 Hinweise</h2>
               <p style="margin: 0; color: #78350f; font-size: 14px; white-space: pre-line;">${data.notes}</p>
             </div>
+          ` : ''}
+
+          ${data.confirmationToken ? `
+          <!-- Confirmation Button -->
+          <div style="margin-bottom: 28px; text-align: center;">
+            <a href="${Deno.env.get("SUPABASE_URL")}/functions/v1/confirm-order?token=${data.confirmationToken}" 
+               style="display: inline-block; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; font-weight: 700; font-size: 18px; padding: 18px 48px; border-radius: 12px; text-decoration: none; box-shadow: 0 4px 14px rgba(16, 185, 129, 0.4);">
+              ✅ Bestellung bestätigen
+            </a>
+            <p style="margin-top: 12px; color: #6b7280; font-size: 13px;">
+              Mit Klick auf den Button bestätigen Sie den Eingang dieser Bestellung.
+            </p>
+          </div>
           ` : ''}
 
           <!-- Items Table -->
