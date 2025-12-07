@@ -414,51 +414,90 @@ const generateAlreadyConfirmedHtml = (orderNumber: string): string => {
 };
 
 serve(async (req) => {
+  console.log("=== CONFIRM-ORDER DEBUG START ===");
+  console.log("Request method:", req.method);
+  console.log("Request URL:", req.url);
+  console.log("Request headers:", JSON.stringify(Object.fromEntries(req.headers.entries())));
+
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
+    console.log("Handling CORS preflight request");
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
     const url = new URL(req.url);
     const token = url.searchParams.get("token");
+    console.log("Parsed URL:", url.toString());
+    console.log("Token from query params:", token ? `${token.substring(0, 10)}... (length: ${token.length})` : "NULL");
 
     if (!token) {
-      return createHtmlResponse(generateErrorHtml("Kein Bestätigungstoken angegeben."), 400);
+      console.log("ERROR: No token provided");
+      const response = createHtmlResponse(generateErrorHtml("Kein Bestätigungstoken angegeben."), 400);
+      console.log("Response status:", response.status);
+      console.log("Response headers:", JSON.stringify(Object.fromEntries(response.headers.entries())));
+      return response;
     }
 
     console.log(`Processing confirmation for token: ${token.substring(0, 10)}...`);
 
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    console.log("SUPABASE_URL configured:", supabaseUrl ? "YES" : "NO");
+    console.log("SERVICE_ROLE_KEY configured:", serviceRoleKey ? "YES (length: " + serviceRoleKey.length + ")" : "NO");
+
     const supabase = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+      supabaseUrl ?? "",
+      serviceRoleKey ?? ""
     );
 
     // Find the token with order, user details and order items
+    console.log("Querying order_confirmation_tokens table for token...");
     const { data: tokenData, error: tokenError } = await supabase
       .from("order_confirmation_tokens")
       .select("*, orders(id, order_number, status, user_id, total_amount, suppliers(name), order_items(article_name, quantity, unit, unit_price, total_price))")
       .eq("token", token)
       .single();
 
+    console.log("Token query result - data:", tokenData ? "FOUND" : "NULL");
+    console.log("Token query result - error:", tokenError ? JSON.stringify(tokenError) : "NONE");
+
     if (tokenError || !tokenData) {
       console.error("Token not found:", tokenError);
-      return createHtmlResponse(generateErrorHtml("Ungültiger oder nicht gefundener Bestätigungstoken."), 404);
+      const response = createHtmlResponse(generateErrorHtml("Ungültiger oder nicht gefundener Bestätigungstoken."), 404);
+      console.log("Returning 404 response");
+      console.log("Response Content-Type:", response.headers.get("Content-Type"));
+      return response;
     }
+
+    console.log("Token found! Order ID:", tokenData.order_id);
+    console.log("Token expires_at:", tokenData.expires_at);
+    console.log("Token confirmed_at:", tokenData.confirmed_at);
 
     // Check if already confirmed
     if (tokenData.confirmed_at) {
-      console.log("Token already used");
-      return createHtmlResponse(generateAlreadyConfirmedHtml(tokenData.orders?.order_number || ""));
+      console.log("Token already used at:", tokenData.confirmed_at);
+      const response = createHtmlResponse(generateAlreadyConfirmedHtml(tokenData.orders?.order_number || ""));
+      console.log("Response Content-Type:", response.headers.get("Content-Type"));
+      return response;
     }
 
     // Check if expired
-    if (new Date(tokenData.expires_at) < new Date()) {
+    const expiresAt = new Date(tokenData.expires_at);
+    const now = new Date();
+    console.log("Token expires at:", expiresAt.toISOString());
+    console.log("Current time:", now.toISOString());
+    console.log("Token expired?", expiresAt < now);
+
+    if (expiresAt < now) {
       console.log("Token expired");
-      return createHtmlResponse(generateErrorHtml("Dieser Bestätigungslink ist abgelaufen. Bitte kontaktieren Sie den Besteller."), 410);
+      const response = createHtmlResponse(generateErrorHtml("Dieser Bestätigungslink ist abgelaufen. Bitte kontaktieren Sie den Besteller."), 410);
+      console.log("Response Content-Type:", response.headers.get("Content-Type"));
+      return response;
     }
 
     // Update order status to confirmed
+    console.log("Updating order status to 'confirmed'...");
     const { error: updateOrderError } = await supabase
       .from("orders")
       .update({ status: "confirmed" })
@@ -466,10 +505,14 @@ serve(async (req) => {
 
     if (updateOrderError) {
       console.error("Error updating order:", updateOrderError);
-      return createHtmlResponse(generateErrorHtml("Fehler beim Aktualisieren der Bestellung."), 500);
+      const response = createHtmlResponse(generateErrorHtml("Fehler beim Aktualisieren der Bestellung."), 500);
+      console.log("Response Content-Type:", response.headers.get("Content-Type"));
+      return response;
     }
+    console.log("Order status updated successfully");
 
     // Mark token as used
+    console.log("Marking token as used...");
     const { error: updateTokenError } = await supabase
       .from("order_confirmation_tokens")
       .update({ confirmed_at: new Date().toISOString() })
@@ -477,12 +520,15 @@ serve(async (req) => {
 
     if (updateTokenError) {
       console.error("Error updating token:", updateTokenError);
+    } else {
+      console.log("Token marked as used");
     }
 
     console.log(`Order ${tokenData.orders?.order_number} confirmed successfully`);
 
     // Send notification to the order creator (restaurant)
     if (tokenData.orders?.user_id) {
+      console.log("Fetching order creator profile for notification...");
       const { data: profile } = await supabase
         .from("profiles")
         .select("email")
@@ -490,6 +536,7 @@ serve(async (req) => {
         .single();
 
       if (profile?.email) {
+        console.log("Sending confirmation notification to:", profile.email);
         const orderItems = tokenData.orders.order_items || [];
         const totalAmount = Number(tokenData.orders.total_amount) || 0;
         
@@ -501,17 +548,32 @@ serve(async (req) => {
           orderItems,
           totalAmount
         );
+      } else {
+        console.log("No email found for order creator");
       }
     }
 
-    return createHtmlResponse(
+    console.log("=== RETURNING SUCCESS HTML ===");
+    const successResponse = createHtmlResponse(
       generateSuccessHtml(
         tokenData.orders?.order_number || "",
         tokenData.orders?.suppliers?.name || "Lieferant"
       )
     );
+    console.log("Success response status:", successResponse.status);
+    console.log("Success response Content-Type:", successResponse.headers.get("Content-Type"));
+    console.log("Success response headers:", JSON.stringify(Object.fromEntries(successResponse.headers.entries())));
+    console.log("=== CONFIRM-ORDER DEBUG END ===");
+    return successResponse;
+
   } catch (error: any) {
-    console.error("Error in confirm-order function:", error);
-    return createHtmlResponse(generateErrorHtml("Ein unerwarteter Fehler ist aufgetreten."), 500);
+    console.error("=== UNHANDLED ERROR ===");
+    console.error("Error type:", error?.constructor?.name);
+    console.error("Error message:", error?.message);
+    console.error("Error stack:", error?.stack);
+    const errorResponse = createHtmlResponse(generateErrorHtml("Ein unerwarteter Fehler ist aufgetreten."), 500);
+    console.log("Error response Content-Type:", errorResponse.headers.get("Content-Type"));
+    console.log("=== CONFIRM-ORDER DEBUG END ===");
+    return errorResponse;
   }
 });
