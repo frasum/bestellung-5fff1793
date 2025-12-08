@@ -871,6 +871,7 @@ export type Database = {
           footer_text: string | null
           id: string
           info_text: string | null
+          logo_url: string | null
           organization_id: string
           portal_title: string
           updated_at: string
@@ -883,6 +884,7 @@ export type Database = {
           footer_text?: string | null
           id?: string
           info_text?: string | null
+          logo_url?: string | null
           organization_id: string
           portal_title?: string
           updated_at?: string
@@ -895,6 +897,7 @@ export type Database = {
           footer_text?: string | null
           id?: string
           info_text?: string | null
+          logo_url?: string | null
           organization_id?: string
           portal_title?: string
           updated_at?: string

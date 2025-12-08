@@ -10,7 +10,7 @@ import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Building2, MapPin, Bell, Plus, Pencil, Trash2, Star, User, Lock, Users, Mail, Clock, X, Globe, FileText, RotateCcw, Moon, Sun, Ruler, Check, Store, Merge, ExternalLink } from 'lucide-react';
+import { Building2, MapPin, Bell, Plus, Pencil, Trash2, Star, User, Lock, Users, Mail, Clock, X, Globe, FileText, RotateCcw, Moon, Sun, Ruler, Check, Store, Merge, ExternalLink, Upload, ImageIcon, Loader2 } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { useSupplierPortalSettings, useUpsertSupplierPortalSettings, DEFAULT_PORTAL_SETTINGS } from '@/hooks/useSupplierPortalSettings';
 import ReactMarkdown from 'react-markdown';
@@ -2061,7 +2061,7 @@ const CategoriesTab = () => {
 };
 
 const SupplierPortalTab = () => {
-  const { data: settings, isLoading } = useSupplierPortalSettings();
+  const { data: settings, isLoading, refetch } = useSupplierPortalSettings();
   const upsertSettings = useUpsertSupplierPortalSettings();
   
   const [portalTitle, setPortalTitle] = useState('');
@@ -2070,6 +2070,8 @@ const SupplierPortalTab = () => {
   const [cardDescription, setCardDescription] = useState('');
   const [infoText, setInfoText] = useState('');
   const [footerText, setFooterText] = useState('');
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
   const [initialized, setInitialized] = useState(false);
 
   // Initialize form with loaded settings
@@ -2080,6 +2082,7 @@ const SupplierPortalTab = () => {
     setCardDescription(settings.card_description);
     setInfoText(settings.info_text || '');
     setFooterText(settings.footer_text || '');
+    setLogoUrl(settings.logo_url || null);
     setInitialized(true);
   } else if (!settings && !isLoading && !initialized) {
     setPortalTitle(DEFAULT_PORTAL_SETTINGS.portal_title);
@@ -2088,8 +2091,96 @@ const SupplierPortalTab = () => {
     setCardDescription(DEFAULT_PORTAL_SETTINGS.card_description);
     setInfoText('');
     setFooterText('');
+    setLogoUrl(null);
     setInitialized(true);
   }
+
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast.error('Bitte wählen Sie eine Bilddatei aus');
+      return;
+    }
+
+    // Validate file size (max 2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error('Die Datei ist zu groß. Maximale Größe: 2MB');
+      return;
+    }
+
+    setUploadingLogo(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('organization_id')
+        .eq('id', user.id)
+        .single();
+
+      if (!profile?.organization_id) throw new Error('No organization found');
+
+      // Generate unique filename
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${profile.organization_id}/logo-${Date.now()}.${fileExt}`;
+
+      // Delete old logo if exists
+      if (logoUrl) {
+        const oldPath = logoUrl.split('/portal-logos/')[1];
+        if (oldPath) {
+          await supabase.storage.from('portal-logos').remove([oldPath]);
+        }
+      }
+
+      // Upload new logo
+      const { error: uploadError } = await supabase.storage
+        .from('portal-logos')
+        .upload(fileName, file);
+
+      if (uploadError) throw uploadError;
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('portal-logos')
+        .getPublicUrl(fileName);
+
+      // Save to settings
+      await upsertSettings.mutateAsync({ logo_url: publicUrl });
+      setLogoUrl(publicUrl);
+      toast.success('Logo erfolgreich hochgeladen');
+    } catch (error: any) {
+      console.error('Error uploading logo:', error);
+      toast.error('Fehler beim Hochladen: ' + error.message);
+    } finally {
+      setUploadingLogo(false);
+      // Reset input
+      e.target.value = '';
+    }
+  };
+
+  const handleRemoveLogo = async () => {
+    if (!logoUrl) return;
+
+    try {
+      // Delete from storage
+      const path = logoUrl.split('/portal-logos/')[1];
+      if (path) {
+        await supabase.storage.from('portal-logos').remove([path]);
+      }
+
+      // Update settings
+      await upsertSettings.mutateAsync({ logo_url: null });
+      setLogoUrl(null);
+      toast.success('Logo entfernt');
+    } catch (error: any) {
+      console.error('Error removing logo:', error);
+      toast.error('Fehler beim Entfernen: ' + error.message);
+    }
+  };
 
   const handleSave = () => {
     upsertSettings.mutate({
@@ -2128,6 +2219,68 @@ const SupplierPortalTab = () => {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
+          {/* Logo Upload Section */}
+          <div className="space-y-3">
+            <Label className="flex items-center gap-2">
+              <ImageIcon className="h-4 w-4" />
+              Portal-Logo
+            </Label>
+            <div className="flex items-center gap-4">
+              <div className="w-24 h-24 border rounded-lg flex items-center justify-center bg-muted/30 overflow-hidden">
+                {logoUrl ? (
+                  <img src={logoUrl} alt="Portal Logo" className="max-w-full max-h-full object-contain" />
+                ) : (
+                  <ImageIcon className="h-8 w-8 text-muted-foreground/50" />
+                )}
+              </div>
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center gap-2">
+                  <label htmlFor="logo-upload">
+                    <Input
+                      id="logo-upload"
+                      type="file"
+                      accept="image/*"
+                      onChange={handleLogoUpload}
+                      className="hidden"
+                      disabled={uploadingLogo}
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={uploadingLogo}
+                      onClick={() => document.getElementById('logo-upload')?.click()}
+                    >
+                      {uploadingLogo ? (
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      ) : (
+                        <Upload className="h-4 w-4 mr-2" />
+                      )}
+                      {logoUrl ? 'Logo ändern' : 'Logo hochladen'}
+                    </Button>
+                  </label>
+                  {logoUrl && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleRemoveLogo}
+                      className="text-destructive hover:text-destructive"
+                    >
+                      <Trash2 className="h-4 w-4 mr-1" />
+                      Entfernen
+                    </Button>
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Max. 2MB. Wird im Portal-Header angezeigt.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="border-t pt-4 mt-4" />
+
           {/* Markdown hint */}
           <div className="p-3 bg-muted/50 rounded-lg text-xs text-muted-foreground space-y-1">
             <p className="font-medium">Markdown-Formatierung unterstützt:</p>
