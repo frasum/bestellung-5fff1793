@@ -1,10 +1,11 @@
 import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
-import { ShoppingCart, Users, BarChart3, Package, Loader2 } from 'lucide-react';
+import { ShoppingCart, Users, BarChart3, Package, Loader2, ChevronRight } from 'lucide-react';
 import { useOrders } from '@/hooks/useOrders';
 import { useSuppliers } from '@/hooks/useSuppliers';
+import { Badge } from '@/components/ui/badge';
 
 const Dashboard = () => {
   const { user, loading } = useAuth();
@@ -65,6 +66,29 @@ const Dashboard = () => {
 
   const maxSupplierAmount = Math.max(...topSuppliers.map(s => s.amount), 1);
   const maxMonthlyAmount = Math.max(...monthlySpending.map(m => m.amount), 1);
+
+  // Get recent orders (last 5)
+  const recentOrders = orders.slice(0, 5);
+
+  const statusColors: Record<string, string> = {
+    pending: 'bg-warning/10 text-warning border-warning/20',
+    confirmed: 'bg-success/10 text-success border-success/20',
+    processing: 'bg-primary/10 text-primary border-primary/20',
+    shipped: 'bg-accent/10 text-accent border-accent/20',
+    delivered: 'bg-success/10 text-success border-success/20',
+    cancelled: 'bg-destructive/10 text-destructive border-destructive/20',
+    draft: 'bg-muted text-muted-foreground border-muted',
+  };
+
+  const statusLabels: Record<string, string> = {
+    pending: 'Ausstehend',
+    confirmed: 'Bestätigt',
+    processing: 'In Bearbeitung',
+    shipped: 'Versendet',
+    delivered: 'Geliefert',
+    cancelled: 'Storniert',
+    draft: 'Entwurf',
+  };
 
   const stats = [
     { label: 'Bestellungen', value: totalOrders, icon: ShoppingCart, color: 'text-primary' },
@@ -135,6 +159,59 @@ const Dashboard = () => {
               </div>
             )}
           </div>
+        </div>
+
+        {/* Recent Orders */}
+        <div className="bg-card border border-border rounded-xl p-4 lg:p-6">
+          <div className="flex items-center justify-between mb-3 lg:mb-4">
+            <h2 className="text-base lg:text-lg font-semibold text-foreground">Letzte Bestellungen</h2>
+            <Link 
+              to="/orders" 
+              className="text-sm text-primary hover:text-primary/80 flex items-center gap-1"
+            >
+              Alle anzeigen
+              <ChevronRight className="w-4 h-4" />
+            </Link>
+          </div>
+          {recentOrders.length === 0 ? (
+            <p className="text-muted-foreground text-sm">Noch keine Bestellungen</p>
+          ) : (
+            <div className="space-y-2">
+              {recentOrders.map((order) => (
+                <Link
+                  key={order.id}
+                  to="/orders"
+                  className="flex items-center justify-between p-2.5 lg:p-3 bg-muted/50 hover:bg-muted rounded-lg transition-colors"
+                >
+                  <div className="flex items-center gap-3 min-w-0 flex-1">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium text-foreground truncate">
+                          {order.suppliers?.name || 'Unbekannt'}
+                        </span>
+                        <Badge 
+                          variant="outline" 
+                          className={`text-[10px] lg:text-xs px-1.5 py-0 ${statusColors[order.status] || ''}`}
+                        >
+                          {statusLabels[order.status] || order.status}
+                        </Badge>
+                      </div>
+                      <span className="text-xs text-muted-foreground">
+                        {new Date(order.created_at).toLocaleDateString('de-DE', { 
+                          day: '2-digit', 
+                          month: '2-digit',
+                          year: '2-digit'
+                        })}
+                      </span>
+                    </div>
+                  </div>
+                  <span className="text-sm font-medium text-foreground whitespace-nowrap ml-2">
+                    €{Number(order.total_amount).toLocaleString('de-DE')}
+                  </span>
+                </Link>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </DashboardLayout>
