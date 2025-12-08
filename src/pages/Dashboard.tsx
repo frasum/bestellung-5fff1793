@@ -180,7 +180,7 @@ const Dashboard = () => {
               {recentOrders.map((order) => (
                 <Link
                   key={order.id}
-                  to="/orders"
+                  to={`/orders?orderId=${order.id}`}
                   className="flex items-center justify-between p-2.5 lg:p-3 bg-muted/50 hover:bg-muted rounded-lg transition-colors"
                 >
                   <div className="flex items-center gap-3 min-w-0 flex-1">
