@@ -147,7 +147,7 @@ async function sendConfirmationNotification(
 
   try {
     const { error } = await resend.emails.send({
-      from: "Bestellung.pro <onboarding@resend.dev>",
+      from: "Bestellung.pro <noreply@bestellung.pro>",
       to: [recipientEmail],
       subject: `✅ Bestellung ${orderNumber} wurde von ${supplierName} bestätigt`,
       html: generateConfirmationNotificationHtml(orderNumber, supplierName, confirmedAt, items, totalAmount),
