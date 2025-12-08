@@ -13,7 +13,7 @@ import Suppliers from "./pages/Suppliers";
 import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
 import Orders from "./pages/Orders";
-import Drafts from "./pages/Drafts";
+
 import Reports from "./pages/Reports";
 import Settings from "./pages/Settings";
 import Inventory from "./pages/Inventory";
@@ -43,7 +43,7 @@ const App = () => (
                 <Route path="/cart" element={<Cart />} />
                 <Route path="/checkout" element={<Checkout />} />
                 <Route path="/orders" element={<Orders />} />
-                <Route path="/drafts" element={<Drafts />} />
+                <Route path="/drafts" element={<Navigate to="/orders?tab=drafts" replace />} />
                 <Route path="/reports" element={<Reports />} />
                 <Route path="/inventory" element={<Inventory />} />
                 <Route path="/settings" element={<Settings />} />

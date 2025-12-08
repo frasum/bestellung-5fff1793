@@ -26,7 +26,6 @@ const mainNavItems = [
 
 const moreNavItems = [
   { href: '/orders', label: 'Bestellungen', icon: ShoppingCart },
-  { href: '/drafts', label: 'Entwürfe', icon: FileText },
   { href: '/reports', label: 'Berichte', icon: BarChart3 },
   { href: '/settings', label: 'Einstellungen', icon: Settings },
 ];

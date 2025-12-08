@@ -85,7 +85,7 @@ const Cart = () => {
         setSaveDialogOpen(false);
         setDraftName('');
         clearCart();
-        navigate('/drafts');
+        navigate('/orders?tab=drafts');
       },
     });
   };
