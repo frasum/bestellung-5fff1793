@@ -764,6 +764,7 @@ const TeamTab = () => {
 };
 
 const AddressesTab = () => {
+  const { t } = useTranslation();
   const { activeLocation } = useLocationContext();
   const { data: addresses = [], isLoading } = useDeliveryAddresses(activeLocation?.id);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -780,28 +781,28 @@ const AddressesTab = () => {
   };
 
   if (isLoading) {
-    return <Card><CardContent className="p-6">Lädt...</CardContent></Card>;
+    return <Card><CardContent className="p-6">{t('common.loading')}</CardContent></Card>;
   }
 
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
         <div>
-          <CardTitle>Lieferadressen</CardTitle>
+          <CardTitle>{t('settings.deliveryAddresses')}</CardTitle>
           <CardDescription>
-            Lieferadressen für {activeLocation?.name || 'diesen Standort'} verwalten
+            {t('settings.addressDescription', { location: activeLocation?.name || t('locations.title') })}
           </CardDescription>
         </div>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
             <Button onClick={handleAdd} className="gap-2">
               <Plus className="h-4 w-4" />
-              Adresse hinzufügen
+              {t('settings.addAddress')}
             </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>{editingAddress ? 'Adresse bearbeiten' : 'Adresse hinzufügen'}</DialogTitle>
+              <DialogTitle>{editingAddress ? t('settings.editAddress') : t('settings.addAddress')}</DialogTitle>
             </DialogHeader>
             <AddressForm
               address={editingAddress}
@@ -814,7 +815,7 @@ const AddressesTab = () => {
       <CardContent>
         {addresses.length === 0 ? (
           <p className="text-muted-foreground text-center py-8">
-            Noch keine Adressen für {activeLocation?.name || 'diesen Standort'}. Füge die erste Lieferadresse hinzu.
+            {t('settings.noAddresses', { location: activeLocation?.name || t('locations.title') })}
           </p>
         ) : (
           <div className="space-y-4">
@@ -829,6 +830,7 @@ const AddressesTab = () => {
 };
 
 const AddressCard = ({ address, onEdit }: { address: DeliveryAddress; onEdit: () => void }) => {
+  const { t } = useTranslation();
   const deleteAddress = useDeleteDeliveryAddress();
   const updateAddress = useUpdateDeliveryAddress();
 
@@ -840,7 +842,7 @@ const AddressCard = ({ address, onEdit }: { address: DeliveryAddress; onEdit: ()
           {address.is_default && (
             <Badge variant="secondary" className="gap-1">
               <Star className="h-3 w-3" />
-              Standard
+              {t('settings.defaultAddress')}
             </Badge>
           )}
         </div>
@@ -887,6 +889,7 @@ const AddressForm = ({
   locationId: string | null;
   onSuccess: () => void;
 }) => {
+  const { t } = useTranslation();
   const createAddress = useCreateDeliveryAddress();
   const updateAddress = useUpdateDeliveryAddress();
   const [formData, setFormData] = useState({
@@ -913,37 +916,37 @@ const AddressForm = ({
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-2">
-        <Label htmlFor="label">Bezeichnung</Label>
+        <Label htmlFor="label">{t('settings.addressLabel')}</Label>
         <Input
           id="label"
           value={formData.label}
           onChange={(e) => setFormData({ ...formData, label: e.target.value })}
-          placeholder="z.B. Hauptküche, Bar"
+          placeholder={t('settings.addressLabelPlaceholder')}
           required
         />
       </div>
       <div className="space-y-2">
-        <Label htmlFor="address_line1">Adresszeile 1</Label>
+        <Label htmlFor="address_line1">{t('settings.addressLine1')}</Label>
         <Input
           id="address_line1"
           value={formData.address_line1}
           onChange={(e) => setFormData({ ...formData, address_line1: e.target.value })}
-          placeholder="Straße und Hausnummer"
+          placeholder={t('settings.addressLine1Placeholder')}
           required
         />
       </div>
       <div className="space-y-2">
-        <Label htmlFor="address_line2">Adresszeile 2</Label>
+        <Label htmlFor="address_line2">{t('settings.addressLine2')}</Label>
         <Input
           id="address_line2"
           value={formData.address_line2}
           onChange={(e) => setFormData({ ...formData, address_line2: e.target.value })}
-          placeholder="Gebäude, Etage, etc. (optional)"
+          placeholder={t('settings.addressLine2Placeholder')}
         />
       </div>
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="postal_code">PLZ</Label>
+          <Label htmlFor="postal_code">{t('settings.postalCode')}</Label>
           <Input
             id="postal_code"
             value={formData.postal_code}
@@ -952,7 +955,7 @@ const AddressForm = ({
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="city">Stadt</Label>
+          <Label htmlFor="city">{t('settings.city')}</Label>
           <Input
             id="city"
             value={formData.city}
@@ -962,7 +965,7 @@ const AddressForm = ({
         </div>
       </div>
       <div className="space-y-2">
-        <Label htmlFor="country">Land</Label>
+        <Label htmlFor="country">{t('settings.country')}</Label>
         <Input
           id="country"
           value={formData.country}
@@ -976,16 +979,17 @@ const AddressForm = ({
           checked={formData.is_default}
           onCheckedChange={(checked) => setFormData({ ...formData, is_default: checked })}
         />
-        <Label htmlFor="is_default">Als Standardadresse festlegen</Label>
+        <Label htmlFor="is_default">{t('settings.setAsDefault')}</Label>
       </div>
       <Button type="submit" className="w-full" disabled={isPending}>
-        {isPending ? 'Speichert...' : address ? 'Adresse aktualisieren' : 'Adresse hinzufügen'}
+        {isPending ? t('settings.savingProfile') : address ? t('settings.updateAddress') : t('settings.addAddress')}
       </Button>
     </form>
   );
 };
 
 const NotificationsTab = () => {
+  const { t } = useTranslation();
   const { data: preferences, isLoading } = useNotificationPreferences();
   const upsertPreferences = useUpsertNotificationPreferences();
   const [prefs, setPrefs] = useState({
@@ -1013,7 +1017,7 @@ const NotificationsTab = () => {
   };
 
   if (isLoading) {
-    return <Card><CardContent className="p-6">Lädt...</CardContent></Card>;
+    return <Card><CardContent className="p-6">{t('common.loading')}</CardContent></Card>;
   }
 
   const currentPrefs = preferences || prefs;
@@ -1021,15 +1025,15 @@ const NotificationsTab = () => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Benachrichtigungseinstellungen</CardTitle>
-        <CardDescription>Wähle, welche Benachrichtigungen du erhalten möchtest</CardDescription>
+        <CardTitle>{t('settings.notificationPrefs')}</CardTitle>
+        <CardDescription>{t('settings.notificationDescription')}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
-              <Label>Bestellbestätigungen</Label>
-              <p className="text-sm text-muted-foreground">E-Mail erhalten, wenn Bestellungen aufgegeben werden</p>
+              <Label>{t('settings.orderConfirmation')}</Label>
+              <p className="text-sm text-muted-foreground">{t('settings.orderConfirmationDesc')}</p>
             </div>
             <Switch
               checked={currentPrefs.email_order_confirmation}
@@ -1039,8 +1043,8 @@ const NotificationsTab = () => {
 
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
-              <Label>Bestellstatus-Updates</Label>
-              <p className="text-sm text-muted-foreground">Benachrichtigt werden, wenn sich der Bestellstatus ändert</p>
+              <Label>{t('settings.orderStatus')}</Label>
+              <p className="text-sm text-muted-foreground">{t('settings.orderStatusDesc')}</p>
             </div>
             <Switch
               checked={currentPrefs.email_order_status}
@@ -1050,8 +1054,8 @@ const NotificationsTab = () => {
 
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
-              <Label>Wöchentliche Berichte</Label>
-              <p className="text-sm text-muted-foreground">Wöchentliche Ausgabenübersichten erhalten</p>
+              <Label>{t('settings.weeklyReport')}</Label>
+              <p className="text-sm text-muted-foreground">{t('settings.weeklyReportDesc')}</p>
             </div>
             <Switch
               checked={currentPrefs.email_weekly_report}
@@ -1061,8 +1065,8 @@ const NotificationsTab = () => {
 
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
-              <Label>Lieferanten-Updates</Label>
-              <p className="text-sm text-muted-foreground">Über Änderungen bei Lieferanten informiert werden</p>
+              <Label>{t('settings.supplierUpdates')}</Label>
+              <p className="text-sm text-muted-foreground">{t('settings.supplierUpdatesDesc')}</p>
             </div>
             <Switch
               checked={currentPrefs.email_supplier_updates}
@@ -1576,6 +1580,7 @@ const UnitsTab = () => {
 };
 
 const LocationsTab = () => {
+  const { t } = useTranslation();
   const { data: locations = [], isLoading } = useLocations();
   const createLocation = useCreateLocation();
   const updateLocation = useUpdateLocation();
@@ -1626,13 +1631,13 @@ const LocationsTab = () => {
   };
 
   const handleDelete = (id: string) => {
-    if (confirm('Standort wirklich löschen?')) {
+    if (confirm(t('settings.deleteLocationConfirm'))) {
       deleteLocation.mutate(id);
     }
   };
 
   if (isLoading) {
-    return <Card><CardContent className="p-6">Laden...</CardContent></Card>;
+    return <Card><CardContent className="p-6">{t('common.loading')}</CardContent></Card>;
   }
 
   return (
@@ -1641,50 +1646,50 @@ const LocationsTab = () => {
         <div>
           <CardTitle className="flex items-center gap-2">
             <Store className="h-5 w-5" />
-            Standorte
+            {t('settings.manageLocations')}
           </CardTitle>
           <CardDescription>
-            Verwalten Sie Ihre Restaurant-Standorte. Jeder Standort kann eigene Kundennummern und Lieferadressen haben.
+            {t('settings.manageLocationsDesc')}
           </CardDescription>
         </div>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
             <Button className="gap-2" onClick={() => handleOpenDialog()}>
               <Plus className="h-4 w-4" />
-              Standort hinzufügen
+              {t('settings.addLocation')}
             </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>
-                {editingLocation ? 'Standort bearbeiten' : 'Neuen Standort erstellen'}
+                {editingLocation ? t('settings.editLocation') : t('settings.createLocation')}
               </DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="location-name">Name *</Label>
+                <Label htmlFor="location-name">{t('settings.locationName')} *</Label>
                 <Input
                   id="location-name"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="z.B. Restaurant Hauptstraße"
+                  placeholder={t('settings.locationNamePlaceholder')}
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="location-code">Kürzel (optional)</Label>
+                <Label htmlFor="location-code">{t('settings.locationCode')}</Label>
                 <Input
                   id="location-code"
                   value={shortCode}
                   onChange={(e) => setShortCode(e.target.value)}
-                  placeholder="z.B. HS"
+                  placeholder={t('settings.locationCodePlaceholder')}
                   maxLength={5}
                 />
-                <p className="text-xs text-muted-foreground">Wird in der Navigation angezeigt</p>
+                <p className="text-xs text-muted-foreground">{t('settings.locationCodeDesc')}</p>
               </div>
               <div className="flex items-center justify-between">
                 <div>
-                  <Label htmlFor="is-default">Standard-Standort</Label>
-                  <p className="text-xs text-muted-foreground">Wird automatisch beim Anmelden ausgewählt</p>
+                  <Label htmlFor="is-default">{t('settings.defaultLocation')}</Label>
+                  <p className="text-xs text-muted-foreground">{t('settings.defaultLocationDesc')}</p>
                 </div>
                 <Switch
                   id="is-default"
@@ -1693,7 +1698,7 @@ const LocationsTab = () => {
                 />
               </div>
               <Button onClick={handleSave} className="w-full" disabled={createLocation.isPending || updateLocation.isPending}>
-                {(createLocation.isPending || updateLocation.isPending) ? 'Speichern...' : 'Speichern'}
+                {(createLocation.isPending || updateLocation.isPending) ? t('settings.savingProfile') : t('common.save')}
               </Button>
             </div>
           </DialogContent>
@@ -1702,7 +1707,7 @@ const LocationsTab = () => {
       <CardContent>
         {locations.length === 0 ? (
           <p className="text-muted-foreground text-center py-8">
-            Noch keine Standorte angelegt.
+            {t('settings.noLocations')}
           </p>
         ) : (
           <div className="space-y-3">
@@ -1726,7 +1731,7 @@ const LocationsTab = () => {
                       {location.is_default && (
                         <Badge variant="secondary" className="text-xs">
                           <Star className="h-3 w-3 mr-1" />
-                          Standard
+                          {t('settings.defaultAddress')}
                         </Badge>
                       )}
                     </div>
