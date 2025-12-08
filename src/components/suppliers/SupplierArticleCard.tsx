@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Save, Loader2, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { SupplierUnitSelect } from './SupplierUnitSelect';
 
 interface Article {
   id: string;
@@ -26,15 +27,22 @@ interface PendingChange {
   created_at: string;
 }
 
+interface Unit {
+  id: string;
+  name: string;
+}
+
 interface SupplierArticleCardProps {
   article: Article;
   editedArticles: Record<string, Partial<Article>>;
   priceInputs: Record<string, string>;
   pendingChanges: PendingChange[];
   saving: string | null;
+  units: Unit[];
   onFieldChange: (articleId: string, field: keyof Article, value: any) => void;
   onPriceChange: (articleId: string, value: string) => void;
   onSave: (articleId: string) => void;
+  onCreateUnit: (name: string) => Promise<void>;
 }
 
 export function SupplierArticleCard({
@@ -43,9 +51,11 @@ export function SupplierArticleCard({
   priceInputs,
   pendingChanges,
   saving,
+  units,
   onFieldChange,
   onPriceChange,
   onSave,
+  onCreateUnit,
 }: SupplierArticleCardProps) {
   const getDisplayValue = (field: keyof Article) => {
     if (editedArticles[article.id]?.[field] !== undefined) {
@@ -144,23 +154,20 @@ export function SupplierArticleCard({
           )}
         </div>
 
-        {/* Unit + Price Row */}
         <div className="grid grid-cols-2 gap-3">
           <div>
             <label className="text-xs text-muted-foreground font-medium">Einheit</label>
-            <Input
-              value={getDisplayValue('unit') as string}
-              onChange={(e) => onFieldChange(article.id, 'unit', e.target.value)}
-              className={cn("h-11 mt-1", hasPendingChange('unit') && "border-amber-500")}
-            />
-            {getPendingChangeForField('unit') && (
-              <p className="text-xs mt-1">
-                <span className="text-amber-600">Ausstehend</span>
-                <span className="text-muted-foreground ml-1">
-                  (vorher: {getPendingChangeForField('unit')?.old_value || '—'})
-                </span>
-              </p>
-            )}
+            <div className="mt-1">
+              <SupplierUnitSelect
+                value={getDisplayValue('unit') as string}
+                units={units}
+                onChange={(value) => onFieldChange(article.id, 'unit', value)}
+                onCreateUnit={onCreateUnit}
+                hasPending={hasPendingChange('unit')}
+                pendingInfo={getPendingChangeForField('unit')}
+                className="h-11"
+              />
+            </div>
           </div>
           <div>
             <label className="text-xs text-muted-foreground font-medium">Preis (€)</label>
