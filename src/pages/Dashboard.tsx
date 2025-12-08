@@ -2,9 +2,10 @@ import { useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
-import { ShoppingCart, Users, BarChart3, Package, Loader2, ChevronRight } from 'lucide-react';
+import { ShoppingCart, Users, BarChart3, Package, Loader2, ChevronRight, Box } from 'lucide-react';
 import { useOrders } from '@/hooks/useOrders';
 import { useSuppliers } from '@/hooks/useSuppliers';
+import { useArticles } from '@/hooks/useArticles';
 import { Badge } from '@/components/ui/badge';
 
 const Dashboard = () => {
@@ -12,6 +13,7 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const { data: orders = [], isLoading: ordersLoading } = useOrders();
   const { data: suppliers = [], isLoading: suppliersLoading } = useSuppliers();
+  const { data: articles = [], isLoading: articlesLoading } = useArticles();
 
   useEffect(() => {
     if (!loading && !user) {
@@ -19,7 +21,7 @@ const Dashboard = () => {
     }
   }, [user, loading, navigate]);
 
-  if (loading || ordersLoading || suppliersLoading) {
+  if (loading || ordersLoading || suppliersLoading || articlesLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
@@ -32,7 +34,8 @@ const Dashboard = () => {
   // Calculate real stats from database
   const totalOrders = orders.length;
   const totalSpent = orders.reduce((sum, order) => sum + Number(order.total_amount), 0);
-  const totalSuppliers = suppliers.length; // Bug-fix: All suppliers are active
+  const totalSuppliers = suppliers.length;
+  const totalArticles = articles.length;
   const pendingOrders = orders.filter(o => o.status === 'pending').length;
 
   // Calculate monthly spending (last 6 months)
@@ -94,6 +97,7 @@ const Dashboard = () => {
     { label: 'Bestellungen', value: totalOrders, icon: ShoppingCart, color: 'text-primary' },
     { label: 'Gesamtausgaben', value: `€${totalSpent.toLocaleString('de-DE')}`, icon: BarChart3, color: 'text-success' },
     { label: 'Lieferanten', value: totalSuppliers, icon: Users, color: 'text-accent' },
+    { label: 'Artikel', value: totalArticles, icon: Box, color: 'text-blue-500' },
     { label: 'Ausstehend', value: pendingOrders, icon: Package, color: 'text-warning' },
   ];
 
@@ -107,7 +111,7 @@ const Dashboard = () => {
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 lg:gap-4">
           {stats.map((stat, index) => (
             <div key={index} className="bg-card border border-border rounded-xl p-4 lg:p-6">
               <div className="flex items-center justify-between mb-2 lg:mb-4">
