@@ -13,7 +13,7 @@ import { CsvImportDialog } from '@/components/CsvImportDialog';
 import { useImportSuppliers, useImportArticles } from '@/hooks/useImport';
 import { supabase } from '@/integrations/supabase/client';
 import { ExportMenu } from '@/components/ExportMenu';
-import { useSupplierPendingChanges } from '@/hooks/useSupplierChanges';
+import { useSupplierPendingChanges, useCombinedPendingBySupplier } from '@/hooks/useSupplierChanges';
 import { SupplierChangesDialog } from '@/components/suppliers/SupplierChangesDialog';
 import { SupplierLocationsDialog } from '@/components/suppliers/SupplierLocationsDialog';
 import { useCategories } from '@/hooks/useCategories';
@@ -93,6 +93,7 @@ const Suppliers = () => {
   const [changesDialogSupplier, setChangesDialogSupplier] = useState<Supplier | null>(null);
   const [locationsDialogSupplier, setLocationsDialogSupplier] = useState<Supplier | null>(null);
   const { data: pendingChanges } = useSupplierPendingChanges();
+  const { data: pendingChangesBySupplier } = useCombinedPendingBySupplier();
 
   // Local state for multi-select toggles
   const [supplierMultiSelectEnabled, setSupplierMultiSelectEnabled] = useState(() => {
@@ -141,12 +142,7 @@ const Suppliers = () => {
     }
   }, [articleAdvancedViewEnabled]);
 
-  // Group pending changes by supplier
-  const pendingChangesBySupplier = pendingChanges?.reduce((acc, change) => {
-    if (!acc[change.supplier_id]) acc[change.supplier_id] = 0;
-    acc[change.supplier_id]++;
-    return acc;
-  }, {} as Record<string, number>) || {};
+  // pendingChangesBySupplier now comes from useCombinedPendingBySupplier hook
 
   // Fetch organization name for invitation emails
   useEffect(() => {
@@ -524,7 +520,7 @@ const Suppliers = () => {
                 expandedSuppliers={expandedSuppliers}
                 selectedSuppliers={selectedSuppliers}
                 multiSelectEnabled={supplierMultiSelectEnabled}
-                pendingChangesBySupplier={pendingChangesBySupplier}
+                pendingChangesBySupplier={pendingChangesBySupplier || {}}
                 onToggleExpand={toggleSupplierExpanded}
                 onToggleSelect={toggleSupplierSelected}
                 onSelectAll={selectAllSuppliers}

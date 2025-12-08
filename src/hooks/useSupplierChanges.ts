@@ -72,6 +72,41 @@ export const usePendingChangesCount = () => {
   });
 };
 
+// Combined pending items count per supplier (changes + suggestions)
+export const useCombinedPendingBySupplier = () => {
+  return useQuery({
+    queryKey: ['combined-pending-by-supplier'],
+    queryFn: async () => {
+      // Fetch pending article changes
+      const { data: changes, error: changesError } = await supabase
+        .from('supplier_article_changes')
+        .select('supplier_id')
+        .eq('status', 'pending');
+
+      if (changesError) throw changesError;
+
+      // Fetch pending suggested articles
+      const { data: suggestions, error: suggestionsError } = await supabase
+        .from('suggested_articles')
+        .select('supplier_id')
+        .eq('status', 'pending');
+
+      if (suggestionsError) throw suggestionsError;
+
+      // Combine counts per supplier
+      const counts: Record<string, number> = {};
+      changes?.forEach(c => { 
+        counts[c.supplier_id] = (counts[c.supplier_id] || 0) + 1; 
+      });
+      suggestions?.forEach(s => { 
+        counts[s.supplier_id] = (counts[s.supplier_id] || 0) + 1; 
+      });
+      
+      return counts;
+    },
+  });
+};
+
 export const usePendingChangesBySupplier = (supplierId: string | null) => {
   return useQuery({
     queryKey: ['supplier-pending-changes', supplierId],
