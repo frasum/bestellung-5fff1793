@@ -12,7 +12,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useSuppliers, useCreateSupplier, useUpdateSupplier, useDeleteSupplier, Supplier, SupplierInput } from '@/hooks/useSuppliers';
 import { useArticles, useCreateArticle, useUpdateArticle, useDeleteArticle, useBulkUpdateArticles, Article, ArticleInput } from '@/hooks/useArticles';
-import { Plus, Pencil, Trash2, Search, Loader2, Upload, ChevronDown, ChevronRight, Minus, FileText, Printer, Send, Bell, Store, ShoppingCart, List, X, Tags, Package } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, Loader2, Upload, ChevronDown, ChevronRight, Minus, FileText, Printer, Send, Bell, Store, ShoppingCart, X, Tags, Package } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { SupplierLocationsDialog } from '@/components/suppliers/SupplierLocationsDialog';
 import { useSendSupplierInvitation } from '@/hooks/useSupplierPortal';
