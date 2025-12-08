@@ -280,6 +280,8 @@ const ProfileTab = () => {
               ))}
             </div>
           </div>
+
+          <AdvancedSettingsSwitch />
         </CardContent>
       </Card>
 
@@ -327,6 +329,36 @@ const ProfileTab = () => {
           </form>
         </CardContent>
       </Card>
+    </div>
+  );
+};
+
+const AdvancedSettingsSwitch = () => {
+  const [advancedMode, setAdvancedMode] = useState(() => 
+    localStorage.getItem('advanced-settings-enabled') === 'true'
+  );
+
+  const handleToggle = (checked: boolean) => {
+    setAdvancedMode(checked);
+    localStorage.setItem('advanced-settings-enabled', checked.toString());
+    // Dispatch storage event for other components to react
+    window.dispatchEvent(new StorageEvent('storage', { key: 'advanced-settings-enabled', newValue: checked.toString() }));
+  };
+
+  return (
+    <div className="pt-4 border-t">
+      <div className="flex items-center justify-between">
+        <div>
+          <Label className="mb-1 block">Erweiterte Einstellungen</Label>
+          <p className="text-xs text-muted-foreground">
+            Zeigt zusätzliche Funktionen wie Export und Import an
+          </p>
+        </div>
+        <Switch 
+          checked={advancedMode} 
+          onCheckedChange={handleToggle}
+        />
+      </div>
     </div>
   );
 };

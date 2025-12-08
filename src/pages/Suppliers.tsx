@@ -166,6 +166,22 @@ const Suppliers = () => {
     return saved === 'true';
   });
 
+  // Advanced settings mode for export/import visibility
+  const [advancedSettingsEnabled, setAdvancedSettingsEnabled] = useState(() => {
+    return localStorage.getItem('advanced-settings-enabled') === 'true';
+  });
+
+  // Listen for changes to advanced settings from Settings page
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'advanced-settings-enabled') {
+        setAdvancedSettingsEnabled(e.newValue === 'true');
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
+
   useEffect(() => {
     localStorage.setItem('suppliers-multi-select', String(supplierMultiSelectEnabled));
   }, [supplierMultiSelectEnabled]);
@@ -532,10 +548,13 @@ const Suppliers = () => {
                 getData={() => suppliers?.map(s => [s.name, s.email, s.phone || '', s.address || '', s.contact_person || '', s.customer_number || '', s.is_active ? 'Aktiv' : 'Inaktiv']) || []} 
                 disabled={!suppliers?.length} 
               />
+              )}
+              {advancedSettingsEnabled && (
               <Button variant="outline" onClick={() => setIsSupplierImportOpen(true)}>
                 <Upload className="w-4 h-4 mr-2" />
                 Importieren
               </Button>
+              )}
               <Dialog open={isSupplierDialogOpen} onOpenChange={open => {
                 setIsSupplierDialogOpen(open);
                 if (!open) setEditingSupplier(null);
