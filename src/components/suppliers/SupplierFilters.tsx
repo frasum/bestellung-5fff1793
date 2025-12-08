@@ -18,6 +18,7 @@ interface SupplierFiltersProps {
   onMultiSelectChange: (value: boolean) => void;
   selectedCount: number;
   onPrintCombined: () => void;
+  showMultiSelectToggle?: boolean;
 }
 
 export const SupplierFilters = ({
@@ -31,7 +32,8 @@ export const SupplierFilters = ({
   multiSelectEnabled,
   onMultiSelectChange,
   selectedCount,
-  onPrintCombined
+  onPrintCombined,
+  showMultiSelectToggle = false
 }: SupplierFiltersProps) => {
   return (
     <div className="flex flex-col sm:flex-row gap-4">
@@ -57,10 +59,12 @@ export const SupplierFilters = ({
           {existingCategories.map(cat => <SelectItem key={cat} value={cat}>{cat}</SelectItem>)}
         </SelectContent>
       </Select>
-      <div className="flex items-center gap-2">
-        <Switch id="multi-select" checked={multiSelectEnabled} onCheckedChange={onMultiSelectChange} />
-        <Label htmlFor="multi-select" className="text-sm cursor-pointer whitespace-nowrap">Mehrfachauswahl</Label>
-      </div>
+      {showMultiSelectToggle && (
+        <div className="flex items-center gap-2">
+          <Switch id="multi-select" checked={multiSelectEnabled} onCheckedChange={onMultiSelectChange} />
+          <Label htmlFor="multi-select" className="text-sm cursor-pointer whitespace-nowrap">Mehrfachauswahl</Label>
+        </div>
+      )}
       {multiSelectEnabled && selectedCount > 0 && (
         <Button onClick={onPrintCombined} variant="secondary">
           <Printer className="w-4 h-4 mr-2" />
