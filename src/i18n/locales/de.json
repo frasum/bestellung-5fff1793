@@ -458,12 +458,13 @@
     "sectionTitlePlaceholder": "z.B. Meine Artikel",
     "sectionDescription": "Bereichs-Beschreibung",
     "sectionDescriptionPlaceholder": "z.B. Änderungen werden zur Genehmigung eingereicht.",
+    "additionalTexts": "Zusätzliche Texte",
     "infoText": "Info-Text (optional)",
-    "infoTextPlaceholder": "Zusätzliche Hinweise für Lieferanten...",
-    "infoTextDesc": "Erscheint als Hinweisbox im Artikelbereich. Markdown wird unterstützt.",
+    "infoTextPlaceholder": "z.B. Bitte aktualisieren Sie Ihre Preise regelmäßig. Bei Fragen kontaktieren Sie uns unter support@restaurant.de",
+    "infoTextDesc": "Wird als Hinweisbox über der Artikelliste angezeigt. Markdown wird unterstützt.",
     "footerTextLabel": "Footer-Text (optional)",
-    "footerTextPlaceholder": "z.B. Bei Fragen wenden Sie sich an unser Team.",
-    "footerTextDesc": "Wird am unteren Rand des Portals angezeigt. Markdown wird unterstützt."
+    "footerTextPlaceholder": "z.B. © 2024 Mein Restaurant - Kontakt: lieferanten@restaurant.de",
+    "footerTextDesc": "Wird am Ende der Seite angezeigt. Markdown wird unterstützt."
   },
   "landing": {
     "heroTitle": "Intelligente Beschaffung für Restaurants",

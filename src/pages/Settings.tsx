@@ -2055,6 +2055,7 @@ const CategoriesTab = () => {
 };
 
 const SupplierPortalTab = () => {
+  const { t } = useTranslation();
   const { data: settings, isLoading, refetch } = useSupplierPortalSettings();
   const upsertSettings = useUpsertSupplierPortalSettings();
   
@@ -2093,12 +2094,12 @@ const SupplierPortalTab = () => {
     if (!file) return;
 
     if (!file.type.startsWith('image/')) {
-      toast.error('Bitte wählen Sie eine Bilddatei aus');
+      toast.error(t('settings.selectImageFile'));
       return;
     }
 
     if (file.size > 2 * 1024 * 1024) {
-      toast.error('Die Datei ist zu groß. Maximale Größe: 2MB');
+      toast.error(t('settings.fileTooLarge'));
       return;
     }
 
@@ -2137,10 +2138,10 @@ const SupplierPortalTab = () => {
 
       await upsertSettings.mutateAsync({ logo_url: publicUrl });
       setLogoUrl(publicUrl);
-      toast.success('Logo erfolgreich hochgeladen');
+      toast.success(t('settings.logoUploaded'));
     } catch (error: any) {
       console.error('Error uploading logo:', error);
-      toast.error('Fehler beim Hochladen: ' + error.message);
+      toast.error(t('settings.logoUploadError') + ': ' + error.message);
     } finally {
       setUploadingLogo(false);
       e.target.value = '';
@@ -2158,10 +2159,10 @@ const SupplierPortalTab = () => {
 
       await upsertSettings.mutateAsync({ logo_url: null });
       setLogoUrl(null);
-      toast.success('Logo entfernt');
+      toast.success(t('settings.logoRemoved'));
     } catch (error: any) {
       console.error('Error removing logo:', error);
-      toast.error('Fehler beim Entfernen: ' + error.message);
+      toast.error(t('settings.logoRemoveError') + ': ' + error.message);
     }
   };
 
@@ -2186,7 +2187,7 @@ const SupplierPortalTab = () => {
   };
 
   if (isLoading) {
-    return <Card><CardContent className="p-6">Lädt...</CardContent></Card>;
+    return <Card><CardContent className="p-6">{t('common.loading')}</CardContent></Card>;
   }
 
   return (
@@ -2195,10 +2196,10 @@ const SupplierPortalTab = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <ExternalLink className="h-5 w-5" />
-            Portal-Vorschau
+            {t('settings.portalPreview')}
           </CardTitle>
           <CardDescription>
-            So sieht das Portal für Lieferanten aus
+            {t('settings.portalPreviewDesc')}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -2218,17 +2219,17 @@ const SupplierPortalTab = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <FileText className="h-5 w-5" />
-            Lieferantenportal-Texte
+            {t('settings.portalTexts')}
           </CardTitle>
           <CardDescription>
-            Passen Sie die Texte an, die Lieferanten im Portal sehen
+            {t('settings.portalTextsDesc')}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="space-y-3">
             <Label className="flex items-center gap-2">
               <ImageIcon className="h-4 w-4" />
-              Portal-Logo
+              {t('settings.portalLogo')}
             </Label>
             <div className="flex items-center gap-4">
               <div className="w-24 h-24 border rounded-lg flex items-center justify-center bg-muted/30 overflow-hidden">
@@ -2261,7 +2262,7 @@ const SupplierPortalTab = () => {
                       ) : (
                         <Upload className="h-4 w-4 mr-2" />
                       )}
-                      {logoUrl ? 'Logo ändern' : 'Logo hochladen'}
+                      {logoUrl ? t('settings.changeLogo') : t('settings.uploadLogo')}
                     </Button>
                   </label>
                   {logoUrl && (
@@ -2273,12 +2274,12 @@ const SupplierPortalTab = () => {
                       className="text-destructive hover:text-destructive"
                     >
                       <Trash2 className="h-4 w-4 mr-1" />
-                      Entfernen
+                      {t('settings.removeLogo')}
                     </Button>
                   )}
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Max. 2MB. Wird im Portal-Header angezeigt.
+                  {t('settings.portalLogoMaxSize')}
                 </p>
               </div>
             </div>
@@ -2287,39 +2288,39 @@ const SupplierPortalTab = () => {
           <div className="border-t pt-4 mt-4" />
 
           <div className="p-3 bg-muted/50 rounded-lg text-xs text-muted-foreground space-y-1">
-            <p className="font-medium">Markdown-Formatierung unterstützt:</p>
-            <p>**fett** • *kursiv* • [Link](https://example.com) • - Listen</p>
+            <p className="font-medium">{t('settings.markdownSupport')}</p>
+            <p>{t('settings.markdownExample')}</p>
           </div>
 
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="portal-title">Portal-Titel</Label>
+              <Label htmlFor="portal-title">{t('settings.portalTitle')}</Label>
               <Input
                 id="portal-title"
                 value={portalTitle}
                 onChange={(e) => setPortalTitle(e.target.value)}
-                placeholder="z.B. Lieferantenportal"
+                placeholder={t('settings.portalTitlePlaceholder')}
               />
               <p className="text-xs text-muted-foreground">
-                Wird als Hauptüberschrift im Header angezeigt
+                {t('settings.portalTitleDesc')}
               </p>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="welcome-message">Willkommensnachricht (optional)</Label>
+              <Label htmlFor="welcome-message">{t('settings.welcomeMessage')}</Label>
               <Textarea
                 id="welcome-message"
                 value={welcomeMessage}
                 onChange={(e) => setWelcomeMessage(e.target.value)}
-                placeholder="z.B. Willkommen im Lieferantenportal! Hier können Sie Ihre Artikelinformationen verwalten."
+                placeholder={t('settings.welcomeMessagePlaceholder')}
                 rows={3}
               />
               <p className="text-xs text-muted-foreground">
-                Wird unter dem Header als Einführungstext angezeigt. Markdown wird unterstützt.
+                {t('settings.welcomeMessageDesc')}
               </p>
               {welcomeMessage && (
                 <div className="mt-2 p-3 bg-muted/50 rounded-lg">
-                  <p className="text-xs font-medium text-muted-foreground mb-2">Vorschau:</p>
+                  <p className="text-xs font-medium text-muted-foreground mb-2">{t('settings.templatePreview')}:</p>
                   <div className="prose prose-sm dark:prose-invert max-w-none">
                     <ReactMarkdown
                       components={{
@@ -2338,50 +2339,50 @@ const SupplierPortalTab = () => {
             </div>
 
             <div className="border-t pt-4 mt-4">
-              <p className="text-sm font-medium mb-4">Artikel-Bereich</p>
+              <p className="text-sm font-medium mb-4">{t('settings.articleSection')}</p>
               
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="card-title">Bereichs-Titel</Label>
+                  <Label htmlFor="card-title">{t('settings.sectionTitle')}</Label>
                   <Input
                     id="card-title"
                     value={cardTitle}
                     onChange={(e) => setCardTitle(e.target.value)}
-                    placeholder="z.B. Meine Artikel"
+                    placeholder={t('settings.sectionTitlePlaceholder')}
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="card-description">Bereichs-Beschreibung</Label>
+                  <Label htmlFor="card-description">{t('settings.sectionDescription')}</Label>
                   <Input
                     id="card-description"
                     value={cardDescription}
                     onChange={(e) => setCardDescription(e.target.value)}
-                    placeholder="z.B. Änderungen werden zur Genehmigung eingereicht."
+                    placeholder={t('settings.sectionDescriptionPlaceholder')}
                   />
                 </div>
               </div>
             </div>
 
             <div className="border-t pt-4 mt-4">
-              <p className="text-sm font-medium mb-4">Zusätzliche Texte</p>
+              <p className="text-sm font-medium mb-4">{t('settings.additionalTexts')}</p>
               
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="info-text">Info-Text (optional)</Label>
+                  <Label htmlFor="info-text">{t('settings.infoText')}</Label>
                   <Textarea
                     id="info-text"
                     value={infoText}
                     onChange={(e) => setInfoText(e.target.value)}
-                    placeholder="z.B. Bitte aktualisieren Sie Ihre Preise regelmäßig. Bei Fragen kontaktieren Sie uns unter support@restaurant.de"
+                    placeholder={t('settings.infoTextPlaceholder')}
                     rows={3}
                   />
                   <p className="text-xs text-muted-foreground">
-                    Wird als Hinweisbox über der Artikelliste angezeigt. Markdown wird unterstützt.
+                    {t('settings.infoTextDesc')}
                   </p>
                   {infoText && (
                     <div className="mt-2 p-3 bg-primary/10 border border-primary/20 rounded-lg">
-                      <p className="text-xs font-medium text-muted-foreground mb-2">Vorschau:</p>
+                      <p className="text-xs font-medium text-muted-foreground mb-2">{t('settings.templatePreview')}:</p>
                       <div className="prose prose-sm dark:prose-invert max-w-none">
                         <ReactMarkdown
                           components={{
@@ -2400,20 +2401,20 @@ const SupplierPortalTab = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="footer-text">Footer-Text (optional)</Label>
+                  <Label htmlFor="footer-text">{t('settings.footerTextLabel')}</Label>
                   <Textarea
                     id="footer-text"
                     value={footerText}
                     onChange={(e) => setFooterText(e.target.value)}
-                    placeholder="z.B. © 2024 Mein Restaurant - Kontakt: lieferanten@restaurant.de"
+                    placeholder={t('settings.footerTextPlaceholder')}
                     rows={2}
                   />
                   <p className="text-xs text-muted-foreground">
-                    Wird am Ende der Seite angezeigt. Markdown wird unterstützt.
+                    {t('settings.footerTextDesc')}
                   </p>
                   {footerText && (
                     <div className="mt-2 p-3 bg-muted/30 rounded-lg text-center">
-                      <p className="text-xs font-medium text-muted-foreground mb-2">Vorschau:</p>
+                      <p className="text-xs font-medium text-muted-foreground mb-2">{t('settings.templatePreview')}:</p>
                       <div className="prose prose-sm dark:prose-invert max-w-none mx-auto">
                         <ReactMarkdown
                           components={{
@@ -2436,11 +2437,11 @@ const SupplierPortalTab = () => {
 
           <div className="flex items-center gap-3 pt-4 border-t">
             <Button onClick={handleSave} disabled={upsertSettings.isPending}>
-              {upsertSettings.isPending ? 'Speichern...' : 'Speichern'}
+              {upsertSettings.isPending ? t('common.saving') : t('common.save')}
             </Button>
             <Button variant="outline" onClick={handleReset}>
               <RotateCcw className="h-4 w-4 mr-2" />
-              Auf Standardwerte zurücksetzen
+              {t('settings.resetToDefault')}
             </Button>
           </div>
         </CardContent>
