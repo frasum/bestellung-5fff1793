@@ -751,6 +751,72 @@ export type Database = {
           },
         ]
       }
+      suggested_articles: {
+        Row: {
+          category: string | null
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          organization_id: string
+          price: number
+          reviewed_at: string | null
+          reviewed_by: string | null
+          sku: string | null
+          status: string
+          supplier_comment: string | null
+          supplier_id: string
+          unit: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          organization_id: string
+          price?: number
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          sku?: string | null
+          status?: string
+          supplier_comment?: string | null
+          supplier_id: string
+          unit?: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          organization_id?: string
+          price?: number
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          sku?: string | null
+          status?: string
+          supplier_comment?: string | null
+          supplier_id?: string
+          unit?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "suggested_articles_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "suggested_articles_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       supplier_article_changes: {
         Row: {
           article_id: string
