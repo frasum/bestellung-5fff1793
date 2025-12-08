@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Users, ShoppingCart, MoreHorizontal, BarChart3, ClipboardList, Settings, LogOut } from 'lucide-react';
+import { LayoutDashboard, Users, ShoppingCart, MoreHorizontal, BarChart3, Settings, LogOut } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useCart } from '@/contexts/CartContext';
 import { Badge } from '@/components/ui/badge';
@@ -34,18 +34,16 @@ export const MobileBottomNav = () => {
   const { t } = useTranslation();
   const [sheetOpen, setSheetOpen] = useState(false);
   const itemCount = getItemCount();
-  const { hasRole: canAccessStaffOrders } = useHasRole(['admin', 'manager', 'purchaser']);
   const { hasRole: canSeeAllSubmissions } = useHasRole(['admin', 'manager']);
   const { data: pendingCount = 0 } = usePendingSubmissionsCount();
 
   const moreNavItems = [
-    { href: '/orders', label: t('nav.orders'), icon: ShoppingCart },
-    ...(canAccessStaffOrders ? [{
-      href: '/staff-orders',
-      label: t('nav.staffOrders'),
-      icon: ClipboardList,
+    { 
+      href: '/orders', 
+      label: t('nav.orders'), 
+      icon: ShoppingCart,
       badge: canSeeAllSubmissions && pendingCount > 0 ? pendingCount : undefined,
-    }] : []),
+    },
     { href: '/settings', label: t('nav.settings'), icon: Settings },
   ];
 
