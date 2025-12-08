@@ -4,7 +4,9 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { LayoutDashboard, Users, Package, ShoppingCart, BarChart3, Settings, LogOut, Menu, X, FlaskConical, Search, Sparkles } from 'lucide-react';
+import { LayoutDashboard, Users, Package, ShoppingCart, BarChart3, Settings, LogOut, Menu, X, FlaskConical, Search, Sparkles, ClipboardList } from 'lucide-react';
+import { useHasRole } from '@/hooks/useUserRole';
+import { usePendingSubmissionsCount } from '@/hooks/useEmployeeSubmissions';
 import { GlobalSearch } from '@/components/GlobalSearch';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import { LocationSwitcher } from '@/components/LocationSwitcher';
@@ -39,6 +41,9 @@ export const DashboardLayout = ({
   useKeyboardShortcuts();
   
   const { data: organization } = useOrganization();
+  const { hasRole: canAccessStaffOrders } = useHasRole(['admin', 'manager', 'purchaser']);
+  const { hasRole: canSeeAllSubmissions } = useHasRole(['admin', 'manager']);
+  const { data: pendingCount = 0 } = usePendingSubmissionsCount();
   
   // Calculate demo days remaining
   const getDemoDaysRemaining = () => {
@@ -52,27 +57,19 @@ export const DashboardLayout = ({
   
   const demoDaysRemaining = getDemoDaysRemaining();
   
-  const navItems = [{
-    href: '/dashboard',
-    label: t('nav.dashboard'),
-    icon: LayoutDashboard
-  }, {
-    href: '/suppliers',
-    label: t('nav.catalog'),
-    icon: Users
-  }, {
-    href: '/orders',
-    label: t('nav.orders'),
-    icon: ShoppingCart
-  }, {
-    href: '/reports',
-    label: t('nav.reports'),
-    icon: BarChart3
-  }, {
-    href: '/settings',
-    label: t('nav.settings'),
-    icon: Settings
-  }];
+  const navItems = [
+    { href: '/dashboard', label: t('nav.dashboard'), icon: LayoutDashboard },
+    { href: '/suppliers', label: t('nav.catalog'), icon: Users },
+    { href: '/orders', label: t('nav.orders'), icon: ShoppingCart },
+    ...(canAccessStaffOrders ? [{
+      href: '/staff-orders',
+      label: t('nav.staffOrders'),
+      icon: ClipboardList,
+      badge: canSeeAllSubmissions && pendingCount > 0 ? pendingCount : undefined,
+    }] : []),
+    { href: '/reports', label: t('nav.reports'), icon: BarChart3 },
+    { href: '/settings', label: t('nav.settings'), icon: Settings },
+  ];
   const handleSignOut = async () => {
     await signOut();
     navigate('/');
@@ -166,12 +163,27 @@ export const DashboardLayout = ({
             </div>
             
             {navItems.map(item => {
-            const isActive = location.pathname === item.href;
-            return <Link key={item.href} to={item.href} onClick={() => setSidebarOpen(false)} className={cn('flex items-center gap-3 px-4 py-3 rounded-lg transition-colors', isActive ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-muted')}>
+              const isActive = location.pathname === item.href;
+              return (
+                <Link 
+                  key={item.href} 
+                  to={item.href} 
+                  onClick={() => setSidebarOpen(false)} 
+                  className={cn(
+                    'flex items-center gap-3 px-4 py-3 rounded-lg transition-colors',
+                    isActive ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+                  )}
+                >
                   <item.icon className="w-5 h-5" />
-                  <span className="font-medium">{item.label}</span>
-                </Link>;
-          })}
+                  <span className="font-medium flex-1">{item.label}</span>
+                  {'badge' in item && item.badge && (
+                    <Badge variant="destructive" className="h-5 min-w-5 flex items-center justify-center text-xs">
+                      {item.badge}
+                    </Badge>
+                  )}
+                </Link>
+              );
+            })}
           </nav>
 
           {/* User section */}

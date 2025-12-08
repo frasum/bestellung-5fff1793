@@ -1,17 +1,20 @@
 import { useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Mic, Camera, Upload, Send, Loader2, Check, X, Clock } from 'lucide-react';
+import { Mic, Camera, Upload, Loader2, Filter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useArticles } from '@/hooks/useArticles';
-import { useMySubmissions, useCreateSubmission } from '@/hooks/useEmployeeSubmissions';
+import { useMySubmissions, useCreateSubmission, useEmployeeSubmissions, EmployeeOrderSubmission } from '@/hooks/useEmployeeSubmissions';
+import { useHasRole } from '@/hooks/useUserRole';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import StaffOrderPreview from '@/components/staff/StaffOrderPreview';
 import StaffSubmissionHistory from '@/components/staff/StaffSubmissionHistory';
+import EmployeeSubmissionReviewDialog from '@/components/staff/EmployeeSubmissionReviewDialog';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 
@@ -28,6 +31,8 @@ export default function StaffOrders() {
   const { toast } = useToast();
   const { data: articles = [] } = useArticles();
   const { data: mySubmissions = [] } = useMySubmissions();
+  const { data: allSubmissions = [] } = useEmployeeSubmissions();
+  const { hasRole: canSeeAllSubmissions } = useHasRole(['admin', 'manager']);
   const createSubmission = useCreateSubmission();
   
   const [isRecording, setIsRecording] = useState(false);
@@ -35,6 +40,9 @@ export default function StaffOrders() {
   const [parsedItems, setParsedItems] = useState<ParsedItem[]>([]);
   const [transcription, setTranscription] = useState<string>('');
   const [submissionType, setSubmissionType] = useState<'photo' | 'voice' | null>(null);
+  const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
+  const [selectedSubmission, setSelectedSubmission] = useState<EmployeeOrderSubmission | null>(null);
+  const [reviewDialogOpen, setReviewDialogOpen] = useState(false);
   
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
@@ -238,20 +246,38 @@ export default function StaffOrders() {
     setSubmissionType(null);
   };
 
+  const pendingCount = allSubmissions.filter(s => s.status === 'pending').length;
+  const filteredSubmissions = statusFilter === 'all' 
+    ? allSubmissions 
+    : allSubmissions.filter(s => s.status === statusFilter);
+
+  const handleSubmissionClick = (submission: EmployeeOrderSubmission) => {
+    setSelectedSubmission(submission);
+    setReviewDialogOpen(true);
+  };
+
   return (
     <DashboardLayout>
       <div className="container mx-auto px-4 py-6 max-w-2xl">
-        <h1 className="text-2xl font-bold mb-6">Bestellung aufgeben</h1>
+        <h1 className="text-2xl font-bold mb-6">{t('staffOrders.title')}</h1>
 
         <Tabs defaultValue="new" className="w-full">
-          <TabsList className="w-full mb-6">
-            <TabsTrigger value="new" className="flex-1">Neue Bestellung</TabsTrigger>
+          <TabsList className={`w-full mb-6 ${canSeeAllSubmissions ? 'grid-cols-3' : ''}`}>
+            <TabsTrigger value="new" className="flex-1">{t('staffOrders.newOrder')}</TabsTrigger>
             <TabsTrigger value="history" className="flex-1">
-              Meine Bestellungen
+              {t('staffOrders.myOrders')}
               {mySubmissions.length > 0 && (
                 <Badge variant="secondary" className="ml-2">{mySubmissions.length}</Badge>
               )}
             </TabsTrigger>
+            {canSeeAllSubmissions && (
+              <TabsTrigger value="all" className="flex-1">
+                {t('staffOrders.allOrders')}
+                {pendingCount > 0 && (
+                  <Badge variant="destructive" className="ml-2">{pendingCount}</Badge>
+                )}
+              </TabsTrigger>
+            )}
           </TabsList>
 
           <TabsContent value="new">
@@ -279,13 +305,11 @@ export default function StaffOrders() {
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2 text-lg">
                       <Mic className="h-5 w-5" />
-                      Sprachbestellung
+                      {t('staffOrders.voice')}
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-muted-foreground text-sm mb-4">
-                      Sprich deine Bestellung ein, z.B. "5 Kisten Mineralwasser und 3 Kilogramm Tomaten"
-                    </p>
+                    <p className="text-muted-foreground text-sm mb-4">{t('staffOrders.voiceDescription')}</p>
                     <Button
                       size="lg"
                       className={`w-full h-20 text-lg ${isRecording ? 'bg-destructive hover:bg-destructive/90' : ''}`}
@@ -295,17 +319,17 @@ export default function StaffOrders() {
                       {isProcessing ? (
                         <>
                           <Loader2 className="h-6 w-6 mr-2 animate-spin" />
-                          Verarbeite...
+                          {t('staffOrders.processing')}
                         </>
                       ) : isRecording ? (
                         <>
                           <div className="h-4 w-4 rounded-full bg-white animate-pulse mr-2" />
-                          Aufnahme stoppen
+                          {t('staffOrders.stopRecording')}
                         </>
                       ) : (
                         <>
                           <Mic className="h-6 w-6 mr-2" />
-                          Aufnahme starten
+                          {t('staffOrders.startRecording')}
                         </>
                       )}
                     </Button>
@@ -317,13 +341,11 @@ export default function StaffOrders() {
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2 text-lg">
                       <Camera className="h-5 w-5" />
-                      Foto-Bestellung
+                      {t('staffOrders.photo')}
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-muted-foreground text-sm mb-4">
-                      Fotografiere eine handgeschriebene Bestellliste
-                    </p>
+                    <p className="text-muted-foreground text-sm mb-4">{t('staffOrders.photoDescription')}</p>
                     <input
                       ref={fileInputRef}
                       type="file"
@@ -341,7 +363,7 @@ export default function StaffOrders() {
                         disabled={isProcessing}
                       >
                         <Camera className="h-5 w-5 mr-2" />
-                        Kamera
+                        {t('staffOrders.camera')}
                       </Button>
                       <Button
                         size="lg"
@@ -357,7 +379,7 @@ export default function StaffOrders() {
                         disabled={isProcessing}
                       >
                         <Upload className="h-5 w-5 mr-2" />
-                        Galerie
+                        {t('staffOrders.gallery')}
                       </Button>
                     </div>
                   </CardContent>
@@ -367,9 +389,44 @@ export default function StaffOrders() {
           </TabsContent>
 
           <TabsContent value="history">
-            <StaffSubmissionHistory submissions={mySubmissions} />
+            <StaffSubmissionHistory submissions={mySubmissions} onSubmissionClick={handleSubmissionClick} />
           </TabsContent>
+
+          {canSeeAllSubmissions && (
+            <TabsContent value="all">
+              <div className="space-y-4">
+                {/* Status Filter */}
+                <div className="flex items-center gap-2">
+                  <Filter className="h-4 w-4 text-muted-foreground" />
+                  <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as typeof statusFilter)}>
+                    <SelectTrigger className="w-[180px]">
+                      <SelectValue placeholder={t('staffOrders.filterByStatus')} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">{t('staffOrders.allStatuses')}</SelectItem>
+                      <SelectItem value="pending">{t('staffOrders.status.pending')}</SelectItem>
+                      <SelectItem value="approved">{t('staffOrders.status.approved')}</SelectItem>
+                      <SelectItem value="rejected">{t('staffOrders.status.rejected')}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <StaffSubmissionHistory 
+                  submissions={filteredSubmissions} 
+                  onSubmissionClick={handleSubmissionClick}
+                  showSubmitter
+                />
+              </div>
+            </TabsContent>
+          )}
         </Tabs>
+
+        {/* Review Dialog */}
+        <EmployeeSubmissionReviewDialog
+          submission={selectedSubmission}
+          open={reviewDialogOpen}
+          onOpenChange={setReviewDialogOpen}
+        />
       </div>
     </DashboardLayout>
   );

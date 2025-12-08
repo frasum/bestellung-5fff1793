@@ -3,10 +3,12 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
-import { ShoppingCart, Users, BarChart3, Package, Loader2, ChevronRight, Box } from 'lucide-react';
+import { ShoppingCart, Users, BarChart3, Package, Loader2, ChevronRight, Box, ClipboardList } from 'lucide-react';
 import { useOrders } from '@/hooks/useOrders';
 import { useSuppliers } from '@/hooks/useSuppliers';
 import { useArticles } from '@/hooks/useArticles';
+import { usePendingSubmissionsCount } from '@/hooks/useEmployeeSubmissions';
+import { useHasRole } from '@/hooks/useUserRole';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import { de, enUS, fr, it, th, vi, Locale } from 'date-fns/locale';
@@ -20,6 +22,8 @@ const Dashboard = () => {
   const { data: orders = [], isLoading: ordersLoading } = useOrders();
   const { data: suppliers = [], isLoading: suppliersLoading } = useSuppliers();
   const { data: articles = [], isLoading: articlesLoading } = useArticles();
+  const { data: pendingStaffOrders = 0 } = usePendingSubmissionsCount();
+  const { hasRole: canSeeStaffOrders } = useHasRole(['admin', 'manager']);
   
   const locale = localeMap[i18n.language] || de;
 
@@ -97,6 +101,14 @@ const Dashboard = () => {
     { label: t('suppliers.title'), value: totalSuppliers, icon: Users, color: 'text-accent' },
     { label: t('articles.title'), value: totalArticles, icon: Box, color: 'text-blue-500' },
     { label: t('dashboard.pending'), value: pendingOrders, icon: Package, color: 'text-warning' },
+    ...(canSeeStaffOrders && pendingStaffOrders > 0 ? [{
+      label: t('dashboard.pendingStaffOrders'),
+      value: pendingStaffOrders,
+      icon: ClipboardList,
+      color: 'text-orange-500',
+      href: '/staff-orders',
+      pulse: true,
+    }] : []),
   ];
 
   return (
@@ -110,15 +122,37 @@ const Dashboard = () => {
 
         {/* Stats Grid */}
         <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 lg:gap-4">
-          {stats.map((stat, index) => (
-            <div key={index} className="bg-card border border-border rounded-xl p-4 lg:p-6">
-              <div className="flex items-center justify-between mb-2 lg:mb-4">
-                <stat.icon className={`w-5 h-5 lg:w-6 lg:h-6 ${stat.color}`} />
+          {stats.map((stat, index) => {
+            const content = (
+              <div 
+                className={`bg-card border border-border rounded-xl p-4 lg:p-6 ${
+                  'href' in stat ? 'cursor-pointer hover:border-primary/50 transition-colors' : ''
+                } ${'pulse' in stat && stat.pulse ? 'ring-2 ring-primary/20 animate-pulse' : ''}`}
+              >
+                <div className="flex items-center justify-between mb-2 lg:mb-4">
+                  <stat.icon className={`w-5 h-5 lg:w-6 lg:h-6 ${stat.color}`} />
+                  {'pulse' in stat && stat.pulse && (
+                    <span className="relative flex h-3 w-3">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-3 w-3 bg-primary"></span>
+                    </span>
+                  )}
+                </div>
+                <div className="text-xl lg:text-2xl font-bold text-foreground">{stat.value}</div>
+                <div className="text-xs lg:text-sm text-muted-foreground">{stat.label}</div>
               </div>
-              <div className="text-xl lg:text-2xl font-bold text-foreground">{stat.value}</div>
-              <div className="text-xs lg:text-sm text-muted-foreground">{stat.label}</div>
-            </div>
-          ))}
+            );
+            
+            if ('href' in stat && stat.href) {
+              return (
+                <Link key={index} to={stat.href}>
+                  {content}
+                </Link>
+              );
+            }
+            
+            return <div key={index}>{content}</div>;
+          })}
         </div>
 
         {/* Charts */}

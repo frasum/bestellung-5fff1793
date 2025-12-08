@@ -1,5 +1,5 @@
-import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Users, ShoppingCart, MoreHorizontal, BarChart3 } from 'lucide-react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { LayoutDashboard, Users, ShoppingCart, MoreHorizontal, BarChart3, ClipboardList, Settings, LogOut } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useCart } from '@/contexts/CartContext';
 import { Badge } from '@/components/ui/badge';
@@ -10,12 +10,12 @@ import {
   SheetTitle,
   SheetTrigger,
 } from '@/components/ui/sheet';
-import { FileText, Settings, LogOut } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { useHasRole } from '@/hooks/useUserRole';
+import { usePendingSubmissionsCount } from '@/hooks/useEmployeeSubmissions';
 
 const mainNavItems = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -24,10 +24,7 @@ const mainNavItems = [
   { href: '/reports', label: 'Berichte', icon: BarChart3 },
 ];
 
-const moreNavItems = [
-  { href: '/orders', label: 'Bestellungen', icon: ShoppingCart },
-  { href: '/settings', label: 'Einstellungen', icon: Settings },
-];
+// More nav items will be built dynamically based on user role
 
 export const MobileBottomNav = () => {
   const location = useLocation();
@@ -37,6 +34,20 @@ export const MobileBottomNav = () => {
   const { t } = useTranslation();
   const [sheetOpen, setSheetOpen] = useState(false);
   const itemCount = getItemCount();
+  const { hasRole: canAccessStaffOrders } = useHasRole(['admin', 'manager', 'purchaser']);
+  const { hasRole: canSeeAllSubmissions } = useHasRole(['admin', 'manager']);
+  const { data: pendingCount = 0 } = usePendingSubmissionsCount();
+
+  const moreNavItems = [
+    { href: '/orders', label: t('nav.orders'), icon: ShoppingCart },
+    ...(canAccessStaffOrders ? [{
+      href: '/staff-orders',
+      label: t('nav.staffOrders'),
+      icon: ClipboardList,
+      badge: canSeeAllSubmissions && pendingCount > 0 ? pendingCount : undefined,
+    }] : []),
+    { href: '/settings', label: t('nav.settings'), icon: Settings },
+  ];
 
   const handleSignOut = async () => {
     await signOut();
@@ -111,14 +122,19 @@ export const MobileBottomNav = () => {
                     to={item.href}
                     onClick={handleNavClick}
                     className={cn(
-                      'flex items-center gap-3 p-4 rounded-xl transition-colors',
+                      'flex items-center gap-3 p-4 rounded-xl transition-colors relative',
                       isActive 
                         ? 'bg-primary text-primary-foreground' 
                         : 'bg-muted hover:bg-muted/80'
                     )}
                   >
                     <Icon className="w-5 h-5" />
-                    <span className="font-medium">{item.label}</span>
+                    <span className="font-medium flex-1">{item.label}</span>
+                    {'badge' in item && item.badge && (
+                      <Badge variant="destructive" className="h-5 min-w-5 flex items-center justify-center text-xs">
+                        {item.badge}
+                      </Badge>
+                    )}
                   </Link>
                 );
               })}
