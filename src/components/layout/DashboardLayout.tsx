@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { LayoutDashboard, Users, Package, ShoppingCart, BarChart3, Settings, LogOut, Menu, X, FlaskConical, Search, Sparkles, ClipboardList } from 'lucide-react';
+import { LayoutDashboard, Users, Package, ShoppingCart, BarChart3, Settings, LogOut, Menu, X, FlaskConical, Search, Sparkles } from 'lucide-react';
 import { useHasRole } from '@/hooks/useUserRole';
 import { usePendingSubmissionsCount } from '@/hooks/useEmployeeSubmissions';
 import { GlobalSearch } from '@/components/GlobalSearch';
@@ -41,7 +41,6 @@ export const DashboardLayout = ({
   useKeyboardShortcuts();
   
   const { data: organization } = useOrganization();
-  const { hasRole: canAccessStaffOrders } = useHasRole(['admin', 'manager', 'purchaser']);
   const { hasRole: canSeeAllSubmissions } = useHasRole(['admin', 'manager']);
   const { data: pendingCount = 0 } = usePendingSubmissionsCount();
   
@@ -60,13 +59,12 @@ export const DashboardLayout = ({
   const navItems = [
     { href: '/dashboard', label: t('nav.dashboard'), icon: LayoutDashboard },
     { href: '/suppliers', label: t('nav.catalog'), icon: Users },
-    { href: '/orders', label: t('nav.orders'), icon: ShoppingCart },
-    ...(canAccessStaffOrders ? [{
-      href: '/staff-orders',
-      label: t('nav.staffOrders'),
-      icon: ClipboardList,
+    { 
+      href: '/orders', 
+      label: t('nav.orders'), 
+      icon: ShoppingCart,
       badge: canSeeAllSubmissions && pendingCount > 0 ? pendingCount : undefined,
-    }] : []),
+    },
     { href: '/reports', label: t('nav.reports'), icon: BarChart3 },
     { href: '/settings', label: t('nav.settings'), icon: Settings },
   ];

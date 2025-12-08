@@ -11,12 +11,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { useArticles } from '@/hooks/useArticles';
 import { useMySubmissions, useCreateSubmission, useEmployeeSubmissions, EmployeeOrderSubmission } from '@/hooks/useEmployeeSubmissions';
 import { useHasRole } from '@/hooks/useUserRole';
-import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import StaffOrderPreview from '@/components/staff/StaffOrderPreview';
 import StaffSubmissionHistory from '@/components/staff/StaffSubmissionHistory';
 import EmployeeSubmissionReviewDialog from '@/components/staff/EmployeeSubmissionReviewDialog';
-import { format } from 'date-fns';
-import { de } from 'date-fns/locale';
 
 interface ParsedItem {
   article_id: string | null;
@@ -26,7 +23,7 @@ interface ParsedItem {
   confidence: number;
 }
 
-export default function StaffOrders() {
+export default function StaffOrdersTab() {
   const { t } = useTranslation();
   const { toast } = useToast();
   const { data: articles = [] } = useArticles();
@@ -90,11 +87,9 @@ export default function StaffOrders() {
   const processAudio = async (audioBlob: Blob) => {
     setIsProcessing(true);
     try {
-      // Convert to base64
       const arrayBuffer = await audioBlob.arrayBuffer();
       const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
 
-      // Transcribe with Whisper
       const { data: transcribeData, error: transcribeError } = await supabase.functions.invoke(
         'transcribe-voice-order',
         { body: { audio: base64 } }
@@ -105,7 +100,6 @@ export default function StaffOrders() {
       const text = transcribeData.text;
       setTranscription(text);
 
-      // Parse with AI
       await parseOrderText(text);
     } catch (error) {
       console.error('Error processing audio:', error);
@@ -127,11 +121,9 @@ export default function StaffOrders() {
     setSubmissionType('photo');
 
     try {
-      // Convert to base64
       const arrayBuffer = await file.arrayBuffer();
       const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
 
-      // Use existing scan-order-list function
       const articlesForScan = articles.map(a => ({
         id: a.id,
         name: a.name,
@@ -226,7 +218,6 @@ export default function StaffOrders() {
         description: 'Deine Bestellung wurde zur Genehmigung eingereicht',
       });
 
-      // Reset state
       setParsedItems([]);
       setTranscription('');
       setSubmissionType(null);
@@ -257,177 +248,173 @@ export default function StaffOrders() {
   };
 
   return (
-    <DashboardLayout>
-      <div className="container mx-auto px-4 py-6 max-w-2xl">
-        <h1 className="text-2xl font-bold mb-6">{t('staffOrders.title')}</h1>
-
-        <Tabs defaultValue="new" className="w-full">
-          <TabsList className={`w-full mb-6 ${canSeeAllSubmissions ? 'grid-cols-3' : ''}`}>
-            <TabsTrigger value="new" className="flex-1">{t('staffOrders.newOrder')}</TabsTrigger>
-            <TabsTrigger value="history" className="flex-1">
-              {t('staffOrders.myOrders')}
-              {mySubmissions.length > 0 && (
-                <Badge variant="secondary" className="ml-2">{mySubmissions.length}</Badge>
+    <div className="max-w-2xl mx-auto">
+      <Tabs defaultValue="new" className="w-full">
+        <TabsList className={`w-full mb-6 ${canSeeAllSubmissions ? 'grid-cols-3' : ''}`}>
+          <TabsTrigger value="new" className="flex-1">{t('staffOrders.newOrder')}</TabsTrigger>
+          <TabsTrigger value="history" className="flex-1">
+            {t('staffOrders.myOrders')}
+            {mySubmissions.length > 0 && (
+              <Badge variant="secondary" className="ml-2">{mySubmissions.length}</Badge>
+            )}
+          </TabsTrigger>
+          {canSeeAllSubmissions && (
+            <TabsTrigger value="all" className="flex-1">
+              {t('staffOrders.allOrders')}
+              {pendingCount > 0 && (
+                <Badge variant="destructive" className="ml-2">{pendingCount}</Badge>
               )}
             </TabsTrigger>
-            {canSeeAllSubmissions && (
-              <TabsTrigger value="all" className="flex-1">
-                {t('staffOrders.allOrders')}
-                {pendingCount > 0 && (
-                  <Badge variant="destructive" className="ml-2">{pendingCount}</Badge>
-                )}
-              </TabsTrigger>
-            )}
-          </TabsList>
+          )}
+        </TabsList>
 
-          <TabsContent value="new">
-            {parsedItems.length > 0 ? (
-              <StaffOrderPreview
-                items={parsedItems}
-                transcription={transcription}
-                articles={articles}
-                onItemChange={(index, item) => {
-                  const newItems = [...parsedItems];
-                  newItems[index] = item;
-                  setParsedItems(newItems);
-                }}
-                onItemRemove={(index) => {
-                  setParsedItems(parsedItems.filter((_, i) => i !== index));
-                }}
-                onSubmit={handleSubmit}
-                onCancel={handleCancel}
-                isSubmitting={createSubmission.isPending}
-              />
-            ) : (
-              <div className="space-y-4">
-                {/* Voice Recording Card */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-lg">
-                      <Mic className="h-5 w-5" />
-                      {t('staffOrders.voice')}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-muted-foreground text-sm mb-4">{t('staffOrders.voiceDescription')}</p>
+        <TabsContent value="new">
+          {parsedItems.length > 0 ? (
+            <StaffOrderPreview
+              items={parsedItems}
+              transcription={transcription}
+              articles={articles}
+              onItemChange={(index, item) => {
+                const newItems = [...parsedItems];
+                newItems[index] = item;
+                setParsedItems(newItems);
+              }}
+              onItemRemove={(index) => {
+                setParsedItems(parsedItems.filter((_, i) => i !== index));
+              }}
+              onSubmit={handleSubmit}
+              onCancel={handleCancel}
+              isSubmitting={createSubmission.isPending}
+            />
+          ) : (
+            <div className="space-y-4">
+              {/* Voice Recording Card */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <Mic className="h-5 w-5" />
+                    {t('staffOrders.voice')}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-muted-foreground text-sm mb-4">{t('staffOrders.voiceDescription')}</p>
+                  <Button
+                    size="lg"
+                    className={`w-full h-20 text-lg ${isRecording ? 'bg-destructive hover:bg-destructive/90' : ''}`}
+                    onClick={isRecording ? stopRecording : startRecording}
+                    disabled={isProcessing}
+                  >
+                    {isProcessing ? (
+                      <>
+                        <Loader2 className="h-6 w-6 mr-2 animate-spin" />
+                        {t('staffOrders.processing')}
+                      </>
+                    ) : isRecording ? (
+                      <>
+                        <div className="h-4 w-4 rounded-full bg-white animate-pulse mr-2" />
+                        {t('staffOrders.stopRecording')}
+                      </>
+                    ) : (
+                      <>
+                        <Mic className="h-6 w-6 mr-2" />
+                        {t('staffOrders.startRecording')}
+                      </>
+                    )}
+                  </Button>
+                </CardContent>
+              </Card>
+
+              {/* Photo Upload Card */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <Camera className="h-5 w-5" />
+                    {t('staffOrders.photo')}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-muted-foreground text-sm mb-4">{t('staffOrders.photoDescription')}</p>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    capture="environment"
+                    className="hidden"
+                    onChange={handlePhotoUpload}
+                  />
+                  <div className="flex gap-2">
                     <Button
                       size="lg"
-                      className={`w-full h-20 text-lg ${isRecording ? 'bg-destructive hover:bg-destructive/90' : ''}`}
-                      onClick={isRecording ? stopRecording : startRecording}
+                      variant="outline"
+                      className="flex-1 h-16"
+                      onClick={() => fileInputRef.current?.click()}
                       disabled={isProcessing}
                     >
-                      {isProcessing ? (
-                        <>
-                          <Loader2 className="h-6 w-6 mr-2 animate-spin" />
-                          {t('staffOrders.processing')}
-                        </>
-                      ) : isRecording ? (
-                        <>
-                          <div className="h-4 w-4 rounded-full bg-white animate-pulse mr-2" />
-                          {t('staffOrders.stopRecording')}
-                        </>
-                      ) : (
-                        <>
-                          <Mic className="h-6 w-6 mr-2" />
-                          {t('staffOrders.startRecording')}
-                        </>
-                      )}
+                      <Camera className="h-5 w-5 mr-2" />
+                      {t('staffOrders.camera')}
                     </Button>
-                  </CardContent>
-                </Card>
-
-                {/* Photo Upload Card */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-lg">
-                      <Camera className="h-5 w-5" />
-                      {t('staffOrders.photo')}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-muted-foreground text-sm mb-4">{t('staffOrders.photoDescription')}</p>
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      accept="image/*"
-                      capture="environment"
-                      className="hidden"
-                      onChange={handlePhotoUpload}
-                    />
-                    <div className="flex gap-2">
-                      <Button
-                        size="lg"
-                        variant="outline"
-                        className="flex-1 h-16"
-                        onClick={() => fileInputRef.current?.click()}
-                        disabled={isProcessing}
-                      >
-                        <Camera className="h-5 w-5 mr-2" />
-                        {t('staffOrders.camera')}
-                      </Button>
-                      <Button
-                        size="lg"
-                        variant="outline"
-                        className="flex-1 h-16"
-                        onClick={() => {
-                          if (fileInputRef.current) {
-                            fileInputRef.current.removeAttribute('capture');
-                            fileInputRef.current.click();
-                            fileInputRef.current.setAttribute('capture', 'environment');
-                          }
-                        }}
-                        disabled={isProcessing}
-                      >
-                        <Upload className="h-5 w-5 mr-2" />
-                        {t('staffOrders.gallery')}
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            )}
-          </TabsContent>
-
-          <TabsContent value="history">
-            <StaffSubmissionHistory submissions={mySubmissions} onSubmissionClick={handleSubmissionClick} />
-          </TabsContent>
-
-          {canSeeAllSubmissions && (
-            <TabsContent value="all">
-              <div className="space-y-4">
-                {/* Status Filter */}
-                <div className="flex items-center gap-2">
-                  <Filter className="h-4 w-4 text-muted-foreground" />
-                  <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as typeof statusFilter)}>
-                    <SelectTrigger className="w-[180px]">
-                      <SelectValue placeholder={t('staffOrders.filterByStatus')} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">{t('staffOrders.allStatuses')}</SelectItem>
-                      <SelectItem value="pending">{t('staffOrders.status.pending')}</SelectItem>
-                      <SelectItem value="approved">{t('staffOrders.status.approved')}</SelectItem>
-                      <SelectItem value="rejected">{t('staffOrders.status.rejected')}</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <StaffSubmissionHistory 
-                  submissions={filteredSubmissions} 
-                  onSubmissionClick={handleSubmissionClick}
-                  showSubmitter
-                />
-              </div>
-            </TabsContent>
+                    <Button
+                      size="lg"
+                      variant="outline"
+                      className="flex-1 h-16"
+                      onClick={() => {
+                        if (fileInputRef.current) {
+                          fileInputRef.current.removeAttribute('capture');
+                          fileInputRef.current.click();
+                          fileInputRef.current.setAttribute('capture', 'environment');
+                        }
+                      }}
+                      disabled={isProcessing}
+                    >
+                      <Upload className="h-5 w-5 mr-2" />
+                      {t('staffOrders.gallery')}
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           )}
-        </Tabs>
+        </TabsContent>
 
-        {/* Review Dialog */}
-        <EmployeeSubmissionReviewDialog
-          submission={selectedSubmission}
-          open={reviewDialogOpen}
-          onOpenChange={setReviewDialogOpen}
-        />
-      </div>
-    </DashboardLayout>
+        <TabsContent value="history">
+          <StaffSubmissionHistory submissions={mySubmissions} onSubmissionClick={handleSubmissionClick} />
+        </TabsContent>
+
+        {canSeeAllSubmissions && (
+          <TabsContent value="all">
+            <div className="space-y-4">
+              {/* Status Filter */}
+              <div className="flex items-center gap-2">
+                <Filter className="h-4 w-4 text-muted-foreground" />
+                <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as typeof statusFilter)}>
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder={t('staffOrders.filterByStatus')} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">{t('staffOrders.allStatuses')}</SelectItem>
+                    <SelectItem value="pending">{t('staffOrders.status.pending')}</SelectItem>
+                    <SelectItem value="approved">{t('staffOrders.status.approved')}</SelectItem>
+                    <SelectItem value="rejected">{t('staffOrders.status.rejected')}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <StaffSubmissionHistory 
+                submissions={filteredSubmissions} 
+                onSubmissionClick={handleSubmissionClick}
+                showSubmitter
+              />
+            </div>
+          </TabsContent>
+        )}
+      </Tabs>
+
+      {/* Review Dialog */}
+      <EmployeeSubmissionReviewDialog
+        submission={selectedSubmission}
+        open={reviewDialogOpen}
+        onOpenChange={setReviewDialogOpen}
+      />
+    </div>
   );
 }
