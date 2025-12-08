@@ -343,6 +343,51 @@ const Orders = () => {
           </Button>
         </div>
 
+        {/* Recent Orders Card */}
+        {orders && orders.length > 0 && (
+          <div className="bg-card border border-border rounded-xl p-4">
+            <h2 className="text-base font-semibold text-foreground mb-3">{t('dashboard.recentOrders')}</h2>
+            <div className="space-y-2">
+              {orders.slice(0, 5).map((order) => (
+                <button
+                  key={order.id}
+                  onClick={() => {
+                    const supplierName = order.suppliers?.name || t('common.unknown');
+                    setOpenSuppliers(prev => new Set([...prev, supplierName]));
+                    setOpenOrders(prev => new Set([...prev, order.id]));
+                    setTimeout(() => {
+                      document.getElementById(`order-${order.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }, 100);
+                  }}
+                  className="w-full flex items-center justify-between p-2.5 bg-muted/50 hover:bg-muted rounded-lg transition-colors text-left"
+                >
+                  <div className="flex items-center gap-3 min-w-0 flex-1">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium text-foreground truncate">
+                          {order.suppliers?.name || t('common.unknown')}
+                        </span>
+                        <Badge 
+                          variant="outline" 
+                          className={`text-[10px] px-1.5 py-0 ${statusColors[order.status] || ''}`}
+                        >
+                          {t(`orders.status.${order.status}`)}
+                        </Badge>
+                      </div>
+                      <span className="text-xs text-muted-foreground">
+                        {format(new Date(order.created_at), 'dd.MM.yy', { locale })}
+                      </span>
+                    </div>
+                  </div>
+                  <span className="text-sm font-medium text-foreground whitespace-nowrap ml-2">
+                    €{Number(order.total_amount).toLocaleString(i18n.language)}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
           <TabsList className="grid w-full max-w-md grid-cols-2">
