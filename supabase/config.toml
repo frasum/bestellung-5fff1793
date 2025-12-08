@@ -35,3 +35,6 @@ verify_jwt = false
 
 [functions.convert-demo-account]
 verify_jwt = true
+
+[functions.populate-demo-data]
+verify_jwt = true
