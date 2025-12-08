@@ -185,12 +185,12 @@ const ProfileTab = () => {
     setPasswordError('');
 
     if (newPassword.length < 6) {
-      setPasswordError('Password must be at least 6 characters');
+      setPasswordError('Passwort muss mindestens 6 Zeichen haben');
       return;
     }
 
     if (newPassword !== confirmPassword) {
-      setPasswordError('Passwords do not match');
+      setPasswordError('Passwörter stimmen nicht überein');
       return;
     }
 
@@ -207,40 +207,40 @@ const ProfileTab = () => {
   };
 
   if (isLoading) {
-    return <Card><CardContent className="p-6">Loading...</CardContent></Card>;
+    return <Card><CardContent className="p-6">Lädt...</CardContent></Card>;
   }
 
   return (
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>Profile Information</CardTitle>
-          <CardDescription>Update your personal details</CardDescription>
+          <CardTitle>Profilinformationen</CardTitle>
+          <CardDescription>Aktualisiere deine persönlichen Daten</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email">E-Mail</Label>
             <Input
               id="email"
               value={profile?.email || ''}
               disabled
               className="bg-muted"
             />
-            <p className="text-xs text-muted-foreground">Email cannot be changed</p>
+            <p className="text-xs text-muted-foreground">E-Mail kann nicht geändert werden</p>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="full-name">Full Name</Label>
+            <Label htmlFor="full-name">Vollständiger Name</Label>
             <Input
               id="full-name"
               defaultValue={profile?.full_name || ''}
               onChange={(e) => setFullName(e.target.value)}
-              placeholder="Enter your full name"
+              placeholder="Gib deinen vollständigen Namen ein"
             />
           </div>
 
           <Button onClick={handleProfileSave} disabled={updateProfile.isPending}>
-            {updateProfile.isPending ? 'Saving...' : 'Save Profile'}
+            {updateProfile.isPending ? 'Speichert...' : 'Profil speichern'}
           </Button>
 
           <AdvancedSettingsSwitch />
@@ -251,32 +251,32 @@ const ProfileTab = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Lock className="h-5 w-5" />
-            Change Password
+            Passwort ändern
           </CardTitle>
-          <CardDescription>Update your password to keep your account secure</CardDescription>
+          <CardDescription>Aktualisiere dein Passwort, um dein Konto sicher zu halten</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handlePasswordChange} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="new-password">New Password</Label>
+              <Label htmlFor="new-password">Neues Passwort</Label>
               <Input
                 id="new-password"
                 type="password"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
-                placeholder="Enter new password"
+                placeholder="Neues Passwort eingeben"
                 required
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="confirm-password">Confirm New Password</Label>
+              <Label htmlFor="confirm-password">Neues Passwort bestätigen</Label>
               <Input
                 id="confirm-password"
                 type="password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="Confirm new password"
+                placeholder="Neues Passwort bestätigen"
                 required
               />
             </div>
@@ -286,7 +286,7 @@ const ProfileTab = () => {
             )}
 
             <Button type="submit" disabled={updatePassword.isPending}>
-              {updatePassword.isPending ? 'Updating...' : 'Update Password'}
+              {updatePassword.isPending ? 'Aktualisiert...' : 'Passwort aktualisieren'}
             </Button>
           </form>
         </CardContent>
@@ -441,43 +441,43 @@ const OrganizationGeneralContent = () => {
   };
 
   if (isLoading) {
-    return <Card><CardContent className="p-6">Loading...</CardContent></Card>;
+    return <Card><CardContent className="p-6">Lädt...</CardContent></Card>;
   }
 
   return (
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>Organization Profile</CardTitle>
-          <CardDescription>Manage your organization details</CardDescription>
+          <CardTitle>Organisationsprofil</CardTitle>
+          <CardDescription>Verwalte deine Organisationsdetails</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="space-y-2">
-            <Label htmlFor="org-name">Organization Name</Label>
+            <Label htmlFor="org-name">Organisationsname</Label>
             <Input
               id="org-name"
               defaultValue={organization?.name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Enter organization name"
+              placeholder="Organisationsname eingeben"
             />
           </div>
 
           <div className="space-y-2">
-            <Label>Subscription</Label>
+            <Label>Abonnement</Label>
             <div className="flex items-center gap-2">
               <Badge variant="secondary" className="capitalize">
                 {organization?.subscription_tier || 'free'}
               </Badge>
               {organization?.trial_ends_at && (
                 <span className="text-sm text-muted-foreground">
-                  Trial ends: {new Date(organization.trial_ends_at).toLocaleDateString()}
+                  Testphase endet: {new Date(organization.trial_ends_at).toLocaleDateString()}
                 </span>
               )}
             </div>
           </div>
 
           <Button onClick={handleSave} disabled={updateOrganization.isPending}>
-            {updateOrganization.isPending ? 'Saving...' : 'Save Changes'}
+            {updateOrganization.isPending ? 'Speichert...' : 'Änderungen speichern'}
           </Button>
         </CardContent>
       </Card>
@@ -599,12 +599,12 @@ const TeamTab = () => {
   const roleLabels: Record<TeamMember['role'], string> = {
     admin: 'Admin',
     manager: 'Manager',
-    purchaser: 'Purchaser',
-    viewer: 'Viewer',
+    purchaser: 'Einkäufer',
+    viewer: 'Betrachter',
   };
 
   if (isLoading) {
-    return <Card><CardContent className="p-6">Loading...</CardContent></Card>;
+    return <Card><CardContent className="p-6">Lädt...</CardContent></Card>;
   }
 
   return (
@@ -612,49 +612,49 @@ const TeamTab = () => {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
-            <CardTitle>Team Members</CardTitle>
-            <CardDescription>Manage your organization's team members</CardDescription>
+            <CardTitle>Teammitglieder</CardTitle>
+            <CardDescription>Verwalte die Teammitglieder deiner Organisation</CardDescription>
           </div>
           {isAdmin && (
             <Dialog open={inviteDialogOpen} onOpenChange={setInviteDialogOpen}>
               <DialogTrigger asChild>
                 <Button className="gap-2">
                   <Plus className="h-4 w-4" />
-                  Invite Member
+                  Mitglied einladen
                 </Button>
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>Invite Team Member</DialogTitle>
+                  <DialogTitle>Teammitglied einladen</DialogTitle>
                 </DialogHeader>
                 <form onSubmit={handleInvite} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="invite-email">Email Address</Label>
+                    <Label htmlFor="invite-email">E-Mail-Adresse</Label>
                     <Input
                       id="invite-email"
                       type="email"
                       value={inviteEmail}
                       onChange={(e) => setInviteEmail(e.target.value)}
-                      placeholder="colleague@example.com"
+                      placeholder="kollege@beispiel.de"
                       required
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="invite-role">Role</Label>
+                    <Label htmlFor="invite-role">Rolle</Label>
                     <Select value={inviteRole} onValueChange={(v) => setInviteRole(v as TeamMember['role'])}>
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="viewer">Viewer - Can view orders and articles</SelectItem>
-                        <SelectItem value="purchaser">Purchaser - Can place orders</SelectItem>
-                        <SelectItem value="manager">Manager - Can manage suppliers and articles</SelectItem>
-                        <SelectItem value="admin">Admin - Full access</SelectItem>
+                        <SelectItem value="viewer">Betrachter - Kann Bestellungen und Artikel ansehen</SelectItem>
+                        <SelectItem value="purchaser">Einkäufer - Kann Bestellungen aufgeben</SelectItem>
+                        <SelectItem value="manager">Manager - Kann Lieferanten und Artikel verwalten</SelectItem>
+                        <SelectItem value="admin">Admin - Vollzugriff</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                   <Button type="submit" className="w-full" disabled={createInvitation.isPending}>
-                    {createInvitation.isPending ? 'Sending...' : 'Send Invitation'}
+                    {createInvitation.isPending ? 'Wird gesendet...' : 'Einladung senden'}
                   </Button>
                 </form>
               </DialogContent>
@@ -663,7 +663,7 @@ const TeamTab = () => {
         </CardHeader>
         <CardContent>
           {members.length === 0 ? (
-            <p className="text-muted-foreground text-center py-8">No team members yet.</p>
+            <p className="text-muted-foreground text-center py-8">Noch keine Teammitglieder.</p>
           ) : (
             <div className="space-y-4">
               {members.map((member) => (
@@ -673,7 +673,7 @@ const TeamTab = () => {
                       <User className="h-5 w-5 text-primary" />
                     </div>
                     <div>
-                      <p className="font-medium">{member.full_name || 'No name'}</p>
+                      <p className="font-medium">{member.full_name || 'Kein Name'}</p>
                       <p className="text-sm text-muted-foreground">{member.email}</p>
                     </div>
                   </div>
@@ -707,7 +707,7 @@ const TeamTab = () => {
                       <Badge variant="secondary">{roleLabels[member.role]}</Badge>
                     )}
                     {member.id === user?.id && (
-                      <Badge variant="outline">You</Badge>
+                      <Badge variant="outline">Du</Badge>
                     )}
                   </div>
                 </div>
@@ -722,9 +722,9 @@ const TeamTab = () => {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Mail className="h-5 w-5" />
-              Pending Invitations
+              Ausstehende Einladungen
             </CardTitle>
-            <CardDescription>Invitations waiting to be accepted</CardDescription>
+            <CardDescription>Einladungen, die auf Annahme warten</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
@@ -736,7 +736,7 @@ const TeamTab = () => {
                       <Badge variant="secondary">{roleLabels[invitation.role]}</Badge>
                       <span className="flex items-center gap-1">
                         <Clock className="h-3 w-3" />
-                        Expires {new Date(invitation.expires_at).toLocaleDateString()}
+                        Läuft ab am {new Date(invitation.expires_at).toLocaleDateString()}
                       </span>
                     </div>
                   </div>
@@ -775,14 +775,14 @@ const AddressesTab = () => {
   };
 
   if (isLoading) {
-    return <Card><CardContent className="p-6">Loading...</CardContent></Card>;
+    return <Card><CardContent className="p-6">Lädt...</CardContent></Card>;
   }
 
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
         <div>
-          <CardTitle>Delivery Addresses</CardTitle>
+          <CardTitle>Lieferadressen</CardTitle>
           <CardDescription>
             Lieferadressen für {activeLocation?.name || 'diesen Standort'} verwalten
           </CardDescription>
@@ -791,12 +791,12 @@ const AddressesTab = () => {
           <DialogTrigger asChild>
             <Button onClick={handleAdd} className="gap-2">
               <Plus className="h-4 w-4" />
-              Add Address
+              Adresse hinzufügen
             </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>{editingAddress ? 'Edit Address' : 'Add Address'}</DialogTitle>
+              <DialogTitle>{editingAddress ? 'Adresse bearbeiten' : 'Adresse hinzufügen'}</DialogTitle>
             </DialogHeader>
             <AddressForm
               address={editingAddress}
@@ -835,7 +835,7 @@ const AddressCard = ({ address, onEdit }: { address: DeliveryAddress; onEdit: ()
           {address.is_default && (
             <Badge variant="secondary" className="gap-1">
               <Star className="h-3 w-3" />
-              Default
+              Standard
             </Badge>
           )}
         </div>
@@ -908,37 +908,37 @@ const AddressForm = ({
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-2">
-        <Label htmlFor="label">Label</Label>
+        <Label htmlFor="label">Bezeichnung</Label>
         <Input
           id="label"
           value={formData.label}
           onChange={(e) => setFormData({ ...formData, label: e.target.value })}
-          placeholder="e.g., Main Kitchen, Bar"
+          placeholder="z.B. Hauptküche, Bar"
           required
         />
       </div>
       <div className="space-y-2">
-        <Label htmlFor="address_line1">Address Line 1</Label>
+        <Label htmlFor="address_line1">Adresszeile 1</Label>
         <Input
           id="address_line1"
           value={formData.address_line1}
           onChange={(e) => setFormData({ ...formData, address_line1: e.target.value })}
-          placeholder="Street address"
+          placeholder="Straße und Hausnummer"
           required
         />
       </div>
       <div className="space-y-2">
-        <Label htmlFor="address_line2">Address Line 2</Label>
+        <Label htmlFor="address_line2">Adresszeile 2</Label>
         <Input
           id="address_line2"
           value={formData.address_line2}
           onChange={(e) => setFormData({ ...formData, address_line2: e.target.value })}
-          placeholder="Building, floor, etc. (optional)"
+          placeholder="Gebäude, Etage, etc. (optional)"
         />
       </div>
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="postal_code">Postal Code</Label>
+          <Label htmlFor="postal_code">PLZ</Label>
           <Input
             id="postal_code"
             value={formData.postal_code}
@@ -947,7 +947,7 @@ const AddressForm = ({
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="city">City</Label>
+          <Label htmlFor="city">Stadt</Label>
           <Input
             id="city"
             value={formData.city}
@@ -957,7 +957,7 @@ const AddressForm = ({
         </div>
       </div>
       <div className="space-y-2">
-        <Label htmlFor="country">Country</Label>
+        <Label htmlFor="country">Land</Label>
         <Input
           id="country"
           value={formData.country}
@@ -971,10 +971,10 @@ const AddressForm = ({
           checked={formData.is_default}
           onCheckedChange={(checked) => setFormData({ ...formData, is_default: checked })}
         />
-        <Label htmlFor="is_default">Set as default address</Label>
+        <Label htmlFor="is_default">Als Standardadresse festlegen</Label>
       </div>
       <Button type="submit" className="w-full" disabled={isPending}>
-        {isPending ? 'Saving...' : address ? 'Update Address' : 'Add Address'}
+        {isPending ? 'Speichert...' : address ? 'Adresse aktualisieren' : 'Adresse hinzufügen'}
       </Button>
     </form>
   );
@@ -1008,7 +1008,7 @@ const NotificationsTab = () => {
   };
 
   if (isLoading) {
-    return <Card><CardContent className="p-6">Loading...</CardContent></Card>;
+    return <Card><CardContent className="p-6">Lädt...</CardContent></Card>;
   }
 
   const currentPrefs = preferences || prefs;
@@ -1016,15 +1016,15 @@ const NotificationsTab = () => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Notification Preferences</CardTitle>
-        <CardDescription>Choose what notifications you want to receive</CardDescription>
+        <CardTitle>Benachrichtigungseinstellungen</CardTitle>
+        <CardDescription>Wähle, welche Benachrichtigungen du erhalten möchtest</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
-              <Label>Order Confirmations</Label>
-              <p className="text-sm text-muted-foreground">Receive email when orders are placed</p>
+              <Label>Bestellbestätigungen</Label>
+              <p className="text-sm text-muted-foreground">E-Mail erhalten, wenn Bestellungen aufgegeben werden</p>
             </div>
             <Switch
               checked={currentPrefs.email_order_confirmation}
@@ -1034,8 +1034,8 @@ const NotificationsTab = () => {
 
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
-              <Label>Order Status Updates</Label>
-              <p className="text-sm text-muted-foreground">Get notified when order status changes</p>
+              <Label>Bestellstatus-Updates</Label>
+              <p className="text-sm text-muted-foreground">Benachrichtigt werden, wenn sich der Bestellstatus ändert</p>
             </div>
             <Switch
               checked={currentPrefs.email_order_status}
@@ -1045,8 +1045,8 @@ const NotificationsTab = () => {
 
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
-              <Label>Weekly Reports</Label>
-              <p className="text-sm text-muted-foreground">Receive weekly spending summaries</p>
+              <Label>Wöchentliche Berichte</Label>
+              <p className="text-sm text-muted-foreground">Wöchentliche Ausgabenübersichten erhalten</p>
             </div>
             <Switch
               checked={currentPrefs.email_weekly_report}
@@ -1056,8 +1056,8 @@ const NotificationsTab = () => {
 
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
-              <Label>Supplier Updates</Label>
-              <p className="text-sm text-muted-foreground">Get notified about supplier changes</p>
+              <Label>Lieferanten-Updates</Label>
+              <p className="text-sm text-muted-foreground">Über Änderungen bei Lieferanten informiert werden</p>
             </div>
             <Switch
               checked={currentPrefs.email_supplier_updates}

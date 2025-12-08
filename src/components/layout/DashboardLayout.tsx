@@ -14,6 +14,7 @@ import { useOrganization } from '@/hooks/useSettings';
 import { Badge } from '@/components/ui/badge';
 import { MobileBottomNav } from '@/components/layout/MobileBottomNav';
 import { FloatingCartButton } from '@/components/FloatingCartButton';
+import { TooltipProvider } from '@/components/ui/tooltip';
 import logoImage from '@/assets/logo.png';
 
 interface DashboardLayoutProps {
@@ -126,9 +127,10 @@ export const DashboardLayout = ({
         <div className="flex items-center gap-4">
           <GlobalSearch />
         </div>
-        <div className="flex items-center gap-3">
-          <LanguageSwitcher variant="icon" />
-          <ThemeToggle />
+        <TooltipProvider>
+          <div className="flex items-center gap-3">
+            <LanguageSwitcher variant="icon" />
+            <ThemeToggle />
           {organization?.is_demo && demoDaysRemaining !== null && (
             <Badge 
               variant="outline" 
@@ -149,7 +151,8 @@ export const DashboardLayout = ({
               Testmodus aktiv
             </Badge>
           )}
-        </div>
+          </div>
+        </TooltipProvider>
       </div>
 
       {/* Sidebar */}
