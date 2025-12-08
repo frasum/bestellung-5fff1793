@@ -32,7 +32,12 @@ import {
 } from '@/components/ui/alert-dialog';
 import { format, isAfter, isBefore, startOfDay, endOfDay, subDays, subMonths } from 'date-fns';
 import { de, enUS, fr } from 'date-fns/locale';
-import { Loader2, Package, CheckCircle2, Clock, Truck, XCircle, Eye, Search, X, ChevronDown, Trash2, FlaskConical } from 'lucide-react';
+import { Loader2, Package, CheckCircle2, Clock, Truck, XCircle, Eye, Search, X, ChevronDown, Trash2, FlaskConical, Filter } from 'lucide-react';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 import { useTranslation } from 'react-i18next';
 import { OrderEmailViewDialog } from '@/components/orders/OrderEmailViewDialog';
 import { supabase } from '@/integrations/supabase/client';
@@ -284,8 +289,73 @@ const Orders = () => {
             </div>
           </div>
         )}
-        {/* Filters */}
-        <div className="flex flex-col sm:flex-row gap-3">
+        {/* Mobile Filters */}
+        <div className="flex gap-2 sm:hidden">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              placeholder={t('orders.searchPlaceholder')}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9 h-11"
+            />
+          </div>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" size="icon" className="h-11 w-11 shrink-0 relative">
+                <Filter className="w-4 h-4" />
+                {(statusFilter !== 'all' || dateFilter !== 'all') && (
+                  <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-primary rounded-full" />
+                )}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-72 bg-card border border-border" align="end">
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">{t('orders.filterByStatus')}</label>
+                  <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as Order['status'] | 'all')}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">{t('orders.allStatuses')}</SelectItem>
+                      <SelectItem value="pending">{t('orders.status.pending')}</SelectItem>
+                      <SelectItem value="confirmed">{t('orders.status.confirmed')}</SelectItem>
+                      <SelectItem value="processing">{t('orders.status.processing')}</SelectItem>
+                      <SelectItem value="shipped">{t('orders.status.shipped')}</SelectItem>
+                      <SelectItem value="delivered">{t('orders.status.delivered')}</SelectItem>
+                      <SelectItem value="cancelled">{t('orders.status.cancelled')}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">{t('orders.filterByDate')}</label>
+                  <Select value={dateFilter} onValueChange={(v) => setDateFilter(v as DateFilter)}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">{t('orders.allDates')}</SelectItem>
+                      <SelectItem value="today">{t('orders.today')}</SelectItem>
+                      <SelectItem value="week">{t('orders.lastWeek')}</SelectItem>
+                      <SelectItem value="month">{t('orders.lastMonth')}</SelectItem>
+                      <SelectItem value="3months">{t('orders.last3Months')}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                {hasActiveFilters && (
+                  <Button variant="outline" size="sm" onClick={clearFilters} className="w-full">
+                    <X className="w-4 h-4 mr-2" />
+                    {t('orders.clearFilters')}
+                  </Button>
+                )}
+              </div>
+            </PopoverContent>
+          </Popover>
+        </div>
+
+        {/* Desktop Filters */}
+        <div className="hidden sm:flex gap-3">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
@@ -296,7 +366,7 @@ const Orders = () => {
             />
           </div>
           <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as Order['status'] | 'all')}>
-            <SelectTrigger className="w-full sm:w-40">
+            <SelectTrigger className="w-40">
               <SelectValue placeholder={t('orders.filterByStatus')} />
             </SelectTrigger>
             <SelectContent>
@@ -310,7 +380,7 @@ const Orders = () => {
             </SelectContent>
           </Select>
           <Select value={dateFilter} onValueChange={(v) => setDateFilter(v as DateFilter)}>
-            <SelectTrigger className="w-full sm:w-40">
+            <SelectTrigger className="w-40">
               <SelectValue placeholder={t('orders.filterByDate')} />
             </SelectTrigger>
             <SelectContent>
@@ -360,16 +430,16 @@ const Orders = () => {
                 >
                   {/* Supplier Header */}
                   <CollapsibleTrigger className="w-full">
-                    <div className="flex items-center justify-between p-4 bg-card border border-border rounded-lg hover:bg-muted/50 transition-colors">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 bg-card border border-border rounded-lg hover:bg-muted/50 transition-colors min-h-[56px]">
                       <div className="flex items-center gap-3">
                         <ChevronDown className={cn(
-                          "w-5 h-5 text-muted-foreground transition-transform duration-200",
+                          "w-5 h-5 text-muted-foreground transition-transform duration-200 shrink-0",
                           isOpen && "rotate-180"
                         )} />
-                        <span className="font-semibold text-foreground">{supplierName}</span>
-                        <Badge variant="secondary">{supplierOrders.length} {t('orders.ordersCount')}</Badge>
+                        <span className="font-semibold text-foreground text-left">{supplierName}</span>
+                        <Badge variant="secondary" className="shrink-0">{supplierOrders.length}</Badge>
                       </div>
-                      <span className="font-bold text-foreground">€{totalAmount.toFixed(2)}</span>
+                      <span className="font-bold text-foreground pl-8 sm:pl-0 text-left sm:text-right mt-1 sm:mt-0">€{totalAmount.toFixed(2)}</span>
                     </div>
                   </CollapsibleTrigger>
                   
@@ -386,8 +456,38 @@ const Orders = () => {
                             open={isOrderOpen}
                             onOpenChange={() => toggleOrder(order.id)}
                           >
-                            {/* Compact Order Header */}
-                            <CollapsibleTrigger className="w-full">
+                            {/* Mobile Order Header */}
+                            <CollapsibleTrigger className="w-full sm:hidden">
+                              <div className="flex flex-col gap-2 p-3 bg-card border border-border rounded-lg min-h-[64px]">
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center gap-2">
+                                    <ChevronDown className={cn(
+                                      "w-4 h-4 text-muted-foreground transition-transform duration-200 shrink-0",
+                                      isOrderOpen && "rotate-180"
+                                    )} />
+                                    <StatusIcon className="w-4 h-4 text-primary shrink-0" />
+                                    <span className="font-medium text-foreground text-sm truncate max-w-[140px]">{order.order_number}</span>
+                                  </div>
+                                  <Badge className={cn(statusColors[order.status], "text-xs shrink-0")}>
+                                    {t(`orders.status.${order.status}`)}
+                                  </Badge>
+                                </div>
+                                <div className="flex items-center justify-between pl-6 text-sm">
+                                  <span className="text-muted-foreground">
+                                    {format(new Date(order.created_at), 'd. MMM', { locale })}
+                                    {order.is_test_order && (
+                                      <span className="ml-2 text-warning">
+                                        <FlaskConical className="w-3 h-3 inline" />
+                                      </span>
+                                    )}
+                                  </span>
+                                  <span className="font-bold text-foreground">€{Number(order.total_amount).toFixed(2)}</span>
+                                </div>
+                              </div>
+                            </CollapsibleTrigger>
+                            
+                            {/* Desktop Order Header */}
+                            <CollapsibleTrigger className="w-full hidden sm:block">
                               <div className="flex items-center justify-between p-3 bg-card border border-border rounded-lg">
                                 <div className="flex items-center gap-3">
                                   <ChevronDown className={cn(
@@ -405,12 +505,12 @@ const Orders = () => {
                                   <Badge className={cn(statusColors[order.status], "text-xs")}>
                                     {t(`orders.status.${order.status}`)}
                                   </Badge>
-                                  <span className="text-xs text-muted-foreground hidden sm:inline">
+                                  <span className="text-xs text-muted-foreground">
                                     {order.order_items?.length || 0} {t('orders.items')}
                                   </span>
                                 </div>
                                 <div className="flex items-center gap-4">
-                                  <span className="text-sm text-muted-foreground hidden sm:inline">
+                                  <span className="text-sm text-muted-foreground">
                                     {format(new Date(order.created_at), 'EEEE d. MMM yyyy', { locale })}
                                   </span>
                                   <span className="font-bold text-foreground">€{Number(order.total_amount).toFixed(2)}</span>
@@ -440,8 +540,63 @@ const Orders = () => {
                                   </p>
                                 </div>
                                 
-                                {/* Actions */}
-                                <div className="flex items-center justify-between pt-3 border-t border-border">
+                                {/* Mobile Actions - Touch-friendly */}
+                                <div className="flex flex-col gap-3 pt-3 border-t border-border sm:hidden">
+                                  {order.email_sent && (
+                                    <Button
+                                      variant="outline"
+                                      className="w-full h-11 justify-start"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleViewEmail(order);
+                                      }}
+                                    >
+                                      <Eye className="w-5 h-5 mr-2" />
+                                      {t('orders.viewEmail')}
+                                    </Button>
+                                  )}
+                                  <div className="grid grid-cols-3 gap-2">
+                                    <Button
+                                      variant={order.status === 'confirmed' ? 'default' : 'outline'}
+                                      size="sm"
+                                      className="h-11 flex-col gap-0.5 px-2"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        updateStatus.mutate({ orderId: order.id, status: 'confirmed' });
+                                      }}
+                                    >
+                                      <CheckCircle2 className="w-4 h-4" />
+                                      <span className="text-[10px]">{t('orders.status.confirmed')}</span>
+                                    </Button>
+                                    <Button
+                                      variant={order.status === 'delivered' ? 'default' : 'outline'}
+                                      size="sm"
+                                      className="h-11 flex-col gap-0.5 px-2"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        updateStatus.mutate({ orderId: order.id, status: 'delivered' });
+                                      }}
+                                    >
+                                      <Truck className="w-4 h-4" />
+                                      <span className="text-[10px]">{t('orders.status.delivered')}</span>
+                                    </Button>
+                                    <Button
+                                      variant={order.status === 'cancelled' ? 'destructive' : 'outline'}
+                                      size="sm"
+                                      className="h-11 flex-col gap-0.5 px-2"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        updateStatus.mutate({ orderId: order.id, status: 'cancelled' });
+                                      }}
+                                    >
+                                      <XCircle className="w-4 h-4" />
+                                      <span className="text-[10px]">{t('orders.status.cancelled')}</span>
+                                    </Button>
+                                  </div>
+                                </div>
+                                
+                                {/* Desktop Actions */}
+                                <div className="hidden sm:flex items-center justify-between pt-3 border-t border-border">
                                   <div className="flex items-center gap-2">
                                     {order.email_sent && (
                                       <Button
