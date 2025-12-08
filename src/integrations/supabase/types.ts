@@ -299,6 +299,24 @@ export type Database = {
           },
         ]
       }
+      demo_account_rate_limits: {
+        Row: {
+          created_at: string
+          id: string
+          ip_address: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          ip_address: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          ip_address?: string
+        }
+        Relationships: []
+      }
       email_templates: {
         Row: {
           article_list_format: string
@@ -1223,6 +1241,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      cleanup_old_rate_limits: { Args: never; Returns: undefined }
       generate_order_number: { Args: never; Returns: string }
       get_user_organization_id: { Args: { user_id: string }; Returns: string }
       has_role: {
