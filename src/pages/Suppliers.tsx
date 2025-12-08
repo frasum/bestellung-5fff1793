@@ -406,27 +406,43 @@ const Suppliers = () => {
 
           {/* Suppliers Tab */}
           <TabsContent value="suppliers" className="space-y-4">
-            {/* Supplier Actions */}
-            <div className="flex flex-wrap gap-2">
-              {advancedSettingsEnabled && (
-                <ExportMenu 
-                  filename="suppliers" 
-                  title="Lieferanten" 
-                  headers={['Name', 'Email', 'Telefon', 'Adresse', 'Ansprechpartner', 'Kundennummer', 'Status']} 
-                  getData={() => suppliers?.map(s => [s.name, s.email, s.phone || '', s.address || '', s.contact_person || '', s.customer_number || '', s.is_active ? 'Aktiv' : 'Inaktiv']) || []} 
-                  disabled={!suppliers?.length} 
-                />
-              )}
-              {advancedSettingsEnabled && (
-                <Button variant="outline" onClick={() => setIsSupplierImportOpen(true)}>
-                  <Upload className="w-4 h-4 mr-2" />
-                  Importieren
+            {/* Combined Filter + Actions Row */}
+            <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+              <SupplierFilters
+                searchQuery={searchQuery}
+                onSearchChange={setSearchQuery}
+                topCategoryFilter={topCategoryFilter}
+                onTopCategoryChange={setTopCategoryFilter}
+                categoryFilter={categoryFilter}
+                onCategoryChange={setCategoryFilter}
+                existingCategories={existingSupplierCategories}
+                multiSelectEnabled={supplierMultiSelectEnabled}
+                onMultiSelectChange={setSupplierMultiSelectEnabled}
+                selectedCount={selectedSuppliers.size}
+                onPrintCombined={handlePrintCombined}
+                showMultiSelectToggle={advancedSettingsEnabled}
+              />
+              <div className="flex flex-wrap gap-2 shrink-0">
+                {advancedSettingsEnabled && (
+                  <ExportMenu 
+                    filename="suppliers" 
+                    title="Lieferanten" 
+                    headers={['Name', 'Email', 'Telefon', 'Adresse', 'Ansprechpartner', 'Kundennummer', 'Status']} 
+                    getData={() => suppliers?.map(s => [s.name, s.email, s.phone || '', s.address || '', s.contact_person || '', s.customer_number || '', s.is_active ? 'Aktiv' : 'Inaktiv']) || []} 
+                    disabled={!suppliers?.length} 
+                  />
+                )}
+                {advancedSettingsEnabled && (
+                  <Button variant="outline" onClick={() => setIsSupplierImportOpen(true)}>
+                    <Upload className="w-4 h-4 mr-2" />
+                    Importieren
+                  </Button>
+                )}
+                <Button onClick={() => { setEditingSupplier(null); setIsSupplierDialogOpen(true); }}>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Lieferant hinzufügen
                 </Button>
-              )}
-              <Button onClick={() => { setEditingSupplier(null); setIsSupplierDialogOpen(true); }}>
-                <Plus className="w-4 h-4 mr-2" />
-                Lieferant hinzufügen
-              </Button>
+              </div>
             </div>
 
             {/* Supplier Form Dialog */}
@@ -470,22 +486,6 @@ const Suppliers = () => {
               templateFileName="articles_template.csv" 
             />
 
-            {/* Supplier Search and Filter */}
-            <SupplierFilters
-              searchQuery={searchQuery}
-              onSearchChange={setSearchQuery}
-              topCategoryFilter={topCategoryFilter}
-              onTopCategoryChange={setTopCategoryFilter}
-              categoryFilter={categoryFilter}
-              onCategoryChange={setCategoryFilter}
-              existingCategories={existingSupplierCategories}
-              multiSelectEnabled={supplierMultiSelectEnabled}
-              onMultiSelectChange={setSupplierMultiSelectEnabled}
-              selectedCount={selectedSuppliers.size}
-              onPrintCombined={handlePrintCombined}
-              showMultiSelectToggle={advancedSettingsEnabled}
-            />
-
             {/* Suppliers Table */}
             {suppliersLoading ? (
               <div className="flex items-center justify-center py-12">
@@ -525,35 +525,58 @@ const Suppliers = () => {
 
           {/* Articles Tab */}
           <TabsContent value="articles" className="space-y-4">
-            {/* Article Actions */}
-            <div className="flex flex-wrap gap-2">
-              {advancedSettingsEnabled && (
-                <ExportMenu
-                  filename="articles"
-                  title="Artikel"
-                  headers={['Name', 'Lieferant', 'Preis', 'Einheit', 'SKU', 'Kategorie', 'Status']}
-                  getData={() => allArticles?.map(a => [
-                    a.name,
-                    a.suppliers?.name || '',
-                    `€${Number(a.price).toFixed(2)}`,
-                    a.unit,
-                    a.sku || '',
-                    a.category || '',
-                    a.is_active ? 'Aktiv' : 'Inaktiv'
-                  ]) || []}
-                  disabled={!allArticles?.length}
-                />
-              )}
-              {advancedSettingsEnabled && (
-                <Button variant="outline" onClick={() => setIsArticleImportOpen(true)}>
-                  <Upload className="w-4 h-4 mr-2" />
-                  Importieren
+            {/* Combined Filter + Actions Row */}
+            <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+              <ArticleFilters
+                searchQuery={articleSearchQuery}
+                onSearchChange={setArticleSearchQuery}
+                selectedSuppliers={selectedArticleSuppliers}
+                onSupplierChange={setSelectedArticleSuppliers}
+                suppliers={suppliers || []}
+                supplierPopoverOpen={supplierPopoverOpen}
+                onSupplierPopoverChange={setSupplierPopoverOpen}
+                selectedCategory={selectedCategory}
+                onCategoryChange={setSelectedCategory}
+                articleCategories={articleCategoriesForFilter}
+                advancedViewEnabled={articleAdvancedViewEnabled}
+                onAdvancedViewChange={setArticleAdvancedViewEnabled}
+                hasFilters={articleSearchQuery !== '' || selectedArticleSuppliers.length > 0 || selectedCategory !== 'all'}
+                showAdvancedToggle={advancedSettingsEnabled}
+                onClearFilters={() => {
+                  setArticleSearchQuery('');
+                  setSelectedArticleSuppliers([]);
+                  setSelectedCategory('all');
+                }}
+              />
+              <div className="flex flex-wrap gap-2 shrink-0">
+                {advancedSettingsEnabled && (
+                  <ExportMenu
+                    filename="articles"
+                    title="Artikel"
+                    headers={['Name', 'Lieferant', 'Preis', 'Einheit', 'SKU', 'Kategorie', 'Status']}
+                    getData={() => allArticles?.map(a => [
+                      a.name,
+                      a.suppliers?.name || '',
+                      `€${Number(a.price).toFixed(2)}`,
+                      a.unit,
+                      a.sku || '',
+                      a.category || '',
+                      a.is_active ? 'Aktiv' : 'Inaktiv'
+                    ]) || []}
+                    disabled={!allArticles?.length}
+                  />
+                )}
+                {advancedSettingsEnabled && (
+                  <Button variant="outline" onClick={() => setIsArticleImportOpen(true)}>
+                    <Upload className="w-4 h-4 mr-2" />
+                    Importieren
+                  </Button>
+                )}
+                <Button onClick={() => { setEditingArticle(null); setIsArticleDialogOpen(true); }}>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Artikel hinzufügen
                 </Button>
-              )}
-              <Button onClick={() => { setEditingArticle(null); setIsArticleDialogOpen(true); }}>
-                <Plus className="w-4 h-4 mr-2" />
-                Artikel hinzufügen
-              </Button>
+              </div>
             </div>
 
             {/* Article Form Dialog */}
@@ -582,29 +605,6 @@ const Suppliers = () => {
               templateFileName="articles_template.csv"
               suppliers={suppliers?.map(s => ({ id: s.id, name: s.name }))}
               showSupplierSelect={true}
-            />
-
-            {/* Article Filters */}
-            <ArticleFilters
-              searchQuery={articleSearchQuery}
-              onSearchChange={setArticleSearchQuery}
-              selectedSuppliers={selectedArticleSuppliers}
-              onSupplierChange={setSelectedArticleSuppliers}
-              suppliers={suppliers || []}
-              supplierPopoverOpen={supplierPopoverOpen}
-              onSupplierPopoverChange={setSupplierPopoverOpen}
-              selectedCategory={selectedCategory}
-              onCategoryChange={setSelectedCategory}
-              articleCategories={articleCategoriesForFilter}
-              advancedViewEnabled={articleAdvancedViewEnabled}
-              onAdvancedViewChange={setArticleAdvancedViewEnabled}
-              hasFilters={articleSearchQuery !== '' || selectedArticleSuppliers.length > 0 || selectedCategory !== 'all'}
-              showAdvancedToggle={advancedSettingsEnabled}
-              onClearFilters={() => {
-                setArticleSearchQuery('');
-                setSelectedArticleSuppliers([]);
-                setSelectedCategory('all');
-              }}
             />
 
             {/* Selection Toolbar */}
