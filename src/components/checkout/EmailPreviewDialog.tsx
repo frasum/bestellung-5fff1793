@@ -219,32 +219,6 @@ ${signatureText}`;
               </div>
             </div>
 
-            {/* Confirmation Checkbox */}
-            <div 
-              className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
-                confirmedEmails.has(currentIndex) 
-                  ? 'border-green-500/50 bg-green-500/10' 
-                  : 'border-primary/30 bg-primary/5 hover:bg-primary/10'
-              }`}
-              onClick={toggleCurrentEmailConfirmed}
-            >
-              <Checkbox 
-                id={`confirm-email-${currentIndex}`}
-                checked={confirmedEmails.has(currentIndex)}
-                onCheckedChange={toggleCurrentEmailConfirmed}
-                onClick={(e) => e.stopPropagation()}
-                className="h-5 w-5"
-              />
-              <Label 
-                htmlFor={`confirm-email-${currentIndex}`} 
-                className="text-sm font-medium cursor-pointer flex-1"
-              >
-                E-Mail an {currentEmail.supplierName} geprüft
-              </Label>
-              {confirmedEmails.has(currentIndex) && (
-                <span className="text-xs text-green-600 dark:text-green-400 font-medium">✓ Bestätigt</span>
-              )}
-            </div>
 
             {/* Email Body Preview */}
             <div className="border border-border rounded-lg overflow-hidden">
@@ -398,9 +372,36 @@ ${signatureText}`;
                   </p>
                 </div>
               </div>
+              </div>
+            </div>
+
+            {/* Confirmation Checkbox - at the bottom after email content */}
+            <div 
+              className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
+                confirmedEmails.has(currentIndex) 
+                  ? 'border-green-500/50 bg-green-500/10' 
+                  : 'border-primary/30 bg-primary/5 hover:bg-primary/10'
+              }`}
+              onClick={toggleCurrentEmailConfirmed}
+            >
+              <Checkbox 
+                id={`confirm-email-${currentIndex}`}
+                checked={confirmedEmails.has(currentIndex)}
+                onCheckedChange={toggleCurrentEmailConfirmed}
+                onClick={(e) => e.stopPropagation()}
+                className="h-5 w-5"
+              />
+              <Label 
+                htmlFor={`confirm-email-${currentIndex}`} 
+                className="text-sm font-medium cursor-pointer flex-1"
+              >
+                E-Mail an {currentEmail.supplierName} geprüft
+              </Label>
+              {confirmedEmails.has(currentIndex) && (
+                <span className="text-xs text-green-600 dark:text-green-400 font-medium">✓ Bestätigt</span>
+              )}
             </div>
           </div>
-        </div>
 
         <DialogFooter className="flex-col sm:flex-row gap-2 mt-4">
           {emailPreviews.length > 1 && (
