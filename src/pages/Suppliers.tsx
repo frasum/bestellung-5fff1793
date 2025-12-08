@@ -541,6 +541,7 @@ const Suppliers = () => {
           <TabsContent value="suppliers" className="space-y-4">
             {/* Supplier Actions */}
             <div className="flex flex-wrap gap-2">
+              {advancedSettingsEnabled && (
               <ExportMenu 
                 filename="suppliers" 
                 title="Lieferanten" 
@@ -913,6 +914,7 @@ const Suppliers = () => {
           <TabsContent value="articles" className="space-y-4">
             {/* Article Actions */}
             <div className="flex flex-wrap gap-2">
+              {advancedSettingsEnabled && (
               <ExportMenu
                 filename="articles"
                 title="Artikel"
@@ -928,10 +930,13 @@ const Suppliers = () => {
                 ]) || []}
                 disabled={!allArticles?.length}
               />
+              )}
+              {advancedSettingsEnabled && (
               <Button variant="outline" onClick={() => setIsArticleImportOpen(true)}>
                 <Upload className="w-4 h-4 mr-2" />
                 Importieren
               </Button>
+              )}
               <Dialog open={isArticleDialogOpen} onOpenChange={(open) => {
                 setIsArticleDialogOpen(open);
                 if (!open) setEditingArticle(null);
