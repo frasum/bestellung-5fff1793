@@ -2,8 +2,9 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader2, CheckCircle, XCircle } from 'lucide-react';
+import { Loader2, CheckCircle, XCircle, Mail, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { toast } from '@/hooks/use-toast';
 import logo from '@/assets/logo.png';
 
 const SupplierAuth = () => {
@@ -11,6 +12,9 @@ const SupplierAuth = () => {
   const navigate = useNavigate();
   const [status, setStatus] = useState<'verifying' | 'success' | 'error' | 'expired'>('verifying');
   const [errorMessage, setErrorMessage] = useState('');
+  const [expiredSupplierId, setExpiredSupplierId] = useState<string | null>(null);
+  const [requesting, setRequesting] = useState(false);
+  const [linkSent, setLinkSent] = useState(false);
   const token = searchParams.get('token');
 
   useEffect(() => {
@@ -22,7 +26,6 @@ const SupplierAuth = () => {
       }
 
       try {
-        // Use edge function to verify token (bypasses RLS)
         const { data, error } = await supabase.functions.invoke('verify-supplier-token', {
           body: { token },
         });
@@ -36,7 +39,8 @@ const SupplierAuth = () => {
 
         if (data.status === 'expired') {
           setStatus('expired');
-          setErrorMessage('Dieser Link ist abgelaufen. Bitte fordern Sie einen neuen Link an.');
+          setExpiredSupplierId(data.supplierId || null);
+          setErrorMessage('Dieser Link ist abgelaufen.');
           return;
         }
 
@@ -46,19 +50,18 @@ const SupplierAuth = () => {
           return;
         }
 
-        // Generate session token for API authentication
-        // Format: supplierId:organizationId:timestamp:randomHash
+        // Generate session token
         const timestamp = Date.now();
         const randomHash = Math.random().toString(36).substring(2, 15);
         const sessionToken = `${data.supplierId}:${data.organizationId}:${timestamp}:${randomHash}`;
         
-        // Store supplier session in localStorage
+        // Store supplier session with token expiry
         const supplierSession = {
           supplierId: data.supplierId,
           supplierName: data.supplierName,
           organizationId: data.organizationId,
-          sessionToken, // Include token for API calls
-          expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // 24 hours
+          sessionToken,
+          expiresAt: data.expiresAt || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
         };
         localStorage.setItem('supplierSession', JSON.stringify(supplierSession));
 
@@ -66,7 +69,6 @@ const SupplierAuth = () => {
 
         setStatus('success');
         
-        // Redirect to supplier portal after short delay
         setTimeout(() => {
           navigate('/supplier-portal');
         }, 1500);
@@ -79,6 +81,41 @@ const SupplierAuth = () => {
 
     verifyToken();
   }, [token, navigate]);
+
+  const handleRequestNewLink = async () => {
+    if (!expiredSupplierId) {
+      toast({
+        title: 'Fehler',
+        description: 'Lieferanten-ID nicht verfügbar. Bitte kontaktieren Sie den Administrator.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setRequesting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('request-new-magic-link', {
+        body: { supplierId: expiredSupplierId },
+      });
+
+      if (error) throw error;
+
+      setLinkSent(true);
+      toast({
+        title: 'Link gesendet',
+        description: 'Ein neuer Zugangslink wurde an Ihre E-Mail-Adresse gesendet.',
+      });
+    } catch (error: any) {
+      console.error('Error requesting new link:', error);
+      toast({
+        title: 'Fehler',
+        description: 'Der Link konnte nicht gesendet werden. Bitte versuchen Sie es später erneut.',
+        variant: 'destructive',
+      });
+    } finally {
+      setRequesting(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
@@ -103,7 +140,37 @@ const SupplierAuth = () => {
             </div>
           )}
           
-          {(status === 'error' || status === 'expired') && (
+          {status === 'expired' && !linkSent && (
+            <div className="space-y-4">
+              <Clock className="h-12 w-12 mx-auto text-amber-500" />
+              <p className="text-amber-600 font-medium">{errorMessage}</p>
+              <p className="text-muted-foreground text-sm">
+                Fordern Sie einen neuen Zugangslink an:
+              </p>
+              {expiredSupplierId ? (
+                <Button onClick={handleRequestNewLink} disabled={requesting} className="gap-2">
+                  {requesting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mail className="h-4 w-4" />}
+                  Neuen Link anfordern
+                </Button>
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  Bitte kontaktieren Sie Ihren Ansprechpartner für einen neuen Link.
+                </p>
+              )}
+            </div>
+          )}
+
+          {status === 'expired' && linkSent && (
+            <div className="space-y-4">
+              <CheckCircle className="h-12 w-12 mx-auto text-green-500" />
+              <p className="text-green-600 font-medium">Link gesendet!</p>
+              <p className="text-muted-foreground text-sm">
+                Bitte überprüfen Sie Ihr E-Mail-Postfach und klicken Sie auf den neuen Link.
+              </p>
+            </div>
+          )}
+          
+          {status === 'error' && (
             <div className="space-y-4">
               <XCircle className="h-12 w-12 mx-auto text-destructive" />
               <p className="text-destructive font-medium">{errorMessage}</p>
