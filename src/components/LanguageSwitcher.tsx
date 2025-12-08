@@ -7,6 +7,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Globe } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 const languages = [
   { code: 'de', label: 'Deutsch', flag: '🇩🇪' },
@@ -29,18 +30,25 @@ export const LanguageSwitcher = ({ variant = 'icon' }: LanguageSwitcherProps) =>
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        {variant === 'icon' ? (
-          <Button variant="ghost" size="icon">
-            <Globe className="h-5 w-5" />
-          </Button>
-        ) : (
+      {variant === 'icon' ? (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon">
+                <Globe className="h-5 w-5" />
+              </Button>
+            </DropdownMenuTrigger>
+          </TooltipTrigger>
+          <TooltipContent>Sprache wählen</TooltipContent>
+        </Tooltip>
+      ) : (
+        <DropdownMenuTrigger asChild>
           <Button variant="outline" className="gap-2">
             <span>{currentLanguage.flag}</span>
             <span>{currentLanguage.label}</span>
           </Button>
-        )}
-      </DropdownMenuTrigger>
+        </DropdownMenuTrigger>
+      )}
       <DropdownMenuContent align="end">
         {languages.map((lang) => (
           <DropdownMenuItem
