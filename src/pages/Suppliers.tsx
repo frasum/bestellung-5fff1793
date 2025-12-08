@@ -284,6 +284,7 @@ const Suppliers = () => {
     }
   }, [user, authLoading, navigate]);
 
+
   // Supplier submit handler
   const handleSupplierSubmit = async (input: SupplierInput) => {
     if (editingSupplier) {
@@ -375,6 +376,16 @@ const Suppliers = () => {
     
     return groups.sort((a, b) => a.supplier.name.localeCompare(b.supplier.name, 'de'));
   }, [sortedArticles]);
+
+  // Auto-expand suppliers when article search query is active
+  useEffect(() => {
+    if (articleSearchQuery.trim() !== '') {
+      const supplierIds = groupedBySupplier.map(group => group.supplier.id);
+      setOpenArticleSuppliers(new Set(supplierIds));
+    } else {
+      setOpenArticleSuppliers(new Set());
+    }
+  }, [articleSearchQuery, groupedBySupplier]);
 
   const articleCategoriesForFilter = (allArticles?.map((a) => a.category).filter(Boolean) || []) as string[];
 
