@@ -62,44 +62,55 @@ const Settings = () => {
         </div>
 
         <Tabs defaultValue="profile" className="space-y-6">
-          <TabsList className="flex-wrap">
-            <TabsTrigger value="profile" className="gap-2">
-              <User className="h-4 w-4" />
-              {t('settings.profile')}
-            </TabsTrigger>
-            <TabsTrigger value="organization" className="gap-2">
-              <Building2 className="h-4 w-4" />
-              {t('settings.organization')}
-            </TabsTrigger>
-            <TabsTrigger value="team" className="gap-2">
-              <Users className="h-4 w-4" />
-              {t('settings.team')}
-            </TabsTrigger>
-            <TabsTrigger value="addresses" className="gap-2">
-              <MapPin className="h-4 w-4" />
-              {t('settings.addresses')}
-            </TabsTrigger>
-            <TabsTrigger value="notifications" className="gap-2">
-              <Bell className="h-4 w-4" />
-              {t('settings.notifications')}
-            </TabsTrigger>
-            <TabsTrigger value="email-templates" className="gap-2">
-              <FileText className="h-4 w-4" />
-              {t('settings.emailTemplates')}
-            </TabsTrigger>
-            <TabsTrigger value="units" className="gap-2">
-              <Ruler className="h-4 w-4" />
-              Einheiten
-            </TabsTrigger>
-            <TabsTrigger value="locations" className="gap-2">
-              <Store className="h-4 w-4" />
-              Standorte
-            </TabsTrigger>
-            <TabsTrigger value="categories" className="gap-2">
-              <Tag className="h-4 w-4" />
-              Kategorien
-            </TabsTrigger>
-          </TabsList>
+          <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
+            <TabsList className="inline-flex w-max sm:w-auto sm:flex-wrap gap-1">
+              <TabsTrigger value="profile" className="gap-1.5 text-xs sm:text-sm whitespace-nowrap">
+                <User className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                <span className="hidden sm:inline">{t('settings.profile')}</span>
+                <span className="sm:hidden">Profil</span>
+              </TabsTrigger>
+              <TabsTrigger value="organization" className="gap-1.5 text-xs sm:text-sm whitespace-nowrap">
+                <Building2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                <span className="hidden sm:inline">{t('settings.organization')}</span>
+                <span className="sm:hidden">Firma</span>
+              </TabsTrigger>
+              <TabsTrigger value="team" className="gap-1.5 text-xs sm:text-sm whitespace-nowrap">
+                <Users className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                <span className="hidden sm:inline">{t('settings.team')}</span>
+                <span className="sm:hidden">Team</span>
+              </TabsTrigger>
+              <TabsTrigger value="addresses" className="gap-1.5 text-xs sm:text-sm whitespace-nowrap">
+                <MapPin className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                <span className="hidden sm:inline">{t('settings.addresses')}</span>
+                <span className="sm:hidden">Adressen</span>
+              </TabsTrigger>
+              <TabsTrigger value="notifications" className="gap-1.5 text-xs sm:text-sm whitespace-nowrap">
+                <Bell className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                <span className="hidden sm:inline">{t('settings.notifications')}</span>
+                <span className="sm:hidden">Meldungen</span>
+              </TabsTrigger>
+              <TabsTrigger value="email-templates" className="gap-1.5 text-xs sm:text-sm whitespace-nowrap">
+                <FileText className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                <span className="hidden sm:inline">{t('settings.emailTemplates')}</span>
+                <span className="sm:hidden">E-Mail</span>
+              </TabsTrigger>
+              <TabsTrigger value="units" className="gap-1.5 text-xs sm:text-sm whitespace-nowrap">
+                <Ruler className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                <span className="hidden sm:inline">Einheiten</span>
+                <span className="sm:hidden">Einh.</span>
+              </TabsTrigger>
+              <TabsTrigger value="locations" className="gap-1.5 text-xs sm:text-sm whitespace-nowrap">
+                <Store className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                <span className="hidden sm:inline">Standorte</span>
+                <span className="sm:hidden">Orte</span>
+              </TabsTrigger>
+              <TabsTrigger value="categories" className="gap-1.5 text-xs sm:text-sm whitespace-nowrap">
+                <Tag className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                <span className="hidden sm:inline">Kategorien</span>
+                <span className="sm:hidden">Kat.</span>
+              </TabsTrigger>
+            </TabsList>
+          </div>
 
           <TabsContent value="profile">
             <ProfileTab />

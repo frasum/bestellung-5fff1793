@@ -4,13 +4,13 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { LayoutDashboard, Users, Package, ShoppingCart, FileText, BarChart3, Settings, LogOut, Menu, X, ClipboardList, FlaskConical } from 'lucide-react';
+import { LayoutDashboard, Users, Package, ShoppingCart, FileText, BarChart3, Settings, LogOut, Menu, X, ClipboardList, FlaskConical, Search } from 'lucide-react';
 import { GlobalSearch } from '@/components/GlobalSearch';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import { LocationSwitcher } from '@/components/LocationSwitcher';
 import { useOrganization } from '@/hooks/useSettings';
 import { Badge } from '@/components/ui/badge';
-import { FloatingCartButton } from '@/components/FloatingCartButton';
+import { MobileBottomNav } from '@/components/layout/MobileBottomNav';
 import logoImage from '@/assets/logo.png';
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -163,11 +163,11 @@ export const DashboardLayout = ({
       {sidebarOpen && <div className="fixed inset-0 bg-background/80 z-30 lg:hidden" onClick={() => setSidebarOpen(false)} />}
 
       {/* Main Content */}
-      <main className="lg:ml-64 pt-16 lg:pt-14 min-h-screen">
-        <div className="p-6 lg:p-8">{children}</div>
+      <main className="lg:ml-64 pt-16 lg:pt-14 pb-20 lg:pb-0 min-h-screen">
+        <div className="p-4 sm:p-6 lg:p-8">{children}</div>
       </main>
 
-      {/* Floating Cart Button */}
-      <FloatingCartButton />
+      {/* Mobile Bottom Navigation */}
+      <MobileBottomNav />
     </div>;
 };
