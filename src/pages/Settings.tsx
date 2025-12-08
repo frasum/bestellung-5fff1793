@@ -15,6 +15,7 @@ import { useTheme } from 'next-themes';
 import { useSupplierPortalSettings, useUpsertSupplierPortalSettings, DEFAULT_PORTAL_SETTINGS } from '@/hooks/useSupplierPortalSettings';
 import ReactMarkdown from 'react-markdown';
 import { Textarea } from '@/components/ui/textarea';
+import { PortalPreview } from '@/components/suppliers/PortalPreview';
 import { useLocations, useCreateLocation, useUpdateLocation, useDeleteLocation, Location } from '@/hooks/useLocations';
 import {
   useOrganization,
@@ -2208,10 +2209,35 @@ const SupplierPortalTab = () => {
 
   return (
     <div className="space-y-6">
+      {/* Live Preview */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <ExternalLink className="h-5 w-5" />
+            Portal-Vorschau
+          </CardTitle>
+          <CardDescription>
+            So sieht das Portal für Lieferanten aus
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <PortalPreview
+            logoUrl={logoUrl}
+            portalTitle={portalTitle}
+            welcomeMessage={welcomeMessage}
+            cardTitle={cardTitle}
+            cardDescription={cardDescription}
+            infoText={infoText}
+            footerText={footerText}
+          />
+        </CardContent>
+      </Card>
+
+      {/* Settings Form */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <FileText className="h-5 w-5" />
             Lieferantenportal-Texte
           </CardTitle>
           <CardDescription>
