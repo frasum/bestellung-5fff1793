@@ -9,6 +9,7 @@ import { GlobalSearch } from '@/components/GlobalSearch';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import { LocationSwitcher } from '@/components/LocationSwitcher';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
+import { ThemeToggle } from '@/components/ThemeToggle';
 import { useOrganization } from '@/hooks/useSettings';
 import { Badge } from '@/components/ui/badge';
 import { MobileBottomNav } from '@/components/layout/MobileBottomNav';
@@ -127,6 +128,7 @@ export const DashboardLayout = ({
         </div>
         <div className="flex items-center gap-3">
           <LanguageSwitcher variant="icon" />
+          <ThemeToggle />
           {organization?.is_demo && demoDaysRemaining !== null && (
             <Badge 
               variant="outline" 
@@ -189,8 +191,9 @@ export const DashboardLayout = ({
                 <p className="text-sm font-medium text-foreground truncate">{user?.email}</p>
               </div>
             </div>
-            <div className="lg:hidden mb-2">
+            <div className="lg:hidden mb-2 flex items-center gap-2">
               <LanguageSwitcher variant="full" />
+              <ThemeToggle />
             </div>
             <Button variant="ghost" className="w-full justify-start" onClick={handleSignOut}>
               <LogOut className="w-4 h-4 mr-2" />

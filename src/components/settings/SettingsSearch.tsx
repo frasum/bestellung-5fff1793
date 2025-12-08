@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { 
-  Search, User, Lock, Moon, Building2, Users, Store, MapPin, 
+  Search, User, Lock, Building2, Users, Store, MapPin, 
   Bell, FileText, ExternalLink, Ruler, Tag, FlaskConical, Mail
 } from 'lucide-react';
 import { LucideIcon } from 'lucide-react';
@@ -24,7 +24,6 @@ const SETTINGS_SEARCH_ITEMS: SettingsSearchItem[] = [
   // Profil
   { id: 'profile-name', label: 'Vollständiger Name', description: 'Profilname ändern', keywords: ['name', 'profil', 'benutzer', 'user'], tab: 'profile', icon: User, path: 'Profil' },
   { id: 'profile-password', label: 'Passwort ändern', description: 'Sicherheit', keywords: ['kennwort', 'sicherheit', 'password', 'security'], tab: 'profile', icon: Lock, path: 'Profil' },
-  { id: 'profile-theme', label: 'Design-Modus', description: 'Hell / Dunkel', keywords: ['dark mode', 'hell', 'dunkel', 'theme', 'light'], tab: 'profile', icon: Moon, path: 'Profil' },
   
   // Organisation > Allgemein
   { id: 'org-name', label: 'Organisationsname', description: 'Firmenname', keywords: ['firma', 'unternehmen', 'company', 'name'], tab: 'organization', subTab: 'general', icon: Building2, path: 'Organisation › Allgemein' },
