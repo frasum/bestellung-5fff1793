@@ -370,6 +370,7 @@ export type Database = {
           storage_1: number
           storage_2: number
           total: number | null
+          unit_price: number | null
           updated_at: string
         }
         Insert: {
@@ -380,6 +381,7 @@ export type Database = {
           storage_1?: number
           storage_2?: number
           total?: number | null
+          unit_price?: number | null
           updated_at?: string
         }
         Update: {
@@ -390,6 +392,7 @@ export type Database = {
           storage_1?: number
           storage_2?: number
           total?: number | null
+          unit_price?: number | null
           updated_at?: string
         }
         Relationships: [

@@ -21,6 +21,7 @@ export interface InventoryItem {
   storage_1: number;
   storage_2: number;
   total: number;
+  unit_price?: number;
   created_at: string;
   updated_at: string;
   article?: {
@@ -84,6 +85,7 @@ export const useInventoryItems = (sessionId: string | null) => {
             unit,
             sku,
             supplier_id,
+            price,
             supplier:suppliers(id, name)
           )
         `)
@@ -187,16 +189,18 @@ export const useUpsertInventoryItem = () => {
       article_id,
       storage_1,
       storage_2,
+      unit_price,
     }: {
       session_id: string;
       article_id: string;
       storage_1: number;
       storage_2: number;
+      unit_price?: number;
     }) => {
       const { data, error } = await supabase
         .from('inventory_items')
         .upsert(
-          { session_id, article_id, storage_1, storage_2 },
+          { session_id, article_id, storage_1, storage_2, unit_price },
           { onConflict: 'session_id,article_id' }
         )
         .select()
@@ -220,7 +224,7 @@ export const useBulkUpsertInventoryItems = () => {
       items,
     }: {
       session_id: string;
-      items: { article_id: string; storage_1: number; storage_2: number }[];
+      items: { article_id: string; storage_1: number; storage_2: number; unit_price?: number }[];
     }) => {
       const itemsWithSession = items.map((item) => ({
         ...item,
