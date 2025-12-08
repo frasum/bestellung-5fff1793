@@ -220,7 +220,18 @@
     "sendOrders": "Bestellungen senden",
     "orderSummary": "Bestellübersicht",
     "emailPreview": "E-Mail-Vorschau",
-    "confirmSend": "Bestellungen bestätigen und senden"
+    "confirmSend": "Bestellungen bestätigen und senden",
+    "deliveryDate": "Lieferdatum",
+    "selectDate": "Datum wählen",
+    "timeWindow": "Zeitfenster",
+    "selectTimeWindow": "Zeitfenster wählen",
+    "ordersEmailed": "Bestellungen werden sofort per E-Mail an die Lieferanten gesendet",
+    "ordersSuccessful": "{{count}} Bestellung(en) erfolgreich aufgegeben!",
+    "loadPreviewError": "Fehler beim Laden der Vorschau",
+    "selectAddressError": "Bitte wählen Sie eine Lieferadresse",
+    "createOrderError": "Fehler beim Erstellen der Bestellungen",
+    "defaultBadge": "Standard",
+    "flexible": "Flexibel"
   },
   "reports": {
     "title": "Berichte",

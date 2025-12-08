@@ -220,7 +220,18 @@
     "sendOrders": "ส่งคำสั่งซื้อ",
     "orderSummary": "สรุปคำสั่งซื้อ",
     "emailPreview": "ตัวอย่างอีเมล",
-    "confirmSend": "ยืนยันและส่งคำสั่งซื้อ"
+    "confirmSend": "ยืนยันและส่งคำสั่งซื้อ",
+    "deliveryDate": "วันที่จัดส่ง",
+    "selectDate": "เลือกวันที่",
+    "timeWindow": "ช่วงเวลา",
+    "selectTimeWindow": "เลือกช่วงเวลา",
+    "ordersEmailed": "คำสั่งซื้อจะถูกส่งทางอีเมลถึงผู้จัดจำหน่ายทันที",
+    "ordersSuccessful": "สั่งซื้อ {{count}} รายการเรียบร้อยแล้ว!",
+    "loadPreviewError": "เกิดข้อผิดพลาดในการโหลดตัวอย่าง",
+    "selectAddressError": "กรุณาเลือกที่อยู่จัดส่ง",
+    "createOrderError": "เกิดข้อผิดพลาดในการสร้างคำสั่งซื้อ",
+    "defaultBadge": "ค่าเริ่มต้น",
+    "flexible": "ยืดหยุ่น"
   },
   "reports": {
     "title": "รายงาน",
