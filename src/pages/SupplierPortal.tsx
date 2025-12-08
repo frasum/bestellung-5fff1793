@@ -11,7 +11,12 @@ import { toast } from 'sonner';
 import { LogOut, Save, Search, Package, Loader2, Clock } from 'lucide-react';
 import logo from '@/assets/logo.png';
 import { SupplierArticleCard } from '@/components/suppliers/SupplierArticleCard';
+import { SupplierUnitSelect } from '@/components/suppliers/SupplierUnitSelect';
 
+interface Unit {
+  id: string;
+  name: string;
+}
 interface SupplierSession {
   supplierId: string;
   supplierName: string;
@@ -61,6 +66,7 @@ const SupplierPortal = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [editedArticles, setEditedArticles] = useState<Record<string, Partial<Article>>>({});
   const [priceInputs, setPriceInputs] = useState<Record<string, string>>({});
+  const [units, setUnits] = useState<Unit[]>([]);
   const [portalSettings, setPortalSettings] = useState<PortalSettings>({
     portal_title: 'Lieferantenportal',
     welcome_message: null,
@@ -112,6 +118,20 @@ const SupplierPortal = () => {
 
         if (!settingsError && settingsData?.settings) {
           setPortalSettings(settingsData.settings);
+        }
+
+        // Fetch units
+        const { data: unitsData, error: unitsError } = await supabase.functions.invoke('supplier-portal-articles', {
+          body: {
+            action: 'get-units',
+            supplierId: session.supplierId,
+            organizationId: session.organizationId,
+            sessionToken: session.sessionToken,
+          },
+        });
+
+        if (!unitsError && unitsData?.units) {
+          setUnits(unitsData.units);
         }
 
         // Fetch articles
@@ -235,6 +255,36 @@ const SupplierPortal = () => {
 
   const hasPendingChange = (articleId: string, fieldName: string) => {
     return !!getPendingChangeForField(articleId, fieldName);
+  };
+
+  const handleCreateUnit = async (unitName: string) => {
+    if (!session) return;
+    
+    const { data, error } = await supabase.functions.invoke('supplier-portal-articles', {
+      body: {
+        action: 'create-unit',
+        supplierId: session.supplierId,
+        organizationId: session.organizationId,
+        sessionToken: session.sessionToken,
+        unitName,
+      },
+    });
+
+    if (error) {
+      toast.error('Fehler beim Erstellen der Einheit');
+      throw error;
+    }
+
+    if (data?.unit) {
+      setUnits(prev => {
+        // Check if unit already exists
+        if (prev.some(u => u.id === data.unit.id)) {
+          return prev;
+        }
+        return [...prev, data.unit].sort((a, b) => a.name.localeCompare(b.name, 'de'));
+      });
+      toast.success(`Einheit "${unitName}" hinzugefügt`);
+    }
   };
 
   const filteredArticles = articles.filter(a =>
@@ -417,21 +467,14 @@ const SupplierPortal = () => {
                               </div>
                             </TableCell>
                             <TableCell>
-                              <div className="space-y-1">
-                                <Input
-                                  value={getDisplayValue(article, 'unit') as string}
-                                  onChange={(e) => handleFieldChange(article.id, 'unit', e.target.value)}
-                                  className={`h-8 ${hasPendingChange(article.id, 'unit') ? 'border-amber-500' : ''}`}
-                                />
-                                {getPendingChangeForField(article.id, 'unit') && (
-                                  <div className="text-xs">
-                                    <span className="text-amber-600">Ausstehend</span>
-                                    <span className="text-muted-foreground ml-1">
-                                      (vorher: {getPendingChangeForField(article.id, 'unit')?.old_value || '-'})
-                                    </span>
-                                  </div>
-                                )}
-                              </div>
+                              <SupplierUnitSelect
+                                value={getDisplayValue(article, 'unit') as string}
+                                units={units}
+                                onChange={(value) => handleFieldChange(article.id, 'unit', value)}
+                                onCreateUnit={handleCreateUnit}
+                                hasPending={hasPendingChange(article.id, 'unit')}
+                                pendingInfo={getPendingChangeForField(article.id, 'unit')}
+                              />
                             </TableCell>
                             <TableCell>
                               <div className="space-y-1">
@@ -497,11 +540,13 @@ const SupplierPortal = () => {
                       priceInputs={priceInputs}
                       pendingChanges={pendingChanges}
                       saving={saving}
+                      units={units}
                       onFieldChange={handleFieldChange}
                       onPriceChange={(articleId, value) => {
                         setPriceInputs(prev => ({ ...prev, [articleId]: value }));
                       }}
                       onSave={handleSave}
+                      onCreateUnit={handleCreateUnit}
                     />
                   ))}
                 </div>

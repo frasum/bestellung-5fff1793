@@ -7,12 +7,13 @@ const corsHeaders = {
 };
 
 interface ArticleUpdateRequest {
-  action: 'list' | 'update' | 'get-settings';
+  action: 'list' | 'update' | 'get-settings' | 'get-units' | 'create-unit';
   supplierId: string;
   organizationId: string;
   sessionToken: string; // Required session token for authentication
   articleId?: string;
   changes?: Record<string, any>;
+  unitName?: string; // For create-unit action
 }
 
 serve(async (req) => {
@@ -125,6 +126,74 @@ serve(async (req) => {
       console.log('Returning portal settings for organization:', organizationId);
 
       return new Response(JSON.stringify({ settings: portalSettings }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Handle get-units action - fetch organization units
+    if (action === 'get-units') {
+      const { data: units, error: unitsError } = await supabase
+        .from('units')
+        .select('id, name')
+        .eq('organization_id', organizationId)
+        .order('name');
+
+      if (unitsError) {
+        console.error('Error fetching units:', unitsError);
+        throw unitsError;
+      }
+
+      console.log(`Found ${units?.length || 0} units for organization ${organizationId}`);
+
+      return new Response(JSON.stringify({ units: units || [] }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Handle create-unit action - create a new unit
+    if (action === 'create-unit') {
+      const { unitName } = body;
+      
+      if (!unitName || !unitName.trim()) {
+        return new Response(
+          JSON.stringify({ error: 'Missing unitName' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Check if unit already exists
+      const { data: existingUnit } = await supabase
+        .from('units')
+        .select('id, name')
+        .eq('organization_id', organizationId)
+        .ilike('name', unitName.trim())
+        .maybeSingle();
+
+      if (existingUnit) {
+        console.log(`Unit "${unitName}" already exists`);
+        return new Response(JSON.stringify({ unit: existingUnit }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      // Create new unit
+      const { data: newUnit, error: createError } = await supabase
+        .from('units')
+        .insert({ 
+          name: unitName.trim(), 
+          organization_id: organizationId 
+        })
+        .select('id, name')
+        .single();
+
+      if (createError) {
+        console.error('Error creating unit:', createError);
+        throw createError;
+      }
+
+      console.log(`Created new unit: ${newUnit.name}`);
+
+      return new Response(JSON.stringify({ unit: newUnit }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
