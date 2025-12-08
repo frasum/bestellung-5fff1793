@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { LogOut, Save, Search, Package, Loader2, Clock, Plus, FileDown, AlertCircle, AlertTriangle } from 'lucide-react';
+import { LogOut, Save, Search, Package, Loader2, Clock, Plus, FileDown, AlertCircle, AlertTriangle, SendHorizontal } from 'lucide-react';
 import logo from '@/assets/logo.png';
 import { SupplierArticleCard } from '@/components/suppliers/SupplierArticleCard';
 import { SupplierUnitSelect } from '@/components/suppliers/SupplierUnitSelect';
@@ -81,6 +81,7 @@ const SupplierPortal = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState<string | null>(null);
   const [savingDraft, setSavingDraft] = useState(false);
+  const [savingAll, setSavingAll] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [editedArticles, setEditedArticles] = useState<Record<string, Partial<Article>>>({});
   const [priceInputs, setPriceInputs] = useState<Record<string, string>>({});
@@ -371,6 +372,99 @@ const SupplierPortal = () => {
            Object.keys(annualOrderValueInputs).length > 0;
   };
 
+  const getChangedArticleCount = () => {
+    const changedIds = new Set([
+      ...Object.keys(editedArticles),
+      ...Object.keys(priceInputs),
+      ...Object.keys(annualOrderValueInputs),
+    ]);
+    return changedIds.size;
+  };
+
+  const handleSaveAll = async () => {
+    if (!session || !hasAnyChanges()) return;
+
+    setSavingAll(true);
+    try {
+      // Collect all article IDs with changes
+      const changedIds = new Set([
+        ...Object.keys(editedArticles),
+        ...Object.keys(priceInputs),
+        ...Object.keys(annualOrderValueInputs),
+      ]);
+
+      // Build the changes array for each article
+      const articleChanges: Array<{ articleId: string; changes: Record<string, any> }> = [];
+      
+      for (const articleId of changedIds) {
+        const changes: Record<string, any> = { ...editedArticles[articleId] };
+        
+        // Parse price from input string if it was edited
+        if (priceInputs[articleId] !== undefined) {
+          const priceValue = priceInputs[articleId].replace(',', '.');
+          const parsed = parseFloat(priceValue);
+          if (!isNaN(parsed)) {
+            changes.price = parsed;
+          }
+        }
+
+        // Parse annual_order_value from input string if it was edited
+        if (annualOrderValueInputs[articleId] !== undefined) {
+          const aoValue = annualOrderValueInputs[articleId].replace(',', '.');
+          const parsed = parseFloat(aoValue);
+          if (!isNaN(parsed)) {
+            changes.annual_order_value = parsed;
+          } else if (annualOrderValueInputs[articleId] === '') {
+            changes.annual_order_value = null;
+          }
+        }
+
+        if (Object.keys(changes).length > 0) {
+          articleChanges.push({ articleId, changes });
+        }
+      }
+
+      if (articleChanges.length === 0) {
+        toast.info('Keine Änderungen zum Einreichen');
+        return;
+      }
+
+      const { data, error } = await supabase.functions.invoke('supplier-portal-articles', {
+        body: {
+          action: 'update-all',
+          supplierId: session.supplierId,
+          organizationId: session.organizationId,
+          sessionToken: session.sessionToken,
+          articleChanges,
+        },
+      });
+
+      if (error) throw error;
+
+      if (data?.pendingChanges) {
+        setPendingChanges(prev => [...prev, ...data.pendingChanges]);
+      }
+
+      // Clear all edited states
+      setEditedArticles({});
+      setPriceInputs({});
+      setAnnualOrderValueInputs({});
+
+      // Delete draft after successful submission
+      if (hasDraft) {
+        await handleDeleteDraft();
+      }
+
+      const changeCount = data?.pendingChanges?.length || articleChanges.length;
+      toast.success(`${changeCount} Änderung${changeCount > 1 ? 'en' : ''} zur Genehmigung eingereicht`);
+    } catch (error: any) {
+      console.error('Error saving all articles:', error);
+      toast.error('Fehler beim Einreichen der Änderungen');
+    } finally {
+      setSavingAll(false);
+    }
+  };
+
   const getPendingChangesForArticle = (articleId: string) => {
     return pendingChanges.filter(c => c.article_id === articleId && c.status === 'pending');
   };
@@ -616,7 +710,7 @@ const SupplierPortal = () => {
                 <Button 
                   variant="outline" 
                   onClick={handleSaveDraft} 
-                  disabled={!hasAnyChanges() || savingDraft}
+                  disabled={!hasAnyChanges() || savingDraft || savingAll}
                 >
                   {savingDraft ? (
                     <Loader2 className="h-4 w-4 animate-spin mr-2" />
@@ -625,7 +719,19 @@ const SupplierPortal = () => {
                   )}
                   Entwurf speichern
                 </Button>
-                <Button onClick={() => setSuggestDialogOpen(true)} className="shrink-0">
+                <Button 
+                  onClick={handleSaveAll} 
+                  disabled={!hasAnyChanges() || savingAll || savingDraft}
+                  className="bg-primary"
+                >
+                  {savingAll ? (
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  ) : (
+                    <SendHorizontal className="h-4 w-4 mr-2" />
+                  )}
+                  Alle einreichen {hasAnyChanges() && `(${getChangedArticleCount()})`}
+                </Button>
+                <Button onClick={() => setSuggestDialogOpen(true)} className="shrink-0" variant="outline">
                   <Plus className="h-4 w-4 mr-2" />
                   Neuen Artikel vorschlagen
                 </Button>
