@@ -70,8 +70,8 @@ serve(async (req: Request): Promise<Response> => {
       throw new Error(`Failed to create token: ${tokenError.message}`);
     }
 
-    // Build the magic link URL - use preview URL for testing
-    const appUrl = Deno.env.get("APP_URL") || "https://113bb70f-2619-492d-82eb-ef1843c240c4.lovableproject.com";
+    // Build the magic link URL
+    const appUrl = Deno.env.get("APP_URL") || "https://bestellung.pro";
     const magicLink = `${appUrl}/supplier-auth?token=${tokenData.token}`;
 
     console.log(`Magic link created: ${magicLink}`);
