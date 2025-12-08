@@ -78,7 +78,9 @@ import {
   Pencil,
   Filter,
   ChevronDown,
+  ChevronRight,
 } from 'lucide-react';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { generateInventoryListPdf, exportInventoryToExcel } from '@/lib/inventoryListPdf';
@@ -118,6 +120,9 @@ const Inventory = () => {
   const [editingUnitId, setEditingUnitId] = useState<string | null>(null);
   const [editingUnitValue, setEditingUnitValue] = useState<string>('');
   const [newUnitName, setNewUnitName] = useState('');
+  
+  // Collapsible state for prices tab
+  const [openPriceSuppliers, setOpenPriceSuppliers] = useState<Set<string>>(new Set());
 
   const { data: articles, isLoading: articlesLoading } = useArticles();
   const { data: suppliers } = useSuppliers();
@@ -213,6 +218,48 @@ const Inventory = () => {
 
     return filtered.sort((a, b) => a.name.localeCompare(b.name));
   }, [articles, supplierFilter, categoryFilter, searchQuery]);
+
+  // Group filtered articles by supplier for prices tab
+  const groupedArticlesBySupplier = useMemo(() => {
+    if (!filteredArticles) return [];
+    
+    const grouped = new Map<string, { supplier: { id: string; name: string }; articles: typeof filteredArticles }>();
+    
+    filteredArticles.forEach((article) => {
+      if (!article.supplier_id || !article.suppliers) return;
+      
+      if (!grouped.has(article.supplier_id)) {
+        grouped.set(article.supplier_id, {
+          supplier: { id: article.supplier_id, name: article.suppliers.name },
+          articles: [],
+        });
+      }
+      grouped.get(article.supplier_id)!.articles.push(article);
+    });
+    
+    return Array.from(grouped.values()).sort((a, b) => 
+      a.supplier.name.localeCompare(b.supplier.name, 'de')
+    );
+  }, [filteredArticles]);
+
+  // Auto-expand suppliers when searching
+  useEffect(() => {
+    if (searchQuery && groupedArticlesBySupplier.length > 0) {
+      setOpenPriceSuppliers(new Set(groupedArticlesBySupplier.map(g => g.supplier.id)));
+    }
+  }, [searchQuery, groupedArticlesBySupplier]);
+
+  const togglePriceSupplier = (supplierId: string) => {
+    setOpenPriceSuppliers((prev) => {
+      const next = new Set(prev);
+      if (next.has(supplierId)) {
+        next.delete(supplierId);
+      } else {
+        next.add(supplierId);
+      }
+      return next;
+    });
+  };
 
   const handleCreateSession = async () => {
     if (!newSessionName.trim()) return;
@@ -826,278 +873,307 @@ const Inventory = () => {
           </TabsContent>
 
           {/* Prices Tab Content */}
-          <TabsContent value="prices" className="mt-4">
-            <Card>
-              <CardContent className="p-0">
-                {articlesLoading ? (
-                  <div className="py-8">
-                    <Skeleton className="h-64 w-full" />
-                  </div>
-                ) : (
-                  <>
-                    {/* Mobile: Card-based layout */}
-                    <div className="divide-y divide-border sm:hidden">
-                      {filteredArticles.map((article) => (
-                        <div key={article.id} className="p-4">
-                          <div className="flex justify-between items-start">
-                            <div className="min-w-0 flex-1">
-                              <p className="font-medium text-foreground text-sm">{article.name}</p>
-                              {article.sku && (
-                                <p className="text-xs text-muted-foreground">{article.sku}</p>
-                              )}
-                              <p className="text-xs text-muted-foreground mt-0.5">
-                                {article.suppliers?.name} • {article.unit}
-                              </p>
-                              {article.category && (
-                                <Badge variant="secondary" className="mt-1 text-xs">
-                                  {article.category}
-                                </Badge>
-                              )}
-                            </div>
-                            <div className="flex-shrink-0 ml-3">
-                              {editingPriceId === article.id ? (
-                                <div className="flex items-center gap-1">
-                                  <Input
-                                    type="number"
-                                    inputMode="decimal"
-                                    min="0"
-                                    step="0.01"
-                                    value={editingPriceValue}
-                                    onChange={(e) => setEditingPriceValue(e.target.value)}
-                                    onFocus={(e) => e.target.select()}
-                                    onKeyDown={(e) => {
-                                      if (e.key === 'Enter') handleSavePriceEdit(article.id);
-                                      if (e.key === 'Escape') handleCancelPriceEdit();
-                                    }}
-                                    className="w-20 h-10 text-right text-base [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                                    autoFocus
-                                  />
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-10 w-10"
-                                    onClick={() => handleSavePriceEdit(article.id)}
-                                    disabled={updateArticle.isPending}
-                                  >
-                                    <Check className="w-5 h-5 text-green-600" />
-                                  </Button>
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-10 w-10"
-                                    onClick={handleCancelPriceEdit}
-                                  >
-                                    <X className="w-5 h-5 text-destructive" />
-                                  </Button>
-                                </div>
-                              ) : (
-                                <button
-                                  onClick={() => handleStartPriceEdit(article.id, article.price)}
-                                  className="font-semibold text-lg hover:text-primary cursor-pointer transition-colors px-3 py-2 rounded-lg hover:bg-muted min-w-[80px] text-right"
-                                >
-                                  €{article.price.toFixed(2)}
-                                </button>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-
-                    {/* Desktop: Table layout */}
-                    <div className="hidden sm:block overflow-x-auto">
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead className="w-12">Nr.</TableHead>
-                            <TableHead>Artikel</TableHead>
-                            <TableHead>Kategorie</TableHead>
-                            <TableHead>Lieferant</TableHead>
-                            <TableHead className="w-24">Einheit</TableHead>
-                            <TableHead className="w-36 text-right">Preis (€)</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {filteredArticles.map((article, index) => (
-                            <TableRow key={article.id}>
-                              <TableCell className="text-muted-foreground">
-                                {index + 1}
-                              </TableCell>
-                              <TableCell>
+          <TabsContent value="prices" className="mt-4 space-y-2">
+            {articlesLoading ? (
+              <Card>
+                <CardContent className="py-8">
+                  <Skeleton className="h-64 w-full" />
+                </CardContent>
+              </Card>
+            ) : groupedArticlesBySupplier.length === 0 ? (
+              <Card>
+                <CardContent className="py-12 text-center text-muted-foreground">
+                  Keine Artikel gefunden
+                </CardContent>
+              </Card>
+            ) : (
+              <>
+                {groupedArticlesBySupplier.map((group) => {
+                  const isOpen = openPriceSuppliers.has(group.supplier.id);
+                  return (
+                    <Collapsible
+                      key={group.supplier.id}
+                      open={isOpen}
+                      onOpenChange={() => togglePriceSupplier(group.supplier.id)}
+                    >
+                      <Card>
+                        <CollapsibleTrigger asChild>
+                          <CardHeader className="py-3 px-4 cursor-pointer hover:bg-muted/50 transition-colors">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-3">
+                                {isOpen ? (
+                                  <ChevronDown className="w-5 h-5 text-muted-foreground" />
+                                ) : (
+                                  <ChevronRight className="w-5 h-5 text-muted-foreground" />
+                                )}
                                 <div>
-                                  <span className="font-medium">{article.name}</span>
-                                  {article.sku && (
-                                    <span className="block text-xs text-muted-foreground">
-                                      {article.sku}
-                                    </span>
-                                  )}
+                                  <CardTitle className="text-base font-medium">
+                                    {group.supplier.name}
+                                  </CardTitle>
+                                  <p className="text-sm text-muted-foreground">
+                                    {group.articles.length} Artikel
+                                  </p>
                                 </div>
-                              </TableCell>
-                              <TableCell className="text-muted-foreground">
-                                {article.category || '-'}
-                              </TableCell>
-                              <TableCell className="text-muted-foreground">
-                                {article.suppliers?.name}
-                              </TableCell>
-                              <TableCell>
-                                <Popover 
-                                  open={editingUnitId === article.id}
-                                  onOpenChange={(open) => {
-                                    if (open) {
-                                      handleStartUnitEdit(article.id, article.unit);
-                                    } else {
-                                      handleCancelUnitEdit();
-                                      setNewUnitName('');
-                                    }
-                                  }}
-                                >
-                                  <PopoverTrigger asChild>
-                                    <span
-                                      className="cursor-pointer hover:text-primary hover:underline"
-                                    >
-                                      {article.unit}
-                                    </span>
-                                  </PopoverTrigger>
-                                  <PopoverContent className="w-56 p-0" align="start">
-                                    <div className="p-2 border-b">
-                                      <div className="flex gap-1">
-                                        <Input
-                                          placeholder="Suchen oder hinzufügen..."
-                                          value={newUnitName}
-                                          onChange={(e) => setNewUnitName(e.target.value)}
-                                          onKeyDown={(e) => {
-                                            if (e.key === 'Enter' && newUnitName.trim()) {
-                                              const exactMatch = commonUnits.find(u => u.toLowerCase() === newUnitName.trim().toLowerCase());
-                                              if (exactMatch) {
-                                                handleSaveUnitEdit(article.id, exactMatch);
-                                                setNewUnitName('');
-                                              } else {
-                                                createUnit.mutate(newUnitName.trim(), {
-                                                  onSuccess: () => {
-                                                    handleSaveUnitEdit(article.id, newUnitName.trim());
-                                                    setNewUnitName('');
-                                                  }
-                                                });
-                                              }
+                              </div>
+                            </div>
+                          </CardHeader>
+                        </CollapsibleTrigger>
+                        <CollapsibleContent>
+                          <CardContent className="p-0 pt-0">
+                            {/* Mobile: Card-based layout */}
+                            <div className="divide-y divide-border sm:hidden">
+                              {group.articles.map((article) => (
+                                <div key={article.id} className="p-4">
+                                  <div className="flex justify-between items-start">
+                                    <div className="min-w-0 flex-1">
+                                      <p className="font-medium text-foreground text-sm">{article.name}</p>
+                                      {article.sku && (
+                                        <p className="text-xs text-muted-foreground">{article.sku}</p>
+                                      )}
+                                      <p className="text-xs text-muted-foreground mt-0.5">
+                                        {article.unit}
+                                      </p>
+                                      {article.category && (
+                                        <Badge variant="secondary" className="mt-1 text-xs">
+                                          {article.category}
+                                        </Badge>
+                                      )}
+                                    </div>
+                                    <div className="flex-shrink-0 ml-3">
+                                      {editingPriceId === article.id ? (
+                                        <div className="flex items-center gap-1">
+                                          <Input
+                                            type="number"
+                                            inputMode="decimal"
+                                            min="0"
+                                            step="0.01"
+                                            value={editingPriceValue}
+                                            onChange={(e) => setEditingPriceValue(e.target.value)}
+                                            onFocus={(e) => e.target.select()}
+                                            onKeyDown={(e) => {
+                                              if (e.key === 'Enter') handleSavePriceEdit(article.id);
+                                              if (e.key === 'Escape') handleCancelPriceEdit();
+                                            }}
+                                            className="w-20 h-10 text-right text-base [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                            autoFocus
+                                          />
+                                          <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="h-10 w-10"
+                                            onClick={() => handleSavePriceEdit(article.id)}
+                                            disabled={updateArticle.isPending}
+                                          >
+                                            <Check className="w-5 h-5 text-green-600" />
+                                          </Button>
+                                          <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="h-10 w-10"
+                                            onClick={handleCancelPriceEdit}
+                                          >
+                                            <X className="w-5 h-5 text-destructive" />
+                                          </Button>
+                                        </div>
+                                      ) : (
+                                        <button
+                                          onClick={() => handleStartPriceEdit(article.id, article.price)}
+                                          className="font-semibold text-lg hover:text-primary cursor-pointer transition-colors px-3 py-2 rounded-lg hover:bg-muted min-w-[80px] text-right"
+                                        >
+                                          €{article.price.toFixed(2)}
+                                        </button>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+
+                            {/* Desktop: Table layout */}
+                            <div className="hidden sm:block overflow-x-auto">
+                              <Table>
+                                <TableHeader>
+                                  <TableRow>
+                                    <TableHead>Artikel</TableHead>
+                                    <TableHead>Kategorie</TableHead>
+                                    <TableHead className="w-24">Einheit</TableHead>
+                                    <TableHead className="w-36 text-right">Preis (€)</TableHead>
+                                  </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                  {group.articles.map((article) => (
+                                    <TableRow key={article.id}>
+                                      <TableCell>
+                                        <div>
+                                          <span className="font-medium">{article.name}</span>
+                                          {article.sku && (
+                                            <span className="block text-xs text-muted-foreground">
+                                              {article.sku}
+                                            </span>
+                                          )}
+                                        </div>
+                                      </TableCell>
+                                      <TableCell className="text-muted-foreground">
+                                        {article.category || '-'}
+                                      </TableCell>
+                                      <TableCell>
+                                        <Popover 
+                                          open={editingUnitId === article.id}
+                                          onOpenChange={(open) => {
+                                            if (open) {
+                                              handleStartUnitEdit(article.id, article.unit);
+                                            } else {
+                                              handleCancelUnitEdit();
+                                              setNewUnitName('');
                                             }
                                           }}
-                                          className="h-8 text-sm"
-                                        />
-                                        {newUnitName.trim() && !commonUnits.some(u => u.toLowerCase() === newUnitName.trim().toLowerCase()) && (
-                                          <Button
-                                            size="icon"
-                                            variant="ghost"
-                                            className="h-8 w-8 shrink-0"
-                                            disabled={createUnit.isPending}
-                                            onClick={() => {
-                                              createUnit.mutate(newUnitName.trim(), {
-                                                onSuccess: () => {
-                                                  handleSaveUnitEdit(article.id, newUnitName.trim());
-                                                  setNewUnitName('');
-                                                }
-                                              });
-                                            }}
-                                          >
-                                            <Plus className="w-4 h-4" />
-                                          </Button>
-                                        )}
-                                      </div>
-                                    </div>
-                                    <div className="max-h-48 overflow-y-auto p-1">
-                                      {commonUnits
-                                        .filter(unit => !newUnitName.trim() || unit.toLowerCase().includes(newUnitName.toLowerCase()))
-                                        .map((unit) => {
-                                          const dbUnit = units?.find(u => u.name === unit);
-                                          return (
-                                            <div
-                                              key={unit}
-                                              className="flex items-center justify-between px-2 py-1.5 rounded hover:bg-muted cursor-pointer group"
-                                              onClick={() => {
-                                                handleSaveUnitEdit(article.id, unit);
-                                                setNewUnitName('');
-                                              }}
+                                        >
+                                          <PopoverTrigger asChild>
+                                            <span
+                                              className="cursor-pointer hover:text-primary hover:underline"
                                             >
-                                              <span className={`text-sm ${article.unit === unit ? 'font-medium text-primary' : ''}`}>
-                                                {unit}
-                                              </span>
-                                              {dbUnit && (
-                                                <Button
-                                                  size="icon"
-                                                  variant="ghost"
-                                                  className="h-6 w-6 opacity-0 group-hover:opacity-100 text-destructive hover:text-destructive"
-                                                  onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    deleteUnit.mutate(dbUnit.id);
+                                              {article.unit}
+                                            </span>
+                                          </PopoverTrigger>
+                                          <PopoverContent className="w-56 p-0 bg-background z-50" align="start">
+                                            <div className="p-2 border-b">
+                                              <div className="flex gap-1">
+                                                <Input
+                                                  placeholder="Suchen oder hinzufügen..."
+                                                  value={newUnitName}
+                                                  onChange={(e) => setNewUnitName(e.target.value)}
+                                                  onKeyDown={(e) => {
+                                                    if (e.key === 'Enter' && newUnitName.trim()) {
+                                                      const exactMatch = commonUnits.find(u => u.toLowerCase() === newUnitName.trim().toLowerCase());
+                                                      if (exactMatch) {
+                                                        handleSaveUnitEdit(article.id, exactMatch);
+                                                        setNewUnitName('');
+                                                      } else {
+                                                        createUnit.mutate(newUnitName.trim(), {
+                                                          onSuccess: () => {
+                                                            handleSaveUnitEdit(article.id, newUnitName.trim());
+                                                            setNewUnitName('');
+                                                          }
+                                                        });
+                                                      }
+                                                    }
                                                   }}
-                                                >
-                                                  <Trash2 className="w-3 h-3" />
-                                                </Button>
-                                              )}
+                                                  className="h-8 text-sm"
+                                                />
+                                                {newUnitName.trim() && !commonUnits.some(u => u.toLowerCase() === newUnitName.trim().toLowerCase()) && (
+                                                  <Button
+                                                    size="icon"
+                                                    variant="ghost"
+                                                    className="h-8 w-8 shrink-0"
+                                                    disabled={createUnit.isPending}
+                                                    onClick={() => {
+                                                      createUnit.mutate(newUnitName.trim(), {
+                                                        onSuccess: () => {
+                                                          handleSaveUnitEdit(article.id, newUnitName.trim());
+                                                          setNewUnitName('');
+                                                        }
+                                                      });
+                                                    }}
+                                                  >
+                                                    <Plus className="w-4 h-4" />
+                                                  </Button>
+                                                )}
+                                              </div>
                                             </div>
-                                          );
-                                        })}
-                                    </div>
-                                  </PopoverContent>
-                                </Popover>
-                              </TableCell>
-                              <TableCell className="text-right">
-                                {editingPriceId === article.id ? (
-                                  <div className="flex items-center justify-end gap-1">
-                                    <Input
-                                      type="number"
-                                      min="0"
-                                      step="0.01"
-                                      value={editingPriceValue}
-                                      onChange={(e) => setEditingPriceValue(e.target.value)}
-                                      onFocus={(e) => e.target.select()}
-                                      onKeyDown={(e) => {
-                                        if (e.key === 'Enter') handleSavePriceEdit(article.id);
-                                        if (e.key === 'Escape') handleCancelPriceEdit();
-                                      }}
-                                      className="w-24 text-right [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                                      autoFocus
-                                    />
-                                    <Button
-                                      variant="ghost"
-                                      size="icon"
-                                      className="h-8 w-8"
-                                      onClick={() => handleSavePriceEdit(article.id)}
-                                      disabled={updateArticle.isPending}
-                                    >
-                                      <Check className="w-4 h-4 text-green-600" />
-                                    </Button>
-                                    <Button
-                                      variant="ghost"
-                                      size="icon"
-                                      className="h-8 w-8"
-                                      onClick={handleCancelPriceEdit}
-                                    >
-                                      <X className="w-4 h-4 text-destructive" />
-                                    </Button>
-                                  </div>
-                                ) : (
-                                  <button
-                                    onClick={() => handleStartPriceEdit(article.id, article.price)}
-                                    className="font-medium hover:text-primary cursor-pointer transition-colors px-2 py-1 rounded hover:bg-muted"
-                                  >
-                                    €{article.price.toFixed(2)}
-                                  </button>
-                                )}
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </div>
-                  </>
-                )}
-                {filteredArticles.length === 0 && !articlesLoading && (
-                  <div className="py-12 text-center text-muted-foreground">
-                    Keine Artikel gefunden
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+                                            <div className="max-h-48 overflow-y-auto p-1">
+                                              {commonUnits
+                                                .filter(unit => !newUnitName.trim() || unit.toLowerCase().includes(newUnitName.toLowerCase()))
+                                                .map((unit) => {
+                                                  const dbUnit = units?.find(u => u.name === unit);
+                                                  return (
+                                                    <div
+                                                      key={unit}
+                                                      className="flex items-center justify-between px-2 py-1.5 rounded hover:bg-muted cursor-pointer group"
+                                                      onClick={() => {
+                                                        handleSaveUnitEdit(article.id, unit);
+                                                        setNewUnitName('');
+                                                      }}
+                                                    >
+                                                      <span className={`text-sm ${article.unit === unit ? 'font-medium text-primary' : ''}`}>
+                                                        {unit}
+                                                      </span>
+                                                      {dbUnit && (
+                                                        <Button
+                                                          size="icon"
+                                                          variant="ghost"
+                                                          className="h-6 w-6 opacity-0 group-hover:opacity-100 text-destructive hover:text-destructive"
+                                                          onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            deleteUnit.mutate(dbUnit.id);
+                                                          }}
+                                                        >
+                                                          <Trash2 className="w-3 h-3" />
+                                                        </Button>
+                                                      )}
+                                                    </div>
+                                                  );
+                                                })}
+                                            </div>
+                                          </PopoverContent>
+                                        </Popover>
+                                      </TableCell>
+                                      <TableCell className="text-right">
+                                        {editingPriceId === article.id ? (
+                                          <div className="flex items-center justify-end gap-1">
+                                            <Input
+                                              type="number"
+                                              min="0"
+                                              step="0.01"
+                                              value={editingPriceValue}
+                                              onChange={(e) => setEditingPriceValue(e.target.value)}
+                                              onFocus={(e) => e.target.select()}
+                                              onKeyDown={(e) => {
+                                                if (e.key === 'Enter') handleSavePriceEdit(article.id);
+                                                if (e.key === 'Escape') handleCancelPriceEdit();
+                                              }}
+                                              className="w-24 text-right [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                              autoFocus
+                                            />
+                                            <Button
+                                              variant="ghost"
+                                              size="icon"
+                                              className="h-8 w-8"
+                                              onClick={() => handleSavePriceEdit(article.id)}
+                                              disabled={updateArticle.isPending}
+                                            >
+                                              <Check className="w-4 h-4 text-green-600" />
+                                            </Button>
+                                            <Button
+                                              variant="ghost"
+                                              size="icon"
+                                              className="h-8 w-8"
+                                              onClick={handleCancelPriceEdit}
+                                            >
+                                              <X className="w-4 h-4 text-destructive" />
+                                            </Button>
+                                          </div>
+                                        ) : (
+                                          <button
+                                            onClick={() => handleStartPriceEdit(article.id, article.price)}
+                                            className="font-medium hover:text-primary cursor-pointer transition-colors px-2 py-1 rounded hover:bg-muted"
+                                          >
+                                            €{article.price.toFixed(2)}
+                                          </button>
+                                        )}
+                                      </TableCell>
+                                    </TableRow>
+                                  ))}
+                                </TableBody>
+                              </Table>
+                            </div>
+                          </CardContent>
+                        </CollapsibleContent>
+                      </Card>
+                    </Collapsible>
+                  );
+                })}
+              </>
+            )}
           </TabsContent>
         </Tabs>
       </div>
