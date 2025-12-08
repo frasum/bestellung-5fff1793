@@ -1,0 +1,26 @@
+import { z } from 'zod';
+
+export const supplierSchema = z.object({
+  name: z.string().min(2, 'Name muss mindestens 2 Zeichen haben'),
+  email: z.string().email('Bitte geben Sie eine gültige E-Mail-Adresse ein'),
+  phone: z.string().optional(),
+  address: z.string().optional(),
+  contact_person: z.string().optional(),
+  customer_number: z.string().optional(),
+  minimum_order_value: z.string().optional(),
+  top_category: z.string().optional(),
+  main_category: z.string().optional()
+});
+
+export const articleSchema = z.object({
+  supplier_id: z.string().min(1, 'Bitte wählen Sie einen Lieferanten'),
+  name: z.string().min(2, 'Name muss mindestens 2 Zeichen haben'),
+  description: z.string().optional(),
+  sku: z.string().optional(),
+  unit: z.string().min(1, 'Einheit ist erforderlich'),
+  price: z.string().min(1, 'Preis ist erforderlich').refine((val) => !isNaN(Number(val)) && Number(val) > 0, 'Preis muss eine positive Zahl sein'),
+  category: z.string().optional(),
+});
+
+export type SupplierFormData = z.infer<typeof supplierSchema>;
+export type ArticleFormData = z.infer<typeof articleSchema>;
