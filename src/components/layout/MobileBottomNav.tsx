@@ -18,7 +18,6 @@ import { useHasRole } from '@/hooks/useUserRole';
 import { usePendingSubmissionsCount } from '@/hooks/useEmployeeSubmissions';
 
 const mainNavItems = [
-  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/suppliers', label: 'Katalog', icon: Users },
   { href: '/cart', label: 'Warenkorb', icon: ShoppingCart, showBadge: true },
   { href: '/reports', label: 'Berichte', icon: BarChart3 },

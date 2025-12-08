@@ -8,7 +8,6 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { CartProvider } from "@/contexts/CartContext";
 import { LocationProvider } from "@/contexts/LocationContext";
 import Auth from "./pages/Auth";
-import Dashboard from "./pages/Dashboard";
 import Suppliers from "./pages/Suppliers";
 import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
@@ -36,7 +35,7 @@ const App = () => (
             <BrowserRouter>
               <Routes>
                 <Route path="/" element={<Auth />} />
-                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/dashboard" element={<Navigate to="/reports" replace />} />
                 <Route path="/suppliers" element={<Suppliers />} />
                 <Route path="/articles" element={<Navigate to="/suppliers?tab=articles" replace />} />
                 <Route path="/cart" element={<Cart />} />
