@@ -11,6 +11,7 @@ import { LocationSwitcher } from '@/components/LocationSwitcher';
 import { useOrganization } from '@/hooks/useSettings';
 import { Badge } from '@/components/ui/badge';
 import { MobileBottomNav } from '@/components/layout/MobileBottomNav';
+import { FloatingCartButton } from '@/components/FloatingCartButton';
 import logoImage from '@/assets/logo.png';
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -166,6 +167,9 @@ export const DashboardLayout = ({
       <main className="lg:ml-64 pt-16 lg:pt-14 pb-20 lg:pb-0 min-h-screen">
         <div className="p-4 sm:p-6 lg:p-8">{children}</div>
       </main>
+
+      {/* Floating Cart Button (Desktop) */}
+      <FloatingCartButton />
 
       {/* Mobile Bottom Navigation */}
       <MobileBottomNav />
