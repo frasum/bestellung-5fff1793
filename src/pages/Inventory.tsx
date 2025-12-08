@@ -81,7 +81,7 @@ import {
   ChevronRight,
 } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { format } from 'date-fns';
+import { format, Locale } from 'date-fns';
 import { de, enUS, fr, it, th, vi } from 'date-fns/locale';
 import { generateInventoryListPdf, exportInventoryToExcel } from '@/lib/inventoryListPdf';
 import { toast } from 'sonner';
