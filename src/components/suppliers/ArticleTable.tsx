@@ -23,6 +23,7 @@ interface ArticleTableProps {
   getCartQuantity: (articleId: string) => number;
   getItemsBySupplier: () => Map<string, unknown>;
   pendingChangesBySupplier?: Record<string, number>;
+  pendingArticleIds?: Set<string>;
   onToggleSupplier: (supplierId: string) => void;
   onToggleArticle: (articleId: string) => void;
   onAddToCart: (article: Article, quantity: number) => void;
@@ -30,6 +31,7 @@ interface ArticleTableProps {
   onEdit: (article: Article) => void;
   onDelete: (article: Article) => void;
   onShowChanges?: (supplierId: string) => void;
+  onArticleChangeClick?: (article: Article, supplierId: string, supplierName: string) => void;
 }
 
 export const ArticleTable = ({
@@ -40,13 +42,15 @@ export const ArticleTable = ({
   getCartQuantity,
   getItemsBySupplier,
   pendingChangesBySupplier = {},
+  pendingArticleIds = new Set(),
   onToggleSupplier,
   onToggleArticle,
   onAddToCart,
   onUpdateQuantity,
   onEdit,
   onDelete,
-  onShowChanges
+  onShowChanges,
+  onArticleChangeClick
 }: ArticleTableProps) => {
   return (
     <>
@@ -100,10 +104,12 @@ export const ArticleTable = ({
                     key={article.id}
                     article={article}
                     cartQty={getCartQuantity(article.id)}
+                    hasPendingChanges={pendingArticleIds.has(article.id)}
                     onUpdateQuantity={onUpdateQuantity}
                     onAddToCart={onAddToCart}
                     onEdit={onEdit}
                     onDelete={onDelete}
+                    onPendingClick={() => onArticleChangeClick?.(article, group.supplier.id, group.supplier.name)}
                   />
                 ))}
               </div>
@@ -195,7 +201,24 @@ export const ArticleTable = ({
                           <TableCell className="py-2">
                             <div className="flex items-center gap-3">
                               <div className="min-w-0 flex-1">
-                                <p className="font-medium text-foreground break-words line-clamp-2">{article.name}</p>
+                                <div className="flex items-center gap-2">
+                                  <p 
+                                    className={cn(
+                                      "font-medium text-foreground break-words line-clamp-2",
+                                      pendingArticleIds.has(article.id) && "cursor-pointer hover:underline"
+                                    )}
+                                    onClick={() => pendingArticleIds.has(article.id) && onArticleChangeClick?.(article, group.supplier.id, group.supplier.name)}
+                                  >
+                                    {article.name}
+                                  </p>
+                                  {pendingArticleIds.has(article.id) && (
+                                    <span 
+                                      className="w-2 h-2 rounded-full bg-orange-500 animate-pulse cursor-pointer shrink-0" 
+                                      title="Ausstehende Änderungen"
+                                      onClick={() => onArticleChangeClick?.(article, group.supplier.id, group.supplier.name)}
+                                    />
+                                  )}
+                                </div>
                                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
                                   <span className="sm:hidden truncate">{article.suppliers?.name}</span>
                                   {article.category && <span className="text-primary font-medium">{article.category}</span>}

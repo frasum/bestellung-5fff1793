@@ -7,19 +7,23 @@ import { cn } from '@/lib/utils';
 interface ArticleCardProps {
   article: Article;
   cartQty: number;
+  hasPendingChanges?: boolean;
   onUpdateQuantity: (articleId: string, quantity: number) => void;
   onAddToCart: (article: Article, quantity: number) => void;
   onEdit: (article: Article) => void;
   onDelete: (article: Article) => void;
+  onPendingClick?: () => void;
 }
 
 export const ArticleCard = ({
   article,
   cartQty,
+  hasPendingChanges = false,
   onUpdateQuantity,
   onAddToCart,
   onEdit,
-  onDelete
+  onDelete,
+  onPendingClick
 }: ArticleCardProps) => {
   return (
     <Card className={cn(
@@ -28,7 +32,24 @@ export const ArticleCard = ({
     )}>
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
-          <p className="font-medium text-foreground">{article.name}</p>
+          <div className="flex items-center gap-2">
+            <p 
+              className={cn(
+                "font-medium text-foreground",
+                hasPendingChanges && "cursor-pointer hover:underline"
+              )}
+              onClick={() => hasPendingChanges && onPendingClick?.()}
+            >
+              {article.name}
+            </p>
+            {hasPendingChanges && (
+              <span 
+                className="w-2 h-2 rounded-full bg-orange-500 animate-pulse cursor-pointer shrink-0" 
+                title="Ausstehende Änderungen"
+                onClick={onPendingClick}
+              />
+            )}
+          </div>
           <div className="flex flex-wrap items-center gap-2 mt-1 text-xs text-muted-foreground">
             {article.category && (
               <span className="text-primary font-medium">{article.category}</span>

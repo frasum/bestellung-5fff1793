@@ -16,6 +16,7 @@ interface SupplierTableProps {
   selectedSuppliers: Set<string>;
   multiSelectEnabled: boolean;
   pendingChangesBySupplier: Record<string, number>;
+  pendingArticleIds?: Set<string>;
   onToggleExpand: (supplierId: string) => void;
   onToggleSelect: (supplierId: string) => void;
   onSelectAll: () => void;
@@ -25,6 +26,7 @@ interface SupplierTableProps {
   onShowChanges: (supplier: Supplier) => void;
   onShowLocations: (supplier: Supplier) => void;
   onPrintOrderList: (supplier: Supplier, articles: Article[]) => void;
+  onArticleChangeClick?: (article: Article, supplier: Supplier) => void;
   invitingSupplierId: string | null;
   sendingInvitation: boolean;
   getCartQuantity: (articleId: string) => number;
@@ -39,6 +41,7 @@ export const SupplierTable = ({
   selectedSuppliers,
   multiSelectEnabled,
   pendingChangesBySupplier,
+  pendingArticleIds = new Set(),
   onToggleExpand,
   onToggleSelect,
   onSelectAll,
@@ -48,6 +51,7 @@ export const SupplierTable = ({
   onShowChanges,
   onShowLocations,
   onPrintOrderList,
+  onArticleChangeClick,
   invitingSupplierId,
   sendingInvitation,
   getCartQuantity,
@@ -196,7 +200,24 @@ export const SupplierTable = ({
                                     </div>
                                   </TableCell>
                                   <TableCell className="py-1.5">
-                                    <p className="text-sm font-medium">{article.name}</p>
+                                    <div className="flex items-center gap-2">
+                                      <p 
+                                        className={cn(
+                                          "text-sm font-medium",
+                                          pendingArticleIds.has(article.id) && "cursor-pointer hover:underline"
+                                        )}
+                                        onClick={() => pendingArticleIds.has(article.id) && onArticleChangeClick?.(article, supplier)}
+                                      >
+                                        {article.name}
+                                      </p>
+                                      {pendingArticleIds.has(article.id) && (
+                                        <span 
+                                          className="w-2 h-2 rounded-full bg-orange-500 animate-pulse cursor-pointer" 
+                                          title="Ausstehende Änderungen"
+                                          onClick={() => onArticleChangeClick?.(article, supplier)}
+                                        />
+                                      )}
+                                    </div>
                                   </TableCell>
                                   <TableCell className="py-1.5 hidden md:table-cell">
                                     <p className="text-xs text-muted-foreground truncate max-w-[200px]" title={article.description || ''}>

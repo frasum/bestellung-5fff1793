@@ -107,6 +107,22 @@ export const useCombinedPendingBySupplier = () => {
   });
 };
 
+// Get Set of article IDs that have pending changes
+export const usePendingArticleIds = () => {
+  return useQuery({
+    queryKey: ['pending-article-ids'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('supplier_article_changes')
+        .select('article_id')
+        .eq('status', 'pending');
+
+      if (error) throw error;
+      return new Set(data?.map(c => c.article_id) || []);
+    },
+  });
+};
+
 export const usePendingChangesBySupplier = (supplierId: string | null) => {
   return useQuery({
     queryKey: ['supplier-pending-changes', supplierId],
