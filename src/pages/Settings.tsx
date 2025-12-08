@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Building2, MapPin, Bell, Plus, Pencil, Trash2, Star, User, Lock, Users, Mail, Clock, X, Globe, FileText, RotateCcw, Moon, Sun, Ruler, Check, Store, Merge, ExternalLink } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { useSupplierPortalSettings, useUpsertSupplierPortalSettings, DEFAULT_PORTAL_SETTINGS } from '@/hooks/useSupplierPortalSettings';
+import ReactMarkdown from 'react-markdown';
 import { Textarea } from '@/components/ui/textarea';
 import { useLocations, useCreateLocation, useUpdateLocation, useDeleteLocation, Location } from '@/hooks/useLocations';
 import {
@@ -2159,6 +2160,24 @@ const SupplierPortalTab = () => {
               <p className="text-xs text-muted-foreground">
                 Wird unter dem Header als Einführungstext angezeigt. Markdown wird unterstützt.
               </p>
+              {welcomeMessage && (
+                <div className="mt-2 p-3 bg-muted/50 rounded-lg">
+                  <p className="text-xs font-medium text-muted-foreground mb-2">Vorschau:</p>
+                  <div className="prose prose-sm dark:prose-invert max-w-none">
+                    <ReactMarkdown
+                      components={{
+                        a: ({ href, children }) => (
+                          <a href={href} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                            {children}
+                          </a>
+                        ),
+                      }}
+                    >
+                      {welcomeMessage}
+                    </ReactMarkdown>
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="border-t pt-4 mt-4">
@@ -2203,6 +2222,24 @@ const SupplierPortalTab = () => {
                   <p className="text-xs text-muted-foreground">
                     Wird als Hinweisbox über der Artikelliste angezeigt. Markdown wird unterstützt.
                   </p>
+                  {infoText && (
+                    <div className="mt-2 p-3 bg-primary/10 border border-primary/20 rounded-lg">
+                      <p className="text-xs font-medium text-muted-foreground mb-2">Vorschau:</p>
+                      <div className="prose prose-sm dark:prose-invert max-w-none">
+                        <ReactMarkdown
+                          components={{
+                            a: ({ href, children }) => (
+                              <a href={href} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                                {children}
+                              </a>
+                            ),
+                          }}
+                        >
+                          {infoText}
+                        </ReactMarkdown>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <div className="space-y-2">
@@ -2217,6 +2254,24 @@ const SupplierPortalTab = () => {
                   <p className="text-xs text-muted-foreground">
                     Wird am Ende der Seite angezeigt. Markdown wird unterstützt.
                   </p>
+                  {footerText && (
+                    <div className="mt-2 p-3 bg-muted/30 rounded-lg text-center">
+                      <p className="text-xs font-medium text-muted-foreground mb-2">Vorschau:</p>
+                      <div className="prose prose-sm dark:prose-invert max-w-none mx-auto">
+                        <ReactMarkdown
+                          components={{
+                            a: ({ href, children }) => (
+                              <a href={href} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                                {children}
+                              </a>
+                            ),
+                          }}
+                        >
+                          {footerText}
+                        </ReactMarkdown>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
