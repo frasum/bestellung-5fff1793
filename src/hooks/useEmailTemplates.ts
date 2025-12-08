@@ -133,7 +133,7 @@ export const getDefaultTemplate = (): EmailTemplateUpdate => ({
   signature: 'Mit freundlichen Grüßen,\n{restaurant_name}',
   article_list_format: '- {article_name}{sku_suffix}: {quantity} {unit} à €{unit_price} = €{total_price}',
   design_style: 'modern',
-  footer_text: 'Diese Bestellung wurde über OrderFox.pro aufgegeben.',
+  footer_text: 'Diese Bestellung wurde über Bestellung.pro aufgegeben.',
   footer_logo_url: null,
   show_powered_by: true,
 });

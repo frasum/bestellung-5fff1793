@@ -245,7 +245,7 @@ const OrderConfirmed = () => {
           {/* Footer */}
           <div className="mt-8 pt-6 border-t border-border text-center">
             <p className="text-xs text-muted-foreground">
-              Powered by OrderFox.pro
+              Powered by Bestellung.pro
             </p>
           </div>
         </CardContent>

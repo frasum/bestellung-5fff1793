@@ -93,8 +93,8 @@ const Auth = () => {
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="flex items-center justify-center gap-2 mb-8">
-          <img src={logoImage} alt="OrderFox.pro" className="w-10 h-10 rounded-lg object-cover" />
-          <span className="font-bold text-2xl text-foreground">OrderFox.pro</span>
+          <img src={logoImage} alt="Bestellung.pro" className="w-10 h-10 rounded-lg object-cover" />
+          <span className="font-bold text-2xl text-foreground">Bestellung.pro</span>
         </div>
 
         {/* Card */}

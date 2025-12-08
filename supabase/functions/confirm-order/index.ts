@@ -115,12 +115,12 @@ const generateConfirmationNotificationHtml = (
           </div>
           
           <p style="color: #6b7280; font-size: 14px;">
-            Der Lieferant wird Ihre Bestellung nun bearbeiten. Sie können den Status jederzeit in OrderFox.pro einsehen.
+            Der Lieferant wird Ihre Bestellung nun bearbeiten. Sie können den Status jederzeit in Bestellung.pro einsehen.
           </p>
           
           <div style="text-align: center; padding-top: 24px; border-top: 1px solid #e5e7eb; margin-top: 24px;">
             <p style="color: #9ca3af; font-size: 12px; margin: 0;">
-              Diese Benachrichtigung wurde automatisch von OrderFox.pro versendet.
+              Diese Benachrichtigung wurde automatisch von Bestellung.pro versendet.
             </p>
           </div>
         </div>
@@ -147,7 +147,7 @@ async function sendConfirmationNotification(
 
   try {
     const { error } = await resend.emails.send({
-      from: "OrderFox.pro <onboarding@resend.dev>",
+      from: "Bestellung.pro <onboarding@resend.dev>",
       to: [recipientEmail],
       subject: `✅ Bestellung ${orderNumber} wurde von ${supplierName} bestätigt`,
       html: generateConfirmationNotificationHtml(orderNumber, supplierName, confirmedAt, items, totalAmount),

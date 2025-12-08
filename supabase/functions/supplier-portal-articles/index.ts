@@ -576,12 +576,12 @@ serve(async (req) => {
                   </table>
                   
                   <p style="color: #6b7280; font-size: 14px; margin: 24px 0 0;">
-                    Bitte prüfen Sie die Änderungen im OrderFox-Dashboard und genehmigen oder lehnen Sie diese ab.
+                    Bitte prüfen Sie die Änderungen im Bestellung.pro-Dashboard und genehmigen oder lehnen Sie diese ab.
                   </p>
                 </div>
                 <div style="background-color: #f9fafb; padding: 16px; text-align: center; border-top: 1px solid #e5e7eb;">
                   <p style="margin: 0; color: #9ca3af; font-size: 12px;">
-                    Diese E-Mail wurde automatisch von OrderFox.pro gesendet.
+                    Diese E-Mail wurde automatisch von Bestellung.pro gesendet.
                   </p>
                 </div>
               </div>
@@ -598,7 +598,7 @@ serve(async (req) => {
               'Authorization': `Bearer ${RESEND_API_KEY}`,
             },
             body: JSON.stringify({
-              from: 'OrderFox <onboarding@resend.dev>',
+              from: 'Bestellung.pro <onboarding@resend.dev>',
               to: adminEmails,
               subject: `[Lieferantenportal] Änderungsanfrage von ${supplier.name || 'Lieferant'}`,
               html: emailHtml,
@@ -723,12 +723,12 @@ serve(async (req) => {
                   </div>
                   
                   <p style="color: #6b7280; font-size: 14px; margin: 0;">
-                    Bitte prüfen Sie den Vorschlag im OrderFox-Dashboard und übernehmen oder lehnen Sie ihn ab.
+                    Bitte prüfen Sie den Vorschlag im Bestellung.pro-Dashboard und übernehmen oder lehnen Sie ihn ab.
                   </p>
                 </div>
                 <div style="background-color: #f9fafb; padding: 16px; text-align: center; border-top: 1px solid #e5e7eb;">
                   <p style="margin: 0; color: #9ca3af; font-size: 12px;">
-                    Diese E-Mail wurde automatisch von OrderFox.pro gesendet.
+                    Diese E-Mail wurde automatisch von Bestellung.pro gesendet.
                   </p>
                 </div>
               </div>
@@ -745,7 +745,7 @@ serve(async (req) => {
               'Authorization': `Bearer ${RESEND_API_KEY}`,
             },
             body: JSON.stringify({
-              from: 'OrderFox <onboarding@resend.dev>',
+              from: 'Bestellung.pro <onboarding@resend.dev>',
               to: adminEmails,
               subject: `[Lieferantenportal] Neuer Artikelvorschlag von ${supplier.name || 'Lieferant'}`,
               html: emailHtml,

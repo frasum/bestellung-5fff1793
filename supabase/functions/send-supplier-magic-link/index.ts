@@ -92,7 +92,7 @@ serve(async (req: Request): Promise<Response> => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: "OrderFox.pro <onboarding@resend.dev>",
+        from: "Bestellung.pro <onboarding@resend.dev>",
         to: [actualRecipient],
         subject: `${subjectPrefix}Zugang zum Lieferantenportal - ${organizationName}`,
         html: `
@@ -111,7 +111,7 @@ serve(async (req: Request): Promise<Response> => {
           <body>
             <div class="container">
               <div class="header">
-                <h1>🦊 OrderFox.pro</h1>
+                <h1>📦 Bestellung.pro</h1>
                 <h2>Lieferantenportal</h2>
               </div>
               
@@ -132,7 +132,7 @@ serve(async (req: Request): Promise<Response> => {
               <p>Falls Sie diesen Link nicht angefordert haben, können Sie diese E-Mail ignorieren.</p>
               
               <div class="footer">
-                <p>Diese E-Mail wurde automatisch von OrderFox.pro generiert.</p>
+                <p>Diese E-Mail wurde automatisch von Bestellung.pro generiert.</p>
               </div>
             </div>
           </body>
