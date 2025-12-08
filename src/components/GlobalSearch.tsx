@@ -13,6 +13,7 @@ import {
 import { useSuppliers } from '@/hooks/useSuppliers';
 import { useArticles } from '@/hooks/useArticles';
 import { useOrders } from '@/hooks/useOrders';
+import { useRecentlyActiveSuppliers } from '@/hooks/useSupplierChanges';
 import {
   Users,
   Package,
@@ -32,6 +33,7 @@ export function GlobalSearch() {
   const suppliersQuery = useSuppliers();
   const articlesQuery = useArticles();
   const ordersQuery = useOrders();
+  const { data: recentlyActiveSuppliers } = useRecentlyActiveSuppliers();
   
   const suppliers = suppliersQuery.data;
   const articles = articlesQuery.data;
@@ -108,6 +110,12 @@ export function GlobalSearch() {
                   >
                     <Users className="mr-2 h-4 w-4" />
                     {supplier.name}
+                    {recentlyActiveSuppliers?.has(supplier.id) && (
+                      <span 
+                        className="w-2 h-2 rounded-full bg-green-500 animate-pulse ml-2 shrink-0" 
+                        title="Kürzlich aktiv - Änderungen eingereicht in den letzten 4 Monaten"
+                      />
+                    )}
                     {supplier.main_category && (
                       <span className="ml-2 text-xs text-muted-foreground">
                         {supplier.main_category}

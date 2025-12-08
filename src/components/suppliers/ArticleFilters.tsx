@@ -25,6 +25,7 @@ interface ArticleFiltersProps {
   hasFilters: boolean;
   onClearFilters: () => void;
   showAdvancedToggle?: boolean;
+  recentlyActiveSuppliers?: Set<string>;
 }
 
 export const ArticleFilters = ({
@@ -42,7 +43,8 @@ export const ArticleFilters = ({
   onAdvancedViewChange,
   hasFilters,
   onClearFilters,
-  showAdvancedToggle = false
+  showAdvancedToggle = false,
+  recentlyActiveSuppliers = new Set()
 }: ArticleFiltersProps) => {
   const activeFilterCount = (selectedSuppliers.length > 0 ? 1 : 0) + (selectedCategory ? 1 : 0);
 
@@ -106,6 +108,12 @@ export const ArticleFilters = ({
                             }}>
                               <Checkbox checked={selectedSuppliers.includes(supplier.id)} className="mr-2" />
                               {supplier.name}
+                              {recentlyActiveSuppliers.has(supplier.id) && (
+                                <span 
+                                  className="w-2 h-2 rounded-full bg-green-500 animate-pulse ml-2 shrink-0" 
+                                  title="Kürzlich aktiv"
+                                />
+                              )}
                             </CommandItem>
                           ))}
                         </CommandGroup>
@@ -182,6 +190,12 @@ export const ArticleFilters = ({
                     }}>
                       <Checkbox checked={selectedSuppliers.includes(supplier.id)} className="mr-2" />
                       {supplier.name}
+                      {recentlyActiveSuppliers.has(supplier.id) && (
+                        <span 
+                          className="w-2 h-2 rounded-full bg-green-500 animate-pulse ml-2 shrink-0" 
+                          title="Kürzlich aktiv"
+                        />
+                      )}
                     </CommandItem>
                   ))}
                 </CommandGroup>

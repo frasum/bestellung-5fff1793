@@ -327,3 +327,32 @@ export const useRejectAllChanges = () => {
     },
   });
 };
+
+// Get Set of supplier IDs that submitted changes in the last 4 months
+export const useRecentlyActiveSuppliers = () => {
+  return useQuery({
+    queryKey: ['recently-active-suppliers'],
+    queryFn: async () => {
+      const fourMonthsAgo = new Date();
+      fourMonthsAgo.setMonth(fourMonthsAgo.getMonth() - 4);
+
+      // Fetch changes from the last 4 months (any status)
+      const { data: changes } = await supabase
+        .from('supplier_article_changes')
+        .select('supplier_id')
+        .gte('created_at', fourMonthsAgo.toISOString());
+
+      // Fetch suggested articles from the last 4 months
+      const { data: suggestions } = await supabase
+        .from('suggested_articles')
+        .select('supplier_id')
+        .gte('created_at', fourMonthsAgo.toISOString());
+
+      const activeSupplierIds = new Set<string>();
+      changes?.forEach(c => activeSupplierIds.add(c.supplier_id));
+      suggestions?.forEach(s => activeSupplierIds.add(s.supplier_id));
+
+      return activeSupplierIds;
+    },
+  });
+};

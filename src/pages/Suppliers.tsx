@@ -13,7 +13,7 @@ import { CsvImportDialog } from '@/components/CsvImportDialog';
 import { useImportSuppliers, useImportArticles } from '@/hooks/useImport';
 import { supabase } from '@/integrations/supabase/client';
 import { ExportMenu } from '@/components/ExportMenu';
-import { useSupplierPendingChanges, useCombinedPendingBySupplier, usePendingArticleIds } from '@/hooks/useSupplierChanges';
+import { useSupplierPendingChanges, useCombinedPendingBySupplier, usePendingArticleIds, useRecentlyActiveSuppliers } from '@/hooks/useSupplierChanges';
 import { SupplierChangesDialog } from '@/components/suppliers/SupplierChangesDialog';
 import { SupplierLocationsDialog } from '@/components/suppliers/SupplierLocationsDialog';
 import { useCategories } from '@/hooks/useCategories';
@@ -96,6 +96,7 @@ const Suppliers = () => {
   const { data: pendingChanges } = useSupplierPendingChanges();
   const { data: pendingChangesBySupplier } = useCombinedPendingBySupplier();
   const { data: pendingArticleIds } = usePendingArticleIds();
+  const { data: recentlyActiveSuppliers } = useRecentlyActiveSuppliers();
 
   // Local state for multi-select toggles
   const [supplierMultiSelectEnabled, setSupplierMultiSelectEnabled] = useState(() => {
@@ -524,6 +525,7 @@ const Suppliers = () => {
                 multiSelectEnabled={supplierMultiSelectEnabled}
                 pendingChangesBySupplier={pendingChangesBySupplier || {}}
                 pendingArticleIds={pendingArticleIds || new Set()}
+                recentlyActiveSuppliers={recentlyActiveSuppliers || new Set()}
                 onToggleExpand={toggleSupplierExpanded}
                 onToggleSelect={toggleSupplierSelected}
                 onSelectAll={selectAllSuppliers}
@@ -565,6 +567,7 @@ const Suppliers = () => {
                 onAdvancedViewChange={setArticleAdvancedViewEnabled}
                 hasFilters={articleSearchQuery !== '' || selectedArticleSuppliers.length > 0 || selectedCategory !== 'all'}
                 showAdvancedToggle={advancedSettingsEnabled}
+                recentlyActiveSuppliers={recentlyActiveSuppliers || new Set()}
                 onClearFilters={() => {
                   setArticleSearchQuery('');
                   setSelectedArticleSuppliers([]);
@@ -664,6 +667,7 @@ const Suppliers = () => {
                 getItemsBySupplier={getItemsBySupplier}
                 pendingChangesBySupplier={pendingChangesBySupplier || {}}
                 pendingArticleIds={pendingArticleIds || new Set()}
+                recentlyActiveSuppliers={recentlyActiveSuppliers || new Set()}
                 onToggleSupplier={toggleArticleSupplier}
                 onToggleArticle={toggleArticleSelected}
                 onAddToCart={addItem}

@@ -24,6 +24,7 @@ interface ArticleTableProps {
   getItemsBySupplier: () => Map<string, unknown>;
   pendingChangesBySupplier?: Record<string, number>;
   pendingArticleIds?: Set<string>;
+  recentlyActiveSuppliers?: Set<string>;
   onToggleSupplier: (supplierId: string) => void;
   onToggleArticle: (articleId: string) => void;
   onAddToCart: (article: Article, quantity: number) => void;
@@ -43,6 +44,7 @@ export const ArticleTable = ({
   getItemsBySupplier,
   pendingChangesBySupplier = {},
   pendingArticleIds = new Set(),
+  recentlyActiveSuppliers = new Set(),
   onToggleSupplier,
   onToggleArticle,
   onAddToCart,
@@ -78,6 +80,12 @@ export const ArticleTable = ({
                   )}>
                     {group.supplier.name}
                   </span>
+                  {recentlyActiveSuppliers.has(group.supplier.id) && (
+                    <span 
+                      className="w-2 h-2 rounded-full bg-green-500 animate-pulse shrink-0" 
+                      title="Kürzlich aktiv - Änderungen eingereicht in den letzten 4 Monaten"
+                    />
+                  )}
                   {pendingChangesBySupplier[group.supplier.id] > 0 && (
                     <Badge 
                       variant="destructive" 
@@ -137,6 +145,12 @@ export const ArticleTable = ({
                           "font-semibold text-sm",
                           getItemsBySupplier().has(group.supplier.id) ? "text-destructive" : "text-foreground"
                         )}>{group.supplier.name}</span>
+                        {recentlyActiveSuppliers.has(group.supplier.id) && (
+                          <span 
+                            className="w-2 h-2 rounded-full bg-green-500 animate-pulse shrink-0" 
+                            title="Kürzlich aktiv - Änderungen eingereicht in den letzten 4 Monaten"
+                          />
+                        )}
                         <span className="text-xs text-muted-foreground">({group.articles?.length || 0} Artikel)</span>
                         {pendingChangesBySupplier[group.supplier.id] > 0 && (
                           <Badge 
