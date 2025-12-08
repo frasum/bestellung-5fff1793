@@ -113,6 +113,7 @@ export const useApproveSuggestedArticle = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['suggested-articles'] });
       queryClient.invalidateQueries({ queryKey: ['suggested-articles-count'] });
+      queryClient.invalidateQueries({ queryKey: ['combined-pending-by-supplier'] });
       queryClient.invalidateQueries({ queryKey: ['articles'] });
       toast.success('Artikel übernommen');
     },
@@ -140,6 +141,7 @@ export const useRejectSuggestedArticle = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['suggested-articles'] });
       queryClient.invalidateQueries({ queryKey: ['suggested-articles-count'] });
+      queryClient.invalidateQueries({ queryKey: ['combined-pending-by-supplier'] });
       toast.success('Vorschlag abgelehnt');
     },
     onError: (error: any) => {
@@ -182,6 +184,7 @@ export const useApproveAllSuggestedArticles = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['suggested-articles'] });
       queryClient.invalidateQueries({ queryKey: ['suggested-articles-count'] });
+      queryClient.invalidateQueries({ queryKey: ['combined-pending-by-supplier'] });
       queryClient.invalidateQueries({ queryKey: ['articles'] });
       toast.success('Alle Vorschläge übernommen');
     },
@@ -209,6 +212,7 @@ export const useRejectAllSuggestedArticles = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['suggested-articles'] });
       queryClient.invalidateQueries({ queryKey: ['suggested-articles-count'] });
+      queryClient.invalidateQueries({ queryKey: ['combined-pending-by-supplier'] });
       toast.success('Alle Vorschläge abgelehnt');
     },
     onError: (error: any) => {
