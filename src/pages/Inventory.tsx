@@ -123,6 +123,9 @@ const Inventory = () => {
   
   // Collapsible state for prices tab
   const [openPriceSuppliers, setOpenPriceSuppliers] = useState<Set<string>>(new Set());
+  
+  // Collapsible state for inventory tab
+  const [openInventorySuppliers, setOpenInventorySuppliers] = useState<Set<string>>(new Set());
 
   const { data: articles, isLoading: articlesLoading } = useArticles();
   const { data: suppliers } = useSuppliers();
@@ -242,15 +245,66 @@ const Inventory = () => {
     );
   }, [filteredArticles]);
 
+  // Group inventory articles by supplier (for inventory tab)
+  const groupedInventoryArticles = useMemo(() => {
+    if (!filteredArticles) return [];
+    
+    const grouped = new Map<string, { 
+      supplier: { id: string; name: string }; 
+      articles: typeof filteredArticles;
+      capturedCount: number;
+      totalValue: number;
+    }>();
+    
+    filteredArticles.forEach((article) => {
+      if (!article.supplier_id || !article.suppliers) return;
+      
+      if (!grouped.has(article.supplier_id)) {
+        grouped.set(article.supplier_id, {
+          supplier: { id: article.supplier_id, name: article.suppliers.name },
+          articles: [],
+          capturedCount: 0,
+          totalValue: 0,
+        });
+      }
+      const group = grouped.get(article.supplier_id)!;
+      group.articles.push(article);
+      
+      // Calculate captured values
+      const values = localItems.get(article.id);
+      if (values && (values.storage_1 > 0 || values.storage_2 > 0)) {
+        group.capturedCount++;
+        group.totalValue += (values.storage_1 + values.storage_2) * article.price;
+      }
+    });
+    
+    return Array.from(grouped.values()).sort((a, b) => 
+      a.supplier.name.localeCompare(b.supplier.name, 'de')
+    );
+  }, [filteredArticles, localItems]);
+
   // Auto-expand suppliers when searching
   useEffect(() => {
     if (searchQuery && groupedArticlesBySupplier.length > 0) {
       setOpenPriceSuppliers(new Set(groupedArticlesBySupplier.map(g => g.supplier.id)));
+      setOpenInventorySuppliers(new Set(groupedInventoryArticles.map(g => g.supplier.id)));
     }
-  }, [searchQuery, groupedArticlesBySupplier]);
+  }, [searchQuery, groupedArticlesBySupplier, groupedInventoryArticles]);
 
   const togglePriceSupplier = (supplierId: string) => {
     setOpenPriceSuppliers((prev) => {
+      const next = new Set(prev);
+      if (next.has(supplierId)) {
+        next.delete(supplierId);
+      } else {
+        next.add(supplierId);
+      }
+      return next;
+    });
+  };
+
+  const toggleInventorySupplier = (supplierId: string) => {
+    setOpenInventorySuppliers((prev) => {
       const next = new Set(prev);
       if (next.has(supplierId)) {
         next.delete(supplierId);
@@ -688,187 +742,229 @@ const Inventory = () => {
                   <Skeleton className="h-64 w-full" />
                 </CardContent>
               </Card>
-            ) : (
+            ) : groupedInventoryArticles.length === 0 ? (
               <Card>
-                <CardContent className="p-0">
-                  {/* Mobile: Card-based layout */}
-                  <div className="divide-y divide-border sm:hidden">
-                    {filteredArticles.map((article, index) => {
-                      const values = getItemValues(article.id);
-                      return (
-                        <div key={article.id} className="p-4">
-                          <div className="flex justify-between items-start mb-3">
-                            <div className="min-w-0 flex-1">
-                              <p className="font-medium text-foreground text-sm">{article.name}</p>
-                              {article.sku && (
-                                <p className="text-xs text-muted-foreground">{article.sku}</p>
-                              )}
-                              <p className="text-xs text-muted-foreground mt-0.5">
-                                {article.suppliers?.name} • {article.unit}
-                              </p>
-                            </div>
-                            {values.total > 0 && (
-                              <div className="text-right flex-shrink-0 ml-2">
-                                <p className="font-semibold text-sm">{values.total.toFixed(1)}</p>
-                                <p className="text-xs text-muted-foreground">
-                                  €{(values.total * article.price).toFixed(2)}
-                                </p>
-                              </div>
-                            )}
-                          </div>
-                          <div className="grid grid-cols-2 gap-3">
-                            <div>
-                              <Label className="text-xs text-muted-foreground mb-1 block">Lager 1</Label>
-                              <Input
-                                type="number"
-                                inputMode="decimal"
-                                min="0"
-                                step="0.01"
-                                value={values.storage_1 || ''}
-                                onChange={(e) =>
-                                  handleItemChange(article.id, 'storage_1', e.target.value)
-                                }
-                                className="h-11 text-center text-base [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                                placeholder="0"
-                              />
-                            </div>
-                            <div>
-                              <Label className="text-xs text-muted-foreground mb-1 block">Lager 2</Label>
-                              <Input
-                                type="number"
-                                inputMode="decimal"
-                                min="0"
-                                step="0.01"
-                                value={values.storage_2 || ''}
-                                onChange={(e) =>
-                                  handleItemChange(article.id, 'storage_2', e.target.value)
-                                }
-                                className="h-11 text-center text-base [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                                placeholder="0"
-                              />
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-
-                  {/* Desktop: Table layout */}
-                  <div className="hidden sm:block overflow-x-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead className="w-12">Nr.</TableHead>
-                          <TableHead>Artikel</TableHead>
-                          <TableHead>Lieferant</TableHead>
-                          <TableHead className="w-24">Einheit</TableHead>
-                          <TableHead className="w-28 text-right">Lager 1</TableHead>
-                          <TableHead className="w-28 text-right">Lager 2</TableHead>
-                          <TableHead className="w-28 text-right">Gesamt</TableHead>
-                          <TableHead className="w-32 text-right">Gesamtwert</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {filteredArticles.map((article, index) => {
-                          const values = getItemValues(article.id);
-                          return (
-                            <TableRow key={article.id}>
-                              <TableCell className="text-muted-foreground">
-                                {index + 1}
-                              </TableCell>
-                              <TableCell>
-                                <div>
-                                  <span className="font-medium">{article.name}</span>
-                                  {article.sku && (
-                                    <span className="block text-xs text-muted-foreground">
-                                      {article.sku}
-                                    </span>
-                                  )}
-                                </div>
-                              </TableCell>
-                              <TableCell className="text-muted-foreground">
-                                {article.suppliers?.name}
-                              </TableCell>
-                              <TableCell>
-                                {editingUnitId === article.id ? (
-                                  <div className="flex items-center gap-1">
-                                    <Select
-                                      value={editingUnitValue}
-                                      onValueChange={(value) => {
-                                        setEditingUnitValue(value);
-                                        handleSaveUnitEdit(article.id, value);
-                                      }}
-                                      open={true}
-                                      onOpenChange={(open) => {
-                                        if (!open) handleCancelUnitEdit();
-                                      }}
-                                    >
-                                      <SelectTrigger className="w-24 h-8">
-                                        <SelectValue />
-                                      </SelectTrigger>
-                                      <SelectContent className="bg-background z-50">
-                                        {commonUnits.map((unit) => (
-                                          <SelectItem key={unit} value={unit}>
-                                            {unit}
-                                          </SelectItem>
-                                        ))}
-                                      </SelectContent>
-                                    </Select>
-                                  </div>
-                                ) : (
-                                  <span
-                                    className="cursor-pointer hover:text-primary hover:underline"
-                                    onClick={() => handleStartUnitEdit(article.id, article.unit)}
-                                  >
-                                    {article.unit}
-                                  </span>
-                                )}
-                              </TableCell>
-                              <TableCell>
-                                <Input
-                                  type="number"
-                                  min="0"
-                                  step="0.01"
-                                  value={values.storage_1 || ''}
-                                  onChange={(e) =>
-                                    handleItemChange(article.id, 'storage_1', e.target.value)
-                                  }
-                                  className="w-24 text-right [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                                  placeholder="0"
-                                />
-                              </TableCell>
-                              <TableCell>
-                                <Input
-                                  type="number"
-                                  min="0"
-                                  step="0.01"
-                                  value={values.storage_2 || ''}
-                                  onChange={(e) =>
-                                    handleItemChange(article.id, 'storage_2', e.target.value)
-                                  }
-                                  className="w-24 text-right [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                                  placeholder="0"
-                                />
-                              </TableCell>
-                              <TableCell className="text-right font-medium">
-                                {values.total > 0 ? values.total.toFixed(2) : '-'}
-                              </TableCell>
-                              <TableCell className="text-right font-medium">
-                                {values.total > 0 ? `€${(values.total * article.price).toFixed(2)}` : '-'}
-                              </TableCell>
-                            </TableRow>
-                          );
-                        })}
-                      </TableBody>
-                    </Table>
-                  </div>
-                  {filteredArticles.length === 0 && (
-                    <div className="py-12 text-center text-muted-foreground">
-                      Keine Artikel gefunden
-                    </div>
-                  )}
+                <CardContent className="py-12 text-center text-muted-foreground">
+                  Keine Artikel gefunden
                 </CardContent>
               </Card>
+            ) : (
+              <div className="space-y-2">
+                {groupedInventoryArticles.map((group) => {
+                  const isOpen = openInventorySuppliers.has(group.supplier.id);
+                  return (
+                    <Collapsible
+                      key={group.supplier.id}
+                      open={isOpen}
+                      onOpenChange={() => toggleInventorySupplier(group.supplier.id)}
+                    >
+                      <Card>
+                        <CollapsibleTrigger asChild>
+                          <CardHeader className="py-3 px-4 cursor-pointer hover:bg-muted/50 transition-colors">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-3">
+                                {isOpen ? (
+                                  <ChevronDown className="w-5 h-5 text-muted-foreground" />
+                                ) : (
+                                  <ChevronRight className="w-5 h-5 text-muted-foreground" />
+                                )}
+                                <div>
+                                  <CardTitle className="text-base font-medium">
+                                    {group.supplier.name}
+                                  </CardTitle>
+                                  <p className="text-sm text-muted-foreground">
+                                    {group.capturedCount} von {group.articles.length} erfasst
+                                    {group.totalValue > 0 && (
+                                      <span className="ml-2">• €{group.totalValue.toFixed(2)}</span>
+                                    )}
+                                  </p>
+                                </div>
+                              </div>
+                              {group.capturedCount > 0 && group.capturedCount === group.articles.length && (
+                                <Badge variant="default" className="bg-green-600">
+                                  <CheckCircle className="w-3 h-3 mr-1" />
+                                  Fertig
+                                </Badge>
+                              )}
+                            </div>
+                          </CardHeader>
+                        </CollapsibleTrigger>
+                        <CollapsibleContent>
+                          <CardContent className="p-0 pt-0">
+                            {/* Mobile: Card-based layout */}
+                            <div className="divide-y divide-border sm:hidden">
+                              {group.articles.map((article) => {
+                                const values = getItemValues(article.id);
+                                return (
+                                  <div key={article.id} className="p-4">
+                                    <div className="flex justify-between items-start mb-3">
+                                      <div className="min-w-0 flex-1">
+                                        <p className="font-medium text-foreground text-sm">{article.name}</p>
+                                        {article.sku && (
+                                          <p className="text-xs text-muted-foreground">{article.sku}</p>
+                                        )}
+                                        <p className="text-xs text-muted-foreground mt-0.5">
+                                          {article.unit}
+                                        </p>
+                                      </div>
+                                      {values.total > 0 && (
+                                        <div className="text-right flex-shrink-0 ml-2">
+                                          <p className="font-semibold text-sm">{values.total.toFixed(1)}</p>
+                                          <p className="text-xs text-muted-foreground">
+                                            €{(values.total * article.price).toFixed(2)}
+                                          </p>
+                                        </div>
+                                      )}
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-3">
+                                      <div>
+                                        <Label className="text-xs text-muted-foreground mb-1 block">Lager 1</Label>
+                                        <Input
+                                          type="number"
+                                          inputMode="decimal"
+                                          min="0"
+                                          step="0.01"
+                                          value={values.storage_1 || ''}
+                                          onChange={(e) =>
+                                            handleItemChange(article.id, 'storage_1', e.target.value)
+                                          }
+                                          className="h-11 text-center text-base [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                          placeholder="0"
+                                        />
+                                      </div>
+                                      <div>
+                                        <Label className="text-xs text-muted-foreground mb-1 block">Lager 2</Label>
+                                        <Input
+                                          type="number"
+                                          inputMode="decimal"
+                                          min="0"
+                                          step="0.01"
+                                          value={values.storage_2 || ''}
+                                          onChange={(e) =>
+                                            handleItemChange(article.id, 'storage_2', e.target.value)
+                                          }
+                                          className="h-11 text-center text-base [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                          placeholder="0"
+                                        />
+                                      </div>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+
+                            {/* Desktop: Table layout */}
+                            <div className="hidden sm:block overflow-x-auto">
+                              <Table>
+                                <TableHeader>
+                                  <TableRow>
+                                    <TableHead className="w-12">Nr.</TableHead>
+                                    <TableHead>Artikel</TableHead>
+                                    <TableHead className="w-24">Einheit</TableHead>
+                                    <TableHead className="w-28 text-right">Lager 1</TableHead>
+                                    <TableHead className="w-28 text-right">Lager 2</TableHead>
+                                    <TableHead className="w-28 text-right">Gesamt</TableHead>
+                                    <TableHead className="w-32 text-right">Gesamtwert</TableHead>
+                                  </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                  {group.articles.map((article, index) => {
+                                    const values = getItemValues(article.id);
+                                    return (
+                                      <TableRow key={article.id}>
+                                        <TableCell className="text-muted-foreground">
+                                          {index + 1}
+                                        </TableCell>
+                                        <TableCell>
+                                          <div>
+                                            <span className="font-medium">{article.name}</span>
+                                            {article.sku && (
+                                              <span className="block text-xs text-muted-foreground">
+                                                {article.sku}
+                                              </span>
+                                            )}
+                                          </div>
+                                        </TableCell>
+                                        <TableCell>
+                                          {editingUnitId === article.id ? (
+                                            <div className="flex items-center gap-1">
+                                              <Select
+                                                value={editingUnitValue}
+                                                onValueChange={(value) => {
+                                                  setEditingUnitValue(value);
+                                                  handleSaveUnitEdit(article.id, value);
+                                                }}
+                                                open={true}
+                                                onOpenChange={(open) => {
+                                                  if (!open) handleCancelUnitEdit();
+                                                }}
+                                              >
+                                                <SelectTrigger className="w-24 h-8">
+                                                  <SelectValue />
+                                                </SelectTrigger>
+                                                <SelectContent className="bg-background z-50">
+                                                  {commonUnits.map((unit) => (
+                                                    <SelectItem key={unit} value={unit}>
+                                                      {unit}
+                                                    </SelectItem>
+                                                  ))}
+                                                </SelectContent>
+                                              </Select>
+                                            </div>
+                                          ) : (
+                                            <span
+                                              className="cursor-pointer hover:text-primary hover:underline"
+                                              onClick={() => handleStartUnitEdit(article.id, article.unit)}
+                                            >
+                                              {article.unit}
+                                            </span>
+                                          )}
+                                        </TableCell>
+                                        <TableCell>
+                                          <Input
+                                            type="number"
+                                            min="0"
+                                            step="0.01"
+                                            value={values.storage_1 || ''}
+                                            onChange={(e) =>
+                                              handleItemChange(article.id, 'storage_1', e.target.value)
+                                            }
+                                            className="w-24 text-right [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                            placeholder="0"
+                                          />
+                                        </TableCell>
+                                        <TableCell>
+                                          <Input
+                                            type="number"
+                                            min="0"
+                                            step="0.01"
+                                            value={values.storage_2 || ''}
+                                            onChange={(e) =>
+                                              handleItemChange(article.id, 'storage_2', e.target.value)
+                                            }
+                                            className="w-24 text-right [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                            placeholder="0"
+                                          />
+                                        </TableCell>
+                                        <TableCell className="text-right font-medium">
+                                          {values.total > 0 ? values.total.toFixed(2) : '-'}
+                                        </TableCell>
+                                        <TableCell className="text-right font-medium">
+                                          {values.total > 0 ? `€${(values.total * article.price).toFixed(2)}` : '-'}
+                                        </TableCell>
+                                      </TableRow>
+                                    );
+                                  })}
+                                </TableBody>
+                              </Table>
+                            </div>
+                          </CardContent>
+                        </CollapsibleContent>
+                      </Card>
+                    </Collapsible>
+                  );
+                })}
+              </div>
             )}
           </TabsContent>
 
