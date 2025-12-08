@@ -181,7 +181,7 @@
     "minimumOrderWarning": "Mindestbestellwert nicht erreicht",
     "minimumOrderMessage": "Der Mindestbestellwert bei {{supplier}} beträgt {{amount}}. Es fehlen noch {{remaining}}.",
     "cannotCheckout": "Sie können nicht zur Kasse gehen, bis alle Mindestbestellwerte erreicht sind.",
-    "saveAsDraft": "Als Entwurf speichern",
+    "saveAsDraft": "Als Vorbestellung speichern",
     "draftName": "Entwurfsname",
     "draftSaved": "Entwurf gespeichert"
   },
