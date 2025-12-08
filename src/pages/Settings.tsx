@@ -10,8 +10,9 @@ import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Building2, MapPin, Bell, Plus, Pencil, Trash2, Star, User, Lock, Users, Mail, Clock, X, Globe, FileText, RotateCcw, Moon, Sun, Ruler, Check, Store, Merge } from 'lucide-react';
+import { Building2, MapPin, Bell, Plus, Pencil, Trash2, Star, User, Lock, Users, Mail, Clock, X, Globe, FileText, RotateCcw, Moon, Sun, Ruler, Check, Store, Merge, ExternalLink } from 'lucide-react';
 import { useTheme } from 'next-themes';
+import { useSupplierPortalSettings, useUpsertSupplierPortalSettings, DEFAULT_PORTAL_SETTINGS } from '@/hooks/useSupplierPortalSettings';
 import { Textarea } from '@/components/ui/textarea';
 import { useLocations, useCreateLocation, useUpdateLocation, useDeleteLocation, Location } from '@/hooks/useLocations';
 import {
@@ -109,6 +110,11 @@ const Settings = () => {
                 <span className="hidden sm:inline">Kategorien</span>
                 <span className="sm:hidden">Kat.</span>
               </TabsTrigger>
+              <TabsTrigger value="supplier-portal" className="gap-1.5 text-xs sm:text-sm whitespace-nowrap">
+                <ExternalLink className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                <span className="hidden sm:inline">Lieferantenportal</span>
+                <span className="sm:hidden">Portal</span>
+              </TabsTrigger>
             </TabsList>
           </div>
 
@@ -146,6 +152,10 @@ const Settings = () => {
 
           <TabsContent value="categories">
             <CategoriesTab />
+          </TabsContent>
+
+          <TabsContent value="supplier-portal">
+            <SupplierPortalTab />
           </TabsContent>
         </Tabs>
       </div>
@@ -2046,6 +2056,178 @@ const CategoriesTab = () => {
         </AlertDialogContent>
       </AlertDialog>
     </Card>
+  );
+};
+
+const SupplierPortalTab = () => {
+  const { data: settings, isLoading } = useSupplierPortalSettings();
+  const upsertSettings = useUpsertSupplierPortalSettings();
+  
+  const [portalTitle, setPortalTitle] = useState('');
+  const [welcomeMessage, setWelcomeMessage] = useState('');
+  const [cardTitle, setCardTitle] = useState('');
+  const [cardDescription, setCardDescription] = useState('');
+  const [infoText, setInfoText] = useState('');
+  const [footerText, setFooterText] = useState('');
+  const [initialized, setInitialized] = useState(false);
+
+  // Initialize form with loaded settings
+  if (settings && !initialized) {
+    setPortalTitle(settings.portal_title);
+    setWelcomeMessage(settings.welcome_message || '');
+    setCardTitle(settings.card_title);
+    setCardDescription(settings.card_description);
+    setInfoText(settings.info_text || '');
+    setFooterText(settings.footer_text || '');
+    setInitialized(true);
+  } else if (!settings && !isLoading && !initialized) {
+    setPortalTitle(DEFAULT_PORTAL_SETTINGS.portal_title);
+    setWelcomeMessage('');
+    setCardTitle(DEFAULT_PORTAL_SETTINGS.card_title);
+    setCardDescription(DEFAULT_PORTAL_SETTINGS.card_description);
+    setInfoText('');
+    setFooterText('');
+    setInitialized(true);
+  }
+
+  const handleSave = () => {
+    upsertSettings.mutate({
+      portal_title: portalTitle,
+      welcome_message: welcomeMessage || null,
+      card_title: cardTitle,
+      card_description: cardDescription,
+      info_text: infoText || null,
+      footer_text: footerText || null,
+    });
+  };
+
+  const handleReset = () => {
+    setPortalTitle(DEFAULT_PORTAL_SETTINGS.portal_title);
+    setWelcomeMessage('');
+    setCardTitle(DEFAULT_PORTAL_SETTINGS.card_title);
+    setCardDescription(DEFAULT_PORTAL_SETTINGS.card_description);
+    setInfoText('');
+    setFooterText('');
+  };
+
+  if (isLoading) {
+    return <Card><CardContent className="p-6">Loading...</CardContent></Card>;
+  }
+
+  return (
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <ExternalLink className="h-5 w-5" />
+            Lieferantenportal-Texte
+          </CardTitle>
+          <CardDescription>
+            Passen Sie die Texte an, die Lieferanten im Portal sehen
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="portal-title">Portal-Titel</Label>
+              <Input
+                id="portal-title"
+                value={portalTitle}
+                onChange={(e) => setPortalTitle(e.target.value)}
+                placeholder="z.B. Lieferantenportal"
+              />
+              <p className="text-xs text-muted-foreground">
+                Wird als Hauptüberschrift im Header angezeigt
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="welcome-message">Willkommensnachricht (optional)</Label>
+              <Textarea
+                id="welcome-message"
+                value={welcomeMessage}
+                onChange={(e) => setWelcomeMessage(e.target.value)}
+                placeholder="z.B. Willkommen im Lieferantenportal! Hier können Sie Ihre Artikelinformationen verwalten."
+                rows={3}
+              />
+              <p className="text-xs text-muted-foreground">
+                Wird unter dem Header als Einführungstext angezeigt
+              </p>
+            </div>
+
+            <div className="border-t pt-4 mt-4">
+              <p className="text-sm font-medium mb-4">Artikel-Bereich</p>
+              
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="card-title">Bereichs-Titel</Label>
+                  <Input
+                    id="card-title"
+                    value={cardTitle}
+                    onChange={(e) => setCardTitle(e.target.value)}
+                    placeholder="z.B. Meine Artikel"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="card-description">Bereichs-Beschreibung</Label>
+                  <Input
+                    id="card-description"
+                    value={cardDescription}
+                    onChange={(e) => setCardDescription(e.target.value)}
+                    placeholder="z.B. Änderungen werden zur Genehmigung eingereicht."
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="border-t pt-4 mt-4">
+              <p className="text-sm font-medium mb-4">Zusätzliche Texte</p>
+              
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="info-text">Info-Text (optional)</Label>
+                  <Textarea
+                    id="info-text"
+                    value={infoText}
+                    onChange={(e) => setInfoText(e.target.value)}
+                    placeholder="z.B. Bitte aktualisieren Sie Ihre Preise regelmäßig. Bei Fragen kontaktieren Sie uns unter support@restaurant.de"
+                    rows={3}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Wird als Hinweisbox über der Artikelliste angezeigt
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="footer-text">Footer-Text (optional)</Label>
+                  <Textarea
+                    id="footer-text"
+                    value={footerText}
+                    onChange={(e) => setFooterText(e.target.value)}
+                    placeholder="z.B. © 2024 Mein Restaurant - Kontakt: lieferanten@restaurant.de"
+                    rows={2}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Wird am Ende der Seite angezeigt
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3 pt-4 border-t">
+            <Button onClick={handleSave} disabled={upsertSettings.isPending}>
+              {upsertSettings.isPending ? 'Speichern...' : 'Speichern'}
+            </Button>
+            <Button variant="outline" onClick={handleReset}>
+              <RotateCcw className="h-4 w-4 mr-2" />
+              Auf Standardwerte zurücksetzen
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   );
 };
 

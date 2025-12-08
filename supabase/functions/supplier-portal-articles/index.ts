@@ -7,7 +7,7 @@ const corsHeaders = {
 };
 
 interface ArticleUpdateRequest {
-  action: 'list' | 'update';
+  action: 'list' | 'update' | 'get-settings';
   supplierId: string;
   organizationId: string;
   sessionToken: string; // Required session token for authentication
@@ -97,6 +97,35 @@ serve(async (req) => {
         JSON.stringify({ error: 'Invalid supplier or organization' }),
         { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
+    }
+
+    // Handle get-settings action
+    if (action === 'get-settings') {
+      const { data: settings, error: settingsError } = await supabase
+        .from('supplier_portal_settings')
+        .select('*')
+        .eq('organization_id', organizationId)
+        .maybeSingle();
+
+      if (settingsError) {
+        console.error('Error fetching portal settings:', settingsError);
+      }
+
+      // Return settings or defaults
+      const portalSettings = settings || {
+        portal_title: 'Lieferantenportal',
+        welcome_message: null,
+        card_title: 'Meine Artikel',
+        card_description: 'Änderungen werden zur Genehmigung eingereicht.',
+        info_text: null,
+        footer_text: null,
+      };
+
+      console.log('Returning portal settings for organization:', organizationId);
+
+      return new Response(JSON.stringify({ settings: portalSettings }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     if (action === 'list') {

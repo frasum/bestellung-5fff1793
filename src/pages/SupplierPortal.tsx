@@ -40,6 +40,15 @@ interface PendingChange {
   created_at: string;
 }
 
+interface PortalSettings {
+  portal_title: string;
+  welcome_message: string | null;
+  card_title: string;
+  card_description: string;
+  info_text: string | null;
+  footer_text: string | null;
+}
+
 const SupplierPortal = () => {
   const navigate = useNavigate();
   const [session, setSession] = useState<SupplierSession | null>(null);
@@ -50,6 +59,14 @@ const SupplierPortal = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [editedArticles, setEditedArticles] = useState<Record<string, Partial<Article>>>({});
   const [priceInputs, setPriceInputs] = useState<Record<string, string>>({});
+  const [portalSettings, setPortalSettings] = useState<PortalSettings>({
+    portal_title: 'Lieferantenportal',
+    welcome_message: null,
+    card_title: 'Meine Artikel',
+    card_description: 'Änderungen werden zur Genehmigung eingereicht.',
+    info_text: null,
+    footer_text: null,
+  });
 
   useEffect(() => {
     const checkSession = () => {
@@ -76,10 +93,25 @@ const SupplierPortal = () => {
   }, [navigate]);
 
   useEffect(() => {
-    const fetchArticles = async () => {
+    const fetchData = async () => {
       if (!session) return;
 
       try {
+        // Fetch portal settings first
+        const { data: settingsData, error: settingsError } = await supabase.functions.invoke('supplier-portal-articles', {
+          body: {
+            action: 'get-settings',
+            supplierId: session.supplierId,
+            organizationId: session.organizationId,
+            sessionToken: session.sessionToken,
+          },
+        });
+
+        if (!settingsError && settingsData?.settings) {
+          setPortalSettings(settingsData.settings);
+        }
+
+        // Fetch articles
         const { data, error } = await supabase.functions.invoke('supplier-portal-articles', {
           body: {
             action: 'list',
@@ -93,14 +125,14 @@ const SupplierPortal = () => {
         setArticles(data?.articles || []);
         setPendingChanges(data?.pendingChanges || []);
       } catch (error: any) {
-        console.error('Error fetching articles:', error);
-        toast.error('Fehler beim Laden der Artikel');
+        console.error('Error fetching data:', error);
+        toast.error('Fehler beim Laden der Daten');
       } finally {
         setLoading(false);
       }
     };
 
-    fetchArticles();
+    fetchData();
   }, [session]);
 
   const handleLogout = () => {
@@ -224,7 +256,7 @@ const SupplierPortal = () => {
           <div className="flex items-center gap-3">
             <img src={logo} alt="OrderFox.pro" className="h-10 w-10" />
             <div>
-              <h1 className="font-semibold">Lieferantenportal</h1>
+              <h1 className="font-semibold">{portalSettings.portal_title}</h1>
               <p className="text-sm text-muted-foreground">{session.supplierName}</p>
             </div>
           </div>
@@ -237,16 +269,30 @@ const SupplierPortal = () => {
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8">
+        {/* Welcome Message */}
+        {portalSettings.welcome_message && (
+          <div className="mb-6 p-4 bg-muted/50 rounded-lg">
+            <p className="text-muted-foreground">{portalSettings.welcome_message}</p>
+          </div>
+        )}
+
+        {/* Info Text */}
+        {portalSettings.info_text && (
+          <div className="mb-6 p-4 bg-primary/10 border border-primary/20 rounded-lg">
+            <p className="text-sm">{portalSettings.info_text}</p>
+          </div>
+        )}
+
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
                 <CardTitle className="flex items-center gap-2">
                   <Package className="h-5 w-5" />
-                  Meine Artikel
+                  {portalSettings.card_title}
                 </CardTitle>
                 <CardDescription>
-                  Änderungen werden zur Genehmigung eingereicht
+                  {portalSettings.card_description}
                 </CardDescription>
               </div>
               <div className="flex items-center gap-4">
@@ -436,6 +482,13 @@ const SupplierPortal = () => {
             )}
           </CardContent>
         </Card>
+
+        {/* Footer Text */}
+        {portalSettings.footer_text && (
+          <div className="mt-8 text-center text-sm text-muted-foreground">
+            {portalSettings.footer_text}
+          </div>
+        )}
       </main>
     </div>
   );
