@@ -13,7 +13,7 @@ import { CsvImportDialog } from '@/components/CsvImportDialog';
 import { useImportSuppliers, useImportArticles } from '@/hooks/useImport';
 import { supabase } from '@/integrations/supabase/client';
 import { ExportMenu } from '@/components/ExportMenu';
-import { useSupplierPendingChanges, useCombinedPendingBySupplier } from '@/hooks/useSupplierChanges';
+import { useSupplierPendingChanges, useCombinedPendingBySupplier, usePendingArticleIds } from '@/hooks/useSupplierChanges';
 import { SupplierChangesDialog } from '@/components/suppliers/SupplierChangesDialog';
 import { SupplierLocationsDialog } from '@/components/suppliers/SupplierLocationsDialog';
 import { useCategories } from '@/hooks/useCategories';
@@ -91,9 +91,11 @@ const Suppliers = () => {
   const [invitingSupplierId, setInvitingSupplierId] = useState<string | null>(null);
   const [organizationName, setOrganizationName] = useState<string>('');
   const [changesDialogSupplier, setChangesDialogSupplier] = useState<Supplier | null>(null);
+  const [changesDialogArticle, setChangesDialogArticle] = useState<{ id: string; name: string } | null>(null);
   const [locationsDialogSupplier, setLocationsDialogSupplier] = useState<Supplier | null>(null);
   const { data: pendingChanges } = useSupplierPendingChanges();
   const { data: pendingChangesBySupplier } = useCombinedPendingBySupplier();
+  const { data: pendingArticleIds } = usePendingArticleIds();
 
   // Local state for multi-select toggles
   const [supplierMultiSelectEnabled, setSupplierMultiSelectEnabled] = useState(() => {
@@ -521,6 +523,7 @@ const Suppliers = () => {
                 selectedSuppliers={selectedSuppliers}
                 multiSelectEnabled={supplierMultiSelectEnabled}
                 pendingChangesBySupplier={pendingChangesBySupplier || {}}
+                pendingArticleIds={pendingArticleIds || new Set()}
                 onToggleExpand={toggleSupplierExpanded}
                 onToggleSelect={toggleSupplierSelected}
                 onSelectAll={selectAllSuppliers}
@@ -530,6 +533,10 @@ const Suppliers = () => {
                 onShowChanges={setChangesDialogSupplier}
                 onShowLocations={setLocationsDialogSupplier}
                 onPrintOrderList={(supplier, articles) => generateOrderListPdf(supplier, articles)}
+                onArticleChangeClick={(article, supplier) => {
+                  setChangesDialogSupplier(supplier);
+                  setChangesDialogArticle({ id: article.id, name: article.name });
+                }}
                 invitingSupplierId={invitingSupplierId}
                 sendingInvitation={sendingInvitation}
                 getCartQuantity={getCartQuantity}
@@ -656,6 +663,7 @@ const Suppliers = () => {
                 getCartQuantity={getCartQuantity}
                 getItemsBySupplier={getItemsBySupplier}
                 pendingChangesBySupplier={pendingChangesBySupplier || {}}
+                pendingArticleIds={pendingArticleIds || new Set()}
                 onToggleSupplier={toggleArticleSupplier}
                 onToggleArticle={toggleArticleSelected}
                 onAddToCart={addItem}
@@ -665,6 +673,13 @@ const Suppliers = () => {
                 onShowChanges={(supplierId) => {
                   const supplier = suppliers?.find(s => s.id === supplierId);
                   if (supplier) setChangesDialogSupplier(supplier);
+                }}
+                onArticleChangeClick={(article, supplierId, supplierName) => {
+                  const supplier = suppliers?.find(s => s.id === supplierId);
+                  if (supplier) {
+                    setChangesDialogSupplier(supplier);
+                    setChangesDialogArticle({ id: article.id, name: article.name });
+                  }
                 }}
               />
             )}
@@ -687,9 +702,16 @@ const Suppliers = () => {
       {/* Supplier Changes Dialog */}
       <SupplierChangesDialog
         open={!!changesDialogSupplier}
-        onOpenChange={(open) => !open && setChangesDialogSupplier(null)}
+        onOpenChange={(open) => {
+          if (!open) {
+            setChangesDialogSupplier(null);
+            setChangesDialogArticle(null);
+          }
+        }}
         supplierId={changesDialogSupplier?.id || null}
         supplierName={changesDialogSupplier?.name || ''}
+        articleId={changesDialogArticle?.id}
+        articleName={changesDialogArticle?.name}
       />
 
       {/* Supplier Locations Dialog */}

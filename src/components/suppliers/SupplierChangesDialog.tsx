@@ -19,6 +19,8 @@ interface SupplierChangesDialogProps {
   onOpenChange: (open: boolean) => void;
   supplierId: string | null;
   supplierName: string;
+  articleId?: string | null;
+  articleName?: string;
 }
 
 const FIELD_LABELS: Record<string, string> = {
@@ -34,14 +36,21 @@ export const SupplierChangesDialog = ({
   open, 
   onOpenChange, 
   supplierId, 
-  supplierName 
+  supplierName,
+  articleId,
+  articleName
 }: SupplierChangesDialogProps) => {
-  const { data: changes, isLoading: changesLoading } = usePendingChangesBySupplier(supplierId);
+  const { data: allChanges, isLoading: changesLoading } = usePendingChangesBySupplier(supplierId);
   const { data: suggestions, isLoading: suggestionsLoading } = useSuggestedArticlesBySupplier(supplierId);
   const approveChange = useApproveChange();
   const rejectChange = useRejectChange();
   const approveAll = useApproveAllChanges();
   const rejectAll = useRejectAllChanges();
+
+  // Filter changes by articleId if provided
+  const changes = articleId 
+    ? allChanges?.filter(c => c.article_id === articleId) 
+    : allChanges;
 
   const isLoading = changesLoading || suggestionsLoading;
 
@@ -65,14 +74,21 @@ export const SupplierChangesDialog = ({
   const hasSuggestions = (suggestions?.length || 0) > 0;
   const isEmpty = !hasChanges && !hasSuggestions;
 
+  // Determine dialog title based on whether filtering by article
+  const dialogTitle = articleId && articleName 
+    ? `Änderungen - ${articleName}` 
+    : `Ausstehende Änderungen - ${supplierName}`;
+
+  const dialogDescription = articleId 
+    ? 'Überprüfen Sie die Änderungen für diesen Artikel'
+    : 'Überprüfen Sie die vom Lieferanten vorgeschlagenen Änderungen und Artikel';
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Ausstehende Änderungen - {supplierName}</DialogTitle>
-          <DialogDescription>
-            Überprüfen Sie die vom Lieferanten vorgeschlagenen Änderungen und Artikel
-          </DialogDescription>
+          <DialogTitle>{dialogTitle}</DialogTitle>
+          <DialogDescription>{dialogDescription}</DialogDescription>
         </DialogHeader>
 
         {isLoading ? (
