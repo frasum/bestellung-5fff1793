@@ -598,7 +598,7 @@ serve(async (req) => {
               'Authorization': `Bearer ${RESEND_API_KEY}`,
             },
             body: JSON.stringify({
-              from: 'Bestellung.pro <onboarding@resend.dev>',
+              from: 'Bestellung.pro <noreply@bestellung.pro>',
               to: adminEmails,
               subject: `[Lieferantenportal] Änderungsanfrage von ${supplier.name || 'Lieferant'}`,
               html: emailHtml,
@@ -745,7 +745,7 @@ serve(async (req) => {
               'Authorization': `Bearer ${RESEND_API_KEY}`,
             },
             body: JSON.stringify({
-              from: 'Bestellung.pro <onboarding@resend.dev>',
+              from: 'Bestellung.pro <noreply@bestellung.pro>',
               to: adminEmails,
               subject: `[Lieferantenportal] Neuer Artikelvorschlag von ${supplier.name || 'Lieferant'}`,
               html: emailHtml,

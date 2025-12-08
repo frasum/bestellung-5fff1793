@@ -92,7 +92,7 @@ serve(async (req: Request): Promise<Response> => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: "Bestellung.pro <onboarding@resend.dev>",
+        from: "Bestellung.pro <noreply@bestellung.pro>",
         to: [actualRecipient],
         subject: `${subjectPrefix}Zugang zum Lieferantenportal - ${organizationName}`,
         html: `

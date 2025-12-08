@@ -42,7 +42,7 @@ serve(async (req) => {
     const roleDescription = roleDescriptions[role] || role;
 
     const emailResponse = await resend.emails.send({
-      from: "Bestellung.pro <onboarding@resend.dev>",
+      from: "Bestellung.pro <noreply@bestellung.pro>",
       to: [inviteeEmail],
       subject: `You've been invited to join ${organizationName} on Bestellung.pro`,
       html: `
