@@ -215,6 +215,22 @@
       "pending": "Ausstehend",
       "approved": "Genehmigt",
       "rejected": "Abgelehnt"
+    },
+    "restartTour": "Tour erneut starten"
+  },
+  "onboarding": {
+    "purchaser": {
+      "welcome": "Willkommen bei den Mitarbeiter-Bestellungen!",
+      "welcomeDescription": "Hier kannst du Bestellungen schnell per Sprache oder Foto einreichen. Die KI erkennt automatisch die Artikel und Mengen.",
+      "voiceStep": "Sprachbestellung",
+      "voiceStepDescription": "Tippe auf den Button und sprich deine Bestellung ein. Zum Beispiel: \"3 Kisten Mineralwasser und 5 Packungen Servietten\". Die KI erkennt die Artikel automatisch.",
+      "photoStep": "Foto-Bestellung",
+      "photoStepDescription": "Fotografiere eine handgeschriebene Bestellliste. Die KI liest die Artikel ab und ordnet sie automatisch zu.",
+      "historyStep": "Deine Bestellungen",
+      "historyStepDescription": "Unter 'Meine Bestellungen' siehst du den Status deiner eingereichten Bestellungen. Genehmigte Bestellungen kannst du direkt in den Warenkorb übernehmen.",
+      "next": "Weiter",
+      "skip": "Überspringen",
+      "finish": "Los geht's!"
     }
   },
   "suppliers": {
