@@ -1456,7 +1456,7 @@ const UnitsTab = () => {
   const isLoading = unitsLoading || articlesLoading;
 
   if (isLoading) {
-    return <Card><CardContent className="p-6">Loading...</CardContent></Card>;
+    return <Card><CardContent className="p-6">Lädt...</CardContent></Card>;
   }
 
   return (
@@ -1859,7 +1859,7 @@ const CategoriesTab = () => {
   const mergeTargets = sortedCategories.filter(c => c.id !== mergingCategory?.id);
 
   if (isLoading) {
-    return <Card><CardContent className="p-6">Loading...</CardContent></Card>;
+    return <Card><CardContent className="p-6">Lädt...</CardContent></Card>;
   }
 
   return (
@@ -2176,7 +2176,7 @@ const SupplierPortalTab = () => {
   };
 
   if (isLoading) {
-    return <Card><CardContent className="p-6">Loading...</CardContent></Card>;
+    return <Card><CardContent className="p-6">Lädt...</CardContent></Card>;
   }
 
   return (
