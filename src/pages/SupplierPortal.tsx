@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import ReactMarkdown from 'react-markdown';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -271,15 +272,35 @@ const SupplierPortal = () => {
       <main className="container mx-auto px-4 py-8">
         {/* Welcome Message */}
         {portalSettings.welcome_message && (
-          <div className="mb-6 p-4 bg-muted/50 rounded-lg">
-            <p className="text-muted-foreground">{portalSettings.welcome_message}</p>
+          <div className="mb-6 p-4 bg-muted/50 rounded-lg prose prose-sm dark:prose-invert max-w-none">
+            <ReactMarkdown
+              components={{
+                a: ({ href, children }) => (
+                  <a href={href} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                    {children}
+                  </a>
+                ),
+              }}
+            >
+              {portalSettings.welcome_message}
+            </ReactMarkdown>
           </div>
         )}
 
         {/* Info Text */}
         {portalSettings.info_text && (
-          <div className="mb-6 p-4 bg-primary/10 border border-primary/20 rounded-lg">
-            <p className="text-sm">{portalSettings.info_text}</p>
+          <div className="mb-6 p-4 bg-primary/10 border border-primary/20 rounded-lg prose prose-sm dark:prose-invert max-w-none">
+            <ReactMarkdown
+              components={{
+                a: ({ href, children }) => (
+                  <a href={href} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                    {children}
+                  </a>
+                ),
+              }}
+            >
+              {portalSettings.info_text}
+            </ReactMarkdown>
           </div>
         )}
 
@@ -485,8 +506,18 @@ const SupplierPortal = () => {
 
         {/* Footer Text */}
         {portalSettings.footer_text && (
-          <div className="mt-8 text-center text-sm text-muted-foreground">
-            {portalSettings.footer_text}
+          <div className="mt-8 text-center text-sm text-muted-foreground prose prose-sm dark:prose-invert max-w-none mx-auto">
+            <ReactMarkdown
+              components={{
+                a: ({ href, children }) => (
+                  <a href={href} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                    {children}
+                  </a>
+                ),
+              }}
+            >
+              {portalSettings.footer_text}
+            </ReactMarkdown>
           </div>
         )}
       </main>

@@ -2127,6 +2127,12 @@ const SupplierPortalTab = () => {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
+          {/* Markdown hint */}
+          <div className="p-3 bg-muted/50 rounded-lg text-xs text-muted-foreground space-y-1">
+            <p className="font-medium">Markdown-Formatierung unterstützt:</p>
+            <p>**fett** • *kursiv* • [Link](https://example.com) • - Listen</p>
+          </div>
+
           <div className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="portal-title">Portal-Titel</Label>
@@ -2151,7 +2157,7 @@ const SupplierPortalTab = () => {
                 rows={3}
               />
               <p className="text-xs text-muted-foreground">
-                Wird unter dem Header als Einführungstext angezeigt
+                Wird unter dem Header als Einführungstext angezeigt. Markdown wird unterstützt.
               </p>
             </div>
 
@@ -2195,7 +2201,7 @@ const SupplierPortalTab = () => {
                     rows={3}
                   />
                   <p className="text-xs text-muted-foreground">
-                    Wird als Hinweisbox über der Artikelliste angezeigt
+                    Wird als Hinweisbox über der Artikelliste angezeigt. Markdown wird unterstützt.
                   </p>
                 </div>
 
@@ -2209,7 +2215,7 @@ const SupplierPortalTab = () => {
                     rows={2}
                   />
                   <p className="text-xs text-muted-foreground">
-                    Wird am Ende der Seite angezeigt
+                    Wird am Ende der Seite angezeigt. Markdown wird unterstützt.
                   </p>
                 </div>
               </div>
