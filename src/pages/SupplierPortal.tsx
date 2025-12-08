@@ -284,17 +284,17 @@ const SupplierPortal = () => {
                 {searchTerm ? 'Keine Artikel gefunden' : 'Noch keine Artikel vorhanden'}
               </div>
             ) : (
-              <div className="border rounded-lg overflow-hidden">
+              <div className="border rounded-lg overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="w-[200px]">Artikelname</TableHead>
-                      <TableHead className="w-[120px]">SKU</TableHead>
-                      <TableHead>Beschreibung</TableHead>
-                      <TableHead className="w-[100px]">Einheit</TableHead>
-                      <TableHead className="w-[120px]">Preis (€)</TableHead>
-                      <TableHead className="w-[140px]">Kategorie</TableHead>
-                      <TableHead className="w-[100px]"></TableHead>
+                      <TableHead className="min-w-[280px]">Artikelname</TableHead>
+                      <TableHead className="w-[100px]">SKU</TableHead>
+                      <TableHead className="min-w-[150px]">Beschreibung</TableHead>
+                      <TableHead className="w-[80px]">Einheit</TableHead>
+                      <TableHead className="w-[100px]">Preis (€)</TableHead>
+                      <TableHead className="w-[120px]">Kategorie</TableHead>
+                      <TableHead className="w-[80px]"></TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
