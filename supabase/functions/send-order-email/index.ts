@@ -40,6 +40,9 @@ interface EmailTemplate {
   signature: string;
   article_list_format: string;
   design_style: 'modern' | 'classic' | 'minimalist';
+  footer_text: string;
+  footer_logo_url: string | null;
+  show_powered_by: boolean;
 }
 
 const defaultTemplate: EmailTemplate = {
@@ -50,6 +53,9 @@ const defaultTemplate: EmailTemplate = {
   signature: 'Mit freundlichen Grüßen,\n{restaurant_name}',
   article_list_format: '- {article_name}{sku_suffix}: {quantity} {unit} à €{unit_price} = €{total_price}',
   design_style: 'modern',
+  footer_text: 'Diese Bestellung wurde über OrderFox.pro aufgegeben.',
+  footer_logo_url: null,
+  show_powered_by: true,
 };
 
 // Generate subject line from template
@@ -196,11 +202,13 @@ const generateModernEmail = (data: OrderEmailRequest, template: EmailTemplate): 
             <p style="margin: 0; font-size: 15px; color: #1f2937;">${signature}</p>
           </div>
 
+          ${(template.footer_text || template.show_powered_by) ? `
           <div style="text-align: center; padding-top: 24px; border-top: 1px solid #e5e7eb;">
-            <p style="color: #9ca3af; font-size: 12px; margin: 0;">
-              Diese Bestellung wurde über OrderFox.pro aufgegeben.
-            </p>
+            ${template.footer_logo_url ? `<img src="${template.footer_logo_url}" alt="Logo" style="max-height: 40px; margin-bottom: 12px;" />` : ''}
+            ${template.footer_text ? `<p style="color: #9ca3af; font-size: 12px; margin: 0;">${template.footer_text}</p>` : ''}
+            ${template.show_powered_by ? `<p style="color: #d1d5db; font-size: 10px; margin: 8px 0 0 0;">Powered by OrderFox.pro</p>` : ''}
           </div>
+          ` : ''}
         </div>
       </body>
     </html>
@@ -301,10 +309,14 @@ const generateClassicEmail = (data: OrderEmailRequest, template: EmailTemplate):
           <p style="margin: 0 0 16px 0; font-size: 15px;">${template.closing}</p>
           <p style="margin: 0; font-size: 15px;">${signature}</p>
 
+          ${(template.footer_text || template.show_powered_by) ? `
           <hr style="margin: 32px 0 16px 0; border: none; border-top: 1px solid #e5e7eb;">
-          <p style="color: #9ca3af; font-size: 11px; text-align: center; margin: 0;">
-            Diese Bestellung wurde über OrderFox.pro aufgegeben.
-          </p>
+          <div style="text-align: center;">
+            ${template.footer_logo_url ? `<img src="${template.footer_logo_url}" alt="Logo" style="max-height: 40px; margin-bottom: 12px;" />` : ''}
+            ${template.footer_text ? `<p style="color: #9ca3af; font-size: 11px; margin: 0;">${template.footer_text}</p>` : ''}
+            ${template.show_powered_by ? `<p style="color: #d1d5db; font-size: 10px; margin: 8px 0 0 0;">Powered by OrderFox.pro</p>` : ''}
+          </div>
+          ` : ''}
         </div>
       </body>
     </html>
@@ -368,9 +380,13 @@ const generateMinimalistEmail = (data: OrderEmailRequest, template: EmailTemplat
           <p style="margin: 0; font-size: 15px; color: #374151;">${signature}</p>
         </div>
 
-        <p style="margin-top: 48px; font-size: 11px; color: #9ca3af;">
-          Gesendet über OrderFox.pro
-        </p>
+        ${(template.footer_text || template.show_powered_by) ? `
+        <div style="margin-top: 48px; text-align: center;">
+          ${template.footer_logo_url ? `<img src="${template.footer_logo_url}" alt="Logo" style="max-height: 40px; margin-bottom: 8px;" />` : ''}
+          ${template.footer_text ? `<p style="font-size: 11px; color: #9ca3af; margin: 0;">${template.footer_text}</p>` : ''}
+          ${template.show_powered_by ? `<p style="font-size: 10px; color: #d1d5db; margin: 4px 0 0 0;">Powered by OrderFox.pro</p>` : ''}
+        </div>
+        ` : ''}
       </body>
     </html>
   `;
@@ -489,6 +505,9 @@ serve(async (req) => {
           signature: emailTemplateData.signature || defaultTemplate.signature,
           article_list_format: emailTemplateData.article_list_format || defaultTemplate.article_list_format,
           design_style: emailTemplateData.design_style || defaultTemplate.design_style,
+          footer_text: emailTemplateData.footer_text || defaultTemplate.footer_text,
+          footer_logo_url: emailTemplateData.footer_logo_url || defaultTemplate.footer_logo_url,
+          show_powered_by: emailTemplateData.show_powered_by ?? defaultTemplate.show_powered_by,
         };
         console.log(`Using email template with design_style: ${template.design_style}`);
       } else {

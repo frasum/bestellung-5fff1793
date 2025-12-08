@@ -1067,6 +1067,9 @@ const EmailTemplateTab = () => {
     signature: '',
     article_list_format: '',
     design_style: 'modern' as 'modern' | 'classic' | 'minimalist',
+    footer_text: '',
+    footer_logo_url: '',
+    show_powered_by: true,
   });
 
   // Initialize form with template data or defaults
@@ -1080,6 +1083,9 @@ const EmailTemplateTab = () => {
         signature: template.signature,
         article_list_format: template.article_list_format,
         design_style: template.design_style || 'modern',
+        footer_text: template.footer_text || '',
+        footer_logo_url: template.footer_logo_url || '',
+        show_powered_by: template.show_powered_by ?? true,
       });
     } else {
       setFormData({
@@ -1090,6 +1096,9 @@ const EmailTemplateTab = () => {
         signature: defaultTemplate.signature || '',
         article_list_format: defaultTemplate.article_list_format || '',
         design_style: defaultTemplate.design_style || 'modern',
+        footer_text: defaultTemplate.footer_text || '',
+        footer_logo_url: defaultTemplate.footer_logo_url || '',
+        show_powered_by: defaultTemplate.show_powered_by ?? true,
       });
     }
   });
@@ -1102,6 +1111,9 @@ const EmailTemplateTab = () => {
     signature: template.signature,
     article_list_format: template.article_list_format,
     design_style: template.design_style || 'modern',
+    footer_text: template.footer_text || '',
+    footer_logo_url: template.footer_logo_url || '',
+    show_powered_by: template.show_powered_by ?? true,
   } : formData;
 
   const handleChange = (field: keyof typeof formData, value: string) => {
@@ -1125,6 +1137,9 @@ const EmailTemplateTab = () => {
       signature: defaultTemplate.signature || '',
       article_list_format: defaultTemplate.article_list_format || '',
       design_style: defaultTemplate.design_style || 'modern',
+      footer_text: defaultTemplate.footer_text || '',
+      footer_logo_url: defaultTemplate.footer_logo_url || '',
+      show_powered_by: defaultTemplate.show_powered_by ?? true,
     });
   };
 
@@ -1267,6 +1282,52 @@ const EmailTemplateTab = () => {
               rows={2}
             />
             <p className="text-xs text-muted-foreground">{t('settings.articleListFormatHelp')}</p>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Footer Customization Card */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <FileText className="h-5 w-5" />
+            E-Mail-Footer
+          </CardTitle>
+          <CardDescription>Passen Sie den Footer Ihrer Bestell-E-Mails an</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <Label htmlFor="show-powered-by">"Powered by OrderFox.pro" anzeigen</Label>
+              <p className="text-xs text-muted-foreground">Zeigt einen dezenten Hinweis am Ende der E-Mail</p>
+            </div>
+            <Switch
+              id="show-powered-by"
+              checked={formData.show_powered_by ?? currentData.show_powered_by ?? true}
+              onCheckedChange={(checked) => setFormData(prev => ({ ...prev, show_powered_by: checked }))}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="footer-text">Eigener Footer-Text</Label>
+            <Input
+              id="footer-text"
+              value={formData.footer_text || currentData.footer_text || ''}
+              onChange={(e) => handleChange('footer_text', e.target.value)}
+              placeholder="z.B. Diese Bestellung wurde über Ihr Restaurant gesendet."
+            />
+            <p className="text-xs text-muted-foreground">Dieser Text erscheint am Ende der E-Mail</p>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="footer-logo-url">Logo-URL (optional)</Label>
+            <Input
+              id="footer-logo-url"
+              value={formData.footer_logo_url || currentData.footer_logo_url || ''}
+              onChange={(e) => handleChange('footer_logo_url', e.target.value)}
+              placeholder="https://example.com/logo.png"
+            />
+            <p className="text-xs text-muted-foreground">URL zu Ihrem Logo (wird über dem Footer-Text angezeigt)</p>
           </div>
 
           <div className="flex gap-3">

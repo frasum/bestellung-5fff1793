@@ -16,6 +16,9 @@ export interface EmailTemplate {
   signature: string;
   article_list_format: string;
   design_style: EmailDesignStyle;
+  footer_text: string;
+  footer_logo_url: string | null;
+  show_powered_by: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -28,6 +31,9 @@ export interface EmailTemplateUpdate {
   signature?: string;
   article_list_format?: string;
   design_style?: EmailDesignStyle;
+  footer_text?: string;
+  footer_logo_url?: string | null;
+  show_powered_by?: boolean;
 }
 
 export const useEmailTemplate = () => {
@@ -127,4 +133,7 @@ export const getDefaultTemplate = (): EmailTemplateUpdate => ({
   signature: 'Mit freundlichen Grüßen,\n{restaurant_name}',
   article_list_format: '- {article_name}{sku_suffix}: {quantity} {unit} à €{unit_price} = €{total_price}',
   design_style: 'modern',
+  footer_text: 'Diese Bestellung wurde über OrderFox.pro aufgegeben.',
+  footer_logo_url: null,
+  show_powered_by: true,
 });
