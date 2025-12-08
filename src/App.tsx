@@ -16,7 +16,6 @@ import Orders from "./pages/Orders";
 
 import Reports from "./pages/Reports";
 import Settings from "./pages/Settings";
-import Inventory from "./pages/Inventory";
 import SupplierLogin from "./pages/SupplierLogin";
 import SupplierAuth from "./pages/SupplierAuth";
 import SupplierPortal from "./pages/SupplierPortal";
@@ -45,7 +44,7 @@ const App = () => (
                 <Route path="/orders" element={<Orders />} />
                 <Route path="/drafts" element={<Navigate to="/orders?tab=drafts" replace />} />
                 <Route path="/reports" element={<Reports />} />
-                <Route path="/inventory" element={<Inventory />} />
+                <Route path="/inventory" element={<Navigate to="/reports?tab=inventur" replace />} />
                 <Route path="/settings" element={<Settings />} />
                 <Route path="/supplier-login" element={<SupplierLogin />} />
                 <Route path="/supplier-auth" element={<SupplierAuth />} />

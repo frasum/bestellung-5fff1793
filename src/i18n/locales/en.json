@@ -235,6 +235,8 @@
   "reports": {
     "title": "Reports",
     "description": "Spending analysis and statistics",
+    "overview": "Overview",
+    "inventoryTab": "Inventory",
     "totalSpent": "Total Spent",
     "orderCount": "Order Count",
     "avgOrderValue": "Avg Order Value",

@@ -236,6 +236,8 @@
   "reports": {
     "title": "Berichte",
     "description": "Ausgabenanalyse und Statistiken",
+    "overview": "Übersicht",
+    "inventoryTab": "Inventur",
     "totalSpent": "Gesamtausgaben",
     "orderCount": "Anzahl Bestellungen",
     "avgOrderValue": "Ø Bestellwert",

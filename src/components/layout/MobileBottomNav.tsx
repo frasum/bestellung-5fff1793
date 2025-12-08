@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Users, ShoppingCart, ClipboardList, MoreHorizontal } from 'lucide-react';
+import { LayoutDashboard, Users, ShoppingCart, MoreHorizontal, BarChart3 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useCart } from '@/contexts/CartContext';
 import { Badge } from '@/components/ui/badge';
@@ -10,7 +10,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from '@/components/ui/sheet';
-import { FileText, BarChart3, Settings, LogOut } from 'lucide-react';
+import { FileText, Settings, LogOut } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -21,12 +21,11 @@ const mainNavItems = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/suppliers', label: 'Katalog', icon: Users },
   { href: '/cart', label: 'Warenkorb', icon: ShoppingCart, showBadge: true },
-  { href: '/inventory', label: 'Inventur', icon: ClipboardList },
+  { href: '/reports', label: 'Berichte', icon: BarChart3 },
 ];
 
 const moreNavItems = [
   { href: '/orders', label: 'Bestellungen', icon: ShoppingCart },
-  { href: '/reports', label: 'Berichte', icon: BarChart3 },
   { href: '/settings', label: 'Einstellungen', icon: Settings },
 ];
 

@@ -235,6 +235,8 @@
   "reports": {
     "title": "Report",
     "description": "Analisi delle spese e statistiche",
+    "overview": "Panoramica",
+    "inventoryTab": "Inventario",
     "totalSpent": "Spesa totale",
     "orderCount": "Numero ordini",
     "avgOrderValue": "Valore medio ordine",
