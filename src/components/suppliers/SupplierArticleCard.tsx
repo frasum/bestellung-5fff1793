@@ -185,23 +185,10 @@ export function SupplierArticleCard({
           </div>
         </div>
 
-        {/* Category */}
+        {/* Category (read-only) */}
         <div>
           <label className="text-xs text-muted-foreground font-medium">Kategorie</label>
-          <Input
-            value={(getDisplayValue('category') as string) || ''}
-            onChange={(e) => onFieldChange(article.id, 'category', e.target.value || null)}
-            className={cn("h-11 mt-1", hasPendingChange('category') && "border-amber-500")}
-            placeholder="—"
-          />
-          {getPendingChangeForField('category') && (
-            <p className="text-xs mt-1">
-              <span className="text-amber-600">Ausstehend</span>
-              <span className="text-muted-foreground ml-1">
-                (vorher: {getPendingChangeForField('category')?.old_value || '—'})
-              </span>
-            </p>
-          )}
+          <p className="text-sm mt-1 py-2">{article.category || '—'}</p>
         </div>
       </div>
 
