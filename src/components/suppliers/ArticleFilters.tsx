@@ -24,6 +24,7 @@ interface ArticleFiltersProps {
   onAdvancedViewChange: (value: boolean) => void;
   hasFilters: boolean;
   onClearFilters: () => void;
+  showAdvancedToggle?: boolean;
 }
 
 export const ArticleFilters = ({
@@ -40,7 +41,8 @@ export const ArticleFilters = ({
   advancedViewEnabled,
   onAdvancedViewChange,
   hasFilters,
-  onClearFilters
+  onClearFilters,
+  showAdvancedToggle = false
 }: ArticleFiltersProps) => {
   return (
     <div className="flex flex-col sm:flex-row gap-4">
@@ -102,10 +104,12 @@ export const ArticleFilters = ({
           <X className="w-4 h-4" />
         </Button>
       )}
-      <div className="flex items-center gap-2">
-        <Switch id="advanced-view" checked={advancedViewEnabled} onCheckedChange={onAdvancedViewChange} />
-        <Label htmlFor="advanced-view" className="text-sm cursor-pointer whitespace-nowrap">Mehrfachauswahl</Label>
-      </div>
+      {showAdvancedToggle && (
+        <div className="flex items-center gap-2">
+          <Switch id="advanced-view" checked={advancedViewEnabled} onCheckedChange={onAdvancedViewChange} />
+          <Label htmlFor="advanced-view" className="text-sm cursor-pointer whitespace-nowrap">Mehrfachauswahl</Label>
+        </div>
+      )}
     </div>
   );
 };

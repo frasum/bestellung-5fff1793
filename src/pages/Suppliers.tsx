@@ -483,6 +483,7 @@ const Suppliers = () => {
               onMultiSelectChange={setSupplierMultiSelectEnabled}
               selectedCount={selectedSuppliers.size}
               onPrintCombined={handlePrintCombined}
+              showMultiSelectToggle={advancedSettingsEnabled}
             />
 
             {/* Suppliers Table */}
@@ -598,6 +599,7 @@ const Suppliers = () => {
               advancedViewEnabled={articleAdvancedViewEnabled}
               onAdvancedViewChange={setArticleAdvancedViewEnabled}
               hasFilters={articleSearchQuery !== '' || selectedArticleSuppliers.length > 0 || selectedCategory !== 'all'}
+              showAdvancedToggle={advancedSettingsEnabled}
               onClearFilters={() => {
                 setArticleSearchQuery('');
                 setSelectedArticleSuppliers([]);
