@@ -863,6 +863,53 @@ export type Database = {
           },
         ]
       }
+      supplier_portal_settings: {
+        Row: {
+          card_description: string
+          card_title: string
+          created_at: string
+          footer_text: string | null
+          id: string
+          info_text: string | null
+          organization_id: string
+          portal_title: string
+          updated_at: string
+          welcome_message: string | null
+        }
+        Insert: {
+          card_description?: string
+          card_title?: string
+          created_at?: string
+          footer_text?: string | null
+          id?: string
+          info_text?: string | null
+          organization_id: string
+          portal_title?: string
+          updated_at?: string
+          welcome_message?: string | null
+        }
+        Update: {
+          card_description?: string
+          card_title?: string
+          created_at?: string
+          footer_text?: string | null
+          id?: string
+          info_text?: string | null
+          organization_id?: string
+          portal_title?: string
+          updated_at?: string
+          welcome_message?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supplier_portal_settings_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: true
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       supplier_portal_tokens: {
         Row: {
           created_at: string
