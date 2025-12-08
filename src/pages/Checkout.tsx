@@ -11,6 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerFooter } from '@/components/ui/drawer';
 import { useCreateOrder } from '@/hooks/useOrders';
 import { useDeliveryAddresses } from '@/hooks/useSettings';
 import { ArrowLeft, CalendarIcon, CheckCircle2, Clock, Eye, Loader2, Mail, MapPin, Minus, Plus, Send, Settings, Store, Trash2 } from 'lucide-react';
@@ -53,6 +54,7 @@ const Checkout = () => {
   const [emailPreviews, setEmailPreviews] = useState<EmailPreviewData[]>([]);
   const [pendingOrderData, setPendingOrderData] = useState<CheckoutFormData | null>(null);
   const [calendarOpen, setCalendarOpen] = useState(false);
+  const [showMobileForm, setShowMobileForm] = useState(false);
 
   const defaultAddress = deliveryAddresses?.find(a => a.is_default);
 
@@ -292,88 +294,324 @@ const Checkout = () => {
     );
   }
 
+  // Reusable form content for both desktop and mobile
+  const renderFormContent = (isMobile: boolean = false) => (
+    <form onSubmit={form.handleSubmit(handlePreviewEmails)} className="space-y-4">
+      <div className="space-y-2">
+        <Label>
+          <MapPin className="w-4 h-4 inline mr-1" />
+          Lieferadresse *
+        </Label>
+        {addressesLoading ? (
+          <div className="flex items-center gap-2 text-muted-foreground text-sm py-2">
+            <Loader2 className="w-4 h-4 animate-spin" />
+            Lade Adressen...
+          </div>
+        ) : deliveryAddresses && deliveryAddresses.length > 0 ? (
+          <Controller
+            control={form.control}
+            name="deliveryAddressId"
+            render={({ field }) => (
+              <Select onValueChange={field.onChange} value={field.value}>
+                <SelectTrigger className={isMobile ? "h-12" : ""}>
+                  <SelectValue placeholder="Adresse wählen" />
+                </SelectTrigger>
+                <SelectContent>
+                  {deliveryAddresses.map((address) => (
+                    <SelectItem key={address.id} value={address.id}>
+                      <span className="flex items-center gap-2">
+                        {address.label}
+                        {address.is_default && (
+                          <span className="text-xs bg-primary/10 text-primary px-1.5 py-0.5 rounded">
+                            Standard
+                          </span>
+                        )}
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          />
+        ) : (
+          <div className="text-sm text-muted-foreground border border-dashed border-border rounded-md p-4 text-center">
+            <p className="mb-2">Keine Lieferadressen hinterlegt</p>
+            <Button variant="outline" size="sm" onClick={() => navigate('/settings')}>
+              <Settings className="w-4 h-4 mr-2" />
+              In Einstellungen hinzufügen
+            </Button>
+          </div>
+        )}
+        {form.formState.errors.deliveryAddressId && (
+          <p className="text-sm text-destructive">
+            {form.formState.errors.deliveryAddressId.message}
+          </p>
+        )}
+      </div>
+
+      <div className="space-y-2">
+        <Label>
+          <CalendarIcon className="w-4 h-4 inline mr-1" />
+          Lieferdatum *
+        </Label>
+        <Controller
+          control={form.control}
+          name="deliveryDate"
+          render={({ field }) => (
+            <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "w-full justify-start text-left font-normal",
+                    isMobile && "h-12",
+                    !field.value && "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {field.value ? format(field.value, "PPP", { locale: de }) : "Datum wählen"}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={field.value}
+                  onSelect={(date) => {
+                    field.onChange(date);
+                    setCalendarOpen(false);
+                  }}
+                  disabled={(date) => date < new Date()}
+                  initialFocus
+                  className="pointer-events-auto"
+                />
+              </PopoverContent>
+            </Popover>
+          )}
+        />
+        {form.formState.errors.deliveryDate && (
+          <p className="text-sm text-destructive">
+            {form.formState.errors.deliveryDate.message}
+          </p>
+        )}
+      </div>
+
+      <div className="space-y-2">
+        <Label>
+          <Clock className="w-4 h-4 inline mr-1" />
+          Zeitfenster *
+        </Label>
+        <Controller
+          control={form.control}
+          name="deliveryTimeWindow"
+          render={({ field }) => (
+            <Select onValueChange={field.onChange} value={field.value}>
+              <SelectTrigger className={isMobile ? "h-12" : ""}>
+                <SelectValue placeholder="Zeitfenster wählen" />
+              </SelectTrigger>
+              <SelectContent>
+                {TIME_WINDOWS.map((tw) => (
+                  <SelectItem key={tw.value} value={tw.value}>
+                    {tw.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+        />
+        {form.formState.errors.deliveryTimeWindow && (
+          <p className="text-sm text-destructive">
+            {form.formState.errors.deliveryTimeWindow.message}
+          </p>
+        )}
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor={isMobile ? "notes-mobile" : "notes"}>Notizen (Optional)</Label>
+        <Textarea
+          id={isMobile ? "notes-mobile" : "notes"}
+          {...form.register('notes')}
+          placeholder="Besondere Anweisungen, Hinweise zur Lieferung, etc."
+          rows={3}
+        />
+      </div>
+
+      {!isMobile && (
+        <>
+          <div className="border-t border-border pt-4 space-y-2">
+            <div className="flex justify-between text-sm">
+              <span className="text-muted-foreground">Orders to place</span>
+              <span className="text-foreground">{Object.keys(itemsBySupplier).length}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="font-semibold text-foreground">Total</span>
+              <span className="font-bold text-xl text-foreground">€{getTotal().toFixed(2)}</span>
+            </div>
+          </div>
+
+          <Button type="submit" className="w-full" size="lg">
+            <Eye className="w-4 h-4 mr-2" />
+            E-Mail Vorschau anzeigen
+          </Button>
+
+          <p className="text-xs text-muted-foreground text-center">
+            Orders will be emailed to each supplier immediately
+          </p>
+        </>
+      )}
+
+      {isMobile && (
+        <Button type="submit" className="w-full h-12" size="lg">
+          <Eye className="w-5 h-5 mr-2" />
+          E-Mail Vorschau anzeigen
+        </Button>
+      )}
+    </form>
+  );
+
   return (
     <DashboardLayout>
-      <div className="max-w-4xl mx-auto">
-        <Button variant="ghost" onClick={() => navigate('/cart')} className="mb-6">
+      <div className="max-w-4xl mx-auto pb-32 lg:pb-0">
+        <Button variant="ghost" onClick={() => navigate('/cart')} className="mb-4 lg:mb-6">
           <ArrowLeft className="w-4 h-4 mr-2" />
-          Back to Cart
+          <span className="hidden sm:inline">Back to Cart</span>
+          <span className="sm:hidden">Zurück</span>
         </Button>
 
-        <h1 className="text-3xl font-bold text-foreground mb-2">Checkout</h1>
-        <p className="text-muted-foreground mb-8">
+        <h1 className="text-2xl lg:text-3xl font-bold text-foreground mb-1 lg:mb-2">Checkout</h1>
+        <p className="text-sm lg:text-base text-muted-foreground mb-4 lg:mb-8">
           Review your orders and provide delivery details
         </p>
 
-        <div className="grid lg:grid-cols-3 gap-6">
+        <div className="grid lg:grid-cols-3 gap-4 lg:gap-6">
           {/* Order Summary */}
           <div className="lg:col-span-2 space-y-6">
             {Object.values(itemsBySupplier).map(({ supplierId, supplierName, items: supplierItems, total }) => (
               <div key={supplierId} className="bg-card border border-border rounded-xl overflow-hidden">
-                <div className="bg-muted/50 px-6 py-4 border-b border-border flex items-center justify-between">
+                {/* Mobile: Compact header */}
+                <div className="bg-muted/50 px-4 lg:px-6 py-3 lg:py-4 border-b border-border flex items-center justify-between min-h-[52px]">
                   <div className="flex items-center gap-2">
-                    <Send className="w-4 h-4 text-primary" />
-                    <h3 className="font-semibold text-foreground">{supplierName}</h3>
+                    <Send className="w-4 h-4 text-primary flex-shrink-0" />
+                    <h3 className="font-semibold text-foreground text-sm lg:text-base truncate">{supplierName}</h3>
                   </div>
-                  <span className="text-sm text-muted-foreground">
-                    {supplierItems.length} item{supplierItems.length > 1 ? 's' : ''}
-                  </span>
+                  <div className="flex items-center gap-2 lg:gap-3 flex-shrink-0">
+                    <span className="text-xs lg:text-sm text-muted-foreground">
+                      {supplierItems.length} {supplierItems.length > 1 ? 'Artikel' : 'Artikel'}
+                    </span>
+                    <span className="font-bold text-foreground text-sm lg:text-base lg:hidden">
+                      €{total.toFixed(2)}
+                    </span>
+                  </div>
                 </div>
                 <div className="divide-y divide-border">
                   {supplierItems.map((item) => (
-                    <div key={item.article.id} className="p-4 flex items-center justify-between gap-4">
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium text-foreground truncate">{item.article.name}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {item.article.sku && <span className="mr-2">SKU: {item.article.sku}</span>}
+                    <div key={item.article.id}>
+                      {/* Mobile: Stacked layout */}
+                      <div className="p-4 sm:hidden">
+                        <div className="flex justify-between items-start mb-2">
+                          <p className="font-medium text-foreground text-sm flex-1 pr-2">{item.article.name}</p>
+                          <p className="font-semibold text-foreground text-sm flex-shrink-0">
+                            €{(Number(item.article.price) * item.quantity).toFixed(2)}
+                          </p>
+                        </div>
+                        <p className="text-xs text-muted-foreground mb-3">
+                          {item.article.sku && <span>SKU: {item.article.sku} • </span>}
                           {item.article.unit} × €{Number(item.article.price).toFixed(2)}
                         </p>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className="flex items-center gap-1">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-1">
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="icon"
+                              className="h-10 w-10"
+                              onClick={() => updateQuantity(item.article.id, item.quantity - 1)}
+                            >
+                              <Minus className="h-4 w-4" />
+                            </Button>
+                            <Input
+                              type="number"
+                              min="1"
+                              value={item.quantity}
+                              onChange={(e) => updateQuantity(item.article.id, parseInt(e.target.value) || 1)}
+                              className="w-14 h-10 text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                            />
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="icon"
+                              className="h-10 w-10"
+                              onClick={() => updateQuantity(item.article.id, item.quantity + 1)}
+                            >
+                              <Plus className="h-4 w-4" />
+                            </Button>
+                          </div>
                           <Button
                             type="button"
-                            variant="outline"
+                            variant="ghost"
                             size="icon"
-                            className="h-8 w-8"
-                            onClick={() => updateQuantity(item.article.id, item.quantity - 1)}
+                            className="h-10 w-10 text-destructive hover:text-destructive"
+                            onClick={() => removeItem(item.article.id)}
                           >
-                            <Minus className="h-3 w-3" />
-                          </Button>
-                          <Input
-                            type="number"
-                            min="1"
-                            value={item.quantity}
-                            onChange={(e) => updateQuantity(item.article.id, parseInt(e.target.value) || 1)}
-                            className="w-16 h-8 text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                          />
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="icon"
-                            className="h-8 w-8"
-                            onClick={() => updateQuantity(item.article.id, item.quantity + 1)}
-                          >
-                            <Plus className="h-3 w-3" />
+                            <Trash2 className="h-5 w-5" />
                           </Button>
                         </div>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-destructive hover:text-destructive"
-                          onClick={() => removeItem(item.article.id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                        <p className="font-semibold text-foreground w-20 text-right">
-                          €{(Number(item.article.price) * item.quantity).toFixed(2)}
-                        </p>
+                      </div>
+                      
+                      {/* Desktop: Original inline layout */}
+                      <div className="p-4 hidden sm:flex items-center justify-between gap-4">
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-foreground truncate">{item.article.name}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {item.article.sku && <span className="mr-2">SKU: {item.article.sku}</span>}
+                            {item.article.unit} × €{Number(item.article.price).toFixed(2)}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-1">
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="icon"
+                              className="h-8 w-8"
+                              onClick={() => updateQuantity(item.article.id, item.quantity - 1)}
+                            >
+                              <Minus className="h-3 w-3" />
+                            </Button>
+                            <Input
+                              type="number"
+                              min="1"
+                              value={item.quantity}
+                              onChange={(e) => updateQuantity(item.article.id, parseInt(e.target.value) || 1)}
+                              className="w-16 h-8 text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                            />
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="icon"
+                              className="h-8 w-8"
+                              onClick={() => updateQuantity(item.article.id, item.quantity + 1)}
+                            >
+                              <Plus className="h-3 w-3" />
+                            </Button>
+                          </div>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-destructive hover:text-destructive"
+                            onClick={() => removeItem(item.article.id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                          <p className="font-semibold text-foreground w-20 text-right">
+                            €{(Number(item.article.price) * item.quantity).toFixed(2)}
+                          </p>
+                        </div>
                       </div>
                     </div>
                   ))}
                 </div>
-                <div className="bg-muted/30 px-6 py-3 flex justify-between">
+                <div className="bg-muted/30 px-4 lg:px-6 py-3 hidden lg:flex justify-between">
                   <span className="font-medium text-foreground">Subtotal</span>
                   <span className="font-bold text-foreground">€{total.toFixed(2)}</span>
                 </div>
@@ -381,172 +619,43 @@ const Checkout = () => {
             ))}
           </div>
 
-          {/* Checkout Form */}
-          <div className="lg:col-span-1">
+          {/* Checkout Form - Desktop only */}
+          <div className="hidden lg:block lg:col-span-1">
             <div className="bg-card border border-border rounded-xl p-6 sticky top-6">
               <h2 className="text-lg font-semibold text-foreground mb-4">Delivery Details</h2>
-              <form onSubmit={form.handleSubmit(handlePreviewEmails)} className="space-y-4">
-                <div className="space-y-2">
-                  <Label>
-                    <MapPin className="w-4 h-4 inline mr-1" />
-                    Lieferadresse *
-                  </Label>
-                  {addressesLoading ? (
-                    <div className="flex items-center gap-2 text-muted-foreground text-sm py-2">
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      Lade Adressen...
-                    </div>
-                  ) : deliveryAddresses && deliveryAddresses.length > 0 ? (
-                    <Controller
-                      control={form.control}
-                      name="deliveryAddressId"
-                      render={({ field }) => (
-                        <Select onValueChange={field.onChange} value={field.value}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Adresse wählen" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {deliveryAddresses.map((address) => (
-                              <SelectItem key={address.id} value={address.id}>
-                                <span className="flex items-center gap-2">
-                                  {address.label}
-                                  {address.is_default && (
-                                    <span className="text-xs bg-primary/10 text-primary px-1.5 py-0.5 rounded">
-                                      Standard
-                                    </span>
-                                  )}
-                                </span>
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      )}
-                    />
-                  ) : (
-                    <div className="text-sm text-muted-foreground border border-dashed border-border rounded-md p-4 text-center">
-                      <p className="mb-2">Keine Lieferadressen hinterlegt</p>
-                      <Button variant="outline" size="sm" onClick={() => navigate('/settings')}>
-                        <Settings className="w-4 h-4 mr-2" />
-                        In Einstellungen hinzufügen
-                      </Button>
-                    </div>
-                  )}
-                  {form.formState.errors.deliveryAddressId && (
-                    <p className="text-sm text-destructive">
-                      {form.formState.errors.deliveryAddressId.message}
-                    </p>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <Label>
-                    <CalendarIcon className="w-4 h-4 inline mr-1" />
-                    Lieferdatum *
-                  </Label>
-                  <Controller
-                    control={form.control}
-                    name="deliveryDate"
-                    render={({ field }) => (
-                      <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
-                        <PopoverTrigger asChild>
-                          <Button
-                            variant="outline"
-                            className={cn(
-                              "w-full justify-start text-left font-normal",
-                              !field.value && "text-muted-foreground"
-                            )}
-                          >
-                            <CalendarIcon className="mr-2 h-4 w-4" />
-                            {field.value ? format(field.value, "PPP", { locale: de }) : "Datum wählen"}
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar
-                            mode="single"
-                            selected={field.value}
-                            onSelect={(date) => {
-                              field.onChange(date);
-                              setCalendarOpen(false);
-                            }}
-                            disabled={(date) => date < new Date()}
-                            initialFocus
-                            className="pointer-events-auto"
-                          />
-                        </PopoverContent>
-                      </Popover>
-                    )}
-                  />
-                  {form.formState.errors.deliveryDate && (
-                    <p className="text-sm text-destructive">
-                      {form.formState.errors.deliveryDate.message}
-                    </p>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <Label>
-                    <Clock className="w-4 h-4 inline mr-1" />
-                    Zeitfenster *
-                  </Label>
-                  <Controller
-                    control={form.control}
-                    name="deliveryTimeWindow"
-                    render={({ field }) => (
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Zeitfenster wählen" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {TIME_WINDOWS.map((tw) => (
-                            <SelectItem key={tw.value} value={tw.value}>
-                              {tw.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    )}
-                  />
-                  {form.formState.errors.deliveryTimeWindow && (
-                    <p className="text-sm text-destructive">
-                      {form.formState.errors.deliveryTimeWindow.message}
-                    </p>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="notes">Notizen (Optional)</Label>
-                  <Textarea
-                    id="notes"
-                    {...form.register('notes')}
-                    placeholder="Besondere Anweisungen, Hinweise zur Lieferung, etc."
-                    rows={3}
-                  />
-                </div>
-
-                <div className="border-t border-border pt-4 space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Orders to place</span>
-                    <span className="text-foreground">{Object.keys(itemsBySupplier).length}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="font-semibold text-foreground">Total</span>
-                    <span className="font-bold text-xl text-foreground">€{getTotal().toFixed(2)}</span>
-                  </div>
-                </div>
-
-                <Button type="submit" className="w-full" size="lg">
-                  <Eye className="w-4 h-4 mr-2" />
-                  E-Mail Vorschau anzeigen
-                </Button>
-
-                <p className="text-xs text-muted-foreground text-center">
-                  Orders will be emailed to each supplier immediately
-                </p>
-              </form>
+              {renderFormContent(false)}
             </div>
           </div>
         </div>
       </div>
+
+      {/* Mobile Sticky Footer */}
+      <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border p-4 lg:hidden z-50 safe-area-bottom">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm text-muted-foreground">
+              {Object.keys(itemsBySupplier).length} Bestellung(en)
+            </p>
+            <p className="text-xl font-bold text-foreground">€{getTotal().toFixed(2)}</p>
+          </div>
+          <Button onClick={() => setShowMobileForm(true)} className="h-12 px-6">
+            Lieferdetails
+            <ArrowLeft className="w-4 h-4 ml-2 rotate-180" />
+          </Button>
+        </div>
+      </div>
+
+      {/* Mobile Form Drawer */}
+      <Drawer open={showMobileForm} onOpenChange={setShowMobileForm}>
+        <DrawerContent className="max-h-[90vh]">
+          <DrawerHeader className="text-left">
+            <DrawerTitle>Lieferdetails</DrawerTitle>
+          </DrawerHeader>
+          <div className="px-4 pb-4 overflow-y-auto">
+            {renderFormContent(true)}
+          </div>
+        </DrawerContent>
+      </Drawer>
 
       <EmailPreviewDialog
         open={showEmailPreview}
