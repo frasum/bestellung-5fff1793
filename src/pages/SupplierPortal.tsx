@@ -12,8 +12,14 @@ import { LogOut, Save, Search, Package, Loader2, Clock } from 'lucide-react';
 import logo from '@/assets/logo.png';
 import { SupplierArticleCard } from '@/components/suppliers/SupplierArticleCard';
 import { SupplierUnitSelect } from '@/components/suppliers/SupplierUnitSelect';
+import { SupplierCategorySelect } from '@/components/suppliers/SupplierCategorySelect';
 
 interface Unit {
+  id: string;
+  name: string;
+}
+
+interface Category {
   id: string;
   name: string;
 }
@@ -67,6 +73,7 @@ const SupplierPortal = () => {
   const [editedArticles, setEditedArticles] = useState<Record<string, Partial<Article>>>({});
   const [priceInputs, setPriceInputs] = useState<Record<string, string>>({});
   const [units, setUnits] = useState<Unit[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [portalSettings, setPortalSettings] = useState<PortalSettings>({
     portal_title: 'Lieferantenportal',
     welcome_message: null,
@@ -132,6 +139,20 @@ const SupplierPortal = () => {
 
         if (!unitsError && unitsData?.units) {
           setUnits(unitsData.units);
+        }
+
+        // Fetch categories
+        const { data: categoriesData, error: categoriesError } = await supabase.functions.invoke('supplier-portal-articles', {
+          body: {
+            action: 'get-categories',
+            supplierId: session.supplierId,
+            organizationId: session.organizationId,
+            sessionToken: session.sessionToken,
+          },
+        });
+
+        if (!categoriesError && categoriesData?.categories) {
+          setCategories(categoriesData.categories);
         }
 
         // Fetch articles
@@ -284,6 +305,36 @@ const SupplierPortal = () => {
         return [...prev, data.unit].sort((a, b) => a.name.localeCompare(b.name, 'de'));
       });
       toast.success(`Einheit "${unitName}" hinzugefügt`);
+    }
+  };
+
+  const handleCreateCategory = async (categoryName: string) => {
+    if (!session) return;
+    
+    const { data, error } = await supabase.functions.invoke('supplier-portal-articles', {
+      body: {
+        action: 'create-category',
+        supplierId: session.supplierId,
+        organizationId: session.organizationId,
+        sessionToken: session.sessionToken,
+        categoryName,
+      },
+    });
+
+    if (error) {
+      toast.error('Fehler beim Erstellen der Kategorie');
+      throw error;
+    }
+
+    if (data?.category) {
+      setCategories(prev => {
+        // Check if category already exists
+        if (prev.some(c => c.id === data.category.id)) {
+          return prev;
+        }
+        return [...prev, data.category].sort((a, b) => a.name.localeCompare(b.name, 'de'));
+      });
+      toast.success(`Kategorie "${categoryName}" hinzugefügt`);
     }
   };
 
@@ -504,7 +555,14 @@ const SupplierPortal = () => {
                               </div>
                             </TableCell>
                             <TableCell>
-                              <span className="text-muted-foreground">{article.category || '—'}</span>
+                              <SupplierCategorySelect
+                                value={(getDisplayValue(article, 'category') as string) || ''}
+                                categories={categories}
+                                onChange={(value) => handleFieldChange(article.id, 'category', value)}
+                                onCreateCategory={handleCreateCategory}
+                                hasPending={hasPendingChange(article.id, 'category')}
+                                pendingInfo={getPendingChangeForField(article.id, 'category')}
+                              />
                             </TableCell>
                             <TableCell>
                               <Button
@@ -541,12 +599,14 @@ const SupplierPortal = () => {
                       pendingChanges={pendingChanges}
                       saving={saving}
                       units={units}
+                      categories={categories}
                       onFieldChange={handleFieldChange}
                       onPriceChange={(articleId, value) => {
                         setPriceInputs(prev => ({ ...prev, [articleId]: value }));
                       }}
                       onSave={handleSave}
                       onCreateUnit={handleCreateUnit}
+                      onCreateCategory={handleCreateCategory}
                     />
                   ))}
                 </div>
