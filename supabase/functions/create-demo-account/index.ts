@@ -86,6 +86,9 @@ const DEMO_SUPPLIERS = [
   }
 ];
 
+const RATE_LIMIT_MAX = 5; // Max demo accounts per IP per day
+const RATE_LIMIT_WINDOW_HOURS = 24;
+
 serve(async (req) => {
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
@@ -100,6 +103,39 @@ serve(async (req) => {
       auth: { autoRefreshToken: false, persistSession: false }
     });
 
+    // Get client IP address for rate limiting
+    const clientIP = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() 
+      || req.headers.get('x-real-ip') 
+      || req.headers.get('cf-connecting-ip')
+      || 'unknown';
+    
+    console.log(`Demo account request from IP: ${clientIP}`);
+
+    // Check rate limit
+    const windowStart = new Date();
+    windowStart.setHours(windowStart.getHours() - RATE_LIMIT_WINDOW_HOURS);
+    
+    const { count: requestCount, error: countError } = await supabase
+      .from('demo_account_rate_limits')
+      .select('*', { count: 'exact', head: true })
+      .eq('ip_address', clientIP)
+      .gte('created_at', windowStart.toISOString());
+
+    if (countError) {
+      console.error('Rate limit check error:', countError);
+    }
+
+    if (requestCount !== null && requestCount >= RATE_LIMIT_MAX) {
+      console.log(`Rate limit exceeded for IP: ${clientIP} (${requestCount}/${RATE_LIMIT_MAX})`);
+      return new Response(
+        JSON.stringify({ 
+          error: 'Zu viele Demo-Accounts erstellt. Bitte versuchen Sie es später erneut.',
+          retryAfter: RATE_LIMIT_WINDOW_HOURS 
+        }),
+        { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     const { email }: DemoRequest = await req.json();
 
     if (!email || !email.includes('@')) {
@@ -110,6 +146,16 @@ serve(async (req) => {
     }
 
     console.log(`Creating demo account for: ${email}`);
+
+    // Record this attempt for rate limiting (before checking email to prevent enumeration)
+    await supabase
+      .from('demo_account_rate_limits')
+      .insert({ ip_address: clientIP });
+
+    // Cleanup old rate limit entries periodically (1% chance per request)
+    if (Math.random() < 0.01) {
+      await supabase.rpc('cleanup_old_rate_limits');
+    }
 
     // Check if email already exists
     const { data: existingUser } = await supabase.auth.admin.listUsers();
