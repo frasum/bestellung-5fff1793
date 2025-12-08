@@ -10,7 +10,7 @@ import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Building2, MapPin, Bell, Plus, Pencil, Trash2, Star, User, Lock, Users, Mail, Clock, X, Globe, FileText, RotateCcw, Moon, Sun, Ruler, Check, Store, Merge, ExternalLink, Upload, ImageIcon, Loader2, Palette } from 'lucide-react';
+import { Building2, MapPin, Bell, Plus, Pencil, Trash2, Star, User, Lock, Users, Mail, Clock, X, Globe, FileText, RotateCcw, Moon, Sun, Ruler, Check, Store, Merge, ExternalLink, Upload, ImageIcon, Loader2, Palette, FlaskConical } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { useColorScheme, colorSchemes } from '@/hooks/useColorScheme';
 import { useSupplierPortalSettings, useUpsertSupplierPortalSettings, DEFAULT_PORTAL_SETTINGS } from '@/hooks/useSupplierPortalSettings';
@@ -53,9 +53,12 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { DemoAccountsTab } from '@/components/settings/DemoAccountsTab';
 
 const Settings = () => {
   const { t } = useTranslation();
+  const { data: userRole } = useUserRole();
+  const isAdmin = userRole === 'admin';
 
   return (
     <DashboardLayout>
@@ -118,6 +121,13 @@ const Settings = () => {
                 <span className="hidden sm:inline">Lieferantenportal</span>
                 <span className="sm:hidden">Portal</span>
               </TabsTrigger>
+              {isAdmin && (
+                <TabsTrigger value="demo-accounts" className="gap-1.5 text-xs sm:text-sm whitespace-nowrap">
+                  <FlaskConical className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                  <span className="hidden sm:inline">Demo-Accounts</span>
+                  <span className="sm:hidden">Demo</span>
+                </TabsTrigger>
+              )}
             </TabsList>
           </div>
 
@@ -160,6 +170,12 @@ const Settings = () => {
           <TabsContent value="supplier-portal">
             <SupplierPortalTab />
           </TabsContent>
+
+          {isAdmin && (
+            <TabsContent value="demo-accounts">
+              <DemoAccountsTab />
+            </TabsContent>
+          )}
         </Tabs>
       </div>
     </DashboardLayout>
