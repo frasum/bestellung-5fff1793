@@ -5,6 +5,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Table, TableBody, TableCell, TableRow } from '@/components/ui/table';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { PriceHistoryPopover } from '@/components/suppliers/PriceHistoryPopover';
+import { ArticleCard } from '@/components/suppliers/ArticleCard';
 import { Article } from '@/hooks/useArticles';
 import { cn } from '@/lib/utils';
 
@@ -43,9 +44,60 @@ export const ArticleTable = ({
   onDelete
 }: ArticleTableProps) => {
   return (
-    <div className="bg-card border border-border rounded-xl overflow-hidden">
-      <Table>
-        <TableBody>
+    <>
+      {/* Mobile Card View */}
+      <div className="md:hidden space-y-4">
+        {groupedBySupplier.map((group) => (
+          <Collapsible 
+            key={group.supplier.id} 
+            open={openSuppliers.has(group.supplier.id)} 
+            onOpenChange={() => onToggleSupplier(group.supplier.id)}
+          >
+            <CollapsibleTrigger className="w-full">
+              <div className={cn(
+                "flex items-center justify-between p-4 rounded-lg bg-card border border-border",
+                getItemsBySupplier().has(group.supplier.id) && "bg-destructive/10 border-destructive/30"
+              )}>
+                <div className="flex items-center gap-2">
+                  <ChevronRight className={cn(
+                    "h-5 w-5 transition-transform text-muted-foreground",
+                    openSuppliers.has(group.supplier.id) && "rotate-90"
+                  )} />
+                  <span className={cn(
+                    "font-semibold",
+                    getItemsBySupplier().has(group.supplier.id) ? "text-destructive" : "text-foreground"
+                  )}>
+                    {group.supplier.name}
+                  </span>
+                </div>
+                <span className="text-sm text-muted-foreground">
+                  {group.articles?.length || 0} Artikel
+                </span>
+              </div>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <div className="space-y-3 pt-3">
+                {group.articles?.map((article) => (
+                  <ArticleCard
+                    key={article.id}
+                    article={article}
+                    cartQty={getCartQuantity(article.id)}
+                    onUpdateQuantity={onUpdateQuantity}
+                    onAddToCart={onAddToCart}
+                    onEdit={onEdit}
+                    onDelete={onDelete}
+                  />
+                ))}
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
+        ))}
+      </div>
+
+      {/* Desktop Table View */}
+      <div className="hidden md:block bg-card border border-border rounded-xl overflow-hidden">
+        <Table>
+          <TableBody>
           {groupedBySupplier.map((group) => (
             <Collapsible key={group.supplier.id} open={openSuppliers.has(group.supplier.id)} onOpenChange={() => onToggleSupplier(group.supplier.id)} asChild>
               <Fragment>
@@ -150,8 +202,9 @@ export const ArticleTable = ({
               </Fragment>
             </Collapsible>
           ))}
-        </TableBody>
-      </Table>
-    </div>
+          </TableBody>
+        </Table>
+      </div>
+    </>
   );
 };

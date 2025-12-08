@@ -34,10 +34,13 @@ export const FloatingCartButton = () => {
     return null;
   }
 
+  // Hide on mobile (we have bottom nav now)
+  // Only show on desktop
+
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <Link to="/cart">
+        <Link to="/cart" className="hidden lg:block">
           <Button
             size="lg"
             className={cn(
