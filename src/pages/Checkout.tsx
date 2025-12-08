@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
 import { useLocationContext } from '@/contexts/LocationContext';
@@ -25,23 +26,25 @@ import { cn } from '@/lib/utils';
 import { EmailPreviewDialog, EmailPreviewData } from '@/components/checkout/EmailPreviewDialog';
 
 const TIME_WINDOWS = [
-  { value: 'morning', label: '06:00 - 10:00 Uhr' },
-  { value: 'late-morning', label: '10:00 - 12:00 Uhr' },
-  { value: 'noon', label: '12:00 - 14:00 Uhr' },
-  { value: 'afternoon', label: '14:00 - 17:00 Uhr' },
-  { value: 'flexible', label: 'Flexibel' },
+  { value: 'morning', label: '06:00 - 10:00' },
+  { value: 'late-morning', label: '10:00 - 12:00' },
+  { value: 'noon', label: '12:00 - 14:00' },
+  { value: 'afternoon', label: '14:00 - 17:00' },
+  { value: 'flexible', label: 'Flexible' },
 ];
 
-const checkoutSchema = z.object({
-  deliveryAddressId: z.string().min(1, 'Bitte wählen Sie eine Lieferadresse'),
-  deliveryDate: z.date({ required_error: 'Bitte wählen Sie ein Lieferdatum' }),
-  deliveryTimeWindow: z.string({ required_error: 'Bitte wählen Sie ein Zeitfenster' }),
-  notes: z.string().optional(),
-});
-
-type CheckoutFormData = z.infer<typeof checkoutSchema>;
-
 const Checkout = () => {
+  const { t } = useTranslation();
+
+  const checkoutSchema = z.object({
+    deliveryAddressId: z.string().min(1, t('validation.required')),
+    deliveryDate: z.date({ required_error: t('validation.required') }),
+    deliveryTimeWindow: z.string({ required_error: t('validation.required') }),
+    notes: z.string().optional(),
+  });
+
+  type CheckoutFormData = z.infer<typeof checkoutSchema>;
+
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const { items, getTotal, clearCart, updateQuantity, removeItem } = useCart();
@@ -263,12 +266,12 @@ const Checkout = () => {
           <div className="w-20 h-20 rounded-full bg-success/20 flex items-center justify-center mx-auto mb-6">
             <CheckCircle2 className="w-10 h-10 text-success" />
           </div>
-          <h1 className="text-3xl font-bold text-foreground mb-4">Orders Placed Successfully!</h1>
+          <h1 className="text-3xl font-bold text-foreground mb-4">{t('checkout.confirmSend')}</h1>
           <p className="text-muted-foreground mb-6">
-            Your orders have been sent to the suppliers. You will receive confirmation emails shortly.
+            {t('orders.emailSent')}
           </p>
           <div className="bg-card border border-border rounded-xl p-6 mb-8">
-            <h2 className="font-semibold text-foreground mb-4">Order Numbers</h2>
+            <h2 className="font-semibold text-foreground mb-4">{t('orders.orderDetails')}</h2>
             <div className="space-y-2">
               {completedOrders.map((order) => {
                 const displayNumber = order.orderNumber.replace(/^ORD/, order.supplierName);
@@ -283,10 +286,10 @@ const Checkout = () => {
           </div>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button variant="outline" onClick={() => navigate('/orders')}>
-              View Orders
+              {t('nav.orders')}
             </Button>
             <Button onClick={() => navigate('/articles')}>
-              Continue Shopping
+              {t('orders.browseArticles')}
             </Button>
           </div>
         </div>
@@ -300,12 +303,12 @@ const Checkout = () => {
       <div className="space-y-2">
         <Label>
           <MapPin className="w-4 h-4 inline mr-1" />
-          Lieferadresse *
+          {t('checkout.selectAddress')} *
         </Label>
         {addressesLoading ? (
           <div className="flex items-center gap-2 text-muted-foreground text-sm py-2">
             <Loader2 className="w-4 h-4 animate-spin" />
-            Lade Adressen...
+            {t('common.loading')}
           </div>
         ) : deliveryAddresses && deliveryAddresses.length > 0 ? (
           <Controller
@@ -314,7 +317,7 @@ const Checkout = () => {
             render={({ field }) => (
               <Select onValueChange={field.onChange} value={field.value}>
                 <SelectTrigger className={isMobile ? "h-12" : ""}>
-                  <SelectValue placeholder="Adresse wählen" />
+                  <SelectValue placeholder={t('checkout.selectAddress')} />
                 </SelectTrigger>
                 <SelectContent>
                   {deliveryAddresses.map((address) => (
@@ -335,10 +338,10 @@ const Checkout = () => {
           />
         ) : (
           <div className="text-sm text-muted-foreground border border-dashed border-border rounded-md p-4 text-center">
-            <p className="mb-2">Keine Lieferadressen hinterlegt</p>
+            <p className="mb-2">{t('settings.noAddresses')}</p>
             <Button variant="outline" size="sm" onClick={() => navigate('/settings')}>
               <Settings className="w-4 h-4 mr-2" />
-              In Einstellungen hinzufügen
+              {t('settings.addAddress')}
             </Button>
           </div>
         )}
@@ -426,11 +429,11 @@ const Checkout = () => {
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor={isMobile ? "notes-mobile" : "notes"}>Notizen (Optional)</Label>
+        <Label htmlFor={isMobile ? "notes-mobile" : "notes"}>{t('checkout.addNotes')}</Label>
         <Textarea
           id={isMobile ? "notes-mobile" : "notes"}
           {...form.register('notes')}
-          placeholder="Besondere Anweisungen, Hinweise zur Lieferung, etc."
+          placeholder={t('checkout.addNotes')}
           rows={3}
         />
       </div>
@@ -439,18 +442,18 @@ const Checkout = () => {
         <>
           <div className="border-t border-border pt-4 space-y-2">
             <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Orders to place</span>
+              <span className="text-muted-foreground">{t('checkout.orderSummary')}</span>
               <span className="text-foreground">{Object.keys(itemsBySupplier).length}</span>
             </div>
             <div className="flex justify-between">
-              <span className="font-semibold text-foreground">Total</span>
+              <span className="font-semibold text-foreground">{t('common.total')}</span>
               <span className="font-bold text-xl text-foreground">€{getTotal().toFixed(2)}</span>
             </div>
           </div>
 
           <Button type="submit" className="w-full" size="lg">
             <Eye className="w-4 h-4 mr-2" />
-            E-Mail Vorschau anzeigen
+            {t('checkout.emailPreview')}
           </Button>
 
           <p className="text-xs text-muted-foreground text-center">
@@ -462,7 +465,7 @@ const Checkout = () => {
       {isMobile && (
         <Button type="submit" className="w-full h-12" size="lg">
           <Eye className="w-5 h-5 mr-2" />
-          E-Mail Vorschau anzeigen
+          {t('checkout.emailPreview')}
         </Button>
       )}
     </form>
@@ -473,13 +476,12 @@ const Checkout = () => {
       <div className="max-w-4xl mx-auto pb-32 lg:pb-0">
         <Button variant="ghost" onClick={() => navigate('/cart')} className="mb-4 lg:mb-6">
           <ArrowLeft className="w-4 h-4 mr-2" />
-          <span className="hidden sm:inline">Back to Cart</span>
-          <span className="sm:hidden">Zurück</span>
+          {t('common.back')}
         </Button>
 
-        <h1 className="text-2xl lg:text-3xl font-bold text-foreground mb-1 lg:mb-2">Checkout</h1>
+        <h1 className="text-2xl lg:text-3xl font-bold text-foreground mb-1 lg:mb-2">{t('checkout.title')}</h1>
         <p className="text-sm lg:text-base text-muted-foreground mb-4 lg:mb-8">
-          Review your orders and provide delivery details
+          {t('checkout.reviewOrders')}
         </p>
 
         <div className="grid lg:grid-cols-3 gap-4 lg:gap-6">
@@ -495,7 +497,7 @@ const Checkout = () => {
                   </div>
                   <div className="flex items-center gap-2 lg:gap-3 flex-shrink-0">
                     <span className="text-xs lg:text-sm text-muted-foreground">
-                      {supplierItems.length} {supplierItems.length > 1 ? 'Artikel' : 'Artikel'}
+                      {t('cart.itemCount', { count: supplierItems.length })}
                     </span>
                     <span className="font-bold text-foreground text-sm lg:text-base lg:hidden">
                       €{total.toFixed(2)}
@@ -612,7 +614,7 @@ const Checkout = () => {
                   ))}
                 </div>
                 <div className="bg-muted/30 px-4 lg:px-6 py-3 hidden lg:flex justify-between">
-                  <span className="font-medium text-foreground">Subtotal</span>
+                  <span className="font-medium text-foreground">{t('cart.subtotal')}</span>
                   <span className="font-bold text-foreground">€{total.toFixed(2)}</span>
                 </div>
               </div>
@@ -622,7 +624,7 @@ const Checkout = () => {
           {/* Checkout Form - Desktop only */}
           <div className="hidden lg:block lg:col-span-1">
             <div className="bg-card border border-border rounded-xl p-6 sticky top-6">
-              <h2 className="text-lg font-semibold text-foreground mb-4">Delivery Details</h2>
+              <h2 className="text-lg font-semibold text-foreground mb-4">{t('checkout.selectAddress')}</h2>
               {renderFormContent(false)}
             </div>
           </div>
@@ -634,12 +636,12 @@ const Checkout = () => {
         <div className="flex items-center justify-between">
           <div>
             <p className="text-sm text-muted-foreground">
-              {Object.keys(itemsBySupplier).length} Bestellung(en)
+              {t('checkout.orderSummary')}
             </p>
             <p className="text-xl font-bold text-foreground">€{getTotal().toFixed(2)}</p>
           </div>
           <Button onClick={() => setShowMobileForm(true)} className="h-12 px-6">
-            Lieferdetails
+            {t('checkout.selectAddress')}
             <ArrowLeft className="w-4 h-4 ml-2 rotate-180" />
           </Button>
         </div>
@@ -649,7 +651,7 @@ const Checkout = () => {
       <Drawer open={showMobileForm} onOpenChange={setShowMobileForm}>
         <DrawerContent className="max-h-[90vh]">
           <DrawerHeader className="text-left">
-            <DrawerTitle>Lieferdetails</DrawerTitle>
+            <DrawerTitle>{t('checkout.selectAddress')}</DrawerTitle>
           </DrawerHeader>
           <div className="px-4 pb-4 overflow-y-auto">
             {renderFormContent(true)}
