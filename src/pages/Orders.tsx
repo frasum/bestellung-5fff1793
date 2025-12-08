@@ -355,9 +355,9 @@ const Orders = () => {
         </div>
 
         {/* Recent Orders Card */}
-        {orders && orders.length > 0 && (
-          <div className="bg-card border border-border rounded-xl p-4">
-            <h2 className="text-base font-semibold text-foreground mb-3">{t('dashboard.recentOrders')}</h2>
+        <div className="bg-card border border-border rounded-xl p-4">
+          <h2 className="text-base font-semibold text-foreground mb-3">{t('dashboard.recentOrders')}</h2>
+          {orders && orders.length > 0 ? (
             <div className="space-y-2">
               {orders.slice(0, 5).map((order) => (
                 <button
@@ -396,8 +396,12 @@ const Orders = () => {
                 </button>
               ))}
             </div>
-          </div>
-        )}
+          ) : (
+            <p className="text-sm text-muted-foreground py-4 text-center">
+              {t('orders.noOrders', 'Noch keine Bestellungen vorhanden')}
+            </p>
+          )}
+        </div>
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
