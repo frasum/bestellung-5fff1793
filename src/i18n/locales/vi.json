@@ -235,6 +235,8 @@
   "reports": {
     "title": "Báo cáo",
     "description": "Phân tích chi tiêu và thống kê",
+    "overview": "Tổng quan",
+    "inventoryTab": "Kho hàng",
     "totalSpent": "Tổng chi tiêu",
     "orderCount": "Số đơn hàng",
     "avgOrderValue": "Giá trị đơn hàng trung bình",

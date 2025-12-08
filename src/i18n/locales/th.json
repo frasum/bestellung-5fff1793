@@ -235,6 +235,8 @@
   "reports": {
     "title": "รายงาน",
     "description": "การวิเคราะห์ค่าใช้จ่ายและสถิติ",
+    "overview": "ภาพรวม",
+    "inventoryTab": "สินค้าคงคลัง",
     "totalSpent": "ยอดใช้จ่ายรวม",
     "orderCount": "จำนวนคำสั่งซื้อ",
     "avgOrderValue": "ยอดสั่งซื้อเฉลี่ย",

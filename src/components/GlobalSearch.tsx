@@ -62,8 +62,8 @@ export function GlobalSearch() {
     { name: t('nav.articles'), href: '/suppliers?tab=articles', icon: Package },
     { name: t('nav.orders'), href: '/orders', icon: ShoppingCart },
     { name: t('nav.drafts'), href: '/orders?tab=drafts', icon: FileText },
-    { name: t('nav.inventory'), href: '/inventory', icon: ClipboardList },
     { name: t('nav.reports'), href: '/reports', icon: BarChart3 },
+    { name: t('nav.inventory'), href: '/reports?tab=inventur', icon: ClipboardList },
     { name: t('nav.settings'), href: '/settings', icon: Settings },
   ];
 
