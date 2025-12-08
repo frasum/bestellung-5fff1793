@@ -1,6 +1,8 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
+const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -88,7 +90,7 @@ serve(async (req) => {
     // Verify supplier exists and belongs to the organization
     const { data: supplier, error: supplierError } = await supabase
       .from('suppliers')
-      .select('id, organization_id')
+      .select('id, organization_id, name')
       .eq('id', supplierId)
       .eq('organization_id', organizationId)
       .single();
@@ -328,7 +330,15 @@ serve(async (req) => {
       }
 
       // Create pending change records for each changed field
-      const changeRecords = [];
+      const changeRecords: Array<{
+        supplier_id: string;
+        organization_id: string;
+        article_id: string;
+        field_name: string;
+        old_value: string | null;
+        new_value: string | null;
+        status: string;
+      }> = [];
       for (const [field, newValue] of Object.entries(changes)) {
         const oldValue = currentArticle[field];
         
@@ -388,6 +398,140 @@ serve(async (req) => {
       }
 
       console.log(`Created ${insertedChanges?.length || 0} pending change(s) for article ${articleId}`);
+
+      // Send notification email to admins (background task)
+      const sendAdminNotification = async () => {
+        try {
+          // Fetch admin users for this organization
+          const { data: adminProfiles, error: adminError } = await supabase
+            .from('profiles')
+            .select('id, email, full_name')
+            .eq('organization_id', organizationId);
+
+          if (adminError) {
+            console.error('Error fetching profiles:', adminError);
+            return;
+          }
+
+          if (!adminProfiles || adminProfiles.length === 0) {
+            console.log('No profiles found for organization');
+            return;
+          }
+
+          // Filter to only admins by checking user_roles
+          const adminEmails: string[] = [];
+          for (const profile of adminProfiles) {
+            const { data: roleData } = await supabase
+              .from('user_roles')
+              .select('role')
+              .eq('user_id', profile.id)
+              .eq('role', 'admin')
+              .maybeSingle();
+            
+            if (roleData) {
+              adminEmails.push(profile.email);
+            }
+          }
+
+          if (adminEmails.length === 0) {
+            console.log('No admin users found for organization');
+            return;
+          }
+
+          // Build change summary for email
+          const changeSummary = changeRecords.map(c => {
+            const fieldLabels: Record<string, string> = {
+              name: 'Artikelname',
+              sku: 'SKU',
+              description: 'Beschreibung',
+              unit: 'Einheit',
+              price: 'Preis',
+              category: 'Kategorie',
+            };
+            const label = fieldLabels[c.field_name] || c.field_name;
+            return `<tr>
+              <td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${label}</td>
+              <td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${c.old_value || '—'}</td>
+              <td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${c.new_value || '—'}</td>
+            </tr>`;
+          }).join('');
+
+          const emailHtml = `
+            <!DOCTYPE html>
+            <html>
+            <head>
+              <meta charset="utf-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            </head>
+            <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 20px; background-color: #f4f4f5;">
+              <div style="max-width: 600px; margin: 0 auto; background-color: white; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                <div style="background-color: #f97316; color: white; padding: 24px; text-align: center;">
+                  <h1 style="margin: 0; font-size: 24px;">🦊 Lieferantenänderung</h1>
+                </div>
+                <div style="padding: 24px;">
+                  <p style="color: #374151; margin: 0 0 16px;">
+                    Der Lieferant <strong>${supplier.name || 'Unbekannt'}</strong> hat Änderungen für einen Artikel eingereicht.
+                  </p>
+                  
+                  <div style="background-color: #f9fafb; border-radius: 6px; padding: 16px; margin-bottom: 16px;">
+                    <p style="margin: 0; color: #6b7280; font-size: 14px;">Artikel</p>
+                    <p style="margin: 4px 0 0; color: #111827; font-weight: 600;">${currentArticle.name}</p>
+                    ${currentArticle.sku ? `<p style="margin: 4px 0 0; color: #6b7280; font-size: 14px;">SKU: ${currentArticle.sku}</p>` : ''}
+                  </div>
+                  
+                  <h3 style="color: #374151; margin: 0 0 12px;">Vorgeschlagene Änderungen</h3>
+                  <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+                    <thead>
+                      <tr style="background-color: #f9fafb;">
+                        <th style="padding: 8px; text-align: left; border-bottom: 1px solid #e5e7eb;">Feld</th>
+                        <th style="padding: 8px; text-align: left; border-bottom: 1px solid #e5e7eb;">Alter Wert</th>
+                        <th style="padding: 8px; text-align: left; border-bottom: 1px solid #e5e7eb;">Neuer Wert</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      ${changeSummary}
+                    </tbody>
+                  </table>
+                  
+                  <p style="color: #6b7280; font-size: 14px; margin: 24px 0 0;">
+                    Bitte prüfen Sie die Änderungen im OrderFox-Dashboard und genehmigen oder lehnen Sie diese ab.
+                  </p>
+                </div>
+                <div style="background-color: #f9fafb; padding: 16px; text-align: center; border-top: 1px solid #e5e7eb;">
+                  <p style="margin: 0; color: #9ca3af; font-size: 12px;">
+                    Diese E-Mail wurde automatisch von OrderFox.pro gesendet.
+                  </p>
+                </div>
+              </div>
+            </body>
+            </html>
+          `;
+
+          console.log(`Sending notification email to ${adminEmails.length} admin(s): ${adminEmails.join(', ')}`);
+
+          const emailResponse = await fetch('https://api.resend.com/emails', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${RESEND_API_KEY}`,
+            },
+            body: JSON.stringify({
+              from: 'OrderFox <onboarding@resend.dev>',
+              to: adminEmails,
+              subject: `[Lieferantenportal] Änderungsanfrage von ${supplier.name || 'Lieferant'}`,
+              html: emailHtml,
+            }),
+          });
+
+          const emailResult = await emailResponse.json();
+          console.log('Admin notification email sent:', emailResult);
+        } catch (emailError) {
+          console.error('Error sending admin notification:', emailError);
+        }
+      };
+
+      // Run email notification in background (don't await)
+      sendAdminNotification();
 
       return new Response(JSON.stringify({ 
         message: 'Änderungen zur Genehmigung eingereicht',
