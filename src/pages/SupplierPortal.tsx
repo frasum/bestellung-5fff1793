@@ -388,22 +388,7 @@ const SupplierPortal = () => {
                               </div>
                             </TableCell>
                             <TableCell>
-                              <div className="space-y-1">
-                                <Input
-                                  value={(getDisplayValue(article, 'category') as string) || ''}
-                                  onChange={(e) => handleFieldChange(article.id, 'category', e.target.value || null)}
-                                  className={`h-8 ${hasPendingChange(article.id, 'category') ? 'border-amber-500' : ''}`}
-                                  placeholder="-"
-                                />
-                                {getPendingChangeForField(article.id, 'category') && (
-                                  <div className="text-xs">
-                                    <span className="text-amber-600">Ausstehend</span>
-                                    <span className="text-muted-foreground ml-1">
-                                      (vorher: {getPendingChangeForField(article.id, 'category')?.old_value || '-'})
-                                    </span>
-                                  </div>
-                                )}
-                              </div>
+                              <span className="text-muted-foreground">{article.category || '—'}</span>
                             </TableCell>
                             <TableCell>
                               <Button
