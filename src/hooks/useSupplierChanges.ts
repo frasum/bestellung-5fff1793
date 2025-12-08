@@ -51,13 +51,23 @@ export const usePendingChangesCount = () => {
   return useQuery({
     queryKey: ['supplier-pending-changes-count'],
     queryFn: async () => {
-      const { count, error } = await supabase
+      // Count pending article changes
+      const { count: changesCount, error: changesError } = await supabase
         .from('supplier_article_changes')
         .select('supplier_id', { count: 'exact', head: true })
         .eq('status', 'pending');
 
-      if (error) throw error;
-      return count || 0;
+      if (changesError) throw changesError;
+
+      // Count pending suggested articles
+      const { count: suggestionsCount, error: suggestionsError } = await supabase
+        .from('suggested_articles')
+        .select('id', { count: 'exact', head: true })
+        .eq('status', 'pending');
+
+      if (suggestionsError) throw suggestionsError;
+
+      return (changesCount || 0) + (suggestionsCount || 0);
     },
   });
 };

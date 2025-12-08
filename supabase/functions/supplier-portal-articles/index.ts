@@ -9,7 +9,7 @@ const corsHeaders = {
 };
 
 interface ArticleUpdateRequest {
-  action: 'list' | 'update' | 'get-settings' | 'get-units' | 'create-unit' | 'get-categories' | 'create-category';
+  action: 'list' | 'update' | 'get-settings' | 'get-units' | 'create-unit' | 'get-categories' | 'create-category' | 'suggest-article';
   supplierId: string;
   organizationId: string;
   sessionToken: string; // Required session token for authentication
@@ -17,6 +17,15 @@ interface ArticleUpdateRequest {
   changes?: Record<string, any>;
   unitName?: string; // For create-unit action
   categoryName?: string; // For create-category action
+  suggestedArticle?: {
+    name: string;
+    description?: string | null;
+    sku?: string | null;
+    unit: string;
+    price: number;
+    category?: string | null;
+    comment?: string | null;
+  };
 }
 
 serve(async (req) => {
@@ -536,6 +545,157 @@ serve(async (req) => {
       return new Response(JSON.stringify({ 
         message: 'Änderungen zur Genehmigung eingereicht',
         pendingChanges: insertedChanges 
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Handle suggest-article action
+    if (action === 'suggest-article') {
+      const { suggestedArticle } = body;
+      
+      if (!suggestedArticle || !suggestedArticle.name?.trim()) {
+        return new Response(
+          JSON.stringify({ error: 'Missing article name' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Insert the suggested article
+      const { data: newSuggestion, error: insertError } = await supabase
+        .from('suggested_articles')
+        .insert({
+          supplier_id: supplierId,
+          organization_id: organizationId,
+          name: suggestedArticle.name.trim(),
+          description: suggestedArticle.description || null,
+          sku: suggestedArticle.sku || null,
+          unit: suggestedArticle.unit || 'Stk',
+          price: suggestedArticle.price || 0,
+          category: suggestedArticle.category || null,
+          supplier_comment: suggestedArticle.comment || null,
+          status: 'pending',
+        })
+        .select()
+        .single();
+
+      if (insertError) {
+        console.error('Error inserting suggested article:', insertError);
+        throw insertError;
+      }
+
+      console.log(`Created suggested article: ${newSuggestion.name} (${newSuggestion.id})`);
+
+      // Send notification email to admins (background task)
+      const sendSuggestionNotification = async () => {
+        try {
+          // Fetch admin users for this organization
+          const { data: adminProfiles, error: adminError } = await supabase
+            .from('profiles')
+            .select('id, email, full_name')
+            .eq('organization_id', organizationId);
+
+          if (adminError || !adminProfiles?.length) {
+            console.log('No profiles found for organization');
+            return;
+          }
+
+          // Filter to only admins by checking user_roles
+          const adminEmails: string[] = [];
+          for (const profile of adminProfiles) {
+            const { data: roleData } = await supabase
+              .from('user_roles')
+              .select('role')
+              .eq('user_id', profile.id)
+              .eq('role', 'admin')
+              .maybeSingle();
+            
+            if (roleData) {
+              adminEmails.push(profile.email);
+            }
+          }
+
+          if (adminEmails.length === 0) {
+            console.log('No admin users found for organization');
+            return;
+          }
+
+          const emailHtml = `
+            <!DOCTYPE html>
+            <html>
+            <head>
+              <meta charset="utf-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            </head>
+            <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 20px; background-color: #f4f4f5;">
+              <div style="max-width: 600px; margin: 0 auto; background-color: white; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                <div style="background-color: #22c55e; color: white; padding: 24px; text-align: center;">
+                  <h1 style="margin: 0; font-size: 24px;">📦 Neuer Artikelvorschlag</h1>
+                </div>
+                <div style="padding: 24px;">
+                  <p style="color: #374151; margin: 0 0 16px;">
+                    Der Lieferant <strong>${supplier.name || 'Unbekannt'}</strong> hat einen neuen Artikel vorgeschlagen.
+                  </p>
+                  
+                  <div style="background-color: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 6px; padding: 16px; margin-bottom: 16px;">
+                    <h3 style="margin: 0 0 12px; color: #166534;">${suggestedArticle.name}</h3>
+                    <table style="width: 100%; font-size: 14px; color: #374151;">
+                      ${suggestedArticle.sku ? `<tr><td style="padding: 4px 0;"><strong>SKU:</strong></td><td>${suggestedArticle.sku}</td></tr>` : ''}
+                      <tr><td style="padding: 4px 0;"><strong>Einheit:</strong></td><td>${suggestedArticle.unit || 'Stk'}</td></tr>
+                      <tr><td style="padding: 4px 0;"><strong>Preis:</strong></td><td>${(suggestedArticle.price || 0).toFixed(2).replace('.', ',')} €</td></tr>
+                      ${suggestedArticle.category ? `<tr><td style="padding: 4px 0;"><strong>Kategorie:</strong></td><td>${suggestedArticle.category}</td></tr>` : ''}
+                      ${suggestedArticle.description ? `<tr><td style="padding: 4px 0;"><strong>Beschreibung:</strong></td><td>${suggestedArticle.description}</td></tr>` : ''}
+                    </table>
+                    ${suggestedArticle.comment ? `
+                      <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #bbf7d0;">
+                        <p style="margin: 0; font-style: italic; color: #166534;">"${suggestedArticle.comment}"</p>
+                      </div>
+                    ` : ''}
+                  </div>
+                  
+                  <p style="color: #6b7280; font-size: 14px; margin: 0;">
+                    Bitte prüfen Sie den Vorschlag im OrderFox-Dashboard und übernehmen oder lehnen Sie ihn ab.
+                  </p>
+                </div>
+                <div style="background-color: #f9fafb; padding: 16px; text-align: center; border-top: 1px solid #e5e7eb;">
+                  <p style="margin: 0; color: #9ca3af; font-size: 12px;">
+                    Diese E-Mail wurde automatisch von OrderFox.pro gesendet.
+                  </p>
+                </div>
+              </div>
+            </body>
+            </html>
+          `;
+
+          console.log(`Sending suggestion notification to ${adminEmails.length} admin(s)`);
+
+          const emailResponse = await fetch('https://api.resend.com/emails', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${RESEND_API_KEY}`,
+            },
+            body: JSON.stringify({
+              from: 'OrderFox <onboarding@resend.dev>',
+              to: adminEmails,
+              subject: `[Lieferantenportal] Neuer Artikelvorschlag von ${supplier.name || 'Lieferant'}`,
+              html: emailHtml,
+            }),
+          });
+
+          const emailResult = await emailResponse.json();
+          console.log('Suggestion notification email sent:', emailResult);
+        } catch (emailError) {
+          console.error('Error sending suggestion notification:', emailError);
+        }
+      };
+
+      // Run email notification in background
+      sendSuggestionNotification();
+
+      return new Response(JSON.stringify({ 
+        message: 'Artikelvorschlag eingereicht',
+        suggestion: newSuggestion 
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });

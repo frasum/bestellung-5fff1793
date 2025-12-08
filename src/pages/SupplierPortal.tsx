@@ -8,11 +8,12 @@ import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { LogOut, Save, Search, Package, Loader2, Clock } from 'lucide-react';
+import { LogOut, Save, Search, Package, Loader2, Clock, Plus } from 'lucide-react';
 import logo from '@/assets/logo.png';
 import { SupplierArticleCard } from '@/components/suppliers/SupplierArticleCard';
 import { SupplierUnitSelect } from '@/components/suppliers/SupplierUnitSelect';
 import { SupplierCategorySelect } from '@/components/suppliers/SupplierCategorySelect';
+import { SuggestArticleDialog } from '@/components/suppliers/SuggestArticleDialog';
 
 interface Unit {
   id: string;
@@ -74,6 +75,7 @@ const SupplierPortal = () => {
   const [priceInputs, setPriceInputs] = useState<Record<string, string>>({});
   const [units, setUnits] = useState<Unit[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [suggestDialogOpen, setSuggestDialogOpen] = useState(false);
   const [portalSettings, setPortalSettings] = useState<PortalSettings>({
     portal_title: 'Lieferantenportal',
     welcome_message: null,
@@ -338,6 +340,35 @@ const SupplierPortal = () => {
     }
   };
 
+  const handleSuggestArticle = async (article: {
+    name: string;
+    sku: string | null;
+    description: string | null;
+    unit: string;
+    price: number;
+    category: string | null;
+    comment: string | null;
+  }) => {
+    if (!session) return;
+
+    const { data, error } = await supabase.functions.invoke('supplier-portal-articles', {
+      body: {
+        action: 'suggest-article',
+        supplierId: session.supplierId,
+        organizationId: session.organizationId,
+        sessionToken: session.sessionToken,
+        suggestedArticle: article,
+      },
+    });
+
+    if (error) {
+      toast.error('Fehler beim Einreichen des Vorschlags');
+      throw error;
+    }
+
+    toast.success('Artikelvorschlag zur Genehmigung eingereicht');
+  };
+
   const filteredArticles = articles.filter(a =>
     a.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (a.sku && a.sku.toLowerCase().includes(searchTerm.toLowerCase())) ||
@@ -437,9 +468,9 @@ const SupplierPortal = () => {
             </div>
           </CardHeader>
           <CardContent>
-            {/* Search */}
-            <div className="mb-6">
-              <div className="relative max-w-sm">
+            {/* Search and Suggest Button */}
+            <div className="mb-6 flex flex-col sm:flex-row gap-4 sm:items-center sm:justify-between">
+              <div className="relative max-w-sm flex-1">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   placeholder="Artikel suchen..."
@@ -448,6 +479,10 @@ const SupplierPortal = () => {
                   className="pl-10"
                 />
               </div>
+              <Button onClick={() => setSuggestDialogOpen(true)} className="shrink-0">
+                <Plus className="h-4 w-4 mr-2" />
+                Neuen Artikel vorschlagen
+              </Button>
             </div>
 
             {loading ? (
@@ -632,6 +667,17 @@ const SupplierPortal = () => {
           </div>
         )}
       </main>
+
+      {/* Suggest Article Dialog */}
+      <SuggestArticleDialog
+        open={suggestDialogOpen}
+        onOpenChange={setSuggestDialogOpen}
+        onSubmit={handleSuggestArticle}
+        units={units}
+        categories={categories}
+        onCreateUnit={handleCreateUnit}
+        onCreateCategory={handleCreateCategory}
+      />
     </div>
   );
 };
