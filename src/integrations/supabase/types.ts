@@ -509,6 +509,32 @@ export type Database = {
           },
         ]
       }
+      magic_link_rate_limits: {
+        Row: {
+          created_at: string
+          id: string
+          supplier_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          supplier_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          supplier_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "magic_link_rate_limits_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notification_preferences: {
         Row: {
           created_at: string
@@ -1241,6 +1267,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      cleanup_old_magic_link_rate_limits: { Args: never; Returns: undefined }
       cleanup_old_rate_limits: { Args: never; Returns: undefined }
       generate_order_number: { Args: never; Returns: string }
       get_user_organization_id: { Args: { user_id: string }; Returns: string }
