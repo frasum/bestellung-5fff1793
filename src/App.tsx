@@ -20,6 +20,7 @@ import SupplierLogin from "./pages/SupplierLogin";
 import SupplierAuth from "./pages/SupplierAuth";
 import SupplierPortal from "./pages/SupplierPortal";
 import OrderConfirmed from "./pages/OrderConfirmed";
+import StaffOrders from "./pages/StaffOrders";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -50,6 +51,7 @@ const App = () => (
                 <Route path="/supplier-auth" element={<SupplierAuth />} />
                 <Route path="/supplier-portal" element={<SupplierPortal />} />
                 <Route path="/order-confirmed" element={<OrderConfirmed />} />
+                <Route path="/staff-orders" element={<StaffOrders />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
