@@ -42,9 +42,9 @@ serve(async (req) => {
     const roleDescription = roleDescriptions[role] || role;
 
     const emailResponse = await resend.emails.send({
-      from: "OrderFlow <onboarding@resend.dev>",
+      from: "Bestellung.pro <onboarding@resend.dev>",
       to: [inviteeEmail],
-      subject: `You've been invited to join ${organizationName} on OrderFlow`,
+      subject: `You've been invited to join ${organizationName} on Bestellung.pro`,
       html: `
         <!DOCTYPE html>
         <html>
@@ -66,7 +66,7 @@ serve(async (req) => {
             </div>
             <div class="content">
               <p>Hi there,</p>
-              <p><strong>${inviterName}</strong> has invited you to join <strong>${organizationName}</strong> on OrderFlow.</p>
+              <p><strong>${inviterName}</strong> has invited you to join <strong>${organizationName}</strong> on Bestellung.pro.</p>
               <p>You've been assigned the role of <span class="role-badge">${role}</span>, which allows you to ${roleDescription}.</p>
               <p style="text-align: center;">
                 <a href="${signupUrl}" class="button">Accept Invitation</a>
@@ -75,7 +75,7 @@ serve(async (req) => {
               <p style="font-size: 14px; color: #6b7280;">This invitation will expire in 7 days.</p>
             </div>
             <div class="footer">
-              <p>OrderFlow - Streamline your restaurant supply ordering</p>
+              <p>Bestellung.pro - Streamline your restaurant supply ordering</p>
               <p style="font-size: 12px;">If you didn't expect this invitation, you can safely ignore this email.</p>
             </div>
           </div>
@@ -83,7 +83,7 @@ serve(async (req) => {
         </html>
       `,
       text: `
-You've been invited to join ${organizationName} on OrderFlow!
+You've been invited to join ${organizationName} on Bestellung.pro!
 
 ${inviterName} has invited you to join their organization with the role of ${role}, which allows you to ${roleDescription}.
 
@@ -94,7 +94,7 @@ If you don't have an account yet, you'll be able to create one when you click th
 This invitation will expire in 7 days.
 
 ---
-OrderFlow - Streamline your restaurant supply ordering
+Bestellung.pro - Streamline your restaurant supply ordering
 
 If you didn't expect this invitation, you can safely ignore this email.
       `,

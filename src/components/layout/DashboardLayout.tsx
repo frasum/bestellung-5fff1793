@@ -74,8 +74,8 @@ export const DashboardLayout = ({
       {/* Mobile Header */}
       <header className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-card border-b border-border h-16 flex items-center justify-between px-4">
         <Link to="/dashboard" className="flex items-center gap-2">
-          <img src={logoImage} alt="OrderFox.pro" className="w-8 h-8 rounded-lg object-cover" />
-          <span className="font-bold text-lg text-foreground">OrderFox.pro</span>
+          <img src={logoImage} alt="Bestellung.pro" className="w-8 h-8 rounded-lg object-cover" />
+          <span className="font-bold text-lg text-foreground">Bestellung.pro</span>
         </Link>
         <div className="flex items-center gap-2">
           {organization?.test_mode_enabled && (
@@ -119,8 +119,8 @@ export const DashboardLayout = ({
           {/* Logo */}
           <div className="h-16 flex items-center justify-between px-6 border-b border-border">
             <div className="flex items-center gap-2">
-              <img src={logoImage} alt="OrderFox.pro" className="w-9 h-9 rounded-lg object-cover" />
-              <span className="font-bold text-xl text-foreground">OrderFox.pro</span>
+              <img src={logoImage} alt="Bestellung.pro" className="w-9 h-9 rounded-lg object-cover" />
+              <span className="font-bold text-xl text-foreground">Bestellung.pro</span>
             </div>
           </div>
 

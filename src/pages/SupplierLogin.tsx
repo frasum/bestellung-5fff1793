@@ -24,7 +24,7 @@ const SupplierLogin = () => {
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <img src={logo} alt="OrderFox.pro" className="h-16 w-16 mx-auto mb-4" />
+          <img src={logo} alt="Bestellung.pro" className="h-16 w-16 mx-auto mb-4" />
           <CardTitle className="text-2xl">Lieferantenportal</CardTitle>
           <CardDescription>
             Verwalten Sie Ihre Artikel für Ihre Kunden

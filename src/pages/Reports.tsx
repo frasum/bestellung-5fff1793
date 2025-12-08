@@ -173,7 +173,7 @@ const Reports = () => {
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
-    link.download = `orderfox-bericht-${format(new Date(), 'yyyy-MM-dd')}.csv`;
+    link.download = `bestellung-bericht-${format(new Date(), 'yyyy-MM-dd')}.csv`;
     link.click();
   };
 

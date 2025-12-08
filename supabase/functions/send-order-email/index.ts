@@ -53,7 +53,7 @@ const defaultTemplate: EmailTemplate = {
   signature: 'Mit freundlichen Grüßen,\n{restaurant_name}',
   article_list_format: '- {article_name}{sku_suffix}: {quantity} {unit} à €{unit_price} = €{total_price}',
   design_style: 'modern',
-  footer_text: 'Diese Bestellung wurde über OrderFox.pro aufgegeben.',
+  footer_text: 'Diese Bestellung wurde über Bestellung.pro aufgegeben.',
   footer_logo_url: null,
   show_powered_by: true,
 };
@@ -206,7 +206,7 @@ const generateModernEmail = (data: OrderEmailRequest, template: EmailTemplate): 
           <div style="text-align: center; padding-top: 24px; border-top: 1px solid #e5e7eb;">
             ${template.footer_logo_url ? `<img src="${template.footer_logo_url}" alt="Logo" style="max-height: 40px; margin-bottom: 12px;" />` : ''}
             ${template.footer_text ? `<p style="color: #9ca3af; font-size: 12px; margin: 0;">${template.footer_text}</p>` : ''}
-            ${template.show_powered_by ? `<p style="color: #d1d5db; font-size: 10px; margin: 8px 0 0 0;">Powered by OrderFox.pro</p>` : ''}
+            ${template.show_powered_by ? `<p style="color: #d1d5db; font-size: 10px; margin: 8px 0 0 0;">Powered by Bestellung.pro</p>` : ''}
           </div>
           ` : ''}
         </div>
@@ -314,7 +314,7 @@ const generateClassicEmail = (data: OrderEmailRequest, template: EmailTemplate):
           <div style="text-align: center;">
             ${template.footer_logo_url ? `<img src="${template.footer_logo_url}" alt="Logo" style="max-height: 40px; margin-bottom: 12px;" />` : ''}
             ${template.footer_text ? `<p style="color: #9ca3af; font-size: 11px; margin: 0;">${template.footer_text}</p>` : ''}
-            ${template.show_powered_by ? `<p style="color: #d1d5db; font-size: 10px; margin: 8px 0 0 0;">Powered by OrderFox.pro</p>` : ''}
+            ${template.show_powered_by ? `<p style="color: #d1d5db; font-size: 10px; margin: 8px 0 0 0;">Powered by Bestellung.pro</p>` : ''}
           </div>
           ` : ''}
         </div>
@@ -384,7 +384,7 @@ const generateMinimalistEmail = (data: OrderEmailRequest, template: EmailTemplat
         <div style="margin-top: 48px; text-align: center;">
           ${template.footer_logo_url ? `<img src="${template.footer_logo_url}" alt="Logo" style="max-height: 40px; margin-bottom: 8px;" />` : ''}
           ${template.footer_text ? `<p style="font-size: 11px; color: #9ca3af; margin: 0;">${template.footer_text}</p>` : ''}
-          ${template.show_powered_by ? `<p style="font-size: 10px; color: #d1d5db; margin: 4px 0 0 0;">Powered by OrderFox.pro</p>` : ''}
+          ${template.show_powered_by ? `<p style="font-size: 10px; color: #d1d5db; margin: 4px 0 0 0;">Powered by Bestellung.pro</p>` : ''}
         </div>
         ` : ''}
       </body>
@@ -441,7 +441,7 @@ ${template.closing}
 ${signature}
 
 ---
-Gesendet über OrderFox.pro
+Gesendet über Bestellung.pro
   `.trim();
 };
 
@@ -542,7 +542,7 @@ serve(async (req) => {
     console.log(`Sending order email to ${recipientEmail}${isTestMode ? ' (TEST MODE)' : ''}`);
 
     const emailResponse = await resend.emails.send({
-      from: "OrderFox.pro <bestellung@yum.orderfox.pro>",
+      from: "Bestellung.pro <bestellung@bestellung.pro>",
       to: [recipientEmail],
       subject: subject,
       html: emailHtml,
