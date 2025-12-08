@@ -82,7 +82,7 @@ import {
 } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { format } from 'date-fns';
-import { de } from 'date-fns/locale';
+import { de, enUS, fr, it, th, vi } from 'date-fns/locale';
 import { generateInventoryListPdf, exportInventoryToExcel } from '@/lib/inventoryListPdf';
 import { toast } from 'sonner';
 
@@ -97,8 +97,14 @@ interface LocalInventoryItem {
 const DEFAULT_UNITS = ['kg', 'g', 'Stück', 'Stk', 'Liter', 'l', '0,75l', '1,0l', 'ml', 'Pg.', 'Ka.', 'Kt.', 'Fl.', 'Dose', 'Bund', 'Beutel', 'Pack'];
 
 const Inventory = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { user, loading: authLoading } = useAuth();
+
+  // Get date-fns locale based on current language
+  const getDateLocale = () => {
+    const locales: Record<string, Locale> = { de, en: enUS, fr, it, th, vi };
+    return locales[i18n.language] || de;
+  };
   const navigate = useNavigate();
 
   const [activeTab, setActiveTab] = useState<string>('inventory');
@@ -441,16 +447,16 @@ const Inventory = () => {
   const handleSavePriceEdit = async (articleId: string) => {
     const newPrice = parseFloat(editingPriceValue);
     if (isNaN(newPrice) || newPrice < 0) {
-      toast.error('Ungültiger Preis');
+      toast.error(t('inventory.invalidPrice'));
       return;
     }
     try {
       await updateArticle.mutateAsync({ id: articleId, price: newPrice });
-      toast.success('Preis aktualisiert');
+      toast.success(t('inventory.priceUpdated'));
       setEditingPriceId(null);
       setEditingPriceValue('');
     } catch {
-      toast.error('Fehler beim Speichern');
+      toast.error(t('inventory.saveError'));
     }
   };
 
@@ -467,16 +473,16 @@ const Inventory = () => {
   const handleSaveUnitEdit = async (articleId: string, value?: string) => {
     const unitValue = value ?? editingUnitValue;
     if (!unitValue.trim()) {
-      toast.error('Einheit darf nicht leer sein');
+      toast.error(t('inventory.unitCannotBeEmpty'));
       return;
     }
     try {
       await updateArticle.mutateAsync({ id: articleId, unit: unitValue.trim() });
-      toast.success('Einheit aktualisiert');
+      toast.success(t('inventory.unitUpdated'));
       setEditingUnitId(null);
       setEditingUnitValue('');
     } catch {
-      toast.error('Fehler beim Speichern');
+      toast.error(t('inventory.saveError'));
     }
   };
 
@@ -500,21 +506,21 @@ const Inventory = () => {
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
-            <h1 className="text-xl lg:text-2xl font-bold text-foreground">Inventur</h1>
-            <p className="text-sm text-muted-foreground">Bestandsaufnahme & Artikelpreise</p>
+            <h1 className="text-xl lg:text-2xl font-bold text-foreground">{t('inventory.title')}</h1>
+            <p className="text-sm text-muted-foreground">{t('inventory.description')}</p>
           </div>
           <div className="flex flex-wrap gap-2">
             {activeTab === 'inventory' && (
               <>
                 <Button variant="outline" size="sm" onClick={() => setShowHistoryDialog(true)} className="h-9 lg:h-10">
                   <History className="w-4 h-4 lg:mr-2" />
-                  <span className="hidden lg:inline">Historie</span>
+                  <span className="hidden lg:inline">{t('inventory.history')}</span>
                 </Button>
                 {!activeSession && (
                   <Button size="sm" onClick={() => setShowNewSessionDialog(true)} className="h-9 lg:h-10">
                     <Plus className="w-4 h-4 lg:mr-2" />
-                    <span className="hidden lg:inline">Neue Inventur</span>
-                    <span className="lg:hidden">Neu</span>
+                    <span className="hidden lg:inline">{t('inventory.newSession')}</span>
+                    <span className="lg:hidden">{t('inventory.new')}</span>
                   </Button>
                 )}
               </>
@@ -527,12 +533,12 @@ const Inventory = () => {
           <TabsList className="w-full sm:w-auto">
             <TabsTrigger value="inventory" className="gap-2 flex-1 sm:flex-initial">
               <ClipboardList className="w-4 h-4" />
-              <span className="hidden sm:inline">Inventur</span>
+              <span className="hidden sm:inline">{t('inventory.title')}</span>
             </TabsTrigger>
             <TabsTrigger value="prices" className="gap-2 flex-1 sm:flex-initial">
               <Euro className="w-4 h-4" />
-              <span className="hidden sm:inline">Artikelpreise</span>
-              <span className="sm:hidden">Preise</span>
+              <span className="hidden sm:inline">{t('inventory.articlePrices')}</span>
+              <span className="sm:hidden">{t('inventory.articlePrices')}</span>
             </TabsTrigger>
           </TabsList>
 
@@ -541,7 +547,7 @@ const Inventory = () => {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
-                placeholder="Artikel suchen..."
+                placeholder={t('inventory.searchArticles')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-9"
@@ -549,10 +555,10 @@ const Inventory = () => {
             </div>
             <Select value={supplierFilter} onValueChange={setSupplierFilter}>
               <SelectTrigger className="w-full sm:w-48">
-                <SelectValue placeholder="Lieferant filtern" />
+                <SelectValue placeholder={t('inventory.filterBySupplier')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Alle Lieferanten</SelectItem>
+                <SelectItem value="all">{t('inventory.allSuppliers')}</SelectItem>
                 {suppliers?.map((supplier) => (
                   <SelectItem key={supplier.id} value={supplier.id}>
                     {supplier.name}
@@ -562,10 +568,10 @@ const Inventory = () => {
             </Select>
             <Select value={categoryFilter} onValueChange={setCategoryFilter}>
               <SelectTrigger className="w-full sm:w-48">
-                <SelectValue placeholder="Kategorie filtern" />
+                <SelectValue placeholder={t('inventory.filterByCategory')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Alle Kategorien</SelectItem>
+                <SelectItem value="all">{t('inventory.allCategories')}</SelectItem>
                 {categories.map((category) => (
                   <SelectItem key={category} value={category!}>
                     {category}
@@ -580,7 +586,7 @@ const Inventory = () => {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
-                placeholder="Suchen..."
+                placeholder={t('common.search')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-9 h-11"
@@ -600,13 +606,13 @@ const Inventory = () => {
               <PopoverContent className="w-72 p-4" align="end">
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <Label>Lieferant</Label>
+                    <Label>{t('inventory.supplier')}</Label>
                     <Select value={supplierFilter} onValueChange={setSupplierFilter}>
                       <SelectTrigger className="h-11">
-                        <SelectValue placeholder="Alle Lieferanten" />
+                        <SelectValue placeholder={t('inventory.allSuppliers')} />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="all">Alle Lieferanten</SelectItem>
+                        <SelectItem value="all">{t('inventory.allSuppliers')}</SelectItem>
                         {suppliers?.map((supplier) => (
                           <SelectItem key={supplier.id} value={supplier.id}>
                             {supplier.name}
@@ -616,13 +622,13 @@ const Inventory = () => {
                     </Select>
                   </div>
                   <div className="space-y-2">
-                    <Label>Kategorie</Label>
+                    <Label>{t('inventory.category')}</Label>
                     <Select value={categoryFilter} onValueChange={setCategoryFilter}>
                       <SelectTrigger className="h-11">
-                        <SelectValue placeholder="Alle Kategorien" />
+                        <SelectValue placeholder={t('inventory.allCategories')} />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="all">Alle Kategorien</SelectItem>
+                        <SelectItem value="all">{t('inventory.allCategories')}</SelectItem>
                         {categories.map((category) => (
                           <SelectItem key={category} value={category!}>
                             {category}
@@ -641,7 +647,7 @@ const Inventory = () => {
                         setCategoryFilter('all');
                       }}
                     >
-                      Filter zurücksetzen
+                      {t('common.resetFilters')}
                     </Button>
                   )}
                 </div>
@@ -662,7 +668,7 @@ const Inventory = () => {
                       <div className="min-w-0 flex-1">
                         <CardTitle className="text-base truncate">{activeSession.name}</CardTitle>
                         <p className="text-xs text-muted-foreground">
-                          {format(new Date(activeSession.created_at), 'dd.MM.yy HH:mm', { locale: de })}
+                          {format(new Date(activeSession.created_at), 'dd.MM.yy HH:mm', { locale: getDateLocale() })}
                         </p>
                       </div>
                     </div>
@@ -695,9 +701,9 @@ const Inventory = () => {
                       <div>
                         <CardTitle className="text-lg">{activeSession.name}</CardTitle>
                         <p className="text-sm text-muted-foreground">
-                          Gestartet am{' '}
+                          {t('inventory.startedAt')}{' '}
                           {format(new Date(activeSession.created_at), 'dd.MM.yyyy HH:mm', {
-                            locale: de,
+                            locale: getDateLocale(),
                           })}
                         </p>
                       </div>
@@ -718,11 +724,11 @@ const Inventory = () => {
                         disabled={!hasChanges || bulkUpsertItems.isPending}
                       >
                         <Save className="w-4 h-4 mr-2" />
-                        Speichern
+                        {t('common.save')}
                       </Button>
                       <Button size="sm" onClick={handleComplete}>
                         <CheckCircle className="w-4 h-4 mr-2" />
-                        Abschließen
+                        {t('inventory.completeSession')}
                       </Button>
                     </div>
                   </div>
@@ -735,13 +741,13 @@ const Inventory = () => {
               <Card>
                 <CardContent className="py-12 text-center">
                   <ClipboardList className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-                  <h3 className="text-lg font-medium mb-2">Keine aktive Inventur</h3>
+                  <h3 className="text-lg font-medium mb-2">{t('inventory.noActiveSession')}</h3>
                   <p className="text-muted-foreground mb-4">
-                    Starten Sie eine neue Inventur oder laden Sie eine aus der Historie.
+                    {t('inventory.startNewOrLoadHistory')}
                   </p>
                   <Button onClick={() => setShowNewSessionDialog(true)}>
                     <Plus className="w-4 h-4 mr-2" />
-                    Neue Inventur starten
+                    {t('inventory.startSession')}
                   </Button>
                 </CardContent>
               </Card>
@@ -754,7 +760,7 @@ const Inventory = () => {
             ) : groupedInventoryArticles.length === 0 ? (
               <Card>
                 <CardContent className="py-12 text-center text-muted-foreground">
-                  Keine Artikel gefunden
+                  {t('inventory.noArticles')}
                 </CardContent>
               </Card>
             ) : (
@@ -782,7 +788,7 @@ const Inventory = () => {
                                     {group.supplier.name}
                                   </CardTitle>
                                   <p className="text-sm text-muted-foreground">
-                                    {group.capturedCount} von {group.articles.length} erfasst
+                                    {t('inventory.xOfYCaptured', { captured: group.capturedCount, total: group.articles.length })}
                                     {group.totalValue > 0 && (
                                       <span className="ml-2">• €{group.totalValue.toFixed(2)}</span>
                                     )}
@@ -792,7 +798,7 @@ const Inventory = () => {
                               {group.capturedCount > 0 && group.capturedCount === group.articles.length && (
                                 <Badge variant="default" className="bg-green-600">
                                   <CheckCircle className="w-3 h-3 mr-1" />
-                                  Fertig
+                                  {t('inventory.complete')}
                                 </Badge>
                               )}
                             </div>
@@ -827,7 +833,7 @@ const Inventory = () => {
                                     </div>
                                     <div className="grid grid-cols-2 gap-3">
                                       <div>
-                                        <Label className="text-xs text-muted-foreground mb-1 block">Lager 1</Label>
+                                        <Label className="text-xs text-muted-foreground mb-1 block">{t('inventory.storage1')}</Label>
                                         <Input
                                           type="number"
                                           inputMode="decimal"
@@ -842,7 +848,7 @@ const Inventory = () => {
                                         />
                                       </div>
                                       <div>
-                                        <Label className="text-xs text-muted-foreground mb-1 block">Lager 2</Label>
+                                        <Label className="text-xs text-muted-foreground mb-1 block">{t('inventory.storage2')}</Label>
                                         <Input
                                           type="number"
                                           inputMode="decimal"
@@ -1016,7 +1022,7 @@ const Inventory = () => {
                                     {group.supplier.name}
                                   </CardTitle>
                                   <p className="text-sm text-muted-foreground">
-                                    {group.articles.length} Artikel
+                                    {t('inventory.xArticles', { count: group.articles.length })}
                                   </p>
                                 </div>
                               </div>
@@ -1099,10 +1105,10 @@ const Inventory = () => {
                               <Table>
                                 <TableHeader>
                                   <TableRow>
-                                    <TableHead>Artikel</TableHead>
-                                    <TableHead>Kategorie</TableHead>
-                                    <TableHead className="w-24">Einheit</TableHead>
-                                    <TableHead className="w-36 text-right">Preis (€)</TableHead>
+                                    <TableHead>{t('inventory.article')}</TableHead>
+                                    <TableHead>{t('inventory.category')}</TableHead>
+                                    <TableHead className="w-24">{t('inventory.unit')}</TableHead>
+                                    <TableHead className="w-36 text-right">{t('inventory.price')}</TableHead>
                                   </TableRow>
                                 </TableHeader>
                                 <TableBody>
@@ -1144,7 +1150,7 @@ const Inventory = () => {
                                             <div className="p-2 border-b">
                                               <div className="flex gap-1">
                                                 <Input
-                                                  placeholder="Suchen oder hinzufügen..."
+                                                  placeholder={t('inventory.searchOrAdd')}
                                                   value={newUnitName}
                                                   onChange={(e) => setNewUnitName(e.target.value)}
                                                   onKeyDown={(e) => {
@@ -1287,31 +1293,31 @@ const Inventory = () => {
       <Dialog open={showNewSessionDialog} onOpenChange={setShowNewSessionDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Neue Inventur starten</DialogTitle>
+            <DialogTitle>{t('inventory.startSession')}</DialogTitle>
             <DialogDescription>
-              Geben Sie einen Namen für die Inventursitzung ein.
+              {t('inventory.enterSessionName')}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="session-name">Name</Label>
+              <Label htmlFor="session-name">{t('common.name')}</Label>
               <Input
                 id="session-name"
                 value={newSessionName}
                 onChange={(e) => setNewSessionName(e.target.value)}
-                placeholder={`Inventur ${format(new Date(), 'dd.MM.yyyy')}`}
+                placeholder={`${t('inventory.title')} ${format(new Date(), 'dd.MM.yyyy')}`}
               />
             </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowNewSessionDialog(false)}>
-              Abbrechen
+              {t('common.cancel')}
             </Button>
             <Button
               onClick={handleCreateSession}
               disabled={createSession.isPending}
             >
-              Starten
+              {t('inventory.start')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1321,9 +1327,9 @@ const Inventory = () => {
       <Dialog open={showHistoryDialog} onOpenChange={setShowHistoryDialog}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Inventur-Historie</DialogTitle>
+            <DialogTitle>{t('inventory.historyTitle')}</DialogTitle>
             <DialogDescription>
-              Vergangene Inventuren anzeigen und laden.
+              {t('inventory.historyDescription')}
             </DialogDescription>
           </DialogHeader>
           <div className="max-h-96 overflow-y-auto">
@@ -1342,7 +1348,7 @@ const Inventory = () => {
                         <p className="font-medium">{session.name}</p>
                         <p className="text-sm text-muted-foreground">
                           {format(new Date(session.created_at), 'dd.MM.yyyy HH:mm', {
-                            locale: de,
+                            locale: getDateLocale(),
                           })}
                         </p>
                       </div>
@@ -1354,15 +1360,15 @@ const Inventory = () => {
                         }
                       >
                         {session.status === 'completed'
-                          ? 'Abgeschlossen'
-                          : 'In Bearbeitung'}
+                          ? t('inventory.completed')
+                          : t('inventory.inProgress')}
                       </Badge>
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => handleLoadSession(session.id)}
                       >
-                        Laden
+                        {t('inventory.load')}
                       </Button>
                       <Button
                         variant="ghost"
@@ -1377,7 +1383,7 @@ const Inventory = () => {
               </div>
             ) : (
               <p className="text-center text-muted-foreground py-8">
-                Noch keine Inventuren durchgeführt.
+                {t('inventory.noHistory')}
               </p>
             )}
           </div>
@@ -1391,19 +1397,18 @@ const Inventory = () => {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Inventur löschen?</AlertDialogTitle>
+            <AlertDialogTitle>{t('inventory.deleteConfirmTitle')}</AlertDialogTitle>
             <AlertDialogDescription>
-              Diese Aktion kann nicht rückgängig gemacht werden. Alle erfassten Daten
-              dieser Inventur werden gelöscht.
+              {t('inventory.deleteConfirmDesc')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+            <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeleteSession}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              Löschen
+              {t('common.delete')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
