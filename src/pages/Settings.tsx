@@ -532,17 +532,25 @@ const OrganizationTab = () => {
                 }}
                 placeholder="test@beispiel.de"
                 className="flex-1"
+                disabled={organization?.is_demo}
               />
-              <Button 
-                onClick={handleTestEmailSave} 
-                disabled={updateOrganization.isPending || !testEmail}
-                variant="outline"
-              >
-                Speichern
-              </Button>
+              {!organization?.is_demo && (
+                <Button 
+                  onClick={handleTestEmailSave} 
+                  disabled={updateOrganization.isPending || !testEmail}
+                  variant="outline"
+                >
+                  Speichern
+                </Button>
+              )}
             </div>
             {testEmailError && (
               <p className="text-sm text-destructive">{testEmailError}</p>
+            )}
+            {organization?.is_demo && (
+              <p className="text-sm text-muted-foreground">
+                Im Demo-Modus kann die Test-E-Mail-Adresse nicht geändert werden.
+              </p>
             )}
           </div>
 
