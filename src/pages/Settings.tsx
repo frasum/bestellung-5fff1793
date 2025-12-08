@@ -1196,7 +1196,7 @@ const EmailTemplateTab = () => {
         <CardContent className="space-y-6">
           <div className="flex items-center justify-between">
             <div>
-              <Label htmlFor="show-powered-by">"Powered by OrderFox.pro" anzeigen</Label>
+              <Label htmlFor="show-powered-by">"Erstellt von Bestellung.pro" anzeigen</Label>
               <p className="text-xs text-muted-foreground">Zeigt einen dezenten Hinweis am Ende der E-Mail</p>
             </div>
             <Switch
