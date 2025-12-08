@@ -1249,20 +1249,6 @@ const Suppliers = () => {
             ) : (
               <div className="bg-card border border-border rounded-xl overflow-hidden">
                 <Table>
-                  <TableHeader>
-                    <TableRow className="hover:bg-transparent">
-                      {articleAdvancedViewEnabled && (
-                        <TableHead className="w-[40px]">
-                          <Checkbox checked={sortedArticles?.length > 0 && selectedArticles.size === sortedArticles?.length} onCheckedChange={selectAllArticles} />
-                        </TableHead>
-                      )}
-                      <TableHead className="text-center w-[140px]">Menge</TableHead>
-                      <TableHead className="w-[25%]">Artikel</TableHead>
-                      <TableHead className="hidden md:table-cell w-[25%]">Beschreibung</TableHead>
-                      <TableHead className="hidden sm:table-cell">Lieferant</TableHead>
-                      <TableHead className="text-right">Preis</TableHead>
-                    </TableRow>
-                  </TableHeader>
                   <TableBody>
                     {groupedBySupplier.map((group) => (
                       <Collapsible key={group.supplier.id} open={openArticleSuppliers.has(group.supplier.id)} onOpenChange={() => toggleArticleSupplier(group.supplier.id)} asChild>
