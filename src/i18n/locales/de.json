@@ -292,7 +292,15 @@
     "articleListFormat": "Artikellisten-Format",
     "articleListFormatHelp": "Variablen: {article_name}, {sku_suffix}, {quantity}, {unit}, {unit_price}, {total_price}",
     "resetToDefault": "Auf Standard zurücksetzen",
-    "templatePreview": "Vorschau"
+    "templatePreview": "Vorschau",
+    "emailDesign": "E-Mail-Design",
+    "emailDesignDescription": "Wählen Sie ein Design für Ihre Bestellungs-E-Mails",
+    "designModern": "Modern",
+    "designModernDesc": "Farbverlauf, Icons, abgerundete Ecken",
+    "designClassic": "Klassisch",
+    "designClassicDesc": "Formell, klar strukturiert, professionell",
+    "designMinimalist": "Minimalistisch",
+    "designMinimalistDesc": "Schlicht, textfokussiert, dezent"
   },
   "landing": {
     "heroTitle": "Intelligente Beschaffung für Restaurants",

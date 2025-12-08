@@ -292,7 +292,15 @@
     "articleListFormat": "Article List Format",
     "articleListFormatHelp": "Variables: {article_name}, {sku_suffix}, {quantity}, {unit}, {unit_price}, {total_price}",
     "resetToDefault": "Reset to Default",
-    "templatePreview": "Preview"
+    "templatePreview": "Preview",
+    "emailDesign": "Email Design",
+    "emailDesignDescription": "Choose a design for your order emails",
+    "designModern": "Modern",
+    "designModernDesc": "Gradient, icons, rounded corners",
+    "designClassic": "Classic",
+    "designClassicDesc": "Formal, clearly structured, professional",
+    "designMinimalist": "Minimalist",
+    "designMinimalistDesc": "Simple, text-focused, subtle"
   },
   "landing": {
     "heroTitle": "Smart Procurement for Restaurants",

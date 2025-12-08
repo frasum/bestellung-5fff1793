@@ -29,9 +29,44 @@ interface OrderEmailRequest {
   totalAmount: number;
   notes?: string;
   confirmationToken?: string;
+  customerNumber?: string;
 }
 
-const generateEmailHtml = (data: OrderEmailRequest): string => {
+interface EmailTemplate {
+  subject_template: string;
+  greeting: string;
+  introduction: string;
+  closing: string;
+  signature: string;
+  article_list_format: string;
+  design_style: 'modern' | 'classic' | 'minimalist';
+}
+
+const defaultTemplate: EmailTemplate = {
+  subject_template: 'Neue Bestellung von {restaurant_name}{customer_number_suffix}',
+  greeting: 'Guten Tag,',
+  introduction: 'hiermit senden wir Ihnen unsere Bestellung:',
+  closing: 'Vielen Dank für Ihre Zusammenarbeit.',
+  signature: 'Mit freundlichen Grüßen,\n{restaurant_name}',
+  article_list_format: '- {article_name}{sku_suffix}: {quantity} {unit} à €{unit_price} = €{total_price}',
+  design_style: 'modern',
+};
+
+// Generate subject line from template
+const generateSubject = (template: EmailTemplate, data: OrderEmailRequest): string => {
+  const customerNumberSuffix = data.customerNumber ? ` (Kd-Nr: ${data.customerNumber})` : '';
+  return template.subject_template
+    .replace('{restaurant_name}', data.restaurantName)
+    .replace('{customer_number_suffix}', customerNumberSuffix);
+};
+
+// Generate signature with variables replaced
+const generateSignature = (template: EmailTemplate, restaurantName: string): string => {
+  return template.signature.replace('{restaurant_name}', restaurantName);
+};
+
+// ============== MODERN DESIGN ==============
+const generateModernEmail = (data: OrderEmailRequest, template: EmailTemplate): string => {
   const itemRows = data.items.map((item, index) => {
     const bgColor = index % 2 === 0 ? '#ffffff' : '#f9fafb';
     const skuDisplay = item.sku ? `<span style="display: inline-block; background: #e5e7eb; color: #374151; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 4px; margin-left: 8px;">${item.sku}</span>` : '';
@@ -51,7 +86,7 @@ const generateEmailHtml = (data: OrderEmailRequest): string => {
   `;
   }).join('');
 
-  const itemCount = data.items.reduce((sum, item) => sum + item.quantity, 0);
+  const signature = generateSignature(template, data.restaurantName).replace(/\n/g, '<br>');
 
   return `
     <!DOCTYPE html>
@@ -68,6 +103,12 @@ const generateEmailHtml = (data: OrderEmailRequest): string => {
         
         <div style="background: #ffffff; padding: 32px; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 16px 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
           
+          <!-- Greeting & Introduction -->
+          <div style="margin-bottom: 24px;">
+            <p style="margin: 0 0 12px 0; font-size: 16px; color: #1f2937;">${template.greeting}</p>
+            <p style="margin: 0; font-size: 15px; color: #374151;">${template.introduction}</p>
+          </div>
+
           <!-- Quick Summary -->
           <div style="display: flex; margin-bottom: 28px; padding: 20px; background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border-radius: 12px; border: 1px solid #bae6fd;">
             <div style="flex: 1; text-align: center; border-right: 1px solid #bae6fd;">
@@ -149,10 +190,15 @@ const generateEmailHtml = (data: OrderEmailRequest): string => {
             </table>
           </div>
 
+          <!-- Closing & Signature -->
+          <div style="margin-bottom: 24px;">
+            <p style="margin: 0 0 16px 0; font-size: 15px; color: #374151;">${template.closing}</p>
+            <p style="margin: 0; font-size: 15px; color: #1f2937;">${signature}</p>
+          </div>
+
           <div style="text-align: center; padding-top: 24px; border-top: 1px solid #e5e7eb;">
             <p style="color: #9ca3af; font-size: 12px; margin: 0;">
-              Diese Bestellung wurde über OrderFox.pro aufgegeben.<br>
-              Bitte bestätigen Sie den Eingang und bearbeiten Sie die Bestellung entsprechend.
+              Diese Bestellung wurde über OrderFox.pro aufgegeben.
             </p>
           </div>
         </div>
@@ -161,36 +207,225 @@ const generateEmailHtml = (data: OrderEmailRequest): string => {
   `;
 };
 
-const generatePlainText = (data: OrderEmailRequest): string => {
+// ============== CLASSIC DESIGN ==============
+const generateClassicEmail = (data: OrderEmailRequest, template: EmailTemplate): string => {
+  const itemRows = data.items.map((item) => {
+    const skuDisplay = item.sku ? ` (${item.sku})` : '';
+    return `
+    <tr>
+      <td style="padding: 12px 8px; border: 1px solid #d1d5db; vertical-align: top;">${item.article_name}${skuDisplay}</td>
+      <td style="padding: 12px 8px; border: 1px solid #d1d5db; text-align: center;">${item.quantity} ${item.unit}</td>
+      <td style="padding: 12px 8px; border: 1px solid #d1d5db; text-align: right;">€${item.unit_price.toFixed(2)}</td>
+      <td style="padding: 12px 8px; border: 1px solid #d1d5db; text-align: right; font-weight: 600;">€${item.total_price.toFixed(2)}</td>
+    </tr>
+  `;
+  }).join('');
+
+  const signature = generateSignature(template, data.restaurantName).replace(/\n/g, '<br>');
+
+  return `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <meta charset="utf-8">
+        <title>Bestellung von ${data.restaurantName}</title>
+      </head>
+      <body style="font-family: Georgia, 'Times New Roman', serif; line-height: 1.6; color: #1f2937; max-width: 650px; margin: 0 auto; padding: 20px; background: #ffffff;">
+        
+        <!-- Header -->
+        <div style="background: #1e3a5f; padding: 24px 32px; border-bottom: 4px solid #b45309;">
+          <h1 style="color: white; margin: 0; font-size: 22px; font-weight: 600; letter-spacing: 1px;">BESTELLUNG</h1>
+          <p style="color: rgba(255,255,255,0.85); margin: 8px 0 0 0; font-size: 14px;">${data.restaurantName}</p>
+        </div>
+        
+        <div style="padding: 32px; border: 1px solid #d1d5db; border-top: none;">
+          
+          <!-- Greeting & Introduction -->
+          <p style="margin: 0 0 8px 0; font-size: 15px;">${template.greeting}</p>
+          <p style="margin: 0 0 24px 0; font-size: 15px;">${template.introduction}</p>
+
+          <!-- Order Details -->
+          <table style="width: 100%; margin-bottom: 24px; font-size: 14px;">
+            <tr>
+              <td style="padding: 4px 0; width: 140px; color: #6b7280;">Bestelldatum:</td>
+              <td style="padding: 4px 0;">${new Date().toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</td>
+            </tr>
+            <tr>
+              <td style="padding: 4px 0; color: #6b7280;">Lieferant:</td>
+              <td style="padding: 4px 0;">${data.supplierName}</td>
+            </tr>
+            <tr>
+              <td style="padding: 4px 0; color: #6b7280;">Lieferadresse:</td>
+              <td style="padding: 4px 0;">${data.deliveryAddress.replace(/\n/g, ', ')}</td>
+            </tr>
+          </table>
+
+          ${data.notes ? `
+            <div style="margin-bottom: 24px; padding: 16px; background: #fef9c3; border-left: 4px solid #eab308;">
+              <p style="margin: 0; font-size: 14px; font-weight: 600; color: #854d0e;">Hinweise:</p>
+              <p style="margin: 8px 0 0 0; font-size: 14px; color: #713f12; white-space: pre-line;">${data.notes}</p>
+            </div>
+          ` : ''}
+
+          ${data.confirmationToken ? `
+          <div style="margin-bottom: 24px; text-align: center; padding: 20px; background: #f0fdf4; border: 2px solid #16a34a;">
+            <a href="${Deno.env.get("SUPABASE_URL")}/functions/v1/confirm-order?token=${data.confirmationToken}" 
+               style="display: inline-block; background: #16a34a; color: white; font-weight: 600; font-size: 16px; padding: 14px 32px; text-decoration: none;">
+              Bestellung bestätigen
+            </a>
+          </div>
+          ` : ''}
+
+          <!-- Items Table -->
+          <table style="width: 100%; border-collapse: collapse; margin-bottom: 24px;">
+            <thead>
+              <tr style="background: #374151;">
+                <th style="padding: 12px 8px; text-align: left; color: white; font-size: 13px; border: 1px solid #374151;">Artikel</th>
+                <th style="padding: 12px 8px; text-align: center; color: white; font-size: 13px; border: 1px solid #374151;">Menge</th>
+                <th style="padding: 12px 8px; text-align: right; color: white; font-size: 13px; border: 1px solid #374151;">Einzelpreis</th>
+                <th style="padding: 12px 8px; text-align: right; color: white; font-size: 13px; border: 1px solid #374151;">Gesamt</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${itemRows}
+            </tbody>
+            <tfoot>
+              <tr style="background: #f3f4f6;">
+                <td colspan="3" style="padding: 14px 8px; border: 1px solid #d1d5db; font-weight: 700; font-size: 15px;">Gesamtbetrag</td>
+                <td style="padding: 14px 8px; border: 1px solid #d1d5db; text-align: right; font-weight: 700; font-size: 16px;">€${data.totalAmount.toFixed(2)}</td>
+              </tr>
+            </tfoot>
+          </table>
+
+          <!-- Closing & Signature -->
+          <p style="margin: 0 0 16px 0; font-size: 15px;">${template.closing}</p>
+          <p style="margin: 0; font-size: 15px;">${signature}</p>
+
+          <hr style="margin: 32px 0 16px 0; border: none; border-top: 1px solid #e5e7eb;">
+          <p style="color: #9ca3af; font-size: 11px; text-align: center; margin: 0;">
+            Diese Bestellung wurde über OrderFox.pro aufgegeben.
+          </p>
+        </div>
+      </body>
+    </html>
+  `;
+};
+
+// ============== MINIMALIST DESIGN ==============
+const generateMinimalistEmail = (data: OrderEmailRequest, template: EmailTemplate): string => {
+  const itemList = data.items.map((item) => {
+    const skuDisplay = item.sku ? ` [${item.sku}]` : '';
+    return `<li style="padding: 8px 0; border-bottom: 1px solid #f3f4f6;">${item.quantity}× ${item.article_name}${skuDisplay} (${item.unit}) — €${item.total_price.toFixed(2)}</li>`;
+  }).join('');
+
+  const signature = generateSignature(template, data.restaurantName).replace(/\n/g, '<br>');
+
+  return `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <meta charset="utf-8">
+        <title>Bestellung von ${data.restaurantName}</title>
+      </head>
+      <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.8; color: #374151; max-width: 550px; margin: 0 auto; padding: 40px 20px; background: #ffffff;">
+        
+        <h1 style="font-size: 18px; font-weight: 600; color: #111827; margin: 0 0 8px 0;">Bestellung</h1>
+        <p style="font-size: 13px; color: #6b7280; margin: 0 0 32px 0;">${data.restaurantName} · ${new Date().toLocaleDateString('de-DE')}</p>
+        
+        <p style="margin: 0 0 8px 0; font-size: 15px;">${template.greeting}</p>
+        <p style="margin: 0 0 24px 0; font-size: 15px;">${template.introduction}</p>
+
+        <div style="margin-bottom: 24px; padding: 16px 0; border-top: 1px solid #e5e7eb; border-bottom: 1px solid #e5e7eb;">
+          <p style="margin: 0 0 4px 0; font-size: 12px; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.5px;">Lieferadresse</p>
+          <p style="margin: 0; font-size: 14px; color: #374151;">${data.deliveryAddress.replace(/\n/g, ', ')}</p>
+        </div>
+
+        ${data.notes ? `
+          <p style="margin: 0 0 24px 0; padding: 12px 16px; background: #fffbeb; font-size: 14px; color: #92400e; border-radius: 4px;">${data.notes}</p>
+        ` : ''}
+
+        ${data.confirmationToken ? `
+        <div style="margin-bottom: 24px; text-align: center;">
+          <a href="${Deno.env.get("SUPABASE_URL")}/functions/v1/confirm-order?token=${data.confirmationToken}" 
+             style="display: inline-block; background: #111827; color: white; font-size: 14px; padding: 12px 24px; text-decoration: none; border-radius: 4px;">
+            Bestellung bestätigen →
+          </a>
+        </div>
+        ` : ''}
+
+        <ul style="list-style: none; padding: 0; margin: 0 0 24px 0; font-size: 14px;">
+          ${itemList}
+        </ul>
+
+        <div style="padding: 16px 0; border-top: 2px solid #111827;">
+          <p style="margin: 0; font-size: 16px; font-weight: 600; color: #111827;">
+            Gesamt: €${data.totalAmount.toFixed(2)}
+          </p>
+        </div>
+
+        <div style="margin-top: 32px;">
+          <p style="margin: 0 0 16px 0; font-size: 15px; color: #374151;">${template.closing}</p>
+          <p style="margin: 0; font-size: 15px; color: #374151;">${signature}</p>
+        </div>
+
+        <p style="margin-top: 48px; font-size: 11px; color: #9ca3af;">
+          Gesendet über OrderFox.pro
+        </p>
+      </body>
+    </html>
+  `;
+};
+
+// Template router
+const generateEmailHtml = (data: OrderEmailRequest, template: EmailTemplate): string => {
+  switch (template.design_style) {
+    case 'classic':
+      return generateClassicEmail(data, template);
+    case 'minimalist':
+      return generateMinimalistEmail(data, template);
+    case 'modern':
+    default:
+      return generateModernEmail(data, template);
+  }
+};
+
+const generatePlainText = (data: OrderEmailRequest, template: EmailTemplate): string => {
+  const signature = generateSignature(template, data.restaurantName);
+  
   const itemLines = data.items.map(item => {
     const skuPart = item.sku ? ` (SKU: ${item.sku})` : '';
     return `- ${item.article_name}${skuPart}: ${item.quantity} ${item.unit} x €${item.unit_price.toFixed(2)} = €${item.total_price.toFixed(2)}`;
   }).join('\n');
 
   return `
-NEW ORDER RECEIVED
-==================
-Order #${data.orderNumber}
+${template.greeting}
 
-From: ${data.restaurantName}
-To: ${data.supplierName}
-Date: ${new Date().toLocaleDateString('de-DE')}
+${template.introduction}
 
-DELIVERY ADDRESS
-----------------
+BESTELLDETAILS
+--------------
+Von: ${data.restaurantName}
+An: ${data.supplierName}
+Datum: ${new Date().toLocaleDateString('de-DE')}
+
+LIEFERADRESSE
+-------------
 ${data.deliveryAddress}
 
-${data.notes ? `NOTES\n------\n${data.notes}\n` : ''}
+${data.notes ? `HINWEISE\n--------\n${data.notes}\n` : ''}
 
-ORDER ITEMS
------------
+BESTELLTE ARTIKEL
+-----------------
 ${itemLines}
 
-TOTAL: €${data.totalAmount.toFixed(2)}
+GESAMT: €${data.totalAmount.toFixed(2)}
+
+${template.closing}
+
+${signature}
 
 ---
-This order was placed through OrderFox.pro.
-Please confirm receipt and process accordingly.
+Gesendet über OrderFox.pro
   `.trim();
 };
 
@@ -203,13 +438,15 @@ serve(async (req) => {
   try {
     const data: OrderEmailRequest = await req.json();
     
-    // Create Supabase client to fetch organization settings
+    console.log(`Processing order email for order ${data.orderNumber}`);
+    
+    // Create Supabase client to fetch organization settings and email template
     const supabaseClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
-    // Fetch test mode settings from organization
+    // Fetch order and organization info
     const { data: order } = await supabaseClient
       .from("orders")
       .select("organization_id")
@@ -219,8 +456,10 @@ serve(async (req) => {
     let isTestMode = false;
     let testEmail: string | null = null;
     let originalSupplierEmail = data.supplierEmail;
+    let template: EmailTemplate = defaultTemplate;
 
     if (order?.organization_id) {
+      // Fetch organization settings
       const { data: org } = await supabaseClient
         .from("organizations")
         .select("test_mode_enabled, test_email")
@@ -232,14 +471,40 @@ serve(async (req) => {
         testEmail = org.test_email;
         console.log(`Test mode enabled - redirecting email from ${data.supplierEmail} to ${testEmail}`);
       }
+
+      // Fetch email template
+      const { data: emailTemplateData } = await supabaseClient
+        .from("email_templates")
+        .select("*")
+        .eq("organization_id", order.organization_id)
+        .eq("template_type", "order")
+        .maybeSingle();
+
+      if (emailTemplateData) {
+        template = {
+          subject_template: emailTemplateData.subject_template || defaultTemplate.subject_template,
+          greeting: emailTemplateData.greeting || defaultTemplate.greeting,
+          introduction: emailTemplateData.introduction || defaultTemplate.introduction,
+          closing: emailTemplateData.closing || defaultTemplate.closing,
+          signature: emailTemplateData.signature || defaultTemplate.signature,
+          article_list_format: emailTemplateData.article_list_format || defaultTemplate.article_list_format,
+          design_style: emailTemplateData.design_style || defaultTemplate.design_style,
+        };
+        console.log(`Using email template with design_style: ${template.design_style}`);
+      } else {
+        console.log(`No email template found, using defaults`);
+      }
     }
 
     const recipientEmail = isTestMode && testEmail ? testEmail : data.supplierEmail;
     const subjectPrefix = isTestMode ? "[TEST] " : "";
     
-    // Add test mode notice to email content if in test mode
-    let emailHtml = generateEmailHtml(data);
-    let emailText = generatePlainText(data);
+    // Generate subject from template
+    const subject = subjectPrefix + generateSubject(template, data);
+    
+    // Generate email content with template
+    let emailHtml = generateEmailHtml(data, template);
+    let emailText = generatePlainText(data, template);
     
     if (isTestMode) {
       const testNotice = `
@@ -250,19 +515,17 @@ serve(async (req) => {
           </p>
         </div>
       `;
-      emailHtml = emailHtml.replace(
-        '<div style="background: linear-gradient(135deg, #1e3a5f 0%, #2563eb 100%);',
-        testNotice + '<div style="background: linear-gradient(135deg, #1e3a5f 0%, #2563eb 100%);'
-      );
+      // Insert test notice at the beginning of body content
+      emailHtml = emailHtml.replace('<body', '<body').replace(/<body[^>]*>/, (match) => match + testNotice);
       emailText = `[TESTMODUS] Diese E-Mail würde im Produktivmodus an ${originalSupplierEmail} gesendet werden.\n\n` + emailText;
     }
     
-    console.log(`Sending order email for order ${data.orderNumber} to ${recipientEmail}${isTestMode ? ' (TEST MODE)' : ''}`);
+    console.log(`Sending order email to ${recipientEmail}${isTestMode ? ' (TEST MODE)' : ''}`);
 
     const emailResponse = await resend.emails.send({
       from: "OrderFox.pro <bestellung@yum.orderfox.pro>",
       to: [recipientEmail],
-      subject: `${subjectPrefix}New Order #${data.orderNumber} from ${data.restaurantName}`,
+      subject: subject,
       html: emailHtml,
       text: emailText,
     });
