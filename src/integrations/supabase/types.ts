@@ -774,6 +774,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          color_scheme: string | null
           created_at: string
           email: string
           full_name: string | null
@@ -782,6 +783,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          color_scheme?: string | null
           created_at?: string
           email: string
           full_name?: string | null
@@ -790,6 +792,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          color_scheme?: string | null
           created_at?: string
           email?: string
           full_name?: string | null
