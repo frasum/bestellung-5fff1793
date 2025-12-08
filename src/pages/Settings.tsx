@@ -94,28 +94,28 @@ const Settings = () => {
               <TabsTrigger value="profile" className="gap-1.5 text-xs sm:text-sm whitespace-nowrap">
                 <User className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                 <span className="hidden sm:inline">{t('settings.profile')}</span>
-                <span className="sm:hidden">Profil</span>
+                <span className="sm:hidden">{t('settings.profile')}</span>
               </TabsTrigger>
               <TabsTrigger value="organization" className="gap-1.5 text-xs sm:text-sm whitespace-nowrap">
                 <Building2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                 <span className="hidden sm:inline">{t('settings.organization')}</span>
-                <span className="sm:hidden">Firma</span>
+                <span className="sm:hidden">{t('settings.organization')}</span>
               </TabsTrigger>
               <TabsTrigger value="master-data" className="gap-1.5 text-xs sm:text-sm whitespace-nowrap">
                 <Layers className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                <span className="hidden sm:inline">Stammdaten</span>
-                <span className="sm:hidden">Daten</span>
+                <span className="hidden sm:inline">{t('settings.masterData')}</span>
+                <span className="sm:hidden">{t('settings.masterDataShort')}</span>
               </TabsTrigger>
               <TabsTrigger value="communication" className="gap-1.5 text-xs sm:text-sm whitespace-nowrap">
                 <MessageSquare className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                <span className="hidden sm:inline">Kommunikation</span>
-                <span className="sm:hidden">Komm.</span>
+                <span className="hidden sm:inline">{t('settings.communication')}</span>
+                <span className="sm:hidden">{t('settings.communicationShort')}</span>
               </TabsTrigger>
               {isAdmin && (
                 <TabsTrigger value="demo-accounts" className="gap-1.5 text-xs sm:text-sm whitespace-nowrap">
                   <FlaskConical className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                  <span className="hidden sm:inline">Demo-Accounts</span>
-                  <span className="sm:hidden">Demo</span>
+                  <span className="hidden sm:inline">{t('settings.demoAccounts')}</span>
+                  <span className="sm:hidden">{t('settings.demoAccountsShort')}</span>
                 </TabsTrigger>
               )}
             </TabsList>
@@ -185,12 +185,12 @@ const ProfileTab = () => {
     setPasswordError('');
 
     if (newPassword.length < 6) {
-      setPasswordError('Passwort muss mindestens 6 Zeichen haben');
+      setPasswordError(t('validation.passwordTooShort'));
       return;
     }
 
     if (newPassword !== confirmPassword) {
-      setPasswordError('Passwörter stimmen nicht überein');
+      setPasswordError(t('validation.passwordMismatch'));
       return;
     }
 
@@ -207,40 +207,40 @@ const ProfileTab = () => {
   };
 
   if (isLoading) {
-    return <Card><CardContent className="p-6">Lädt...</CardContent></Card>;
+    return <Card><CardContent className="p-6">{t('common.loading')}</CardContent></Card>;
   }
 
   return (
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>Profilinformationen</CardTitle>
-          <CardDescription>Aktualisiere deine persönlichen Daten</CardDescription>
+          <CardTitle>{t('settings.profileInfo')}</CardTitle>
+          <CardDescription>{t('settings.updateDetails')}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="email">E-Mail</Label>
+            <Label htmlFor="email">{t('common.email')}</Label>
             <Input
               id="email"
               value={profile?.email || ''}
               disabled
               className="bg-muted"
             />
-            <p className="text-xs text-muted-foreground">E-Mail kann nicht geändert werden</p>
+            <p className="text-xs text-muted-foreground">{t('settings.emailCannotChange')}</p>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="full-name">Vollständiger Name</Label>
+            <Label htmlFor="full-name">{t('auth.fullName')}</Label>
             <Input
               id="full-name"
               defaultValue={profile?.full_name || ''}
               onChange={(e) => setFullName(e.target.value)}
-              placeholder="Gib deinen vollständigen Namen ein"
+              placeholder={t('auth.fullName')}
             />
           </div>
 
           <Button onClick={handleProfileSave} disabled={updateProfile.isPending}>
-            {updateProfile.isPending ? 'Speichert...' : 'Profil speichern'}
+            {updateProfile.isPending ? t('settings.savingProfile') : t('settings.saveProfile')}
           </Button>
 
           <AdvancedSettingsSwitch />
@@ -251,32 +251,32 @@ const ProfileTab = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Lock className="h-5 w-5" />
-            Passwort ändern
+            {t('settings.changePassword')}
           </CardTitle>
-          <CardDescription>Aktualisiere dein Passwort, um dein Konto sicher zu halten</CardDescription>
+          <CardDescription>{t('settings.passwordDescription')}</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handlePasswordChange} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="new-password">Neues Passwort</Label>
+              <Label htmlFor="new-password">{t('settings.newPassword')}</Label>
               <Input
                 id="new-password"
                 type="password"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
-                placeholder="Neues Passwort eingeben"
+                placeholder={t('settings.newPasswordPlaceholder')}
                 required
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="confirm-password">Neues Passwort bestätigen</Label>
+              <Label htmlFor="confirm-password">{t('settings.confirmPassword')}</Label>
               <Input
                 id="confirm-password"
                 type="password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="Neues Passwort bestätigen"
+                placeholder={t('settings.confirmPasswordPlaceholder')}
                 required
               />
             </div>
@@ -286,7 +286,7 @@ const ProfileTab = () => {
             )}
 
             <Button type="submit" disabled={updatePassword.isPending}>
-              {updatePassword.isPending ? 'Aktualisiert...' : 'Passwort aktualisieren'}
+              {updatePassword.isPending ? t('settings.updatingPassword') : t('settings.updatePassword')}
             </Button>
           </form>
         </CardContent>
@@ -306,13 +306,15 @@ const AdvancedSettingsSwitch = () => {
     window.dispatchEvent(new StorageEvent('storage', { key: 'advanced-settings-enabled', newValue: checked.toString() }));
   };
 
+  const { t } = useTranslation();
+  
   return (
     <div className="pt-4 border-t">
       <div className="flex items-center justify-between">
         <div>
-          <Label className="mb-1 block">Erweiterte Einstellungen</Label>
+          <Label className="mb-1 block">{t('settings.advancedSettings')}</Label>
           <p className="text-xs text-muted-foreground">
-            Zeigt zusätzliche Funktionen wie Export und Import an
+            {t('settings.advancedSettingsDesc')}
           </p>
         </div>
         <Switch 
@@ -330,28 +332,30 @@ interface OrganizationTabProps {
 }
 
 const OrganizationTab = ({ activeSubTab, onSubTabChange }: OrganizationTabProps) => {
+  const { t } = useTranslation();
+  
   return (
     <div className="bg-muted/30 rounded-lg p-4 border border-border/50">
       <Tabs value={activeSubTab} onValueChange={onSubTabChange} className="space-y-4">
         <TabsList className="bg-muted/50 p-1">
           <TabsTrigger value="general" className="gap-1.5 text-xs sm:text-sm data-[state=active]:bg-background data-[state=active]:shadow-sm">
             <Building2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-            <span className="hidden sm:inline">Allgemein</span>
-            <span className="sm:hidden">Allg.</span>
+            <span className="hidden sm:inline">{t('settings.general')}</span>
+            <span className="sm:hidden">{t('settings.generalShort')}</span>
           </TabsTrigger>
           <TabsTrigger value="team" className="gap-1.5 text-xs sm:text-sm data-[state=active]:bg-background data-[state=active]:shadow-sm">
             <Users className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-            <span>Team</span>
+            <span>{t('settings.team')}</span>
           </TabsTrigger>
           <TabsTrigger value="locations" className="gap-1.5 text-xs sm:text-sm data-[state=active]:bg-background data-[state=active]:shadow-sm">
             <Store className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-            <span className="hidden sm:inline">Standorte</span>
-            <span className="sm:hidden">Orte</span>
+            <span className="hidden sm:inline">{t('locations.title')}</span>
+            <span className="sm:hidden">{t('settings.locationsShort')}</span>
           </TabsTrigger>
           <TabsTrigger value="addresses" className="gap-1.5 text-xs sm:text-sm data-[state=active]:bg-background data-[state=active]:shadow-sm">
             <MapPin className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-            <span className="hidden sm:inline">Adressen</span>
-            <span className="sm:hidden">Adr.</span>
+            <span className="hidden sm:inline">{t('settings.addresses')}</span>
+            <span className="sm:hidden">{t('settings.addressesShort')}</span>
           </TabsTrigger>
         </TabsList>
 
@@ -376,6 +380,7 @@ const OrganizationTab = ({ activeSubTab, onSubTabChange }: OrganizationTabProps)
 };
 
 const OrganizationGeneralContent = () => {
+  const { t } = useTranslation();
   const { data: organization, isLoading } = useOrganization();
   const updateOrganization = useUpdateOrganization();
   const [name, setName] = useState('');
@@ -405,12 +410,12 @@ const OrganizationGeneralContent = () => {
     if (!organization) return;
     
     if (enabled && !testEmail) {
-      setTestEmailError('Bitte geben Sie zuerst eine Test-E-Mail-Adresse ein');
+      setTestEmailError(t('settings.testEmailError'));
       return;
     }
 
     if (enabled && testEmail && !validateEmail(testEmail)) {
-      setTestEmailError('Bitte geben Sie eine gültige E-Mail-Adresse ein');
+      setTestEmailError(t('settings.testEmailInvalid'));
       return;
     }
 
@@ -425,12 +430,12 @@ const OrganizationGeneralContent = () => {
     if (!organization) return;
     
     if (!testEmail) {
-      setTestEmailError('Bitte geben Sie eine E-Mail-Adresse ein');
+      setTestEmailError(t('settings.testEmailRequired'));
       return;
     }
 
     if (!validateEmail(testEmail)) {
-      setTestEmailError('Bitte geben Sie eine gültige E-Mail-Adresse ein');
+      setTestEmailError(t('settings.testEmailInvalid'));
       return;
     }
 
@@ -441,43 +446,43 @@ const OrganizationGeneralContent = () => {
   };
 
   if (isLoading) {
-    return <Card><CardContent className="p-6">Lädt...</CardContent></Card>;
+    return <Card><CardContent className="p-6">{t('common.loading')}</CardContent></Card>;
   }
 
   return (
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>Organisationsprofil</CardTitle>
-          <CardDescription>Verwalte deine Organisationsdetails</CardDescription>
+          <CardTitle>{t('settings.orgProfile')}</CardTitle>
+          <CardDescription>{t('settings.orgDetails')}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="space-y-2">
-            <Label htmlFor="org-name">Organisationsname</Label>
+            <Label htmlFor="org-name">{t('settings.orgName')}</Label>
             <Input
               id="org-name"
               defaultValue={organization?.name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Organisationsname eingeben"
+              placeholder={t('settings.orgNamePlaceholder')}
             />
           </div>
 
           <div className="space-y-2">
-            <Label>Abonnement</Label>
+            <Label>{t('settings.subscription')}</Label>
             <div className="flex items-center gap-2">
               <Badge variant="secondary" className="capitalize">
                 {organization?.subscription_tier || 'free'}
               </Badge>
               {organization?.trial_ends_at && (
                 <span className="text-sm text-muted-foreground">
-                  Testphase endet: {new Date(organization.trial_ends_at).toLocaleDateString()}
+                  {t('settings.trialEnds')}: {new Date(organization.trial_ends_at).toLocaleDateString()}
                 </span>
               )}
             </div>
           </div>
 
           <Button onClick={handleSave} disabled={updateOrganization.isPending}>
-            {updateOrganization.isPending ? 'Speichert...' : 'Änderungen speichern'}
+            {updateOrganization.isPending ? t('settings.savingProfile') : t('settings.saveChanges')}
           </Button>
         </CardContent>
       </Card>
@@ -486,10 +491,10 @@ const OrganizationGeneralContent = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Mail className="h-5 w-5" />
-            E-Mail Testmodus
+            {t('testMode.title')}
           </CardTitle>
           <CardDescription>
-            Im Testmodus werden alle Bestellungen an eine Test-E-Mail-Adresse gesendet, nicht an die Lieferanten
+            {t('settings.testModeDescription')}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -497,10 +502,10 @@ const OrganizationGeneralContent = () => {
             <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg border">
               <div className="space-y-0.5">
                 <Label htmlFor="test-mode" className="text-base font-medium">
-                  Testmodus aktivieren
+                  {t('settings.testModeEnable')}
                 </Label>
                 <p className="text-sm text-muted-foreground">
-                  E-Mails werden an die Test-Adresse statt an Lieferanten gesendet
+                  {t('settings.testModeEnabledDesc')}
                 </p>
               </div>
               <Switch
@@ -512,7 +517,7 @@ const OrganizationGeneralContent = () => {
           )}
 
           <div className="space-y-2">
-            <Label htmlFor="test-email">Test-E-Mail-Adresse</Label>
+            <Label htmlFor="test-email">{t('settings.testEmailAddress')}</Label>
             <div className="flex gap-2">
               <Input
                 id="test-email"
@@ -522,7 +527,7 @@ const OrganizationGeneralContent = () => {
                   setTestEmail(e.target.value);
                   setTestEmailError('');
                 }}
-                placeholder="test@beispiel.de"
+                placeholder={t('settings.testEmailPlaceholder')}
                 className="flex-1"
                 disabled={organization?.is_demo}
               />
@@ -532,7 +537,7 @@ const OrganizationGeneralContent = () => {
                   disabled={updateOrganization.isPending || !testEmail}
                   variant="outline"
                 >
-                  Speichern
+                  {t('common.save')}
                 </Button>
               )}
             </div>
@@ -541,7 +546,7 @@ const OrganizationGeneralContent = () => {
             )}
             {organization?.is_demo && (
               <p className="text-sm text-muted-foreground">
-                Im Demo-Modus kann die Test-E-Mail-Adresse nicht geändert werden.
+                {t('settings.demoModeNote')}
               </p>
             )}
           </div>
@@ -550,10 +555,9 @@ const OrganizationGeneralContent = () => {
             <div className="flex items-start gap-3 p-4 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg">
               <span className="text-xl">⚠️</span>
               <div>
-                <p className="font-medium text-amber-800 dark:text-amber-200">Testmodus ist aktiv</p>
+                <p className="font-medium text-amber-800 dark:text-amber-200">{t('settings.testModeActive')}</p>
                 <p className="text-sm text-amber-700 dark:text-amber-300 mt-1">
-                  Alle E-Mail-Bestellungen werden an <strong>{organization.test_email}</strong> gesendet.
-                  Deaktivieren Sie den Testmodus, um E-Mails an echte Lieferanten zu senden.
+                  {t('settings.testModeActiveDesc', { email: organization.test_email })}
                 </p>
               </div>
             </div>
@@ -565,6 +569,7 @@ const OrganizationGeneralContent = () => {
 };
 
 const TeamTab = () => {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const { data: currentUserRole } = useUserRole();
   const { data: members = [], isLoading: membersLoading } = useTeamMembers();
@@ -597,14 +602,14 @@ const TeamTab = () => {
   };
 
   const roleLabels: Record<TeamMember['role'], string> = {
-    admin: 'Admin',
-    manager: 'Manager',
-    purchaser: 'Einkäufer',
-    viewer: 'Betrachter',
+    admin: t('settings.roles.admin'),
+    manager: t('settings.roles.manager'),
+    purchaser: t('settings.roles.purchaser'),
+    viewer: t('settings.roles.viewer'),
   };
 
   if (isLoading) {
-    return <Card><CardContent className="p-6">Lädt...</CardContent></Card>;
+    return <Card><CardContent className="p-6">{t('common.loading')}</CardContent></Card>;
   }
 
   return (
@@ -612,49 +617,49 @@ const TeamTab = () => {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
-            <CardTitle>Teammitglieder</CardTitle>
-            <CardDescription>Verwalte die Teammitglieder deiner Organisation</CardDescription>
+            <CardTitle>{t('settings.teamMembers')}</CardTitle>
+            <CardDescription>{t('settings.teamDescription')}</CardDescription>
           </div>
           {isAdmin && (
             <Dialog open={inviteDialogOpen} onOpenChange={setInviteDialogOpen}>
               <DialogTrigger asChild>
                 <Button className="gap-2">
                   <Plus className="h-4 w-4" />
-                  Mitglied einladen
+                  {t('settings.inviteMember')}
                 </Button>
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>Teammitglied einladen</DialogTitle>
+                  <DialogTitle>{t('settings.inviteTitle')}</DialogTitle>
                 </DialogHeader>
                 <form onSubmit={handleInvite} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="invite-email">E-Mail-Adresse</Label>
+                    <Label htmlFor="invite-email">{t('settings.emailAddress')}</Label>
                     <Input
                       id="invite-email"
                       type="email"
                       value={inviteEmail}
                       onChange={(e) => setInviteEmail(e.target.value)}
-                      placeholder="kollege@beispiel.de"
+                      placeholder={t('settings.emailPlaceholder')}
                       required
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="invite-role">Rolle</Label>
+                    <Label htmlFor="invite-role">{t('settings.role')}</Label>
                     <Select value={inviteRole} onValueChange={(v) => setInviteRole(v as TeamMember['role'])}>
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="viewer">Betrachter - Kann Bestellungen und Artikel ansehen</SelectItem>
-                        <SelectItem value="purchaser">Einkäufer - Kann Bestellungen aufgeben</SelectItem>
-                        <SelectItem value="manager">Manager - Kann Lieferanten und Artikel verwalten</SelectItem>
-                        <SelectItem value="admin">Admin - Vollzugriff</SelectItem>
+                        <SelectItem value="viewer">{t('settings.roles.viewer')} - {t('settings.roles.viewerDesc')}</SelectItem>
+                        <SelectItem value="purchaser">{t('settings.roles.purchaser')} - {t('settings.roles.purchaserDesc')}</SelectItem>
+                        <SelectItem value="manager">{t('settings.roles.manager')} - {t('settings.roles.managerDesc')}</SelectItem>
+                        <SelectItem value="admin">{t('settings.roles.admin')} - {t('settings.roles.adminDesc')}</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                   <Button type="submit" className="w-full" disabled={createInvitation.isPending}>
-                    {createInvitation.isPending ? 'Wird gesendet...' : 'Einladung senden'}
+                    {createInvitation.isPending ? t('settings.sending') : t('settings.sendInvitation')}
                   </Button>
                 </form>
               </DialogContent>
@@ -663,7 +668,7 @@ const TeamTab = () => {
         </CardHeader>
         <CardContent>
           {members.length === 0 ? (
-            <p className="text-muted-foreground text-center py-8">Noch keine Teammitglieder.</p>
+            <p className="text-muted-foreground text-center py-8">{t('settings.noMembers')}</p>
           ) : (
             <div className="space-y-4">
               {members.map((member) => (
@@ -673,7 +678,7 @@ const TeamTab = () => {
                       <User className="h-5 w-5 text-primary" />
                     </div>
                     <div>
-                      <p className="font-medium">{member.full_name || 'Kein Name'}</p>
+                      <p className="font-medium">{member.full_name || t('settings.noName')}</p>
                       <p className="text-sm text-muted-foreground">{member.email}</p>
                     </div>
                   </div>
@@ -707,7 +712,7 @@ const TeamTab = () => {
                       <Badge variant="secondary">{roleLabels[member.role]}</Badge>
                     )}
                     {member.id === user?.id && (
-                      <Badge variant="outline">Du</Badge>
+                      <Badge variant="outline">{t('settings.you')}</Badge>
                     )}
                   </div>
                 </div>
@@ -722,9 +727,9 @@ const TeamTab = () => {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Mail className="h-5 w-5" />
-              Ausstehende Einladungen
+              {t('settings.pendingInvitations')}
             </CardTitle>
-            <CardDescription>Einladungen, die auf Annahme warten</CardDescription>
+            <CardDescription>{t('settings.pendingDescription')}</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
@@ -736,7 +741,7 @@ const TeamTab = () => {
                       <Badge variant="secondary">{roleLabels[invitation.role]}</Badge>
                       <span className="flex items-center gap-1">
                         <Clock className="h-3 w-3" />
-                        Läuft ab am {new Date(invitation.expires_at).toLocaleDateString()}
+                        {t('settings.expires')} {new Date(invitation.expires_at).toLocaleDateString()}
                       </span>
                     </div>
                   </div>
