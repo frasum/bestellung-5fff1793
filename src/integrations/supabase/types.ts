@@ -64,6 +64,7 @@ export type Database = {
       }
       articles: {
         Row: {
+          annual_order_value: number | null
           category: string | null
           created_at: string
           description: string | null
@@ -78,6 +79,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          annual_order_value?: number | null
           category?: string | null
           created_at?: string
           description?: string | null
@@ -92,6 +94,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          annual_order_value?: number | null
           category?: string | null
           created_at?: string
           description?: string | null
@@ -922,6 +925,48 @@ export type Database = {
           },
           {
             foreignKeyName: "supplier_locations_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      supplier_portal_drafts: {
+        Row: {
+          created_at: string
+          draft_data: Json
+          id: string
+          organization_id: string
+          supplier_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          draft_data?: Json
+          id?: string
+          organization_id: string
+          supplier_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          draft_data?: Json
+          id?: string
+          organization_id?: string
+          supplier_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supplier_portal_drafts_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supplier_portal_drafts_supplier_id_fkey"
             columns: ["supplier_id"]
             isOneToOne: false
             referencedRelation: "suppliers"

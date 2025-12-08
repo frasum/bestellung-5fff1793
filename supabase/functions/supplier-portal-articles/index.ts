@@ -9,14 +9,14 @@ const corsHeaders = {
 };
 
 interface ArticleUpdateRequest {
-  action: 'list' | 'update' | 'get-settings' | 'get-units' | 'create-unit' | 'get-categories' | 'create-category' | 'suggest-article';
+  action: 'list' | 'update' | 'get-settings' | 'get-units' | 'create-unit' | 'get-categories' | 'create-category' | 'suggest-article' | 'save-draft' | 'get-draft' | 'delete-draft';
   supplierId: string;
   organizationId: string;
-  sessionToken: string; // Required session token for authentication
+  sessionToken: string;
   articleId?: string;
   changes?: Record<string, any>;
-  unitName?: string; // For create-unit action
-  categoryName?: string; // For create-category action
+  unitName?: string;
+  categoryName?: string;
   suggestedArticle?: {
     name: string;
     description?: string | null;
@@ -25,6 +25,11 @@ interface ArticleUpdateRequest {
     price: number;
     category?: string | null;
     comment?: string | null;
+  };
+  draftData?: {
+    editedArticles: Record<string, any>;
+    priceInputs: Record<string, string>;
+    annualOrderValueInputs: Record<string, string>;
   };
 }
 
@@ -63,8 +68,6 @@ serve(async (req) => {
     }
 
     // Verify session token matches the supplier
-    // Session token format: supplierId:organizationId:timestamp:randomHash
-    // We validate that the token contains the correct supplierId and organizationId
     const tokenParts = sessionToken.split(':');
     if (tokenParts.length < 3) {
       console.error('Invalid session token format');
@@ -76,7 +79,6 @@ serve(async (req) => {
 
     const [tokenSupplierId, tokenOrgId, tokenTimestamp] = tokenParts;
     
-    // Validate token matches the requested supplier and organization
     if (tokenSupplierId !== supplierId || tokenOrgId !== organizationId) {
       console.error('Session token does not match supplier/organization');
       return new Response(
@@ -85,9 +87,8 @@ serve(async (req) => {
       );
     }
 
-    // Validate token is not too old (24 hours max session)
     const tokenAge = Date.now() - parseInt(tokenTimestamp, 10);
-    const maxTokenAge = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+    const maxTokenAge = 24 * 60 * 60 * 1000;
     if (isNaN(tokenAge) || tokenAge > maxTokenAge) {
       console.error('Session token expired');
       return new Response(
@@ -124,7 +125,6 @@ serve(async (req) => {
         console.error('Error fetching portal settings:', settingsError);
       }
 
-      // Return settings or defaults
       const portalSettings = settings || {
         portal_title: 'Lieferantenportal',
         welcome_message: null,
@@ -142,7 +142,7 @@ serve(async (req) => {
       });
     }
 
-    // Handle get-units action - fetch organization units
+    // Handle get-units action
     if (action === 'get-units') {
       const { data: units, error: unitsError } = await supabase
         .from('units')
@@ -162,7 +162,7 @@ serve(async (req) => {
       });
     }
 
-    // Handle create-unit action - create a new unit
+    // Handle create-unit action
     if (action === 'create-unit') {
       const { unitName } = body;
       
@@ -173,7 +173,6 @@ serve(async (req) => {
         );
       }
 
-      // Check if unit already exists
       const { data: existingUnit } = await supabase
         .from('units')
         .select('id, name')
@@ -188,7 +187,6 @@ serve(async (req) => {
         });
       }
 
-      // Create new unit
       const { data: newUnit, error: createError } = await supabase
         .from('units')
         .insert({ 
@@ -210,7 +208,7 @@ serve(async (req) => {
       });
     }
 
-    // Handle get-categories action - fetch organization categories
+    // Handle get-categories action
     if (action === 'get-categories') {
       const { data: categories, error: categoriesError } = await supabase
         .from('categories')
@@ -230,7 +228,7 @@ serve(async (req) => {
       });
     }
 
-    // Handle create-category action - create a new category
+    // Handle create-category action
     if (action === 'create-category') {
       const { categoryName } = body;
       
@@ -241,7 +239,6 @@ serve(async (req) => {
         );
       }
 
-      // Check if category already exists
       const { data: existingCategory } = await supabase
         .from('categories')
         .select('id, name')
@@ -256,7 +253,6 @@ serve(async (req) => {
         });
       }
 
-      // Create new category
       const { data: newCategory, error: createError } = await supabase
         .from('categories')
         .insert({ 
@@ -278,11 +274,89 @@ serve(async (req) => {
       });
     }
 
+    // Handle save-draft action
+    if (action === 'save-draft') {
+      const { draftData } = body;
+      
+      if (!draftData) {
+        return new Response(
+          JSON.stringify({ error: 'Missing draftData' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Upsert the draft (insert or update if exists)
+      const { data: draft, error: upsertError } = await supabase
+        .from('supplier_portal_drafts')
+        .upsert({
+          supplier_id: supplierId,
+          organization_id: organizationId,
+          draft_data: draftData,
+          updated_at: new Date().toISOString(),
+        }, {
+          onConflict: 'supplier_id,organization_id',
+        })
+        .select()
+        .single();
+
+      if (upsertError) {
+        console.error('Error saving draft:', upsertError);
+        throw upsertError;
+      }
+
+      console.log(`Saved draft for supplier ${supplierId}`);
+
+      return new Response(JSON.stringify({ success: true, draft }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Handle get-draft action
+    if (action === 'get-draft') {
+      const { data: draft, error: fetchError } = await supabase
+        .from('supplier_portal_drafts')
+        .select('*')
+        .eq('supplier_id', supplierId)
+        .eq('organization_id', organizationId)
+        .maybeSingle();
+
+      if (fetchError) {
+        console.error('Error fetching draft:', fetchError);
+        throw fetchError;
+      }
+
+      console.log(`Fetched draft for supplier ${supplierId}: ${draft ? 'found' : 'none'}`);
+
+      return new Response(JSON.stringify({ draft: draft?.draft_data || null }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Handle delete-draft action
+    if (action === 'delete-draft') {
+      const { error: deleteError } = await supabase
+        .from('supplier_portal_drafts')
+        .delete()
+        .eq('supplier_id', supplierId)
+        .eq('organization_id', organizationId);
+
+      if (deleteError) {
+        console.error('Error deleting draft:', deleteError);
+        throw deleteError;
+      }
+
+      console.log(`Deleted draft for supplier ${supplierId}`);
+
+      return new Response(JSON.stringify({ success: true }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     if (action === 'list') {
-      // Fetch articles for this supplier
+      // Fetch articles for this supplier including annual_order_value
       const { data: articles, error: articlesError } = await supabase
         .from('articles')
-        .select('id, name, description, sku, unit, price, category, is_active')
+        .select('id, name, description, sku, unit, price, category, is_active, annual_order_value')
         .eq('supplier_id', supplierId)
         .eq('organization_id', organizationId)
         .order('name');
@@ -351,14 +425,13 @@ serve(async (req) => {
       for (const [field, newValue] of Object.entries(changes)) {
         const oldValue = currentArticle[field];
         
-        // For price field, compare as numbers to avoid floating point string issues
+        // For numeric fields, compare as numbers
         let hasChanged = false;
-        if (field === 'price') {
+        if (field === 'price' || field === 'annual_order_value') {
           const oldNum = oldValue !== null && oldValue !== undefined ? Number(oldValue) : null;
           const newNum = newValue !== null && newValue !== undefined ? Number(newValue) : null;
           hasChanged = oldNum !== newNum;
         } else {
-          // For other fields, compare as strings
           const oldStr = oldValue !== null && oldValue !== undefined ? String(oldValue) : null;
           const newStr = newValue !== null && newValue !== undefined ? String(newValue) : null;
           hasChanged = oldStr !== newStr;
@@ -408,26 +481,19 @@ serve(async (req) => {
 
       console.log(`Created ${insertedChanges?.length || 0} pending change(s) for article ${articleId}`);
 
-      // Send notification email to admins (background task)
+      // Send notification email to admins
       const sendAdminNotification = async () => {
         try {
-          // Fetch admin users for this organization
           const { data: adminProfiles, error: adminError } = await supabase
             .from('profiles')
             .select('id, email, full_name')
             .eq('organization_id', organizationId);
 
-          if (adminError) {
-            console.error('Error fetching profiles:', adminError);
-            return;
-          }
-
-          if (!adminProfiles || adminProfiles.length === 0) {
+          if (adminError || !adminProfiles?.length) {
             console.log('No profiles found for organization');
             return;
           }
 
-          // Filter to only admins by checking user_roles
           const adminEmails: string[] = [];
           for (const profile of adminProfiles) {
             const { data: roleData } = await supabase
@@ -447,7 +513,6 @@ serve(async (req) => {
             return;
           }
 
-          // Build change summary for email
           const changeSummary = changeRecords.map(c => {
             const fieldLabels: Record<string, string> = {
               name: 'Artikelname',
@@ -456,12 +521,20 @@ serve(async (req) => {
               unit: 'Einheit',
               price: 'Preis',
               category: 'Kategorie',
+              annual_order_value: 'Bestellwert (365 Tage)',
             };
             const label = fieldLabels[c.field_name] || c.field_name;
+            const formatValue = (val: string | null) => {
+              if (val === null) return '—';
+              if (c.field_name === 'price' || c.field_name === 'annual_order_value') {
+                return `${parseFloat(val).toFixed(2).replace('.', ',')} €`;
+              }
+              return val;
+            };
             return `<tr>
               <td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${label}</td>
-              <td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${c.old_value || '—'}</td>
-              <td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${c.new_value || '—'}</td>
+              <td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${formatValue(c.old_value)}</td>
+              <td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${formatValue(c.new_value)}</td>
             </tr>`;
           }).join('');
 
@@ -539,7 +612,6 @@ serve(async (req) => {
         }
       };
 
-      // Run email notification in background (don't await)
       sendAdminNotification();
 
       return new Response(JSON.stringify({ 
@@ -561,7 +633,6 @@ serve(async (req) => {
         );
       }
 
-      // Insert the suggested article
       const { data: newSuggestion, error: insertError } = await supabase
         .from('suggested_articles')
         .insert({
@@ -586,10 +657,9 @@ serve(async (req) => {
 
       console.log(`Created suggested article: ${newSuggestion.name} (${newSuggestion.id})`);
 
-      // Send notification email to admins (background task)
+      // Send notification email to admins
       const sendSuggestionNotification = async () => {
         try {
-          // Fetch admin users for this organization
           const { data: adminProfiles, error: adminError } = await supabase
             .from('profiles')
             .select('id, email, full_name')
@@ -600,7 +670,6 @@ serve(async (req) => {
             return;
           }
 
-          // Filter to only admins by checking user_roles
           const adminEmails: string[] = [];
           for (const profile of adminProfiles) {
             const { data: roleData } = await supabase
@@ -690,12 +759,11 @@ serve(async (req) => {
         }
       };
 
-      // Run email notification in background
       sendSuggestionNotification();
 
       return new Response(JSON.stringify({ 
         message: 'Artikelvorschlag eingereicht',
-        suggestion: newSuggestion 
+        suggestedArticle: newSuggestion 
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -706,14 +774,12 @@ serve(async (req) => {
       { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
-  } catch (error: any) {
-    console.error('Error in supplier-portal-articles:', error);
+  } catch (error: unknown) {
+    console.error('Error in supplier-portal-articles function:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Internal server error';
     return new Response(
-      JSON.stringify({ error: error.message }),
-      { 
-        status: 500, 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-      }
+      JSON.stringify({ error: errorMessage }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
 });
