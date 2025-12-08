@@ -10,9 +10,8 @@ import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Building2, MapPin, Plus, Pencil, Trash2, Star, User, Lock, Users, Mail, Clock, X, Globe, FileText, RotateCcw, Moon, Sun, Ruler, Check, Store, Merge, ExternalLink, Upload, ImageIcon, Loader2, Palette, FlaskConical, Layers, MessageSquare, Bell } from 'lucide-react';
+import { Building2, MapPin, Plus, Pencil, Trash2, Star, User, Lock, Users, Mail, Clock, X, Globe, FileText, RotateCcw, Moon, Sun, Ruler, Check, Store, Merge, ExternalLink, Upload, ImageIcon, Loader2, FlaskConical, Layers, MessageSquare, Bell } from 'lucide-react';
 import { useTheme } from 'next-themes';
-import { useColorScheme, colorSchemes } from '@/hooks/useColorScheme';
 import { useSupplierPortalSettings, useUpsertSupplierPortalSettings, DEFAULT_PORTAL_SETTINGS } from '@/hooks/useSupplierPortalSettings';
 import ReactMarkdown from 'react-markdown';
 import { Textarea } from '@/components/ui/textarea';
@@ -170,7 +169,6 @@ const ProfileTab = () => {
   const updateProfile = useUpdateUserProfile();
   const updatePassword = useUpdatePassword();
   const { theme, setTheme } = useTheme();
-  const { colorScheme, setColorScheme } = useColorScheme();
   const [fullName, setFullName] = useState('');
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -280,30 +278,6 @@ const ProfileTab = () => {
               >
                 System
               </Button>
-            </div>
-          </div>
-
-          <div className="pt-4 border-t">
-            <Label className="mb-3 block flex items-center gap-2">
-              <Palette className="h-4 w-4" />
-              Farbdesign
-            </Label>
-            <div className="flex gap-2 flex-wrap">
-              {colorSchemes.map((scheme) => (
-                <Button
-                  key={scheme.id}
-                  variant={colorScheme === scheme.id ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setColorScheme(scheme.id)}
-                  className="gap-2"
-                >
-                  <span 
-                    className="w-4 h-4 rounded-full border border-border" 
-                    style={{ backgroundColor: scheme.color }}
-                  />
-                  {scheme.label}
-                </Button>
-              ))}
             </div>
           </div>
 
