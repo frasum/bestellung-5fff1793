@@ -7,13 +7,14 @@ const corsHeaders = {
 };
 
 interface ArticleUpdateRequest {
-  action: 'list' | 'update' | 'get-settings' | 'get-units' | 'create-unit';
+  action: 'list' | 'update' | 'get-settings' | 'get-units' | 'create-unit' | 'get-categories' | 'create-category';
   supplierId: string;
   organizationId: string;
   sessionToken: string; // Required session token for authentication
   articleId?: string;
   changes?: Record<string, any>;
   unitName?: string; // For create-unit action
+  categoryName?: string; // For create-category action
 }
 
 serve(async (req) => {
@@ -194,6 +195,74 @@ serve(async (req) => {
       console.log(`Created new unit: ${newUnit.name}`);
 
       return new Response(JSON.stringify({ unit: newUnit }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Handle get-categories action - fetch organization categories
+    if (action === 'get-categories') {
+      const { data: categories, error: categoriesError } = await supabase
+        .from('categories')
+        .select('id, name')
+        .eq('organization_id', organizationId)
+        .order('name');
+
+      if (categoriesError) {
+        console.error('Error fetching categories:', categoriesError);
+        throw categoriesError;
+      }
+
+      console.log(`Found ${categories?.length || 0} categories for organization ${organizationId}`);
+
+      return new Response(JSON.stringify({ categories: categories || [] }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Handle create-category action - create a new category
+    if (action === 'create-category') {
+      const { categoryName } = body;
+      
+      if (!categoryName || !categoryName.trim()) {
+        return new Response(
+          JSON.stringify({ error: 'Missing categoryName' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Check if category already exists
+      const { data: existingCategory } = await supabase
+        .from('categories')
+        .select('id, name')
+        .eq('organization_id', organizationId)
+        .ilike('name', categoryName.trim())
+        .maybeSingle();
+
+      if (existingCategory) {
+        console.log(`Category "${categoryName}" already exists`);
+        return new Response(JSON.stringify({ category: existingCategory }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      // Create new category
+      const { data: newCategory, error: createError } = await supabase
+        .from('categories')
+        .insert({ 
+          name: categoryName.trim(), 
+          organization_id: organizationId 
+        })
+        .select('id, name')
+        .single();
+
+      if (createError) {
+        console.error('Error creating category:', createError);
+        throw createError;
+      }
+
+      console.log(`Created new category: ${newCategory.name}`);
+
+      return new Response(JSON.stringify({ category: newCategory }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }

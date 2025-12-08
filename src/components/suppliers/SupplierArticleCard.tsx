@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Save, Loader2, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { SupplierUnitSelect } from './SupplierUnitSelect';
+import { SupplierCategorySelect } from './SupplierCategorySelect';
 
 interface Article {
   id: string;
@@ -32,6 +33,11 @@ interface Unit {
   name: string;
 }
 
+interface Category {
+  id: string;
+  name: string;
+}
+
 interface SupplierArticleCardProps {
   article: Article;
   editedArticles: Record<string, Partial<Article>>;
@@ -39,10 +45,12 @@ interface SupplierArticleCardProps {
   pendingChanges: PendingChange[];
   saving: string | null;
   units: Unit[];
+  categories: Category[];
   onFieldChange: (articleId: string, field: keyof Article, value: any) => void;
   onPriceChange: (articleId: string, value: string) => void;
   onSave: (articleId: string) => void;
   onCreateUnit: (name: string) => Promise<void>;
+  onCreateCategory: (name: string) => Promise<void>;
 }
 
 export function SupplierArticleCard({
@@ -52,10 +60,12 @@ export function SupplierArticleCard({
   pendingChanges,
   saving,
   units,
+  categories,
   onFieldChange,
   onPriceChange,
   onSave,
   onCreateUnit,
+  onCreateCategory,
 }: SupplierArticleCardProps) {
   const getDisplayValue = (field: keyof Article) => {
     if (editedArticles[article.id]?.[field] !== undefined) {
@@ -192,10 +202,20 @@ export function SupplierArticleCard({
           </div>
         </div>
 
-        {/* Category (read-only) */}
+        {/* Category */}
         <div>
           <label className="text-xs text-muted-foreground font-medium">Kategorie</label>
-          <p className="text-sm mt-1 py-2">{article.category || '—'}</p>
+          <div className="mt-1">
+            <SupplierCategorySelect
+              value={(getDisplayValue('category') as string) || ''}
+              categories={categories}
+              onChange={(value) => onFieldChange(article.id, 'category', value)}
+              onCreateCategory={onCreateCategory}
+              hasPending={hasPendingChange('category')}
+              pendingInfo={getPendingChangeForField('category')}
+              className="h-11"
+            />
+          </div>
         </div>
       </div>
 
