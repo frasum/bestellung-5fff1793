@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { 
-  Search, User, Lock, Moon, Palette, Globe, Building2, Users, Store, MapPin, 
+  Search, User, Lock, Moon, Globe, Building2, Users, Store, MapPin, 
   Bell, FileText, ExternalLink, Ruler, Tag, FlaskConical, Mail
 } from 'lucide-react';
 import { LucideIcon } from 'lucide-react';
@@ -25,7 +25,6 @@ const SETTINGS_SEARCH_ITEMS: SettingsSearchItem[] = [
   { id: 'profile-name', label: 'Vollständiger Name', description: 'Profilname ändern', keywords: ['name', 'profil', 'benutzer', 'user'], tab: 'profile', icon: User, path: 'Profil' },
   { id: 'profile-password', label: 'Passwort ändern', description: 'Sicherheit', keywords: ['kennwort', 'sicherheit', 'password', 'security'], tab: 'profile', icon: Lock, path: 'Profil' },
   { id: 'profile-theme', label: 'Design-Modus', description: 'Hell / Dunkel', keywords: ['dark mode', 'hell', 'dunkel', 'theme', 'light'], tab: 'profile', icon: Moon, path: 'Profil' },
-  { id: 'profile-color', label: 'Farbschema', description: 'Farbdesign wählen', keywords: ['farbe', 'color', 'orange', 'blau', 'grün', 'design'], tab: 'profile', icon: Palette, path: 'Profil' },
   { id: 'profile-language', label: 'Sprache', description: 'Anzeigesprache', keywords: ['deutsch', 'english', 'français', 'language', 'german', 'french'], tab: 'profile', icon: Globe, path: 'Profil' },
   
   // Organisation > Allgemein
