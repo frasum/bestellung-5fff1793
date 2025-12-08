@@ -265,42 +265,49 @@ const Reports = () => {
               </div>
             ) : (
               <>
-                {/* KPI Cards */}
-                <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                {/* KPI Cards - 2x2 on mobile, 4 cols on desktop */}
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
                   <Card>
-                    <CardContent className="p-6">
+                    <CardContent className="p-3 sm:p-4 lg:p-6">
                       <div className="flex items-center justify-between">
-                        <Euro className="w-8 h-8 text-primary" />
+                        <Euro className="w-5 h-5 sm:w-6 sm:h-6 lg:w-8 lg:h-8 text-primary" />
                         {stats.spendingChange !== 0 && (
-                          <div className={`flex items-center gap-1 text-sm ${stats.spendingChange > 0 ? 'text-destructive' : 'text-success'}`}>
-                            {stats.spendingChange > 0 ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
-                            {Math.abs(stats.spendingChange).toFixed(1)}%
+                          <div className={`flex items-center gap-0.5 text-xs sm:text-sm ${stats.spendingChange > 0 ? 'text-destructive' : 'text-success'}`}>
+                            {stats.spendingChange > 0 ? <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4" /> : <TrendingDown className="w-3 h-3 sm:w-4 sm:h-4" />}
+                            <span className="hidden sm:inline">{Math.abs(stats.spendingChange).toFixed(1)}%</span>
+                            <span className="sm:hidden">{Math.abs(stats.spendingChange).toFixed(0)}%</span>
                           </div>
                         )}
                       </div>
-                      <p className="text-2xl font-bold text-foreground mt-4">€{stats.totalSpent.toLocaleString('de-DE', { minimumFractionDigits: 2 })}</p>
-                      <p className="text-sm text-muted-foreground">{t('reports.totalSpent')}</p>
+                      <p className="text-lg sm:text-xl lg:text-2xl font-bold text-foreground mt-2 sm:mt-4">
+                        <span className="sm:hidden">€{(stats.totalSpent / 1000).toFixed(1)}k</span>
+                        <span className="hidden sm:inline">€{stats.totalSpent.toLocaleString('de-DE', { minimumFractionDigits: 2 })}</span>
+                      </p>
+                      <p className="text-xs sm:text-sm text-muted-foreground">{t('reports.totalSpent')}</p>
                     </CardContent>
                   </Card>
                   <Card>
-                    <CardContent className="p-6">
-                      <ShoppingCart className="w-8 h-8 text-accent" />
-                      <p className="text-2xl font-bold text-foreground mt-4">{stats.totalOrders}</p>
-                      <p className="text-sm text-muted-foreground">{t('reports.orderCount')}</p>
+                    <CardContent className="p-3 sm:p-4 lg:p-6">
+                      <ShoppingCart className="w-5 h-5 sm:w-6 sm:h-6 lg:w-8 lg:h-8 text-accent" />
+                      <p className="text-lg sm:text-xl lg:text-2xl font-bold text-foreground mt-2 sm:mt-4">{stats.totalOrders}</p>
+                      <p className="text-xs sm:text-sm text-muted-foreground">{t('reports.orderCount')}</p>
                     </CardContent>
                   </Card>
                   <Card>
-                    <CardContent className="p-6">
-                      <Euro className="w-8 h-8 text-success" />
-                      <p className="text-2xl font-bold text-foreground mt-4">€{stats.avgOrderValue.toFixed(2)}</p>
-                      <p className="text-sm text-muted-foreground">{t('reports.avgOrderValue')}</p>
+                    <CardContent className="p-3 sm:p-4 lg:p-6">
+                      <Euro className="w-5 h-5 sm:w-6 sm:h-6 lg:w-8 lg:h-8 text-success" />
+                      <p className="text-lg sm:text-xl lg:text-2xl font-bold text-foreground mt-2 sm:mt-4">
+                        <span className="sm:hidden">€{stats.avgOrderValue.toFixed(0)}</span>
+                        <span className="hidden sm:inline">€{stats.avgOrderValue.toFixed(2)}</span>
+                      </p>
+                      <p className="text-xs sm:text-sm text-muted-foreground">{t('reports.avgOrderValue')}</p>
                     </CardContent>
                   </Card>
                   <Card>
-                    <CardContent className="p-6">
-                      <Users className="w-8 h-8 text-warning" />
-                      <p className="text-2xl font-bold text-foreground mt-4">{stats.supplierBreakdown.length}</p>
-                      <p className="text-sm text-muted-foreground">{t('reports.activeSuppliers')}</p>
+                    <CardContent className="p-3 sm:p-4 lg:p-6">
+                      <Users className="w-5 h-5 sm:w-6 sm:h-6 lg:w-8 lg:h-8 text-warning" />
+                      <p className="text-lg sm:text-xl lg:text-2xl font-bold text-foreground mt-2 sm:mt-4">{stats.supplierBreakdown.length}</p>
+                      <p className="text-xs sm:text-sm text-muted-foreground">{t('reports.activeSuppliers')}</p>
                     </CardContent>
                   </Card>
                 </div>
