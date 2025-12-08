@@ -10,6 +10,9 @@ interface RequestNewLinkBody {
   supplierId: string;
 }
 
+const RATE_LIMIT_MAX = 3; // Max requests per supplier per hour
+const RATE_LIMIT_WINDOW_MINUTES = 60;
+
 serve(async (req: Request): Promise<Response> => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -37,6 +40,41 @@ serve(async (req: Request): Promise<Response> => {
     }
 
     console.log(`Requesting new magic link for supplier: ${supplierId}`);
+
+    // Check rate limit for this supplier
+    const windowStart = new Date();
+    windowStart.setMinutes(windowStart.getMinutes() - RATE_LIMIT_WINDOW_MINUTES);
+    
+    const { count: requestCount, error: countError } = await supabase
+      .from('magic_link_rate_limits')
+      .select('*', { count: 'exact', head: true })
+      .eq('supplier_id', supplierId)
+      .gte('created_at', windowStart.toISOString());
+
+    if (countError) {
+      console.error('Rate limit check error:', countError);
+    }
+
+    if (requestCount !== null && requestCount >= RATE_LIMIT_MAX) {
+      console.log(`Rate limit exceeded for supplier: ${supplierId} (${requestCount}/${RATE_LIMIT_MAX})`);
+      return new Response(
+        JSON.stringify({ 
+          error: 'Zu viele Anfragen. Bitte versuchen Sie es in einer Stunde erneut.',
+          retryAfterMinutes: RATE_LIMIT_WINDOW_MINUTES 
+        }),
+        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Record this request for rate limiting
+    await supabase
+      .from('magic_link_rate_limits')
+      .insert({ supplier_id: supplierId });
+
+    // Cleanup old rate limit entries periodically (5% chance per request)
+    if (Math.random() < 0.05) {
+      await supabase.rpc('cleanup_old_magic_link_rate_limits');
+    }
 
     // Fetch supplier data
     const { data: supplier, error: supplierError } = await supabase
