@@ -306,24 +306,34 @@ const Reports = () => {
                 </div>
 
                 {/* Charts Row */}
-                <div className="grid lg:grid-cols-2 gap-6">
+                <div className="grid lg:grid-cols-2 gap-4 lg:gap-6">
                   {/* Monthly Spending Chart */}
                   <Card>
-                    <CardHeader>
-                      <CardTitle className="text-lg">{t('reports.monthlySpending')}</CardTitle>
+                    <CardHeader className="pb-2 sm:pb-4">
+                      <CardTitle className="text-base sm:text-lg">{t('reports.monthlySpending')}</CardTitle>
                     </CardHeader>
-                    <CardContent>
-                      <div className="h-72">
+                    <CardContent className="px-2 sm:px-6 pb-4">
+                      <div className="h-56 sm:h-72">
                         <ResponsiveContainer width="100%" height="100%">
-                          <BarChart data={stats.monthlySpending}>
+                          <BarChart data={stats.monthlySpending} margin={{ top: 5, right: 5, left: -15, bottom: 5 }}>
                             <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                            <XAxis dataKey="month" tick={{ fill: 'hsl(var(--muted-foreground))' }} fontSize={12} />
-                            <YAxis tick={{ fill: 'hsl(var(--muted-foreground))' }} fontSize={12} tickFormatter={(v) => `€${v}`} />
+                            <XAxis 
+                              dataKey="month" 
+                              tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }} 
+                              tickFormatter={(value) => value.slice(0, 3)}
+                              interval={0}
+                            />
+                            <YAxis 
+                              tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }} 
+                              tickFormatter={(v) => v >= 1000 ? `${(v/1000).toFixed(0)}k` : `€${v}`}
+                              width={45}
+                            />
                             <Tooltip
                               contentStyle={{
                                 backgroundColor: 'hsl(var(--card))',
                                 border: '1px solid hsl(var(--border))',
                                 borderRadius: '8px',
+                                fontSize: '12px',
                               }}
                               formatter={(value: number) => [`€${value.toFixed(2)}`, 'Ausgaben']}
                             />
@@ -336,44 +346,48 @@ const Reports = () => {
 
                   {/* Supplier Breakdown */}
                   <Card>
-                    <CardHeader>
-                      <CardTitle className="text-lg">{t('reports.supplierSpending')}</CardTitle>
+                    <CardHeader className="pb-2 sm:pb-4">
+                      <CardTitle className="text-base sm:text-lg">{t('reports.supplierSpending')}</CardTitle>
                     </CardHeader>
-                    <CardContent>
-                      <div className="h-72 flex items-center">
-                        <ResponsiveContainer width="50%" height="100%">
-                          <PieChart>
-                            <Pie
-                              data={stats.supplierBreakdown}
-                              dataKey="amount"
-                              nameKey="name"
-                              cx="50%"
-                              cy="50%"
-                              innerRadius={50}
-                              outerRadius={80}
-                            >
-                              {stats.supplierBreakdown.map((entry, index) => (
-                                <Cell key={`cell-${index}`} fill={entry.color} />
-                              ))}
-                            </Pie>
-                            <Tooltip
-                              contentStyle={{
-                                backgroundColor: 'hsl(var(--card))',
-                                border: '1px solid hsl(var(--border))',
-                                borderRadius: '8px',
-                              }}
-                              formatter={(value: number) => `€${value.toFixed(2)}`}
-                            />
-                          </PieChart>
-                        </ResponsiveContainer>
-                        <div className="flex-1 space-y-2">
-                          {stats.supplierBreakdown.map((supplier, i) => (
-                            <div key={i} className="flex items-center justify-between text-sm">
-                              <div className="flex items-center gap-2">
-                                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: supplier.color }} />
-                                <span className="text-foreground truncate max-w-[120px]">{supplier.name}</span>
+                    <CardContent className="px-2 sm:px-6 pb-4">
+                      {/* Mobile: Stacked layout, Desktop: Side by side */}
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                        <div className="h-48 sm:h-56 w-full sm:w-1/2">
+                          <ResponsiveContainer width="100%" height="100%">
+                            <PieChart>
+                              <Pie
+                                data={stats.supplierBreakdown}
+                                dataKey="amount"
+                                nameKey="name"
+                                cx="50%"
+                                cy="50%"
+                                innerRadius={35}
+                                outerRadius={60}
+                              >
+                                {stats.supplierBreakdown.map((entry, index) => (
+                                  <Cell key={`cell-${index}`} fill={entry.color} />
+                                ))}
+                              </Pie>
+                              <Tooltip
+                                contentStyle={{
+                                  backgroundColor: 'hsl(var(--card))',
+                                  border: '1px solid hsl(var(--border))',
+                                  borderRadius: '8px',
+                                  fontSize: '12px',
+                                }}
+                                formatter={(value: number) => `€${value.toFixed(2)}`}
+                              />
+                            </PieChart>
+                          </ResponsiveContainer>
+                        </div>
+                        <div className="w-full sm:flex-1 grid grid-cols-2 sm:grid-cols-1 gap-2">
+                          {stats.supplierBreakdown.slice(0, 6).map((supplier, i) => (
+                            <div key={i} className="flex items-center justify-between text-xs sm:text-sm gap-2">
+                              <div className="flex items-center gap-1.5 min-w-0">
+                                <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full shrink-0" style={{ backgroundColor: supplier.color }} />
+                                <span className="text-foreground truncate">{supplier.name}</span>
                               </div>
-                              <span className="text-muted-foreground">€{supplier.amount.toFixed(0)}</span>
+                              <span className="text-muted-foreground shrink-0">€{supplier.amount.toFixed(0)}</span>
                             </div>
                           ))}
                         </div>
@@ -383,24 +397,34 @@ const Reports = () => {
                 </div>
 
                 {/* Bottom Row */}
-                <div className="grid lg:grid-cols-2 gap-6">
+                <div className="grid lg:grid-cols-2 gap-4 lg:gap-6">
                   {/* Spending Trend */}
                   <Card>
-                    <CardHeader>
-                      <CardTitle className="text-lg">{t('reports.spendingTrend')}</CardTitle>
+                    <CardHeader className="pb-2 sm:pb-4">
+                      <CardTitle className="text-base sm:text-lg">{t('reports.spendingTrend')}</CardTitle>
                     </CardHeader>
-                    <CardContent>
-                      <div className="h-64">
+                    <CardContent className="px-2 sm:px-6 pb-4">
+                      <div className="h-48 sm:h-64">
                         <ResponsiveContainer width="100%" height="100%">
-                          <LineChart data={stats.monthlySpending}>
+                          <LineChart data={stats.monthlySpending} margin={{ top: 5, right: 5, left: -15, bottom: 5 }}>
                             <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                            <XAxis dataKey="month" tick={{ fill: 'hsl(var(--muted-foreground))' }} fontSize={12} />
-                            <YAxis tick={{ fill: 'hsl(var(--muted-foreground))' }} fontSize={12} tickFormatter={(v) => `€${v}`} />
+                            <XAxis 
+                              dataKey="month" 
+                              tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }} 
+                              tickFormatter={(value) => value.slice(0, 3)}
+                              interval={0}
+                            />
+                            <YAxis 
+                              tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }} 
+                              tickFormatter={(v) => v >= 1000 ? `${(v/1000).toFixed(0)}k` : `€${v}`}
+                              width={45}
+                            />
                             <Tooltip
                               contentStyle={{
                                 backgroundColor: 'hsl(var(--card))',
                                 border: '1px solid hsl(var(--border))',
                                 borderRadius: '8px',
+                                fontSize: '12px',
                               }}
                               formatter={(value: number) => [`€${value.toFixed(2)}`, 'Ausgaben']}
                             />
@@ -409,7 +433,7 @@ const Reports = () => {
                               dataKey="amount"
                               stroke="hsl(var(--primary))"
                               strokeWidth={2}
-                              dot={{ fill: 'hsl(var(--primary))' }}
+                              dot={{ fill: 'hsl(var(--primary))', r: 3 }}
                             />
                           </LineChart>
                         </ResponsiveContainer>
