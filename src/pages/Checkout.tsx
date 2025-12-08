@@ -25,16 +25,16 @@ import { de } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { EmailPreviewDialog, EmailPreviewData } from '@/components/checkout/EmailPreviewDialog';
 
-const TIME_WINDOWS = [
-  { value: 'morning', label: '06:00 - 10:00' },
-  { value: 'late-morning', label: '10:00 - 12:00' },
-  { value: 'noon', label: '12:00 - 14:00' },
-  { value: 'afternoon', label: '14:00 - 17:00' },
-  { value: 'flexible', label: 'Flexible' },
-];
-
 const Checkout = () => {
   const { t } = useTranslation();
+
+  const TIME_WINDOWS = [
+    { value: 'morning', label: '06:00 - 10:00' },
+    { value: 'late-morning', label: '10:00 - 12:00' },
+    { value: 'noon', label: '12:00 - 14:00' },
+    { value: 'afternoon', label: '14:00 - 17:00' },
+    { value: 'flexible', label: t('checkout.flexible') },
+  ];
 
   const checkoutSchema = z.object({
     deliveryAddressId: z.string().min(1, t('validation.required')),
@@ -126,7 +126,7 @@ const Checkout = () => {
     // Get selected address
     const selectedAddress = deliveryAddresses?.find(a => a.id === data.deliveryAddressId);
     if (!selectedAddress) {
-      toast.error('Bitte wählen Sie eine Lieferadresse');
+      toast.error(t('checkout.selectAddressError'));
       return;
     }
 
@@ -209,7 +209,7 @@ const Checkout = () => {
       setPendingOrderData(data);
       setShowEmailPreview(true);
     } catch (error: any) {
-      toast.error(error.message || 'Fehler beim Laden der Vorschau');
+      toast.error(error.message || t('checkout.loadPreviewError'));
     }
   };
 
@@ -242,9 +242,9 @@ const Checkout = () => {
       setCompletedOrders(orderNumbers);
       clearCart();
       setShowEmailPreview(false);
-      toast.success(`${orderNumbers.length} Bestellung(en) erfolgreich aufgegeben!`);
+      toast.success(t('checkout.ordersSuccessful', { count: orderNumbers.length }));
     } catch (error: any) {
-      toast.error(error.message || 'Fehler beim Erstellen der Bestellungen');
+      toast.error(error.message || t('checkout.createOrderError'));
     } finally {
       setIsSubmitting(false);
     }
@@ -326,7 +326,7 @@ const Checkout = () => {
                         {address.label}
                         {address.is_default && (
                           <span className="text-xs bg-primary/10 text-primary px-1.5 py-0.5 rounded">
-                            Standard
+                            {t('checkout.defaultBadge')}
                           </span>
                         )}
                       </span>
@@ -355,7 +355,7 @@ const Checkout = () => {
       <div className="space-y-2">
         <Label>
           <CalendarIcon className="w-4 h-4 inline mr-1" />
-          Lieferdatum *
+          {t('checkout.deliveryDate')} *
         </Label>
         <Controller
           control={form.control}
@@ -372,7 +372,7 @@ const Checkout = () => {
                   )}
                 >
                   <CalendarIcon className="mr-2 h-4 w-4" />
-                  {field.value ? format(field.value, "PPP", { locale: de }) : "Datum wählen"}
+                  {field.value ? format(field.value, "PPP", { locale: de }) : t('checkout.selectDate')}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="start">
@@ -401,7 +401,7 @@ const Checkout = () => {
       <div className="space-y-2">
         <Label>
           <Clock className="w-4 h-4 inline mr-1" />
-          Zeitfenster *
+          {t('checkout.timeWindow')} *
         </Label>
         <Controller
           control={form.control}
@@ -409,7 +409,7 @@ const Checkout = () => {
           render={({ field }) => (
             <Select onValueChange={field.onChange} value={field.value}>
               <SelectTrigger className={isMobile ? "h-12" : ""}>
-                <SelectValue placeholder="Zeitfenster wählen" />
+                <SelectValue placeholder={t('checkout.selectTimeWindow')} />
               </SelectTrigger>
               <SelectContent>
                 {TIME_WINDOWS.map((tw) => (
@@ -457,7 +457,7 @@ const Checkout = () => {
           </Button>
 
           <p className="text-xs text-muted-foreground text-center">
-            Orders will be emailed to each supplier immediately
+            {t('checkout.ordersEmailed')}
           </p>
         </>
       )}

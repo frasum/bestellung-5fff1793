@@ -220,7 +220,18 @@
     "sendOrders": "Envoyer les commandes",
     "orderSummary": "Résumé de la commande",
     "emailPreview": "Aperçu de l'e-mail",
-    "confirmSend": "Confirmer et envoyer les commandes"
+    "confirmSend": "Confirmer et envoyer les commandes",
+    "deliveryDate": "Date de livraison",
+    "selectDate": "Sélectionner une date",
+    "timeWindow": "Créneau horaire",
+    "selectTimeWindow": "Sélectionner un créneau",
+    "ordersEmailed": "Les commandes seront envoyées par email à chaque fournisseur immédiatement",
+    "ordersSuccessful": "{{count}} commande(s) passée(s) avec succès !",
+    "loadPreviewError": "Erreur lors du chargement de l'aperçu",
+    "selectAddressError": "Veuillez sélectionner une adresse de livraison",
+    "createOrderError": "Erreur lors de la création des commandes",
+    "defaultBadge": "Par défaut",
+    "flexible": "Flexible"
   },
   "reports": {
     "title": "Rapports",

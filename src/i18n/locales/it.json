@@ -220,7 +220,18 @@
     "sendOrders": "Invia ordini",
     "orderSummary": "Riepilogo ordine",
     "emailPreview": "Anteprima email",
-    "confirmSend": "Conferma e invia ordini"
+    "confirmSend": "Conferma e invia ordini",
+    "deliveryDate": "Data di consegna",
+    "selectDate": "Seleziona data",
+    "timeWindow": "Fascia oraria",
+    "selectTimeWindow": "Seleziona fascia oraria",
+    "ordersEmailed": "Gli ordini saranno inviati via email a ciascun fornitore immediatamente",
+    "ordersSuccessful": "{{count}} ordine/i effettuato/i con successo!",
+    "loadPreviewError": "Errore durante il caricamento dell'anteprima",
+    "selectAddressError": "Seleziona un indirizzo di consegna",
+    "createOrderError": "Errore durante la creazione degli ordini",
+    "defaultBadge": "Predefinito",
+    "flexible": "Flessibile"
   },
   "reports": {
     "title": "Report",

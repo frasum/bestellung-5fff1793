@@ -220,7 +220,18 @@
     "sendOrders": "Send Orders",
     "orderSummary": "Order Summary",
     "emailPreview": "Email Preview",
-    "confirmSend": "Confirm and Send Orders"
+    "confirmSend": "Confirm and Send Orders",
+    "deliveryDate": "Delivery Date",
+    "selectDate": "Select date",
+    "timeWindow": "Time Window",
+    "selectTimeWindow": "Select time window",
+    "ordersEmailed": "Orders will be emailed to each supplier immediately",
+    "ordersSuccessful": "{{count}} order(s) placed successfully!",
+    "loadPreviewError": "Error loading preview",
+    "selectAddressError": "Please select a delivery address",
+    "createOrderError": "Error creating orders",
+    "defaultBadge": "Default",
+    "flexible": "Flexible"
   },
   "reports": {
     "title": "Reports",

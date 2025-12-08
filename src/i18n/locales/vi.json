@@ -220,7 +220,18 @@
     "sendOrders": "Gửi đơn hàng",
     "orderSummary": "Tóm tắt đơn hàng",
     "emailPreview": "Xem trước email",
-    "confirmSend": "Xác nhận và gửi đơn hàng"
+    "confirmSend": "Xác nhận và gửi đơn hàng",
+    "deliveryDate": "Ngày giao hàng",
+    "selectDate": "Chọn ngày",
+    "timeWindow": "Khung giờ",
+    "selectTimeWindow": "Chọn khung giờ",
+    "ordersEmailed": "Đơn hàng sẽ được gửi email đến từng nhà cung cấp ngay lập tức",
+    "ordersSuccessful": "Đã đặt thành công {{count}} đơn hàng!",
+    "loadPreviewError": "Lỗi khi tải bản xem trước",
+    "selectAddressError": "Vui lòng chọn địa chỉ giao hàng",
+    "createOrderError": "Lỗi khi tạo đơn hàng",
+    "defaultBadge": "Mặc định",
+    "flexible": "Linh hoạt"
   },
   "reports": {
     "title": "Báo cáo",
