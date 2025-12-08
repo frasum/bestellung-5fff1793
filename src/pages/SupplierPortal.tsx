@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { LogOut, Save, Search, Package, Loader2, Clock } from 'lucide-react';
 import logo from '@/assets/logo.png';
+import { SupplierArticleCard } from '@/components/suppliers/SupplierArticleCard';
 
 interface SupplierSession {
   supplierId: string;
@@ -284,148 +285,169 @@ const SupplierPortal = () => {
                 {searchTerm ? 'Keine Artikel gefunden' : 'Noch keine Artikel vorhanden'}
               </div>
             ) : (
-              <div className="border rounded-lg overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="min-w-[280px]">Artikelname</TableHead>
-                      <TableHead className="w-[100px]">SKU</TableHead>
-                      <TableHead className="min-w-[150px]">Beschreibung</TableHead>
-                      <TableHead className="w-[80px]">Einheit</TableHead>
-                      <TableHead className="w-[100px]">Preis (€)</TableHead>
-                      <TableHead className="w-[120px]">Kategorie</TableHead>
-                      <TableHead className="w-[80px]"></TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredArticles.map((article) => {
-                      const articlePendingChanges = getPendingChangesForArticle(article.id);
-                      return (
-                        <TableRow key={article.id}>
-                          <TableCell>
-                            <span className="font-medium">{article.name}</span>
-                          </TableCell>
-                          <TableCell>
-                            <div className="space-y-1">
-                              <Input
-                                value={(getDisplayValue(article, 'sku') as string) || ''}
-                                onChange={(e) => handleFieldChange(article.id, 'sku', e.target.value || null)}
-                                className={`h-8 ${hasPendingChange(article.id, 'sku') ? 'border-amber-500' : ''}`}
-                                placeholder="-"
-                              />
-                              {getPendingChangeForField(article.id, 'sku') && (
-                                <div className="text-xs">
-                                  <span className="text-amber-600">Ausstehend</span>
-                                  <span className="text-muted-foreground ml-1">
-                                    (vorher: {getPendingChangeForField(article.id, 'sku')?.old_value || '-'})
-                                  </span>
-                                </div>
-                              )}
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="space-y-1">
-                              <Input
-                                value={(getDisplayValue(article, 'description') as string) || ''}
-                                onChange={(e) => handleFieldChange(article.id, 'description', e.target.value || null)}
-                                className={`h-8 ${hasPendingChange(article.id, 'description') ? 'border-amber-500' : ''}`}
-                                placeholder="-"
-                              />
-                              {getPendingChangeForField(article.id, 'description') && (
-                                <div className="text-xs">
-                                  <span className="text-amber-600">Ausstehend</span>
-                                  <span className="text-muted-foreground ml-1">
-                                    (vorher: {getPendingChangeForField(article.id, 'description')?.old_value || '-'})
-                                  </span>
-                                </div>
-                              )}
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="space-y-1">
-                              <Input
-                                value={getDisplayValue(article, 'unit') as string}
-                                onChange={(e) => handleFieldChange(article.id, 'unit', e.target.value)}
-                                className={`h-8 ${hasPendingChange(article.id, 'unit') ? 'border-amber-500' : ''}`}
-                              />
-                              {getPendingChangeForField(article.id, 'unit') && (
-                                <div className="text-xs">
-                                  <span className="text-amber-600">Ausstehend</span>
-                                  <span className="text-muted-foreground ml-1">
-                                    (vorher: {getPendingChangeForField(article.id, 'unit')?.old_value || '-'})
-                                  </span>
-                                </div>
-                              )}
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="space-y-1">
-                              <Input
-                                type="text"
-                                inputMode="decimal"
-                                value={priceInputs[article.id] !== undefined 
-                                  ? priceInputs[article.id]
-                                  : getPendingChangeForField(article.id, 'price')?.new_value?.replace('.', ',') 
-                                    ?? String(article.price).replace('.', ',')}
-                                onChange={(e) => {
-                                  setPriceInputs(prev => ({
-                                    ...prev,
-                                    [article.id]: e.target.value
-                                  }));
-                                }}
-                                className={`h-8 ${hasPendingChange(article.id, 'price') ? 'border-amber-500' : ''}`}
-                              />
-                              {getPendingChangeForField(article.id, 'price') && (
-                                <div className="text-xs">
-                                  <span className="text-amber-600">Ausstehend</span>
-                                  <span className="text-muted-foreground ml-1">
-                                    (vorher: {getPendingChangeForField(article.id, 'price')?.old_value?.replace('.', ',') || '-'} €)
-                                  </span>
-                                </div>
-                              )}
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="space-y-1">
-                              <Input
-                                value={(getDisplayValue(article, 'category') as string) || ''}
-                                onChange={(e) => handleFieldChange(article.id, 'category', e.target.value || null)}
-                                className={`h-8 ${hasPendingChange(article.id, 'category') ? 'border-amber-500' : ''}`}
-                                placeholder="-"
-                              />
-                              {getPendingChangeForField(article.id, 'category') && (
-                                <div className="text-xs">
-                                  <span className="text-amber-600">Ausstehend</span>
-                                  <span className="text-muted-foreground ml-1">
-                                    (vorher: {getPendingChangeForField(article.id, 'category')?.old_value || '-'})
-                                  </span>
-                                </div>
-                              )}
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <Button
-                              size="sm"
-                              onClick={() => handleSave(article.id)}
-                              disabled={!hasChanges(article.id) || saving === article.id}
-                              className="w-full"
-                            >
-                              {saving === article.id ? (
-                                <Loader2 className="h-4 w-4 animate-spin" />
-                              ) : (
-                                <>
-                                  <Save className="h-4 w-4 mr-1" />
-                                  Einreichen
-                                </>
-                              )}
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
-              </div>
+              <>
+                {/* Desktop: Table */}
+                <div className="hidden lg:block border rounded-lg overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="min-w-[280px]">Artikelname</TableHead>
+                        <TableHead className="w-[100px]">SKU</TableHead>
+                        <TableHead className="min-w-[150px]">Beschreibung</TableHead>
+                        <TableHead className="w-[80px]">Einheit</TableHead>
+                        <TableHead className="w-[100px]">Preis (€)</TableHead>
+                        <TableHead className="w-[120px]">Kategorie</TableHead>
+                        <TableHead className="w-[80px]"></TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredArticles.map((article) => {
+                        return (
+                          <TableRow key={article.id}>
+                            <TableCell>
+                              <span className="font-medium">{article.name}</span>
+                            </TableCell>
+                            <TableCell>
+                              <div className="space-y-1">
+                                <Input
+                                  value={(getDisplayValue(article, 'sku') as string) || ''}
+                                  onChange={(e) => handleFieldChange(article.id, 'sku', e.target.value || null)}
+                                  className={`h-8 ${hasPendingChange(article.id, 'sku') ? 'border-amber-500' : ''}`}
+                                  placeholder="-"
+                                />
+                                {getPendingChangeForField(article.id, 'sku') && (
+                                  <div className="text-xs">
+                                    <span className="text-amber-600">Ausstehend</span>
+                                    <span className="text-muted-foreground ml-1">
+                                      (vorher: {getPendingChangeForField(article.id, 'sku')?.old_value || '-'})
+                                    </span>
+                                  </div>
+                                )}
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div className="space-y-1">
+                                <Input
+                                  value={(getDisplayValue(article, 'description') as string) || ''}
+                                  onChange={(e) => handleFieldChange(article.id, 'description', e.target.value || null)}
+                                  className={`h-8 ${hasPendingChange(article.id, 'description') ? 'border-amber-500' : ''}`}
+                                  placeholder="-"
+                                />
+                                {getPendingChangeForField(article.id, 'description') && (
+                                  <div className="text-xs">
+                                    <span className="text-amber-600">Ausstehend</span>
+                                    <span className="text-muted-foreground ml-1">
+                                      (vorher: {getPendingChangeForField(article.id, 'description')?.old_value || '-'})
+                                    </span>
+                                  </div>
+                                )}
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div className="space-y-1">
+                                <Input
+                                  value={getDisplayValue(article, 'unit') as string}
+                                  onChange={(e) => handleFieldChange(article.id, 'unit', e.target.value)}
+                                  className={`h-8 ${hasPendingChange(article.id, 'unit') ? 'border-amber-500' : ''}`}
+                                />
+                                {getPendingChangeForField(article.id, 'unit') && (
+                                  <div className="text-xs">
+                                    <span className="text-amber-600">Ausstehend</span>
+                                    <span className="text-muted-foreground ml-1">
+                                      (vorher: {getPendingChangeForField(article.id, 'unit')?.old_value || '-'})
+                                    </span>
+                                  </div>
+                                )}
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div className="space-y-1">
+                                <Input
+                                  type="text"
+                                  inputMode="decimal"
+                                  value={priceInputs[article.id] !== undefined 
+                                    ? priceInputs[article.id]
+                                    : getPendingChangeForField(article.id, 'price')?.new_value?.replace('.', ',') 
+                                      ?? String(article.price).replace('.', ',')}
+                                  onChange={(e) => {
+                                    setPriceInputs(prev => ({
+                                      ...prev,
+                                      [article.id]: e.target.value
+                                    }));
+                                  }}
+                                  className={`h-8 ${hasPendingChange(article.id, 'price') ? 'border-amber-500' : ''}`}
+                                />
+                                {getPendingChangeForField(article.id, 'price') && (
+                                  <div className="text-xs">
+                                    <span className="text-amber-600">Ausstehend</span>
+                                    <span className="text-muted-foreground ml-1">
+                                      (vorher: {getPendingChangeForField(article.id, 'price')?.old_value?.replace('.', ',') || '-'} €)
+                                    </span>
+                                  </div>
+                                )}
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div className="space-y-1">
+                                <Input
+                                  value={(getDisplayValue(article, 'category') as string) || ''}
+                                  onChange={(e) => handleFieldChange(article.id, 'category', e.target.value || null)}
+                                  className={`h-8 ${hasPendingChange(article.id, 'category') ? 'border-amber-500' : ''}`}
+                                  placeholder="-"
+                                />
+                                {getPendingChangeForField(article.id, 'category') && (
+                                  <div className="text-xs">
+                                    <span className="text-amber-600">Ausstehend</span>
+                                    <span className="text-muted-foreground ml-1">
+                                      (vorher: {getPendingChangeForField(article.id, 'category')?.old_value || '-'})
+                                    </span>
+                                  </div>
+                                )}
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <Button
+                                size="sm"
+                                onClick={() => handleSave(article.id)}
+                                disabled={!hasChanges(article.id) || saving === article.id}
+                                className="w-full"
+                              >
+                                {saving === article.id ? (
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : (
+                                  <>
+                                    <Save className="h-4 w-4 mr-1" />
+                                    Einreichen
+                                  </>
+                                )}
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </div>
+
+                {/* Mobile: Cards */}
+                <div className="lg:hidden space-y-4">
+                  {filteredArticles.map((article) => (
+                    <SupplierArticleCard
+                      key={article.id}
+                      article={article}
+                      editedArticles={editedArticles}
+                      priceInputs={priceInputs}
+                      pendingChanges={pendingChanges}
+                      saving={saving}
+                      onFieldChange={handleFieldChange}
+                      onPriceChange={(articleId, value) => {
+                        setPriceInputs(prev => ({ ...prev, [articleId]: value }));
+                      }}
+                      onSave={handleSave}
+                    />
+                  ))}
+                </div>
+              </>
             )}
           </CardContent>
         </Card>
