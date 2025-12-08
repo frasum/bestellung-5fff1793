@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
+import { format, differenceInHours } from 'date-fns';
+import { de } from 'date-fns/locale';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { LogOut, Save, Search, Package, Loader2, Clock, Plus, FileDown, AlertCircle } from 'lucide-react';
+import { LogOut, Save, Search, Package, Loader2, Clock, Plus, FileDown, AlertCircle, AlertTriangle } from 'lucide-react';
 import logo from '@/assets/logo.png';
 import { SupplierArticleCard } from '@/components/suppliers/SupplierArticleCard';
 import { SupplierUnitSelect } from '@/components/suppliers/SupplierUnitSelect';
@@ -500,10 +502,27 @@ const SupplierPortal = () => {
               <p className="text-sm text-muted-foreground">{session.supplierName}</p>
             </div>
           </div>
-          <Button variant="outline" onClick={handleLogout}>
-            <LogOut className="h-4 w-4 mr-2" />
-            Abmelden
-          </Button>
+          <div className="flex items-center gap-4">
+            {/* Expiry display */}
+            {session.expiresAt && (
+              <div className="hidden sm:flex items-center gap-2">
+                {differenceInHours(new Date(session.expiresAt), new Date()) <= 24 ? (
+                  <Badge variant="outline" className="border-amber-500 text-amber-600 gap-1">
+                    <AlertTriangle className="h-3 w-3" />
+                    Läuft bald ab
+                  </Badge>
+                ) : null}
+                <div className="text-xs text-muted-foreground flex items-center gap-1">
+                  <Clock className="h-3 w-3" />
+                  Zugang bis: {format(new Date(session.expiresAt), 'dd.MM.yyyy', { locale: de })}
+                </div>
+              </div>
+            )}
+            <Button variant="outline" onClick={handleLogout}>
+              <LogOut className="h-4 w-4 mr-2" />
+              Abmelden
+            </Button>
+          </div>
         </div>
       </header>
 

@@ -26,3 +26,6 @@ verify_jwt = false
 
 [functions.get-order-details]
 verify_jwt = false
+
+[functions.request-new-magic-link]
+verify_jwt = false

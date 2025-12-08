@@ -55,7 +55,12 @@ serve(async (req) => {
     if (new Date(tokenData.expires_at) < new Date()) {
       console.log('Token expired');
       return new Response(
-        JSON.stringify({ error: 'Token expired', status: 'expired' }),
+        JSON.stringify({ 
+          error: 'Token expired', 
+          status: 'expired',
+          supplierId: tokenData.supplier_id,
+          supplierEmail: tokenData.suppliers?.email
+        }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -73,13 +78,14 @@ serve(async (req) => {
 
     console.log('Token verified successfully for supplier:', tokenData.suppliers?.name);
 
-    // Return supplier session data
+    // Return supplier session data including expiry
     return new Response(
       JSON.stringify({
         status: 'success',
         supplierId: tokenData.supplier_id,
         supplierName: tokenData.suppliers?.name || 'Lieferant',
         organizationId: tokenData.suppliers?.organization_id,
+        expiresAt: tokenData.expires_at,
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
