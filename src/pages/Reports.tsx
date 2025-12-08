@@ -1,5 +1,6 @@
 import { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useOrders } from '@/hooks/useOrders';
@@ -42,6 +43,7 @@ import { Download, TrendingUp, TrendingDown, Euro, ShoppingCart, Users, Loader2,
 const COLORS = ['hsl(var(--primary))', 'hsl(var(--accent))', 'hsl(142, 76%, 36%)', 'hsl(38, 92%, 50%)', 'hsl(0, 84%, 60%)', 'hsl(262, 83%, 58%)'];
 
 const Reports = () => {
+  const { t } = useTranslation();
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const { data: orders, isLoading } = useOrders();
@@ -159,11 +161,11 @@ const Reports = () => {
   const exportToCSV = () => {
     if (!stats?.filteredOrders) return;
 
-    const headers = ['Bestellnummer', 'Datum', 'Lieferant', 'Artikel', 'Gesamt', 'Status'];
+    const headers = [t('orders.orderDetails'), t('common.date'), t('articles.supplier'), t('orders.items'), t('common.total'), t('common.status')];
     const rows = stats.filteredOrders.map((order) => [
       order.order_number,
       format(new Date(order.created_at), 'yyyy-MM-dd HH:mm'),
-      order.suppliers?.name || 'Unbekannt',
+      order.suppliers?.name || t('common.noData'),
       order.order_items?.length || 0,
       `€${Number(order.total_amount).toFixed(2)}`,
       order.status,
@@ -191,8 +193,8 @@ const Reports = () => {
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">Berichte</h1>
-            <p className="text-muted-foreground mt-1">Analysieren Sie Ihre Beschaffungsausgaben und Trends</p>
+            <h1 className="text-3xl font-bold text-foreground">{t('reports.title')}</h1>
+            <p className="text-muted-foreground mt-1">{t('reports.description')}</p>
           </div>
           <div className="flex items-center gap-3">
             <Select value={timeRange} onValueChange={setTimeRange}>
@@ -200,14 +202,14 @@ const Reports = () => {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent className="bg-card border border-border z-50">
-                <SelectItem value="3">Letzte 3 Monate</SelectItem>
-                <SelectItem value="6">Letzte 6 Monate</SelectItem>
-                <SelectItem value="12">Letzte 12 Monate</SelectItem>
+                <SelectItem value="3">{t('reports.months', { count: 3 })}</SelectItem>
+                <SelectItem value="6">{t('reports.months', { count: 6 })}</SelectItem>
+                <SelectItem value="12">{t('reports.months', { count: 12 })}</SelectItem>
               </SelectContent>
             </Select>
             <Button onClick={exportToCSV} disabled={!stats?.filteredOrders?.length}>
               <Download className="w-4 h-4 mr-2" />
-              CSV exportieren
+              {t('export.csv')}
             </Button>
           </div>
         </div>
@@ -219,11 +221,11 @@ const Reports = () => {
         ) : !stats || stats.totalOrders === 0 ? (
           <div className="text-center py-16 bg-card border border-border rounded-xl">
             <TrendingUp className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
-            <h2 className="text-xl font-semibold text-foreground mb-2">Noch keine Daten</h2>
+            <h2 className="text-xl font-semibold text-foreground mb-2">{t('common.noData')}</h2>
             <p className="text-muted-foreground mb-6">
-              Beginnen Sie mit Bestellungen, um Ihre Ausgabenanalyse zu sehen
+              {t('orders.noOrdersDescription')}
             </p>
-            <Button onClick={() => navigate('/articles')}>Artikel durchsuchen</Button>
+            <Button onClick={() => navigate('/articles')}>{t('orders.browseArticles')}</Button>
           </div>
         ) : (
           <>
@@ -241,28 +243,28 @@ const Reports = () => {
                     )}
                   </div>
                   <p className="text-2xl font-bold text-foreground mt-4">€{stats.totalSpent.toLocaleString('de-DE', { minimumFractionDigits: 2 })}</p>
-                  <p className="text-sm text-muted-foreground">Gesamtausgaben</p>
+                  <p className="text-sm text-muted-foreground">{t('reports.totalSpent')}</p>
                 </CardContent>
               </Card>
               <Card>
                 <CardContent className="p-6">
                   <ShoppingCart className="w-8 h-8 text-accent" />
                   <p className="text-2xl font-bold text-foreground mt-4">{stats.totalOrders}</p>
-                  <p className="text-sm text-muted-foreground">Bestellungen</p>
+                  <p className="text-sm text-muted-foreground">{t('reports.orderCount')}</p>
                 </CardContent>
               </Card>
               <Card>
                 <CardContent className="p-6">
                   <Euro className="w-8 h-8 text-success" />
                   <p className="text-2xl font-bold text-foreground mt-4">€{stats.avgOrderValue.toFixed(2)}</p>
-                  <p className="text-sm text-muted-foreground">Ø Bestellwert</p>
+                  <p className="text-sm text-muted-foreground">{t('reports.avgOrderValue')}</p>
                 </CardContent>
               </Card>
               <Card>
                 <CardContent className="p-6">
                   <Users className="w-8 h-8 text-warning" />
                   <p className="text-2xl font-bold text-foreground mt-4">{stats.supplierBreakdown.length}</p>
-                  <p className="text-sm text-muted-foreground">Aktive Lieferanten</p>
+                  <p className="text-sm text-muted-foreground">{t('reports.activeSuppliers')}</p>
                 </CardContent>
               </Card>
             </div>
@@ -272,7 +274,7 @@ const Reports = () => {
               {/* Monthly Spending Chart */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-lg">Monatliche Ausgaben</CardTitle>
+                  <CardTitle className="text-lg">{t('reports.monthlySpending')}</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="h-72">
@@ -299,7 +301,7 @@ const Reports = () => {
               {/* Supplier Breakdown */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-lg">Ausgaben nach Lieferant</CardTitle>
+                  <CardTitle className="text-lg">{t('reports.supplierSpending')}</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="h-72 flex items-center">
@@ -349,7 +351,7 @@ const Reports = () => {
               {/* Spending Trend */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-lg">Ausgabentrend</CardTitle>
+                  <CardTitle className="text-lg">{t('reports.spendingTrend')}</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="h-64">
@@ -382,12 +384,12 @@ const Reports = () => {
               {/* Top Articles */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-lg">Top Artikel nach Ausgaben</CardTitle>
+                  <CardTitle className="text-lg">{t('reports.topArticles')}</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3">
                     {stats.topArticles.length === 0 ? (
-                      <p className="text-muted-foreground text-center py-8">Keine Artikeldaten verfügbar</p>
+                      <p className="text-muted-foreground text-center py-8">{t('common.noData')}</p>
                     ) : (
                       stats.topArticles.map((article, i) => (
                         <div key={i} className="flex items-center justify-between">

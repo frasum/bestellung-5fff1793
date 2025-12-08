@@ -96,21 +96,21 @@ const Cart = () => {
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">Shopping Cart</h1>
+            <h1 className="text-3xl font-bold text-foreground">{t('cart.title')}</h1>
             <p className="text-muted-foreground mt-1">
               {items.length === 0 
-                ? 'Ihr Warenkorb ist leer' 
-                : `${items.length} Artikel in Ihrem Warenkorb`}
+                ? t('cart.empty')
+                : t('cart.itemCount', { count: items.length })}
             </p>
           </div>
           <div className="flex gap-2">
             <Button variant="outline" onClick={() => setScanDialogOpen(true)}>
               <Camera className="w-4 h-4 mr-2" />
-              Liste scannen
+              {t('scan.title')}
             </Button>
             {items.length > 0 && (
               <Button variant="outline" onClick={clearCart}>
-                Warenkorb leeren
+                {t('common.delete')}
               </Button>
             )}
           </div>
@@ -119,10 +119,10 @@ const Cart = () => {
         {items.length === 0 ? (
           <div className="text-center py-12 sm:py-16 bg-card border border-border rounded-xl">
             <ShoppingCart className="w-12 h-12 sm:w-16 sm:h-16 mx-auto text-muted-foreground mb-4" />
-            <h2 className="text-lg sm:text-xl font-semibold text-foreground mb-2">Ihr Warenkorb ist leer</h2>
-            <p className="text-sm sm:text-base text-muted-foreground mb-6 px-4">Durchstöbern Sie Artikel und fügen Sie sie Ihrem Warenkorb hinzu</p>
+            <h2 className="text-lg sm:text-xl font-semibold text-foreground mb-2">{t('cart.empty')}</h2>
+            <p className="text-sm sm:text-base text-muted-foreground mb-6 px-4">{t('cart.emptyDescription')}</p>
             <Button onClick={() => navigate('/suppliers?tab=articles')}>
-              Artikel durchsuchen
+              {t('cart.browseArticles')}
             </Button>
           </div>
         ) : (
@@ -131,7 +131,7 @@ const Cart = () => {
             <div className="lg:hidden sticky top-0 z-10 -mx-4 px-4 py-3 bg-background/95 backdrop-blur-sm border-b border-border">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">{items.length} Artikel</p>
+                  <p className="text-sm text-muted-foreground">{t('cart.itemCount', { count: items.length })}</p>
                   <p className="text-xl font-bold text-foreground">€{getTotal().toFixed(2)}</p>
                 </div>
                 <div className="flex gap-2">
@@ -147,14 +147,14 @@ const Cart = () => {
                     onClick={() => navigate('/checkout')}
                     disabled={hasMinimumOrderWarning}
                   >
-                    Zur Kasse
+                    {t('cart.checkout')}
                     <ArrowRight className="w-4 h-4 ml-1" />
                   </Button>
                 </div>
               </div>
               {hasMinimumOrderWarning && (
                 <p className="text-xs text-destructive mt-2">
-                  Mindestbestellwert nicht erreicht
+                  {t('cart.minimumOrderWarning')}
                 </p>
               )}
             </div>
@@ -174,7 +174,7 @@ const Cart = () => {
                       <Alert variant="destructive" className="m-3 sm:m-4 mb-0">
                         <AlertTriangle className="h-4 w-4" />
                         <AlertDescription className="text-xs sm:text-sm">
-                          Noch €{(minimumOrderValue - total).toFixed(2)} bis zum Mindestbestellwert
+                          {t('cart.minimumOrderMessage', { supplier: name, amount: `€${minimumOrderValue.toFixed(2)}`, remaining: `€${(minimumOrderValue - total).toFixed(2)}` })}
                         </AlertDescription>
                       </Alert>
                     )}
@@ -286,7 +286,7 @@ const Cart = () => {
               {/* Order Summary - Desktop only */}
               <div className="hidden lg:block lg:col-span-1">
                 <div className="bg-card border border-border rounded-xl p-6 sticky top-6">
-                  <h3 className="text-lg font-semibold text-foreground mb-4">Bestellübersicht</h3>
+                  <h3 className="text-lg font-semibold text-foreground mb-4">{t('checkout.orderSummary')}</h3>
                   <div className="space-y-3 mb-6">
                     {supplierTotals.map(({ name, total }) => (
                       <div key={name} className="flex justify-between text-sm">
@@ -295,7 +295,7 @@ const Cart = () => {
                       </div>
                     ))}
                     <div className="border-t border-border pt-3 flex justify-between">
-                      <span className="font-semibold text-foreground">Gesamt</span>
+                      <span className="font-semibold text-foreground">{t('common.total')}</span>
                       <span className="font-bold text-xl text-foreground">€{getTotal().toFixed(2)}</span>
                     </div>
                   </div>
@@ -303,7 +303,7 @@ const Cart = () => {
                     <Alert variant="destructive" className="mb-4">
                       <AlertTriangle className="h-4 w-4" />
                       <AlertDescription className="text-xs">
-                        Nicht alle Lieferanten haben den Mindestbestellwert erreicht.
+                        {t('cart.cannotCheckout')}
                       </AlertDescription>
                     </Alert>
                   )}
@@ -326,9 +326,6 @@ const Cart = () => {
                       {t('cart.saveAsDraft')}
                     </Button>
                   </div>
-                  <p className="text-xs text-muted-foreground text-center mt-4">
-                    Bestellungen werden separat an jeden Lieferanten gesendet
-                  </p>
                 </div>
               </div>
             </div>
