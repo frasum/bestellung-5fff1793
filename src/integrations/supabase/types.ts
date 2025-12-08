@@ -302,10 +302,13 @@ export type Database = {
           closing: string
           created_at: string
           design_style: string
+          footer_logo_url: string | null
+          footer_text: string | null
           greeting: string
           id: string
           introduction: string
           organization_id: string
+          show_powered_by: boolean | null
           signature: string
           subject_template: string
           template_type: string
@@ -316,10 +319,13 @@ export type Database = {
           closing?: string
           created_at?: string
           design_style?: string
+          footer_logo_url?: string | null
+          footer_text?: string | null
           greeting?: string
           id?: string
           introduction?: string
           organization_id: string
+          show_powered_by?: boolean | null
           signature?: string
           subject_template?: string
           template_type?: string
@@ -330,10 +336,13 @@ export type Database = {
           closing?: string
           created_at?: string
           design_style?: string
+          footer_logo_url?: string | null
+          footer_text?: string | null
           greeting?: string
           id?: string
           introduction?: string
           organization_id?: string
+          show_powered_by?: boolean | null
           signature?: string
           subject_template?: string
           template_type?: string
