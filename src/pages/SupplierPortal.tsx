@@ -303,21 +303,7 @@ const SupplierPortal = () => {
                       return (
                         <TableRow key={article.id}>
                           <TableCell>
-                            <div className="space-y-1">
-                              <Input
-                                value={getDisplayValue(article, 'name') as string}
-                                onChange={(e) => handleFieldChange(article.id, 'name', e.target.value)}
-                                className={`h-8 ${hasPendingChange(article.id, 'name') ? 'border-amber-500' : ''}`}
-                              />
-                              {getPendingChangeForField(article.id, 'name') && (
-                                <div className="text-xs">
-                                  <span className="text-amber-600">Ausstehend</span>
-                                  <span className="text-muted-foreground ml-1">
-                                    (vorher: {getPendingChangeForField(article.id, 'name')?.old_value || '-'})
-                                  </span>
-                                </div>
-                              )}
-                            </div>
+                            <span className="font-medium">{article.name}</span>
                           </TableCell>
                           <TableCell>
                             <div className="space-y-1">
