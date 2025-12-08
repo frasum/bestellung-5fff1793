@@ -1,8 +1,9 @@
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
-import { Clock, Check, X, Mic, Camera, FileText, User, ShoppingCart } from 'lucide-react';
+import { Clock, Check, X, Mic, Camera, FileText, User, ShoppingCart, CheckCircle } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -27,6 +28,7 @@ export default function StaffSubmissionHistory({
   const { data: articles = [] } = useArticles();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const [addedSubmissionIds, setAddedSubmissionIds] = useState<string[]>([]);
 
   if (submissions.length === 0) {
     return (
@@ -68,6 +70,7 @@ export default function StaffSubmissionHistory({
     });
 
     if (addedCount > 0) {
+      setAddedSubmissionIds(prev => [...prev, submission.id]);
       toast({
         title: 'In Warenkorb übernommen',
         description: `${addedCount} Artikel wurden zum Warenkorb hinzugefügt${skippedCount > 0 ? ` (${skippedCount} ohne Artikelzuordnung übersprungen)` : ''}`,
@@ -128,15 +131,25 @@ export default function StaffSubmissionHistory({
               <div className="flex items-center gap-2">
                 {getStatusBadge(submission.status)}
                 {submission.status === 'approved' && submission.items && submission.items.length > 0 && (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="h-7 gap-1.5 text-xs"
-                    onClick={(e) => handleAddToCart(e, submission)}
-                  >
-                    <ShoppingCart className="h-3.5 w-3.5" />
-                    <span className="hidden sm:inline">In Warenkorb</span>
-                  </Button>
+                  <>
+                    {addedSubmissionIds.includes(submission.id) && (
+                      <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 border-emerald-500/30 gap-1">
+                        <CheckCircle className="h-3 w-3" />
+                        <span className="hidden sm:inline">Im Warenkorb</span>
+                      </Badge>
+                    )}
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-7 gap-1.5 text-xs"
+                      onClick={(e) => handleAddToCart(e, submission)}
+                    >
+                      <ShoppingCart className="h-3.5 w-3.5" />
+                      <span className="hidden sm:inline">
+                        {addedSubmissionIds.includes(submission.id) ? 'Erneut hinzufügen' : 'In Warenkorb'}
+                      </span>
+                    </Button>
+                  </>
                 )}
               </div>
             </div>

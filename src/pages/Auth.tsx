@@ -55,7 +55,7 @@ const Auth = () => {
 
   useEffect(() => {
     if (user) {
-      navigate('/dashboard');
+      navigate('/reports');
     }
   }, [user, navigate]);
 
@@ -89,7 +89,7 @@ const Auth = () => {
       }
     } else {
       toast.success('Welcome back!');
-      navigate('/dashboard');
+      navigate('/reports');
     }
   };
 
@@ -106,7 +106,7 @@ const Auth = () => {
       }
     } else {
       toast.success('Account created! Redirecting...');
-      navigate('/dashboard');
+      navigate('/reports');
     }
   };
 
@@ -139,7 +139,7 @@ const Auth = () => {
         
         toast.success('Demo-Account erstellt! Willkommen bei Bestellung.pro');
         setShowDemoDialog(false);
-        navigate('/dashboard');
+        navigate('/reports');
       } else if (result?.needsManualLogin) {
         toast.success('Demo-Account erstellt! Bitte melden Sie sich mit der E-Mail an.');
         setShowDemoDialog(false);
