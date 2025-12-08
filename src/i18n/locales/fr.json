@@ -129,6 +129,26 @@
     "signInDescription": "Connectez-vous à votre compte",
     "signUpDescription": "Créez un nouveau compte"
   },
+  "demo": {
+    "startDemo": "Démarrer la démo",
+    "daysRemaining": "{{count}} jours restants",
+    "badge": "Mode démo",
+    "badgeMobile": "Démo",
+    "upgradeNow": "Mettre à niveau",
+    "convertAccount": "Activer le compte",
+    "convertTitle": "Convertir la démo en compte réel",
+    "convertDescription": "Conservez toutes vos données et utilisez Bestellung.pro sans restrictions.",
+    "convertButton": "Activer le compte",
+    "expired": "Démo expirée",
+    "expiredDescription": "Votre période d'essai est terminée. Activez votre compte pour continuer.",
+    "features": {
+      "title": "Qu'est-ce qui est inclus ?",
+      "suppliers": "4 fournisseurs exemple avec 24 articles",
+      "orders": "Commandes exemple à explorer",
+      "allFeatures": "Toutes les fonctionnalités débloquées",
+      "testMode": "Mode test actif – les e-mails vous sont envoyés"
+    }
+  },
   "dashboard": {
     "title": "Tableau de bord",
     "welcome": "Bienvenue",

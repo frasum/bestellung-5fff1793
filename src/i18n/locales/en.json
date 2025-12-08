@@ -129,6 +129,26 @@
     "signInDescription": "Sign in to your account",
     "signUpDescription": "Create a new account"
   },
+  "demo": {
+    "startDemo": "Start Demo",
+    "daysRemaining": "{{count}} days left",
+    "badge": "Demo Mode",
+    "badgeMobile": "Demo",
+    "upgradeNow": "Upgrade Now",
+    "convertAccount": "Activate Account",
+    "convertTitle": "Convert Demo to Real Account",
+    "convertDescription": "Keep all your data and use Bestellung.pro without restrictions.",
+    "convertButton": "Activate Account",
+    "expired": "Demo Expired",
+    "expiredDescription": "Your demo period has expired. Activate your account to continue.",
+    "features": {
+      "title": "What's included?",
+      "suppliers": "4 sample suppliers with 24 articles",
+      "orders": "Sample orders to explore",
+      "allFeatures": "All features unlocked",
+      "testMode": "Test mode active – emails go to you"
+    }
+  },
   "dashboard": {
     "title": "Dashboard",
     "welcome": "Welcome back",
