@@ -22,6 +22,7 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import * as XLSX from 'xlsx';
+import { supabase } from '@/integrations/supabase/client';
 
 export interface ColumnMapping {
   csvHeader: string;
@@ -169,23 +170,19 @@ export const CsvImportDialog = ({
     setAiStatus('KI analysiert Spalten...');
     
     try {
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-import-helper`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+      const { data, error } = await supabase.functions.invoke('ai-import-helper', {
+        body: {
           type: 'map_columns',
           headers: csvHeaders,
           targetFields: fields,
-        }),
+        },
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'AI mapping failed');
+      if (error) {
+        throw new Error(error.message || 'AI mapping failed');
       }
 
-      const data = await response.json();
-      if (data.result?.mappings) {
+      if (data?.result?.mappings) {
         setAiMapping(data.result.mappings);
         toast.success('KI hat Spalten automatisch zugeordnet');
       }
@@ -202,21 +199,18 @@ export const CsvImportDialog = ({
     setAiStatus('KI bereinigt Daten...');
     
     try {
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-import-helper`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+      const { data: result, error } = await supabase.functions.invoke('ai-import-helper', {
+        body: {
           type: 'clean_data',
           data: data.slice(0, 20), // Limit to prevent timeout
-        }),
+        },
       });
 
-      if (!response.ok) {
+      if (error) {
         throw new Error('AI cleaning failed');
       }
 
-      const result = await response.json();
-      if (Array.isArray(result.result)) {
+      if (Array.isArray(result?.result)) {
         // Merge cleaned data with original
         const cleanedMap = new Map<number, Record<string, string>>(
           result.result.map((item: Record<string, string>, i: number) => [i, item])
@@ -237,21 +231,18 @@ export const CsvImportDialog = ({
     setAiStatus('KI kategorisiert Artikel...');
     
     try {
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-import-helper`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+      const { data: result, error } = await supabase.functions.invoke('ai-import-helper', {
+        body: {
           type: 'categorize',
           data: data.slice(0, 50),
-        }),
+        },
       });
 
-      if (!response.ok) {
+      if (error) {
         throw new Error('AI categorization failed');
       }
 
-      const result = await response.json();
-      if (Array.isArray(result.result)) {
+      if (Array.isArray(result?.result)) {
         const categoryMap = new Map<number, string>(
           result.result.map((item: { index: number; category: string }) => [item.index, item.category])
         );
