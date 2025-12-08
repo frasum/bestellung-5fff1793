@@ -3,6 +3,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 
+export type EmailDesignStyle = 'modern' | 'classic' | 'minimalist';
+
 export interface EmailTemplate {
   id: string;
   organization_id: string;
@@ -13,6 +15,7 @@ export interface EmailTemplate {
   closing: string;
   signature: string;
   article_list_format: string;
+  design_style: EmailDesignStyle;
   created_at: string;
   updated_at: string;
 }
@@ -24,6 +27,7 @@ export interface EmailTemplateUpdate {
   closing?: string;
   signature?: string;
   article_list_format?: string;
+  design_style?: EmailDesignStyle;
 }
 
 export const useEmailTemplate = () => {
@@ -122,4 +126,5 @@ export const getDefaultTemplate = (): EmailTemplateUpdate => ({
   closing: 'Vielen Dank für Ihre Zusammenarbeit.',
   signature: 'Mit freundlichen Grüßen,\n{restaurant_name}',
   article_list_format: '- {article_name}{sku_suffix}: {quantity} {unit} à €{unit_price} = €{total_price}',
+  design_style: 'modern',
 });

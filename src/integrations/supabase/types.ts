@@ -301,6 +301,7 @@ export type Database = {
           article_list_format: string
           closing: string
           created_at: string
+          design_style: string
           greeting: string
           id: string
           introduction: string
@@ -314,6 +315,7 @@ export type Database = {
           article_list_format?: string
           closing?: string
           created_at?: string
+          design_style?: string
           greeting?: string
           id?: string
           introduction?: string
@@ -327,6 +329,7 @@ export type Database = {
           article_list_format?: string
           closing?: string
           created_at?: string
+          design_style?: string
           greeting?: string
           id?: string
           introduction?: string
