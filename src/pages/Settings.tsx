@@ -503,21 +503,23 @@ const OrganizationTab = () => {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg border">
-            <div className="space-y-0.5">
-              <Label htmlFor="test-mode" className="text-base font-medium">
-                Testmodus aktivieren
-              </Label>
-              <p className="text-sm text-muted-foreground">
-                E-Mails werden an die Test-Adresse statt an Lieferanten gesendet
-              </p>
+          {!organization?.is_demo && (
+            <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg border">
+              <div className="space-y-0.5">
+                <Label htmlFor="test-mode" className="text-base font-medium">
+                  Testmodus aktivieren
+                </Label>
+                <p className="text-sm text-muted-foreground">
+                  E-Mails werden an die Test-Adresse statt an Lieferanten gesendet
+                </p>
+              </div>
+              <Switch
+                id="test-mode"
+                checked={organization?.test_mode_enabled || false}
+                onCheckedChange={handleTestModeToggle}
+              />
             </div>
-            <Switch
-              id="test-mode"
-              checked={organization?.test_mode_enabled || false}
-              onCheckedChange={handleTestModeToggle}
-            />
-          </div>
+          )}
 
           <div className="space-y-2">
             <Label htmlFor="test-email">Test-E-Mail-Adresse</Label>
