@@ -94,7 +94,8 @@
     "inactive": "ไม่ใช้งาน",
     "you": "คุณ",
     "keyboardShortcuts": "แป้นพิมพ์ลัด",
-    "help": "ช่วยเหลือ"
+    "help": "ช่วยเหลือ",
+    "unknown": "ไม่ทราบ"
   },
   "nav": {
     "dashboard": "แดชบอร์ด",
@@ -152,12 +153,16 @@
   "dashboard": {
     "title": "แดชบอร์ด",
     "welcome": "ยินดีต้อนรับกลับ",
+    "subtitle": "นี่คือภาพรวมการจัดซื้อของคุณ",
     "totalSpent": "ยอดใช้จ่ายรวม",
+    "ordersCount": "คำสั่งซื้อ",
     "ordersThisMonth": "คำสั่งซื้อเดือนนี้",
     "activeSuppliers": "ซัพพลายเออร์ที่ใช้งาน",
     "articlesInCatalog": "สินค้าในแคตตาล็อก",
     "recentOrders": "คำสั่งซื้อล่าสุด",
     "topSuppliers": "ซัพพลายเออร์หลัก",
+    "monthlySpending": "ค่าใช้จ่ายรายเดือน",
+    "pending": "รอดำเนินการ",
     "noOrders": "ยังไม่มีคำสั่งซื้อ",
     "viewAll": "ดูทั้งหมด"
   },

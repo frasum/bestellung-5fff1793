@@ -94,7 +94,8 @@
     "inactive": "Inactive",
     "you": "You",
     "keyboardShortcuts": "Keyboard Shortcuts",
-    "help": "Help"
+    "help": "Help",
+    "unknown": "Unknown"
   },
 "nav": {
     "dashboard": "Dashboard",
@@ -152,12 +153,16 @@
   "dashboard": {
     "title": "Dashboard",
     "welcome": "Welcome back",
+    "subtitle": "Here is your procurement overview.",
     "totalSpent": "Total Spent",
+    "ordersCount": "Orders",
     "ordersThisMonth": "Orders This Month",
     "activeSuppliers": "Active Suppliers",
     "articlesInCatalog": "Articles in Catalog",
     "recentOrders": "Recent Orders",
     "topSuppliers": "Top Suppliers",
+    "monthlySpending": "Monthly Spending",
+    "pending": "Pending",
     "noOrders": "No orders yet",
     "viewAll": "View All"
   },
