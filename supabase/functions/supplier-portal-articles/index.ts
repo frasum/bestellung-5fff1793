@@ -9,12 +9,13 @@ const corsHeaders = {
 };
 
 interface ArticleUpdateRequest {
-  action: 'list' | 'update' | 'get-settings' | 'get-units' | 'create-unit' | 'get-categories' | 'create-category' | 'suggest-article' | 'save-draft' | 'get-draft' | 'delete-draft';
+  action: 'list' | 'update' | 'update-all' | 'get-settings' | 'get-units' | 'create-unit' | 'get-categories' | 'create-category' | 'suggest-article' | 'save-draft' | 'get-draft' | 'delete-draft';
   supplierId: string;
   organizationId: string;
   sessionToken: string;
   articleId?: string;
   changes?: Record<string, any>;
+  articleChanges?: Array<{ articleId: string; changes: Record<string, any> }>;
   unitName?: string;
   categoryName?: string;
   suggestedArticle?: {
@@ -616,6 +617,262 @@ serve(async (req) => {
 
       return new Response(JSON.stringify({ 
         message: 'Änderungen zur Genehmigung eingereicht',
+        pendingChanges: insertedChanges 
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Handle update-all action (batch update)
+    if (action === 'update-all') {
+      const { articleChanges } = body;
+      
+      if (!articleChanges || !Array.isArray(articleChanges) || articleChanges.length === 0) {
+        return new Response(
+          JSON.stringify({ error: 'Missing or empty articleChanges array' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      console.log(`Processing batch update for ${articleChanges.length} articles`);
+
+      const allChangeRecords: Array<{
+        supplier_id: string;
+        organization_id: string;
+        article_id: string;
+        field_name: string;
+        old_value: string | null;
+        new_value: string | null;
+        status: string;
+        article_name?: string;
+      }> = [];
+
+      const articlesInfo: Record<string, { name: string; sku: string | null }> = {};
+
+      // Process each article's changes
+      for (const { articleId, changes } of articleChanges) {
+        if (!articleId || !changes || Object.keys(changes).length === 0) continue;
+
+        // Fetch the current article
+        const { data: currentArticle, error: fetchError } = await supabase
+          .from('articles')
+          .select('*')
+          .eq('id', articleId)
+          .eq('supplier_id', supplierId)
+          .eq('organization_id', organizationId)
+          .single();
+
+        if (fetchError || !currentArticle) {
+          console.error(`Article ${articleId} not found, skipping`);
+          continue;
+        }
+
+        articlesInfo[articleId] = { name: currentArticle.name, sku: currentArticle.sku };
+
+        // Create change records for each field
+        for (const [field, newValue] of Object.entries(changes)) {
+          const oldValue = currentArticle[field];
+          
+          let hasChanged = false;
+          if (field === 'price' || field === 'annual_order_value') {
+            const oldNum = oldValue !== null && oldValue !== undefined ? Number(oldValue) : null;
+            const newNum = newValue !== null && newValue !== undefined ? Number(newValue) : null;
+            hasChanged = oldNum !== newNum;
+          } else {
+            const oldStr = oldValue !== null && oldValue !== undefined ? String(oldValue) : null;
+            const newStr = newValue !== null && newValue !== undefined ? String(newValue) : null;
+            hasChanged = oldStr !== newStr;
+          }
+
+          if (hasChanged) {
+            allChangeRecords.push({
+              supplier_id: supplierId,
+              organization_id: organizationId,
+              article_id: articleId,
+              field_name: field,
+              old_value: oldValue !== null && oldValue !== undefined ? String(oldValue) : null,
+              new_value: newValue !== null && newValue !== undefined ? String(newValue) : null,
+              status: 'pending',
+              article_name: currentArticle.name,
+            });
+          }
+        }
+      }
+
+      if (allChangeRecords.length === 0) {
+        return new Response(JSON.stringify({ 
+          message: 'No changes detected',
+          pendingChanges: [] 
+        }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      // Delete existing pending changes for these articles' fields
+      const articleIds = [...new Set(allChangeRecords.map(c => c.article_id))];
+      for (const artId of articleIds) {
+        const fieldsToUpdate = allChangeRecords.filter(c => c.article_id === artId).map(c => c.field_name);
+        await supabase
+          .from('supplier_article_changes')
+          .delete()
+          .eq('article_id', artId)
+          .eq('status', 'pending')
+          .in('field_name', fieldsToUpdate);
+      }
+
+      // Insert all pending changes (without article_name field)
+      const recordsToInsert = allChangeRecords.map(({ article_name, ...rest }) => rest);
+      const { data: insertedChanges, error: insertError } = await supabase
+        .from('supplier_article_changes')
+        .insert(recordsToInsert)
+        .select();
+
+      if (insertError) {
+        console.error('Error inserting batch changes:', insertError);
+        throw insertError;
+      }
+
+      console.log(`Created ${insertedChanges?.length || 0} pending change(s) for ${articleIds.length} articles`);
+
+      // Send bundled admin notification
+      const sendBatchAdminNotification = async () => {
+        try {
+          const { data: adminProfiles, error: adminError } = await supabase
+            .from('profiles')
+            .select('id, email, full_name')
+            .eq('organization_id', organizationId);
+
+          if (adminError || !adminProfiles?.length) return;
+
+          const adminEmails: string[] = [];
+          for (const profile of adminProfiles) {
+            const { data: roleData } = await supabase
+              .from('user_roles')
+              .select('role')
+              .eq('user_id', profile.id)
+              .eq('role', 'admin')
+              .maybeSingle();
+            
+            if (roleData) {
+              adminEmails.push(profile.email);
+            }
+          }
+
+          if (adminEmails.length === 0) return;
+
+          const fieldLabels: Record<string, string> = {
+            name: 'Artikelname',
+            sku: 'SKU',
+            description: 'Beschreibung',
+            unit: 'Einheit',
+            price: 'Preis',
+            category: 'Kategorie',
+            annual_order_value: 'Bestellwert (365 Tage)',
+          };
+
+          const formatValue = (val: string | null, field: string) => {
+            if (val === null) return '—';
+            if (field === 'price' || field === 'annual_order_value') {
+              return `${parseFloat(val).toFixed(2).replace('.', ',')} €`;
+            }
+            return val;
+          };
+
+          // Group changes by article
+          const changesByArticle: Record<string, typeof allChangeRecords> = {};
+          for (const change of allChangeRecords) {
+            if (!changesByArticle[change.article_id]) {
+              changesByArticle[change.article_id] = [];
+            }
+            changesByArticle[change.article_id].push(change);
+          }
+
+          let articlesHtml = '';
+          for (const [artId, changes] of Object.entries(changesByArticle)) {
+            const artInfo = articlesInfo[artId];
+            articlesHtml += `
+              <div style="background-color: #f9fafb; border-radius: 6px; padding: 16px; margin-bottom: 12px;">
+                <p style="margin: 0 0 8px; color: #111827; font-weight: 600;">${artInfo?.name || 'Unbekannter Artikel'}</p>
+                ${artInfo?.sku ? `<p style="margin: 0 0 8px; color: #6b7280; font-size: 14px;">SKU: ${artInfo.sku}</p>` : ''}
+                <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+                  <thead>
+                    <tr style="background-color: #e5e7eb;">
+                      <th style="padding: 6px 8px; text-align: left;">Feld</th>
+                      <th style="padding: 6px 8px; text-align: left;">Alter Wert</th>
+                      <th style="padding: 6px 8px; text-align: left;">Neuer Wert</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${changes.map(c => `
+                      <tr>
+                        <td style="padding: 6px 8px; border-bottom: 1px solid #e5e7eb;">${fieldLabels[c.field_name] || c.field_name}</td>
+                        <td style="padding: 6px 8px; border-bottom: 1px solid #e5e7eb;">${formatValue(c.old_value, c.field_name)}</td>
+                        <td style="padding: 6px 8px; border-bottom: 1px solid #e5e7eb;">${formatValue(c.new_value, c.field_name)}</td>
+                      </tr>
+                    `).join('')}
+                  </tbody>
+                </table>
+              </div>
+            `;
+          }
+
+          const emailHtml = `
+            <!DOCTYPE html>
+            <html>
+            <head>
+              <meta charset="utf-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            </head>
+            <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 20px; background-color: #f4f4f5;">
+              <div style="max-width: 600px; margin: 0 auto; background-color: white; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                <div style="background-color: #f97316; color: white; padding: 24px; text-align: center;">
+                  <h1 style="margin: 0; font-size: 24px;">🦊 ${articleIds.length} Artikeländerungen</h1>
+                </div>
+                <div style="padding: 24px;">
+                  <p style="color: #374151; margin: 0 0 16px;">
+                    Der Lieferant <strong>${supplier.name || 'Unbekannt'}</strong> hat Änderungen für <strong>${articleIds.length} Artikel</strong> eingereicht (${allChangeRecords.length} Änderungen insgesamt).
+                  </p>
+                  
+                  ${articlesHtml}
+                  
+                  <p style="color: #6b7280; font-size: 14px; margin: 16px 0 0;">
+                    Bitte prüfen Sie die Änderungen im Bestellung.pro-Dashboard und genehmigen oder lehnen Sie diese ab.
+                  </p>
+                </div>
+                <div style="background-color: #f9fafb; padding: 16px; text-align: center; border-top: 1px solid #e5e7eb;">
+                  <p style="margin: 0; color: #9ca3af; font-size: 12px;">
+                    Diese E-Mail wurde automatisch von Bestellung.pro gesendet.
+                  </p>
+                </div>
+              </div>
+            </body>
+            </html>
+          `;
+
+          console.log(`Sending batch notification email to ${adminEmails.length} admin(s)`);
+
+          await fetch('https://api.resend.com/emails', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${RESEND_API_KEY}`,
+            },
+            body: JSON.stringify({
+              from: 'Bestellung.pro <noreply@bestellung.pro>',
+              to: adminEmails,
+              subject: `[Lieferantenportal] ${articleIds.length} Artikeländerungen von ${supplier.name || 'Lieferant'}`,
+              html: emailHtml,
+            }),
+          });
+        } catch (emailError) {
+          console.error('Error sending batch admin notification:', emailError);
+        }
+      };
+
+      sendBatchAdminNotification();
+
+      return new Response(JSON.stringify({ 
+        message: `${allChangeRecords.length} Änderungen zur Genehmigung eingereicht`,
         pendingChanges: insertedChanges 
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
