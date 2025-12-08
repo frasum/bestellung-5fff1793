@@ -213,14 +213,20 @@ const Reports = () => {
 
         {/* Main Tabs */}
         <Tabs value={activeTab} onValueChange={handleTabChange}>
-          <TabsList className="w-full sm:w-auto">
-            <TabsTrigger value="overview" className="gap-2 flex-1 sm:flex-initial">
+          <TabsList className="w-full h-12 sm:h-10 sm:w-auto p-1 bg-muted/50">
+            <TabsTrigger 
+              value="overview" 
+              className="flex-1 sm:flex-initial h-10 sm:h-8 min-h-[44px] sm:min-h-0 gap-2 px-4 text-sm font-medium data-[state=active]:bg-background data-[state=active]:shadow-sm"
+            >
               <BarChart3 className="w-4 h-4" />
-              <span className="hidden sm:inline">{t('reports.overview')}</span>
+              <span>{t('reports.overview')}</span>
             </TabsTrigger>
-            <TabsTrigger value="inventur" className="gap-2 flex-1 sm:flex-initial">
+            <TabsTrigger 
+              value="inventur" 
+              className="flex-1 sm:flex-initial h-10 sm:h-8 min-h-[44px] sm:min-h-0 gap-2 px-4 text-sm font-medium data-[state=active]:bg-background data-[state=active]:shadow-sm"
+            >
               <ClipboardList className="w-4 h-4" />
-              <span className="hidden sm:inline">{t('nav.inventory')}</span>
+              <span>{t('reports.inventoryTab')}</span>
             </TabsTrigger>
           </TabsList>
 
