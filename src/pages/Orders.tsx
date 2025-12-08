@@ -1,5 +1,5 @@
-import { useEffect, useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useState, useMemo, useRef } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLocationContext } from '@/contexts/LocationContext';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
@@ -70,6 +70,7 @@ const Orders = () => {
   const { user, loading: authLoading } = useAuth();
   const { activeLocation } = useLocationContext();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { t, i18n } = useTranslation();
   const { data: orders, isLoading } = useOrders(activeLocation?.id);
   const updateStatus = useUpdateOrderStatus();
@@ -77,6 +78,7 @@ const Orders = () => {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [emailDialogOpen, setEmailDialogOpen] = useState(false);
   const locale = localeMap[i18n.language as keyof typeof localeMap] || de;
+  const highlightedOrderRef = useRef<HTMLDivElement>(null);
 
   // Fetch organization info for test mode
   const { data: orgData } = useQuery({
@@ -175,6 +177,33 @@ const Orders = () => {
   const [openSuppliers, setOpenSuppliers] = useState<Set<string>>(new Set());
   // Track which individual orders are open (default: all closed)
   const [openOrders, setOpenOrders] = useState<Set<string>>(new Set());
+  // Track highlighted order from URL
+  const highlightedOrderId = searchParams.get('orderId');
+
+  // Auto-expand supplier and order when navigating from dashboard
+  useEffect(() => {
+    if (highlightedOrderId && orders && groupedOrders.size > 0) {
+      // Find the order and its supplier
+      const targetOrder = orders.find(o => o.id === highlightedOrderId);
+      if (targetOrder) {
+        const supplierName = targetOrder.suppliers?.name || 'Unbekannt';
+        
+        // Open the supplier group and the specific order
+        setOpenSuppliers(prev => new Set([...prev, supplierName]));
+        setOpenOrders(prev => new Set([...prev, highlightedOrderId]));
+        
+        // Scroll to the order after a short delay
+        setTimeout(() => {
+          highlightedOrderRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 100);
+        
+        // Clear the URL parameter after scrolling
+        setTimeout(() => {
+          setSearchParams({}, { replace: true });
+        }, 2000);
+      }
+    }
+  }, [highlightedOrderId, orders, groupedOrders]);
 
   const toggleSupplier = (supplierName: string) => {
     const newOpen = new Set(openSuppliers);
@@ -449,6 +478,7 @@ const Orders = () => {
                       {supplierOrders.map((order) => {
                         const StatusIcon = statusIcons[order.status];
                         const isOrderOpen = openOrders.has(order.id);
+                        const isHighlighted = order.id === highlightedOrderId;
                         
                         return (
                           <Collapsible
@@ -456,6 +486,7 @@ const Orders = () => {
                             open={isOrderOpen}
                             onOpenChange={() => toggleOrder(order.id)}
                           >
+                            <div ref={isHighlighted ? highlightedOrderRef : undefined}>
                             {/* Mobile Order Header */}
                             <CollapsibleTrigger className="w-full sm:hidden">
                               <div className="flex flex-col gap-2 p-3 bg-card border border-border rounded-lg min-h-[64px]">
@@ -631,6 +662,7 @@ const Orders = () => {
                                 </div>
                               </div>
                             </CollapsibleContent>
+                            </div>
                           </Collapsible>
                         );
                       })}
