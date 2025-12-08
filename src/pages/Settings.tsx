@@ -81,16 +81,6 @@ const Settings = () => {
                 <span className="hidden sm:inline">{t('settings.organization')}</span>
                 <span className="sm:hidden">Firma</span>
               </TabsTrigger>
-              <TabsTrigger value="team" className="gap-1.5 text-xs sm:text-sm whitespace-nowrap">
-                <Users className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                <span className="hidden sm:inline">{t('settings.team')}</span>
-                <span className="sm:hidden">Team</span>
-              </TabsTrigger>
-              <TabsTrigger value="addresses" className="gap-1.5 text-xs sm:text-sm whitespace-nowrap">
-                <MapPin className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                <span className="hidden sm:inline">{t('settings.addresses')}</span>
-                <span className="sm:hidden">Adressen</span>
-              </TabsTrigger>
               <TabsTrigger value="notifications" className="gap-1.5 text-xs sm:text-sm whitespace-nowrap">
                 <Bell className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                 <span className="hidden sm:inline">{t('settings.notifications')}</span>
@@ -105,11 +95,6 @@ const Settings = () => {
                 <Ruler className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                 <span className="hidden sm:inline">Einheiten</span>
                 <span className="sm:hidden">Einh.</span>
-              </TabsTrigger>
-              <TabsTrigger value="locations" className="gap-1.5 text-xs sm:text-sm whitespace-nowrap">
-                <Store className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                <span className="hidden sm:inline">Standorte</span>
-                <span className="sm:hidden">Orte</span>
               </TabsTrigger>
               <TabsTrigger value="categories" className="gap-1.5 text-xs sm:text-sm whitespace-nowrap">
                 <Tag className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
@@ -139,14 +124,6 @@ const Settings = () => {
             <OrganizationTab />
           </TabsContent>
 
-          <TabsContent value="team">
-            <TeamTab />
-          </TabsContent>
-
-          <TabsContent value="addresses">
-            <AddressesTab />
-          </TabsContent>
-
           <TabsContent value="notifications">
             <NotificationsTab />
           </TabsContent>
@@ -157,10 +134,6 @@ const Settings = () => {
 
           <TabsContent value="units">
             <UnitsTab />
-          </TabsContent>
-
-          <TabsContent value="locations">
-            <LocationsTab />
           </TabsContent>
 
           <TabsContent value="categories">
@@ -429,6 +402,52 @@ const AdvancedSettingsSwitch = () => {
 };
 
 const OrganizationTab = () => {
+  return (
+    <div className="space-y-4">
+      <Tabs defaultValue="general" className="space-y-4">
+        <TabsList className="bg-muted/50 p-1">
+          <TabsTrigger value="general" className="gap-1.5 text-xs sm:text-sm data-[state=active]:bg-background">
+            <Building2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+            <span className="hidden sm:inline">Allgemein</span>
+            <span className="sm:hidden">Allg.</span>
+          </TabsTrigger>
+          <TabsTrigger value="team" className="gap-1.5 text-xs sm:text-sm data-[state=active]:bg-background">
+            <Users className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+            <span>Team</span>
+          </TabsTrigger>
+          <TabsTrigger value="locations" className="gap-1.5 text-xs sm:text-sm data-[state=active]:bg-background">
+            <Store className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+            <span className="hidden sm:inline">Standorte</span>
+            <span className="sm:hidden">Orte</span>
+          </TabsTrigger>
+          <TabsTrigger value="addresses" className="gap-1.5 text-xs sm:text-sm data-[state=active]:bg-background">
+            <MapPin className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+            <span className="hidden sm:inline">Adressen</span>
+            <span className="sm:hidden">Adr.</span>
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="general" className="mt-4">
+          <OrganizationGeneralContent />
+        </TabsContent>
+
+        <TabsContent value="team" className="mt-4">
+          <TeamTab />
+        </TabsContent>
+
+        <TabsContent value="locations" className="mt-4">
+          <LocationsTab />
+        </TabsContent>
+
+        <TabsContent value="addresses" className="mt-4">
+          <AddressesTab />
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+};
+
+const OrganizationGeneralContent = () => {
   const { data: organization, isLoading } = useOrganization();
   const updateOrganization = useUpdateOrganization();
   const [name, setName] = useState('');
@@ -459,36 +478,38 @@ const OrganizationTab = () => {
     if (!organization) return;
     
     if (enabled && !testEmail) {
-      setTestEmailError('Bitte geben Sie eine Test-E-Mail-Adresse ein');
+      setTestEmailError('Bitte geben Sie zuerst eine Test-E-Mail-Adresse ein');
       return;
     }
-    
-    if (enabled && !validateEmail(testEmail)) {
+
+    if (enabled && testEmail && !validateEmail(testEmail)) {
       setTestEmailError('Bitte geben Sie eine gültige E-Mail-Adresse ein');
       return;
     }
 
-    setTestEmailError('');
-    setTestModeEnabled(enabled);
-    updateOrganization.mutate({ 
-      id: organization.id, 
+    updateOrganization.mutate({
+      id: organization.id,
       test_mode_enabled: enabled,
-      test_email: enabled ? testEmail : organization.test_email
+      test_email: testEmail || organization.test_email,
     });
   };
 
   const handleTestEmailSave = () => {
     if (!organization) return;
     
+    if (!testEmail) {
+      setTestEmailError('Bitte geben Sie eine E-Mail-Adresse ein');
+      return;
+    }
+
     if (!validateEmail(testEmail)) {
       setTestEmailError('Bitte geben Sie eine gültige E-Mail-Adresse ein');
       return;
     }
 
-    setTestEmailError('');
-    updateOrganization.mutate({ 
-      id: organization.id, 
-      test_email: testEmail 
+    updateOrganization.mutate({
+      id: organization.id,
+      test_email: testEmail,
     });
   };
 
@@ -612,7 +633,6 @@ const OrganizationTab = () => {
           )}
         </CardContent>
       </Card>
-
     </div>
   );
 };
