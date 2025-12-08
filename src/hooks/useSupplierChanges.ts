@@ -186,6 +186,7 @@ export const useApproveChange = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['supplier-pending-changes'] });
       queryClient.invalidateQueries({ queryKey: ['supplier-pending-changes-count'] });
+      queryClient.invalidateQueries({ queryKey: ['combined-pending-by-supplier'] });
       queryClient.invalidateQueries({ queryKey: ['articles'] });
       queryClient.invalidateQueries({ queryKey: ['price-history'] });
       toast.success('Änderung übernommen');
@@ -214,6 +215,7 @@ export const useRejectChange = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['supplier-pending-changes'] });
       queryClient.invalidateQueries({ queryKey: ['supplier-pending-changes-count'] });
+      queryClient.invalidateQueries({ queryKey: ['combined-pending-by-supplier'] });
       toast.success('Änderung abgelehnt');
     },
     onError: (error: any) => {
@@ -272,6 +274,7 @@ export const useApproveAllChanges = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['supplier-pending-changes'] });
       queryClient.invalidateQueries({ queryKey: ['supplier-pending-changes-count'] });
+      queryClient.invalidateQueries({ queryKey: ['combined-pending-by-supplier'] });
       queryClient.invalidateQueries({ queryKey: ['articles'] });
       queryClient.invalidateQueries({ queryKey: ['price-history'] });
       toast.success('Alle Änderungen übernommen');
@@ -300,6 +303,7 @@ export const useRejectAllChanges = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['supplier-pending-changes'] });
       queryClient.invalidateQueries({ queryKey: ['supplier-pending-changes-count'] });
+      queryClient.invalidateQueries({ queryKey: ['combined-pending-by-supplier'] });
       toast.success('Alle Änderungen abgelehnt');
     },
     onError: (error: any) => {
