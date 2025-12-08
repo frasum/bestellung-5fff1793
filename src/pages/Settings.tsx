@@ -1169,26 +1169,26 @@ const EmailTemplateTab = () => {
   };
 
   if (isLoading) {
-    return <Card><CardContent className="p-6">Loading...</CardContent></Card>;
+    return <Card><CardContent className="p-6">{t('common.loading')}</CardContent></Card>;
   }
 
   const designOptions = [
     {
       id: 'modern' as const,
-      name: 'Modern',
-      description: 'Farbverlauf, Icons, abgerundete Ecken',
+      name: t('settings.emailDesignModern'),
+      description: t('settings.emailDesignModernDesc'),
       preview: 'bg-gradient-to-r from-[#1e3a5f] to-[#2563eb]',
     },
     {
       id: 'classic' as const,
-      name: 'Klassisch',
-      description: 'Formell, klar strukturiert, professionell',
+      name: t('settings.emailDesignClassic'),
+      description: t('settings.emailDesignClassicDesc'),
       preview: 'bg-[#1e3a5f]',
     },
     {
       id: 'minimalist' as const,
-      name: 'Minimalistisch',
-      description: 'Schlicht, textfokussiert, dezent',
+      name: t('settings.emailDesignMinimalist'),
+      description: t('settings.emailDesignMinimalistDesc'),
       preview: 'bg-muted border',
     },
   ];
@@ -1201,15 +1201,15 @@ const EmailTemplateTab = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <FileText className="h-5 w-5" />
-            E-Mail-Footer
+            {t('settings.emailFooter')}
           </CardTitle>
-          <CardDescription>Passen Sie den Footer Ihrer Bestell-E-Mails an</CardDescription>
+          <CardDescription>{t('settings.emailFooterDesc')}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="flex items-center justify-between">
             <div>
-              <Label htmlFor="show-powered-by">"Erstellt von Bestellung.pro" anzeigen</Label>
-              <p className="text-xs text-muted-foreground">Zeigt einen dezenten Hinweis am Ende der E-Mail</p>
+              <Label htmlFor="show-powered-by">{t('settings.showPoweredBy')}</Label>
+              <p className="text-xs text-muted-foreground">{t('settings.showPoweredByDesc')}</p>
             </div>
             <Switch
               id="show-powered-by"
@@ -1219,25 +1219,25 @@ const EmailTemplateTab = () => {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="footer-text">Eigener Footer-Text</Label>
+            <Label htmlFor="footer-text">{t('settings.customFooterText')}</Label>
             <Input
               id="footer-text"
               value={formData.footer_text || currentData.footer_text || ''}
               onChange={(e) => handleChange('footer_text', e.target.value)}
-              placeholder="z.B. Diese Bestellung wurde über Ihr Restaurant gesendet."
+              placeholder={t('settings.customFooterTextPlaceholder')}
             />
-            <p className="text-xs text-muted-foreground">Dieser Text erscheint am Ende der E-Mail</p>
+            <p className="text-xs text-muted-foreground">{t('settings.customFooterTextHint')}</p>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="footer-logo-url">Logo-URL (optional)</Label>
+            <Label htmlFor="footer-logo-url">{t('settings.footerLogoUrl')}</Label>
             <Input
               id="footer-logo-url"
               value={formData.footer_logo_url || currentData.footer_logo_url || ''}
               onChange={(e) => handleChange('footer_logo_url', e.target.value)}
               placeholder="https://example.com/logo.png"
             />
-            <p className="text-xs text-muted-foreground">URL zu Ihrem Logo (wird über dem Footer-Text angezeigt)</p>
+            <p className="text-xs text-muted-foreground">{t('settings.footerLogoUrlHint')}</p>
           </div>
         </CardContent>
       </Card>
@@ -1246,9 +1246,9 @@ const EmailTemplateTab = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Mail className="h-5 w-5" />
-            E-Mail-Design
+            {t('settings.emailDesign')}
           </CardTitle>
-          <CardDescription>Wählen Sie ein Design für Ihre Bestellungs-E-Mails</CardDescription>
+          <CardDescription>{t('settings.emailDesignDesc')}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -1368,6 +1368,7 @@ const EmailTemplateTab = () => {
 };
 
 const UnitsTab = () => {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const { data: units = [], isLoading: unitsLoading } = useUnits();
@@ -1418,9 +1419,9 @@ const UnitsTab = () => {
       if (error) throw error;
 
       queryClient.invalidateQueries({ queryKey: ['units'] });
-      toast.success(`${articleUnits.length} Einheiten hinzugefügt`);
+      toast.success(t('settings.unitsAddedSuccess', { count: articleUnits.length }));
     } catch (error) {
-      toast.error('Fehler beim Hinzufügen der Einheiten');
+      toast.error(t('settings.unitsAddError'));
     } finally {
       setIsAddingAll(false);
     }
@@ -1457,7 +1458,7 @@ const UnitsTab = () => {
   };
 
   const handleDelete = (id: string) => {
-    if (confirm('Einheit wirklich löschen?')) {
+    if (confirm(t('settings.deleteUnitConfirm'))) {
       deleteUnit.mutate(id);
     }
   };
@@ -1501,9 +1502,9 @@ const UnitsTab = () => {
         </div>
 
         <div className="space-y-2">
-          <h3 className="text-sm font-medium text-muted-foreground">Gespeicherte Einheiten ({filteredDbUnits.length})</h3>
+          <h3 className="text-sm font-medium text-muted-foreground">{t('settings.savedUnits')} ({filteredDbUnits.length})</h3>
           {filteredDbUnits.length === 0 ? (
-            <p className="text-muted-foreground text-center py-4 text-sm">Keine gespeicherten Einheiten</p>
+            <p className="text-muted-foreground text-center py-4 text-sm">{t('settings.noSavedUnits')}</p>
           ) : (
             filteredDbUnits.map((unit) => (
               <div key={unit.id} className="flex items-center justify-between p-3 border rounded-lg">
@@ -1547,7 +1548,7 @@ const UnitsTab = () => {
         {filteredArticleUnits.length > 0 && (
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-medium text-muted-foreground">Einheiten aus Artikeln ({articleUnits.length})</h3>
+              <h3 className="text-sm font-medium text-muted-foreground">{t('settings.unitsFromArticles')} ({articleUnits.length})</h3>
               <Button 
                 size="sm" 
                 variant="outline"
@@ -1555,10 +1556,10 @@ const UnitsTab = () => {
                 disabled={isAddingAll}
               >
                 <Plus className="h-4 w-4 mr-2" />
-                {isAddingAll ? 'Wird hinzugefügt...' : 'Alle hinzufügen'}
+                {isAddingAll ? t('settings.addingAll') : t('settings.addAll')}
               </Button>
             </div>
-            <p className="text-xs text-muted-foreground">Diese Einheiten werden in Artikeln verwendet, aber noch nicht zentral gespeichert.</p>
+            <p className="text-xs text-muted-foreground">{t('settings.unitsFromArticlesDesc')}</p>
             <div className="flex flex-wrap gap-2">
               {filteredArticleUnits.map((unit) => (
                 <Badge 
@@ -1766,6 +1767,7 @@ const LocationsTab = () => {
 };
 
 const CategoriesTab = () => {
+  const { t } = useTranslation();
   const { data: categories = [], isLoading } = useCategories();
   const { data: articles = [] } = useArticles();
   const createCategory = useCreateCategory();
@@ -1852,11 +1854,11 @@ const CategoriesTab = () => {
       queryClient.invalidateQueries({ queryKey: ['categories'] });
       queryClient.invalidateQueries({ queryKey: ['articles'] });
 
-      toast.success(`"${mergingCategory.name}" wurde mit "${targetCategory.name}" zusammengeführt`);
+      toast.success(t('settings.categoriesMergedSuccess', { source: mergingCategory.name, target: targetCategory.name }));
       setMergingCategory(null);
       setMergeTargetId('');
     } catch (error) {
-      toast.error('Fehler beim Zusammenführen der Kategorien');
+      toast.error(t('settings.categoriesMergeError'));
     } finally {
       setIsMerging(false);
     }
@@ -1869,7 +1871,7 @@ const CategoriesTab = () => {
   const mergeTargets = sortedCategories.filter(c => c.id !== mergingCategory?.id);
 
   if (isLoading) {
-    return <Card><CardContent className="p-6">Lädt...</CardContent></Card>;
+    return <Card><CardContent className="p-6">{t('common.loading')}</CardContent></Card>;
   }
 
   return (
@@ -1877,23 +1879,23 @@ const CategoriesTab = () => {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Tag className="h-5 w-5" />
-          Kategorien verwalten
+          {t('settings.manageCategories')}
         </CardTitle>
         <CardDescription>
-          Verwalten Sie die Kategorien für Ihre Artikel
+          {t('settings.manageCategoriesDesc')}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="flex gap-2">
           <Input
-            placeholder="Neue Kategorie..."
+            placeholder={t('settings.newCategoryPlaceholder')}
             value={newCategoryName}
             onChange={(e) => setNewCategoryName(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleAddCategory()}
           />
           <Button onClick={handleAddCategory} disabled={createCategory.isPending || !newCategoryName.trim()}>
             <Plus className="h-4 w-4 mr-2" />
-            Hinzufügen
+            {t('common.add')}
           </Button>
         </div>
 
@@ -1901,12 +1903,12 @@ const CategoriesTab = () => {
           <div className="p-4 border rounded-lg bg-muted/50 space-y-3">
             <div className="flex items-center justify-between">
               <div>
-                <h4 className="font-medium text-sm">Kategorien aus Artikeln</h4>
-                <p className="text-xs text-muted-foreground">Diese Kategorien werden verwendet, sind aber noch nicht gespeichert.</p>
+                <h4 className="font-medium text-sm">{t('settings.categoriesFromArticles')}</h4>
+                <p className="text-xs text-muted-foreground">{t('settings.categoriesFromArticlesDesc')}</p>
               </div>
               <Button size="sm" variant="outline" onClick={handleAddAllMissingCategories}>
                 <Plus className="h-4 w-4 mr-2" />
-                Alle hinzufügen
+                {t('settings.addAll')}
               </Button>
             </div>
             <div className="flex flex-wrap gap-2">
@@ -1927,7 +1929,7 @@ const CategoriesTab = () => {
 
         {sortedCategories.length === 0 ? (
           <p className="text-muted-foreground text-center py-8">
-            Noch keine Kategorien vorhanden.
+            {t('settings.noCategories')}
           </p>
         ) : (
           <div className="space-y-2">
@@ -1998,19 +2000,18 @@ const CategoriesTab = () => {
       <AlertDialog open={!!deletingCategory} onOpenChange={(open) => !open && setDeletingCategory(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Kategorie löschen?</AlertDialogTitle>
+            <AlertDialogTitle>{t('settings.deleteCategoryTitle')}</AlertDialogTitle>
             <AlertDialogDescription>
-              Möchten Sie die Kategorie "{deletingCategory?.name}" wirklich löschen?
-              Diese Aktion kann nicht rückgängig gemacht werden.
+              {t('settings.deleteCategoryConfirm', { name: deletingCategory?.name })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+            <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeleteConfirm}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              Löschen
+              {t('common.delete')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -2019,15 +2020,14 @@ const CategoriesTab = () => {
       <AlertDialog open={!!mergingCategory} onOpenChange={(open) => !open && setMergingCategory(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Kategorien zusammenführen</AlertDialogTitle>
+            <AlertDialogTitle>{t('settings.mergeCategoriesTitle')}</AlertDialogTitle>
             <AlertDialogDescription className="space-y-4">
               <p>
-                Wählen Sie die Zielkategorie, mit der "{mergingCategory?.name}" zusammengeführt werden soll.
-                Alle Artikel mit der Kategorie "{mergingCategory?.name}" werden zur Zielkategorie verschoben.
+                {t('settings.mergeCategoriesDesc', { name: mergingCategory?.name })}
               </p>
               <Select value={mergeTargetId} onValueChange={setMergeTargetId}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Zielkategorie auswählen..." />
+                  <SelectValue placeholder={t('settings.selectTargetCategory')} />
                 </SelectTrigger>
                 <SelectContent>
                   {mergeTargets.map((cat) => (
@@ -2040,12 +2040,12 @@ const CategoriesTab = () => {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+            <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleMergeConfirm}
               disabled={!mergeTargetId || isMerging}
             >
-              {isMerging ? 'Wird zusammengeführt...' : 'Zusammenführen'}
+              {isMerging ? t('settings.merging') : t('settings.merge')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
