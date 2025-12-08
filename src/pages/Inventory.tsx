@@ -90,6 +90,7 @@ interface LocalInventoryItem {
   article_id: string;
   storage_1: number;
   storage_2: number;
+  unit_price?: number;
 }
 
 // Default units if no custom units exist
@@ -167,6 +168,7 @@ const Inventory = () => {
           article_id: item.article_id,
           storage_1: Number(item.storage_1),
           storage_2: Number(item.storage_2),
+          unit_price: item.unit_price != null ? Number(item.unit_price) : undefined,
         });
       });
       setLocalItems(itemsMap);
@@ -270,11 +272,12 @@ const Inventory = () => {
       const group = grouped.get(article.supplier_id)!;
       group.articles.push(article);
       
-      // Calculate captured values
+      // Calculate captured values - use frozen price if available (for completed sessions)
       const values = localItems.get(article.id);
       if (values && (values.storage_1 > 0 || values.storage_2 > 0)) {
         group.capturedCount++;
-        group.totalValue += (values.storage_1 + values.storage_2) * article.price;
+        const price = values.unit_price ?? article.price;
+        group.totalValue += (values.storage_1 + values.storage_2) * price;
       }
     });
     
@@ -344,9 +347,15 @@ const Inventory = () => {
 
   const handleSave = async () => {
     if (!activeSessionId) return;
-    const items = Array.from(localItems.values()).filter(
-      (item) => item.storage_1 > 0 || item.storage_2 > 0
-    );
+    const items = Array.from(localItems.values())
+      .filter((item) => item.storage_1 > 0 || item.storage_2 > 0)
+      .map((item) => {
+        const article = articles?.find((a) => a.id === item.article_id);
+        return {
+          ...item,
+          unit_price: article?.price || 0,
+        };
+      });
     await bulkUpsertItems.mutateAsync({ session_id: activeSessionId, items });
     setHasChanges(false);
   };
