@@ -1,11 +1,12 @@
 import { useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Mic, Camera, Upload, Loader2, Filter } from 'lucide-react';
+import { Mic, Camera, Upload, Loader2, Filter, HelpCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useArticles } from '@/hooks/useArticles';
@@ -14,6 +15,7 @@ import { useHasRole } from '@/hooks/useUserRole';
 import StaffOrderPreview from '@/components/staff/StaffOrderPreview';
 import StaffSubmissionHistory from '@/components/staff/StaffSubmissionHistory';
 import EmployeeSubmissionReviewDialog from '@/components/staff/EmployeeSubmissionReviewDialog';
+import PurchaserOnboardingTour, { usePurchaserOnboarding } from '@/components/onboarding/PurchaserOnboardingTour';
 
 interface ParsedItem {
   article_id: string | null;
@@ -31,6 +33,7 @@ export default function StaffOrdersTab() {
   const { data: allSubmissions = [] } = useEmployeeSubmissions();
   const { hasRole: canSeeAllSubmissions } = useHasRole(['admin', 'manager']);
   const createSubmission = useCreateSubmission();
+  const { showTour, completeTour, resetTour } = usePurchaserOnboarding();
   
   const [isRecording, setIsRecording] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -249,10 +252,35 @@ export default function StaffOrdersTab() {
 
   return (
     <div className="max-w-2xl mx-auto">
+      {/* Onboarding Tour */}
+      {showTour && <PurchaserOnboardingTour onComplete={completeTour} />}
+      
       <Tabs defaultValue="new" className="w-full">
         <TabsList className={`w-full mb-6 ${canSeeAllSubmissions ? 'grid-cols-3' : ''}`}>
-          <TabsTrigger value="new" className="flex-1">{t('staffOrders.newOrder')}</TabsTrigger>
-          <TabsTrigger value="history" className="flex-1">
+          <TabsTrigger value="new" className="flex-1 gap-1">
+            {t('staffOrders.newOrder')}
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-5 w-5 ml-1"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      resetTour();
+                    }}
+                  >
+                    <HelpCircle className="h-3.5 w-3.5 text-muted-foreground" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{t('staffOrders.restartTour')}</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </TabsTrigger>
+          <TabsTrigger value="history" className="flex-1" data-tour-step="history">
             {t('staffOrders.myOrders')}
             {mySubmissions.length > 0 && (
               <Badge variant="secondary" className="ml-2">{mySubmissions.length}</Badge>
@@ -289,7 +317,7 @@ export default function StaffOrdersTab() {
           ) : (
             <div className="space-y-4">
               {/* Voice Recording Card */}
-              <Card>
+              <Card data-tour-step="voice">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-lg">
                     <Mic className="h-5 w-5" />
@@ -325,7 +353,7 @@ export default function StaffOrdersTab() {
               </Card>
 
               {/* Photo Upload Card */}
-              <Card>
+              <Card data-tour-step="photo">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-lg">
                     <Camera className="h-5 w-5" />
