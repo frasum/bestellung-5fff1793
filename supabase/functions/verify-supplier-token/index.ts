@@ -60,20 +60,16 @@ serve(async (req) => {
       );
     }
 
-    // Check if token was already used
-    if (tokenData.used_at) {
-      console.log('Token already used');
-      return new Response(
-        JSON.stringify({ error: 'Token already used', status: 'error' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+    // Track first usage but allow multiple logins within validity period
+    if (!tokenData.used_at) {
+      await supabase
+        .from('supplier_portal_tokens')
+        .update({ used_at: new Date().toISOString() })
+        .eq('id', tokenData.id);
+      console.log('Token first used at:', new Date().toISOString());
+    } else {
+      console.log('Token reused (first used at:', tokenData.used_at, ')');
     }
-
-    // Mark token as used
-    await supabase
-      .from('supplier_portal_tokens')
-      .update({ used_at: new Date().toISOString() })
-      .eq('id', tokenData.id);
 
     console.log('Token verified successfully for supplier:', tokenData.suppliers?.name);
 
