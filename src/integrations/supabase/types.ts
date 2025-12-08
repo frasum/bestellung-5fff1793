@@ -690,7 +690,9 @@ export type Database = {
         Row: {
           advanced_view_enabled: boolean
           created_at: string
+          demo_expires_at: string | null
           id: string
+          is_demo: boolean | null
           name: string
           subscription_tier: string
           test_email: string | null
@@ -701,7 +703,9 @@ export type Database = {
         Insert: {
           advanced_view_enabled?: boolean
           created_at?: string
+          demo_expires_at?: string | null
           id?: string
+          is_demo?: boolean | null
           name: string
           subscription_tier?: string
           test_email?: string | null
@@ -712,7 +716,9 @@ export type Database = {
         Update: {
           advanced_view_enabled?: boolean
           created_at?: string
+          demo_expires_at?: string | null
           id?: string
+          is_demo?: boolean | null
           name?: string
           subscription_tier?: string
           test_email?: string | null

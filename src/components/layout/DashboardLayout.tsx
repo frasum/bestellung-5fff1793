@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { LayoutDashboard, Users, Package, ShoppingCart, FileText, BarChart3, Settings, LogOut, Menu, X, ClipboardList, FlaskConical, Search } from 'lucide-react';
+import { LayoutDashboard, Users, Package, ShoppingCart, FileText, BarChart3, Settings, LogOut, Menu, X, ClipboardList, FlaskConical, Search, Sparkles } from 'lucide-react';
 import { GlobalSearch } from '@/components/GlobalSearch';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import { LocationSwitcher } from '@/components/LocationSwitcher';
@@ -13,9 +13,11 @@ import { Badge } from '@/components/ui/badge';
 import { MobileBottomNav } from '@/components/layout/MobileBottomNav';
 import { FloatingCartButton } from '@/components/FloatingCartButton';
 import logoImage from '@/assets/logo.png';
+
 interface DashboardLayoutProps {
   children: ReactNode;
 }
+
 export const DashboardLayout = ({
   children
 }: DashboardLayoutProps) => {
@@ -34,6 +36,19 @@ export const DashboardLayout = ({
   useKeyboardShortcuts();
   
   const { data: organization } = useOrganization();
+  
+  // Calculate demo days remaining
+  const getDemoDaysRemaining = () => {
+    if (!organization?.is_demo || !organization?.demo_expires_at) return null;
+    const expiresAt = new Date(organization.demo_expires_at);
+    const now = new Date();
+    const diffTime = expiresAt.getTime() - now.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays > 0 ? diffDays : 0;
+  };
+  
+  const demoDaysRemaining = getDemoDaysRemaining();
+  
   const navItems = [{
     href: '/dashboard',
     label: t('nav.dashboard'),
@@ -78,7 +93,17 @@ export const DashboardLayout = ({
           <span className="font-bold text-lg text-foreground">Bestellung.pro</span>
         </Link>
         <div className="flex items-center gap-2">
-          {organization?.test_mode_enabled && (
+          {organization?.is_demo && demoDaysRemaining !== null && (
+            <Badge 
+              variant="outline" 
+              className="bg-primary/10 text-primary border-primary/30 cursor-pointer hover:bg-primary/20"
+              onClick={() => navigate('/settings')}
+            >
+              <Sparkles className="w-3 h-3 mr-1" />
+              Demo ({demoDaysRemaining}d)
+            </Badge>
+          )}
+          {organization?.test_mode_enabled && !organization?.is_demo && (
             <Badge 
               variant="outline" 
               className="bg-amber-500/10 text-amber-600 border-amber-500/30 cursor-pointer hover:bg-amber-500/20"
@@ -100,7 +125,17 @@ export const DashboardLayout = ({
           <GlobalSearch />
         </div>
         <div className="flex items-center gap-3">
-          {organization?.test_mode_enabled && (
+          {organization?.is_demo && demoDaysRemaining !== null && (
+            <Badge 
+              variant="outline" 
+              className="bg-primary/10 text-primary border-primary/30 cursor-pointer hover:bg-primary/20"
+              onClick={() => navigate('/settings')}
+            >
+              <Sparkles className="w-3 h-3 mr-1" />
+              Demo-Modus (noch {demoDaysRemaining} Tage)
+            </Badge>
+          )}
+          {organization?.test_mode_enabled && !organization?.is_demo && (
             <Badge 
               variant="outline" 
               className="bg-amber-500/10 text-amber-600 border-amber-500/30 cursor-pointer hover:bg-amber-500/20"

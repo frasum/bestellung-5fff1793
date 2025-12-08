@@ -3,13 +3,22 @@ import { useNavigate } from 'react-router-dom';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Mail, Lock, User, Building2, ArrowRight, Loader2 } from 'lucide-react';
+import { Mail, Lock, User, Building2, ArrowRight, Loader2, Play } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 import logoImage from '@/assets/logo.png';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { useTranslation } from 'react-i18next';
 
 const loginSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
@@ -27,14 +36,22 @@ const signupSchema = z.object({
   path: ['confirmPassword'],
 });
 
+const demoSchema = z.object({
+  email: z.string().email('Bitte geben Sie eine gültige E-Mail-Adresse ein'),
+});
+
 type LoginFormData = z.infer<typeof loginSchema>;
 type SignupFormData = z.infer<typeof signupSchema>;
+type DemoFormData = z.infer<typeof demoSchema>;
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
+  const [showDemoDialog, setShowDemoDialog] = useState(false);
+  const [isDemoLoading, setIsDemoLoading] = useState(false);
   const { user, signIn, signUp } = useAuth();
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   useEffect(() => {
     if (user) {
@@ -50,6 +67,11 @@ const Auth = () => {
   const signupForm = useForm<SignupFormData>({
     resolver: zodResolver(signupSchema),
     defaultValues: { fullName: '', organizationName: '', email: '', password: '', confirmPassword: '' },
+  });
+
+  const demoForm = useForm<DemoFormData>({
+    resolver: zodResolver(demoSchema),
+    defaultValues: { email: '' },
   });
 
   const handleLogin = async (data: LoginFormData) => {
@@ -88,6 +110,48 @@ const Auth = () => {
     }
   };
 
+  const handleStartDemo = async (data: DemoFormData) => {
+    setIsDemoLoading(true);
+    
+    try {
+      const { data: result, error } = await supabase.functions.invoke('create-demo-account', {
+        body: { email: data.email }
+      });
+
+      if (error) {
+        toast.error(error.message || 'Fehler beim Erstellen des Demo-Accounts');
+        setIsDemoLoading(false);
+        return;
+      }
+
+      if (result?.error) {
+        toast.error(result.error);
+        setIsDemoLoading(false);
+        return;
+      }
+
+      if (result?.session) {
+        // Set the session
+        await supabase.auth.setSession({
+          access_token: result.session.access_token,
+          refresh_token: result.session.refresh_token,
+        });
+        
+        toast.success('Demo-Account erstellt! Willkommen bei Bestellung.pro');
+        setShowDemoDialog(false);
+        navigate('/dashboard');
+      } else if (result?.needsManualLogin) {
+        toast.success('Demo-Account erstellt! Bitte melden Sie sich mit der E-Mail an.');
+        setShowDemoDialog(false);
+      }
+    } catch (err) {
+      console.error('Demo error:', err);
+      toast.error('Ein unerwarteter Fehler ist aufgetreten');
+    }
+    
+    setIsDemoLoading(false);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-accent/5 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
@@ -109,7 +173,7 @@ const Auth = () => {
                   : 'text-muted-foreground hover:text-foreground'
               }`}
             >
-              Sign In
+              {t('auth.signIn')}
             </button>
             <button
               onClick={() => setIsLogin(false)}
@@ -119,7 +183,7 @@ const Auth = () => {
                   : 'text-muted-foreground hover:text-foreground'
               }`}
             >
-              Sign Up
+              {t('auth.signUp')}
             </button>
           </div>
 
@@ -144,7 +208,7 @@ const Auth = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="login-password">Password</Label>
+                <Label htmlFor="login-password">{t('auth.password')}</Label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <Input
@@ -165,7 +229,7 @@ const Auth = () => {
                   <Loader2 className="w-4 h-4 animate-spin" />
                 ) : (
                   <>
-                    Sign In
+                    {t('auth.signIn')}
                     <ArrowRight className="w-4 h-4 ml-2" />
                   </>
                 )}
@@ -175,7 +239,7 @@ const Auth = () => {
             /* Signup Form */
             <form onSubmit={signupForm.handleSubmit(handleSignup)} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="signup-name">Full Name</Label>
+                <Label htmlFor="signup-name">{t('auth.fullName')}</Label>
                 <div className="relative">
                   <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <Input
@@ -226,7 +290,7 @@ const Auth = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="signup-password">Password</Label>
+                <Label htmlFor="signup-password">{t('auth.password')}</Label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <Input
@@ -243,7 +307,7 @@ const Auth = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="signup-confirm">Confirm Password</Label>
+                <Label htmlFor="signup-confirm">{t('settings.confirmPassword')}</Label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <Input
@@ -264,13 +328,28 @@ const Auth = () => {
                   <Loader2 className="w-4 h-4 animate-spin" />
                 ) : (
                   <>
-                    Create Account
+                    {t('auth.createAccount')}
                     <ArrowRight className="w-4 h-4 ml-2" />
                   </>
                 )}
               </Button>
             </form>
           )}
+
+          {/* Demo Button */}
+          <div className="mt-6 pt-6 border-t border-border">
+            <Button 
+              variant="outline" 
+              className="w-full gap-2"
+              onClick={() => setShowDemoDialog(true)}
+            >
+              <Play className="w-4 h-4" />
+              Demo starten
+            </Button>
+            <p className="text-xs text-muted-foreground text-center mt-2">
+              7 Tage kostenlos testen mit Beispieldaten
+            </p>
+          </div>
 
           <p className="text-center text-sm text-muted-foreground mt-6">
             By continuing, you agree to our{' '}
@@ -280,6 +359,75 @@ const Auth = () => {
           </p>
         </div>
       </div>
+
+      {/* Demo Dialog */}
+      <Dialog open={showDemoDialog} onOpenChange={setShowDemoDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Play className="w-5 h-5 text-primary" />
+              Demo starten
+            </DialogTitle>
+            <DialogDescription>
+              Testen Sie Bestellung.pro 7 Tage kostenlos mit Beispieldaten. 
+              Geben Sie Ihre E-Mail-Adresse ein, um alle E-Mail-Funktionen live zu erleben.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <form onSubmit={demoForm.handleSubmit(handleStartDemo)} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="demo-email">E-Mail-Adresse</Label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  id="demo-email"
+                  type="email"
+                  placeholder="ihre@email.de"
+                  className="pl-10"
+                  {...demoForm.register('email')}
+                />
+              </div>
+              {demoForm.formState.errors.email && (
+                <p className="text-sm text-destructive">{demoForm.formState.errors.email.message}</p>
+              )}
+              <p className="text-xs text-muted-foreground">
+                Bestellungs-E-Mails werden an diese Adresse gesendet, damit Sie sehen, wie die Kommunikation mit Lieferanten aussieht.
+              </p>
+            </div>
+
+            <div className="bg-muted/50 rounded-lg p-3 text-sm">
+              <p className="font-medium mb-1">Was ist enthalten?</p>
+              <ul className="text-muted-foreground space-y-1 text-xs">
+                <li>• 4 Beispiel-Lieferanten mit 24 Artikeln</li>
+                <li>• Beispiel-Bestellungen zum Erkunden</li>
+                <li>• Alle Funktionen freigeschaltet</li>
+                <li>• Testmodus aktiv – E-Mails gehen an Sie</li>
+              </ul>
+            </div>
+
+            <div className="flex gap-3">
+              <Button 
+                type="button" 
+                variant="outline" 
+                className="flex-1"
+                onClick={() => setShowDemoDialog(false)}
+              >
+                Abbrechen
+              </Button>
+              <Button type="submit" className="flex-1" disabled={isDemoLoading}>
+                {isDemoLoading ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <>
+                    <Play className="w-4 h-4 mr-2" />
+                    Demo starten
+                  </>
+                )}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

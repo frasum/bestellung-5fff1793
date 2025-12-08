@@ -29,3 +29,9 @@ verify_jwt = false
 
 [functions.request-new-magic-link]
 verify_jwt = false
+
+[functions.create-demo-account]
+verify_jwt = false
+
+[functions.convert-demo-account]
+verify_jwt = true

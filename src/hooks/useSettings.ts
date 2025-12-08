@@ -34,6 +34,8 @@ export interface Organization {
   trial_ends_at: string | null;
   test_mode_enabled: boolean;
   test_email: string | null;
+  is_demo: boolean;
+  demo_expires_at: string | null;
 }
 
 export const useOrganization = () => {
