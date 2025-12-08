@@ -127,7 +127,7 @@ serve(async (req: Request): Promise<Response> => {
                 <a href="${magicLink}" class="button">Zum Lieferantenportal</a>
               </p>
               
-              <p><strong>Wichtig:</strong> Dieser Link ist 24 Stunden gültig und kann nur einmal verwendet werden.</p>
+              <p><strong>Wichtig:</strong> Dieser Link ist 7 Tage gültig.</p>
               
               <p>Falls Sie diesen Link nicht angefordert haben, können Sie diese E-Mail ignorieren.</p>
               
@@ -148,7 +148,7 @@ ${organizationName} hat Sie eingeladen, Ihre Artikel im Lieferantenportal zu ver
 Klicken Sie auf den folgenden Link, um sich anzumelden:
 ${magicLink}
 
-Wichtig: Dieser Link ist 24 Stunden gültig und kann nur einmal verwendet werden.
+Wichtig: Dieser Link ist 7 Tage gültig.
 
 Falls Sie diesen Link nicht angefordert haben, können Sie diese E-Mail ignorieren.
         `,
