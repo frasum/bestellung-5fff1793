@@ -119,6 +119,7 @@ serve(async (req) => {
         card_description: 'Änderungen werden zur Genehmigung eingereicht.',
         info_text: null,
         footer_text: null,
+        logo_url: null,
       };
 
       console.log('Returning portal settings for organization:', organizationId);

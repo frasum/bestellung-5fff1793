@@ -11,6 +11,7 @@ export interface SupplierPortalSettings {
   card_description: string;
   info_text: string | null;
   footer_text: string | null;
+  logo_url: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -22,6 +23,7 @@ export const DEFAULT_PORTAL_SETTINGS: Omit<SupplierPortalSettings, 'id' | 'organ
   card_description: 'Änderungen werden zur Genehmigung eingereicht.',
   info_text: null,
   footer_text: null,
+  logo_url: null,
 };
 
 export const useSupplierPortalSettings = () => {

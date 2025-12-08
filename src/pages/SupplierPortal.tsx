@@ -48,6 +48,7 @@ interface PortalSettings {
   card_description: string;
   info_text: string | null;
   footer_text: string | null;
+  logo_url: string | null;
 }
 
 const SupplierPortal = () => {
@@ -67,6 +68,7 @@ const SupplierPortal = () => {
     card_description: 'Änderungen werden zur Genehmigung eingereicht.',
     info_text: null,
     footer_text: null,
+    logo_url: null,
   });
 
   useEffect(() => {
@@ -255,7 +257,11 @@ const SupplierPortal = () => {
       <header className="border-b bg-card">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <img src={logo} alt="OrderFox.pro" className="h-10 w-10" />
+            <img 
+              src={portalSettings.logo_url || logo} 
+              alt="Portal Logo" 
+              className={portalSettings.logo_url ? "h-10 max-w-[120px] object-contain" : "h-10 w-10"} 
+            />
             <div>
               <h1 className="font-semibold">{portalSettings.portal_title}</h1>
               <p className="text-sm text-muted-foreground">{session.supplierName}</p>
