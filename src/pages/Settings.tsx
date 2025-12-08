@@ -10,7 +10,7 @@ import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Building2, MapPin, Bell, Plus, Pencil, Trash2, Star, User, Lock, Users, Mail, Clock, X, Globe, FileText, RotateCcw, Moon, Sun, Ruler, Check, Store, Merge, ExternalLink, Upload, ImageIcon, Loader2, Palette, FlaskConical } from 'lucide-react';
+import { Building2, MapPin, Plus, Pencil, Trash2, Star, User, Lock, Users, Mail, Clock, X, Globe, FileText, RotateCcw, Moon, Sun, Ruler, Check, Store, Merge, ExternalLink, Upload, ImageIcon, Loader2, Palette, FlaskConical, Layers, MessageSquare, Bell } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { useColorScheme, colorSchemes } from '@/hooks/useColorScheme';
 import { useSupplierPortalSettings, useUpsertSupplierPortalSettings, DEFAULT_PORTAL_SETTINGS } from '@/hooks/useSupplierPortalSettings';
@@ -54,11 +54,30 @@ import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { DemoAccountsTab } from '@/components/settings/DemoAccountsTab';
+import { SettingsSearch } from '@/components/settings/SettingsSearch';
+import { MasterDataTab } from '@/components/settings/MasterDataTab';
+import { CommunicationTab } from '@/components/settings/CommunicationTab';
 
 const Settings = () => {
   const { t } = useTranslation();
   const { data: userRole } = useUserRole();
   const isAdmin = userRole === 'admin';
+
+  // Tab state management
+  const [activeTab, setActiveTab] = useState('profile');
+  const [activeSubTabs, setActiveSubTabs] = useState({
+    'organization': 'general',
+    'master-data': 'units',
+    'communication': 'notifications',
+  });
+
+  // Handle navigation from search
+  const handleNavigate = (tab: string, subTab?: string) => {
+    setActiveTab(tab);
+    if (subTab) {
+      setActiveSubTabs(prev => ({ ...prev, [tab]: subTab }));
+    }
+  };
 
   return (
     <DashboardLayout>
@@ -68,7 +87,10 @@ const Settings = () => {
           <p className="text-muted-foreground">{t('settings.description')}</p>
         </div>
 
-        <Tabs defaultValue="profile" className="space-y-6">
+        {/* Settings Search */}
+        <SettingsSearch onNavigate={handleNavigate} />
+
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
             <TabsList className="inline-flex w-max sm:w-auto sm:flex-wrap gap-1">
               <TabsTrigger value="profile" className="gap-1.5 text-xs sm:text-sm whitespace-nowrap">
@@ -81,30 +103,15 @@ const Settings = () => {
                 <span className="hidden sm:inline">{t('settings.organization')}</span>
                 <span className="sm:hidden">Firma</span>
               </TabsTrigger>
-              <TabsTrigger value="notifications" className="gap-1.5 text-xs sm:text-sm whitespace-nowrap">
-                <Bell className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                <span className="hidden sm:inline">{t('settings.notifications')}</span>
-                <span className="sm:hidden">Meldungen</span>
+              <TabsTrigger value="master-data" className="gap-1.5 text-xs sm:text-sm whitespace-nowrap">
+                <Layers className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                <span className="hidden sm:inline">Stammdaten</span>
+                <span className="sm:hidden">Daten</span>
               </TabsTrigger>
-              <TabsTrigger value="email-templates" className="gap-1.5 text-xs sm:text-sm whitespace-nowrap">
-                <FileText className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                <span className="hidden sm:inline">{t('settings.emailTemplates')}</span>
-                <span className="sm:hidden">E-Mail</span>
-              </TabsTrigger>
-              <TabsTrigger value="units" className="gap-1.5 text-xs sm:text-sm whitespace-nowrap">
-                <Ruler className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                <span className="hidden sm:inline">Einheiten</span>
-                <span className="sm:hidden">Einh.</span>
-              </TabsTrigger>
-              <TabsTrigger value="categories" className="gap-1.5 text-xs sm:text-sm whitespace-nowrap">
-                <Tag className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                <span className="hidden sm:inline">Kategorien</span>
-                <span className="sm:hidden">Kat.</span>
-              </TabsTrigger>
-              <TabsTrigger value="supplier-portal" className="gap-1.5 text-xs sm:text-sm whitespace-nowrap">
-                <ExternalLink className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                <span className="hidden sm:inline">Lieferantenportal</span>
-                <span className="sm:hidden">Portal</span>
+              <TabsTrigger value="communication" className="gap-1.5 text-xs sm:text-sm whitespace-nowrap">
+                <MessageSquare className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                <span className="hidden sm:inline">Kommunikation</span>
+                <span className="sm:hidden">Komm.</span>
               </TabsTrigger>
               {isAdmin && (
                 <TabsTrigger value="demo-accounts" className="gap-1.5 text-xs sm:text-sm whitespace-nowrap">
@@ -116,36 +123,38 @@ const Settings = () => {
             </TabsList>
           </div>
 
-          <TabsContent value="profile">
+          <TabsContent value="profile" className="animate-in fade-in-50 slide-in-from-left-2 duration-200">
             <ProfileTab />
           </TabsContent>
 
-          <TabsContent value="organization">
-            <OrganizationTab />
+          <TabsContent value="organization" className="animate-in fade-in-50 slide-in-from-bottom-2 duration-200">
+            <OrganizationTab 
+              activeSubTab={activeSubTabs['organization']} 
+              onSubTabChange={(value) => setActiveSubTabs(prev => ({ ...prev, organization: value }))}
+            />
           </TabsContent>
 
-          <TabsContent value="notifications">
-            <NotificationsTab />
+          <TabsContent value="master-data" className="animate-in fade-in-50 slide-in-from-bottom-2 duration-200">
+            <MasterDataTab
+              activeSubTab={activeSubTabs['master-data']}
+              onSubTabChange={(value) => setActiveSubTabs(prev => ({ ...prev, 'master-data': value }))}
+              UnitsContent={UnitsTab}
+              CategoriesContent={CategoriesTab}
+            />
           </TabsContent>
 
-          <TabsContent value="email-templates">
-            <EmailTemplateTab />
-          </TabsContent>
-
-          <TabsContent value="units">
-            <UnitsTab />
-          </TabsContent>
-
-          <TabsContent value="categories">
-            <CategoriesTab />
-          </TabsContent>
-
-          <TabsContent value="supplier-portal">
-            <SupplierPortalTab />
+          <TabsContent value="communication" className="animate-in fade-in-50 slide-in-from-right-2 duration-200">
+            <CommunicationTab
+              activeSubTab={activeSubTabs['communication']}
+              onSubTabChange={(value) => setActiveSubTabs(prev => ({ ...prev, communication: value }))}
+              NotificationsContent={NotificationsTab}
+              EmailTemplatesContent={EmailTemplateTab}
+              SupplierPortalContent={SupplierPortalTab}
+            />
           </TabsContent>
 
           {isAdmin && (
-            <TabsContent value="demo-accounts">
+            <TabsContent value="demo-accounts" className="animate-in fade-in-50 slide-in-from-right-2 duration-200">
               <DemoAccountsTab />
             </TabsContent>
           )}
@@ -379,7 +388,6 @@ const AdvancedSettingsSwitch = () => {
   const handleToggle = (checked: boolean) => {
     setAdvancedMode(checked);
     localStorage.setItem('advanced-settings-enabled', checked.toString());
-    // Dispatch storage event for other components to react
     window.dispatchEvent(new StorageEvent('storage', { key: 'advanced-settings-enabled', newValue: checked.toString() }));
   };
 
@@ -401,45 +409,50 @@ const AdvancedSettingsSwitch = () => {
   );
 };
 
-const OrganizationTab = () => {
+interface OrganizationTabProps {
+  activeSubTab: string;
+  onSubTabChange: (value: string) => void;
+}
+
+const OrganizationTab = ({ activeSubTab, onSubTabChange }: OrganizationTabProps) => {
   return (
-    <div className="space-y-4">
-      <Tabs defaultValue="general" className="space-y-4">
+    <div className="bg-muted/30 rounded-lg p-4 border border-border/50">
+      <Tabs value={activeSubTab} onValueChange={onSubTabChange} className="space-y-4">
         <TabsList className="bg-muted/50 p-1">
-          <TabsTrigger value="general" className="gap-1.5 text-xs sm:text-sm data-[state=active]:bg-background">
+          <TabsTrigger value="general" className="gap-1.5 text-xs sm:text-sm data-[state=active]:bg-background data-[state=active]:shadow-sm">
             <Building2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
             <span className="hidden sm:inline">Allgemein</span>
             <span className="sm:hidden">Allg.</span>
           </TabsTrigger>
-          <TabsTrigger value="team" className="gap-1.5 text-xs sm:text-sm data-[state=active]:bg-background">
+          <TabsTrigger value="team" className="gap-1.5 text-xs sm:text-sm data-[state=active]:bg-background data-[state=active]:shadow-sm">
             <Users className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
             <span>Team</span>
           </TabsTrigger>
-          <TabsTrigger value="locations" className="gap-1.5 text-xs sm:text-sm data-[state=active]:bg-background">
+          <TabsTrigger value="locations" className="gap-1.5 text-xs sm:text-sm data-[state=active]:bg-background data-[state=active]:shadow-sm">
             <Store className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
             <span className="hidden sm:inline">Standorte</span>
             <span className="sm:hidden">Orte</span>
           </TabsTrigger>
-          <TabsTrigger value="addresses" className="gap-1.5 text-xs sm:text-sm data-[state=active]:bg-background">
+          <TabsTrigger value="addresses" className="gap-1.5 text-xs sm:text-sm data-[state=active]:bg-background data-[state=active]:shadow-sm">
             <MapPin className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
             <span className="hidden sm:inline">Adressen</span>
             <span className="sm:hidden">Adr.</span>
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="general" className="mt-4">
+        <TabsContent value="general" className="mt-4 animate-in fade-in-50 slide-in-from-left-2 duration-200">
           <OrganizationGeneralContent />
         </TabsContent>
 
-        <TabsContent value="team" className="mt-4">
+        <TabsContent value="team" className="mt-4 animate-in fade-in-50 slide-in-from-bottom-2 duration-200">
           <TeamTab />
         </TabsContent>
 
-        <TabsContent value="locations" className="mt-4">
+        <TabsContent value="locations" className="mt-4 animate-in fade-in-50 slide-in-from-bottom-2 duration-200">
           <LocationsTab />
         </TabsContent>
 
-        <TabsContent value="addresses" className="mt-4">
+        <TabsContent value="addresses" className="mt-4 animate-in fade-in-50 slide-in-from-right-2 duration-200">
           <AddressesTab />
         </TabsContent>
       </Tabs>
@@ -455,7 +468,6 @@ const OrganizationGeneralContent = () => {
   const [testEmail, setTestEmail] = useState('');
   const [testEmailError, setTestEmailError] = useState('');
 
-  // Initialize test mode state when organization loads
   useState(() => {
     if (organization) {
       setTestModeEnabled(organization.test_mode_enabled || false);
@@ -927,15 +939,15 @@ const AddressCard = ({ address, onEdit }: { address: DeliveryAddress; onEdit: ()
             size="sm"
             onClick={() => updateAddress.mutate({ id: address.id, is_default: true })}
           >
-            Set Default
+            <Star className="h-4 w-4" />
           </Button>
         )}
-        <Button variant="ghost" size="icon" onClick={onEdit}>
+        <Button variant="ghost" size="sm" onClick={onEdit}>
           <Pencil className="h-4 w-4" />
         </Button>
         <Button
           variant="ghost"
-          size="icon"
+          size="sm"
           onClick={() => deleteAddress.mutate(address.id)}
           disabled={deleteAddress.isPending}
         >
@@ -946,30 +958,37 @@ const AddressCard = ({ address, onEdit }: { address: DeliveryAddress; onEdit: ()
   );
 };
 
-const AddressForm = ({ address, locationId, onSuccess }: { address: DeliveryAddress | null; locationId: string | null; onSuccess: () => void }) => {
+const AddressForm = ({
+  address,
+  locationId,
+  onSuccess,
+}: {
+  address: DeliveryAddress | null;
+  locationId: string | null;
+  onSuccess: () => void;
+}) => {
   const createAddress = useCreateDeliveryAddress();
   const updateAddress = useUpdateDeliveryAddress();
   const [formData, setFormData] = useState({
     label: address?.label || '',
     address_line1: address?.address_line1 || '',
     address_line2: address?.address_line2 || '',
-    city: address?.city || '',
     postal_code: address?.postal_code || '',
+    city: address?.city || '',
     country: address?.country || 'Germany',
     is_default: address?.is_default || false,
-    location_id: address?.location_id || locationId,
   });
+
+  const isPending = createAddress.isPending || updateAddress.isPending;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (address) {
       updateAddress.mutate({ id: address.id, ...formData }, { onSuccess });
     } else {
-      createAddress.mutate(formData, { onSuccess });
+      createAddress.mutate({ ...formData, location_id: locationId }, { onSuccess });
     }
   };
-
-  const isPending = createAddress.isPending || updateAddress.isPending;
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
@@ -979,7 +998,7 @@ const AddressForm = ({ address, locationId, onSuccess }: { address: DeliveryAddr
           id="label"
           value={formData.label}
           onChange={(e) => setFormData({ ...formData, label: e.target.value })}
-          placeholder="e.g., Main Kitchen"
+          placeholder="e.g., Main Kitchen, Bar"
           required
         />
       </div>
@@ -989,7 +1008,7 @@ const AddressForm = ({ address, locationId, onSuccess }: { address: DeliveryAddr
           id="address_line1"
           value={formData.address_line1}
           onChange={(e) => setFormData({ ...formData, address_line1: e.target.value })}
-          placeholder="Street and number"
+          placeholder="Street address"
           required
         />
       </div>
@@ -1056,7 +1075,6 @@ const NotificationsTab = () => {
     email_supplier_updates: true,
   });
 
-  // Update local state when data loads
   useState(() => {
     if (preferences) {
       setPrefs({
@@ -1156,7 +1174,6 @@ const EmailTemplateTab = () => {
     show_powered_by: true,
   });
 
-  // Initialize form with template data or defaults
   useState(() => {
     if (template) {
       setFormData({
@@ -1256,7 +1273,6 @@ const EmailTemplateTab = () => {
 
   return (
     <div className="space-y-6">
-      {/* Footer Customization Card - First for visibility */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -1302,7 +1318,6 @@ const EmailTemplateTab = () => {
         </CardContent>
       </Card>
 
-      {/* Design Selection Card */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -1337,7 +1352,6 @@ const EmailTemplateTab = () => {
         </CardContent>
       </Card>
 
-      {/* Text Content Card */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -1443,62 +1457,55 @@ const UnitsTab = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isAddingAll, setIsAddingAll] = useState(false);
 
-  // Get unique units from articles that are not in the database
   const dbUnitNames = new Set(units.map(u => u.name.toLowerCase()));
   const articleUnits = [...new Set(articles.map(a => a.unit).filter(Boolean))]
     .filter(unit => !dbUnitNames.has(unit.toLowerCase()))
-    .sort((a, b) => a.localeCompare(b));
+    .sort((a, b) => a.localeCompare(b, 'de'));
 
-  // Filter units based on search
-  const filteredDbUnits = units.filter(u => 
-    u.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-  const filteredArticleUnits = articleUnits.filter(u => 
-    u.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredDbUnits = units
+    .filter(u => u.name.toLowerCase().includes(searchTerm.toLowerCase()))
+    .sort((a, b) => a.name.localeCompare(b.name, 'de'));
+
+  const filteredArticleUnits = articleUnits
+    .filter(u => u.toLowerCase().includes(searchTerm.toLowerCase()));
 
   const handleAddAllUnits = async () => {
     if (articleUnits.length === 0) return;
     
     setIsAddingAll(true);
     try {
-      // Get user's organization_id
       const { data: profile } = await supabase
         .from('profiles')
         .select('organization_id')
         .eq('id', user?.id)
         .single();
 
-      if (!profile?.organization_id) {
-        toast.error('Keine Organisation gefunden');
-        return;
-      }
+      if (!profile?.organization_id) throw new Error('No organization found');
 
-      // Insert all units at once
-      const unitsToInsert = articleUnits.map(name => ({
+      const unitsToAdd = articleUnits.map(name => ({
         name,
         organization_id: profile.organization_id,
       }));
 
       const { error } = await supabase
         .from('units')
-        .insert(unitsToInsert);
+        .insert(unitsToAdd);
 
       if (error) throw error;
 
       queryClient.invalidateQueries({ queryKey: ['units'] });
       toast.success(`${articleUnits.length} Einheiten hinzugefügt`);
-    } catch (error: any) {
-      toast.error('Fehler beim Hinzufügen: ' + error.message);
+    } catch (error) {
+      toast.error('Fehler beim Hinzufügen der Einheiten');
     } finally {
       setIsAddingAll(false);
     }
   };
 
-  const handleAddUnit = (unitName?: string) => {
-    const name = unitName || newUnitName;
-    if (name.trim()) {
-      createUnit.mutate(name.trim(), {
+  const handleAddUnit = (name?: string) => {
+    const unitName = name || newUnitName;
+    if (unitName.trim()) {
+      createUnit.mutate(unitName.trim(), {
         onSuccess: () => setNewUnitName(''),
       });
     }
@@ -1569,7 +1576,6 @@ const UnitsTab = () => {
           />
         </div>
 
-        {/* Database Units */}
         <div className="space-y-2">
           <h3 className="text-sm font-medium text-muted-foreground">Gespeicherte Einheiten ({filteredDbUnits.length})</h3>
           {filteredDbUnits.length === 0 ? (
@@ -1614,7 +1620,6 @@ const UnitsTab = () => {
           )}
         </div>
 
-        {/* Units from Articles (not yet in database) */}
         {filteredArticleUnits.length > 0 && (
           <div className="space-y-2">
             <div className="flex items-center justify-between">
@@ -1851,7 +1856,6 @@ const CategoriesTab = () => {
   const [mergeTargetId, setMergeTargetId] = useState<string>('');
   const [isMerging, setIsMerging] = useState(false);
 
-  // Get categories from articles that are not in the database
   const articleCategories = [...new Set(articles?.map((a) => a.category).filter(Boolean) || [])] as string[];
   const dbCategoryNames = categories.map(c => c.name);
   const missingCategories = articleCategories.filter(c => !dbCategoryNames.includes(c));
@@ -1906,7 +1910,6 @@ const CategoriesTab = () => {
 
     setIsMerging(true);
     try {
-      // Update all articles from source category to target category
       const { error: updateError } = await supabase
         .from('articles')
         .update({ category: targetCategory.name })
@@ -1914,7 +1917,6 @@ const CategoriesTab = () => {
 
       if (updateError) throw updateError;
 
-      // Delete the source category
       const { error: deleteError } = await supabase
         .from('categories')
         .delete()
@@ -1922,7 +1924,6 @@ const CategoriesTab = () => {
 
       if (deleteError) throw deleteError;
 
-      // Invalidate queries to refresh data
       queryClient.invalidateQueries({ queryKey: ['categories'] });
       queryClient.invalidateQueries({ queryKey: ['articles'] });
 
@@ -1936,12 +1937,10 @@ const CategoriesTab = () => {
     }
   };
 
-  // Sort categories alphabetically
   const sortedCategories = [...categories].sort((a, b) => 
     a.name.localeCompare(b.name, 'de')
   );
 
-  // Available merge targets (all categories except the one being merged)
   const mergeTargets = sortedCategories.filter(c => c.id !== mergingCategory?.id);
 
   if (isLoading) {
@@ -1960,7 +1959,6 @@ const CategoriesTab = () => {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-        {/* Add new category */}
         <div className="flex gap-2">
           <Input
             placeholder="Neue Kategorie..."
@@ -1974,34 +1972,34 @@ const CategoriesTab = () => {
           </Button>
         </div>
 
-        {/* Missing categories from articles */}
         {missingCategories.length > 0 && (
           <div className="p-4 border rounded-lg bg-muted/50 space-y-3">
             <div className="flex items-center justify-between">
-              <p className="text-sm text-muted-foreground">
-                {missingCategories.length} Kategorie(n) aus Artikeln noch nicht in der Datenbank:
-              </p>
+              <div>
+                <h4 className="font-medium text-sm">Kategorien aus Artikeln</h4>
+                <p className="text-xs text-muted-foreground">Diese Kategorien werden verwendet, sind aber noch nicht gespeichert.</p>
+              </div>
               <Button size="sm" variant="outline" onClick={handleAddAllMissingCategories}>
+                <Plus className="h-4 w-4 mr-2" />
                 Alle hinzufügen
               </Button>
             </div>
             <div className="flex flex-wrap gap-2">
-              {missingCategories.sort((a, b) => a.localeCompare(b, 'de')).map((name) => (
+              {missingCategories.map((cat) => (
                 <Badge
-                  key={name}
-                  variant="secondary"
-                  className="cursor-pointer hover:bg-primary hover:text-primary-foreground"
-                  onClick={() => handleAddMissingCategory(name)}
+                  key={cat}
+                  variant="outline"
+                  className="cursor-pointer hover:bg-primary hover:text-primary-foreground transition-colors"
+                  onClick={() => handleAddMissingCategory(cat)}
                 >
                   <Plus className="h-3 w-3 mr-1" />
-                  {name}
+                  {cat}
                 </Badge>
               ))}
             </div>
           </div>
         )}
 
-        {/* Categories list */}
         {sortedCategories.length === 0 ? (
           <p className="text-muted-foreground text-center py-8">
             Noch keine Kategorien vorhanden.
@@ -2072,7 +2070,6 @@ const CategoriesTab = () => {
         )}
       </CardContent>
 
-      {/* Delete confirmation dialog */}
       <AlertDialog open={!!deletingCategory} onOpenChange={(open) => !open && setDeletingCategory(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -2094,7 +2091,6 @@ const CategoriesTab = () => {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Merge confirmation dialog */}
       <AlertDialog open={!!mergingCategory} onOpenChange={(open) => !open && setMergingCategory(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -2147,7 +2143,6 @@ const SupplierPortalTab = () => {
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [initialized, setInitialized] = useState(false);
 
-  // Initialize form with loaded settings
   if (settings && !initialized) {
     setPortalTitle(settings.portal_title);
     setWelcomeMessage(settings.welcome_message || '');
@@ -2172,13 +2167,11 @@ const SupplierPortalTab = () => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validate file type
     if (!file.type.startsWith('image/')) {
       toast.error('Bitte wählen Sie eine Bilddatei aus');
       return;
     }
 
-    // Validate file size (max 2MB)
     if (file.size > 2 * 1024 * 1024) {
       toast.error('Die Datei ist zu groß. Maximale Größe: 2MB');
       return;
@@ -2197,11 +2190,9 @@ const SupplierPortalTab = () => {
 
       if (!profile?.organization_id) throw new Error('No organization found');
 
-      // Generate unique filename
       const fileExt = file.name.split('.').pop();
       const fileName = `${profile.organization_id}/logo-${Date.now()}.${fileExt}`;
 
-      // Delete old logo if exists
       if (logoUrl) {
         const oldPath = logoUrl.split('/portal-logos/')[1];
         if (oldPath) {
@@ -2209,19 +2200,16 @@ const SupplierPortalTab = () => {
         }
       }
 
-      // Upload new logo
       const { error: uploadError } = await supabase.storage
         .from('portal-logos')
         .upload(fileName, file);
 
       if (uploadError) throw uploadError;
 
-      // Get public URL
       const { data: { publicUrl } } = supabase.storage
         .from('portal-logos')
         .getPublicUrl(fileName);
 
-      // Save to settings
       await upsertSettings.mutateAsync({ logo_url: publicUrl });
       setLogoUrl(publicUrl);
       toast.success('Logo erfolgreich hochgeladen');
@@ -2230,7 +2218,6 @@ const SupplierPortalTab = () => {
       toast.error('Fehler beim Hochladen: ' + error.message);
     } finally {
       setUploadingLogo(false);
-      // Reset input
       e.target.value = '';
     }
   };
@@ -2239,13 +2226,11 @@ const SupplierPortalTab = () => {
     if (!logoUrl) return;
 
     try {
-      // Delete from storage
       const path = logoUrl.split('/portal-logos/')[1];
       if (path) {
         await supabase.storage.from('portal-logos').remove([path]);
       }
 
-      // Update settings
       await upsertSettings.mutateAsync({ logo_url: null });
       setLogoUrl(null);
       toast.success('Logo entfernt');
@@ -2281,7 +2266,6 @@ const SupplierPortalTab = () => {
 
   return (
     <div className="space-y-6">
-      {/* Live Preview */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -2305,7 +2289,6 @@ const SupplierPortalTab = () => {
         </CardContent>
       </Card>
 
-      {/* Settings Form */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -2317,7 +2300,6 @@ const SupplierPortalTab = () => {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          {/* Logo Upload Section */}
           <div className="space-y-3">
             <Label className="flex items-center gap-2">
               <ImageIcon className="h-4 w-4" />
@@ -2379,7 +2361,6 @@ const SupplierPortalTab = () => {
 
           <div className="border-t pt-4 mt-4" />
 
-          {/* Markdown hint */}
           <div className="p-3 bg-muted/50 rounded-lg text-xs text-muted-foreground space-y-1">
             <p className="font-medium">Markdown-Formatierung unterstützt:</p>
             <p>**fett** • *kursiv* • [Link](https://example.com) • - Listen</p>
