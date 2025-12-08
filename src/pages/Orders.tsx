@@ -154,7 +154,7 @@ const Orders = () => {
     if (!filteredOrders.length) return new Map<string, Order[]>();
     
     const grouped = filteredOrders.reduce((acc, order) => {
-      const supplierName = order.suppliers?.name || 'Unbekannt';
+      const supplierName = order.suppliers?.name || t('common.unknown');
       if (!acc.has(supplierName)) {
         acc.set(supplierName, []);
       }
@@ -186,7 +186,7 @@ const Orders = () => {
       // Find the order and its supplier
       const targetOrder = orders.find(o => o.id === highlightedOrderId);
       if (targetOrder) {
-        const supplierName = targetOrder.suppliers?.name || 'Unbekannt';
+        const supplierName = targetOrder.suppliers?.name || t('common.unknown');
         
         // Open the supplier group and the specific order
         setOpenSuppliers(prev => new Set([...prev, supplierName]));

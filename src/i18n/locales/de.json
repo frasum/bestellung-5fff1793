@@ -94,7 +94,8 @@
     "inactive": "Inaktiv",
     "you": "Sie",
     "keyboardShortcuts": "Tastaturkürzel",
-    "help": "Hilfe"
+    "help": "Hilfe",
+    "unknown": "Unbekannt"
   },
 "nav": {
     "dashboard": "Dashboard",
@@ -152,12 +153,16 @@
   "dashboard": {
     "title": "Dashboard",
     "welcome": "Willkommen zurück",
+    "subtitle": "Hier ist Ihre Beschaffungsübersicht.",
     "totalSpent": "Gesamtausgaben",
+    "ordersCount": "Bestellungen",
     "ordersThisMonth": "Bestellungen diesen Monat",
     "activeSuppliers": "Aktive Lieferanten",
     "articlesInCatalog": "Artikel im Katalog",
     "recentOrders": "Letzte Bestellungen",
     "topSuppliers": "Top Lieferanten",
+    "monthlySpending": "Monatliche Ausgaben",
+    "pending": "Ausstehend",
     "noOrders": "Noch keine Bestellungen",
     "viewAll": "Alle anzeigen"
   },

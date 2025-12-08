@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { ShoppingCart, Users, BarChart3, Package, Loader2, ChevronRight, Box } from 'lucide-react';
@@ -7,13 +8,20 @@ import { useOrders } from '@/hooks/useOrders';
 import { useSuppliers } from '@/hooks/useSuppliers';
 import { useArticles } from '@/hooks/useArticles';
 import { Badge } from '@/components/ui/badge';
+import { format } from 'date-fns';
+import { de, enUS, fr, it, th, vi, Locale } from 'date-fns/locale';
+
+const localeMap: Record<string, Locale> = { de, en: enUS, fr, it, th, vi };
 
 const Dashboard = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
+  const { t, i18n } = useTranslation();
   const { data: orders = [], isLoading: ordersLoading } = useOrders();
   const { data: suppliers = [], isLoading: suppliersLoading } = useSuppliers();
   const { data: articles = [], isLoading: articlesLoading } = useArticles();
+  
+  const locale = localeMap[i18n.language] || de;
 
   useEffect(() => {
     if (!loading && !user) {
@@ -42,7 +50,7 @@ const Dashboard = () => {
   const now = new Date();
   const monthlySpending = Array.from({ length: 6 }, (_, i) => {
     const date = new Date(now.getFullYear(), now.getMonth() - (5 - i), 1);
-    const monthName = date.toLocaleDateString('de-DE', { month: 'short' });
+    const monthName = format(date, 'MMM', { locale });
     const monthOrders = orders.filter(order => {
       const orderDate = new Date(order.created_at);
       return orderDate.getMonth() === date.getMonth() && 
@@ -55,7 +63,7 @@ const Dashboard = () => {
   // Calculate top suppliers by spending
   const supplierSpending = orders.reduce((acc, order) => {
     const supplierId = order.supplier_id;
-    const supplierName = order.suppliers?.name || 'Unknown';
+    const supplierName = order.suppliers?.name || t('common.unknown');
     if (!acc[supplierId]) {
       acc[supplierId] = { name: supplierName, amount: 0 };
     }
@@ -83,22 +91,12 @@ const Dashboard = () => {
     draft: 'bg-muted text-muted-foreground border-muted',
   };
 
-  const statusLabels: Record<string, string> = {
-    pending: 'Ausstehend',
-    confirmed: 'Bestätigt',
-    processing: 'In Bearbeitung',
-    shipped: 'Versendet',
-    delivered: 'Geliefert',
-    cancelled: 'Storniert',
-    draft: 'Entwurf',
-  };
-
   const stats = [
-    { label: 'Bestellungen', value: totalOrders, icon: ShoppingCart, color: 'text-primary' },
-    { label: 'Gesamtausgaben', value: `€${totalSpent.toLocaleString('de-DE')}`, icon: BarChart3, color: 'text-success' },
-    { label: 'Lieferanten', value: totalSuppliers, icon: Users, color: 'text-accent' },
-    { label: 'Artikel', value: totalArticles, icon: Box, color: 'text-blue-500' },
-    { label: 'Ausstehend', value: pendingOrders, icon: Package, color: 'text-warning' },
+    { label: t('dashboard.ordersCount'), value: totalOrders, icon: ShoppingCart, color: 'text-primary' },
+    { label: t('dashboard.totalSpent'), value: `€${totalSpent.toLocaleString(i18n.language)}`, icon: BarChart3, color: 'text-success' },
+    { label: t('suppliers.title'), value: totalSuppliers, icon: Users, color: 'text-accent' },
+    { label: t('articles.title'), value: totalArticles, icon: Box, color: 'text-blue-500' },
+    { label: t('dashboard.pending'), value: pendingOrders, icon: Package, color: 'text-warning' },
   ];
 
   return (
@@ -106,8 +104,8 @@ const Dashboard = () => {
       <div className="space-y-6 lg:space-y-8">
         {/* Header */}
         <div>
-          <h1 className="text-2xl lg:text-3xl font-bold text-foreground">Dashboard</h1>
-          <p className="text-muted-foreground mt-1 text-sm lg:text-base">Willkommen zurück! Hier ist Ihre Beschaffungsübersicht.</p>
+          <h1 className="text-2xl lg:text-3xl font-bold text-foreground">{t('dashboard.title')}</h1>
+          <p className="text-muted-foreground mt-1 text-sm lg:text-base">{t('dashboard.subtitle')}</p>
         </div>
 
         {/* Stats Grid */}
@@ -126,7 +124,7 @@ const Dashboard = () => {
         {/* Charts */}
         <div className="grid lg:grid-cols-2 gap-4 lg:gap-6">
           <div className="bg-card border border-border rounded-xl p-4 lg:p-6">
-            <h2 className="text-base lg:text-lg font-semibold text-foreground mb-3 lg:mb-4">Monatliche Ausgaben</h2>
+            <h2 className="text-base lg:text-lg font-semibold text-foreground mb-3 lg:mb-4">{t('dashboard.monthlySpending')}</h2>
             <div className="h-36 lg:h-48 flex items-end justify-between gap-1.5 lg:gap-2">
               {monthlySpending.map((item, index) => (
                 <div key={index} className="flex-1 flex flex-col items-center gap-1.5 lg:gap-2">
@@ -141,9 +139,9 @@ const Dashboard = () => {
           </div>
 
           <div className="bg-card border border-border rounded-xl p-4 lg:p-6">
-            <h2 className="text-base lg:text-lg font-semibold text-foreground mb-3 lg:mb-4">Top Lieferanten</h2>
+            <h2 className="text-base lg:text-lg font-semibold text-foreground mb-3 lg:mb-4">{t('dashboard.topSuppliers')}</h2>
             {topSuppliers.length === 0 ? (
-              <p className="text-muted-foreground text-sm">Noch keine Bestellungen</p>
+              <p className="text-muted-foreground text-sm">{t('dashboard.noOrders')}</p>
             ) : (
               <div className="space-y-3 lg:space-y-4">
                 {topSuppliers.map((supplier, index) => (
@@ -168,17 +166,17 @@ const Dashboard = () => {
         {/* Recent Orders */}
         <div className="bg-card border border-border rounded-xl p-4 lg:p-6">
           <div className="flex items-center justify-between mb-3 lg:mb-4">
-            <h2 className="text-base lg:text-lg font-semibold text-foreground">Letzte Bestellungen</h2>
+            <h2 className="text-base lg:text-lg font-semibold text-foreground">{t('dashboard.recentOrders')}</h2>
             <Link 
               to="/orders" 
               className="text-sm text-primary hover:text-primary/80 flex items-center gap-1"
             >
-              Alle anzeigen
+              {t('dashboard.viewAll')}
               <ChevronRight className="w-4 h-4" />
             </Link>
           </div>
           {recentOrders.length === 0 ? (
-            <p className="text-muted-foreground text-sm">Noch keine Bestellungen</p>
+            <p className="text-muted-foreground text-sm">{t('dashboard.noOrders')}</p>
           ) : (
             <div className="space-y-2">
               {recentOrders.map((order) => (
@@ -191,26 +189,22 @@ const Dashboard = () => {
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2">
                         <span className="text-sm font-medium text-foreground truncate">
-                          {order.suppliers?.name || 'Unbekannt'}
+                          {order.suppliers?.name || t('common.unknown')}
                         </span>
                         <Badge 
                           variant="outline" 
                           className={`text-[10px] lg:text-xs px-1.5 py-0 ${statusColors[order.status] || ''}`}
                         >
-                          {statusLabels[order.status] || order.status}
+                          {t(`orders.status.${order.status}`)}
                         </Badge>
                       </div>
                       <span className="text-xs text-muted-foreground">
-                        {new Date(order.created_at).toLocaleDateString('de-DE', { 
-                          day: '2-digit', 
-                          month: '2-digit',
-                          year: '2-digit'
-                        })}
+                        {format(new Date(order.created_at), 'dd.MM.yy', { locale })}
                       </span>
                     </div>
                   </div>
                   <span className="text-sm font-medium text-foreground whitespace-nowrap ml-2">
-                    €{Number(order.total_amount).toLocaleString('de-DE')}
+                    €{Number(order.total_amount).toLocaleString(i18n.language)}
                   </span>
                 </Link>
               ))}

@@ -94,7 +94,8 @@
     "inactive": "Inattivo",
     "you": "Tu",
     "keyboardShortcuts": "Scorciatoie da tastiera",
-    "help": "Aiuto"
+    "help": "Aiuto",
+    "unknown": "Sconosciuto"
   },
   "nav": {
     "dashboard": "Dashboard",
@@ -152,12 +153,16 @@
   "dashboard": {
     "title": "Dashboard",
     "welcome": "Bentornato",
+    "subtitle": "Ecco la panoramica dei tuoi acquisti.",
     "totalSpent": "Spesa totale",
+    "ordersCount": "Ordini",
     "ordersThisMonth": "Ordini questo mese",
     "activeSuppliers": "Fornitori attivi",
     "articlesInCatalog": "Articoli nel catalogo",
     "recentOrders": "Ordini recenti",
     "topSuppliers": "Top fornitori",
+    "monthlySpending": "Spese mensili",
+    "pending": "In sospeso",
     "noOrders": "Nessun ordine ancora",
     "viewAll": "Visualizza tutti"
   },

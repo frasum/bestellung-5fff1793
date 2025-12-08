@@ -94,7 +94,8 @@
     "inactive": "Không hoạt động",
     "you": "Bạn",
     "keyboardShortcuts": "Phím tắt",
-    "help": "Trợ giúp"
+    "help": "Trợ giúp",
+    "unknown": "Không xác định"
   },
   "nav": {
     "dashboard": "Bảng điều khiển",
@@ -152,12 +153,16 @@
   "dashboard": {
     "title": "Bảng điều khiển",
     "welcome": "Chào mừng trở lại",
+    "subtitle": "Đây là tổng quan mua hàng của bạn.",
     "totalSpent": "Tổng chi tiêu",
+    "ordersCount": "Đơn hàng",
     "ordersThisMonth": "Đơn hàng tháng này",
     "activeSuppliers": "Nhà cung cấp đang hoạt động",
     "articlesInCatalog": "Sản phẩm trong danh mục",
     "recentOrders": "Đơn hàng gần đây",
     "topSuppliers": "Nhà cung cấp hàng đầu",
+    "monthlySpending": "Chi tiêu hàng tháng",
+    "pending": "Đang chờ",
     "noOrders": "Chưa có đơn hàng",
     "viewAll": "Xem tất cả"
   },
