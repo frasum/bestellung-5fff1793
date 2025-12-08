@@ -76,6 +76,8 @@ import {
   Check,
   X,
   Pencil,
+  Filter,
+  ChevronDown,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -379,26 +381,30 @@ const Inventory = () => {
     );
   }
 
+  // Count active filters for mobile badge
+  const activeFilterCount = (supplierFilter !== 'all' ? 1 : 0) + (categoryFilter !== 'all' ? 1 : 0);
+
   return (
     <DashboardLayout>
-      <div className="space-y-6">
+      <div className="space-y-4 lg:space-y-6">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-bold text-foreground">Inventur</h1>
-            <p className="text-muted-foreground">Bestandsaufnahme & Artikelpreise</p>
+            <h1 className="text-xl lg:text-2xl font-bold text-foreground">Inventur</h1>
+            <p className="text-sm text-muted-foreground">Bestandsaufnahme & Artikelpreise</p>
           </div>
           <div className="flex flex-wrap gap-2">
             {activeTab === 'inventory' && (
               <>
-                <Button variant="outline" onClick={() => setShowHistoryDialog(true)}>
-                  <History className="w-4 h-4 mr-2" />
-                  Historie
+                <Button variant="outline" size="sm" onClick={() => setShowHistoryDialog(true)} className="h-9 lg:h-10">
+                  <History className="w-4 h-4 lg:mr-2" />
+                  <span className="hidden lg:inline">Historie</span>
                 </Button>
                 {!activeSession && (
-                  <Button onClick={() => setShowNewSessionDialog(true)}>
-                    <Plus className="w-4 h-4 mr-2" />
-                    Neue Inventur
+                  <Button size="sm" onClick={() => setShowNewSessionDialog(true)} className="h-9 lg:h-10">
+                    <Plus className="w-4 h-4 lg:mr-2" />
+                    <span className="hidden lg:inline">Neue Inventur</span>
+                    <span className="lg:hidden">Neu</span>
                   </Button>
                 )}
               </>
@@ -408,19 +414,20 @@ const Inventory = () => {
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList>
-            <TabsTrigger value="inventory" className="gap-2">
+          <TabsList className="w-full sm:w-auto">
+            <TabsTrigger value="inventory" className="gap-2 flex-1 sm:flex-initial">
               <ClipboardList className="w-4 h-4" />
-              Inventur
+              <span className="hidden sm:inline">Inventur</span>
             </TabsTrigger>
-            <TabsTrigger value="prices" className="gap-2">
+            <TabsTrigger value="prices" className="gap-2 flex-1 sm:flex-initial">
               <Euro className="w-4 h-4" />
-              Artikelpreise
+              <span className="hidden sm:inline">Artikelpreise</span>
+              <span className="sm:hidden">Preise</span>
             </TabsTrigger>
           </TabsList>
 
-          {/* Filters - shared between tabs */}
-          <div className="flex flex-col sm:flex-row gap-4 mt-4">
+          {/* Filters - Desktop */}
+          <div className="hidden sm:flex flex-col sm:flex-row gap-4 mt-4">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
@@ -458,13 +465,121 @@ const Inventory = () => {
             </Select>
           </div>
 
+          {/* Filters - Mobile */}
+          <div className="flex sm:hidden gap-2 mt-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                placeholder="Suchen..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9 h-11"
+              />
+            </div>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" size="icon" className="h-11 w-11 relative flex-shrink-0">
+                  <Filter className="w-4 h-4" />
+                  {activeFilterCount > 0 && (
+                    <span className="absolute -top-1 -right-1 w-5 h-5 bg-primary text-primary-foreground text-xs rounded-full flex items-center justify-center">
+                      {activeFilterCount}
+                    </span>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-72 p-4" align="end">
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>Lieferant</Label>
+                    <Select value={supplierFilter} onValueChange={setSupplierFilter}>
+                      <SelectTrigger className="h-11">
+                        <SelectValue placeholder="Alle Lieferanten" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Alle Lieferanten</SelectItem>
+                        {suppliers?.map((supplier) => (
+                          <SelectItem key={supplier.id} value={supplier.id}>
+                            {supplier.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Kategorie</Label>
+                    <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                      <SelectTrigger className="h-11">
+                        <SelectValue placeholder="Alle Kategorien" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Alle Kategorien</SelectItem>
+                        {categories.map((category) => (
+                          <SelectItem key={category} value={category!}>
+                            {category}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  {activeFilterCount > 0 && (
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="w-full"
+                      onClick={() => {
+                        setSupplierFilter('all');
+                        setCategoryFilter('all');
+                      }}
+                    >
+                      Filter zurücksetzen
+                    </Button>
+                  )}
+                </div>
+              </PopoverContent>
+            </Popover>
+          </div>
+
           {/* Inventory Tab Content */}
           <TabsContent value="inventory" className="space-y-4 mt-4">
             {/* Active Session Info */}
             {activeSession && (
               <Card>
-                <CardHeader className="pb-3">
-                  <div className="flex items-center justify-between flex-wrap gap-2">
+                <CardHeader className="pb-3 px-4 lg:px-6">
+                  {/* Mobile: Compact session info */}
+                  <div className="flex flex-col gap-3 sm:hidden">
+                    <div className="flex items-center gap-2">
+                      <ClipboardList className="w-5 h-5 text-primary flex-shrink-0" />
+                      <div className="min-w-0 flex-1">
+                        <CardTitle className="text-base truncate">{activeSession.name}</CardTitle>
+                        <p className="text-xs text-muted-foreground">
+                          {format(new Date(activeSession.created_at), 'dd.MM.yy HH:mm', { locale: de })}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-4 gap-2">
+                      <Button variant="outline" size="sm" onClick={handleExportPdf} className="h-10">
+                        <FileText className="w-4 h-4" />
+                      </Button>
+                      <Button variant="outline" size="sm" onClick={handleExportExcel} className="h-10">
+                        <FileSpreadsheet className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleSave}
+                        disabled={!hasChanges || bulkUpsertItems.isPending}
+                        className="h-10"
+                      >
+                        <Save className="w-4 h-4" />
+                      </Button>
+                      <Button size="sm" onClick={handleComplete} className="h-10">
+                        <CheckCircle className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+                  
+                  {/* Desktop: Original layout */}
+                  <div className="hidden sm:flex items-center justify-between flex-wrap gap-2">
                     <div className="flex items-center gap-3">
                       <ClipboardList className="w-5 h-5 text-primary" />
                       <div>
@@ -529,7 +644,70 @@ const Inventory = () => {
             ) : (
               <Card>
                 <CardContent className="p-0">
-                  <div className="overflow-x-auto">
+                  {/* Mobile: Card-based layout */}
+                  <div className="divide-y divide-border sm:hidden">
+                    {filteredArticles.map((article, index) => {
+                      const values = getItemValues(article.id);
+                      return (
+                        <div key={article.id} className="p-4">
+                          <div className="flex justify-between items-start mb-3">
+                            <div className="min-w-0 flex-1">
+                              <p className="font-medium text-foreground text-sm">{article.name}</p>
+                              {article.sku && (
+                                <p className="text-xs text-muted-foreground">{article.sku}</p>
+                              )}
+                              <p className="text-xs text-muted-foreground mt-0.5">
+                                {article.suppliers?.name} • {article.unit}
+                              </p>
+                            </div>
+                            {values.total > 0 && (
+                              <div className="text-right flex-shrink-0 ml-2">
+                                <p className="font-semibold text-sm">{values.total.toFixed(1)}</p>
+                                <p className="text-xs text-muted-foreground">
+                                  €{(values.total * article.price).toFixed(2)}
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                          <div className="grid grid-cols-2 gap-3">
+                            <div>
+                              <Label className="text-xs text-muted-foreground mb-1 block">Lager 1</Label>
+                              <Input
+                                type="number"
+                                inputMode="decimal"
+                                min="0"
+                                step="0.01"
+                                value={values.storage_1 || ''}
+                                onChange={(e) =>
+                                  handleItemChange(article.id, 'storage_1', e.target.value)
+                                }
+                                className="h-11 text-center text-base [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                placeholder="0"
+                              />
+                            </div>
+                            <div>
+                              <Label className="text-xs text-muted-foreground mb-1 block">Lager 2</Label>
+                              <Input
+                                type="number"
+                                inputMode="decimal"
+                                min="0"
+                                step="0.01"
+                                value={values.storage_2 || ''}
+                                onChange={(e) =>
+                                  handleItemChange(article.id, 'storage_2', e.target.value)
+                                }
+                                className="h-11 text-center text-base [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                placeholder="0"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Desktop: Table layout */}
+                  <div className="hidden sm:block overflow-x-auto">
                     <Table>
                       <TableHeader>
                         <TableRow>
@@ -656,146 +834,32 @@ const Inventory = () => {
                     <Skeleton className="h-64 w-full" />
                   </div>
                 ) : (
-                  <div className="overflow-x-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead className="w-12">Nr.</TableHead>
-                          <TableHead>Artikel</TableHead>
-                          <TableHead>Kategorie</TableHead>
-                          <TableHead>Lieferant</TableHead>
-                          <TableHead className="w-24">Einheit</TableHead>
-                          <TableHead className="w-36 text-right">Preis (€)</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {filteredArticles.map((article, index) => (
-                          <TableRow key={article.id}>
-                            <TableCell className="text-muted-foreground">
-                              {index + 1}
-                            </TableCell>
-                            <TableCell>
-                              <div>
-                                <span className="font-medium">{article.name}</span>
-                                {article.sku && (
-                                  <span className="block text-xs text-muted-foreground">
-                                    {article.sku}
-                                  </span>
-                                )}
-                              </div>
-                            </TableCell>
-                            <TableCell className="text-muted-foreground">
-                              {article.category || '-'}
-                            </TableCell>
-                            <TableCell className="text-muted-foreground">
-                              {article.suppliers?.name}
-                            </TableCell>
-                            <TableCell>
-                              <Popover 
-                                open={editingUnitId === article.id}
-                                onOpenChange={(open) => {
-                                  if (open) {
-                                    handleStartUnitEdit(article.id, article.unit);
-                                  } else {
-                                    handleCancelUnitEdit();
-                                    setNewUnitName('');
-                                  }
-                                }}
-                              >
-                                <PopoverTrigger asChild>
-                                  <span
-                                    className="cursor-pointer hover:text-primary hover:underline"
-                                  >
-                                    {article.unit}
-                                  </span>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-56 p-0" align="start">
-                                  <div className="p-2 border-b">
-                                    <div className="flex gap-1">
-                                      <Input
-                                        placeholder="Suchen oder hinzufügen..."
-                                        value={newUnitName}
-                                        onChange={(e) => setNewUnitName(e.target.value)}
-                                        onKeyDown={(e) => {
-                                          if (e.key === 'Enter' && newUnitName.trim()) {
-                                            const exactMatch = commonUnits.find(u => u.toLowerCase() === newUnitName.trim().toLowerCase());
-                                            if (exactMatch) {
-                                              handleSaveUnitEdit(article.id, exactMatch);
-                                              setNewUnitName('');
-                                            } else {
-                                              createUnit.mutate(newUnitName.trim(), {
-                                                onSuccess: () => {
-                                                  handleSaveUnitEdit(article.id, newUnitName.trim());
-                                                  setNewUnitName('');
-                                                }
-                                              });
-                                            }
-                                          }
-                                        }}
-                                        className="h-8 text-sm"
-                                      />
-                                      {newUnitName.trim() && !commonUnits.some(u => u.toLowerCase() === newUnitName.trim().toLowerCase()) && (
-                                        <Button
-                                          size="icon"
-                                          variant="ghost"
-                                          className="h-8 w-8 shrink-0"
-                                          disabled={createUnit.isPending}
-                                          onClick={() => {
-                                            createUnit.mutate(newUnitName.trim(), {
-                                              onSuccess: () => {
-                                                handleSaveUnitEdit(article.id, newUnitName.trim());
-                                                setNewUnitName('');
-                                              }
-                                            });
-                                          }}
-                                        >
-                                          <Plus className="w-4 h-4" />
-                                        </Button>
-                                      )}
-                                    </div>
-                                  </div>
-                                  <div className="max-h-48 overflow-y-auto p-1">
-                                    {commonUnits
-                                      .filter(unit => !newUnitName.trim() || unit.toLowerCase().includes(newUnitName.toLowerCase()))
-                                      .map((unit) => {
-                                        const dbUnit = units?.find(u => u.name === unit);
-                                        return (
-                                          <div
-                                            key={unit}
-                                            className="flex items-center justify-between px-2 py-1.5 rounded hover:bg-muted cursor-pointer group"
-                                            onClick={() => {
-                                              handleSaveUnitEdit(article.id, unit);
-                                              setNewUnitName('');
-                                            }}
-                                          >
-                                            <span className={`text-sm ${article.unit === unit ? 'font-medium text-primary' : ''}`}>
-                                              {unit}
-                                            </span>
-                                            {dbUnit && (
-                                              <Button
-                                                size="icon"
-                                                variant="ghost"
-                                                className="h-6 w-6 opacity-0 group-hover:opacity-100 text-destructive hover:text-destructive"
-                                                onClick={(e) => {
-                                                  e.stopPropagation();
-                                                  deleteUnit.mutate(dbUnit.id);
-                                                }}
-                                              >
-                                                <Trash2 className="w-3 h-3" />
-                                              </Button>
-                                            )}
-                                          </div>
-                                        );
-                                      })}
-                                  </div>
-                                </PopoverContent>
-                              </Popover>
-                            </TableCell>
-                            <TableCell className="text-right">
+                  <>
+                    {/* Mobile: Card-based layout */}
+                    <div className="divide-y divide-border sm:hidden">
+                      {filteredArticles.map((article) => (
+                        <div key={article.id} className="p-4">
+                          <div className="flex justify-between items-start">
+                            <div className="min-w-0 flex-1">
+                              <p className="font-medium text-foreground text-sm">{article.name}</p>
+                              {article.sku && (
+                                <p className="text-xs text-muted-foreground">{article.sku}</p>
+                              )}
+                              <p className="text-xs text-muted-foreground mt-0.5">
+                                {article.suppliers?.name} • {article.unit}
+                              </p>
+                              {article.category && (
+                                <Badge variant="secondary" className="mt-1 text-xs">
+                                  {article.category}
+                                </Badge>
+                              )}
+                            </div>
+                            <div className="flex-shrink-0 ml-3">
                               {editingPriceId === article.id ? (
-                                <div className="flex items-center justify-end gap-1">
+                                <div className="flex items-center gap-1">
                                   <Input
                                     type="number"
+                                    inputMode="decimal"
                                     min="0"
                                     step="0.01"
                                     value={editingPriceValue}
@@ -805,41 +869,227 @@ const Inventory = () => {
                                       if (e.key === 'Enter') handleSavePriceEdit(article.id);
                                       if (e.key === 'Escape') handleCancelPriceEdit();
                                     }}
-                                    className="w-24 text-right [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                    className="w-20 h-10 text-right text-base [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                     autoFocus
                                   />
                                   <Button
                                     variant="ghost"
                                     size="icon"
-                                    className="h-8 w-8"
+                                    className="h-10 w-10"
                                     onClick={() => handleSavePriceEdit(article.id)}
                                     disabled={updateArticle.isPending}
                                   >
-                                    <Check className="w-4 h-4 text-green-600" />
+                                    <Check className="w-5 h-5 text-green-600" />
                                   </Button>
                                   <Button
                                     variant="ghost"
                                     size="icon"
-                                    className="h-8 w-8"
+                                    className="h-10 w-10"
                                     onClick={handleCancelPriceEdit}
                                   >
-                                    <X className="w-4 h-4 text-destructive" />
+                                    <X className="w-5 h-5 text-destructive" />
                                   </Button>
                                 </div>
                               ) : (
                                 <button
                                   onClick={() => handleStartPriceEdit(article.id, article.price)}
-                                  className="font-medium hover:text-primary cursor-pointer transition-colors px-2 py-1 rounded hover:bg-muted"
+                                  className="font-semibold text-lg hover:text-primary cursor-pointer transition-colors px-3 py-2 rounded-lg hover:bg-muted min-w-[80px] text-right"
                                 >
                                   €{article.price.toFixed(2)}
                                 </button>
                               )}
-                            </TableCell>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Desktop: Table layout */}
+                    <div className="hidden sm:block overflow-x-auto">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead className="w-12">Nr.</TableHead>
+                            <TableHead>Artikel</TableHead>
+                            <TableHead>Kategorie</TableHead>
+                            <TableHead>Lieferant</TableHead>
+                            <TableHead className="w-24">Einheit</TableHead>
+                            <TableHead className="w-36 text-right">Preis (€)</TableHead>
                           </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
+                        </TableHeader>
+                        <TableBody>
+                          {filteredArticles.map((article, index) => (
+                            <TableRow key={article.id}>
+                              <TableCell className="text-muted-foreground">
+                                {index + 1}
+                              </TableCell>
+                              <TableCell>
+                                <div>
+                                  <span className="font-medium">{article.name}</span>
+                                  {article.sku && (
+                                    <span className="block text-xs text-muted-foreground">
+                                      {article.sku}
+                                    </span>
+                                  )}
+                                </div>
+                              </TableCell>
+                              <TableCell className="text-muted-foreground">
+                                {article.category || '-'}
+                              </TableCell>
+                              <TableCell className="text-muted-foreground">
+                                {article.suppliers?.name}
+                              </TableCell>
+                              <TableCell>
+                                <Popover 
+                                  open={editingUnitId === article.id}
+                                  onOpenChange={(open) => {
+                                    if (open) {
+                                      handleStartUnitEdit(article.id, article.unit);
+                                    } else {
+                                      handleCancelUnitEdit();
+                                      setNewUnitName('');
+                                    }
+                                  }}
+                                >
+                                  <PopoverTrigger asChild>
+                                    <span
+                                      className="cursor-pointer hover:text-primary hover:underline"
+                                    >
+                                      {article.unit}
+                                    </span>
+                                  </PopoverTrigger>
+                                  <PopoverContent className="w-56 p-0" align="start">
+                                    <div className="p-2 border-b">
+                                      <div className="flex gap-1">
+                                        <Input
+                                          placeholder="Suchen oder hinzufügen..."
+                                          value={newUnitName}
+                                          onChange={(e) => setNewUnitName(e.target.value)}
+                                          onKeyDown={(e) => {
+                                            if (e.key === 'Enter' && newUnitName.trim()) {
+                                              const exactMatch = commonUnits.find(u => u.toLowerCase() === newUnitName.trim().toLowerCase());
+                                              if (exactMatch) {
+                                                handleSaveUnitEdit(article.id, exactMatch);
+                                                setNewUnitName('');
+                                              } else {
+                                                createUnit.mutate(newUnitName.trim(), {
+                                                  onSuccess: () => {
+                                                    handleSaveUnitEdit(article.id, newUnitName.trim());
+                                                    setNewUnitName('');
+                                                  }
+                                                });
+                                              }
+                                            }
+                                          }}
+                                          className="h-8 text-sm"
+                                        />
+                                        {newUnitName.trim() && !commonUnits.some(u => u.toLowerCase() === newUnitName.trim().toLowerCase()) && (
+                                          <Button
+                                            size="icon"
+                                            variant="ghost"
+                                            className="h-8 w-8 shrink-0"
+                                            disabled={createUnit.isPending}
+                                            onClick={() => {
+                                              createUnit.mutate(newUnitName.trim(), {
+                                                onSuccess: () => {
+                                                  handleSaveUnitEdit(article.id, newUnitName.trim());
+                                                  setNewUnitName('');
+                                                }
+                                              });
+                                            }}
+                                          >
+                                            <Plus className="w-4 h-4" />
+                                          </Button>
+                                        )}
+                                      </div>
+                                    </div>
+                                    <div className="max-h-48 overflow-y-auto p-1">
+                                      {commonUnits
+                                        .filter(unit => !newUnitName.trim() || unit.toLowerCase().includes(newUnitName.toLowerCase()))
+                                        .map((unit) => {
+                                          const dbUnit = units?.find(u => u.name === unit);
+                                          return (
+                                            <div
+                                              key={unit}
+                                              className="flex items-center justify-between px-2 py-1.5 rounded hover:bg-muted cursor-pointer group"
+                                              onClick={() => {
+                                                handleSaveUnitEdit(article.id, unit);
+                                                setNewUnitName('');
+                                              }}
+                                            >
+                                              <span className={`text-sm ${article.unit === unit ? 'font-medium text-primary' : ''}`}>
+                                                {unit}
+                                              </span>
+                                              {dbUnit && (
+                                                <Button
+                                                  size="icon"
+                                                  variant="ghost"
+                                                  className="h-6 w-6 opacity-0 group-hover:opacity-100 text-destructive hover:text-destructive"
+                                                  onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    deleteUnit.mutate(dbUnit.id);
+                                                  }}
+                                                >
+                                                  <Trash2 className="w-3 h-3" />
+                                                </Button>
+                                              )}
+                                            </div>
+                                          );
+                                        })}
+                                    </div>
+                                  </PopoverContent>
+                                </Popover>
+                              </TableCell>
+                              <TableCell className="text-right">
+                                {editingPriceId === article.id ? (
+                                  <div className="flex items-center justify-end gap-1">
+                                    <Input
+                                      type="number"
+                                      min="0"
+                                      step="0.01"
+                                      value={editingPriceValue}
+                                      onChange={(e) => setEditingPriceValue(e.target.value)}
+                                      onFocus={(e) => e.target.select()}
+                                      onKeyDown={(e) => {
+                                        if (e.key === 'Enter') handleSavePriceEdit(article.id);
+                                        if (e.key === 'Escape') handleCancelPriceEdit();
+                                      }}
+                                      className="w-24 text-right [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                      autoFocus
+                                    />
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-8 w-8"
+                                      onClick={() => handleSavePriceEdit(article.id)}
+                                      disabled={updateArticle.isPending}
+                                    >
+                                      <Check className="w-4 h-4 text-green-600" />
+                                    </Button>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-8 w-8"
+                                      onClick={handleCancelPriceEdit}
+                                    >
+                                      <X className="w-4 h-4 text-destructive" />
+                                    </Button>
+                                  </div>
+                                ) : (
+                                  <button
+                                    onClick={() => handleStartPriceEdit(article.id, article.price)}
+                                    className="font-medium hover:text-primary cursor-pointer transition-colors px-2 py-1 rounded hover:bg-muted"
+                                  >
+                                    €{article.price.toFixed(2)}
+                                  </button>
+                                )}
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </>
                 )}
                 {filteredArticles.length === 0 && !articlesLoading && (
                   <div className="py-12 text-center text-muted-foreground">
