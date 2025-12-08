@@ -129,6 +129,26 @@
     "signInDescription": "Melden Sie sich bei Ihrem Konto an",
     "signUpDescription": "Erstellen Sie ein neues Konto"
   },
+  "demo": {
+    "startDemo": "Demo starten",
+    "daysRemaining": "noch {{count}} Tage",
+    "badge": "Demo-Modus",
+    "badgeMobile": "Demo",
+    "upgradeNow": "Jetzt upgraden",
+    "convertAccount": "Account aktivieren",
+    "convertTitle": "Demo in echten Account umwandeln",
+    "convertDescription": "Behalten Sie alle Ihre Daten und nutzen Sie Bestellung.pro ohne Einschränkungen.",
+    "convertButton": "Account aktivieren",
+    "expired": "Demo abgelaufen",
+    "expiredDescription": "Ihre Demo-Phase ist abgelaufen. Aktivieren Sie Ihren Account, um fortzufahren.",
+    "features": {
+      "title": "Was ist enthalten?",
+      "suppliers": "4 Beispiel-Lieferanten mit 24 Artikeln",
+      "orders": "Beispiel-Bestellungen zum Erkunden",
+      "allFeatures": "Alle Funktionen freigeschaltet",
+      "testMode": "Testmodus aktiv – E-Mails gehen an Sie"
+    }
+  },
   "dashboard": {
     "title": "Dashboard",
     "welcome": "Willkommen zurück",
