@@ -11,6 +11,7 @@ interface MagicLinkRequest {
   supplierEmail: string;
   supplierName: string;
   organizationName: string;
+  organizationId: string;
 }
 
 serve(async (req: Request): Promise<Response> => {
@@ -33,9 +34,27 @@ serve(async (req: Request): Promise<Response> => {
     
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const { supplierId, supplierEmail, supplierName, organizationName }: MagicLinkRequest = await req.json();
+    const { supplierId, supplierEmail, supplierName, organizationName, organizationId }: MagicLinkRequest = await req.json();
 
     console.log(`Creating magic link for supplier: ${supplierName} (${supplierEmail})`);
+
+    // Check if test mode is enabled for this organization
+    let actualRecipient = supplierEmail;
+    let isTestMode = false;
+    
+    if (organizationId) {
+      const { data: orgData } = await supabase
+        .from("organizations")
+        .select("test_mode_enabled, test_email")
+        .eq("id", organizationId)
+        .single();
+      
+      if (orgData?.test_mode_enabled && orgData?.test_email) {
+        isTestMode = true;
+        actualRecipient = orgData.test_email;
+        console.log(`Test mode enabled - redirecting email from ${supplierEmail} to ${actualRecipient}`);
+      }
+    }
 
     // Create a new magic link token
     const { data: tokenData, error: tokenError } = await supabase
@@ -57,6 +76,14 @@ serve(async (req: Request): Promise<Response> => {
 
     console.log(`Magic link created: ${magicLink}`);
 
+    // Build email subject and test mode notice
+    const subjectPrefix = isTestMode ? "[TEST] " : "";
+    const testModeNotice = isTestMode 
+      ? `<p style="background: #FEF3C7; border: 1px solid #F59E0B; padding: 12px; border-radius: 6px; margin-bottom: 20px;">
+           <strong>🧪 Testmodus:</strong> Diese E-Mail wäre normalerweise an <strong>${supplierEmail}</strong> gesendet worden.
+         </p>`
+      : "";
+
     // Send email with magic link using fetch to Resend API
     const emailResponse = await fetch("https://api.resend.com/emails", {
       method: "POST",
@@ -66,8 +93,8 @@ serve(async (req: Request): Promise<Response> => {
       },
       body: JSON.stringify({
         from: "OrderFox.pro <onboarding@resend.dev>",
-        to: [supplierEmail],
-        subject: `Zugang zum Lieferantenportal - ${organizationName}`,
+        to: [actualRecipient],
+        subject: `${subjectPrefix}Zugang zum Lieferantenportal - ${organizationName}`,
         html: `
           <!DOCTYPE html>
           <html>
@@ -87,6 +114,8 @@ serve(async (req: Request): Promise<Response> => {
                 <h1>🦊 OrderFox.pro</h1>
                 <h2>Lieferantenportal</h2>
               </div>
+              
+              ${testModeNotice}
               
               <p>Guten Tag,</p>
               
@@ -110,8 +139,8 @@ serve(async (req: Request): Promise<Response> => {
           </html>
         `,
         text: `
-Lieferantenportal - ${organizationName}
-
+${isTestMode ? "[TEST] " : ""}Lieferantenportal - ${organizationName}
+${isTestMode ? `\nTestmodus: Diese E-Mail wäre normalerweise an ${supplierEmail} gesendet worden.\n` : ""}
 Guten Tag,
 
 ${organizationName} hat Sie eingeladen, Ihre Artikel im Lieferantenportal zu verwalten.
@@ -136,7 +165,14 @@ Falls Sie diesen Link nicht angefordert haben, können Sie diese E-Mail ignorier
     console.log("Email sent successfully:", emailResult);
 
     return new Response(
-      JSON.stringify({ success: true, message: "Magic link sent successfully" }),
+      JSON.stringify({ 
+        success: true, 
+        message: isTestMode 
+          ? `Magic link sent to test email (${actualRecipient})` 
+          : "Magic link sent successfully",
+        isTestMode,
+        actualRecipient
+      }),
       {
         status: 200,
         headers: { "Content-Type": "application/json", ...corsHeaders },
