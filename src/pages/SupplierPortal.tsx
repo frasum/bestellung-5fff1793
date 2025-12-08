@@ -8,12 +8,13 @@ import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { LogOut, Save, Search, Package, Loader2, Clock, Plus } from 'lucide-react';
+import { LogOut, Save, Search, Package, Loader2, Clock, Plus, FileDown, AlertCircle } from 'lucide-react';
 import logo from '@/assets/logo.png';
 import { SupplierArticleCard } from '@/components/suppliers/SupplierArticleCard';
 import { SupplierUnitSelect } from '@/components/suppliers/SupplierUnitSelect';
 import { SupplierCategorySelect } from '@/components/suppliers/SupplierCategorySelect';
 import { SuggestArticleDialog } from '@/components/suppliers/SuggestArticleDialog';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface Unit {
   id: string;
@@ -41,6 +42,7 @@ interface Article {
   price: number;
   category: string | null;
   is_active: boolean;
+  annual_order_value: number | null;
 }
 
 interface PendingChange {
@@ -63,6 +65,12 @@ interface PortalSettings {
   logo_url: string | null;
 }
 
+interface DraftData {
+  editedArticles: Record<string, Partial<Article>>;
+  priceInputs: Record<string, string>;
+  annualOrderValueInputs: Record<string, string>;
+}
+
 const SupplierPortal = () => {
   const navigate = useNavigate();
   const [session, setSession] = useState<SupplierSession | null>(null);
@@ -70,12 +78,15 @@ const SupplierPortal = () => {
   const [pendingChanges, setPendingChanges] = useState<PendingChange[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState<string | null>(null);
+  const [savingDraft, setSavingDraft] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [editedArticles, setEditedArticles] = useState<Record<string, Partial<Article>>>({});
   const [priceInputs, setPriceInputs] = useState<Record<string, string>>({});
+  const [annualOrderValueInputs, setAnnualOrderValueInputs] = useState<Record<string, string>>({});
   const [units, setUnits] = useState<Unit[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [suggestDialogOpen, setSuggestDialogOpen] = useState(false);
+  const [hasDraft, setHasDraft] = useState(false);
   const [portalSettings, setPortalSettings] = useState<PortalSettings>({
     portal_title: 'Lieferantenportal',
     welcome_message: null,
@@ -96,7 +107,6 @@ const SupplierPortal = () => {
 
       const parsed: SupplierSession = JSON.parse(storedSession);
       
-      // Check if session expired
       if (new Date(parsed.expiresAt) < new Date()) {
         localStorage.removeItem('supplierSession');
         toast.error('Ihre Sitzung ist abgelaufen');
@@ -170,6 +180,24 @@ const SupplierPortal = () => {
         if (error) throw error;
         setArticles(data?.articles || []);
         setPendingChanges(data?.pendingChanges || []);
+
+        // Fetch draft if exists
+        const { data: draftData, error: draftError } = await supabase.functions.invoke('supplier-portal-articles', {
+          body: {
+            action: 'get-draft',
+            supplierId: session.supplierId,
+            organizationId: session.organizationId,
+            sessionToken: session.sessionToken,
+          },
+        });
+
+        if (!draftError && draftData?.draft) {
+          const draft = draftData.draft as DraftData;
+          setEditedArticles(draft.editedArticles || {});
+          setPriceInputs(draft.priceInputs || {});
+          setAnnualOrderValueInputs(draft.annualOrderValueInputs || {});
+          setHasDraft(true);
+        }
       } catch (error: any) {
         console.error('Error fetching data:', error);
         toast.error('Fehler beim Laden der Daten');
@@ -197,6 +225,54 @@ const SupplierPortal = () => {
     }));
   };
 
+  const handleSaveDraft = async () => {
+    if (!session) return;
+    
+    setSavingDraft(true);
+    try {
+      const { error } = await supabase.functions.invoke('supplier-portal-articles', {
+        body: {
+          action: 'save-draft',
+          supplierId: session.supplierId,
+          organizationId: session.organizationId,
+          sessionToken: session.sessionToken,
+          draftData: {
+            editedArticles,
+            priceInputs,
+            annualOrderValueInputs,
+          },
+        },
+      });
+
+      if (error) throw error;
+      setHasDraft(true);
+      toast.success('Entwurf gespeichert');
+    } catch (error: any) {
+      console.error('Error saving draft:', error);
+      toast.error('Fehler beim Speichern des Entwurfs');
+    } finally {
+      setSavingDraft(false);
+    }
+  };
+
+  const handleDeleteDraft = async () => {
+    if (!session) return;
+    
+    try {
+      await supabase.functions.invoke('supplier-portal-articles', {
+        body: {
+          action: 'delete-draft',
+          supplierId: session.supplierId,
+          organizationId: session.organizationId,
+          sessionToken: session.sessionToken,
+        },
+      });
+      setHasDraft(false);
+    } catch (error) {
+      console.error('Error deleting draft:', error);
+    }
+  };
+
   const handleSave = async (articleId: string) => {
     const changes = { ...editedArticles[articleId] };
     if (!session) return;
@@ -207,6 +283,17 @@ const SupplierPortal = () => {
       const parsed = parseFloat(priceValue);
       if (!isNaN(parsed)) {
         changes.price = parsed;
+      }
+    }
+
+    // Parse annual_order_value from input string if it was edited
+    if (annualOrderValueInputs[articleId] !== undefined) {
+      const aoValue = annualOrderValueInputs[articleId].replace(',', '.');
+      const parsed = parseFloat(aoValue);
+      if (!isNaN(parsed)) {
+        changes.annual_order_value = parsed;
+      } else if (annualOrderValueInputs[articleId] === '') {
+        changes.annual_order_value = null;
       }
     }
     
@@ -227,7 +314,6 @@ const SupplierPortal = () => {
 
       if (error) throw error;
 
-      // Add new pending changes to local state
       if (data?.pendingChanges) {
         setPendingChanges(prev => [...prev, ...data.pendingChanges]);
       }
@@ -243,6 +329,16 @@ const SupplierPortal = () => {
         delete newState[articleId];
         return newState;
       });
+      setAnnualOrderValueInputs(prev => {
+        const newState = { ...prev };
+        delete newState[articleId];
+        return newState;
+      });
+
+      // Delete draft after successful submission if it exists
+      if (hasDraft) {
+        await handleDeleteDraft();
+      }
 
       toast.success('Änderungen zur Genehmigung eingereicht');
     } catch (error: any) {
@@ -263,7 +359,14 @@ const SupplierPortal = () => {
   const hasChanges = (articleId: string) => {
     const hasFieldChanges = !!editedArticles[articleId] && Object.keys(editedArticles[articleId]).length > 0;
     const hasPriceChange = priceInputs[articleId] !== undefined;
-    return hasFieldChanges || hasPriceChange;
+    const hasAOVChange = annualOrderValueInputs[articleId] !== undefined;
+    return hasFieldChanges || hasPriceChange || hasAOVChange;
+  };
+
+  const hasAnyChanges = () => {
+    return Object.keys(editedArticles).length > 0 || 
+           Object.keys(priceInputs).length > 0 || 
+           Object.keys(annualOrderValueInputs).length > 0;
   };
 
   const getPendingChangesForArticle = (articleId: string) => {
@@ -300,7 +403,6 @@ const SupplierPortal = () => {
 
     if (data?.unit) {
       setUnits(prev => {
-        // Check if unit already exists
         if (prev.some(u => u.id === data.unit.id)) {
           return prev;
         }
@@ -330,7 +432,6 @@ const SupplierPortal = () => {
 
     if (data?.category) {
       setCategories(prev => {
-        // Check if category already exists
         if (prev.some(c => c.id === data.category.id)) {
           return prev;
         }
@@ -408,6 +509,19 @@ const SupplierPortal = () => {
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8">
+        {/* Draft Alert */}
+        {hasDraft && (
+          <Alert className="mb-6 border-primary/50 bg-primary/10">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription className="flex items-center justify-between">
+              <span>Sie haben einen gespeicherten Entwurf. Ihre letzten Änderungen wurden wiederhergestellt.</span>
+              <Button variant="ghost" size="sm" onClick={handleDeleteDraft}>
+                Entwurf verwerfen
+              </Button>
+            </AlertDescription>
+          </Alert>
+        )}
+
         {/* Welcome Message */}
         {portalSettings.welcome_message && (
           <div className="mb-6 p-4 bg-muted/50 rounded-lg prose prose-sm dark:prose-invert max-w-none">
@@ -468,7 +582,7 @@ const SupplierPortal = () => {
             </div>
           </CardHeader>
           <CardContent>
-            {/* Search and Suggest Button */}
+            {/* Search and Action Buttons */}
             <div className="mb-6 flex flex-col sm:flex-row gap-4 sm:items-center sm:justify-between">
               <div className="relative max-w-sm flex-1">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -479,10 +593,24 @@ const SupplierPortal = () => {
                   className="pl-10"
                 />
               </div>
-              <Button onClick={() => setSuggestDialogOpen(true)} className="shrink-0">
-                <Plus className="h-4 w-4 mr-2" />
-                Neuen Artikel vorschlagen
-              </Button>
+              <div className="flex gap-2 flex-wrap">
+                <Button 
+                  variant="outline" 
+                  onClick={handleSaveDraft} 
+                  disabled={!hasAnyChanges() || savingDraft}
+                >
+                  {savingDraft ? (
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  ) : (
+                    <FileDown className="h-4 w-4 mr-2" />
+                  )}
+                  Entwurf speichern
+                </Button>
+                <Button onClick={() => setSuggestDialogOpen(true)} className="shrink-0">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Neuen Artikel vorschlagen
+                </Button>
+              </div>
             </div>
 
             {loading ? (
@@ -505,6 +633,7 @@ const SupplierPortal = () => {
                         <TableHead className="min-w-[150px]">Beschreibung</TableHead>
                         <TableHead className="w-[80px]">Einheit</TableHead>
                         <TableHead className="w-[100px]">Preis (€)</TableHead>
+                        <TableHead className="w-[120px]">Bestellwert (365T)</TableHead>
                         <TableHead className="w-[120px]">Kategorie</TableHead>
                         <TableHead className="w-[80px]"></TableHead>
                       </TableRow>
@@ -590,6 +719,34 @@ const SupplierPortal = () => {
                               </div>
                             </TableCell>
                             <TableCell>
+                              <div className="space-y-1">
+                                <Input
+                                  type="text"
+                                  inputMode="decimal"
+                                  value={annualOrderValueInputs[article.id] !== undefined 
+                                    ? annualOrderValueInputs[article.id]
+                                    : getPendingChangeForField(article.id, 'annual_order_value')?.new_value?.replace('.', ',') 
+                                      ?? (article.annual_order_value !== null ? String(article.annual_order_value).replace('.', ',') : '')}
+                                  onChange={(e) => {
+                                    setAnnualOrderValueInputs(prev => ({
+                                      ...prev,
+                                      [article.id]: e.target.value
+                                    }));
+                                  }}
+                                  className={`h-8 ${hasPendingChange(article.id, 'annual_order_value') ? 'border-amber-500' : ''}`}
+                                  placeholder="0,00"
+                                />
+                                {getPendingChangeForField(article.id, 'annual_order_value') && (
+                                  <div className="text-xs">
+                                    <span className="text-amber-600">Ausstehend</span>
+                                    <span className="text-muted-foreground ml-1">
+                                      (vorher: {getPendingChangeForField(article.id, 'annual_order_value')?.old_value?.replace('.', ',') || '-'} €)
+                                    </span>
+                                  </div>
+                                )}
+                              </div>
+                            </TableCell>
+                            <TableCell>
                               <SupplierCategorySelect
                                 value={(getDisplayValue(article, 'category') as string) || ''}
                                 categories={categories}
@@ -631,6 +788,7 @@ const SupplierPortal = () => {
                       article={article}
                       editedArticles={editedArticles}
                       priceInputs={priceInputs}
+                      annualOrderValueInputs={annualOrderValueInputs}
                       pendingChanges={pendingChanges}
                       saving={saving}
                       units={units}
@@ -638,6 +796,9 @@ const SupplierPortal = () => {
                       onFieldChange={handleFieldChange}
                       onPriceChange={(articleId, value) => {
                         setPriceInputs(prev => ({ ...prev, [articleId]: value }));
+                      }}
+                      onAnnualOrderValueChange={(articleId, value) => {
+                        setAnnualOrderValueInputs(prev => ({ ...prev, [articleId]: value }));
                       }}
                       onSave={handleSave}
                       onCreateUnit={handleCreateUnit}
