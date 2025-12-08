@@ -655,12 +655,17 @@ const Suppliers = () => {
                 advancedViewEnabled={articleAdvancedViewEnabled}
                 getCartQuantity={getCartQuantity}
                 getItemsBySupplier={getItemsBySupplier}
+                pendingChangesBySupplier={pendingChangesBySupplier || {}}
                 onToggleSupplier={toggleArticleSupplier}
                 onToggleArticle={toggleArticleSelected}
                 onAddToCart={addItem}
                 onUpdateQuantity={updateQuantity}
                 onEdit={(article) => { setEditingArticle(article); setIsArticleDialogOpen(true); }}
                 onDelete={setDeletingArticle}
+                onShowChanges={(supplierId) => {
+                  const supplier = suppliers?.find(s => s.id === supplierId);
+                  if (supplier) setChangesDialogSupplier(supplier);
+                }}
               />
             )}
           </TabsContent>

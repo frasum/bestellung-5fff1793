@@ -1,7 +1,8 @@
 import { Fragment } from 'react';
-import { ChevronRight, Pencil, Trash2, Plus, Minus } from 'lucide-react';
+import { ChevronRight, Pencil, Trash2, Plus, Minus, Bell } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableRow } from '@/components/ui/table';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { PriceHistoryPopover } from '@/components/suppliers/PriceHistoryPopover';
@@ -21,12 +22,14 @@ interface ArticleTableProps {
   advancedViewEnabled: boolean;
   getCartQuantity: (articleId: string) => number;
   getItemsBySupplier: () => Map<string, unknown>;
+  pendingChangesBySupplier?: Record<string, number>;
   onToggleSupplier: (supplierId: string) => void;
   onToggleArticle: (articleId: string) => void;
   onAddToCart: (article: Article, quantity: number) => void;
   onUpdateQuantity: (articleId: string, quantity: number) => void;
   onEdit: (article: Article) => void;
   onDelete: (article: Article) => void;
+  onShowChanges?: (supplierId: string) => void;
 }
 
 export const ArticleTable = ({
@@ -36,12 +39,14 @@ export const ArticleTable = ({
   advancedViewEnabled,
   getCartQuantity,
   getItemsBySupplier,
+  pendingChangesBySupplier = {},
   onToggleSupplier,
   onToggleArticle,
   onAddToCart,
   onUpdateQuantity,
   onEdit,
-  onDelete
+  onDelete,
+  onShowChanges
 }: ArticleTableProps) => {
   return (
     <>
@@ -69,6 +74,19 @@ export const ArticleTable = ({
                   )}>
                     {group.supplier.name}
                   </span>
+                  {pendingChangesBySupplier[group.supplier.id] > 0 && (
+                    <Badge 
+                      variant="destructive" 
+                      className="animate-pulse cursor-pointer gap-1 text-xs"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onShowChanges?.(group.supplier.id);
+                      }}
+                    >
+                      <Bell className="h-3 w-3" />
+                      {pendingChangesBySupplier[group.supplier.id]}
+                    </Badge>
+                  )}
                 </div>
                 <span className="text-sm text-muted-foreground">
                   {group.articles?.length || 0} Artikel
@@ -114,6 +132,19 @@ export const ArticleTable = ({
                           getItemsBySupplier().has(group.supplier.id) ? "text-destructive" : "text-foreground"
                         )}>{group.supplier.name}</span>
                         <span className="text-xs text-muted-foreground">({group.articles?.length || 0} Artikel)</span>
+                        {pendingChangesBySupplier[group.supplier.id] > 0 && (
+                          <Badge 
+                            variant="destructive" 
+                            className="animate-pulse cursor-pointer gap-1 text-xs"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onShowChanges?.(group.supplier.id);
+                            }}
+                          >
+                            <Bell className="h-3 w-3" />
+                            {pendingChangesBySupplier[group.supplier.id]}
+                          </Badge>
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>
