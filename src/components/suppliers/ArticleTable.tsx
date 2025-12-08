@@ -164,7 +164,7 @@ export const ArticleTable = ({
                           <TableCell className="py-2">
                             <div className="flex items-center gap-3">
                               <div className="min-w-0 flex-1">
-                                <p className="font-medium text-foreground truncate">{article.name}</p>
+                                <p className="font-medium text-foreground break-words line-clamp-2">{article.name}</p>
                                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
                                   <span className="sm:hidden truncate">{article.suppliers?.name}</span>
                                   {article.category && <span className="text-primary font-medium">{article.category}</span>}
@@ -182,7 +182,7 @@ export const ArticleTable = ({
                             </div>
                           </TableCell>
                           <TableCell className="hidden md:table-cell text-muted-foreground py-2">
-                            <p className="truncate max-w-[200px]" title={article.description || ''}>{article.description || '-'}</p>
+                            <p className="break-words line-clamp-2 max-w-[200px]" title={article.description || ''}>{article.description || '-'}</p>
                           </TableCell>
                           <TableCell className="hidden sm:table-cell text-muted-foreground py-2">{article.suppliers?.name}</TableCell>
                           <TableCell className="text-right font-medium py-2">
