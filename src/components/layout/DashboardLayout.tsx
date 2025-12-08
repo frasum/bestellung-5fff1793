@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { LayoutDashboard, Users, Package, ShoppingCart, BarChart3, Settings, LogOut, Menu, X, ClipboardList, FlaskConical, Search, Sparkles } from 'lucide-react';
+import { LayoutDashboard, Users, Package, ShoppingCart, BarChart3, Settings, LogOut, Menu, X, FlaskConical, Search, Sparkles } from 'lucide-react';
 import { GlobalSearch } from '@/components/GlobalSearch';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import { LocationSwitcher } from '@/components/LocationSwitcher';
@@ -64,10 +64,6 @@ export const DashboardLayout = ({
     href: '/orders',
     label: t('nav.orders'),
     icon: ShoppingCart
-  }, {
-    href: '/inventory',
-    label: t('nav.inventory'),
-    icon: ClipboardList
   }, {
     href: '/reports',
     label: t('nav.reports'),
