@@ -1,9 +1,14 @@
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
-import { Clock, Check, X, Mic, Camera, FileText, User } from 'lucide-react';
+import { Clock, Check, X, Mic, Camera, FileText, User, ShoppingCart } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { useCart } from '@/contexts/CartContext';
+import { useArticles } from '@/hooks/useArticles';
+import { useToast } from '@/hooks/use-toast';
 import type { EmployeeOrderSubmission } from '@/hooks/useEmployeeSubmissions';
 
 interface StaffSubmissionHistoryProps {
@@ -18,6 +23,10 @@ export default function StaffSubmissionHistory({
   showSubmitter = false 
 }: StaffSubmissionHistoryProps) {
   const { t } = useTranslation();
+  const { addItem } = useCart();
+  const { data: articles = [] } = useArticles();
+  const { toast } = useToast();
+  const navigate = useNavigate();
 
   if (submissions.length === 0) {
     return (
@@ -27,6 +36,55 @@ export default function StaffSubmissionHistory({
       </div>
     );
   }
+
+  const handleAddToCart = (e: React.MouseEvent, submission: EmployeeOrderSubmission) => {
+    e.stopPropagation(); // Prevent card click
+    
+    if (!submission.items || submission.items.length === 0) {
+      toast({
+        title: t('common.error'),
+        description: 'Keine Artikel in dieser Einreichung',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    let addedCount = 0;
+    let skippedCount = 0;
+
+    submission.items.forEach((item) => {
+      if (item.article_id) {
+        // Find the full article from our articles list
+        const fullArticle = articles.find(a => a.id === item.article_id);
+        if (fullArticle) {
+          addItem(fullArticle, item.quantity);
+          addedCount++;
+        } else {
+          skippedCount++;
+        }
+      } else {
+        skippedCount++;
+      }
+    });
+
+    if (addedCount > 0) {
+      toast({
+        title: 'In Warenkorb übernommen',
+        description: `${addedCount} Artikel wurden zum Warenkorb hinzugefügt${skippedCount > 0 ? ` (${skippedCount} ohne Artikelzuordnung übersprungen)` : ''}`,
+        action: (
+          <Button size="sm" variant="outline" onClick={() => navigate('/cart')}>
+            Zum Warenkorb
+          </Button>
+        ),
+      });
+    } else {
+      toast({
+        title: 'Keine Artikel übernommen',
+        description: 'Alle Artikel in dieser Einreichung haben keine Artikelzuordnung',
+        variant: 'destructive',
+      });
+    }
+  };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -67,7 +125,20 @@ export default function StaffSubmissionHistory({
                    submission.submission_type === 'photo' ? t('staffOrders.photo') : 'Manual'}
                 </span>
               </div>
-              {getStatusBadge(submission.status)}
+              <div className="flex items-center gap-2">
+                {getStatusBadge(submission.status)}
+                {submission.status === 'approved' && submission.items && submission.items.length > 0 && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-7 gap-1.5 text-xs"
+                    onClick={(e) => handleAddToCart(e, submission)}
+                  >
+                    <ShoppingCart className="h-3.5 w-3.5" />
+                    <span className="hidden sm:inline">In Warenkorb</span>
+                  </Button>
+                )}
+              </div>
             </div>
 
             {showSubmitter && submission.submitter && (
