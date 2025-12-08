@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useMemo, useState } from 'react';
+import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
@@ -377,14 +377,23 @@ const Suppliers = () => {
     return groups.sort((a, b) => a.supplier.name.localeCompare(b.supplier.name, 'de'));
   }, [sortedArticles]);
 
+  // Track previous search query to detect when search is cleared
+  const prevArticleSearchRef = useRef(articleSearchQuery);
+
   // Auto-expand suppliers when article search query is active
   useEffect(() => {
+    const prevSearch = prevArticleSearchRef.current;
+    prevArticleSearchRef.current = articleSearchQuery;
+    
     if (articleSearchQuery.trim() !== '') {
+      // Search active: open all filtered suppliers
       const supplierIds = groupedBySupplier.map(group => group.supplier.id);
       setOpenArticleSuppliers(new Set(supplierIds));
-    } else {
+    } else if (prevSearch.trim() !== '') {
+      // Search was just cleared: close all
       setOpenArticleSuppliers(new Set());
     }
+    // If search was already empty: do nothing (allow manual toggle)
   }, [articleSearchQuery, groupedBySupplier]);
 
   const articleCategoriesForFilter = (allArticles?.map((a) => a.category).filter(Boolean) || []) as string[];
