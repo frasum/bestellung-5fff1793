@@ -12,7 +12,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useSuppliers, useCreateSupplier, useUpdateSupplier, useDeleteSupplier, Supplier, SupplierInput } from '@/hooks/useSuppliers';
 import { useArticles, useCreateArticle, useUpdateArticle, useDeleteArticle, useBulkUpdateArticles, Article, ArticleInput } from '@/hooks/useArticles';
-import { Plus, Pencil, Trash2, Search, Loader2, Upload, ChevronDown, ChevronRight, Minus, FileText, Printer, Send, Bell, Store, ShoppingCart, LayoutGrid, List, X, Tags, Package } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, Loader2, Upload, ChevronDown, ChevronRight, Minus, FileText, Printer, Send, Bell, Store, ShoppingCart, List, X, Tags, Package } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { SupplierLocationsDialog } from '@/components/suppliers/SupplierLocationsDialog';
 import { useSendSupplierInvitation } from '@/hooks/useSupplierPortal';
@@ -122,7 +122,7 @@ const Suppliers = () => {
   const [isArticleImportOpen, setIsArticleImportOpen] = useState(false);
   const [editingArticle, setEditingArticle] = useState<Article | null>(null);
   const [deletingArticle, setDeletingArticle] = useState<Article | null>(null);
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
+  
   const [selectedArticles, setSelectedArticles] = useState<Set<string>>(new Set());
   const [articleCategoryPopoverOpen, setArticleCategoryPopoverOpen] = useState(false);
   const [articleCustomCategory, setArticleCustomCategory] = useState('');
@@ -1187,14 +1187,6 @@ const Suppliers = () => {
                 <Switch id="advanced-view" checked={articleAdvancedViewEnabled} onCheckedChange={setArticleAdvancedViewEnabled} />
                 <Label htmlFor="advanced-view" className="text-sm cursor-pointer whitespace-nowrap">Mehrfachauswahl</Label>
               </div>
-              <div className="flex border border-border rounded-lg overflow-hidden">
-                <Button variant={viewMode === 'list' ? 'default' : 'ghost'} size="icon" className="rounded-none h-10 w-10" onClick={() => setViewMode('list')}>
-                  <List className="w-4 h-4" />
-                </Button>
-                <Button variant={viewMode === 'grid' ? 'default' : 'ghost'} size="icon" className="rounded-none h-10 w-10" onClick={() => setViewMode('grid')}>
-                  <LayoutGrid className="w-4 h-4" />
-                </Button>
-              </div>
             </div>
 
             {/* Selection Toolbar */}
@@ -1254,7 +1246,7 @@ const Suppliers = () => {
                     : 'Noch keine Artikel. Fügen Sie Ihren ersten Artikel hinzu.'}
                 </p>
               </div>
-            ) : viewMode === 'list' ? (
+            ) : (
               <div className="bg-card border border-border rounded-xl overflow-hidden">
                 <Table>
                   <TableHeader>
@@ -1378,63 +1370,6 @@ const Suppliers = () => {
                     ))}
                   </TableBody>
                 </Table>
-              </div>
-            ) : (
-              /* Grid View */
-              <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                {sortedArticles?.map((article) => {
-                  const cartQty = getCartQuantity(article.id);
-                  return (
-                    <div key={article.id} className="bg-card border border-border rounded-xl p-5 hover:border-primary/50 transition-colors flex flex-col">
-                      <div className="flex items-start justify-between mb-3">
-                        <div className="flex-1 min-w-0">
-                          <h3 className="font-semibold text-foreground truncate">{article.name}</h3>
-                          <p className="text-sm text-muted-foreground truncate">{article.suppliers?.name}</p>
-                        </div>
-                        <div className="flex gap-1 ml-2">
-                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setEditingArticle(article); setIsArticleDialogOpen(true); }}>
-                            <Pencil className="w-3 h-3" />
-                          </Button>
-                          <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => setDeletingArticle(article)}>
-                            <Trash2 className="w-3 h-3" />
-                          </Button>
-                        </div>
-                      </div>
-                      {article.description && (
-                        <p className="text-sm text-muted-foreground mb-3 line-clamp-2">{article.description}</p>
-                      )}
-                      <div className="flex items-center gap-2 mb-4">
-                        {article.category && <Badge variant="secondary" className="text-xs">{article.category}</Badge>}
-                        {article.sku && <span className="text-xs text-muted-foreground">SKU: {article.sku}</span>}
-                      </div>
-                      <div className="mt-auto">
-                        <div className="flex items-center justify-between mb-3">
-                          <div className="flex items-center gap-1">
-                            <span className="text-2xl font-bold text-foreground">€{Number(article.price).toFixed(2)}</span>
-                            <PriceHistoryPopover articleId={article.id} articleName={article.name} />
-                          </div>
-                          <span className="text-sm text-muted-foreground">/{article.unit}</span>
-                        </div>
-                        {cartQty > 0 ? (
-                          <div className="flex items-center justify-between bg-muted rounded-lg p-1">
-                            <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => updateQuantity(article.id, cartQty - 1)}>
-                              <Minus className="w-4 h-4" />
-                            </Button>
-                            <span className="font-medium text-foreground">{cartQty}</span>
-                            <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => addItem(article, 1)}>
-                              <Plus className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        ) : (
-                          <Button className="w-full" onClick={() => addItem(article, 1)}>
-                            <ShoppingCart className="w-4 h-4 mr-2" />
-                            In den Warenkorb
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
               </div>
             )}
           </TabsContent>
