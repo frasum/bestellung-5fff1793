@@ -48,6 +48,7 @@ interface SupplierArticleCardProps {
   saving: string | null;
   units: Unit[];
   categories: Category[];
+  isMissingAnnualValue?: boolean;
   onFieldChange: (articleId: string, field: keyof Article, value: any) => void;
   onPriceChange: (articleId: string, value: string) => void;
   onAnnualOrderValueChange: (articleId: string, value: string) => void;
@@ -65,6 +66,7 @@ export function SupplierArticleCard({
   saving,
   units,
   categories,
+  isMissingAnnualValue = false,
   onFieldChange,
   onPriceChange,
   onAnnualOrderValueChange,
@@ -107,7 +109,8 @@ export function SupplierArticleCard({
     <Card className={cn(
       "p-4",
       hasPending && "ring-2 ring-amber-500/50",
-      hasChanges() && "ring-2 ring-primary/50"
+      hasChanges() && "ring-2 ring-primary/50",
+      isMissingAnnualValue && !hasPending && !hasChanges() && "ring-2 ring-destructive/50"
     )}>
       {/* Header */}
       <div className="flex justify-between items-start gap-2 mb-4">
@@ -210,7 +213,9 @@ export function SupplierArticleCard({
 
         {/* Annual Order Value */}
         <div>
-          <label className="text-xs text-muted-foreground font-medium">Bestellwert (365 Tage) in €</label>
+          <label className="text-xs text-muted-foreground font-medium">
+            Bestellwert (365 Tage) in € <span className="text-destructive">*</span>
+          </label>
           <Input
             type="text"
             inputMode="decimal"
@@ -219,9 +224,16 @@ export function SupplierArticleCard({
               : getPendingChangeForField('annual_order_value')?.new_value?.replace('.', ',') 
                 ?? (article.annual_order_value !== null ? String(article.annual_order_value).replace('.', ',') : '')}
             onChange={(e) => onAnnualOrderValueChange(article.id, e.target.value)}
-            className={cn("h-11 mt-1", hasPendingChange('annual_order_value') && "border-amber-500")}
-            placeholder="0,00"
+            className={cn(
+              "h-11 mt-1",
+              hasPendingChange('annual_order_value') && "border-amber-500",
+              isMissingAnnualValue && "border-destructive ring-1 ring-destructive/30"
+            )}
+            placeholder="Pflichtfeld"
           />
+          {isMissingAnnualValue && !getPendingChangeForField('annual_order_value') && (
+            <p className="text-xs mt-1 text-destructive">Pflichtfeld</p>
+          )}
           {getPendingChangeForField('annual_order_value') && (
             <p className="text-xs mt-1">
               <span className="text-amber-600">Ausstehend</span>
