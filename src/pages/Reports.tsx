@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useOrders } from '@/hooks/useOrders';
+import { useSupplierAnnualRevenue } from '@/hooks/useSupplierAnnualRevenue';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -12,6 +13,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { Progress } from '@/components/ui/progress';
 import {
   BarChart,
   Bar,
@@ -27,14 +37,15 @@ import {
   Line,
 } from 'recharts';
 import { format, subMonths, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns';
-import { Download, TrendingUp, TrendingDown, Euro, ShoppingCart, Users, Loader2 } from 'lucide-react';
+import { Download, TrendingUp, TrendingDown, Euro, ShoppingCart, Users, Loader2, Package } from 'lucide-react';
 
-const COLORS = ['#4f46e5', '#06b6d4', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
+const COLORS = ['hsl(var(--primary))', 'hsl(var(--accent))', 'hsl(142, 76%, 36%)', 'hsl(38, 92%, 50%)', 'hsl(0, 84%, 60%)', 'hsl(262, 83%, 58%)'];
 
 const Reports = () => {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const { data: orders, isLoading } = useOrders();
+  const { data: annualRevenue, isLoading: revenueLoading } = useSupplierAnnualRevenue();
   const [timeRange, setTimeRange] = useState('6');
 
   useEffect(() => {
@@ -394,6 +405,165 @@ const Reports = () => {
                   </div>
                 </CardContent>
               </Card>
+            </div>
+
+            {/* Supplier Annual Revenue Section */}
+            <div className="space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                  <h2 className="text-xl font-semibold text-foreground">Lieferanten-Jahresumsätze</h2>
+                  <p className="text-sm text-muted-foreground">Basierend auf Lieferanten-Angaben im Portal (365 Tage)</p>
+                </div>
+                {annualRevenue && annualRevenue.suppliers.length > 0 && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      const headers = ['Lieferant', 'Artikel gesamt', 'Mit Wert', 'Jahresumsatz', 'Vollständigkeit'];
+                      const rows = annualRevenue.suppliers.map((s) => [
+                        s.name,
+                        s.articleCount,
+                        s.articlesWithValue,
+                        `€${s.totalRevenue.toFixed(2)}`,
+                        `${s.articleCount > 0 ? ((s.articlesWithValue / s.articleCount) * 100).toFixed(0) : 0}%`,
+                      ]);
+                      const csvContent = [headers, ...rows].map((row) => row.join(';')).join('\n');
+                      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                      const link = document.createElement('a');
+                      link.href = URL.createObjectURL(blob);
+                      link.download = `lieferanten-jahresumsaetze-${format(new Date(), 'yyyy-MM-dd')}.csv`;
+                      link.click();
+                    }}
+                  >
+                    <Download className="w-4 h-4 mr-2" />
+                    CSV
+                  </Button>
+                )}
+              </div>
+
+              {revenueLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                </div>
+              ) : !annualRevenue || annualRevenue.suppliers.length === 0 ? (
+                <Card>
+                  <CardContent className="py-8 text-center">
+                    <Package className="w-12 h-12 mx-auto text-muted-foreground mb-3" />
+                    <p className="text-muted-foreground">Noch keine Jahresumsätze erfasst</p>
+                  </CardContent>
+                </Card>
+              ) : (
+                <div className="grid lg:grid-cols-3 gap-6">
+                  {/* KPI Cards */}
+                  <Card>
+                    <CardContent className="p-6">
+                      <Euro className="w-8 h-8 text-primary" />
+                      <p className="text-2xl font-bold text-foreground mt-4">
+                        €{annualRevenue.totalRevenue.toLocaleString('de-DE', { minimumFractionDigits: 2 })}
+                      </p>
+                      <p className="text-sm text-muted-foreground">Gesamt Jahresumsatz</p>
+                      <div className="mt-3 flex items-center gap-2">
+                        <Progress value={annualRevenue.completeness} className="flex-1" />
+                        <span className="text-xs text-muted-foreground">{annualRevenue.completeness.toFixed(0)}%</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {annualRevenue.totalWithValue} von {annualRevenue.totalArticles} Artikeln erfasst
+                      </p>
+                    </CardContent>
+                  </Card>
+
+                  {/* Top Suppliers Chart */}
+                  <Card className="lg:col-span-2">
+                    <CardHeader>
+                      <CardTitle className="text-lg">Top 10 Lieferanten nach Jahresumsatz</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="h-64">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <BarChart
+                            data={annualRevenue.suppliers.slice(0, 10)}
+                            layout="vertical"
+                            margin={{ left: 80 }}
+                          >
+                            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                            <XAxis
+                              type="number"
+                              tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                              fontSize={12}
+                              tickFormatter={(v) => `€${(v / 1000).toFixed(0)}k`}
+                            />
+                            <YAxis
+                              type="category"
+                              dataKey="name"
+                              tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                              fontSize={12}
+                              width={75}
+                            />
+                            <Tooltip
+                              contentStyle={{
+                                backgroundColor: 'hsl(var(--card))',
+                                border: '1px solid hsl(var(--border))',
+                                borderRadius: '8px',
+                              }}
+                              formatter={(value: number) => [`€${value.toLocaleString('de-DE', { minimumFractionDigits: 2 })}`, 'Jahresumsatz']}
+                            />
+                            <Bar dataKey="totalRevenue" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
+
+              {/* Supplier Table */}
+              {annualRevenue && annualRevenue.suppliers.length > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Übersicht aller Lieferanten</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Lieferant</TableHead>
+                          <TableHead className="text-right">Artikel</TableHead>
+                          <TableHead className="text-right">Erfasst</TableHead>
+                          <TableHead className="text-right">Jahresumsatz</TableHead>
+                          <TableHead className="text-right">Vollständigkeit</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {annualRevenue.suppliers.map((supplier) => {
+                          const completeness = supplier.articleCount > 0
+                            ? (supplier.articlesWithValue / supplier.articleCount) * 100
+                            : 0;
+                          return (
+                            <TableRow key={supplier.id}>
+                              <TableCell className="font-medium">{supplier.name}</TableCell>
+                              <TableCell className="text-right">{supplier.articleCount}</TableCell>
+                              <TableCell className="text-right">
+                                {supplier.articlesWithValue}/{supplier.articleCount}
+                              </TableCell>
+                              <TableCell className="text-right font-semibold">
+                                €{supplier.totalRevenue.toLocaleString('de-DE', { minimumFractionDigits: 2 })}
+                              </TableCell>
+                              <TableCell className="text-right">
+                                <div className="flex items-center justify-end gap-2">
+                                  <Progress value={completeness} className="w-16" />
+                                  <span className={`text-sm ${completeness === 100 ? 'text-green-600' : 'text-muted-foreground'}`}>
+                                    {completeness.toFixed(0)}%
+                                  </span>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
+                      </TableBody>
+                    </Table>
+                  </CardContent>
+                </Card>
+              )}
             </div>
           </>
         )}
