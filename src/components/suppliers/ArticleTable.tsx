@@ -66,7 +66,7 @@ export const ArticleTable = ({
           >
             <CollapsibleTrigger className="w-full">
               <div className={cn(
-                "flex items-center justify-between p-4 rounded-lg bg-card border border-border",
+                "flex items-center justify-between p-2 md:p-3 rounded-lg bg-card border border-border",
                 getItemsBySupplier().has(group.supplier.id) && "bg-destructive/10 border-destructive/30"
               )}>
                 <div className="flex items-center gap-2">
