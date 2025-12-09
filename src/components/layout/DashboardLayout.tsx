@@ -213,7 +213,7 @@ export const DashboardLayout = ({
       {sidebarOpen && <div className="fixed inset-0 bg-background/80 z-30 xl:hidden" onClick={() => setSidebarOpen(false)} />}
 
       {/* Main Content */}
-      <main className="xl:ml-64 pt-16 xl:pt-14 pb-20 xl:pb-0 min-h-screen">
+      <main className="xl:ml-64 pt-14 pb-20 xl:pb-0 min-h-screen">
         <div className="px-4 pt-0 pb-4 md:px-5 md:pt-4 md:pb-5 xl:p-8">{children}</div>
       </main>
 
