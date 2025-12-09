@@ -213,8 +213,7 @@
       "pending": "Pending",
       "approved": "Approved",
       "rejected": "Rejected"
-    },
-    
+    }
   },
   "suppliers": {
     "title": "Suppliers",
