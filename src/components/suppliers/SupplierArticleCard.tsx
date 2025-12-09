@@ -17,6 +17,7 @@ interface Article {
   category: string | null;
   is_active: boolean;
   annual_order_value: number | null;
+  packaging_unit: number | null;
 }
 
 interface PendingChange {
@@ -44,6 +45,7 @@ interface SupplierArticleCardProps {
   editedArticles: Record<string, Partial<Article>>;
   priceInputs: Record<string, string>;
   annualOrderValueInputs: Record<string, string>;
+  packagingUnitInputs: Record<string, string>;
   pendingChanges: PendingChange[];
   saving: string | null;
   units: Unit[];
@@ -52,6 +54,7 @@ interface SupplierArticleCardProps {
   onFieldChange: (articleId: string, field: keyof Article, value: any) => void;
   onPriceChange: (articleId: string, value: string) => void;
   onAnnualOrderValueChange: (articleId: string, value: string) => void;
+  onPackagingUnitChange: (articleId: string, value: string) => void;
   onSave: (articleId: string) => void;
   onCreateUnit: (name: string) => Promise<void>;
   onCreateCategory: (name: string) => Promise<void>;
@@ -62,6 +65,7 @@ export function SupplierArticleCard({
   editedArticles,
   priceInputs,
   annualOrderValueInputs,
+  packagingUnitInputs,
   pendingChanges,
   saving,
   units,
@@ -70,6 +74,7 @@ export function SupplierArticleCard({
   onFieldChange,
   onPriceChange,
   onAnnualOrderValueChange,
+  onPackagingUnitChange,
   onSave,
   onCreateUnit,
   onCreateCategory,
@@ -85,7 +90,8 @@ export function SupplierArticleCard({
     const hasFieldChanges = !!editedArticles[article.id] && Object.keys(editedArticles[article.id]).length > 0;
     const hasPriceChange = priceInputs[article.id] !== undefined;
     const hasAOVChange = annualOrderValueInputs[article.id] !== undefined;
-    return hasFieldChanges || hasPriceChange || hasAOVChange;
+    const hasPUChange = packagingUnitInputs[article.id] !== undefined;
+    return hasFieldChanges || hasPriceChange || hasAOVChange || hasPUChange;
   };
 
   const getPendingChangesForArticle = () => {
@@ -189,6 +195,31 @@ export function SupplierArticleCard({
             </div>
           </div>
           <div>
+            <label className="text-xs text-muted-foreground font-medium">VPE</label>
+            <Input
+              type="text"
+              inputMode="numeric"
+              value={packagingUnitInputs[article.id] !== undefined 
+                ? packagingUnitInputs[article.id]
+                : getPendingChangeForField('packaging_unit')?.new_value 
+                  ?? (article.packaging_unit !== null ? String(article.packaging_unit) : '')}
+              onChange={(e) => onPackagingUnitChange(article.id, e.target.value)}
+              className={cn("h-11 mt-1", hasPendingChange('packaging_unit') && "border-amber-500")}
+              placeholder="-"
+            />
+            {getPendingChangeForField('packaging_unit') && (
+              <p className="text-xs mt-1">
+                <span className="text-amber-600">Ausstehend</span>
+                <span className="text-muted-foreground ml-1">
+                  (vorher: {getPendingChangeForField('packaging_unit')?.old_value || '—'})
+                </span>
+              </p>
+            )}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <div>
             <label className="text-xs text-muted-foreground font-medium">Preis (€)</label>
             <Input
               type="text"
@@ -209,39 +240,35 @@ export function SupplierArticleCard({
               </p>
             )}
           </div>
-        </div>
-
-        {/* Annual Order Value */}
-        <div>
-          <label className="text-xs text-muted-foreground font-medium">
-            Bestellwert (365 Tage) in € <span className="text-destructive">*</span>
-          </label>
-          <Input
-            type="text"
-            inputMode="decimal"
-            value={annualOrderValueInputs[article.id] !== undefined 
-              ? annualOrderValueInputs[article.id]
-              : getPendingChangeForField('annual_order_value')?.new_value?.replace('.', ',') 
-                ?? (article.annual_order_value !== null ? String(article.annual_order_value).replace('.', ',') : '')}
-            onChange={(e) => onAnnualOrderValueChange(article.id, e.target.value)}
-            className={cn(
-              "h-11 mt-1",
-              hasPendingChange('annual_order_value') && "border-amber-500",
-              isMissingAnnualValue && "border-destructive ring-1 ring-destructive/30"
+          <div>
+            <label className="text-xs text-muted-foreground font-medium">Bestellwert (365T)</label>
+            <Input
+              type="text"
+              inputMode="decimal"
+              value={annualOrderValueInputs[article.id] !== undefined 
+                ? annualOrderValueInputs[article.id]
+                : getPendingChangeForField('annual_order_value')?.new_value?.replace('.', ',') 
+                  ?? (article.annual_order_value !== null ? String(article.annual_order_value).replace('.', ',') : '')}
+              onChange={(e) => onAnnualOrderValueChange(article.id, e.target.value)}
+              className={cn(
+                "h-11 mt-1",
+                hasPendingChange('annual_order_value') && "border-amber-500",
+                isMissingAnnualValue && "border-destructive ring-1 ring-destructive/30"
+              )}
+              placeholder="Optional"
+            />
+            {isMissingAnnualValue && !getPendingChangeForField('annual_order_value') && (
+              <p className="text-xs mt-1 text-destructive">Pflichtfeld</p>
             )}
-            placeholder="Pflichtfeld"
-          />
-          {isMissingAnnualValue && !getPendingChangeForField('annual_order_value') && (
-            <p className="text-xs mt-1 text-destructive">Pflichtfeld</p>
-          )}
-          {getPendingChangeForField('annual_order_value') && (
-            <p className="text-xs mt-1">
-              <span className="text-amber-600">Ausstehend</span>
-              <span className="text-muted-foreground ml-1">
-                (vorher: {getPendingChangeForField('annual_order_value')?.old_value?.replace('.', ',') || '—'} €)
-              </span>
-            </p>
-          )}
+            {getPendingChangeForField('annual_order_value') && (
+              <p className="text-xs mt-1">
+                <span className="text-amber-600">Ausstehend</span>
+                <span className="text-muted-foreground ml-1">
+                  (vorher: {getPendingChangeForField('annual_order_value')?.old_value?.replace('.', ',') || '—'} €)
+                </span>
+              </p>
+            )}
+          </div>
         </div>
 
         {/* Category */}
