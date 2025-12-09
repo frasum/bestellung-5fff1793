@@ -16,6 +16,7 @@ import StaffOrderPreview from '@/components/staff/StaffOrderPreview';
 import StaffSubmissionHistory from '@/components/staff/StaffSubmissionHistory';
 import EmployeeSubmissionReviewDialog from '@/components/staff/EmployeeSubmissionReviewDialog';
 import PurchaserOnboardingTour, { usePurchaserOnboarding } from '@/components/onboarding/PurchaserOnboardingTour';
+import AdminOnboardingTour, { useAdminOnboarding } from '@/components/onboarding/AdminOnboardingTour';
 
 interface ParsedItem {
   article_id: string | null;
@@ -34,6 +35,7 @@ export default function StaffOrdersTab() {
   const { hasRole: canSeeAllSubmissions } = useHasRole(['admin', 'manager']);
   const createSubmission = useCreateSubmission();
   const { showTour, completeTour, resetTour } = usePurchaserOnboarding();
+  const { showTour: showAdminTour, completeTour: completeAdminTour, resetTour: resetAdminTour } = useAdminOnboarding();
   
   const [isRecording, setIsRecording] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -43,6 +45,7 @@ export default function StaffOrdersTab() {
   const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
   const [selectedSubmission, setSelectedSubmission] = useState<EmployeeOrderSubmission | null>(null);
   const [reviewDialogOpen, setReviewDialogOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState('new');
   
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
@@ -252,10 +255,13 @@ export default function StaffOrdersTab() {
 
   return (
     <div className="max-w-2xl mx-auto">
-      {/* Onboarding Tour */}
+      {/* Onboarding Tours */}
       {showTour && <PurchaserOnboardingTour onComplete={completeTour} />}
+      {showAdminTour && canSeeAllSubmissions && activeTab === 'all' && (
+        <AdminOnboardingTour onComplete={completeAdminTour} />
+      )}
       
-      <Tabs defaultValue="new" className="w-full">
+      <Tabs defaultValue="new" value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className={`w-full mb-6 ${canSeeAllSubmissions ? 'grid-cols-3' : ''}`}>
           <TabsTrigger value="new" className="flex-1 gap-1">
             {t('staffOrders.newOrder')}
@@ -287,7 +293,7 @@ export default function StaffOrdersTab() {
             )}
           </TabsTrigger>
           {canSeeAllSubmissions && (
-            <TabsTrigger value="all" className="flex-1">
+            <TabsTrigger value="all" className="flex-1" data-tour-step="all-orders-tab">
               {t('staffOrders.allOrders')}
               {pendingCount > 0 && (
                 <Badge variant="destructive" className="ml-2">{pendingCount}</Badge>
@@ -412,19 +418,38 @@ export default function StaffOrdersTab() {
           <TabsContent value="all">
             <div className="space-y-4">
               {/* Status Filter */}
-              <div className="flex items-center gap-2">
-                <Filter className="h-4 w-4 text-muted-foreground" />
-                <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as typeof statusFilter)}>
-                  <SelectTrigger className="w-[180px]">
-                    <SelectValue placeholder={t('staffOrders.filterByStatus')} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">{t('staffOrders.allStatuses')}</SelectItem>
-                    <SelectItem value="pending">{t('staffOrders.status.pending')}</SelectItem>
-                    <SelectItem value="approved">{t('staffOrders.status.approved')}</SelectItem>
-                    <SelectItem value="rejected">{t('staffOrders.status.rejected')}</SelectItem>
-                  </SelectContent>
-                </Select>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2" data-tour-step="status-filter">
+                  <Filter className="h-4 w-4 text-muted-foreground" />
+                  <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as typeof statusFilter)}>
+                    <SelectTrigger className="w-[180px]">
+                      <SelectValue placeholder={t('staffOrders.filterByStatus')} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">{t('staffOrders.allStatuses')}</SelectItem>
+                      <SelectItem value="pending">{t('staffOrders.status.pending')}</SelectItem>
+                      <SelectItem value="approved">{t('staffOrders.status.approved')}</SelectItem>
+                      <SelectItem value="rejected">{t('staffOrders.status.rejected')}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={resetAdminTour}
+                      >
+                        <HelpCircle className="h-4 w-4 text-muted-foreground" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>{t('staffOrders.restartTour')}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </div>
 
               <StaffSubmissionHistory 

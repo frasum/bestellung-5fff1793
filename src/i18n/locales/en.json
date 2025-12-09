@@ -229,6 +229,19 @@
       "next": "Next",
       "skip": "Skip",
       "finish": "Let's go!"
+    },
+    "admin": {
+      "welcome": "Welcome to Order Management!",
+      "welcomeDescription": "As Admin/Manager you can review, edit and approve employee orders.",
+      "allOrdersStep": "All Orders",
+      "allOrdersStepDescription": "Here you can see all submitted orders from your employees. The badge shows the number of pending submissions.",
+      "filterStep": "Status Filter",
+      "filterStepDescription": "Filter by status: Pending, Approved or Rejected.",
+      "approvalStep": "Approve or Reject",
+      "approvalStepDescription": "Click on a submission to see details. Approved items are automatically added to the cart. When rejecting, you can provide a reason.",
+      "next": "Next",
+      "skip": "Skip",
+      "finish": "Let's go!"
     }
   },
   "suppliers": {
