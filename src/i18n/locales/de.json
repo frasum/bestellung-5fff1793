@@ -231,6 +231,19 @@
       "next": "Weiter",
       "skip": "Überspringen",
       "finish": "Los geht's!"
+    },
+    "admin": {
+      "welcome": "Willkommen zur Bestellungsübersicht!",
+      "welcomeDescription": "Als Admin/Manager kannst du Mitarbeiter-Bestellungen prüfen, bearbeiten und genehmigen.",
+      "allOrdersStep": "Alle Bestellungen",
+      "allOrdersStepDescription": "Hier siehst du alle eingereichten Bestellungen deiner Mitarbeiter. Das Badge zeigt die Anzahl der offenen Einreichungen.",
+      "filterStep": "Status-Filter",
+      "filterStepDescription": "Filtere nach Status: Ausstehend, Genehmigt oder Abgelehnt.",
+      "approvalStep": "Genehmigen oder Ablehnen",
+      "approvalStepDescription": "Klicke auf eine Einreichung, um Details zu sehen. Genehmigte Artikel werden automatisch dem Warenkorb hinzugefügt. Bei Ablehnung kannst du einen Grund angeben.",
+      "next": "Weiter",
+      "skip": "Überspringen",
+      "finish": "Los geht's!"
     }
   },
   "suppliers": {
