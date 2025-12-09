@@ -214,7 +214,7 @@ export const DashboardLayout = ({
 
       {/* Main Content */}
       <main className="xl:ml-64 pt-16 xl:pt-14 pb-20 xl:pb-0 min-h-screen">
-        <div className="p-4 sm:p-6 lg:p-8">{children}</div>
+        <div className="p-4 md:p-5 xl:p-8">{children}</div>
       </main>
 
       {/* Floating Cart Button (Desktop) */}
