@@ -474,7 +474,7 @@ const Checkout = () => {
 
   return (
     <DashboardLayout>
-      <div className="max-w-4xl mx-auto pb-32 xl:pb-0">
+      <div className="max-w-4xl mx-auto pb-48 xl:pb-0">
         <Button variant="ghost" onClick={() => navigate('/cart')} className="mb-4 xl:mb-6">
           <ArrowLeft className="w-4 h-4 mr-2" />
           {t('common.back')}
@@ -639,7 +639,7 @@ const Checkout = () => {
       </div>
 
       {/* Mobile/Tablet Sticky Footer */}
-      <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border p-4 xl:hidden z-50 safe-area-bottom">
+      <div className="fixed bottom-16 md:bottom-20 left-0 right-0 bg-card border-t border-border p-4 xl:hidden z-40 safe-area-bottom shadow-lg">
         <div className="flex items-center justify-between">
           <div>
             <p className="text-sm text-muted-foreground">
