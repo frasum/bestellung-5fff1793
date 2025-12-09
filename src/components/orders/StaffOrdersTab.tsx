@@ -254,7 +254,7 @@ export default function StaffOrdersTab() {
   };
 
   return (
-    <div className="w-full">
+    <div className="max-w-2xl mx-auto">
       {/* Onboarding Tours */}
       {showTour && <PurchaserOnboardingTour onComplete={completeTour} />}
       {showAdminTour && canSeeAllSubmissions && activeTab === 'all' && (
