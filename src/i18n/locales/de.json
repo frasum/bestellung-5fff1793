@@ -215,8 +215,7 @@
       "pending": "Ausstehend",
       "approved": "Genehmigt",
       "rejected": "Abgelehnt"
-    },
-    
+    }
   },
   "suppliers": {
     "title": "Lieferanten",
