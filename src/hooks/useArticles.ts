@@ -12,6 +12,7 @@ export interface Article {
   unit: string;
   price: number;
   category: string | null;
+  packaging_unit?: number | null;
   is_active: boolean;
   created_at: string;
   updated_at: string;
@@ -30,6 +31,7 @@ export interface ArticleInput {
   unit: string;
   price: number;
   category?: string;
+  packaging_unit?: number;
   is_active?: boolean;
 }
 

@@ -20,6 +20,10 @@ export const articleSchema = z.object({
   unit: z.string().min(1, 'Einheit ist erforderlich'),
   price: z.string().min(1, 'Preis ist erforderlich').refine((val) => !isNaN(Number(val)) && Number(val) > 0, 'Preis muss eine positive Zahl sein'),
   category: z.string().optional(),
+  packaging_unit: z.string().optional().refine(
+    (val) => !val || (!isNaN(Number(val)) && Number(val) > 0),
+    'VPE muss eine positive Zahl sein'
+  ),
 });
 
 export type SupplierFormData = z.infer<typeof supplierSchema>;

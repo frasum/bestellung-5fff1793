@@ -271,7 +271,12 @@ export const ArticleTable = ({
                             <div className="flex items-center justify-end gap-1">
                               <span>
                                 €{Number(article.price).toFixed(2)}
-                                <span className="text-xs text-muted-foreground ml-1">/{article.unit}</span>
+                                <span className="text-xs text-muted-foreground ml-1">
+                                  /{article.unit}
+                                  {article.packaging_unit && article.packaging_unit > 1 && (
+                                    <span className="ml-1 text-primary font-medium">({article.packaging_unit}er)</span>
+                                  )}
+                                </span>
                               </span>
                               <PriceHistoryPopover articleId={article.id} articleName={article.name} />
                             </div>
