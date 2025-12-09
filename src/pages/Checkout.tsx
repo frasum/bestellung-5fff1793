@@ -316,7 +316,7 @@ const Checkout = () => {
             name="deliveryAddressId"
             render={({ field }) => (
               <Select onValueChange={field.onChange} value={field.value}>
-                <SelectTrigger className={isMobile ? "h-12" : ""}>
+                <SelectTrigger className={isMobile ? "h-12 md:h-14" : ""}>
                   <SelectValue placeholder={t('checkout.selectAddress')} />
                 </SelectTrigger>
                 <SelectContent>
@@ -367,7 +367,7 @@ const Checkout = () => {
                   variant="outline"
                   className={cn(
                     "w-full justify-start text-left font-normal",
-                    isMobile && "h-12",
+                    isMobile && "h-12 md:h-14",
                     !field.value && "text-muted-foreground"
                   )}
                 >
@@ -408,7 +408,7 @@ const Checkout = () => {
           name="deliveryTimeWindow"
           render={({ field }) => (
             <Select onValueChange={field.onChange} value={field.value}>
-              <SelectTrigger className={isMobile ? "h-12" : ""}>
+              <SelectTrigger className={isMobile ? "h-12 md:h-14" : ""}>
                 <SelectValue placeholder={t('checkout.selectTimeWindow')} />
               </SelectTrigger>
               <SelectContent>
@@ -435,6 +435,7 @@ const Checkout = () => {
           {...form.register('notes')}
           placeholder={t('checkout.addNotes')}
           rows={3}
+          className="min-h-[100px] md:min-h-[120px]"
         />
       </div>
 
@@ -463,7 +464,7 @@ const Checkout = () => {
       )}
 
       {isMobile && (
-        <Button type="submit" className="w-full h-12" size="lg">
+        <Button type="submit" className="w-full h-12 md:h-14" size="lg">
           <Eye className="w-5 h-5 mr-2" />
           {t('checkout.emailPreview')}
         </Button>
@@ -473,49 +474,50 @@ const Checkout = () => {
 
   return (
     <DashboardLayout>
-      <div className="max-w-4xl mx-auto pb-32 lg:pb-0">
-        <Button variant="ghost" onClick={() => navigate('/cart')} className="mb-4 lg:mb-6">
+      <div className="max-w-4xl mx-auto pb-32 xl:pb-0">
+        <Button variant="ghost" onClick={() => navigate('/cart')} className="mb-4 xl:mb-6">
           <ArrowLeft className="w-4 h-4 mr-2" />
           {t('common.back')}
         </Button>
 
-        <h1 className="text-2xl lg:text-3xl font-bold text-foreground mb-1 lg:mb-2">{t('checkout.title')}</h1>
-        <p className="text-sm lg:text-base text-muted-foreground mb-4 lg:mb-8">
+        <h1 className="text-2xl xl:text-3xl font-bold text-foreground mb-1 xl:mb-2">{t('checkout.title')}</h1>
+        <p className="text-sm xl:text-base text-muted-foreground mb-4 xl:mb-8">
           {t('checkout.reviewOrders')}
         </p>
 
-        <div className="grid lg:grid-cols-3 gap-4 lg:gap-6">
+        <div className="grid xl:grid-cols-3 gap-4 md:gap-5 xl:gap-6">
           {/* Order Summary */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className="xl:col-span-2 space-y-4 md:space-y-5 xl:space-y-6">
             {Object.values(itemsBySupplier).map(({ supplierId, supplierName, items: supplierItems, total }) => (
               <div key={supplierId} className="bg-card border border-border rounded-xl overflow-hidden">
-                {/* Mobile: Compact header */}
-                <div className="bg-muted/50 px-4 lg:px-6 py-3 lg:py-4 border-b border-border flex items-center justify-between min-h-[52px]">
+                {/* Header */}
+                <div className="bg-muted/50 px-4 md:px-5 xl:px-6 py-3 xl:py-4 border-b border-border flex items-center justify-between min-h-[52px]">
                   <div className="flex items-center gap-2">
                     <Send className="w-4 h-4 text-primary flex-shrink-0" />
-                    <h3 className="font-semibold text-foreground text-sm lg:text-base truncate">{supplierName}</h3>
+                    <h3 className="font-semibold text-foreground text-sm xl:text-base truncate">{supplierName}</h3>
                   </div>
-                  <div className="flex items-center gap-2 lg:gap-3 flex-shrink-0">
-                    <span className="text-xs lg:text-sm text-muted-foreground">
+                  <div className="flex items-center gap-2 xl:gap-3 flex-shrink-0">
+                    <span className="text-xs xl:text-sm text-muted-foreground">
                       {t('cart.itemCount', { count: supplierItems.length })}
                     </span>
-                    <span className="font-bold text-foreground text-sm lg:text-base lg:hidden">
+                    <span className="font-bold text-foreground text-sm xl:text-base xl:hidden">
                       €{total.toFixed(2)}
                     </span>
                   </div>
                 </div>
-                <div className="divide-y divide-border">
-                  {supplierItems.map((item) => (
-                    <div key={item.article.id}>
-                      {/* Mobile: Stacked layout */}
-                      <div className="p-4 sm:hidden">
+                
+                {/* Mobile/Tablet Card Layout */}
+                <div className="xl:hidden">
+                  <div className="grid grid-cols-1 md:grid-cols-2 md:gap-4 md:p-4">
+                    {supplierItems.map((item) => (
+                      <div key={item.article.id} className="p-4 md:p-4 md:border md:border-border md:rounded-lg border-b border-border last:border-b-0 md:last:border-b md:border-b">
                         <div className="flex justify-between items-start mb-2">
-                          <p className="font-medium text-foreground text-sm flex-1 pr-2">{item.article.name}</p>
-                          <p className="font-semibold text-foreground text-sm flex-shrink-0">
+                          <p className="font-medium text-foreground text-sm md:text-base flex-1 pr-2">{item.article.name}</p>
+                          <p className="font-semibold text-foreground text-sm md:text-base flex-shrink-0">
                             €{(Number(item.article.price) * item.quantity).toFixed(2)}
                           </p>
                         </div>
-                        <p className="text-xs text-muted-foreground mb-3">
+                        <p className="text-xs md:text-sm text-muted-foreground mb-3">
                           {item.article.sku && <span>SKU: {item.article.sku} • </span>}
                           {item.article.unit} × €{Number(item.article.price).toFixed(2)}
                         </p>
@@ -525,7 +527,7 @@ const Checkout = () => {
                               type="button"
                               variant="outline"
                               size="icon"
-                              className="h-10 w-10"
+                              className="h-10 w-10 md:h-12 md:w-12"
                               onClick={() => updateQuantity(item.article.id, item.quantity - 1)}
                             >
                               <Minus className="h-4 w-4" />
@@ -535,13 +537,13 @@ const Checkout = () => {
                               min="1"
                               value={item.quantity}
                               onChange={(e) => updateQuantity(item.article.id, parseInt(e.target.value) || 1)}
-                              className="w-14 h-10 text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                              className="w-14 md:w-16 h-10 md:h-12 text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                             />
                             <Button
                               type="button"
                               variant="outline"
                               size="icon"
-                              className="h-10 w-10"
+                              className="h-10 w-10 md:h-12 md:w-12"
                               onClick={() => updateQuantity(item.article.id, item.quantity + 1)}
                             >
                               <Plus className="h-4 w-4" />
@@ -551,69 +553,74 @@ const Checkout = () => {
                             type="button"
                             variant="ghost"
                             size="icon"
-                            className="h-10 w-10 text-destructive hover:text-destructive"
+                            className="h-10 w-10 md:h-11 md:w-11 text-destructive hover:text-destructive"
                             onClick={() => removeItem(item.article.id)}
                           >
                             <Trash2 className="h-5 w-5" />
                           </Button>
                         </div>
                       </div>
-                      
-                      {/* Desktop: Original inline layout */}
-                      <div className="p-4 hidden sm:flex items-center justify-between gap-4">
-                        <div className="flex-1 min-w-0">
-                          <p className="font-medium text-foreground truncate">{item.article.name}</p>
-                          <p className="text-sm text-muted-foreground">
-                            {item.article.sku && <span className="mr-2">SKU: {item.article.sku}</span>}
-                            {item.article.unit} × €{Number(item.article.price).toFixed(2)}
-                          </p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <div className="flex items-center gap-1">
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="icon"
-                              className="h-8 w-8"
-                              onClick={() => updateQuantity(item.article.id, item.quantity - 1)}
-                            >
-                              <Minus className="h-3 w-3" />
-                            </Button>
-                            <Input
-                              type="number"
-                              min="1"
-                              value={item.quantity}
-                              onChange={(e) => updateQuantity(item.article.id, parseInt(e.target.value) || 1)}
-                              className="w-16 h-8 text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                            />
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="icon"
-                              className="h-8 w-8"
-                              onClick={() => updateQuantity(item.article.id, item.quantity + 1)}
-                            >
-                              <Plus className="h-3 w-3" />
-                            </Button>
-                          </div>
+                    ))}
+                  </div>
+                </div>
+                
+                {/* Desktop: Original inline layout */}
+                <div className="hidden xl:block divide-y divide-border">
+                  {supplierItems.map((item) => (
+                    <div key={item.article.id} className="p-4 flex items-center justify-between gap-4">
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-foreground truncate">{item.article.name}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {item.article.sku && <span className="mr-2">SKU: {item.article.sku}</span>}
+                          {item.article.unit} × €{Number(item.article.price).toFixed(2)}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1">
                           <Button
                             type="button"
-                            variant="ghost"
+                            variant="outline"
                             size="icon"
-                            className="h-8 w-8 text-destructive hover:text-destructive"
-                            onClick={() => removeItem(item.article.id)}
+                            className="h-8 w-8"
+                            onClick={() => updateQuantity(item.article.id, item.quantity - 1)}
                           >
-                            <Trash2 className="h-4 w-4" />
+                            <Minus className="h-3 w-3" />
                           </Button>
-                          <p className="font-semibold text-foreground w-20 text-right">
-                            €{(Number(item.article.price) * item.quantity).toFixed(2)}
-                          </p>
+                          <Input
+                            type="number"
+                            min="1"
+                            value={item.quantity}
+                            onChange={(e) => updateQuantity(item.article.id, parseInt(e.target.value) || 1)}
+                            className="w-16 h-8 text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                          />
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={() => updateQuantity(item.article.id, item.quantity + 1)}
+                          >
+                            <Plus className="h-3 h-3" />
+                          </Button>
                         </div>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-destructive hover:text-destructive"
+                          onClick={() => removeItem(item.article.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                        <p className="font-semibold text-foreground w-20 text-right">
+                          €{(Number(item.article.price) * item.quantity).toFixed(2)}
+                        </p>
                       </div>
                     </div>
                   ))}
                 </div>
-                <div className="bg-muted/30 px-4 lg:px-6 py-3 hidden lg:flex justify-between">
+                
+                <div className="bg-muted/30 px-4 xl:px-6 py-3 hidden xl:flex justify-between">
                   <span className="font-medium text-foreground">{t('cart.subtotal')}</span>
                   <span className="font-bold text-foreground">€{total.toFixed(2)}</span>
                 </div>
@@ -622,7 +629,7 @@ const Checkout = () => {
           </div>
 
           {/* Checkout Form - Desktop only */}
-          <div className="hidden lg:block lg:col-span-1">
+          <div className="hidden xl:block xl:col-span-1">
             <div className="bg-card border border-border rounded-xl p-6 sticky top-6">
               <h2 className="text-lg font-semibold text-foreground mb-4">{t('checkout.selectAddress')}</h2>
               {renderFormContent(false)}
@@ -631,8 +638,8 @@ const Checkout = () => {
         </div>
       </div>
 
-      {/* Mobile Sticky Footer */}
-      <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border p-4 lg:hidden z-50 safe-area-bottom">
+      {/* Mobile/Tablet Sticky Footer */}
+      <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border p-4 xl:hidden z-50 safe-area-bottom">
         <div className="flex items-center justify-between">
           <div>
             <p className="text-sm text-muted-foreground">
@@ -640,7 +647,7 @@ const Checkout = () => {
             </p>
             <p className="text-xl font-bold text-foreground">€{getTotal().toFixed(2)}</p>
           </div>
-          <Button onClick={() => setShowMobileForm(true)} className="h-12 px-6">
+          <Button onClick={() => setShowMobileForm(true)} className="h-12 md:h-14 px-6 md:px-8">
             {t('checkout.selectAddress')}
             <ArrowLeft className="w-4 h-4 ml-2 rotate-180" />
           </Button>
