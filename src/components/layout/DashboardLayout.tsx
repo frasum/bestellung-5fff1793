@@ -78,7 +78,7 @@ export const DashboardLayout = ({
       <GlobalSearch />
       
       {/* Mobile Header */}
-      <header className="xl:hidden fixed top-0 left-0 right-0 z-50 bg-card border-b border-border h-16 flex items-center justify-between px-4">
+      <header className="xl:hidden fixed top-0 left-0 right-0 z-50 bg-card border-b border-border h-14 flex items-center justify-between px-4">
         <Link to="/reports" className="flex items-center gap-2">
           <img src={logoImage} alt="Bestellung.pro" className="w-8 h-8 rounded-lg object-cover" />
           <span className="font-bold text-lg text-foreground">Bestellung.pro</span>
