@@ -342,11 +342,11 @@ const Orders = () => {
 
   return (
     <DashboardLayout>
-      <div className="space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="space-y-4 md:space-y-5 xl:space-y-6">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 md:gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">{t('orders.title')}</h1>
-            <p className="text-muted-foreground mt-1">{t('orders.subtitle')}</p>
+            <h1 className="text-2xl md:text-3xl font-bold text-foreground">{t('orders.title')}</h1>
+            <p className="text-sm md:text-base text-muted-foreground mt-0.5 md:mt-1">{t('orders.subtitle')}</p>
           </div>
           <Button onClick={() => navigate('/suppliers?tab=articles')}>
             <Package className="w-4 h-4 mr-2" />

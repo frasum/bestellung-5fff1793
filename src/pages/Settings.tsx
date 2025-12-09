@@ -37,10 +37,10 @@ const Settings = () => {
 
   return (
     <DashboardLayout>
-      <div className="space-y-6">
+      <div className="space-y-4 md:space-y-5 xl:space-y-6">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">{t('settings.title')}</h1>
-          <p className="text-muted-foreground">{t('settings.description')}</p>
+          <h1 className="text-2xl md:text-3xl font-bold text-foreground">{t('settings.title')}</h1>
+          <p className="text-sm md:text-base text-muted-foreground mt-0.5 md:mt-1">{t('settings.description')}</p>
         </div>
 
         <SettingsSearch onNavigate={handleNavigate} />
