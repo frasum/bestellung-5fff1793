@@ -68,15 +68,15 @@ export const ArticleCard = ({
       
       <div className="flex items-center justify-between mt-4 gap-2">
         {/* Quantity Controls */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 md:gap-3">
           <Button
             size="icon"
             variant="outline"
-            className="h-10 w-10"
+            className="h-11 w-11 md:h-12 md:w-12"
             onClick={() => onUpdateQuantity(article.id, cartQty - 1)}
             disabled={cartQty === 0}
           >
-            <Minus className="w-4 h-4" />
+            <Minus className="w-4 h-4 md:w-5 md:h-5" />
           </Button>
           <input
             type="text"
@@ -95,7 +95,7 @@ export const ArticleCard = ({
               setTimeout(() => target.select(), 0);
             }}
             className={cn(
-              "w-14 h-10 text-center font-medium rounded-md border border-input bg-background text-base",
+              "w-14 h-11 md:w-16 md:h-12 text-center font-medium rounded-md border border-input bg-background text-base md:text-lg",
               "focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1",
               cartQty > 0 ? "text-destructive" : "text-foreground"
             )}
@@ -103,30 +103,30 @@ export const ArticleCard = ({
           <Button
             size="icon"
             variant="outline"
-            className="h-10 w-10"
+            className="h-11 w-11 md:h-12 md:w-12"
             onClick={() => onAddToCart(article, 1)}
           >
-            <Plus className="w-4 h-4" />
+            <Plus className="w-4 h-4 md:w-5 md:h-5" />
           </Button>
         </div>
 
         {/* Actions */}
-        <div className="flex gap-1">
+        <div className="flex gap-1 md:gap-2">
           <Button 
             variant="ghost" 
             size="icon" 
-            className="h-10 w-10" 
+            className="h-10 w-10 md:h-11 md:w-11" 
             onClick={() => onEdit(article)}
           >
-            <Pencil className="w-4 h-4" />
+            <Pencil className="w-4 h-4 md:w-5 md:h-5" />
           </Button>
           <Button 
             variant="ghost" 
             size="icon" 
-            className="h-10 w-10 text-destructive hover:text-destructive" 
+            className="h-10 w-10 md:h-11 md:w-11 text-destructive hover:text-destructive" 
             onClick={() => onDelete(article)}
           >
-            <Trash2 className="w-4 h-4" />
+            <Trash2 className="w-4 h-4 md:w-5 md:h-5" />
           </Button>
         </div>
       </div>

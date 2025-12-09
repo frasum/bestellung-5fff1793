@@ -56,8 +56,8 @@ export const ArticleTable = ({
 }: ArticleTableProps) => {
   return (
     <>
-      {/* Mobile Card View */}
-      <div className="md:hidden space-y-4">
+      {/* Mobile & Tablet Card View */}
+      <div className="xl:hidden space-y-4">
         {groupedBySupplier.map((group) => (
           <Collapsible 
             key={group.supplier.id} 
@@ -71,42 +71,43 @@ export const ArticleTable = ({
               )}>
                 <div className="flex items-center gap-2">
                   <ChevronRight className={cn(
-                    "h-5 w-5 transition-transform text-muted-foreground",
+                    "h-5 w-5 md:h-6 md:w-6 transition-transform text-muted-foreground",
                     openSuppliers.has(group.supplier.id) && "rotate-90"
                   )} />
                   <span className={cn(
-                    "font-semibold",
+                    "font-semibold md:text-lg",
                     getItemsBySupplier().has(group.supplier.id) ? "text-destructive" : "text-foreground"
                   )}>
                     {group.supplier.name}
                   </span>
                   {recentlyActiveSuppliers.has(group.supplier.id) && (
                     <span 
-                      className="w-2 h-2 rounded-full bg-green-500 animate-pulse shrink-0" 
+                      className="w-2 h-2 md:w-2.5 md:h-2.5 rounded-full bg-green-500 animate-pulse shrink-0" 
                       title="Kürzlich aktiv - Änderungen eingereicht in den letzten 4 Monaten"
                     />
                   )}
                   {pendingChangesBySupplier[group.supplier.id] > 0 && (
                     <Badge 
                       variant="destructive" 
-                      className="animate-pulse cursor-pointer gap-1 text-xs"
+                      className="animate-pulse cursor-pointer gap-1 text-xs md:text-sm md:h-6"
                       onClick={(e) => {
                         e.stopPropagation();
                         onShowChanges?.(group.supplier.id);
                       }}
                     >
-                      <Bell className="h-3 w-3" />
+                      <Bell className="h-3 w-3 md:h-4 md:w-4" />
                       {pendingChangesBySupplier[group.supplier.id]}
                     </Badge>
                   )}
                 </div>
-                <span className="text-sm text-muted-foreground">
+                <span className="text-sm md:text-base text-muted-foreground">
                   {group.articles?.length || 0} Artikel
                 </span>
               </div>
             </CollapsibleTrigger>
             <CollapsibleContent>
-              <div className="space-y-3 pt-3">
+              {/* 2-column grid for tablets, 1-column for mobile */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 pt-3">
                 {group.articles?.map((article) => (
                   <ArticleCard
                     key={article.id}
@@ -127,7 +128,7 @@ export const ArticleTable = ({
       </div>
 
       {/* Desktop Table View */}
-      <div className="hidden md:block bg-card border border-border rounded-xl overflow-hidden">
+      <div className="hidden xl:block bg-card border border-border rounded-xl overflow-hidden">
         <Table>
           <TableBody>
           {groupedBySupplier.map((group) => (
