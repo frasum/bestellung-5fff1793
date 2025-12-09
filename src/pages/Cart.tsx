@@ -127,8 +127,8 @@ const Cart = () => {
           </div>
         ) : (
           <>
-            {/* Mobile: Order Summary Sticky at top */}
-            <div className="lg:hidden sticky top-0 z-10 -mx-4 px-4 py-3 bg-background/95 backdrop-blur-sm border-b border-border">
+            {/* Mobile/Tablet: Order Summary Sticky at top */}
+            <div className="xl:hidden sticky top-0 z-10 -mx-4 px-4 py-3 bg-background/95 backdrop-blur-sm border-b border-border">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">{t('cart.itemCount', { count: items.length })}</p>
@@ -138,12 +138,15 @@ const Cart = () => {
                   <Button 
                     variant="outline"
                     size="sm"
+                    className="md:h-11 md:px-4"
                     onClick={() => setSaveDialogOpen(true)}
                   >
-                    <Save className="w-4 h-4" />
+                    <Save className="w-4 h-4 md:mr-2" />
+                    <span className="hidden md:inline">{t('cart.saveAsDraft')}</span>
                   </Button>
                   <Button 
                     size="sm"
+                    className="md:h-11 md:px-4"
                     onClick={() => navigate('/checkout')}
                     disabled={hasMinimumOrderWarning}
                   >
@@ -159,123 +162,130 @@ const Cart = () => {
               )}
             </div>
 
-            <div className="grid lg:grid-cols-3 gap-4 sm:gap-6">
+            <div className="grid xl:grid-cols-3 gap-4 md:gap-5 xl:gap-6">
               {/* Cart Items */}
-              <div className="lg:col-span-2 space-y-4 sm:space-y-6">
+              <div className="xl:col-span-2 space-y-4 md:space-y-5 xl:space-y-6">
                 {supplierTotals.map(({ name, items: supplierItems, total, minimumOrderValue }) => (
                   <div key={name} className="bg-card border border-border rounded-xl overflow-hidden">
-                    <div className="bg-muted/50 px-4 sm:px-6 py-3 sm:py-4 border-b border-border flex items-center justify-between">
-                      <h3 className="font-semibold text-foreground text-sm sm:text-base">{name}</h3>
-                      <span className="text-xs sm:text-sm text-muted-foreground">
+                    <div className="bg-muted/50 px-4 md:px-5 xl:px-6 py-3 md:py-4 border-b border-border flex items-center justify-between">
+                      <h3 className="font-semibold text-foreground text-sm md:text-base">{name}</h3>
+                      <span className="text-xs md:text-sm text-muted-foreground">
                         €{total.toFixed(2)}
                       </span>
                     </div>
                     {minimumOrderValue > 0 && total < minimumOrderValue && (
-                      <Alert variant="destructive" className="m-3 sm:m-4 mb-0">
+                      <Alert variant="destructive" className="m-3 md:m-4 mb-0">
                         <AlertTriangle className="h-4 w-4" />
-                        <AlertDescription className="text-xs sm:text-sm">
+                        <AlertDescription className="text-xs md:text-sm">
                           {t('cart.minimumOrderMessage', { supplier: name, amount: `€${minimumOrderValue.toFixed(2)}`, remaining: `€${(minimumOrderValue - total).toFixed(2)}` })}
                         </AlertDescription>
                       </Alert>
                     )}
-                    <div className="divide-y divide-border">
-                      {supplierItems.map((item) => (
-                        <div key={item.article.id} className="p-3 sm:p-4">
-                          {/* Mobile: Stacked layout */}
-                          <div className="flex items-start gap-3 sm:hidden">
-                            <div className="flex-1 min-w-0">
-                              <h4 className="font-medium text-foreground text-sm">{item.article.name}</h4>
-                              <p className="text-xs text-muted-foreground mt-0.5">
-                                €{Number(item.article.price).toFixed(2)} / {item.article.unit}
+                    
+                    {/* Mobile/Tablet Card Layout */}
+                    <div className="xl:hidden">
+                      <div className="grid grid-cols-1 md:grid-cols-2 md:gap-4 md:p-4">
+                        {supplierItems.map((item) => (
+                          <div key={item.article.id} className="p-3 md:p-4 md:border md:border-border md:rounded-lg border-b border-border last:border-b-0 md:last:border-b md:border-b">
+                            <div className="flex items-start gap-3">
+                              <div className="flex-1 min-w-0">
+                                <h4 className="font-medium text-foreground text-sm md:text-base">{item.article.name}</h4>
+                                <p className="text-xs md:text-sm text-muted-foreground mt-0.5">
+                                  €{Number(item.article.price).toFixed(2)} / {item.article.unit}
+                                </p>
+                              </div>
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                className="h-8 w-8 md:h-10 md:w-10 text-destructive hover:text-destructive shrink-0"
+                                onClick={() => removeItem(item.article.id)}
+                              >
+                                <Trash2 className="w-4 h-4 md:w-5 md:h-5" />
+                              </Button>
+                            </div>
+                            <div className="flex items-center justify-between mt-3">
+                              <div className="flex items-center gap-2">
+                                <Button
+                                  size="icon"
+                                  variant="outline"
+                                  className="h-9 w-9 md:h-11 md:w-11"
+                                  onClick={() => updateQuantity(item.article.id, item.quantity - 1)}
+                                >
+                                  <Minus className="w-4 h-4" />
+                                </Button>
+                                <Input
+                                  type="number"
+                                  min="1"
+                                  value={item.quantity}
+                                  onChange={(e) => updateQuantity(item.article.id, parseInt(e.target.value) || 1)}
+                                  className="w-14 md:w-16 text-center h-9 md:h-11"
+                                />
+                                <Button
+                                  size="icon"
+                                  variant="outline"
+                                  className="h-9 w-9 md:h-11 md:w-11"
+                                  onClick={() => updateQuantity(item.article.id, item.quantity + 1)}
+                                >
+                                  <Plus className="w-4 h-4" />
+                                </Button>
+                              </div>
+                              <p className="font-semibold text-foreground text-sm md:text-base">
+                                €{(Number(item.article.price) * item.quantity).toFixed(2)}
                               </p>
                             </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    
+                    {/* Desktop: Horizontal layout */}
+                    <div className="hidden xl:block divide-y divide-border">
+                      {supplierItems.map((item) => (
+                        <div key={item.article.id} className="p-4 flex items-center gap-4">
+                          <div className="flex-1 min-w-0">
+                            <h4 className="font-medium text-foreground truncate">{item.article.name}</h4>
+                            <p className="text-sm text-muted-foreground">
+                              €{Number(item.article.price).toFixed(2)} / {item.article.unit}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-2">
                             <Button
                               size="icon"
-                              variant="ghost"
-                              className="h-8 w-8 text-destructive hover:text-destructive shrink-0"
-                              onClick={() => removeItem(item.article.id)}
+                              variant="outline"
+                              className="h-8 w-8"
+                              onClick={() => updateQuantity(item.article.id, item.quantity - 1)}
                             >
-                              <Trash2 className="w-4 h-4" />
+                              <Minus className="w-3 h-3" />
+                            </Button>
+                            <Input
+                              type="number"
+                              min="1"
+                              value={item.quantity}
+                              onChange={(e) => updateQuantity(item.article.id, parseInt(e.target.value) || 1)}
+                              className="w-16 text-center h-8"
+                            />
+                            <Button
+                              size="icon"
+                              variant="outline"
+                              className="h-8 w-8"
+                              onClick={() => updateQuantity(item.article.id, item.quantity + 1)}
+                            >
+                              <Plus className="w-3 h-3" />
                             </Button>
                           </div>
-                          <div className="flex items-center justify-between mt-2 sm:hidden">
-                            <div className="flex items-center gap-2">
-                              <Button
-                                size="icon"
-                                variant="outline"
-                                className="h-9 w-9"
-                                onClick={() => updateQuantity(item.article.id, item.quantity - 1)}
-                              >
-                                <Minus className="w-4 h-4" />
-                              </Button>
-                              <Input
-                                type="number"
-                                min="1"
-                                value={item.quantity}
-                                onChange={(e) => updateQuantity(item.article.id, parseInt(e.target.value) || 1)}
-                                className="w-14 text-center h-9"
-                              />
-                              <Button
-                                size="icon"
-                                variant="outline"
-                                className="h-9 w-9"
-                                onClick={() => updateQuantity(item.article.id, item.quantity + 1)}
-                              >
-                                <Plus className="w-4 h-4" />
-                              </Button>
-                            </div>
+                          <div className="text-right min-w-[80px]">
                             <p className="font-semibold text-foreground">
                               €{(Number(item.article.price) * item.quantity).toFixed(2)}
                             </p>
                           </div>
-                          
-                          {/* Desktop: Horizontal layout */}
-                          <div className="hidden sm:flex items-center gap-4">
-                            <div className="flex-1 min-w-0">
-                              <h4 className="font-medium text-foreground truncate">{item.article.name}</h4>
-                              <p className="text-sm text-muted-foreground">
-                                €{Number(item.article.price).toFixed(2)} / {item.article.unit}
-                              </p>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <Button
-                                size="icon"
-                                variant="outline"
-                                className="h-8 w-8"
-                                onClick={() => updateQuantity(item.article.id, item.quantity - 1)}
-                              >
-                                <Minus className="w-3 h-3" />
-                              </Button>
-                              <Input
-                                type="number"
-                                min="1"
-                                value={item.quantity}
-                                onChange={(e) => updateQuantity(item.article.id, parseInt(e.target.value) || 1)}
-                                className="w-16 text-center h-8"
-                              />
-                              <Button
-                                size="icon"
-                                variant="outline"
-                                className="h-8 w-8"
-                                onClick={() => updateQuantity(item.article.id, item.quantity + 1)}
-                              >
-                                <Plus className="w-3 h-3" />
-                              </Button>
-                            </div>
-                            <div className="text-right min-w-[80px]">
-                              <p className="font-semibold text-foreground">
-                                €{(Number(item.article.price) * item.quantity).toFixed(2)}
-                              </p>
-                            </div>
-                            <Button
-                              size="icon"
-                              variant="ghost"
-                              className="h-8 w-8 text-destructive hover:text-destructive"
-                              onClick={() => removeItem(item.article.id)}
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </div>
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-8 w-8 text-destructive hover:text-destructive"
+                            onClick={() => removeItem(item.article.id)}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
                         </div>
                       ))}
                     </div>
@@ -284,7 +294,7 @@ const Cart = () => {
               </div>
 
               {/* Order Summary - Desktop only */}
-              <div className="hidden lg:block lg:col-span-1">
+              <div className="hidden xl:block xl:col-span-1">
                 <div className="bg-card border border-border rounded-xl p-6 sticky top-6">
                   <h3 className="text-lg font-semibold text-foreground mb-4">{t('checkout.orderSummary')}</h3>
                   <div className="space-y-3 mb-6">
