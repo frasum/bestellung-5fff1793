@@ -313,7 +313,7 @@ const Reports = () => {
                 </div>
 
                 {/* Charts Row */}
-                <div className="grid lg:grid-cols-2 gap-4 lg:gap-6">
+                <div className="grid grid-cols-1 gap-4 lg:gap-6">
                   {/* Monthly Spending Chart */}
                   <Card>
                     <CardHeader className="pb-2 sm:pb-4">
