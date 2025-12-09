@@ -27,7 +27,7 @@ export const ArticleCard = ({
 }: ArticleCardProps) => {
   return (
     <Card className={cn(
-      "p-4",
+      "p-2 md:p-3",
       cartQty > 0 && "ring-2 ring-destructive/50 bg-destructive/5"
     )}>
       <div className="flex items-start justify-between gap-3">
