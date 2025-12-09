@@ -40,7 +40,7 @@ export const FloatingCartButton = () => {
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <Link to="/cart" className="hidden lg:block" data-tour-step="cart-button">
+        <Link to="/cart" className="hidden lg:block">
           <Button
             size="lg"
             className={cn(

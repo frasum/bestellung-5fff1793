@@ -214,52 +214,7 @@
       "approved": "Approved",
       "rejected": "Rejected"
     },
-    "restartTour": "Restart Tour"
-  },
-  "onboarding": {
-    "purchaser": {
-      "welcome": "Welcome to Staff Orders!",
-      "welcomeDescription": "Here you can quickly submit orders via voice or photo. The AI automatically recognizes articles and quantities.",
-      "voiceStep": "Voice Order",
-      "voiceStepDescription": "Tap the button and speak your order. For example: \"3 cases of mineral water and 5 packs of napkins\". The AI will recognize the articles automatically.",
-      "photoStep": "Photo Order",
-      "photoStepDescription": "Photograph a handwritten order list. The AI reads the articles and assigns them automatically.",
-      "historyStep": "Your Orders",
-      "historyStepDescription": "Under 'My Orders' you can see the status of your submitted orders. Approved orders can be added directly to the cart.",
-      "next": "Next",
-      "skip": "Skip",
-      "finish": "Let's go!"
-    },
-    "admin": {
-      "welcome": "Welcome to Order Management!",
-      "welcomeDescription": "As Admin/Manager you can review, edit and approve employee orders.",
-      "allOrdersStep": "All Orders",
-      "allOrdersStepDescription": "Here you can see all submitted orders from your employees. The badge shows the number of pending submissions.",
-      "filterStep": "Status Filter",
-      "filterStepDescription": "Filter by status: Pending, Approved or Rejected.",
-      "approvalStep": "Approve or Reject",
-      "approvalStepDescription": "Click on a submission to see details. Approved items are automatically added to the cart. When rejecting, you can provide a reason.",
-      "next": "Next",
-      "skip": "Skip",
-      "finish": "Let's go!"
-    },
-    "newUser": {
-      "welcome": "Welcome to Bestellung.pro!",
-      "welcomeDescription": "Your central platform for managing suppliers, articles, and orders. Let's walk through the key features.",
-      "catalogStep": "Catalog",
-      "catalogStepDescription": "Here you'll find all your suppliers and articles. Add items directly to your cart from here.",
-      "cartStep": "Your Cart",
-      "cartStepDescription": "All selected items end up here. Click to go to checkout and place orders.",
-      "ordersStep": "Orders",
-      "ordersStepDescription": "Track all orders, save pre-orders for later, and let employees submit orders via voice or photo.",
-      "reportsStep": "Reports & Inventory",
-      "reportsStepDescription": "Analyze your spending, see top suppliers, and manage your inventory.",
-      "settingsStep": "Settings",
-      "settingsStepDescription": "Manage your profile, team members, locations, categories, and customize email templates.",
-      "next": "Next",
-      "skip": "Skip",
-      "finish": "Let's go!"
-    }
+    
   },
   "suppliers": {
     "title": "Suppliers",

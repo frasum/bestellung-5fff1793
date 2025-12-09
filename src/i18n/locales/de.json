@@ -216,52 +216,7 @@
       "approved": "Genehmigt",
       "rejected": "Abgelehnt"
     },
-    "restartTour": "Tour erneut starten"
-  },
-  "onboarding": {
-    "purchaser": {
-      "welcome": "Willkommen bei den Mitarbeiter-Bestellungen!",
-      "welcomeDescription": "Hier kannst du Bestellungen schnell per Sprache oder Foto einreichen. Die KI erkennt automatisch die Artikel und Mengen.",
-      "voiceStep": "Sprachbestellung",
-      "voiceStepDescription": "Tippe auf den Button und sprich deine Bestellung ein. Zum Beispiel: \"3 Kisten Mineralwasser und 5 Packungen Servietten\". Die KI erkennt die Artikel automatisch.",
-      "photoStep": "Foto-Bestellung",
-      "photoStepDescription": "Fotografiere eine handgeschriebene Bestellliste. Die KI liest die Artikel ab und ordnet sie automatisch zu.",
-      "historyStep": "Deine Bestellungen",
-      "historyStepDescription": "Unter 'Meine Bestellungen' siehst du den Status deiner eingereichten Bestellungen. Genehmigte Bestellungen kannst du direkt in den Warenkorb übernehmen.",
-      "next": "Weiter",
-      "skip": "Überspringen",
-      "finish": "Los geht's!"
-    },
-    "admin": {
-      "welcome": "Willkommen zur Bestellungsübersicht!",
-      "welcomeDescription": "Als Admin/Manager kannst du Mitarbeiter-Bestellungen prüfen, bearbeiten und genehmigen.",
-      "allOrdersStep": "Alle Bestellungen",
-      "allOrdersStepDescription": "Hier siehst du alle eingereichten Bestellungen deiner Mitarbeiter. Das Badge zeigt die Anzahl der offenen Einreichungen.",
-      "filterStep": "Status-Filter",
-      "filterStepDescription": "Filtere nach Status: Ausstehend, Genehmigt oder Abgelehnt.",
-      "approvalStep": "Genehmigen oder Ablehnen",
-      "approvalStepDescription": "Klicke auf eine Einreichung, um Details zu sehen. Genehmigte Artikel werden automatisch dem Warenkorb hinzugefügt. Bei Ablehnung kannst du einen Grund angeben.",
-      "next": "Weiter",
-      "skip": "Überspringen",
-      "finish": "Los geht's!"
-    },
-    "newUser": {
-      "welcome": "Willkommen bei Bestellung.pro!",
-      "welcomeDescription": "Ihre zentrale Plattform für die Verwaltung von Lieferanten, Artikeln und Bestellungen. Lassen Sie uns die wichtigsten Funktionen durchgehen.",
-      "catalogStep": "Katalog",
-      "catalogStepDescription": "Hier finden Sie alle Ihre Lieferanten und Artikel. Fügen Sie Artikel direkt von hier in Ihren Warenkorb hinzu.",
-      "cartStep": "Ihr Warenkorb",
-      "cartStepDescription": "Alle ausgewählten Artikel landen hier. Klicken Sie darauf, um zur Kasse zu gehen und Bestellungen aufzugeben.",
-      "ordersStep": "Bestellungen",
-      "ordersStepDescription": "Verfolgen Sie alle Bestellungen, speichern Sie Vorbestellungen für später, und lassen Sie Mitarbeiter Bestellungen per Sprache oder Foto einreichen.",
-      "reportsStep": "Berichte & Inventur",
-      "reportsStepDescription": "Analysieren Sie Ihre Ausgaben, sehen Sie Top-Lieferanten und verwalten Sie Ihr Inventar.",
-      "settingsStep": "Einstellungen",
-      "settingsStepDescription": "Verwalten Sie Ihr Profil, Team-Mitglieder, Standorte, Kategorien und passen Sie E-Mail-Vorlagen an.",
-      "next": "Weiter",
-      "skip": "Überspringen",
-      "finish": "Los geht's!"
-    }
+    
   },
   "suppliers": {
     "title": "Lieferanten",

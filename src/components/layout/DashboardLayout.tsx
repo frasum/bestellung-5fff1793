@@ -18,7 +18,7 @@ import { MobileBottomNav } from '@/components/layout/MobileBottomNav';
 import { FloatingCartButton } from '@/components/FloatingCartButton';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import logoImage from '@/assets/logo.png';
-import NewUserOnboardingTour, { useNewUserOnboarding } from '@/components/onboarding/NewUserOnboardingTour';
+
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -41,8 +41,6 @@ export const DashboardLayout = ({
   // Enable keyboard shortcuts
   useKeyboardShortcuts();
   
-  // New user onboarding tour
-  const { showTour, completeTour } = useNewUserOnboarding();
   
   const { data: organization } = useOrganization();
   const { hasRole: canSeeAllSubmissions } = useHasRole(['admin', 'manager']);
@@ -61,16 +59,15 @@ export const DashboardLayout = ({
   const demoDaysRemaining = getDemoDaysRemaining();
   
   const navItems = [
-    { href: '/suppliers', label: t('nav.catalog'), icon: Users, tourStep: 'nav-catalog' },
+    { href: '/suppliers', label: t('nav.catalog'), icon: Users },
     { 
       href: '/orders', 
       label: t('nav.orders'), 
       icon: ShoppingCart,
       badge: canSeeAllSubmissions && pendingCount > 0 ? pendingCount : undefined,
-      tourStep: 'nav-orders',
     },
-    { href: '/reports', label: t('nav.reports'), icon: BarChart3, tourStep: 'nav-reports' },
-    { href: '/settings', label: t('nav.settings'), icon: Settings, tourStep: 'nav-settings' },
+    { href: '/reports', label: t('nav.reports'), icon: BarChart3 },
+    { href: '/settings', label: t('nav.settings'), icon: Settings },
   ];
   const handleSignOut = async () => {
     await signOut();
@@ -171,7 +168,6 @@ export const DashboardLayout = ({
                   key={item.href} 
                   to={item.href} 
                   onClick={() => setSidebarOpen(false)} 
-                  data-tour-step={item.tourStep}
                   className={cn(
                     'flex items-center gap-3 px-4 py-3 rounded-lg transition-colors',
                     isActive ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-muted'
@@ -226,8 +222,5 @@ export const DashboardLayout = ({
 
       {/* Mobile Bottom Navigation */}
       <MobileBottomNav />
-
-      {/* New User Onboarding Tour */}
-      {showTour && <NewUserOnboardingTour onComplete={completeTour} />}
     </div>;
 };
