@@ -72,11 +72,11 @@ export const ArticleCard = ({
           <Button
             size="icon"
             variant="outline"
-            className="h-11 w-11 md:h-12 md:w-12"
+            className="h-9 w-9 md:h-11 md:w-11"
             onClick={() => onUpdateQuantity(article.id, cartQty - 1)}
             disabled={cartQty === 0}
           >
-            <Minus className="w-4 h-4 md:w-5 md:h-5" />
+            <Minus className="w-4 h-4" />
           </Button>
           <input
             type="text"
@@ -95,7 +95,7 @@ export const ArticleCard = ({
               setTimeout(() => target.select(), 0);
             }}
             className={cn(
-              "w-14 h-11 md:w-16 md:h-12 text-center font-medium rounded-md border border-input bg-background text-base md:text-lg",
+              "w-12 h-9 md:w-14 md:h-11 text-center font-medium rounded-md border border-input bg-background text-base",
               "focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1",
               cartQty > 0 ? "text-destructive" : "text-foreground"
             )}
@@ -103,10 +103,10 @@ export const ArticleCard = ({
           <Button
             size="icon"
             variant="outline"
-            className="h-11 w-11 md:h-12 md:w-12"
+            className="h-9 w-9 md:h-11 md:w-11"
             onClick={() => onAddToCart(article, 1)}
           >
-            <Plus className="w-4 h-4 md:w-5 md:h-5" />
+            <Plus className="w-4 h-4" />
           </Button>
         </div>
 
