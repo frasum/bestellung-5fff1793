@@ -167,51 +167,6 @@
     "noOrders": "Chưa có đơn hàng",
     "viewAll": "Xem tất cả"
   },
-  "onboarding": {
-    "purchaser": {
-      "welcome": "Chào mừng đến với đơn hàng nhân viên!",
-      "welcomeDescription": "Tại đây bạn có thể gửi đơn hàng nhanh chóng qua giọng nói hoặc ảnh. AI tự động nhận diện sản phẩm và số lượng.",
-      "voiceStep": "Đặt hàng bằng giọng nói",
-      "voiceStepDescription": "Nhấn nút và nói đơn hàng của bạn. Ví dụ: \"3 thùng nước khoáng và 5 gói khăn giấy\". AI sẽ tự động nhận diện sản phẩm.",
-      "photoStep": "Đặt hàng bằng ảnh",
-      "photoStepDescription": "Chụp ảnh danh sách đơn hàng viết tay. AI sẽ đọc và gán sản phẩm tự động.",
-      "historyStep": "Đơn hàng của bạn",
-      "historyStepDescription": "Trong 'Đơn hàng của tôi' bạn có thể xem trạng thái đơn hàng đã gửi. Đơn hàng được duyệt có thể thêm trực tiếp vào giỏ hàng.",
-      "next": "Tiếp theo",
-      "skip": "Bỏ qua",
-      "finish": "Bắt đầu thôi!"
-    },
-    "admin": {
-      "welcome": "Chào mừng đến với quản lý đơn hàng!",
-      "welcomeDescription": "Với vai trò Admin/Manager, bạn có thể xem xét, chỉnh sửa và phê duyệt đơn hàng của nhân viên.",
-      "allOrdersStep": "Tất cả đơn hàng",
-      "allOrdersStepDescription": "Tại đây bạn thấy tất cả đơn hàng được gửi bởi nhân viên. Badge hiển thị số lượng đang chờ xử lý.",
-      "filterStep": "Lọc trạng thái",
-      "filterStepDescription": "Lọc theo trạng thái: Đang chờ, Đã duyệt hoặc Từ chối.",
-      "approvalStep": "Duyệt hoặc từ chối",
-      "approvalStepDescription": "Nhấp vào một đơn để xem chi tiết. Sản phẩm được duyệt sẽ tự động thêm vào giỏ hàng. Khi từ chối, bạn có thể nêu lý do.",
-      "next": "Tiếp theo",
-      "skip": "Bỏ qua",
-      "finish": "Bắt đầu thôi!"
-    },
-    "newUser": {
-      "welcome": "Chào mừng đến với Bestellung.pro!",
-      "welcomeDescription": "Nền tảng trung tâm để quản lý nhà cung cấp, sản phẩm và đơn hàng. Hãy khám phá các tính năng chính.",
-      "catalogStep": "Danh mục",
-      "catalogStepDescription": "Tại đây bạn tìm thấy tất cả nhà cung cấp và sản phẩm. Thêm sản phẩm trực tiếp vào giỏ hàng.",
-      "cartStep": "Giỏ hàng của bạn",
-      "cartStepDescription": "Tất cả sản phẩm đã chọn sẽ ở đây. Nhấp để thanh toán và đặt hàng.",
-      "ordersStep": "Đơn hàng",
-      "ordersStepDescription": "Theo dõi tất cả đơn hàng, lưu đơn đặt trước và cho phép nhân viên gửi đơn qua giọng nói hoặc ảnh.",
-      "reportsStep": "Báo cáo & Kho hàng",
-      "reportsStepDescription": "Phân tích chi tiêu, xem nhà cung cấp hàng đầu và quản lý kho hàng.",
-      "settingsStep": "Cài đặt",
-      "settingsStepDescription": "Quản lý hồ sơ, thành viên nhóm, địa điểm, danh mục và tùy chỉnh mẫu email.",
-      "next": "Tiếp theo",
-      "skip": "Bỏ qua",
-      "finish": "Bắt đầu thôi!"
-    }
-  },
   "suppliers": {
     "title": "Nhà cung cấp",
     "description": "Quản lý nhà cung cấp của bạn",

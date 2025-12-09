@@ -167,51 +167,6 @@
     "noOrders": "Nessun ordine ancora",
     "viewAll": "Visualizza tutti"
   },
-  "onboarding": {
-    "purchaser": {
-      "welcome": "Benvenuto negli ordini del personale!",
-      "welcomeDescription": "Qui puoi inviare rapidamente ordini tramite voce o foto. L'IA riconosce automaticamente gli articoli e le quantità.",
-      "voiceStep": "Ordine vocale",
-      "voiceStepDescription": "Tocca il pulsante e detta il tuo ordine. Ad esempio: \"3 casse di acqua minerale e 5 pacchi di tovaglioli\". L'IA riconoscerà automaticamente gli articoli.",
-      "photoStep": "Ordine fotografico",
-      "photoStepDescription": "Fotografa una lista d'ordine scritta a mano. L'IA legge gli articoli e li assegna automaticamente.",
-      "historyStep": "I tuoi ordini",
-      "historyStepDescription": "Sotto 'I miei ordini' puoi vedere lo stato dei tuoi ordini inviati. Gli ordini approvati possono essere aggiunti direttamente al carrello.",
-      "next": "Avanti",
-      "skip": "Salta",
-      "finish": "Iniziamo!"
-    },
-    "admin": {
-      "welcome": "Benvenuto nella gestione ordini!",
-      "welcomeDescription": "Come Admin/Manager puoi verificare, modificare e approvare gli ordini dei dipendenti.",
-      "allOrdersStep": "Tutti gli ordini",
-      "allOrdersStepDescription": "Qui vedi tutti gli ordini inviati dai tuoi dipendenti. Il badge mostra il numero di invii in sospeso.",
-      "filterStep": "Filtro stato",
-      "filterStepDescription": "Filtra per stato: In sospeso, Approvato o Rifiutato.",
-      "approvalStep": "Approva o rifiuta",
-      "approvalStepDescription": "Clicca su un invio per vedere i dettagli. Gli articoli approvati vengono aggiunti automaticamente al carrello. In caso di rifiuto, puoi indicare un motivo.",
-      "next": "Avanti",
-      "skip": "Salta",
-      "finish": "Iniziamo!"
-    },
-    "newUser": {
-      "welcome": "Benvenuto su Bestellung.pro!",
-      "welcomeDescription": "La tua piattaforma centrale per gestire fornitori, articoli e ordini. Scopriamo le funzionalità principali.",
-      "catalogStep": "Catalogo",
-      "catalogStepDescription": "Qui trovi tutti i tuoi fornitori e articoli. Aggiungi articoli direttamente al carrello.",
-      "cartStep": "Il tuo carrello",
-      "cartStepDescription": "Tutti gli articoli selezionati finiscono qui. Clicca per andare alla cassa e fare ordini.",
-      "ordersStep": "Ordini",
-      "ordersStepDescription": "Traccia tutti gli ordini, salva i preordini e lascia che i dipendenti inviino ordini tramite voce o foto.",
-      "reportsStep": "Report e Inventario",
-      "reportsStepDescription": "Analizza le tue spese, vedi i migliori fornitori e gestisci il tuo inventario.",
-      "settingsStep": "Impostazioni",
-      "settingsStepDescription": "Gestisci il tuo profilo, membri del team, sedi, categorie e personalizza i modelli email.",
-      "next": "Avanti",
-      "skip": "Salta",
-      "finish": "Iniziamo!"
-    }
-  },
   "suppliers": {
     "title": "Fornitori",
     "description": "Gestisci i tuoi fornitori",

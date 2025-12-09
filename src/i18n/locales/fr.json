@@ -167,51 +167,6 @@
     "noOrders": "Pas encore de commandes",
     "viewAll": "Voir tout"
   },
-  "onboarding": {
-    "purchaser": {
-      "welcome": "Bienvenue dans les commandes du personnel !",
-      "welcomeDescription": "Ici, vous pouvez soumettre rapidement des commandes par voix ou photo. L'IA reconnaît automatiquement les articles et les quantités.",
-      "voiceStep": "Commande vocale",
-      "voiceStepDescription": "Appuyez sur le bouton et dictez votre commande. Par exemple : \"3 caisses d'eau minérale et 5 paquets de serviettes\". L'IA reconnaîtra les articles automatiquement.",
-      "photoStep": "Commande par photo",
-      "photoStepDescription": "Photographiez une liste de commande manuscrite. L'IA lit les articles et les attribue automatiquement.",
-      "historyStep": "Vos commandes",
-      "historyStepDescription": "Sous 'Mes commandes', vous pouvez voir le statut de vos commandes soumises. Les commandes approuvées peuvent être ajoutées directement au panier.",
-      "next": "Suivant",
-      "skip": "Passer",
-      "finish": "C'est parti !"
-    },
-    "admin": {
-      "welcome": "Bienvenue dans la gestion des commandes !",
-      "welcomeDescription": "En tant qu'Admin/Manager, vous pouvez vérifier, modifier et approuver les commandes des employés.",
-      "allOrdersStep": "Toutes les commandes",
-      "allOrdersStepDescription": "Ici, vous voyez toutes les commandes soumises par vos employés. Le badge indique le nombre de soumissions en attente.",
-      "filterStep": "Filtre de statut",
-      "filterStepDescription": "Filtrez par statut : En attente, Approuvé ou Rejeté.",
-      "approvalStep": "Approuver ou rejeter",
-      "approvalStepDescription": "Cliquez sur une soumission pour voir les détails. Les articles approuvés sont automatiquement ajoutés au panier. En cas de rejet, vous pouvez indiquer une raison.",
-      "next": "Suivant",
-      "skip": "Passer",
-      "finish": "C'est parti !"
-    },
-    "newUser": {
-      "welcome": "Bienvenue sur Bestellung.pro !",
-      "welcomeDescription": "Votre plateforme centrale pour gérer les fournisseurs, articles et commandes. Découvrons les fonctionnalités principales.",
-      "catalogStep": "Catalogue",
-      "catalogStepDescription": "Ici, vous trouverez tous vos fournisseurs et articles. Ajoutez des articles directement au panier.",
-      "cartStep": "Votre panier",
-      "cartStepDescription": "Tous les articles sélectionnés arrivent ici. Cliquez pour passer à la caisse et passer des commandes.",
-      "ordersStep": "Commandes",
-      "ordersStepDescription": "Suivez toutes les commandes, enregistrez des précommandes et laissez les employés soumettre des commandes par voix ou photo.",
-      "reportsStep": "Rapports & Inventaire",
-      "reportsStepDescription": "Analysez vos dépenses, voyez les meilleurs fournisseurs et gérez votre inventaire.",
-      "settingsStep": "Paramètres",
-      "settingsStepDescription": "Gérez votre profil, membres d'équipe, emplacements, catégories et personnalisez les modèles d'e-mail.",
-      "next": "Suivant",
-      "skip": "Passer",
-      "finish": "C'est parti !"
-    }
-  },
   "suppliers": {
     "title": "Fournisseurs",
     "description": "Gérez vos fournisseurs",
