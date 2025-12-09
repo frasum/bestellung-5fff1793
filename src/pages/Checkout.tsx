@@ -197,6 +197,7 @@ const Checkout = () => {
             unit_price: Number(item.article.price),
             total_price: Number(item.article.price) * item.quantity,
             sku: item.article.sku || undefined,
+            packaging_unit: item.article.packaging_unit || undefined,
           })),
           totalAmount: supplier.total,
           notes: fullNotes,
@@ -519,7 +520,11 @@ const Checkout = () => {
                         </div>
                         <p className="text-xs md:text-sm text-muted-foreground mb-3">
                           {item.article.sku && <span>SKU: {item.article.sku} • </span>}
-                          {item.article.unit} × €{Number(item.article.price).toFixed(2)}
+                          {item.article.unit}
+                          {item.article.packaging_unit && item.article.packaging_unit > 1 && (
+                            <span className="text-primary font-medium"> ({item.article.packaging_unit}er)</span>
+                          )}
+                          {' '}× €{Number(item.article.price).toFixed(2)}
                         </p>
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-1">
@@ -572,7 +577,11 @@ const Checkout = () => {
                         <p className="font-medium text-foreground truncate">{item.article.name}</p>
                         <p className="text-sm text-muted-foreground">
                           {item.article.sku && <span className="mr-2">SKU: {item.article.sku}</span>}
-                          {item.article.unit} × €{Number(item.article.price).toFixed(2)}
+                          {item.article.unit}
+                          {item.article.packaging_unit && item.article.packaging_unit > 1 && (
+                            <span className="text-primary font-medium"> ({item.article.packaging_unit}er)</span>
+                          )}
+                          {' '}× €{Number(item.article.price).toFixed(2)}
                         </p>
                       </div>
                       <div className="flex items-center gap-2">

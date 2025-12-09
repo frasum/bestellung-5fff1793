@@ -16,6 +16,7 @@ interface OrderItem {
   unit_price: number;
   total_price: number;
   sku?: string;
+  packaging_unit?: number;
 }
 
 interface OrderEmailRequest {
@@ -76,6 +77,7 @@ const generateModernEmail = (data: OrderEmailRequest, template: EmailTemplate): 
   const itemRows = data.items.map((item, index) => {
     const bgColor = index % 2 === 0 ? '#ffffff' : '#f9fafb';
     const skuDisplay = item.sku ? `<span style="display: inline-block; background: #e5e7eb; color: #374151; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 4px; margin-left: 8px;">${item.sku}</span>` : '';
+    const vpeDisplay = item.packaging_unit && item.packaging_unit > 1 ? `<span style="color: #2563eb; font-weight: 600;"> (${item.packaging_unit}er)</span>` : '';
     return `
     <tr style="background: ${bgColor};">
       <td style="padding: 16px 12px; border-bottom: 1px solid #e5e7eb; vertical-align: top;">
@@ -84,7 +86,7 @@ const generateModernEmail = (data: OrderEmailRequest, template: EmailTemplate): 
       </td>
       <td style="padding: 16px 12px; border-bottom: 1px solid #e5e7eb; text-align: center; vertical-align: middle;">
         <span style="display: inline-block; background: #dbeafe; color: #1e40af; font-weight: 700; padding: 6px 14px; border-radius: 6px; font-size: 15px;">${item.quantity}</span>
-        <div style="font-size: 12px; color: #6b7280; margin-top: 4px;">${item.unit}</div>
+        <div style="font-size: 12px; color: #6b7280; margin-top: 4px;">${item.unit}${vpeDisplay}</div>
       </td>
       <td style="padding: 16px 12px; border-bottom: 1px solid #e5e7eb; text-align: right; vertical-align: middle; color: #6b7280; font-size: 13px;">€${item.unit_price.toFixed(2)}</td>
       <td style="padding: 16px 12px; border-bottom: 1px solid #e5e7eb; text-align: right; vertical-align: middle; font-weight: 700; color: #1f2937; font-size: 15px;">€${item.total_price.toFixed(2)}</td>
@@ -219,10 +221,11 @@ const generateModernEmail = (data: OrderEmailRequest, template: EmailTemplate): 
 const generateClassicEmail = (data: OrderEmailRequest, template: EmailTemplate): string => {
   const itemRows = data.items.map((item) => {
     const skuDisplay = item.sku ? ` (${item.sku})` : '';
+    const vpeDisplay = item.packaging_unit && item.packaging_unit > 1 ? ` (${item.packaging_unit}er)` : '';
     return `
     <tr>
       <td style="padding: 12px 8px; border: 1px solid #d1d5db; vertical-align: top;">${item.article_name}${skuDisplay}</td>
-      <td style="padding: 12px 8px; border: 1px solid #d1d5db; text-align: center;">${item.quantity} ${item.unit}</td>
+      <td style="padding: 12px 8px; border: 1px solid #d1d5db; text-align: center;">${item.quantity} ${item.unit}${vpeDisplay}</td>
       <td style="padding: 12px 8px; border: 1px solid #d1d5db; text-align: right;">€${item.unit_price.toFixed(2)}</td>
       <td style="padding: 12px 8px; border: 1px solid #d1d5db; text-align: right; font-weight: 600;">€${item.total_price.toFixed(2)}</td>
     </tr>
@@ -327,7 +330,8 @@ const generateClassicEmail = (data: OrderEmailRequest, template: EmailTemplate):
 const generateMinimalistEmail = (data: OrderEmailRequest, template: EmailTemplate): string => {
   const itemList = data.items.map((item) => {
     const skuDisplay = item.sku ? ` [${item.sku}]` : '';
-    return `<li style="padding: 8px 0; border-bottom: 1px solid #f3f4f6;">${item.quantity}× ${item.article_name}${skuDisplay} (${item.unit}) — €${item.total_price.toFixed(2)}</li>`;
+    const vpeDisplay = item.packaging_unit && item.packaging_unit > 1 ? ` (${item.packaging_unit}er)` : '';
+    return `<li style="padding: 8px 0; border-bottom: 1px solid #f3f4f6;">${item.quantity}× ${item.article_name}${skuDisplay} (${item.unit}${vpeDisplay}) — €${item.total_price.toFixed(2)}</li>`;
   }).join('');
 
   const signature = generateSignature(template, data.restaurantName).replace(/\n/g, '<br>');
