@@ -18,6 +18,7 @@ interface OrderItem {
   unit_price: number;
   total_price: number;
   sku?: string;
+  packaging_unit?: number;
 }
 
 export interface EmailPreviewData {
@@ -349,7 +350,12 @@ ${signatureText}`;
                             <div>{item.article_name}</div>
                             {item.sku && <div className="text-xs text-muted-foreground">SKU: {item.sku}</div>}
                           </td>
-                          <td className="p-3 text-center">{item.quantity} {item.unit}</td>
+                          <td className="p-3 text-center">
+                            {item.quantity} {item.unit}
+                            {item.packaging_unit && item.packaging_unit > 1 && (
+                              <span className="ml-1 text-primary font-medium">({item.packaging_unit}er)</span>
+                            )}
+                          </td>
                           <td className="p-3 text-right">€{item.unit_price.toFixed(2)}</td>
                           <td className="p-3 text-right font-medium">€{item.total_price.toFixed(2)}</td>
                         </tr>
