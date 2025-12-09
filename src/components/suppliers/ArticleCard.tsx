@@ -3,11 +3,14 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Article } from '@/hooks/useArticles';
 import { cn } from '@/lib/utils';
+import { LastOrderInfo } from '@/hooks/useLastOrderByArticle';
+import { format } from 'date-fns';
 
 interface ArticleCardProps {
   article: Article;
   cartQty: number;
   hasPendingChanges?: boolean;
+  lastOrder?: LastOrderInfo;
   onUpdateQuantity: (articleId: string, quantity: number) => void;
   onAddToCart: (article: Article, quantity: number) => void;
   onEdit: (article: Article) => void;
@@ -19,6 +22,7 @@ export const ArticleCard = ({
   article,
   cartQty,
   hasPendingChanges = false,
+  lastOrder,
   onUpdateQuantity,
   onAddToCart,
   onEdit,
@@ -57,7 +61,15 @@ export const ArticleCard = ({
             {article.sku && (
               <span>SKU: {article.sku}</span>
             )}
-            <span className="text-muted-foreground">{article.suppliers?.name}</span>
+            <span>{article.suppliers?.name}</span>
+            {lastOrder && (
+              <span 
+                className="text-muted-foreground/70"
+                title={format(new Date(lastOrder.date), 'dd.MM.yyyy')}
+              >
+                · {lastOrder.quantity}× {format(new Date(lastOrder.date), 'dd.MM.')}
+              </span>
+            )}
           </div>
         </div>
         <div className="text-right shrink-0">

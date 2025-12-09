@@ -14,6 +14,7 @@ import { useImportSuppliers, useImportArticles } from '@/hooks/useImport';
 import { supabase } from '@/integrations/supabase/client';
 import { ExportMenu } from '@/components/ExportMenu';
 import { useSupplierPendingChanges, useCombinedPendingBySupplier, usePendingArticleIds, useRecentlyActiveSuppliers } from '@/hooks/useSupplierChanges';
+import { useLastOrderByArticle } from '@/hooks/useLastOrderByArticle';
 import { SupplierChangesDialog } from '@/components/suppliers/SupplierChangesDialog';
 import { SupplierLocationsDialog } from '@/components/suppliers/SupplierLocationsDialog';
 import { useCategories } from '@/hooks/useCategories';
@@ -97,6 +98,7 @@ const Suppliers = () => {
   const { data: pendingChangesBySupplier } = useCombinedPendingBySupplier();
   const { data: pendingArticleIds } = usePendingArticleIds();
   const { data: recentlyActiveSuppliers } = useRecentlyActiveSuppliers();
+  const { data: lastOrderMap } = useLastOrderByArticle();
 
   // Local state for multi-select toggles
   const [supplierMultiSelectEnabled, setSupplierMultiSelectEnabled] = useState(() => {
@@ -668,6 +670,7 @@ const Suppliers = () => {
                 pendingChangesBySupplier={pendingChangesBySupplier || {}}
                 pendingArticleIds={pendingArticleIds || new Set()}
                 recentlyActiveSuppliers={recentlyActiveSuppliers || new Set()}
+                lastOrderMap={lastOrderMap || {}}
                 onToggleSupplier={toggleArticleSupplier}
                 onToggleArticle={toggleArticleSelected}
                 onAddToCart={addItem}

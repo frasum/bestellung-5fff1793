@@ -8,7 +8,9 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { PriceHistoryPopover } from '@/components/suppliers/PriceHistoryPopover';
 import { ArticleCard } from '@/components/suppliers/ArticleCard';
 import { Article } from '@/hooks/useArticles';
+import { LastOrderInfo } from '@/hooks/useLastOrderByArticle';
 import { cn } from '@/lib/utils';
+import { format } from 'date-fns';
 
 interface ArticleGroup {
   supplier: { id: string; name: string };
@@ -25,6 +27,7 @@ interface ArticleTableProps {
   pendingChangesBySupplier?: Record<string, number>;
   pendingArticleIds?: Set<string>;
   recentlyActiveSuppliers?: Set<string>;
+  lastOrderMap?: Record<string, LastOrderInfo>;
   onToggleSupplier: (supplierId: string) => void;
   onToggleArticle: (articleId: string) => void;
   onAddToCart: (article: Article, quantity: number) => void;
@@ -45,6 +48,7 @@ export const ArticleTable = ({
   pendingChangesBySupplier = {},
   pendingArticleIds = new Set(),
   recentlyActiveSuppliers = new Set(),
+  lastOrderMap = {},
   onToggleSupplier,
   onToggleArticle,
   onAddToCart,
@@ -114,6 +118,7 @@ export const ArticleTable = ({
                     article={article}
                     cartQty={getCartQuantity(article.id)}
                     hasPendingChanges={pendingArticleIds.has(article.id)}
+                    lastOrder={lastOrderMap[article.id]}
                     onUpdateQuantity={onUpdateQuantity}
                     onAddToCart={onAddToCart}
                     onEdit={onEdit}
@@ -238,6 +243,14 @@ export const ArticleTable = ({
                                   <span className="sm:hidden truncate">{article.suppliers?.name}</span>
                                   {article.category && <span className="text-primary font-medium">{article.category}</span>}
                                   {article.sku && <span className="text-muted-foreground">SKU: {article.sku}</span>}
+                                  {lastOrderMap[article.id] && (
+                                    <span 
+                                      className="text-muted-foreground/70"
+                                      title={format(new Date(lastOrderMap[article.id].date), 'dd.MM.yyyy')}
+                                    >
+                                      · {lastOrderMap[article.id].quantity}× {format(new Date(lastOrderMap[article.id].date), 'dd.MM.')}
+                                    </span>
+                                  )}
                                 </div>
                               </div>
                               <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
