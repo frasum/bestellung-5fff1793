@@ -129,23 +129,23 @@ export const SupplierTable = ({
                     <Badge variant="secondary">{supplierArticles.length} Artikel</Badge>
                   </TableCell>
                   <TableCell className="text-right py-2">
-                    <div className="flex justify-end gap-1">
-                      <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-primary" onClick={() => onShowLocations(supplier)} title="Standort-Zuordnungen">
-                        <Store className="w-3 h-3" />
+                    <div className="flex justify-end gap-1 md:gap-1.5">
+                      <Button variant="ghost" size="icon" className="h-7 w-7 md:h-9 md:w-9 text-muted-foreground hover:text-primary" onClick={() => onShowLocations(supplier)} title="Standort-Zuordnungen">
+                        <Store className="w-3 h-3 md:w-4 md:h-4" />
                       </Button>
-                      <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-primary" onClick={() => onSendInvitation(supplier)} disabled={invitingSupplierId === supplier.id || sendingInvitation} title="Einladung zum Lieferantenportal senden">
-                        {invitingSupplierId === supplier.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Send className="w-3 h-3" />}
+                      <Button variant="ghost" size="icon" className="h-7 w-7 md:h-9 md:w-9 text-muted-foreground hover:text-primary" onClick={() => onSendInvitation(supplier)} disabled={invitingSupplierId === supplier.id || sendingInvitation} title="Einladung zum Lieferantenportal senden">
+                        {invitingSupplierId === supplier.id ? <Loader2 className="w-3 h-3 md:w-4 md:h-4 animate-spin" /> : <Send className="w-3 h-3 md:w-4 md:h-4" />}
                       </Button>
                       {supplierArticles.length > 0 && (
-                        <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-primary" onClick={() => onPrintOrderList(supplier, supplierArticles)} title="Bestellliste drucken">
-                          <FileText className="w-3 h-3" />
+                        <Button variant="ghost" size="icon" className="h-7 w-7 md:h-9 md:w-9 text-muted-foreground hover:text-primary" onClick={() => onPrintOrderList(supplier, supplierArticles)} title="Bestellliste drucken">
+                          <FileText className="w-3 h-3 md:w-4 md:h-4" />
                         </Button>
                       )}
-                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onEdit(supplier)}>
-                        <Pencil className="w-3 h-3" />
+                      <Button variant="ghost" size="icon" className="h-7 w-7 md:h-9 md:w-9" onClick={() => onEdit(supplier)}>
+                        <Pencil className="w-3 h-3 md:w-4 md:h-4" />
                       </Button>
-                      <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => onDelete(supplier)}>
-                        <Trash2 className="w-3 h-3" />
+                      <Button variant="ghost" size="icon" className="h-7 w-7 md:h-9 md:w-9 text-destructive hover:text-destructive" onClick={() => onDelete(supplier)}>
+                        <Trash2 className="w-3 h-3 md:w-4 md:h-4" />
                       </Button>
                     </div>
                   </TableCell>
@@ -169,15 +169,15 @@ export const SupplierTable = ({
                               return (
                                 <TableRow key={article.id} className={`border-b border-border/30 hover:bg-muted/50 ${cartQty > 0 ? 'bg-destructive/10 text-destructive' : ''}`}>
                                   <TableCell className="py-1.5">
-                                    <div className="flex items-center justify-center gap-1">
+                                    <div className="flex items-center justify-center gap-1 md:gap-1.5">
                                       <Button 
                                         size="icon" 
                                         variant="outline" 
-                                        className="h-8 w-8" 
+                                        className="h-8 w-8 md:h-10 md:w-10" 
                                         onClick={() => onUpdateQuantity(article.id, cartQty - 1)} 
                                         disabled={cartQty === 0}
                                       >
-                                        <Minus className="w-3 h-3" />
+                                        <Minus className="w-3 h-3 md:w-4 md:h-4" />
                                       </Button>
                                       <Input
                                         type="text"
@@ -194,16 +194,16 @@ export const SupplierTable = ({
                                           }
                                         }}
                                         onFocus={(e) => e.target.select()}
-                                        className={cn("w-12 h-8 text-center text-sm", cartQty > 0 && "border-destructive bg-destructive/10 text-destructive font-medium")}
+                                        className={cn("w-12 h-8 md:w-14 md:h-10 text-center text-sm md:text-base", cartQty > 0 && "border-destructive bg-destructive/10 text-destructive font-medium")}
                                         placeholder="0"
                                       />
                                       <Button 
                                         size="icon" 
                                         variant="outline" 
-                                        className="h-8 w-8" 
+                                        className="h-8 w-8 md:h-10 md:w-10" 
                                         onClick={() => cartQty === 0 ? onAddToCart(article, 1) : onUpdateQuantity(article.id, cartQty + 1)}
                                       >
-                                        <Plus className="w-3 h-3" />
+                                        <Plus className="w-3 h-3 md:w-4 md:h-4" />
                                       </Button>
                                     </div>
                                   </TableCell>

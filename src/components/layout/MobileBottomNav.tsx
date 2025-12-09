@@ -57,7 +57,7 @@ export const MobileBottomNav = () => {
 
   return (
     <nav className="xl:hidden fixed bottom-0 left-0 right-0 z-50 bg-card border-t border-border safe-area-bottom">
-      <div className="flex items-center justify-around h-16 px-2">
+      <div className="flex items-center justify-around h-16 md:h-20 px-2">
         {mainNavItems.map((item) => {
           const isActive = location.pathname === item.href;
           const Icon = item.icon;
@@ -74,19 +74,19 @@ export const MobileBottomNav = () => {
               )}
             >
               <div className="relative">
-                <Icon className="w-5 h-5" />
+                <Icon className="w-5 h-5 md:w-6 md:h-6" />
                 {item.showBadge && itemCount > 0 && (
                   <Badge 
                     variant="destructive" 
-                    className="absolute -top-2 -right-3 h-4 min-w-4 flex items-center justify-center rounded-full text-[10px] font-bold px-1"
+                    className="absolute -top-2 -right-3 h-4 min-w-4 md:h-5 md:min-w-5 flex items-center justify-center rounded-full text-[10px] md:text-xs font-bold px-1"
                   >
                     {itemCount > 99 ? '99+' : itemCount}
                   </Badge>
                 )}
               </div>
-              <span className="text-[10px] mt-1 font-medium">{item.label}</span>
+              <span className="text-[10px] md:text-xs mt-1 font-medium">{item.label}</span>
               {isActive && (
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 bg-primary rounded-full" />
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-8 md:w-10 h-0.5 bg-primary rounded-full" />
               )}
             </Link>
           );
@@ -101,15 +101,15 @@ export const MobileBottomNav = () => {
                 'text-muted-foreground active:text-primary transition-colors touch-manipulation'
               )}
             >
-              <MoreHorizontal className="w-5 h-5" />
-              <span className="text-[10px] mt-1 font-medium">Mehr</span>
+              <MoreHorizontal className="w-5 h-5 md:w-6 md:h-6" />
+              <span className="text-[10px] md:text-xs mt-1 font-medium">Mehr</span>
             </button>
           </SheetTrigger>
           <SheetContent side="bottom" className="h-auto max-h-[70vh] rounded-t-xl">
             <SheetHeader className="pb-4">
               <SheetTitle>Navigation</SheetTitle>
             </SheetHeader>
-            <div className="grid grid-cols-2 gap-3 pb-6">
+            <div className="grid grid-cols-2 gap-3 md:gap-4 pb-6">
               {moreNavItems.map((item) => {
                 const isActive = location.pathname === item.href;
                 const Icon = item.icon;
@@ -119,16 +119,16 @@ export const MobileBottomNav = () => {
                     to={item.href}
                     onClick={handleNavClick}
                     className={cn(
-                      'flex items-center gap-3 p-4 rounded-xl transition-colors relative',
+                      'flex items-center gap-3 p-4 md:p-5 min-h-[52px] md:min-h-[60px] rounded-xl transition-colors relative',
                       isActive 
                         ? 'bg-primary text-primary-foreground' 
                         : 'bg-muted hover:bg-muted/80'
                     )}
                   >
-                    <Icon className="w-5 h-5" />
+                    <Icon className="w-5 h-5 md:w-6 md:h-6" />
                     <span className="font-medium flex-1">{item.label}</span>
                     {'badge' in item && item.badge && (
-                      <Badge variant="destructive" className="h-5 min-w-5 flex items-center justify-center text-xs">
+                      <Badge variant="destructive" className="h-5 min-w-5 md:h-6 md:min-w-6 flex items-center justify-center text-xs">
                         {item.badge}
                       </Badge>
                     )}
