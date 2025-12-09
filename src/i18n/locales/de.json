@@ -244,6 +244,23 @@
       "next": "Weiter",
       "skip": "Überspringen",
       "finish": "Los geht's!"
+    },
+    "newUser": {
+      "welcome": "Willkommen bei Bestellung.pro!",
+      "welcomeDescription": "Ihre zentrale Plattform für die Verwaltung von Lieferanten, Artikeln und Bestellungen. Lassen Sie uns die wichtigsten Funktionen durchgehen.",
+      "catalogStep": "Katalog",
+      "catalogStepDescription": "Hier finden Sie alle Ihre Lieferanten und Artikel. Fügen Sie Artikel direkt von hier in Ihren Warenkorb hinzu.",
+      "cartStep": "Ihr Warenkorb",
+      "cartStepDescription": "Alle ausgewählten Artikel landen hier. Klicken Sie darauf, um zur Kasse zu gehen und Bestellungen aufzugeben.",
+      "ordersStep": "Bestellungen",
+      "ordersStepDescription": "Verfolgen Sie alle Bestellungen, speichern Sie Vorbestellungen für später, und lassen Sie Mitarbeiter Bestellungen per Sprache oder Foto einreichen.",
+      "reportsStep": "Berichte & Inventur",
+      "reportsStepDescription": "Analysieren Sie Ihre Ausgaben, sehen Sie Top-Lieferanten und verwalten Sie Ihr Inventar.",
+      "settingsStep": "Einstellungen",
+      "settingsStepDescription": "Verwalten Sie Ihr Profil, Team-Mitglieder, Standorte, Kategorien und passen Sie E-Mail-Vorlagen an.",
+      "next": "Weiter",
+      "skip": "Überspringen",
+      "finish": "Los geht's!"
     }
   },
   "suppliers": {
