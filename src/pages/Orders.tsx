@@ -56,7 +56,7 @@ const localeMap: Record<string, Locale> = { de, en: enUS, fr };
 
 const statusColors: Record<Order['status'], string> = {
   pending: 'bg-warning/20 text-warning',
-  confirmed: 'bg-blue-500/20 text-blue-500',
+  confirmed: 'bg-success/20 text-success',
   processing: 'bg-purple-500/20 text-purple-500',
   shipped: 'bg-cyan-500/20 text-cyan-500',
   delivered: 'bg-success/20 text-success',
