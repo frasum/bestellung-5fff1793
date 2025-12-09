@@ -242,6 +242,23 @@
       "next": "Next",
       "skip": "Skip",
       "finish": "Let's go!"
+    },
+    "newUser": {
+      "welcome": "Welcome to Bestellung.pro!",
+      "welcomeDescription": "Your central platform for managing suppliers, articles, and orders. Let's walk through the key features.",
+      "catalogStep": "Catalog",
+      "catalogStepDescription": "Here you'll find all your suppliers and articles. Add items directly to your cart from here.",
+      "cartStep": "Your Cart",
+      "cartStepDescription": "All selected items end up here. Click to go to checkout and place orders.",
+      "ordersStep": "Orders",
+      "ordersStepDescription": "Track all orders, save pre-orders for later, and let employees submit orders via voice or photo.",
+      "reportsStep": "Reports & Inventory",
+      "reportsStepDescription": "Analyze your spending, see top suppliers, and manage your inventory.",
+      "settingsStep": "Settings",
+      "settingsStepDescription": "Manage your profile, team members, locations, categories, and customize email templates.",
+      "next": "Next",
+      "skip": "Skip",
+      "finish": "Let's go!"
     }
   },
   "suppliers": {
