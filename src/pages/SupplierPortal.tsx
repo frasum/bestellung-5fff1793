@@ -382,21 +382,6 @@ const SupplierPortal = () => {
     return changedIds.size;
   };
 
-  // Get articles missing annual_order_value (required field)
-  const getArticlesMissingAnnualValue = () => {
-    return articles.filter(article => {
-      // Check if there's an edited value
-      if (annualOrderValueInputs[article.id] !== undefined) {
-        const value = annualOrderValueInputs[article.id].replace(',', '.');
-        return value === '' || isNaN(parseFloat(value)) || parseFloat(value) <= 0;
-      }
-      // Check if article already has a valid value
-      return article.annual_order_value === null || article.annual_order_value === undefined || article.annual_order_value <= 0;
-    });
-  };
-
-  const missingAnnualValueArticles = getArticlesMissingAnnualValue();
-  const hasMissingAnnualValues = missingAnnualValueArticles.length > 0;
 
   const handleSaveAll = async () => {
     if (!session || !hasAnyChanges()) return;
@@ -686,22 +671,6 @@ const SupplierPortal = () => {
           </div>
         )}
 
-        {/* Missing Annual Value Warning */}
-        {!loading && hasMissingAnnualValues && (
-          <Alert className="mb-6 border-destructive/50 bg-destructive/10">
-            <AlertTriangle className="h-4 w-4 text-destructive" />
-            <AlertDescription>
-              <div className="flex flex-col gap-2">
-                <span className="font-medium text-destructive">
-                  Bitte erfassen Sie den Bestellwert (365 Tage) für alle Artikel.
-                </span>
-                <span className="text-sm text-muted-foreground">
-                  Es fehlen noch: <strong>{missingAnnualValueArticles.length}</strong> {missingAnnualValueArticles.length === 1 ? 'Artikel' : 'Artikel'}
-                </span>
-              </div>
-            </AlertDescription>
-          </Alert>
-        )}
 
         <Card>
           <CardHeader>
@@ -753,26 +722,18 @@ const SupplierPortal = () => {
                   )}
                   Entwurf speichern
                 </Button>
-                <div className="flex flex-col items-end gap-1">
-                  <Button 
-                    onClick={handleSaveAll} 
-                    disabled={!hasAnyChanges() || savingAll || savingDraft || hasMissingAnnualValues}
-                    className="bg-primary"
-                    title={hasMissingAnnualValues ? `${missingAnnualValueArticles.length} Artikel ohne Jahresumsatz` : undefined}
-                  >
-                    {savingAll ? (
-                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                    ) : (
-                      <SendHorizontal className="h-4 w-4 mr-2" />
-                    )}
-                    Alle einreichen {hasAnyChanges() && `(${getChangedArticleCount()})`}
-                  </Button>
-                  {hasMissingAnnualValues && (
-                    <span className="text-xs text-destructive">
-                      {missingAnnualValueArticles.length} Artikel ohne Jahresumsatz
-                    </span>
+                <Button 
+                  onClick={handleSaveAll} 
+                  disabled={!hasAnyChanges() || savingAll || savingDraft}
+                  className="bg-primary"
+                >
+                  {savingAll ? (
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  ) : (
+                    <SendHorizontal className="h-4 w-4 mr-2" />
                   )}
-                </div>
+                  Alle einreichen {hasAnyChanges() && `(${getChangedArticleCount()})`}
+                </Button>
                 <Button onClick={() => setSuggestDialogOpen(true)} className="shrink-0" variant="outline">
                   <Plus className="h-4 w-4 mr-2" />
                   Neuen Artikel vorschlagen
@@ -886,44 +847,35 @@ const SupplierPortal = () => {
                               </div>
                             </TableCell>
                             <TableCell>
-                              {(() => {
-                                const isMissing = missingAnnualValueArticles.some(a => a.id === article.id);
-                                return (
-                                  <div className="space-y-1">
-                                    <Input
-                                      type="text"
-                                      inputMode="decimal"
-                                      value={annualOrderValueInputs[article.id] !== undefined 
-                                        ? annualOrderValueInputs[article.id]
-                                        : getPendingChangeForField(article.id, 'annual_order_value')?.new_value?.replace('.', ',') 
-                                          ?? (article.annual_order_value !== null ? String(article.annual_order_value).replace('.', ',') : '')}
-                                      onChange={(e) => {
-                                        setAnnualOrderValueInputs(prev => ({
-                                          ...prev,
-                                          [article.id]: e.target.value
-                                        }));
-                                      }}
-                                      className={cn(
-                                        "h-8",
-                                        hasPendingChange(article.id, 'annual_order_value') && "border-amber-500",
-                                        isMissing && "border-destructive ring-1 ring-destructive/30"
-                                      )}
-                                      placeholder="Pflichtfeld"
-                                    />
-                                    {isMissing && !getPendingChangeForField(article.id, 'annual_order_value') && (
-                                      <div className="text-xs text-destructive">Pflichtfeld</div>
-                                    )}
-                                    {getPendingChangeForField(article.id, 'annual_order_value') && (
-                                      <div className="text-xs">
-                                        <span className="text-amber-600">Ausstehend</span>
-                                        <span className="text-muted-foreground ml-1">
-                                          (vorher: {getPendingChangeForField(article.id, 'annual_order_value')?.old_value?.replace('.', ',') || '-'} €)
-                                        </span>
-                                      </div>
-                                    )}
+                              <div className="space-y-1">
+                                <Input
+                                  type="text"
+                                  inputMode="decimal"
+                                  value={annualOrderValueInputs[article.id] !== undefined 
+                                    ? annualOrderValueInputs[article.id]
+                                    : getPendingChangeForField(article.id, 'annual_order_value')?.new_value?.replace('.', ',') 
+                                      ?? (article.annual_order_value !== null ? String(article.annual_order_value).replace('.', ',') : '')}
+                                  onChange={(e) => {
+                                    setAnnualOrderValueInputs(prev => ({
+                                      ...prev,
+                                      [article.id]: e.target.value
+                                    }));
+                                  }}
+                                  className={cn(
+                                    "h-8",
+                                    hasPendingChange(article.id, 'annual_order_value') && "border-amber-500"
+                                  )}
+                                  placeholder="Optional"
+                                />
+                                {getPendingChangeForField(article.id, 'annual_order_value') && (
+                                  <div className="text-xs">
+                                    <span className="text-amber-600">Ausstehend</span>
+                                    <span className="text-muted-foreground ml-1">
+                                      (vorher: {getPendingChangeForField(article.id, 'annual_order_value')?.old_value?.replace('.', ',') || '-'} €)
+                                    </span>
                                   </div>
-                                );
-                              })()}
+                                )}
+                              </div>
                             </TableCell>
                             <TableCell>
                               <SupplierCategorySelect
@@ -972,7 +924,7 @@ const SupplierPortal = () => {
                       saving={saving}
                       units={units}
                       categories={categories}
-                      isMissingAnnualValue={missingAnnualValueArticles.some(a => a.id === article.id)}
+                      isMissingAnnualValue={false}
                       onFieldChange={handleFieldChange}
                       onPriceChange={(articleId, value) => {
                         setPriceInputs(prev => ({ ...prev, [articleId]: value }));
