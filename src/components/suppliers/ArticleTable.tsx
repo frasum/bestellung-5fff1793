@@ -107,7 +107,7 @@ export const ArticleTable = ({
             </CollapsibleTrigger>
             <CollapsibleContent>
               {/* 2-column grid for tablets, 1-column for mobile */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 pt-3">
+              <div className="grid grid-cols-1 gap-3 pt-3">
                 {group.articles?.map((article) => (
                   <ArticleCard
                     key={article.id}
