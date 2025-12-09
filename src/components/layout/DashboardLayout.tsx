@@ -78,7 +78,7 @@ export const DashboardLayout = ({
       <GlobalSearch />
       
       {/* Mobile Header */}
-      <header className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-card border-b border-border h-16 flex items-center justify-between px-4">
+      <header className="xl:hidden fixed top-0 left-0 right-0 z-50 bg-card border-b border-border h-16 flex items-center justify-between px-4">
         <Link to="/reports" className="flex items-center gap-2">
           <img src={logoImage} alt="Bestellung.pro" className="w-8 h-8 rounded-lg object-cover" />
           <span className="font-bold text-lg text-foreground">Bestellung.pro</span>
@@ -111,7 +111,7 @@ export const DashboardLayout = ({
       </header>
 
       {/* Desktop Top Bar */}
-      <div className="hidden lg:flex fixed top-0 left-64 right-0 z-30 h-14 bg-card/80 backdrop-blur-sm border-b border-border items-center justify-between px-6">
+      <div className="hidden xl:flex fixed top-0 left-64 right-0 z-30 h-14 bg-card/80 backdrop-blur-sm border-b border-border items-center justify-between px-6">
         <div className="flex items-center gap-4">
           <GlobalSearch />
         </div>
@@ -144,7 +144,7 @@ export const DashboardLayout = ({
       </div>
 
       {/* Sidebar */}
-      <aside className={cn('fixed top-0 left-0 z-40 h-full w-64 bg-card border-r border-border transition-transform duration-300', 'lg:translate-x-0', sidebarOpen ? 'translate-x-0' : '-translate-x-full')}>
+      <aside className={cn('fixed top-0 left-0 z-40 h-full w-64 bg-card border-r border-border transition-transform duration-300', 'xl:translate-x-0', sidebarOpen ? 'translate-x-0' : '-translate-x-full')}>
         <div className="flex flex-col h-full">
           {/* Logo */}
           <div className="h-16 flex items-center justify-between px-6 border-b border-border">
@@ -197,7 +197,7 @@ export const DashboardLayout = ({
                 <p className="text-sm font-medium text-foreground truncate">{user?.email}</p>
               </div>
             </div>
-            <div className="lg:hidden mb-2 flex items-center gap-2">
+            <div className="xl:hidden mb-2 flex items-center gap-2">
               <LanguageSwitcher variant="full" />
               <ThemeToggle />
             </div>
@@ -210,10 +210,10 @@ export const DashboardLayout = ({
       </aside>
 
       {/* Overlay */}
-      {sidebarOpen && <div className="fixed inset-0 bg-background/80 z-30 lg:hidden" onClick={() => setSidebarOpen(false)} />}
+      {sidebarOpen && <div className="fixed inset-0 bg-background/80 z-30 xl:hidden" onClick={() => setSidebarOpen(false)} />}
 
       {/* Main Content */}
-      <main className="lg:ml-64 pt-16 lg:pt-14 pb-20 lg:pb-0 min-h-screen">
+      <main className="xl:ml-64 pt-16 xl:pt-14 pb-20 xl:pb-0 min-h-screen">
         <div className="p-4 sm:p-6 lg:p-8">{children}</div>
       </main>
 
