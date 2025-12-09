@@ -74,7 +74,12 @@ export const ArticleCard = ({
         </div>
         <div className="text-right shrink-0">
           <p className="font-semibold text-foreground">€{Number(article.price).toFixed(2)}</p>
-          <p className="text-xs text-muted-foreground">/{article.unit}</p>
+          <p className="text-xs text-muted-foreground">
+            /{article.unit}
+            {article.packaging_unit && article.packaging_unit > 1 && (
+              <span className="ml-1 text-primary font-medium">({article.packaging_unit}er)</span>
+            )}
+          </p>
         </div>
       </div>
       

@@ -40,7 +40,7 @@ export const ArticleFormDialog = ({
 
   const form = useForm<ArticleFormData>({
     resolver: zodResolver(articleSchema),
-    defaultValues: { supplier_id: '', name: '', description: '', sku: '', unit: 'pcs', price: '', category: '' },
+    defaultValues: { supplier_id: '', name: '', description: '', sku: '', unit: 'pcs', price: '', category: '', packaging_unit: '' },
   });
 
   useEffect(() => {
@@ -53,9 +53,10 @@ export const ArticleFormDialog = ({
         unit: editingArticle.unit,
         price: String(editingArticle.price),
         category: editingArticle.category || '',
+        packaging_unit: editingArticle.packaging_unit ? String(editingArticle.packaging_unit) : '',
       });
     } else {
-      form.reset({ supplier_id: '', name: '', description: '', sku: '', unit: 'pcs', price: '', category: '' });
+      form.reset({ supplier_id: '', name: '', description: '', sku: '', unit: 'pcs', price: '', category: '', packaging_unit: '' });
     }
   }, [editingArticle, form]);
 
@@ -187,24 +188,38 @@ export const ArticleFormDialog = ({
               <Input id="article-sku" {...form.register('sku')} placeholder="TOM-001" />
             </div>
             <div className="space-y-2">
-              <Label>Kategorie</Label>
-              <Controller
-                name="category"
-                control={form.control}
-                render={({ field }) => (
-                  <Select onValueChange={field.onChange} value={field.value || ''}>
-                    <SelectTrigger className="bg-card">
-                      <SelectValue placeholder="Auswählen" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-card border border-border z-50">
-                      {categories.map((cat) => (
-                        <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
+              <Label htmlFor="article-packaging-unit">VPE</Label>
+              <Input 
+                id="article-packaging-unit" 
+                type="number" 
+                inputMode="numeric"
+                min="1"
+                {...form.register('packaging_unit')} 
+                placeholder="z.B. 6" 
               />
+              {form.formState.errors.packaging_unit && (
+                <p className="text-sm text-destructive">{form.formState.errors.packaging_unit.message}</p>
+              )}
             </div>
+          </div>
+          <div className="space-y-2">
+            <Label>Kategorie</Label>
+            <Controller
+              name="category"
+              control={form.control}
+              render={({ field }) => (
+                <Select onValueChange={field.onChange} value={field.value || ''}>
+                  <SelectTrigger className="bg-card">
+                    <SelectValue placeholder="Auswählen" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-card border border-border z-50">
+                    {categories.map((cat) => (
+                      <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            />
           </div>
           <div className="flex gap-3 pt-4">
             <Button type="button" variant="outline" className="flex-1" onClick={() => onOpenChange(false)}>

@@ -72,6 +72,7 @@ export type Database = {
           is_active: boolean
           name: string
           organization_id: string
+          packaging_unit: number | null
           price: number
           sku: string | null
           supplier_id: string
@@ -87,6 +88,7 @@ export type Database = {
           is_active?: boolean
           name: string
           organization_id: string
+          packaging_unit?: number | null
           price: number
           sku?: string | null
           supplier_id: string
@@ -102,6 +104,7 @@ export type Database = {
           is_active?: boolean
           name?: string
           organization_id?: string
+          packaging_unit?: number | null
           price?: number
           sku?: string | null
           supplier_id?: string
