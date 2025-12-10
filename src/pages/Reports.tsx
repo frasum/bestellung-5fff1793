@@ -50,6 +50,7 @@ const COLORS = ['hsl(var(--primary))', 'hsl(var(--accent))', 'hsl(142, 76%, 36%)
 // Quick Overview KPIs Component
 const QuickOverviewKPIs = () => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const { data: suppliers, isLoading: suppliersLoading } = useSuppliers();
   const { data: articles, isLoading: articlesLoading } = useArticles();
   const { data: orders, isLoading: ordersLoading } = useOrders();
@@ -90,25 +91,29 @@ const QuickOverviewKPIs = () => {
       label: t('reports.totalSuppliers', 'Lieferanten'), 
       value: kpis.activeSuppliers, 
       icon: Users,
-      format: 'number'
+      format: 'number',
+      href: '/suppliers'
     },
     { 
       label: t('reports.totalArticles', 'Artikel'), 
       value: kpis.activeArticles, 
       icon: Package,
-      format: 'number'
+      format: 'number',
+      href: '/suppliers?tab=articles'
     },
     { 
       label: t('reports.pendingOrders', 'Offene Bestellungen'), 
       value: kpis.pendingOrders, 
       icon: ShoppingCart,
-      format: 'number'
+      format: 'number',
+      href: '/orders'
     },
     { 
       label: t('reports.inventoryValue', 'Inventurwert'), 
       value: kpis.inventoryValue, 
       icon: ClipboardList,
-      format: 'currency'
+      format: 'currency',
+      href: '/reports?tab=inventory'
     },
   ];
 
@@ -117,7 +122,11 @@ const QuickOverviewKPIs = () => {
       <h3 className="text-lg font-semibold">{t('reports.quickOverview', 'Schnellübersicht')}</h3>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {kpiCards.map((kpi) => (
-          <Card key={kpi.label} className="relative overflow-hidden">
+          <Card 
+            key={kpi.label} 
+            className="relative overflow-hidden cursor-pointer transition-colors hover:bg-muted/50"
+            onClick={() => navigate(kpi.href)}
+          >
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div className="space-y-1">
