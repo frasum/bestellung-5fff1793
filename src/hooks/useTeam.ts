@@ -24,6 +24,8 @@ export const useTeamMembers = () => {
 
   return useQuery({
     queryKey: ['team-members'],
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes cache
     queryFn: async () => {
       // Get current user's organization
       const { data: profile } = await supabase
@@ -110,6 +112,8 @@ export const useTeamInvitations = () => {
 
   return useQuery({
     queryKey: ['team-invitations'],
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes cache
     queryFn: async () => {
       const { data, error } = await supabase
         .from('team_invitations')
@@ -220,6 +224,8 @@ export const useUserRole = () => {
 
   return useQuery({
     queryKey: ['user-role', user?.id],
+    staleTime: 10 * 60 * 1000, // 10 minutes (role changes rarely)
+    gcTime: 15 * 60 * 1000, // 15 minutes cache
     queryFn: async () => {
       const { data, error } = await supabase
         .from('user_roles')
