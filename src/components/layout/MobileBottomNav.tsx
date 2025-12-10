@@ -14,8 +14,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useTranslation } from 'react-i18next';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { useHasRole } from '@/hooks/useUserRole';
-import { usePendingSubmissionsCount } from '@/hooks/useEmployeeSubmissions';
 
 const mainNavItems = [
   { href: '/suppliers', label: 'Katalog', icon: Users },
@@ -33,16 +31,9 @@ export const MobileBottomNav = () => {
   const { t } = useTranslation();
   const [sheetOpen, setSheetOpen] = useState(false);
   const itemCount = getItemCount();
-  const { hasRole: canSeeAllSubmissions } = useHasRole(['admin', 'manager']);
-  const { data: pendingCount = 0 } = usePendingSubmissionsCount();
 
   const moreNavItems = [
-    { 
-      href: '/orders', 
-      label: t('nav.orders'), 
-      icon: ShoppingCart,
-      badge: canSeeAllSubmissions && pendingCount > 0 ? pendingCount : undefined,
-    },
+    { href: '/orders', label: t('nav.orders'), icon: ShoppingCart },
     { href: '/settings', label: t('nav.settings'), icon: Settings },
   ];
 
@@ -127,11 +118,6 @@ export const MobileBottomNav = () => {
                   >
                     <Icon className="w-5 h-5 md:w-6 md:h-6" />
                     <span className="font-medium flex-1">{item.label}</span>
-                    {'badge' in item && item.badge && (
-                      <Badge variant="destructive" className="h-5 min-w-5 md:h-6 md:min-w-6 flex items-center justify-center text-xs">
-                        {item.badge}
-                      </Badge>
-                    )}
                   </Link>
                 );
               })}
