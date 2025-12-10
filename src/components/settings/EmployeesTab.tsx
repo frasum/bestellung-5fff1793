@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Plus, Pencil, Trash2, Phone, Mail, User, UserCheck, UserX, MapPin, ChevronDown, ChevronRight, Package } from 'lucide-react';
+import { Plus, Pencil, Trash2, Phone, Mail, User, UserCheck, UserX, MapPin, ChevronDown, ChevronRight, Package, QrCode, Copy, MessageCircle, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -27,13 +27,20 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
   useEmployees,
   useCreateEmployee,
   useUpdateEmployee,
   useDeleteEmployee,
   Employee,
 } from '@/hooks/useEmployees';
-import { useSimpleOrderTokens } from '@/hooks/useSimpleOrderTokens';
+import { useSimpleOrderTokens, useCreateSimpleOrderToken, useUpdateSimpleOrderToken, useDeleteSimpleOrderToken } from '@/hooks/useSimpleOrderTokens';
 import { useLocations } from '@/hooks/useLocations';
 import { useSuppliers } from '@/hooks/useSuppliers';
 import { useAllEmployeeLocations, useUpdateEmployeeLocations } from '@/hooks/useEmployeeLocations';
@@ -42,7 +49,14 @@ import {
   useUpdateEmployeeLocationSuppliers,
   LocationSupplierAssignment 
 } from '@/hooks/useEmployeeLocationSuppliers';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { useToast } from '@/hooks/use-toast';
+
+const LANGUAGES = [
+  { code: 'th', name: 'ไทย (Thai)' },
+  { code: 'de', name: 'Deutsch' },
+  { code: 'en', name: 'English' },
+  { code: 'vi', name: 'Tiếng Việt' },
+];
 
 interface LocationAssignment {
   locationId: string;
@@ -52,6 +66,7 @@ interface LocationAssignment {
 
 export function EmployeesTab() {
   const { t } = useTranslation();
+  const { toast } = useToast();
   const { data: employees = [], isLoading } = useEmployees();
   const { data: tokens = [] } = useSimpleOrderTokens();
   const { data: locations = [] } = useLocations();
@@ -63,17 +78,22 @@ export function EmployeesTab() {
   const deleteEmployee = useDeleteEmployee();
   const updateEmployeeLocations = useUpdateEmployeeLocations();
   const updateEmployeeLocationSuppliers = useUpdateEmployeeLocationSuppliers();
+  const createToken = useCreateSimpleOrderToken();
+  const updateToken = useUpdateSimpleOrderToken();
+  const deleteToken = useDeleteSimpleOrderToken();
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
   const [deleteConfirmEmployee, setDeleteConfirmEmployee] = useState<Employee | null>(null);
   const [expandedLocations, setExpandedLocations] = useState<Set<string>>(new Set());
+  const [qrDialogEmployee, setQrDialogEmployee] = useState<Employee | null>(null);
 
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
     email: '',
     notes: '',
+    language: 'th',
   });
   
   // New structure: location -> suppliers mapping
@@ -119,21 +139,54 @@ export function EmployeesTab() {
 
   const openCreateDialog = () => {
     setEditingEmployee(null);
-    setFormData({ name: '', phone: '', email: '', notes: '' });
+    setFormData({ name: '', phone: '', email: '', notes: '', language: 'th' });
     initializeLocationAssignments();
     setIsDialogOpen(true);
   };
 
   const openEditDialog = (employee: Employee) => {
     setEditingEmployee(employee);
+    // Get existing token language if available
+    const existingToken = getTokenForEmployee(employee.id);
     setFormData({
       name: employee.name,
       phone: employee.phone || '',
       email: employee.email || '',
       notes: employee.notes || '',
+      language: existingToken?.language || 'th',
     });
     initializeLocationAssignments(employee.id);
     setIsDialogOpen(true);
+  };
+
+  // Get or create token for employee
+  const getTokenForEmployee = (employeeId: string) => {
+    return tokens.find(t => t.employee_id === employeeId);
+  };
+
+  const getOrderUrl = (token: string) => {
+    return `https://bestellung.pro/simple-order/${token}`;
+  };
+
+  const copyToClipboard = (token: string) => {
+    navigator.clipboard.writeText(getOrderUrl(token));
+    toast({
+      title: 'Link kopiert',
+      description: 'Der Bestelllink wurde in die Zwischenablage kopiert.',
+    });
+  };
+
+  const openWhatsApp = (employee: Employee, token: string) => {
+    if (!employee.phone) return;
+    const url = getOrderUrl(token);
+    const message = encodeURIComponent(`Hallo ${employee.name}, hier ist dein Bestelllink: ${url}`);
+    const phone = employee.phone.replace(/\D/g, '');
+    window.open(`https://wa.me/${phone}?text=${message}`, '_blank');
+  };
+
+  const generateQrCodeUrl = (token: string) => {
+    const url = encodeURIComponent(getOrderUrl(token));
+    return `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${url}`;
   };
 
   const handleSubmit = async () => {
@@ -149,6 +202,9 @@ export function EmployeesTab() {
         locationId: a.locationId,
         supplierIds: a.supplierIds,
       }));
+
+    // Get all unique supplier IDs across all locations
+    const allSupplierIds = [...new Set(supplierAssignments.flatMap(a => a.supplierIds))];
 
     if (editingEmployee) {
       await updateEmployee.mutateAsync({
@@ -168,6 +224,40 @@ export function EmployeesTab() {
         employeeId: editingEmployee.id,
         assignments: supplierAssignments,
       });
+
+      // Update or create token for this employee
+      const existingToken = getTokenForEmployee(editingEmployee.id);
+      if (allSupplierIds.length > 0) {
+        const supplierNames = allSupplierIds
+          .map(id => suppliers.find(s => s.id === id)?.name)
+          .filter(Boolean)
+          .join(', ');
+        const label = supplierNames || formData.name;
+
+        if (existingToken) {
+          await updateToken.mutateAsync({
+            id: existingToken.id,
+            label,
+            language: formData.language,
+            is_multi_supplier: allSupplierIds.length > 1,
+            supplier_id: allSupplierIds.length === 1 ? allSupplierIds[0] : null,
+            supplier_ids: allSupplierIds.length > 1 ? allSupplierIds : [],
+            employee_id: editingEmployee.id,
+          });
+        } else {
+          await createToken.mutateAsync({
+            label,
+            language: formData.language,
+            is_multi_supplier: allSupplierIds.length > 1,
+            supplier_id: allSupplierIds.length === 1 ? allSupplierIds[0] : undefined,
+            supplier_ids: allSupplierIds.length > 1 ? allSupplierIds : undefined,
+            employee_id: editingEmployee.id,
+          });
+        }
+      } else if (existingToken) {
+        // No suppliers assigned, delete token
+        await deleteToken.mutateAsync(existingToken.id);
+      }
     } else {
       const newEmployee = await createEmployee.mutateAsync({
         name: formData.name,
@@ -185,6 +275,24 @@ export function EmployeesTab() {
           employeeId: newEmployee.id,
           assignments: supplierAssignments,
         });
+
+        // Create token for new employee if suppliers assigned
+        if (allSupplierIds.length > 0) {
+          const supplierNames = allSupplierIds
+            .map(id => suppliers.find(s => s.id === id)?.name)
+            .filter(Boolean)
+            .join(', ');
+          const label = supplierNames || formData.name;
+
+          await createToken.mutateAsync({
+            label,
+            language: formData.language,
+            is_multi_supplier: allSupplierIds.length > 1,
+            supplier_id: allSupplierIds.length === 1 ? allSupplierIds[0] : undefined,
+            supplier_ids: allSupplierIds.length > 1 ? allSupplierIds : undefined,
+            employee_id: newEmployee.id,
+          });
+        }
       }
     }
     setIsDialogOpen(false);
@@ -199,16 +307,14 @@ export function EmployeesTab() {
 
   const handleDelete = async () => {
     if (deleteConfirmEmployee) {
+      // Delete associated token first
+      const token = getTokenForEmployee(deleteConfirmEmployee.id);
+      if (token) {
+        await deleteToken.mutateAsync(token.id);
+      }
       await deleteEmployee.mutateAsync(deleteConfirmEmployee.id);
       setDeleteConfirmEmployee(null);
     }
-  };
-
-  const getTokenCountForEmployee = (employeeId: string) => {
-    return tokens.filter(t => {
-      const tokenEmployeeId = (t as any).employee_id || (t as any).employee?.id;
-      return tokenEmployeeId === employeeId;
-    }).length;
   };
 
   const getEmployeeLocationSuppliersInfo = (employeeId: string) => {
@@ -317,7 +423,7 @@ export function EmployeesTab() {
         <div>
           <h3 className="text-lg font-medium">Bestellberechtigte Mitarbeiter</h3>
           <p className="text-sm text-muted-foreground">
-            Verwalte Mitarbeiter, die über Easy Order bestellen dürfen
+            Verwalte Mitarbeiter und ihre Easy Order Zugänge
           </p>
         </div>
         <Button onClick={openCreateDialog} size="sm">
@@ -344,14 +450,16 @@ export function EmployeesTab() {
           <User className="h-12 w-12 mx-auto mb-4 opacity-50" />
           <p>Noch keine Mitarbeiter angelegt</p>
           <p className="text-sm mt-1">
-            Füge Mitarbeiter hinzu, um ihnen Easy Order Links zuzuweisen
+            Füge Mitarbeiter hinzu, um ihnen Easy Order Zugänge zu erstellen
           </p>
         </div>
       ) : (
         <div className="space-y-2">
           {employees.map((employee) => {
-            const tokenCount = getTokenCountForEmployee(employee.id);
+            const token = getTokenForEmployee(employee.id);
             const locationSuppliersInfo = getEmployeeLocationSuppliersInfo(employee.id);
+            const hasAssignments = locationSuppliersInfo.some(info => info.supplierNames.length > 0);
+            
             return (
               <div
                 key={employee.id}
@@ -359,16 +467,17 @@ export function EmployeesTab() {
                   !employee.is_active ? 'opacity-60 bg-muted/30' : ''
                 }`}
               >
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className="font-medium">{employee.name}</span>
                       {!employee.is_active && (
                         <Badge variant="secondary">Inaktiv</Badge>
                       )}
-                      {tokenCount > 0 && (
-                        <Badge variant="outline">
-                          {tokenCount} {tokenCount === 1 ? 'Link' : 'Links'}
+                      {token && (
+                        <Badge variant="outline" className="text-green-600 border-green-600">
+                          <QrCode className="h-3 w-3 mr-1" />
+                          Link aktiv
                         </Badge>
                       )}
                     </div>
@@ -412,7 +521,39 @@ export function EmployeesTab() {
                       </p>
                     )}
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1 flex-shrink-0">
+                    {/* QR/Link Buttons - only show if token exists */}
+                    {token && (
+                      <>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => setQrDialogEmployee(employee)}
+                          title="QR-Code anzeigen"
+                        >
+                          <QrCode className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => copyToClipboard(token.token)}
+                          title="Link kopieren"
+                        >
+                          <Copy className="h-4 w-4" />
+                        </Button>
+                        {employee.phone && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => openWhatsApp(employee, token.token)}
+                            title="Per WhatsApp senden"
+                          >
+                            <MessageCircle className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </>
+                    )}
+                    <div className="w-px h-6 bg-border mx-1" />
                     <Switch
                       checked={employee.is_active}
                       onCheckedChange={() => handleToggleActive(employee)}
@@ -479,6 +620,26 @@ export function EmployeesTab() {
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   placeholder="mitarbeiter@example.com"
                 />
+              </div>
+
+              {/* Language Selection */}
+              <div>
+                <Label>Sprache für Easy Order</Label>
+                <Select
+                  value={formData.language}
+                  onValueChange={(value) => setFormData({ ...formData, language: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {LANGUAGES.map((lang) => (
+                      <SelectItem key={lang.code} value={lang.code}>
+                        {lang.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               {/* Location + Supplier Assignment */}
@@ -613,6 +774,56 @@ export function EmployeesTab() {
         </DialogContent>
       </Dialog>
 
+      {/* QR Code Dialog */}
+      <Dialog open={!!qrDialogEmployee} onOpenChange={() => setQrDialogEmployee(null)}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>QR-Code für {qrDialogEmployee?.name}</DialogTitle>
+          </DialogHeader>
+          {qrDialogEmployee && (() => {
+            const token = getTokenForEmployee(qrDialogEmployee.id);
+            if (!token) return <p className="text-muted-foreground">Kein Link vorhanden</p>;
+            return (
+              <div className="flex flex-col items-center gap-4">
+                <img
+                  src={generateQrCodeUrl(token.token)}
+                  alt="QR Code"
+                  className="w-64 h-64 border rounded-lg"
+                />
+                <div className="flex gap-2 w-full">
+                  <Button
+                    variant="outline"
+                    className="flex-1"
+                    onClick={() => copyToClipboard(token.token)}
+                  >
+                    <Copy className="h-4 w-4 mr-2" />
+                    Link kopieren
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="flex-1"
+                    onClick={() => window.open(getOrderUrl(token.token), '_blank')}
+                  >
+                    <ExternalLink className="h-4 w-4 mr-2" />
+                    Öffnen
+                  </Button>
+                </div>
+                {qrDialogEmployee.phone && (
+                  <Button
+                    variant="secondary"
+                    className="w-full"
+                    onClick={() => openWhatsApp(qrDialogEmployee, token.token)}
+                  >
+                    <MessageCircle className="h-4 w-4 mr-2" />
+                    Per WhatsApp senden
+                  </Button>
+                )}
+              </div>
+            );
+          })()}
+        </DialogContent>
+      </Dialog>
+
       {/* Delete Confirmation */}
       <AlertDialog
         open={!!deleteConfirmEmployee}
@@ -622,8 +833,7 @@ export function EmployeesTab() {
           <AlertDialogHeader>
             <AlertDialogTitle>Mitarbeiter löschen?</AlertDialogTitle>
             <AlertDialogDescription>
-              {deleteConfirmEmployee?.name} wird gelöscht. Zugewiesene Easy Order Links
-              bleiben bestehen, verlieren aber die Mitarbeiter-Zuordnung.
+              {deleteConfirmEmployee?.name} und der zugehörige Easy Order Link werden gelöscht.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
