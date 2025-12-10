@@ -71,7 +71,7 @@ export function EmployeesTab() {
   const { data: tokens = [], isLoading: isLoadingTokens } = useSimpleOrderTokens();
   const { data: locations = [] } = useLocations();
   const { data: suppliers = [], isLoading: isLoadingSuppliers } = useSuppliers();
-  const { data: employeeLocations = [] } = useAllEmployeeLocations();
+  const { data: employeeLocations = [], isLoading: isLoadingEmployeeLocations } = useAllEmployeeLocations();
   const { data: employeeLocationSuppliers = [], isLoading: isLoadingELS } = useAllEmployeeLocationSuppliers();
   const createEmployee = useCreateEmployee();
   const updateEmployee = useUpdateEmployee();
@@ -472,7 +472,7 @@ export function EmployeesTab() {
     });
   };
 
-  if (isLoading) {
+  if (isLoading || isLoadingTokens || isLoadingEmployeeLocations || isLoadingELS || isLoadingSuppliers) {
     return <div className="p-4 text-muted-foreground">Laden...</div>;
   }
 
