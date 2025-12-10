@@ -8,8 +8,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
+import { Checkbox } from '@/components/ui/checkbox';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { Plus, QrCode, Trash2, Copy, ExternalLink, Smartphone } from 'lucide-react';
+import { Plus, QrCode, Trash2, Copy, ExternalLink, Smartphone, Users } from 'lucide-react';
 import { useSuppliers } from '@/hooks/useSuppliers';
 import { useLocations } from '@/hooks/useLocations';
 import { useSimpleOrderTokens, useCreateSimpleOrderToken, useUpdateSimpleOrderToken, useDeleteSimpleOrderToken } from '@/hooks/useSimpleOrderTokens';
@@ -34,6 +35,8 @@ export function SimpleOrderTab() {
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedQrToken, setSelectedQrToken] = useState<string | null>(null);
+  const [isMultiSupplier, setIsMultiSupplier] = useState(false);
+  const [selectedSupplierIds, setSelectedSupplierIds] = useState<string[]>([]);
   const [formData, setFormData] = useState({
     supplier_id: '',
     location_id: '',
@@ -42,24 +45,45 @@ export function SimpleOrderTab() {
   });
 
   const handleCreate = async () => {
-    if (!formData.supplier_id || !formData.label) {
-      toast({
-        title: 'Fehler',
-        description: 'Bitte Lieferant und Bezeichnung angeben',
-        variant: 'destructive',
-      });
-      return;
-    }
+    if (isMultiSupplier) {
+      if (selectedSupplierIds.length === 0 || !formData.label) {
+        toast({
+          title: 'Fehler',
+          description: 'Bitte mindestens einen Lieferanten und eine Bezeichnung angeben',
+          variant: 'destructive',
+        });
+        return;
+      }
 
-    await createToken.mutateAsync({
-      supplier_id: formData.supplier_id,
-      location_id: formData.location_id || null,
-      label: formData.label,
-      language: formData.language,
-    });
+      await createToken.mutateAsync({
+        supplier_ids: selectedSupplierIds,
+        location_id: formData.location_id || null,
+        label: formData.label,
+        language: formData.language,
+        is_multi_supplier: true,
+      });
+    } else {
+      if (!formData.supplier_id || !formData.label) {
+        toast({
+          title: 'Fehler',
+          description: 'Bitte Lieferant und Bezeichnung angeben',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      await createToken.mutateAsync({
+        supplier_id: formData.supplier_id,
+        location_id: formData.location_id || null,
+        label: formData.label,
+        language: formData.language,
+      });
+    }
 
     setIsDialogOpen(false);
     setFormData({ supplier_id: '', location_id: '', label: '', language: 'th' });
+    setSelectedSupplierIds([]);
+    setIsMultiSupplier(false);
   };
 
   const getOrderUrl = (token: string) => {
@@ -80,6 +104,21 @@ export function SimpleOrderTab() {
     return `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${url}`;
   };
 
+  const toggleSupplierSelection = (supplierId: string) => {
+    setSelectedSupplierIds(prev => 
+      prev.includes(supplierId)
+        ? prev.filter(id => id !== supplierId)
+        : [...prev, supplierId]
+    );
+  };
+
+  const getSupplierNames = (token: any) => {
+    if (token.is_multi_supplier && token.token_suppliers) {
+      return token.token_suppliers.map((ts: any) => ts.supplier?.name).filter(Boolean).join(', ');
+    }
+    return token.supplier?.name || '';
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -93,14 +132,21 @@ export function SimpleOrderTab() {
               {t('settings.simpleOrder.description', 'QR-Codes für Mitarbeiter zum einfachen Bestellen erstellen')}
             </CardDescription>
           </div>
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <Dialog open={isDialogOpen} onOpenChange={(open) => {
+            setIsDialogOpen(open);
+            if (!open) {
+              setIsMultiSupplier(false);
+              setSelectedSupplierIds([]);
+              setFormData({ supplier_id: '', location_id: '', label: '', language: 'th' });
+            }
+          }}>
             <DialogTrigger asChild>
               <Button>
                 <Plus className="h-4 w-4 mr-2" />
                 {t('settings.simpleOrder.createLink', 'Neuen Link erstellen')}
               </Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className="max-w-md">
               <DialogHeader>
                 <DialogTitle>{t('settings.simpleOrder.createTitle', 'Bestelllink erstellen')}</DialogTitle>
                 <DialogDescription>
@@ -108,24 +154,74 @@ export function SimpleOrderTab() {
                 </DialogDescription>
               </DialogHeader>
               <div className="space-y-4 py-4">
-                <div className="space-y-2">
-                  <Label>{t('settings.simpleOrder.supplier', 'Lieferant')} *</Label>
-                  <Select
-                    value={formData.supplier_id}
-                    onValueChange={(value) => setFormData(prev => ({ ...prev, supplier_id: value }))}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder={t('settings.simpleOrder.selectSupplier', 'Lieferant auswählen')} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {suppliers?.map((supplier) => (
-                        <SelectItem key={supplier.id} value={supplier.id}>
-                          {supplier.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                {/* Multi-Supplier Toggle */}
+                <div className="flex items-center justify-between rounded-lg border p-4">
+                  <div className="space-y-0.5">
+                    <Label className="font-medium flex items-center gap-2">
+                      <Users className="h-4 w-4" />
+                      Multi-Lieferanten
+                    </Label>
+                    <p className="text-sm text-muted-foreground">
+                      Ein QR-Code für mehrere Lieferanten
+                    </p>
+                  </div>
+                  <Switch
+                    checked={isMultiSupplier}
+                    onCheckedChange={(checked) => {
+                      setIsMultiSupplier(checked);
+                      if (!checked) {
+                        setSelectedSupplierIds([]);
+                      } else {
+                        setFormData(prev => ({ ...prev, supplier_id: '' }));
+                      }
+                    }}
+                  />
                 </div>
+
+                {/* Supplier Selection */}
+                {isMultiSupplier ? (
+                  <div className="space-y-2">
+                    <Label>Lieferanten auswählen *</Label>
+                    <div className="border rounded-lg max-h-48 overflow-y-auto">
+                      {suppliers?.map((supplier) => (
+                        <label
+                          key={supplier.id}
+                          className="flex items-center gap-3 p-3 hover:bg-muted/50 cursor-pointer border-b last:border-b-0"
+                        >
+                          <Checkbox
+                            checked={selectedSupplierIds.includes(supplier.id)}
+                            onCheckedChange={() => toggleSupplierSelection(supplier.id)}
+                          />
+                          <span className="flex-1">{supplier.name}</span>
+                        </label>
+                      ))}
+                    </div>
+                    {selectedSupplierIds.length > 0 && (
+                      <p className="text-sm text-muted-foreground">
+                        {selectedSupplierIds.length} Lieferanten ausgewählt
+                      </p>
+                    )}
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <Label>{t('settings.simpleOrder.supplier', 'Lieferant')} *</Label>
+                    <Select
+                      value={formData.supplier_id}
+                      onValueChange={(value) => setFormData(prev => ({ ...prev, supplier_id: value }))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder={t('settings.simpleOrder.selectSupplier', 'Lieferant auswählen')} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {suppliers?.map((supplier) => (
+                          <SelectItem key={supplier.id} value={supplier.id}>
+                            {supplier.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
 
                 <div className="space-y-2">
                   <Label>{t('settings.simpleOrder.location', 'Standort')} ({t('common.optional', 'optional')})</Label>
@@ -210,7 +306,14 @@ export function SimpleOrderTab() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                       <h3 className="font-semibold">{token.label}</h3>
-                      <Badge variant="outline">{token.supplier?.name}</Badge>
+                      {token.is_multi_supplier ? (
+                        <Badge variant="outline" className="flex items-center gap-1">
+                          <Users className="h-3 w-3" />
+                          {token.token_suppliers?.length || 0} Lieferanten
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline">{token.supplier?.name}</Badge>
+                      )}
                       {token.location && (
                         <Badge variant="secondary">{token.location.name}</Badge>
                       )}
@@ -218,6 +321,11 @@ export function SimpleOrderTab() {
                         {token.is_active ? 'Aktiv' : 'Inaktiv'}
                       </Badge>
                     </div>
+                    {token.is_multi_supplier && token.token_suppliers && (
+                      <p className="text-sm text-muted-foreground mt-1">
+                        {getSupplierNames(token)}
+                      </p>
+                    )}
                     <p className="text-sm text-muted-foreground mt-1">
                       {LANGUAGES.find(l => l.code === token.language)?.name || token.language}
                     </p>
@@ -249,7 +357,10 @@ export function SimpleOrderTab() {
                         <DialogHeader>
                           <DialogTitle>QR-Code: {token.label}</DialogTitle>
                           <DialogDescription>
-                            Scannen Sie diesen QR-Code zum Bestellen bei {token.supplier?.name}
+                            {token.is_multi_supplier 
+                              ? `Scannen Sie diesen QR-Code zum Bestellen bei ${token.token_suppliers?.length || 0} Lieferanten`
+                              : `Scannen Sie diesen QR-Code zum Bestellen bei ${token.supplier?.name}`
+                            }
                           </DialogDescription>
                         </DialogHeader>
                         <div className="flex justify-center p-4">
@@ -273,13 +384,16 @@ export function SimpleOrderTab() {
                             onClick={() => {
                               const printWindow = window.open('', '_blank');
                               if (printWindow) {
+                                const supplierInfo = token.is_multi_supplier 
+                                  ? `${token.token_suppliers?.length || 0} Lieferanten`
+                                  : token.supplier?.name || '';
                                 printWindow.document.write(`
                                   <html>
                                     <head><title>QR-Code: ${token.label}</title></head>
                                     <body style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;margin:0;font-family:sans-serif;">
                                       <h1 style="margin-bottom:20px;">${token.label}</h1>
                                       <img src="${generateQrCodeUrl(token.token)}" style="width:300px;height:300px;" />
-                                      <p style="margin-top:20px;color:#666;">${token.supplier?.name}</p>
+                                      <p style="margin-top:20px;color:#666;">${supplierInfo}</p>
                                     </body>
                                   </html>
                                 `);
