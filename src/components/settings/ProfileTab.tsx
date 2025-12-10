@@ -1,13 +1,15 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { Lock } from 'lucide-react';
-import { useUserProfile, useUpdateUserProfile, useUpdatePassword } from '@/hooks/useSettings';
-
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Lock, MapPin } from 'lucide-react';
+import { useUserProfile, useUpdateUserProfile, useUpdatePassword, useDeliveryAddresses } from '@/hooks/useSettings';
+import { useLocationContext } from '@/contexts/LocationContext';
+import { useUserDeliveryPreference, useUpsertUserDeliveryPreference } from '@/hooks/useUserDeliveryPreference';
 const AdvancedSettingsSwitch = () => {
   const { t } = useTranslation();
   const [advancedMode, setAdvancedMode] = useState(() => 
@@ -48,6 +50,23 @@ export const ProfileTab = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [passwordError, setPasswordError] = useState('');
 
+  // Delivery address preference
+  const { activeLocation } = useLocationContext();
+  const { data: addresses = [] } = useDeliveryAddresses(activeLocation?.id);
+  const { data: preference } = useUserDeliveryPreference();
+  const upsertPreference = useUpsertUserDeliveryPreference();
+  const [selectedAddressId, setSelectedAddressId] = useState<string>('');
+
+  useEffect(() => {
+    if (preference?.delivery_address_id) {
+      setSelectedAddressId(preference.delivery_address_id);
+    }
+  }, [preference]);
+
+  const handleAddressChange = (addressId: string) => {
+    setSelectedAddressId(addressId);
+    upsertPreference.mutate(addressId);
+  };
   const handleProfileSave = () => {
     if (fullName.trim()) {
       updateProfile.mutate({ full_name: fullName.trim() });
@@ -117,6 +136,37 @@ export const ProfileTab = () => {
           </Button>
 
           <AdvancedSettingsSwitch />
+        </CardContent>
+      </Card>
+
+      {/* Default Delivery Address Card */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <MapPin className="h-5 w-5" />
+            {t('settings.defaultDeliveryAddress')}
+          </CardTitle>
+          <CardDescription>
+            {t('settings.defaultDeliveryAddressDesc', { location: activeLocation?.short_code || activeLocation?.name || '' })}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {addresses.length > 0 ? (
+            <Select value={selectedAddressId} onValueChange={handleAddressChange}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder={t('settings.selectDefaultAddress')} />
+              </SelectTrigger>
+              <SelectContent>
+                {addresses.map((address) => (
+                  <SelectItem key={address.id} value={address.id}>
+                    {address.label} - {address.address_line1}, {address.city}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          ) : (
+            <p className="text-sm text-muted-foreground">{t('settings.noAddressesForLocation')}</p>
+          )}
         </CardContent>
       </Card>
 
