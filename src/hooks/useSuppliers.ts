@@ -12,8 +12,6 @@ export interface Supplier {
   contact_person: string | null;
   customer_number: string | null;
   minimum_order_value: number | null;
-  main_category: string | null;
-  top_category: string | null;
   is_active: boolean;
   created_at: string;
   updated_at: string;
