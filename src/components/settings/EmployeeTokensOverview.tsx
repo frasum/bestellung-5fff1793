@@ -7,7 +7,7 @@ import { Switch } from '@/components/ui/switch';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { User, ChevronDown, ChevronRight, Copy, QrCode, Pencil, Trash2, ExternalLink, Printer, Package, Link2, Phone, Mail } from 'lucide-react';
+import { User, ChevronDown, ChevronRight, Copy, QrCode, Pencil, Trash2, ExternalLink, Printer, Package, Link2, Phone, Mail, MessageCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface EmployeeTokensOverviewProps {
@@ -105,6 +105,14 @@ export function EmployeeTokensOverview({ tokens, onEdit, onToggleActive, onDelet
       title: 'Link kopiert',
       description: 'Der Link wurde in die Zwischenablage kopiert.',
     });
+  };
+
+  const sendViaWhatsApp = (token: string, phone: string, employeeName: string) => {
+    // Clean phone number: remove spaces, dashes, and ensure international format
+    const cleanPhone = phone.replace(/[\s\-()]/g, '').replace(/^0/, '49');
+    const orderUrl = getOrderUrl(token);
+    const message = encodeURIComponent(`Hallo ${employeeName}, hier ist dein Bestelllink:\n${orderUrl}`);
+    window.open(`https://wa.me/${cleanPhone}?text=${message}`, '_blank');
   };
 
   const getLinkedSupplierNames = (token: any) => {
@@ -286,6 +294,17 @@ export function EmployeeTokensOverview({ tokens, onEdit, onToggleActive, onDelet
                               <Button variant="ghost" size="icon" onClick={() => copyToClipboard(token.token)} title="Link kopieren">
                                 <Copy className="h-4 w-4" />
                               </Button>
+                              {token.employee?.phone && (
+                                <Button 
+                                  variant="ghost" 
+                                  size="icon" 
+                                  onClick={() => sendViaWhatsApp(token.token, token.employee.phone, employeeName)}
+                                  title="Per WhatsApp senden"
+                                  className="text-green-600 hover:text-green-700 hover:bg-green-50"
+                                >
+                                  <MessageCircle className="h-4 w-4" />
+                                </Button>
+                              )}
                               <Button variant="ghost" size="icon" onClick={() => setSelectedQrToken(token.token)} title="QR-Code">
                                 <QrCode className="h-4 w-4" />
                               </Button>
