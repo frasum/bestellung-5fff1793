@@ -234,7 +234,7 @@ const Suppliers = () => {
     }
   };
 
-  const handlePrintCombined = () => {
+  const handlePrintCombined = async () => {
     const selectedSuppliersData = suppliers?.filter(s => selectedSuppliers.has(s.id)) || [];
     // Enrich articles with last order quantities
     const enrichedArticlesBySupplier = Object.fromEntries(
@@ -250,7 +250,7 @@ const Suppliers = () => {
         }))
       ])
     );
-    generateCombinedOrderListPdf(selectedSuppliersData, enrichedArticlesBySupplier);
+    await generateCombinedOrderListPdf(selectedSuppliersData, enrichedArticlesBySupplier);
     setSelectedSuppliers(new Set());
   };
 
@@ -554,7 +554,7 @@ const Suppliers = () => {
                 onSendInvitation={handleSendInvitation}
                 onShowChanges={setChangesDialogSupplier}
                 onShowLocations={setLocationsDialogSupplier}
-                onPrintOrderList={(supplier, articles) => generateOrderListPdf(supplier, articles.map(a => ({
+                onPrintOrderList={async (supplier, articles) => await generateOrderListPdf(supplier, articles.map(a => ({
                   name: a.name,
                   unit: a.unit,
                   sku: a.sku,

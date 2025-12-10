@@ -2,6 +2,7 @@ import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
+import { loadNotoSansThaiFont } from './fonts/loadNotoSansThai';
 
 interface OrderListArticle {
   name: string;
@@ -17,21 +18,37 @@ interface OrderListSupplier {
   name: string;
 }
 
-export const generateOrderListPdf = (
+// Helper to register Thai-compatible font
+const registerThaiFont = async (doc: jsPDF) => {
+  try {
+    const fontBase64 = await loadNotoSansThaiFont();
+    doc.addFileToVFS('NotoSansThai-Regular.ttf', fontBase64);
+    doc.addFont('NotoSansThai-Regular.ttf', 'NotoSansThai', 'normal');
+    return true;
+  } catch (error) {
+    console.error('Could not load Thai font, falling back to Helvetica:', error);
+    return false;
+  }
+};
+
+export const generateOrderListPdf = async (
   supplier: OrderListSupplier,
   articles: OrderListArticle[]
 ) => {
   const doc = new jsPDF();
   const today = format(new Date(), 'dd.MM.yyyy', { locale: de });
   
+  // Register Thai font
+  const hasThai = await registerThaiFont(doc);
+  const fontName = hasThai ? 'NotoSansThai' : 'helvetica';
+  
   // Header
   doc.setFontSize(20);
-  doc.setFont('helvetica', 'bold');
+  doc.setFont(fontName, 'normal');
   doc.text(`Bestellliste - ${supplier.name}`, 14, 20);
   
   // Date
   doc.setFontSize(11);
-  doc.setFont('helvetica', 'normal');
   doc.text(`Datum: ${today}`, 14, 30);
   
   // Supplier info
@@ -76,11 +93,12 @@ export const generateOrderListPdf = (
       cellPadding: 4,
       lineColor: [200, 200, 200],
       lineWidth: 0.5,
+      font: fontName,
     },
     headStyles: {
       fillColor: [80, 80, 80],
       textColor: 255,
-      fontStyle: 'bold',
+      fontStyle: 'normal',
     },
     columnStyles: {
       0: { cellWidth: 'auto' },
@@ -95,7 +113,6 @@ export const generateOrderListPdf = (
   });
 
   // Add page numbers
-  const pageHeight = doc.internal.pageSize.height;
   const pageCount = doc.getNumberOfPages();
   for (let i = 1; i <= pageCount; i++) {
     doc.setPage(i);
@@ -114,7 +131,7 @@ export const generateOrderListPdf = (
 };
 
 // Compact combined order list for multiple suppliers
-export const generateCombinedOrderListPdf = (
+export const generateCombinedOrderListPdf = async (
   suppliers: OrderListSupplier[],
   articlesBySupplier: Record<string, OrderListArticle[]>
 ) => {
@@ -122,6 +139,10 @@ export const generateCombinedOrderListPdf = (
   const today = format(new Date(), 'dd.MM.yyyy', { locale: de });
   const pageWidth = doc.internal.pageSize.width;
   const pageHeight = doc.internal.pageSize.height;
+  
+  // Register Thai font
+  const hasThai = await registerThaiFont(doc);
+  const fontName = hasThai ? 'NotoSansThai' : 'helvetica';
   
   let currentY = 15;
   
@@ -141,12 +162,11 @@ export const generateCombinedOrderListPdf = (
     
     // Compact supplier header
     doc.setFontSize(11);
-    doc.setFont('helvetica', 'bold');
+    doc.setFont(fontName, 'normal');
     doc.setTextColor(0);
     doc.text(supplier.name, 10, currentY);
     
     doc.setFontSize(8);
-    doc.setFont('helvetica', 'normal');
     doc.setTextColor(100);
     doc.text(`${articles.length} Artikel`, pageWidth - 10, currentY, { align: 'right' });
     
@@ -189,11 +209,12 @@ export const generateCombinedOrderListPdf = (
         lineColor: [180, 180, 180],
         lineWidth: 0.3,
         overflow: 'linebreak',
+        font: fontName,
       },
       headStyles: {
         fillColor: [60, 60, 60],
         textColor: 255,
-        fontStyle: 'bold',
+        fontStyle: 'normal',
         fontSize: 7,
         cellPadding: 1.5,
       },
