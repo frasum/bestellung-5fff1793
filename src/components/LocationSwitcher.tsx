@@ -53,12 +53,9 @@ export const LocationSwitcher = ({ className, showIcon = true }: LocationSwitche
             )}
           >
             <MapPin className="h-4 w-4 mr-2" />
-            <span className="flex-1 truncate">{location.name}</span>
-            {location.short_code && (
-              <span className="text-xs text-muted-foreground ml-2">
-                {location.short_code}
-              </span>
-            )}
+            <span className="flex-1 truncate">
+              {location.short_code || location.name}
+            </span>
           </DropdownMenuItem>
         ))}
       </DropdownMenuContent>
