@@ -368,6 +368,7 @@
     "defaultAddress": "Default Address",
     "setAsDefault": "Set as default",
     "noAddresses": "No addresses for {{location}} yet. Add your first delivery address.",
+    "noAddress": "No delivery address configured",
     "updateAddress": "Update Address",
     "notificationPrefs": "Notification Preferences",
     "notificationDescription": "Configure your email notifications",
