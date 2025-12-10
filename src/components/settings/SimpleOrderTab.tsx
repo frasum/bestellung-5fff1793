@@ -87,8 +87,7 @@ export function SimpleOrderTab() {
   };
 
   const getOrderUrl = (token: string) => {
-    const baseUrl = window.location.origin;
-    return `${baseUrl}/simple-order/${token}`;
+    return `https://bestellung.pro/simple-order/${token}`;
   };
 
   const copyToClipboard = (token: string) => {
