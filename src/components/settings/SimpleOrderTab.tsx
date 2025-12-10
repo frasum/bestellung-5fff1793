@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Checkbox } from '@/components/ui/checkbox';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { Plus, QrCode, Trash2, Copy, ExternalLink, Smartphone, Users, Pencil } from 'lucide-react';
+import { Plus, QrCode, Trash2, Copy, ExternalLink, Smartphone, Users, Pencil, User } from 'lucide-react';
 import { useSuppliers } from '@/hooks/useSuppliers';
 import { useLocations } from '@/hooks/useLocations';
 import { useSimpleOrderTokens, useCreateSimpleOrderToken, useUpdateSimpleOrderToken, useDeleteSimpleOrderToken } from '@/hooks/useSimpleOrderTokens';
@@ -42,6 +42,7 @@ export function SimpleOrderTab() {
     location_id: '',
     label: '',
     language: 'th',
+    employee_name: '',
   });
 
   // Edit state
@@ -54,6 +55,7 @@ export function SimpleOrderTab() {
     location_id: '',
     label: '',
     language: 'th',
+    employee_name: '',
   });
 
   const openEditDialog = (token: any) => {
@@ -64,6 +66,7 @@ export function SimpleOrderTab() {
       location_id: token.location_id || '',
       label: token.label,
       language: token.language,
+      employee_name: token.employee_name || '',
     });
     if (token.is_multi_supplier && token.token_suppliers) {
       setEditSelectedSupplierIds(token.token_suppliers.map((ts: any) => ts.supplier_id));
@@ -94,6 +97,7 @@ export function SimpleOrderTab() {
         is_multi_supplier: true,
         supplier_id: null,
         supplier_ids: editSelectedSupplierIds,
+        employee_name: editFormData.employee_name || null,
       });
     } else {
       if (!editFormData.supplier_id || !editFormData.label) {
@@ -113,6 +117,7 @@ export function SimpleOrderTab() {
         is_multi_supplier: false,
         supplier_id: editFormData.supplier_id,
         supplier_ids: [],
+        employee_name: editFormData.employee_name || null,
       });
     }
 
@@ -145,6 +150,7 @@ export function SimpleOrderTab() {
         label: formData.label,
         language: formData.language,
         is_multi_supplier: true,
+        employee_name: formData.employee_name || null,
       });
     } else {
       if (!formData.supplier_id || !formData.label) {
@@ -161,11 +167,12 @@ export function SimpleOrderTab() {
         location_id: formData.location_id || null,
         label: formData.label,
         language: formData.language,
+        employee_name: formData.employee_name || null,
       });
     }
 
     setIsDialogOpen(false);
-    setFormData({ supplier_id: '', location_id: '', label: '', language: 'th' });
+    setFormData({ supplier_id: '', location_id: '', label: '', language: 'th', employee_name: '' });
     setSelectedSupplierIds([]);
     setIsMultiSupplier(false);
   };
@@ -220,7 +227,7 @@ export function SimpleOrderTab() {
             if (!open) {
               setIsMultiSupplier(false);
               setSelectedSupplierIds([]);
-              setFormData({ supplier_id: '', location_id: '', label: '', language: 'th' });
+              setFormData({ supplier_id: '', location_id: '', label: '', language: 'th', employee_name: '' });
             }
           }}>
             <DialogTrigger asChild>
@@ -329,6 +336,18 @@ export function SimpleOrderTab() {
                 </div>
 
                 <div className="space-y-2">
+                  <Label>{t('settings.simpleOrder.employeeName', 'Mitarbeitername')} ({t('common.optional', 'optional')})</Label>
+                  <Input
+                    value={formData.employee_name}
+                    onChange={(e) => setFormData(prev => ({ ...prev, employee_name: e.target.value }))}
+                    placeholder={t('settings.simpleOrder.employeeNamePlaceholder', 'z.B. Somchai, Maria')}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    {t('settings.simpleOrder.employeeNameHint', 'Wenn gesetzt, wird der Name automatisch ausgefüllt und ist nicht änderbar')}
+                  </p>
+                </div>
+
+                <div className="space-y-2">
                   <Label>{t('settings.simpleOrder.label', 'Bezeichnung')} *</Label>
                   <Input
                     value={formData.label}
@@ -388,7 +407,14 @@ export function SimpleOrderTab() {
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <h3 className="font-semibold">{token.label}</h3>
+                      {token.employee_name ? (
+                        <h3 className="font-semibold flex items-center gap-2">
+                          <User className="h-4 w-4" />
+                          {token.employee_name}
+                        </h3>
+                      ) : (
+                        <h3 className="font-semibold">{token.label}</h3>
+                      )}
                       {token.is_multi_supplier ? (
                         <Badge variant="outline" className="flex items-center gap-1">
                           <Users className="h-3 w-3" />
@@ -404,6 +430,9 @@ export function SimpleOrderTab() {
                         {token.is_active ? 'Aktiv' : 'Inaktiv'}
                       </Badge>
                     </div>
+                    {token.employee_name && (
+                      <p className="text-sm text-muted-foreground">{token.label}</p>
+                    )}
                     {token.is_multi_supplier && token.token_suppliers && (
                       <p className="text-sm text-muted-foreground mt-1">
                         {getSupplierNames(token)}
@@ -614,6 +643,18 @@ export function SimpleOrderTab() {
                   </Select>
                 </div>
               )}
+
+              <div className="space-y-2">
+                <Label>{t('settings.simpleOrder.employeeName', 'Mitarbeitername')} ({t('common.optional', 'optional')})</Label>
+                <Input
+                  value={editFormData.employee_name}
+                  onChange={(e) => setEditFormData(prev => ({ ...prev, employee_name: e.target.value }))}
+                  placeholder={t('settings.simpleOrder.employeeNamePlaceholder', 'z.B. Somchai, Maria')}
+                />
+                <p className="text-xs text-muted-foreground">
+                  {t('settings.simpleOrder.employeeNameHint', 'Wenn gesetzt, wird der Name automatisch ausgefüllt und ist nicht änderbar')}
+                </p>
+              </div>
 
               <div className="space-y-2">
                 <Label>{t('settings.simpleOrder.location', 'Standort')} ({t('common.optional', 'optional')})</Label>
