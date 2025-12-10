@@ -59,6 +59,12 @@ export const SupplierFilters = ({
           {articleCategories.map(cat => <SelectItem key={cat} value={cat}>{cat}</SelectItem>)}
         </SelectContent>
       </Select>
+      {showMultiSelectToggle && (
+        <div className="flex items-center gap-2">
+          <Switch id="multi-select" checked={multiSelectEnabled} onCheckedChange={onMultiSelectChange} />
+          <Label htmlFor="multi-select" className="text-sm cursor-pointer whitespace-nowrap">Mehrfachauswahl</Label>
+        </div>
+      )}
       {multiSelectEnabled && selectedCount > 0 && (
         <Button onClick={onPrintCombined} variant="secondary">
           <Printer className="w-4 h-4 mr-2" />
