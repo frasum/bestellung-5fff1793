@@ -5,30 +5,40 @@ import { useToast } from '@/hooks/use-toast';
 export interface SimpleOrderToken {
   id: string;
   token: string;
-  supplier_id: string;
+  supplier_id: string | null;
   location_id: string | null;
   organization_id: string;
   language: string;
   label: string;
   is_active: boolean;
+  is_multi_supplier: boolean;
   created_at: string;
   expires_at: string | null;
   supplier?: {
     id: string;
     name: string;
-  };
+  } | null;
   location?: {
     id: string;
     name: string;
   } | null;
+  token_suppliers?: {
+    supplier_id: string;
+    supplier: {
+      id: string;
+      name: string;
+    };
+  }[];
 }
 
 export interface CreateSimpleOrderTokenInput {
-  supplier_id: string;
+  supplier_id?: string | null;
+  supplier_ids?: string[];
   location_id?: string | null;
   label: string;
   language?: string;
   expires_at?: string | null;
+  is_multi_supplier?: boolean;
 }
 
 export function useSimpleOrderTokens() {
@@ -57,7 +67,29 @@ export function useSimpleOrderTokens() {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return data as SimpleOrderToken[];
+
+      // For multi-supplier tokens, fetch the linked suppliers
+      const tokensWithSuppliers = await Promise.all(
+        (data || []).map(async (token) => {
+          if (token.is_multi_supplier) {
+            const { data: tokenSuppliers } = await supabase
+              .from('simple_order_token_suppliers')
+              .select(`
+                supplier_id,
+                supplier:suppliers(id, name)
+              `)
+              .eq('token_id', token.id);
+            
+            return {
+              ...token,
+              token_suppliers: tokenSuppliers || [],
+            };
+          }
+          return token;
+        })
+      );
+
+      return tokensWithSuppliers as SimpleOrderToken[];
     },
   });
 }
@@ -79,17 +111,44 @@ export function useCreateSimpleOrderToken() {
 
       if (!profile?.organization_id) throw new Error('No organization');
 
-      const { data, error } = await supabase
+      const isMultiSupplier = input.is_multi_supplier || (input.supplier_ids && input.supplier_ids.length > 0);
+
+      // Create the token
+      const { data: token, error } = await supabase
         .from('simple_order_tokens')
         .insert({
-          ...input,
+          supplier_id: isMultiSupplier ? null : input.supplier_id,
+          location_id: input.location_id || null,
+          label: input.label,
+          language: input.language || 'th',
+          expires_at: input.expires_at || null,
           organization_id: profile.organization_id,
+          is_multi_supplier: isMultiSupplier,
         })
         .select()
         .single();
 
       if (error) throw error;
-      return data;
+
+      // If multi-supplier, create the junction table entries
+      if (isMultiSupplier && input.supplier_ids && input.supplier_ids.length > 0) {
+        const tokenSupplierEntries = input.supplier_ids.map(supplierId => ({
+          token_id: token.id,
+          supplier_id: supplierId,
+        }));
+
+        const { error: junctionError } = await supabase
+          .from('simple_order_token_suppliers')
+          .insert(tokenSupplierEntries);
+
+        if (junctionError) {
+          // Rollback: delete the token if junction insert fails
+          await supabase.from('simple_order_tokens').delete().eq('id', token.id);
+          throw junctionError;
+        }
+      }
+
+      return token;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['simple-order-tokens'] });

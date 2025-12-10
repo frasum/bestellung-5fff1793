@@ -57,21 +57,95 @@ serve(async (req) => {
       );
     }
 
-    // Get articles for the supplier
-    const { data: articles, error: articlesError } = await supabase
-      .from('articles')
-      .select('id, name, description, price, unit, category, sku, packaging_unit')
-      .eq('supplier_id', tokenData.supplier_id)
-      .eq('is_active', true)
-      .order('category', { ascending: true })
-      .order('name', { ascending: true });
+    // Check if this is a multi-supplier token
+    const isMultiSupplier = tokenData.is_multi_supplier === true;
+    console.log('Is multi-supplier token:', isMultiSupplier);
 
-    if (articlesError) {
-      console.error('Error fetching articles:', articlesError);
-      return new Response(
-        JSON.stringify({ error: 'Failed to fetch articles' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+    let suppliers: any[] = [];
+    let articles: any[] = [];
+
+    if (isMultiSupplier) {
+      // Get all suppliers linked to this token
+      const { data: tokenSuppliers, error: tokenSuppliersError } = await supabase
+        .from('simple_order_token_suppliers')
+        .select(`
+          supplier_id,
+          supplier:suppliers(id, name, email, organization_id)
+        `)
+        .eq('token_id', tokenData.id);
+
+      if (tokenSuppliersError) {
+        console.error('Error fetching token suppliers:', tokenSuppliersError);
+        return new Response(
+          JSON.stringify({ error: 'Failed to fetch suppliers' }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Extract supplier IDs
+      const supplierIds = tokenSuppliers?.map(ts => ts.supplier_id) || [];
+      console.log('Multi-supplier token has suppliers:', supplierIds.length);
+
+      if (supplierIds.length > 0) {
+        // Get all articles for these suppliers
+        const { data: allArticles, error: articlesError } = await supabase
+          .from('articles')
+          .select('id, name, description, price, unit, category, sku, packaging_unit, supplier_id')
+          .in('supplier_id', supplierIds)
+          .eq('is_active', true)
+          .order('category', { ascending: true })
+          .order('name', { ascending: true });
+
+        if (articlesError) {
+          console.error('Error fetching articles:', articlesError);
+          return new Response(
+            JSON.stringify({ error: 'Failed to fetch articles' }),
+            { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+
+        articles = allArticles || [];
+
+        // Build suppliers array with article counts
+        suppliers = tokenSuppliers?.map(ts => {
+          const sup = ts.supplier as any;
+          return {
+            id: sup?.id,
+            name: sup?.name,
+            email: sup?.email,
+            organization_id: sup?.organization_id,
+            article_count: articles.filter(a => a.supplier_id === ts.supplier_id).length,
+          };
+        }) || [];
+      }
+    } else {
+      // Single supplier token - use existing logic
+      if (tokenData.supplier_id) {
+        const { data: singleArticles, error: articlesError } = await supabase
+          .from('articles')
+          .select('id, name, description, price, unit, category, sku, packaging_unit, supplier_id')
+          .eq('supplier_id', tokenData.supplier_id)
+          .eq('is_active', true)
+          .order('category', { ascending: true })
+          .order('name', { ascending: true });
+
+        if (articlesError) {
+          console.error('Error fetching articles:', articlesError);
+          return new Response(
+            JSON.stringify({ error: 'Failed to fetch articles' }),
+            { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+
+        articles = singleArticles || [];
+        suppliers = tokenData.supplier ? [{
+          id: tokenData.supplier.id,
+          name: tokenData.supplier.name,
+          email: tokenData.supplier.email,
+          organization_id: tokenData.supplier.organization_id,
+          article_count: articles.length,
+        }] : [];
+      }
     }
 
     // Get all locations for the organization
@@ -85,7 +159,7 @@ serve(async (req) => {
       console.error('Error fetching locations:', locationsError);
     }
 
-    console.log(`Token verified. Supplier: ${tokenData.supplier?.name}, Articles: ${articles?.length || 0}, Locations: ${locations?.length || 0}`);
+    console.log(`Token verified. Multi-supplier: ${isMultiSupplier}, Suppliers: ${suppliers.length}, Articles: ${articles.length}, Locations: ${locations?.length || 0}`);
 
     return new Response(
       JSON.stringify({
@@ -94,11 +168,13 @@ serve(async (req) => {
           id: tokenData.id,
           label: tokenData.label,
           language: tokenData.language,
-          supplier: tokenData.supplier,
+          supplier: isMultiSupplier ? null : tokenData.supplier,
           location: tokenData.location,
           organization_id: tokenData.organization_id,
+          is_multi_supplier: isMultiSupplier,
         },
-        articles: articles || [],
+        suppliers: suppliers,
+        articles: articles,
         locations: locations || [],
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

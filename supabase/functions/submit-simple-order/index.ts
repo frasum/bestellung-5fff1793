@@ -19,7 +19,7 @@ serve(async (req) => {
   }
 
   try {
-    const { token, items, employee_name, location_id } = await req.json();
+    const { token, items, employee_name, location_id, supplier_id: requestSupplierId } = await req.json();
 
     if (!token || !items || items.length === 0) {
       return new Response(
@@ -95,8 +95,8 @@ serve(async (req) => {
         status: 'pending',
         source_data: {
           token_label: tokenData.label,
-          supplier_id: tokenData.supplier_id,
-          supplier_name: tokenData.supplier?.name,
+          supplier_id: requestSupplierId || tokenData.supplier_id,
+          supplier_name: tokenData.supplier?.name || null,
           employee_name: employee_name,
         },
       })

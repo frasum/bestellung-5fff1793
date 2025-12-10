@@ -924,17 +924,54 @@ export type Database = {
           },
         ]
       }
+      simple_order_token_suppliers: {
+        Row: {
+          created_at: string
+          id: string
+          supplier_id: string
+          token_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          supplier_id: string
+          token_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          supplier_id?: string
+          token_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "simple_order_token_suppliers_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "simple_order_token_suppliers_token_id_fkey"
+            columns: ["token_id"]
+            isOneToOne: false
+            referencedRelation: "simple_order_tokens"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       simple_order_tokens: {
         Row: {
           created_at: string
           expires_at: string | null
           id: string
           is_active: boolean
+          is_multi_supplier: boolean
           label: string
           language: string
           location_id: string | null
           organization_id: string
-          supplier_id: string
+          supplier_id: string | null
           token: string
         }
         Insert: {
@@ -942,11 +979,12 @@ export type Database = {
           expires_at?: string | null
           id?: string
           is_active?: boolean
+          is_multi_supplier?: boolean
           label: string
           language?: string
           location_id?: string | null
           organization_id: string
-          supplier_id: string
+          supplier_id?: string | null
           token?: string
         }
         Update: {
@@ -954,11 +992,12 @@ export type Database = {
           expires_at?: string | null
           id?: string
           is_active?: boolean
+          is_multi_supplier?: boolean
           label?: string
           language?: string
           location_id?: string | null
           organization_id?: string
-          supplier_id?: string
+          supplier_id?: string | null
           token?: string
         }
         Relationships: [
