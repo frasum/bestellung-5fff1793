@@ -8,6 +8,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { CategoryFilterDropdown } from '@/components/CategoryFilterDropdown';
 import { Supplier } from '@/hooks/useSuppliers';
+import { SupplierActivityInfo } from '@/hooks/useSupplierChanges';
 
 interface ArticleFiltersProps {
   searchQuery: string;
@@ -25,7 +26,7 @@ interface ArticleFiltersProps {
   hasFilters: boolean;
   onClearFilters: () => void;
   showAdvancedToggle?: boolean;
-  recentlyActiveSuppliers?: Map<string, Date>;
+  recentlyActiveSuppliers?: Map<string, SupplierActivityInfo>;
 }
 
 export const ArticleFilters = ({

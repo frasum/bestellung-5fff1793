@@ -110,17 +110,20 @@ export function GlobalSearch() {
                   >
                     <Users className="mr-2 h-4 w-4" />
                     {supplier.name}
-                    {recentlyActiveSuppliers?.has(supplier.id) && (
-                      <div className="flex items-center gap-1 ml-2">
-                        <span 
-                          className="w-2 h-2 rounded-full bg-green-500 animate-pulse shrink-0" 
-                          title="Kürzlich aktiv - Änderungen eingereicht in den letzten 4 Monaten"
-                        />
-                        <span className="text-xs text-muted-foreground">
-                          {recentlyActiveSuppliers.get(supplier.id)?.toLocaleDateString('de-DE')}
-                        </span>
-                      </div>
-                    )}
+                    {recentlyActiveSuppliers?.has(supplier.id) && (() => {
+                      const activity = recentlyActiveSuppliers.get(supplier.id)!;
+                      return (
+                        <div className="flex items-center gap-1 ml-2">
+                          <span 
+                            className="w-2 h-2 rounded-full bg-green-500 animate-pulse shrink-0" 
+                            title={`${activity.changeCount} Änderungen, ${activity.suggestionCount} Vorschläge`}
+                          />
+                          <span className="text-xs text-muted-foreground">
+                            {activity.lastDate.toLocaleDateString('de-DE')}
+                          </span>
+                        </div>
+                      );
+                    })()}
                   </CommandItem>
                 ))}
               </CommandGroup>
