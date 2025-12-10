@@ -244,7 +244,8 @@ const Suppliers = () => {
           name: a.name,
           unit: a.unit,
           sku: a.sku,
-          lastOrderQuantity: lastOrderMap?.[a.id]?.quantity
+          lastOrderQuantity: lastOrderMap?.[a.id]?.quantity,
+          lastOrderDate: lastOrderMap?.[a.id]?.date
         }))
       ])
     );
@@ -556,7 +557,8 @@ const Suppliers = () => {
                   name: a.name,
                   unit: a.unit,
                   sku: a.sku,
-                  lastOrderQuantity: lastOrderMap?.[a.id]?.quantity
+                  lastOrderQuantity: lastOrderMap?.[a.id]?.quantity,
+                  lastOrderDate: lastOrderMap?.[a.id]?.date
                 })))}
                 onArticleChangeClick={(article, supplier) => {
                   setChangesDialogSupplier(supplier);
