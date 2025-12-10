@@ -314,7 +314,6 @@
         "orders": "Ordini",
         "team": "Team",
         "settings": "Impostazioni",
-        "staffOrders": "Ordini dipendenti",
         "inventory": "Inventario",
         "supplierChanges": "Modifiche fornitori"
       },
@@ -335,8 +334,6 @@
       "settings.editOrg": "Modifica organizzazione",
       "settings.manageLocations": "Gestisci sedi",
       "settings.editTemplates": "Modifica modelli email",
-      "staffOrders.submit": "Invia ordini vocali/foto",
-      "staffOrders.approve": "Approva invii",
       "inventory.view": "Visualizza inventario",
       "inventory.manage": "Gestisci inventario",
       "supplierChanges.review": "Rivedi e approva modifiche"

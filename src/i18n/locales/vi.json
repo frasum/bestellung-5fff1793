@@ -314,7 +314,6 @@
         "orders": "Đơn hàng",
         "team": "Nhóm",
         "settings": "Cài đặt",
-        "staffOrders": "Đơn hàng nhân viên",
         "inventory": "Kho hàng",
         "supplierChanges": "Thay đổi nhà cung cấp"
       },
@@ -335,8 +334,6 @@
       "settings.editOrg": "Sửa tổ chức",
       "settings.manageLocations": "Quản lý địa điểm",
       "settings.editTemplates": "Sửa mẫu email",
-      "staffOrders.submit": "Gửi đơn hàng giọng nói/ảnh",
-      "staffOrders.approve": "Duyệt gửi",
       "inventory.view": "Xem kho hàng",
       "inventory.manage": "Quản lý kho hàng",
       "supplierChanges.review": "Xem xét và duyệt thay đổi"
