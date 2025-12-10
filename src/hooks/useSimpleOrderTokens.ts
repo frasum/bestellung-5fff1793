@@ -131,11 +131,11 @@ export function useCreateSimpleOrderToken() {
           supplier_id: isMultiSupplier ? null : input.supplier_id,
           location_id: input.location_id || null,
           label: input.label,
-          language: input.language || 'th',
+          language: input.language || 'de',
           expires_at: input.expires_at || null,
           organization_id: profile.organization_id,
           is_multi_supplier: isMultiSupplier,
-          employee_name: input.employee_id ? null : (input.employee_name || null),
+          employee_name: input.employee_name || null,
           employee_id: input.employee_id || null,
         })
         .select()
