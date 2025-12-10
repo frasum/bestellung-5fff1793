@@ -13,9 +13,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerFooter } from '@/components/ui/drawer';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { useCreateOrder } from '@/hooks/useOrders';
 import { useDeliveryAddresses } from '@/hooks/useSettings';
 import { useUserDeliveryPreference } from '@/hooks/useUserDeliveryPreference';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { ArrowLeft, CalendarIcon, CheckCircle2, Clock, Eye, Loader2, Mail, MapPin, Minus, Plus, Send, Settings, Store, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { z } from 'zod';
@@ -53,6 +55,7 @@ const Checkout = () => {
   const createOrder = useCreateOrder();
   const { data: deliveryAddresses, isLoading: addressesLoading } = useDeliveryAddresses(activeLocation?.id);
   const { data: userDeliveryPreference } = useUserDeliveryPreference();
+  const isMobileDevice = useIsMobile();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [completedOrders, setCompletedOrders] = useState<{orderNumber: string; supplierName: string}[]>([]);
   const [showEmailPreview, setShowEmailPreview] = useState(false);
@@ -60,6 +63,7 @@ const Checkout = () => {
   const [pendingOrderData, setPendingOrderData] = useState<CheckoutFormData | null>(null);
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [showMobileForm, setShowMobileForm] = useState(false);
+  const [showMobileCalendar, setShowMobileCalendar] = useState(false);
 
   const defaultAddress = deliveryAddresses?.find(a => a.is_default);
 
@@ -373,34 +377,74 @@ const Checkout = () => {
           control={form.control}
           name="deliveryDate"
           render={({ field }) => (
-            <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  className={cn(
-                    "w-full justify-start text-left font-normal",
-                    isMobile && "h-12 md:h-14",
-                    !field.value && "text-muted-foreground"
-                  )}
-                >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {field.value ? format(field.value, "PPP", { locale: de }) : t('checkout.selectDate')}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="single"
-                  selected={field.value}
-                  onSelect={(date) => {
-                    field.onChange(date);
-                    setCalendarOpen(false);
-                  }}
-                  disabled={(date) => date < new Date()}
-                  initialFocus
-                  className="pointer-events-auto"
-                />
-              </PopoverContent>
-            </Popover>
+            <>
+              {/* Mobile: Use Sheet instead of Popover to avoid touch conflicts with Drawer */}
+              {isMobile && isMobileDevice ? (
+                <>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left font-normal h-12 md:h-14",
+                      !field.value && "text-muted-foreground"
+                    )}
+                    onClick={() => setShowMobileCalendar(true)}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {field.value ? format(field.value, "PPP", { locale: de }) : t('checkout.selectDate')}
+                  </Button>
+                  <Sheet open={showMobileCalendar} onOpenChange={setShowMobileCalendar}>
+                    <SheetContent side="bottom" className="h-auto max-h-[85vh] z-[60]">
+                      <SheetHeader className="pb-4">
+                        <SheetTitle>{t('checkout.deliveryDate')}</SheetTitle>
+                      </SheetHeader>
+                      <div className="flex justify-center pb-6">
+                        <Calendar
+                          mode="single"
+                          selected={field.value}
+                          onSelect={(date) => {
+                            field.onChange(date);
+                            setShowMobileCalendar(false);
+                          }}
+                          disabled={(date) => date < new Date()}
+                          className="pointer-events-auto"
+                        />
+                      </div>
+                    </SheetContent>
+                  </Sheet>
+                </>
+              ) : (
+                /* Desktop: Use Popover */
+                <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full justify-start text-left font-normal",
+                        isMobile && "h-12 md:h-14",
+                        !field.value && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {field.value ? format(field.value, "PPP", { locale: de }) : t('checkout.selectDate')}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={field.value}
+                      onSelect={(date) => {
+                        field.onChange(date);
+                        setCalendarOpen(false);
+                      }}
+                      disabled={(date) => date < new Date()}
+                      initialFocus
+                      className="pointer-events-auto"
+                    />
+                  </PopoverContent>
+                </Popover>
+              )}
+            </>
           )}
         />
         {form.formState.errors.deliveryDate && (
