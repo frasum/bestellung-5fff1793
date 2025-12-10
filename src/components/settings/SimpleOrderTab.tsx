@@ -130,14 +130,14 @@ export function SimpleOrderTab() {
                 <div className="space-y-2">
                   <Label>{t('settings.simpleOrder.location', 'Standort')} ({t('common.optional', 'optional')})</Label>
                   <Select
-                    value={formData.location_id}
-                    onValueChange={(value) => setFormData(prev => ({ ...prev, location_id: value }))}
+                    value={formData.location_id || 'all'}
+                    onValueChange={(value) => setFormData(prev => ({ ...prev, location_id: value === 'all' ? '' : value }))}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder={t('settings.simpleOrder.allLocations', 'Alle Standorte')} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">
+                      <SelectItem value="all">
                         {t('settings.simpleOrder.allLocations', 'Alle Standorte')}
                       </SelectItem>
                       {locations?.map((location) => (
