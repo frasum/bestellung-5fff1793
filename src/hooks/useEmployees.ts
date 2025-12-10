@@ -87,7 +87,7 @@ export function useCreateEmployee() {
         .single();
 
       if (error) throw error;
-      return data;
+      return data as Employee;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['employees'] });
