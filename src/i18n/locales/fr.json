@@ -575,7 +575,9 @@
     "article": "Article",
     "unit": "Unité",
     "price": "Prix (€)",
-    "searchArticles": "Rechercher des articles..."
+    "searchArticles": "Rechercher des articles...",
+    "selectSession": "Sélectionner l'inventaire...",
+    "viewingCompleted": "Vous consultez un inventaire terminé (lecture seule)."
   },
   "scan": {
     "title": "Scanner la liste de commande",

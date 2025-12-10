@@ -459,19 +459,46 @@ export const InventoryTab = () => {
 
   return (
     <div className="space-y-4">
-      {/* Header Actions */}
-      <div className="flex flex-wrap gap-2 justify-end">
-        <Button variant="outline" size="sm" onClick={() => setShowHistoryDialog(true)} className="h-9 lg:h-10">
-          <History className="w-4 h-4 lg:mr-2" />
-          <span className="hidden lg:inline">{t('inventory.history')}</span>
-        </Button>
-        {!activeSession && (
+      {/* Session Dropdown + Actions */}
+      <div className="flex flex-wrap items-center gap-2 justify-between">
+        <div className="flex items-center gap-2 flex-1 min-w-0">
+          <Select 
+            value={activeSessionId || ''} 
+            onValueChange={(value) => setActiveSessionId(value || null)}
+          >
+            <SelectTrigger className="w-full max-w-xs h-9 lg:h-10">
+              <SelectValue placeholder={t('inventory.selectSession', 'Inventur auswählen...')} />
+            </SelectTrigger>
+            <SelectContent>
+              {sessions?.map((session) => (
+                <SelectItem key={session.id} value={session.id}>
+                  <div className="flex items-center gap-2">
+                    {session.status === 'in_progress' ? (
+                      <span className="text-amber-500">⏳</span>
+                    ) : (
+                      <span className="text-green-500">✓</span>
+                    )}
+                    <span className="truncate">{session.name}</span>
+                    <span className="text-muted-foreground text-xs">
+                      ({format(new Date(session.created_at), 'dd.MM.yy', { locale: getDateLocale() })})
+                    </span>
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={() => setShowHistoryDialog(true)} className="h-9 lg:h-10">
+            <History className="w-4 h-4 lg:mr-2" />
+            <span className="hidden lg:inline">{t('inventory.history')}</span>
+          </Button>
           <Button size="sm" onClick={() => setShowNewSessionDialog(true)} className="h-9 lg:h-10">
             <Plus className="w-4 h-4 lg:mr-2" />
             <span className="hidden lg:inline">{t('inventory.newSession')}</span>
             <span className="lg:hidden">{t('inventory.new')}</span>
           </Button>
-        )}
+        </div>
       </div>
 
       {/* Inner Tabs */}
@@ -606,35 +633,54 @@ export const InventoryTab = () => {
           {activeSession && (
             <Card>
               <CardHeader className="pb-3 px-4 lg:px-6">
+                {/* Read-only notice for completed sessions */}
+                {activeSession.status === 'completed' && (
+                  <div className="mb-3 p-2 bg-muted rounded-md text-sm text-muted-foreground flex items-center gap-2">
+                    <CheckCircle className="w-4 h-4 text-green-500" />
+                    {t('inventory.viewingCompleted', 'Sie sehen eine abgeschlossene Inventur (nur Ansicht).')}
+                  </div>
+                )}
+                
                 <div className="flex flex-col gap-3 sm:hidden">
                   <div className="flex items-center gap-2">
                     <ClipboardList className="w-5 h-5 text-primary flex-shrink-0" />
                     <div className="min-w-0 flex-1">
-                      <CardTitle className="text-base truncate">{activeSession.name}</CardTitle>
+                      <div className="flex items-center gap-2">
+                        <CardTitle className="text-base truncate">{activeSession.name}</CardTitle>
+                        <Badge variant={activeSession.status === 'completed' ? 'default' : 'secondary'} className="text-xs">
+                          {activeSession.status === 'completed' ? t('inventory.completed') : t('inventory.inProgress')}
+                        </Badge>
+                      </div>
                       <p className="text-xs text-muted-foreground">
-                        {format(new Date(activeSession.created_at), 'dd.MM.yy HH:mm', { locale: getDateLocale() })}
+                        {activeSession.status === 'completed' && activeSession.completed_at
+                          ? format(new Date(activeSession.completed_at), 'dd.MM.yy HH:mm', { locale: getDateLocale() })
+                          : format(new Date(activeSession.created_at), 'dd.MM.yy HH:mm', { locale: getDateLocale() })}
                       </p>
                     </div>
                   </div>
-                  <div className="grid grid-cols-4 gap-2">
+                  <div className={`grid gap-2 ${activeSession.status === 'completed' ? 'grid-cols-2' : 'grid-cols-4'}`}>
                     <Button variant="outline" size="sm" onClick={handleExportPdf} className="h-10">
                       <FileText className="w-4 h-4" />
                     </Button>
                     <Button variant="outline" size="sm" onClick={handleExportExcel} className="h-10">
                       <FileSpreadsheet className="w-4 h-4" />
                     </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={handleSave}
-                      disabled={!hasChanges || bulkUpsertItems.isPending}
-                      className="h-10"
-                    >
-                      <Save className="w-4 h-4" />
-                    </Button>
-                    <Button size="sm" onClick={handleComplete} className="h-10">
-                      <CheckCircle className="w-4 h-4" />
-                    </Button>
+                    {activeSession.status !== 'completed' && (
+                      <>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={handleSave}
+                          disabled={!hasChanges || bulkUpsertItems.isPending}
+                          className="h-10"
+                        >
+                          <Save className="w-4 h-4" />
+                        </Button>
+                        <Button size="sm" onClick={handleComplete} className="h-10">
+                          <CheckCircle className="w-4 h-4" />
+                        </Button>
+                      </>
+                    )}
                   </div>
                 </div>
                 
@@ -642,12 +688,16 @@ export const InventoryTab = () => {
                   <div className="flex items-center gap-3">
                     <ClipboardList className="w-5 h-5 text-primary" />
                     <div>
-                      <CardTitle className="text-lg">{activeSession.name}</CardTitle>
+                      <div className="flex items-center gap-2">
+                        <CardTitle className="text-lg">{activeSession.name}</CardTitle>
+                        <Badge variant={activeSession.status === 'completed' ? 'default' : 'secondary'}>
+                          {activeSession.status === 'completed' ? t('inventory.completed') : t('inventory.inProgress')}
+                        </Badge>
+                      </div>
                       <p className="text-sm text-muted-foreground">
-                        {t('inventory.startedAt')}{' '}
-                        {format(new Date(activeSession.created_at), 'dd.MM.yyyy HH:mm', {
-                          locale: getDateLocale(),
-                        })}
+                        {activeSession.status === 'completed' && activeSession.completed_at
+                          ? `${t('inventory.completedAt')} ${format(new Date(activeSession.completed_at), 'dd.MM.yyyy HH:mm', { locale: getDateLocale() })}`
+                          : `${t('inventory.startedAt')} ${format(new Date(activeSession.created_at), 'dd.MM.yyyy HH:mm', { locale: getDateLocale() })}`}
                       </p>
                     </div>
                   </div>
@@ -660,19 +710,23 @@ export const InventoryTab = () => {
                       <FileSpreadsheet className="w-4 h-4 mr-2" />
                       Excel
                     </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={handleSave}
-                      disabled={!hasChanges || bulkUpsertItems.isPending}
-                    >
-                      <Save className="w-4 h-4 mr-2" />
-                      {t('common.save')}
-                    </Button>
-                    <Button size="sm" onClick={handleComplete}>
-                      <CheckCircle className="w-4 h-4 mr-2" />
-                      {t('inventory.completeSession')}
-                    </Button>
+                    {activeSession.status !== 'completed' && (
+                      <>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={handleSave}
+                          disabled={!hasChanges || bulkUpsertItems.isPending}
+                        >
+                          <Save className="w-4 h-4 mr-2" />
+                          {t('common.save')}
+                        </Button>
+                        <Button size="sm" onClick={handleComplete}>
+                          <CheckCircle className="w-4 h-4 mr-2" />
+                          {t('inventory.completeSession')}
+                        </Button>
+                      </>
+                    )}
                   </div>
                 </div>
               </CardHeader>

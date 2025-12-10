@@ -575,7 +575,9 @@
     "article": "Sản phẩm",
     "unit": "Đơn vị",
     "price": "Giá (€)",
-    "searchArticles": "Tìm kiếm sản phẩm..."
+    "searchArticles": "Tìm kiếm sản phẩm...",
+    "selectSession": "Chọn kiểm kê...",
+    "viewingCompleted": "Bạn đang xem kiểm kê đã hoàn thành (chỉ đọc)."
   },
   "scan": {
     "title": "Quét danh sách đơn hàng",

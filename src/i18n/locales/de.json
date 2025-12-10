@@ -625,7 +625,9 @@
     "article": "Artikel",
     "unit": "Einheit",
     "price": "Preis (€)",
-    "searchArticles": "Artikel suchen..."
+    "searchArticles": "Artikel suchen...",
+    "selectSession": "Inventur auswählen...",
+    "viewingCompleted": "Sie sehen eine abgeschlossene Inventur (nur Ansicht)."
   },
   "scan": {
     "title": "Bestellliste scannen",
