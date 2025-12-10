@@ -385,6 +385,42 @@ export type Database = {
           },
         ]
       }
+      employee_locations: {
+        Row: {
+          created_at: string
+          employee_id: string
+          id: string
+          location_id: string
+        }
+        Insert: {
+          created_at?: string
+          employee_id: string
+          id?: string
+          location_id: string
+        }
+        Update: {
+          created_at?: string
+          employee_id?: string
+          id?: string
+          location_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employee_locations_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employee_locations_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       employee_order_items: {
         Row: {
           admin_corrected: boolean
