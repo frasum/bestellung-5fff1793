@@ -85,6 +85,14 @@ export const ArticleOrganizationTab = () => {
         return true;
       })
       .sort((a, b) => {
+        // Unvollständige Artikel zuerst (mindestens eine Kategorie fehlt)
+        const aIncomplete = !a.top_category || !a.category;
+        const bIncomplete = !b.top_category || !b.category;
+        
+        if (aIncomplete && !bIncomplete) return -1;
+        if (!aIncomplete && bIncomplete) return 1;
+        
+        // Dann nach Lieferant und Name sortieren
         const supplierCompare = (a.suppliers?.name || '').localeCompare(b.suppliers?.name || '', 'de');
         if (supplierCompare !== 0) return supplierCompare;
         return a.name.localeCompare(b.name, 'de');
@@ -143,6 +151,14 @@ export const ArticleOrganizationTab = () => {
       ids: [id],
       updates: { [field]: value } as any,
     });
+  };
+
+  // Row highlight for incomplete articles
+  const getRowHighlightClass = (article: ArticleWithTopCategory) => {
+    if (!article.top_category || !article.category) {
+      return 'bg-red-50 dark:bg-red-950/30';
+    }
+    return '';
   };
 
   if (articlesLoading) {
@@ -321,7 +337,7 @@ export const ArticleOrganizationTab = () => {
                   </TableRow>
                 ) : (
                   filteredArticles.map((article) => (
-                    <TableRow key={article.id}>
+                    <TableRow key={article.id} className={getRowHighlightClass(article)}>
                       <TableCell>
                         <Checkbox
                           checked={selectedIds.has(article.id)}
