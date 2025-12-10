@@ -385,6 +385,52 @@ export type Database = {
           },
         ]
       }
+      employee_location_suppliers: {
+        Row: {
+          created_at: string
+          employee_id: string
+          id: string
+          location_id: string
+          supplier_id: string
+        }
+        Insert: {
+          created_at?: string
+          employee_id: string
+          id?: string
+          location_id: string
+          supplier_id: string
+        }
+        Update: {
+          created_at?: string
+          employee_id?: string
+          id?: string
+          location_id?: string
+          supplier_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employee_location_suppliers_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employee_location_suppliers_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employee_location_suppliers_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       employee_locations: {
         Row: {
           created_at: string

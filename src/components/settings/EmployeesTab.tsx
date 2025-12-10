@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Plus, Pencil, Trash2, Phone, Mail, User, UserCheck, UserX, MapPin } from 'lucide-react';
+import { Plus, Pencil, Trash2, Phone, Mail, User, UserCheck, UserX, MapPin, ChevronDown, ChevronRight, Package } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -8,6 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import {
   Dialog,
   DialogContent,
@@ -34,22 +35,39 @@ import {
 } from '@/hooks/useEmployees';
 import { useSimpleOrderTokens } from '@/hooks/useSimpleOrderTokens';
 import { useLocations } from '@/hooks/useLocations';
+import { useSuppliers } from '@/hooks/useSuppliers';
 import { useAllEmployeeLocations, useUpdateEmployeeLocations } from '@/hooks/useEmployeeLocations';
+import { 
+  useAllEmployeeLocationSuppliers, 
+  useUpdateEmployeeLocationSuppliers,
+  LocationSupplierAssignment 
+} from '@/hooks/useEmployeeLocationSuppliers';
+import { ScrollArea } from '@/components/ui/scroll-area';
+
+interface LocationAssignment {
+  locationId: string;
+  enabled: boolean;
+  supplierIds: string[];
+}
 
 export function EmployeesTab() {
   const { t } = useTranslation();
   const { data: employees = [], isLoading } = useEmployees();
   const { data: tokens = [] } = useSimpleOrderTokens();
   const { data: locations = [] } = useLocations();
+  const { data: suppliers = [] } = useSuppliers();
   const { data: employeeLocations = [] } = useAllEmployeeLocations();
+  const { data: employeeLocationSuppliers = [] } = useAllEmployeeLocationSuppliers();
   const createEmployee = useCreateEmployee();
   const updateEmployee = useUpdateEmployee();
   const deleteEmployee = useDeleteEmployee();
   const updateEmployeeLocations = useUpdateEmployeeLocations();
+  const updateEmployeeLocationSuppliers = useUpdateEmployeeLocationSuppliers();
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
   const [deleteConfirmEmployee, setDeleteConfirmEmployee] = useState<Employee | null>(null);
+  const [expandedLocations, setExpandedLocations] = useState<Set<string>>(new Set());
 
   const [formData, setFormData] = useState({
     name: '',
@@ -57,13 +75,52 @@ export function EmployeesTab() {
     email: '',
     notes: '',
   });
-  const [selectedLocationIds, setSelectedLocationIds] = useState<string[]>([]);
+  
+  // New structure: location -> suppliers mapping
+  const [locationAssignments, setLocationAssignments] = useState<LocationAssignment[]>([]);
+
+  const activeSuppliers = useMemo(() => 
+    suppliers.filter(s => s.is_active), 
+    [suppliers]
+  );
+
+  const initializeLocationAssignments = (employeeId?: string) => {
+    const assignments: LocationAssignment[] = locations.map(location => {
+      if (employeeId) {
+        // Load existing assignments for this employee
+        const isLocationEnabled = employeeLocations.some(
+          el => el.employee_id === employeeId && el.location_id === location.id
+        );
+        const assignedSupplierIds = employeeLocationSuppliers
+          .filter(els => els.employee_id === employeeId && els.location_id === location.id)
+          .map(els => els.supplier_id);
+        
+        return {
+          locationId: location.id,
+          enabled: isLocationEnabled,
+          supplierIds: assignedSupplierIds,
+        };
+      } else {
+        // New employee: all locations with all suppliers by default
+        return {
+          locationId: location.id,
+          enabled: true,
+          supplierIds: activeSuppliers.map(s => s.id),
+        };
+      }
+    });
+    setLocationAssignments(assignments);
+    // Expand all enabled locations
+    const enabledLocationIds = new Set(
+      assignments.filter(a => a.enabled).map(a => a.locationId)
+    );
+    setExpandedLocations(enabledLocationIds);
+  };
 
   const openCreateDialog = () => {
     setEditingEmployee(null);
     setFormData({ name: '', phone: '', email: '', notes: '' });
-    // Default: all locations selected for new employees
-    setSelectedLocationIds(locations.map(l => l.id));
+    initializeLocationAssignments();
     setIsDialogOpen(true);
   };
 
@@ -75,16 +132,23 @@ export function EmployeesTab() {
       email: employee.email || '',
       notes: employee.notes || '',
     });
-    // Load assigned locations
-    const assignedLocationIds = employeeLocations
-      .filter(el => el.employee_id === employee.id)
-      .map(el => el.location_id);
-    setSelectedLocationIds(assignedLocationIds);
+    initializeLocationAssignments(employee.id);
     setIsDialogOpen(true);
   };
 
   const handleSubmit = async () => {
     if (!formData.name.trim()) return;
+
+    const enabledLocationIds = locationAssignments
+      .filter(a => a.enabled)
+      .map(a => a.locationId);
+    
+    const supplierAssignments: LocationSupplierAssignment[] = locationAssignments
+      .filter(a => a.enabled && a.supplierIds.length > 0)
+      .map(a => ({
+        locationId: a.locationId,
+        supplierIds: a.supplierIds,
+      }));
 
     if (editingEmployee) {
       await updateEmployee.mutateAsync({
@@ -97,7 +161,12 @@ export function EmployeesTab() {
       // Update locations
       await updateEmployeeLocations.mutateAsync({
         employeeId: editingEmployee.id,
-        locationIds: selectedLocationIds,
+        locationIds: enabledLocationIds,
+      });
+      // Update location-supplier assignments
+      await updateEmployeeLocationSuppliers.mutateAsync({
+        employeeId: editingEmployee.id,
+        assignments: supplierAssignments,
       });
     } else {
       const newEmployee = await createEmployee.mutateAsync({
@@ -110,7 +179,11 @@ export function EmployeesTab() {
       if (newEmployee?.id) {
         await updateEmployeeLocations.mutateAsync({
           employeeId: newEmployee.id,
-          locationIds: selectedLocationIds,
+          locationIds: enabledLocationIds,
+        });
+        await updateEmployeeLocationSuppliers.mutateAsync({
+          employeeId: newEmployee.id,
+          assignments: supplierAssignments,
         });
       }
     }
@@ -138,29 +211,96 @@ export function EmployeesTab() {
     }).length;
   };
 
-  const getEmployeeLocationNames = (employeeId: string) => {
+  const getEmployeeLocationSuppliersInfo = (employeeId: string) => {
     const assignedLocationIds = employeeLocations
       .filter(el => el.employee_id === employeeId)
       .map(el => el.location_id);
+    
     return locations
       .filter(l => assignedLocationIds.includes(l.id))
-      .map(l => l.short_code || l.name);
+      .map(location => {
+        const supplierIds = employeeLocationSuppliers
+          .filter(els => els.employee_id === employeeId && els.location_id === location.id)
+          .map(els => els.supplier_id);
+        const supplierNames = suppliers
+          .filter(s => supplierIds.includes(s.id))
+          .map(s => s.name);
+        return {
+          locationName: location.short_code || location.name,
+          supplierNames,
+        };
+      });
   };
 
-  const toggleLocationSelection = (locationId: string) => {
-    setSelectedLocationIds(prev => 
-      prev.includes(locationId)
-        ? prev.filter(id => id !== locationId)
-        : [...prev, locationId]
-    );
+  // Location assignment handlers
+  const toggleLocation = (locationId: string) => {
+    setLocationAssignments(prev => prev.map(a => {
+      if (a.locationId === locationId) {
+        const newEnabled = !a.enabled;
+        return {
+          ...a,
+          enabled: newEnabled,
+          // When enabling, select all suppliers by default
+          supplierIds: newEnabled ? activeSuppliers.map(s => s.id) : [],
+        };
+      }
+      return a;
+    }));
+    // Toggle expansion when enabling
+    setExpandedLocations(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(locationId)) {
+        newSet.delete(locationId);
+      } else {
+        newSet.add(locationId);
+      }
+      return newSet;
+    });
   };
 
-  const selectAllLocations = () => {
-    setSelectedLocationIds(locations.map(l => l.id));
+  const toggleSupplierForLocation = (locationId: string, supplierId: string) => {
+    setLocationAssignments(prev => prev.map(a => {
+      if (a.locationId === locationId) {
+        const hasSupplier = a.supplierIds.includes(supplierId);
+        return {
+          ...a,
+          supplierIds: hasSupplier
+            ? a.supplierIds.filter(id => id !== supplierId)
+            : [...a.supplierIds, supplierId],
+        };
+      }
+      return a;
+    }));
   };
 
-  const deselectAllLocations = () => {
-    setSelectedLocationIds([]);
+  const selectAllSuppliersForLocation = (locationId: string) => {
+    setLocationAssignments(prev => prev.map(a => {
+      if (a.locationId === locationId) {
+        return { ...a, supplierIds: activeSuppliers.map(s => s.id) };
+      }
+      return a;
+    }));
+  };
+
+  const deselectAllSuppliersForLocation = (locationId: string) => {
+    setLocationAssignments(prev => prev.map(a => {
+      if (a.locationId === locationId) {
+        return { ...a, supplierIds: [] };
+      }
+      return a;
+    }));
+  };
+
+  const toggleExpandLocation = (locationId: string) => {
+    setExpandedLocations(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(locationId)) {
+        newSet.delete(locationId);
+      } else {
+        newSet.add(locationId);
+      }
+      return newSet;
+    });
   };
 
   if (isLoading) {
@@ -211,7 +351,7 @@ export function EmployeesTab() {
         <div className="space-y-2">
           {employees.map((employee) => {
             const tokenCount = getTokenCountForEmployee(employee.id);
-            const locationNames = getEmployeeLocationNames(employee.id);
+            const locationSuppliersInfo = getEmployeeLocationSuppliersInfo(employee.id);
             return (
               <div
                 key={employee.id}
@@ -232,14 +372,23 @@ export function EmployeesTab() {
                         </Badge>
                       )}
                     </div>
-                    {/* Location badges */}
-                    {locationNames.length > 0 && (
-                      <div className="flex items-center gap-1 mt-1 flex-wrap">
-                        <MapPin className="h-3 w-3 text-muted-foreground" />
-                        {locationNames.map((name, idx) => (
-                          <Badge key={idx} variant="secondary" className="text-xs">
-                            {name}
-                          </Badge>
+                    {/* Location + Suppliers badges */}
+                    {locationSuppliersInfo.length > 0 && (
+                      <div className="mt-2 space-y-1">
+                        {locationSuppliersInfo.map((info, idx) => (
+                          <div key={idx} className="flex items-center gap-1 flex-wrap text-sm">
+                            <MapPin className="h-3 w-3 text-muted-foreground" />
+                            <span className="font-medium text-muted-foreground">{info.locationName}:</span>
+                            {info.supplierNames.length > 0 ? (
+                              info.supplierNames.map((name, sIdx) => (
+                                <Badge key={sIdx} variant="secondary" className="text-xs">
+                                  {name}
+                                </Badge>
+                              ))
+                            ) : (
+                              <span className="text-xs text-amber-600">Keine Lieferanten</span>
+                            )}
+                          </div>
                         ))}
                       </div>
                     )}
@@ -292,113 +441,165 @@ export function EmployeesTab() {
 
       {/* Create/Edit Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-hidden flex flex-col">
           <DialogHeader>
             <DialogTitle>
               {editingEmployee ? 'Mitarbeiter bearbeiten' : 'Neuen Mitarbeiter anlegen'}
             </DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="name">Name *</Label>
-              <Input
-                id="name"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                placeholder="z.B. Somchai"
-              />
-            </div>
-            <div>
-              <Label htmlFor="phone">Telefon</Label>
-              <Input
-                id="phone"
-                type="tel"
-                inputMode="tel"
-                value={formData.phone}
-                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                placeholder="+49 151 12345678"
-              />
-            </div>
-            <div>
-              <Label htmlFor="email">E-Mail</Label>
-              <Input
-                id="email"
-                type="email"
-                inputMode="email"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                placeholder="mitarbeiter@example.com"
-              />
-            </div>
-
-            {/* Location Assignment */}
-            {locations.length > 0 && (
+          <ScrollArea className="flex-1 pr-4">
+            <div className="space-y-4 pb-2">
               <div>
-                <div className="flex items-center justify-between mb-2">
-                  <Label>Standorte</Label>
-                  <div className="flex gap-2">
-                    <Button 
-                      type="button" 
-                      variant="ghost" 
-                      size="sm" 
-                      onClick={selectAllLocations}
-                      className="text-xs h-7"
-                    >
-                      Alle
-                    </Button>
-                    <Button 
-                      type="button" 
-                      variant="ghost" 
-                      size="sm" 
-                      onClick={deselectAllLocations}
-                      className="text-xs h-7"
-                    >
-                      Keine
-                    </Button>
-                  </div>
-                </div>
-                <div className="border rounded-lg p-3 space-y-2">
-                  {locations.map((location) => (
-                    <div key={location.id} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={`location-${location.id}`}
-                        checked={selectedLocationIds.includes(location.id)}
-                        onCheckedChange={() => toggleLocationSelection(location.id)}
-                      />
-                      <label
-                        htmlFor={`location-${location.id}`}
-                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-                      >
-                        {location.name}
-                        {location.short_code && (
-                          <span className="text-muted-foreground ml-1">
-                            ({location.short_code})
-                          </span>
-                        )}
-                      </label>
-                    </div>
-                  ))}
-                </div>
-                {selectedLocationIds.length === 0 && (
-                  <p className="text-xs text-amber-600 mt-1">
-                    Ohne Standortzuweisung kann der Mitarbeiter keine Bestellungen aufgeben
-                  </p>
-                )}
+                <Label htmlFor="name">Name *</Label>
+                <Input
+                  id="name"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  placeholder="z.B. Somchai"
+                />
               </div>
-            )}
+              <div>
+                <Label htmlFor="phone">Telefon</Label>
+                <Input
+                  id="phone"
+                  type="tel"
+                  inputMode="tel"
+                  value={formData.phone}
+                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  placeholder="+49 151 12345678"
+                />
+              </div>
+              <div>
+                <Label htmlFor="email">E-Mail</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  inputMode="email"
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  placeholder="mitarbeiter@example.com"
+                />
+              </div>
 
-            <div>
-              <Label htmlFor="notes">Notizen</Label>
-              <Textarea
-                id="notes"
-                value={formData.notes}
-                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                placeholder="z.B. Küche, nur vormittags erreichbar"
-                rows={2}
-              />
+              {/* Location + Supplier Assignment */}
+              {locations.length > 0 && (
+                <div>
+                  <Label className="mb-2 block">Standorte & Lieferanten</Label>
+                  <div className="border rounded-lg divide-y">
+                    {locations.map((location) => {
+                      const assignment = locationAssignments.find(a => a.locationId === location.id);
+                      const isEnabled = assignment?.enabled ?? false;
+                      const isExpanded = expandedLocations.has(location.id);
+                      const selectedCount = assignment?.supplierIds.length ?? 0;
+
+                      return (
+                        <div key={location.id} className="p-3">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <Checkbox
+                                id={`location-${location.id}`}
+                                checked={isEnabled}
+                                onCheckedChange={() => toggleLocation(location.id)}
+                              />
+                              <label
+                                htmlFor={`location-${location.id}`}
+                                className="text-sm font-medium cursor-pointer"
+                              >
+                                {location.name}
+                                {location.short_code && (
+                                  <span className="text-muted-foreground ml-1">
+                                    ({location.short_code})
+                                  </span>
+                                )}
+                              </label>
+                              {isEnabled && (
+                                <Badge variant="secondary" className="text-xs">
+                                  {selectedCount}/{activeSuppliers.length}
+                                </Badge>
+                              )}
+                            </div>
+                            {isEnabled && activeSuppliers.length > 0 && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => toggleExpandLocation(location.id)}
+                                className="h-7 w-7 p-0"
+                              >
+                                {isExpanded ? (
+                                  <ChevronDown className="h-4 w-4" />
+                                ) : (
+                                  <ChevronRight className="h-4 w-4" />
+                                )}
+                              </Button>
+                            )}
+                          </div>
+
+                          {isEnabled && isExpanded && activeSuppliers.length > 0 && (
+                            <div className="mt-3 ml-6 space-y-2">
+                              <div className="flex gap-2 mb-2">
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => selectAllSuppliersForLocation(location.id)}
+                                  className="text-xs h-6"
+                                >
+                                  Alle
+                                </Button>
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => deselectAllSuppliersForLocation(location.id)}
+                                  className="text-xs h-6"
+                                >
+                                  Keine
+                                </Button>
+                              </div>
+                              <div className="grid grid-cols-2 gap-2">
+                                {activeSuppliers.map((supplier) => (
+                                  <div key={supplier.id} className="flex items-center space-x-2">
+                                    <Checkbox
+                                      id={`supplier-${location.id}-${supplier.id}`}
+                                      checked={assignment?.supplierIds.includes(supplier.id) ?? false}
+                                      onCheckedChange={() => toggleSupplierForLocation(location.id, supplier.id)}
+                                    />
+                                    <label
+                                      htmlFor={`supplier-${location.id}-${supplier.id}`}
+                                      className="text-xs cursor-pointer truncate"
+                                    >
+                                      {supplier.name}
+                                    </label>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                  {locationAssignments.every(a => !a.enabled) && (
+                    <p className="text-xs text-amber-600 mt-1">
+                      Ohne Standortzuweisung kann der Mitarbeiter keine Bestellungen aufgeben
+                    </p>
+                  )}
+                </div>
+              )}
+
+              <div>
+                <Label htmlFor="notes">Notizen</Label>
+                <Textarea
+                  id="notes"
+                  value={formData.notes}
+                  onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                  placeholder="z.B. Küche, nur vormittags erreichbar"
+                  rows={2}
+                />
+              </div>
             </div>
-          </div>
-          <DialogFooter>
+          </ScrollArea>
+          <DialogFooter className="mt-4">
             <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
               Abbrechen
             </Button>
