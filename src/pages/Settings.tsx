@@ -5,7 +5,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Building2, User, FlaskConical, Layers, MessageSquare } from 'lucide-react';
 import { useUserRole } from '@/hooks/useTeam';
 import { DemoAccountsTab } from '@/components/settings/DemoAccountsTab';
-import { SettingsSearch } from '@/components/settings/SettingsSearch';
 import { MasterDataTab } from '@/components/settings/MasterDataTab';
 import { CommunicationTab } from '@/components/settings/CommunicationTab';
 import { ProfileTab } from '@/components/settings/ProfileTab';
@@ -28,13 +27,6 @@ const Settings = () => {
     'communication': 'notifications',
   });
 
-  const handleNavigate = (tab: string, subTab?: string) => {
-    setActiveTab(tab);
-    if (subTab) {
-      setActiveSubTabs(prev => ({ ...prev, [tab]: subTab }));
-    }
-  };
-
   return (
     <DashboardLayout>
       <div className="space-y-2 md:space-y-5 xl:space-y-6">
@@ -42,8 +34,6 @@ const Settings = () => {
           <h1 className="text-2xl md:text-3xl font-bold text-foreground">{t('settings.title')}</h1>
           <p className="text-sm md:text-base text-muted-foreground mt-0.5 md:mt-1">{t('settings.description')}</p>
         </div>
-
-        <SettingsSearch onNavigate={handleNavigate} />
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
