@@ -19,6 +19,7 @@ import {
   useUserRole,
   TeamMember,
 } from '@/hooks/useTeam';
+import { PermissionsOverview } from './PermissionsOverview';
 
 export const TeamTab = () => {
   const { t } = useTranslation();
@@ -211,6 +212,8 @@ export const TeamTab = () => {
           </CardContent>
         </Card>
       )}
+
+      <PermissionsOverview />
     </div>
   );
 };
