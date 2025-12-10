@@ -160,7 +160,9 @@ export default function StaffSubmissionHistory({
               </div>
               <div className="flex items-center gap-2">
                 {getStatusBadge(submission.status)}
-                {submission.status === 'approved' && submission.items && submission.items.length > 0 && (
+                {/* Show cart button for approved orders OR for pending kiosk orders (for quick processing) */}
+                {submission.items && submission.items.length > 0 && 
+                 (submission.status === 'approved' || (submission.status === 'pending' && submission.submission_type === 'simple')) && (
                   <>
                     {addedSubmissionIds.includes(submission.id) && (
                       <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 border-emerald-500/30 gap-1">
@@ -170,7 +172,7 @@ export default function StaffSubmissionHistory({
                     )}
                     <Button
                       size="sm"
-                      variant="outline"
+                      variant={submission.status === 'pending' ? 'default' : 'outline'}
                       className="h-7 gap-1.5 text-xs"
                       onClick={(e) => handleAddToCart(e, submission)}
                     >
