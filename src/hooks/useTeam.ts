@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
+import { useTranslation } from 'react-i18next';
 
 export interface TeamMember {
   id: string;
@@ -125,6 +126,7 @@ export const useTeamInvitations = () => {
 export const useCreateInvitation = () => {
   const queryClient = useQueryClient();
   const { user } = useAuth();
+  const { i18n } = useTranslation();
 
   return useMutation({
     mutationFn: async ({ email, role }: { email: string; role: TeamMember['role'] }) => {
@@ -172,6 +174,7 @@ export const useCreateInvitation = () => {
             organizationName: org?.name || 'the organization',
             role,
             inviteToken: invitation.token,
+            language: i18n.language,
           },
         });
 
