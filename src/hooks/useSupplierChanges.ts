@@ -328,7 +328,15 @@ export const useRejectAllChanges = () => {
   });
 };
 
-// Get Map of supplier IDs to their last activity date (changes in the last 4 months)
+// Detailed supplier activity info
+export interface SupplierActivityInfo {
+  lastDate: Date;
+  changeCount: number;
+  suggestionCount: number;
+  changedFields: string[];
+}
+
+// Get Map of supplier IDs to their activity details (changes in the last 4 months)
 export const useRecentlyActiveSuppliers = () => {
   return useQuery({
     queryKey: ['recently-active-suppliers'],
@@ -336,10 +344,10 @@ export const useRecentlyActiveSuppliers = () => {
       const fourMonthsAgo = new Date();
       fourMonthsAgo.setMonth(fourMonthsAgo.getMonth() - 4);
 
-      // Fetch changes from the last 4 months with dates
+      // Fetch changes from the last 4 months with dates and field names
       const { data: changes } = await supabase
         .from('supplier_article_changes')
-        .select('supplier_id, created_at')
+        .select('supplier_id, created_at, field_name')
         .gte('created_at', fourMonthsAgo.toISOString());
 
       // Fetch suggested articles from the last 4 months with dates
@@ -348,14 +356,49 @@ export const useRecentlyActiveSuppliers = () => {
         .select('supplier_id, created_at')
         .gte('created_at', fourMonthsAgo.toISOString());
 
-      // Map: supplier_id -> latest activity date
-      const supplierActivityMap = new Map<string, Date>();
+      // Map: supplier_id -> activity details
+      const supplierActivityMap = new Map<string, SupplierActivityInfo>();
       
-      [...(changes || []), ...(suggestions || [])].forEach(item => {
+      // Process changes
+      changes?.forEach(item => {
         const date = new Date(item.created_at);
         const existing = supplierActivityMap.get(item.supplier_id);
-        if (!existing || date > existing) {
-          supplierActivityMap.set(item.supplier_id, date);
+        
+        if (!existing) {
+          supplierActivityMap.set(item.supplier_id, {
+            lastDate: date,
+            changeCount: 1,
+            suggestionCount: 0,
+            changedFields: [item.field_name]
+          });
+        } else {
+          if (date > existing.lastDate) {
+            existing.lastDate = date;
+          }
+          existing.changeCount++;
+          if (!existing.changedFields.includes(item.field_name)) {
+            existing.changedFields.push(item.field_name);
+          }
+        }
+      });
+
+      // Process suggestions
+      suggestions?.forEach(item => {
+        const date = new Date(item.created_at);
+        const existing = supplierActivityMap.get(item.supplier_id);
+        
+        if (!existing) {
+          supplierActivityMap.set(item.supplier_id, {
+            lastDate: date,
+            changeCount: 0,
+            suggestionCount: 1,
+            changedFields: []
+          });
+        } else {
+          if (date > existing.lastDate) {
+            existing.lastDate = date;
+          }
+          existing.suggestionCount++;
         }
       });
 

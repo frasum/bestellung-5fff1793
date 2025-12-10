@@ -5,9 +5,11 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableRow } from '@/components/ui/table';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { PriceHistoryPopover } from '@/components/suppliers/PriceHistoryPopover';
 import { ArticleCard } from '@/components/suppliers/ArticleCard';
 import { Article } from '@/hooks/useArticles';
+import { SupplierActivityInfo } from '@/hooks/useSupplierChanges';
 import { LastOrderInfo } from '@/hooks/useLastOrderByArticle';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
@@ -26,7 +28,7 @@ interface ArticleTableProps {
   getItemsBySupplier: () => Map<string, unknown>;
   pendingChangesBySupplier?: Record<string, number>;
   pendingArticleIds?: Set<string>;
-  recentlyActiveSuppliers?: Map<string, Date>;
+  recentlyActiveSuppliers?: Map<string, SupplierActivityInfo>;
   lastOrderMap?: Record<string, LastOrderInfo>;
   onToggleSupplier: (supplierId: string) => void;
   onToggleArticle: (articleId: string) => void;
@@ -84,17 +86,39 @@ export const ArticleTable = ({
                   )}>
                     {group.supplier.name}
                   </span>
-                  {recentlyActiveSuppliers.has(group.supplier.id) && (
-                    <div className="flex items-center gap-1">
-                      <span 
-                        className="w-2 h-2 md:w-2.5 md:h-2.5 rounded-full bg-green-500 animate-pulse shrink-0" 
-                        title="Kürzlich aktiv - Änderungen eingereicht in den letzten 4 Monaten"
-                      />
-                      <span className="text-xs text-muted-foreground">
-                        {recentlyActiveSuppliers.get(group.supplier.id)?.toLocaleDateString('de-DE')}
-                      </span>
-                    </div>
-                  )}
+                  {recentlyActiveSuppliers.has(group.supplier.id) && (() => {
+                    const activity = recentlyActiveSuppliers.get(group.supplier.id)!;
+                    const fieldLabels: Record<string, string> = {
+                      price: 'Preis', name: 'Name', sku: 'SKU', description: 'Beschreibung',
+                      unit: 'Einheit', category: 'Kategorie', annual_order_value: 'Jahresumsatz'
+                    };
+                    const changedFieldsText = activity.changedFields.map(f => fieldLabels[f] || f).join(', ');
+                    return (
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <div className="flex items-center gap-1 cursor-help">
+                              <span className="w-2 h-2 md:w-2.5 md:h-2.5 rounded-full bg-green-500 animate-pulse shrink-0" />
+                              <span className="text-xs text-muted-foreground">
+                                {activity.lastDate.toLocaleDateString('de-DE')}
+                              </span>
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent side="top" className="max-w-xs">
+                            <div className="text-sm space-y-1">
+                              <p className="font-medium">Kürzlich aktiv</p>
+                              {activity.changeCount > 0 && (
+                                <p>{activity.changeCount} Änderung{activity.changeCount > 1 ? 'en' : ''}: {changedFieldsText}</p>
+                              )}
+                              {activity.suggestionCount > 0 && (
+                                <p>{activity.suggestionCount} neue Artikelvorschläge</p>
+                              )}
+                            </div>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    );
+                  })()}
                   {pendingChangesBySupplier[group.supplier.id] > 0 && (
                     <Badge 
                       variant="destructive" 
@@ -156,17 +180,39 @@ export const ArticleTable = ({
                           "font-semibold text-sm",
                           getItemsBySupplier().has(group.supplier.id) ? "text-destructive" : "text-foreground"
                         )}>{group.supplier.name}</span>
-                        {recentlyActiveSuppliers.has(group.supplier.id) && (
-                          <div className="flex items-center gap-1">
-                            <span 
-                              className="w-2 h-2 rounded-full bg-green-500 animate-pulse shrink-0" 
-                              title="Kürzlich aktiv - Änderungen eingereicht in den letzten 4 Monaten"
-                            />
-                            <span className="text-xs text-muted-foreground">
-                              {recentlyActiveSuppliers.get(group.supplier.id)?.toLocaleDateString('de-DE')}
-                            </span>
-                          </div>
-                        )}
+                        {recentlyActiveSuppliers.has(group.supplier.id) && (() => {
+                          const activity = recentlyActiveSuppliers.get(group.supplier.id)!;
+                          const fieldLabels: Record<string, string> = {
+                            price: 'Preis', name: 'Name', sku: 'SKU', description: 'Beschreibung',
+                            unit: 'Einheit', category: 'Kategorie', annual_order_value: 'Jahresumsatz'
+                          };
+                          const changedFieldsText = activity.changedFields.map(f => fieldLabels[f] || f).join(', ');
+                          return (
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <div className="flex items-center gap-1 cursor-help">
+                                    <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse shrink-0" />
+                                    <span className="text-xs text-muted-foreground">
+                                      {activity.lastDate.toLocaleDateString('de-DE')}
+                                    </span>
+                                  </div>
+                                </TooltipTrigger>
+                                <TooltipContent side="top" className="max-w-xs">
+                                  <div className="text-sm space-y-1">
+                                    <p className="font-medium">Kürzlich aktiv</p>
+                                    {activity.changeCount > 0 && (
+                                      <p>{activity.changeCount} Änderung{activity.changeCount > 1 ? 'en' : ''}: {changedFieldsText}</p>
+                                    )}
+                                    {activity.suggestionCount > 0 && (
+                                      <p>{activity.suggestionCount} neue Artikelvorschläge</p>
+                                    )}
+                                  </div>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          );
+                        })()}
                         <span className="text-xs text-muted-foreground">({group.articles?.length || 0} Artikel)</span>
                         {pendingChangesBySupplier[group.supplier.id] > 0 && (
                           <Badge 
