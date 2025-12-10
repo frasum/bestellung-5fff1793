@@ -116,11 +116,6 @@ export function GlobalSearch() {
                         title="Kürzlich aktiv - Änderungen eingereicht in den letzten 4 Monaten"
                       />
                     )}
-                    {supplier.main_category && (
-                      <span className="ml-2 text-xs text-muted-foreground">
-                        {supplier.main_category}
-                      </span>
-                    )}
                   </CommandItem>
                 ))}
               </CommandGroup>

@@ -8,8 +8,6 @@ export const supplierSchema = z.object({
   contact_person: z.string().optional(),
   customer_number: z.string().optional(),
   minimum_order_value: z.string().optional(),
-  top_category: z.string().optional(),
-  main_category: z.string().optional()
 });
 
 export const articleSchema = z.object({

@@ -11,7 +11,6 @@ export const SUPPLIER_IMPORT_FIELDS: ImportField[] = [
   { name: 'contact_person', label: 'Contact Person', required: false },
   { name: 'customer_number', label: 'Customer Number', required: false },
   { name: 'minimum_order_value', label: 'Minimum Order Value', required: false },
-  { name: 'main_category', label: 'Main Category', required: false }
 ];
 
 export const ARTICLE_IMPORT_FIELDS: ImportField[] = [

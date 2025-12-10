@@ -65,8 +65,6 @@ export const ArticleFormDialog = ({
     form.reset();
   };
 
-  const selectedSupplierData = suppliers?.find(s => s.id === form.watch('supplier_id'));
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
@@ -80,34 +78,16 @@ export const ArticleFormDialog = ({
               name="supplier_id"
               control={form.control}
               render={({ field }) => (
-                <>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <SelectTrigger className="bg-card">
-                      <SelectValue placeholder="Lieferant auswählen" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-card border border-border z-50">
-                      {suppliers?.map((supplier) => (
-                        <SelectItem key={supplier.id} value={supplier.id}>{supplier.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {selectedSupplierData && (selectedSupplierData.top_category || selectedSupplierData.main_category) && (
-                    <div className="grid grid-cols-2 gap-2 pt-1">
-                      {selectedSupplierData.top_category && (
-                        <div className="text-xs">
-                          <span className="text-muted-foreground">Oberkategorie: </span>
-                          <span className="text-foreground">{selectedSupplierData.top_category}</span>
-                        </div>
-                      )}
-                      {selectedSupplierData.main_category && (
-                        <div className="text-xs">
-                          <span className="text-muted-foreground">Hauptkategorie: </span>
-                          <span className="text-foreground">{selectedSupplierData.main_category}</span>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </>
+                <Select onValueChange={field.onChange} value={field.value}>
+                  <SelectTrigger className="bg-card">
+                    <SelectValue placeholder="Lieferant auswählen" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-card border border-border z-50">
+                    {suppliers?.map((supplier) => (
+                      <SelectItem key={supplier.id} value={supplier.id}>{supplier.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               )}
             />
             {form.formState.errors.supplier_id && (

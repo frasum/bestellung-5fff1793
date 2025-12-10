@@ -12,6 +12,7 @@ export interface Article {
   unit: string;
   price: number;
   category: string | null;
+  top_category: string | null;
   packaging_unit?: number | null;
   is_active: boolean;
   created_at: string;
