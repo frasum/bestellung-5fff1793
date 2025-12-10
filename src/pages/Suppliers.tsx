@@ -244,6 +244,7 @@ const Suppliers = () => {
           name: a.name,
           unit: a.unit,
           sku: a.sku,
+          description: a.description,
           lastOrderQuantity: lastOrderMap?.[a.id]?.quantity,
           lastOrderDate: lastOrderMap?.[a.id]?.date
         }))
@@ -557,6 +558,7 @@ const Suppliers = () => {
                   name: a.name,
                   unit: a.unit,
                   sku: a.sku,
+                  description: a.description,
                   lastOrderQuantity: lastOrderMap?.[a.id]?.quantity,
                   lastOrderDate: lastOrderMap?.[a.id]?.date
                 })))}

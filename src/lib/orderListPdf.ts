@@ -7,6 +7,7 @@ interface OrderListArticle {
   name: string;
   unit: string;
   sku?: string | null;
+  description?: string | null;
   lastOrderQuantity?: number;
   lastOrderDate?: string;
 }
@@ -50,8 +51,16 @@ export const generateOrderListPdf = (
     return qty;
   };
 
+  const formatArticleName = (article: OrderListArticle) => {
+    let name = article.sku ? `${article.name} (${article.sku})` : article.name;
+    if (article.description) {
+      name += `\n${article.description}`;
+    }
+    return name;
+  };
+
   const tableData = articles.map((article) => [
-    article.sku ? `${article.name} (${article.sku})` : article.name,
+    formatArticleName(article),
     article.unit,
     formatLastOrder(article),
     '', // Menge (quantity) - empty for filling in
@@ -154,8 +163,16 @@ export const generateCombinedOrderListPdf = (
       return qty;
     };
 
+    const formatArticleName = (article: OrderListArticle) => {
+      let name = article.sku ? `${article.name} (${article.sku})` : article.name;
+      if (article.description) {
+        name += `\n${article.description}`;
+      }
+      return name;
+    };
+
     const tableData = articles.map((article) => [
-      article.sku ? `${article.name} (${article.sku})` : article.name,
+      formatArticleName(article),
       article.unit,
       formatLastOrder(article),
       '', // Menge
