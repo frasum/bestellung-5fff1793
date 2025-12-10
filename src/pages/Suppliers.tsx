@@ -531,7 +531,7 @@ const Suppliers = () => {
                 multiSelectEnabled={supplierMultiSelectEnabled}
                 pendingChangesBySupplier={pendingChangesBySupplier || {}}
                 pendingArticleIds={pendingArticleIds || new Set()}
-                recentlyActiveSuppliers={recentlyActiveSuppliers || new Set()}
+                recentlyActiveSuppliers={recentlyActiveSuppliers || new Map()}
                 onToggleExpand={toggleSupplierExpanded}
                 onToggleSelect={toggleSupplierSelected}
                 onSelectAll={selectAllSuppliers}
@@ -573,7 +573,7 @@ const Suppliers = () => {
                 onAdvancedViewChange={setArticleAdvancedViewEnabled}
                 hasFilters={articleSearchQuery !== '' || selectedArticleSuppliers.length > 0 || selectedCategory !== 'all'}
                 showAdvancedToggle={advancedSettingsEnabled}
-                recentlyActiveSuppliers={recentlyActiveSuppliers || new Set()}
+                recentlyActiveSuppliers={recentlyActiveSuppliers || new Map()}
                 onClearFilters={() => {
                   setArticleSearchQuery('');
                   setSelectedArticleSuppliers([]);
@@ -673,7 +673,7 @@ const Suppliers = () => {
                 getItemsBySupplier={getItemsBySupplier}
                 pendingChangesBySupplier={pendingChangesBySupplier || {}}
                 pendingArticleIds={pendingArticleIds || new Set()}
-                recentlyActiveSuppliers={recentlyActiveSuppliers || new Set()}
+                recentlyActiveSuppliers={recentlyActiveSuppliers || new Map()}
                 lastOrderMap={lastOrderMap || {}}
                 onToggleSupplier={toggleArticleSupplier}
                 onToggleArticle={toggleArticleSelected}

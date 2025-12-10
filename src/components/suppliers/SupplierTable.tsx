@@ -17,7 +17,7 @@ interface SupplierTableProps {
   multiSelectEnabled: boolean;
   pendingChangesBySupplier: Record<string, number>;
   pendingArticleIds?: Set<string>;
-  recentlyActiveSuppliers?: Set<string>;
+  recentlyActiveSuppliers?: Map<string, Date>;
   onToggleExpand: (supplierId: string) => void;
   onToggleSelect: (supplierId: string) => void;
   onSelectAll: () => void;
@@ -43,7 +43,7 @@ export const SupplierTable = ({
   multiSelectEnabled,
   pendingChangesBySupplier,
   pendingArticleIds = new Set(),
-  recentlyActiveSuppliers = new Set(),
+  recentlyActiveSuppliers = new Map(),
   onToggleExpand,
   onToggleSelect,
   onSelectAll,
@@ -106,10 +106,15 @@ export const SupplierTable = ({
                         <p className="text-xs text-muted-foreground">{supplier.phone || '-'}</p>
                       </div>
                       {recentlyActiveSuppliers.has(supplier.id) && (
-                        <span 
-                          className="w-2 h-2 rounded-full bg-green-500 animate-pulse shrink-0" 
-                          title="Kürzlich aktiv - Änderungen eingereicht in den letzten 4 Monaten"
-                        />
+                        <div className="flex items-center gap-1.5">
+                          <span 
+                            className="w-2 h-2 rounded-full bg-green-500 animate-pulse shrink-0" 
+                            title="Kürzlich aktiv - Änderungen eingereicht in den letzten 4 Monaten"
+                          />
+                          <span className="text-xs text-muted-foreground">
+                            {recentlyActiveSuppliers.get(supplier.id)?.toLocaleDateString('de-DE')}
+                          </span>
+                        </div>
                       )}
                       {pendingChangesBySupplier[supplier.id] > 0 && (
                         <Badge variant="destructive" className="cursor-pointer animate-pulse" onClick={() => onShowChanges(supplier)}>
