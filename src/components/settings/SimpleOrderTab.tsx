@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Checkbox } from '@/components/ui/checkbox';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { Plus, QrCode, Trash2, Copy, ExternalLink, Smartphone, Users } from 'lucide-react';
+import { Plus, QrCode, Trash2, Copy, ExternalLink, Smartphone, Users, Pencil } from 'lucide-react';
 import { useSuppliers } from '@/hooks/useSuppliers';
 import { useLocations } from '@/hooks/useLocations';
 import { useSimpleOrderTokens, useCreateSimpleOrderToken, useUpdateSimpleOrderToken, useDeleteSimpleOrderToken } from '@/hooks/useSimpleOrderTokens';
@@ -43,6 +43,90 @@ export function SimpleOrderTab() {
     label: '',
     language: 'th',
   });
+
+  // Edit state
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editingTokenId, setEditingTokenId] = useState<string | null>(null);
+  const [isEditMultiSupplier, setIsEditMultiSupplier] = useState(false);
+  const [editSelectedSupplierIds, setEditSelectedSupplierIds] = useState<string[]>([]);
+  const [editFormData, setEditFormData] = useState({
+    supplier_id: '',
+    location_id: '',
+    label: '',
+    language: 'th',
+  });
+
+  const openEditDialog = (token: any) => {
+    setEditingTokenId(token.id);
+    setIsEditMultiSupplier(token.is_multi_supplier);
+    setEditFormData({
+      supplier_id: token.supplier_id || '',
+      location_id: token.location_id || '',
+      label: token.label,
+      language: token.language,
+    });
+    if (token.is_multi_supplier && token.token_suppliers) {
+      setEditSelectedSupplierIds(token.token_suppliers.map((ts: any) => ts.supplier_id));
+    } else {
+      setEditSelectedSupplierIds([]);
+    }
+    setIsEditDialogOpen(true);
+  };
+
+  const handleUpdate = async () => {
+    if (!editingTokenId) return;
+
+    if (isEditMultiSupplier) {
+      if (editSelectedSupplierIds.length === 0 || !editFormData.label) {
+        toast({
+          title: 'Fehler',
+          description: 'Bitte mindestens einen Lieferanten und eine Bezeichnung angeben',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      await updateToken.mutateAsync({
+        id: editingTokenId,
+        label: editFormData.label,
+        location_id: editFormData.location_id || null,
+        language: editFormData.language,
+        is_multi_supplier: true,
+        supplier_id: null,
+        supplier_ids: editSelectedSupplierIds,
+      });
+    } else {
+      if (!editFormData.supplier_id || !editFormData.label) {
+        toast({
+          title: 'Fehler',
+          description: 'Bitte Lieferant und Bezeichnung angeben',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      await updateToken.mutateAsync({
+        id: editingTokenId,
+        label: editFormData.label,
+        location_id: editFormData.location_id || null,
+        language: editFormData.language,
+        is_multi_supplier: false,
+        supplier_id: editFormData.supplier_id,
+        supplier_ids: [],
+      });
+    }
+
+    setIsEditDialogOpen(false);
+    setEditingTokenId(null);
+  };
+
+  const toggleEditSupplierSelection = (supplierId: string) => {
+    setEditSelectedSupplierIds(prev => 
+      prev.includes(supplierId)
+        ? prev.filter(id => id !== supplierId)
+        : [...prev, supplierId]
+    );
+  };
 
   const handleCreate = async () => {
     if (isMultiSupplier) {
@@ -340,6 +424,15 @@ export function SimpleOrderTab() {
                     <Button
                       variant="outline"
                       size="icon"
+                      onClick={() => openEditDialog(token)}
+                      title="Bearbeiten"
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+
+                    <Button
+                      variant="outline"
+                      size="icon"
                       onClick={() => copyToClipboard(token.token)}
                       title="Link kopieren"
                     >
@@ -437,6 +530,151 @@ export function SimpleOrderTab() {
             ))}
           </div>
         )}
+
+        {/* Edit Dialog */}
+        <Dialog open={isEditDialogOpen} onOpenChange={(open) => {
+          setIsEditDialogOpen(open);
+          if (!open) {
+            setEditingTokenId(null);
+          }
+        }}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Bestelllink bearbeiten</DialogTitle>
+              <DialogDescription>
+                Passen Sie die Einstellungen für diesen Bestelllink an
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              {/* Multi-Supplier Toggle */}
+              <div className="flex items-center justify-between rounded-lg border p-4">
+                <div className="space-y-0.5">
+                  <Label className="font-medium flex items-center gap-2">
+                    <Users className="h-4 w-4" />
+                    Multi-Lieferanten
+                  </Label>
+                  <p className="text-sm text-muted-foreground">
+                    Ein QR-Code für mehrere Lieferanten
+                  </p>
+                </div>
+                <Switch
+                  checked={isEditMultiSupplier}
+                  onCheckedChange={(checked) => {
+                    setIsEditMultiSupplier(checked);
+                    if (!checked) {
+                      setEditSelectedSupplierIds([]);
+                    } else {
+                      setEditFormData(prev => ({ ...prev, supplier_id: '' }));
+                    }
+                  }}
+                />
+              </div>
+
+              {/* Supplier Selection */}
+              {isEditMultiSupplier ? (
+                <div className="space-y-2">
+                  <Label>Lieferanten auswählen *</Label>
+                  <div className="border rounded-lg max-h-48 overflow-y-auto">
+                    {suppliers?.map((supplier) => (
+                      <label
+                        key={supplier.id}
+                        className="flex items-center gap-3 p-3 hover:bg-muted/50 cursor-pointer border-b last:border-b-0"
+                      >
+                        <Checkbox
+                          checked={editSelectedSupplierIds.includes(supplier.id)}
+                          onCheckedChange={() => toggleEditSupplierSelection(supplier.id)}
+                        />
+                        <span className="flex-1">{supplier.name}</span>
+                      </label>
+                    ))}
+                  </div>
+                  {editSelectedSupplierIds.length > 0 && (
+                    <p className="text-sm text-muted-foreground">
+                      {editSelectedSupplierIds.length} Lieferanten ausgewählt
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <Label>{t('settings.simpleOrder.supplier', 'Lieferant')} *</Label>
+                  <Select
+                    value={editFormData.supplier_id}
+                    onValueChange={(value) => setEditFormData(prev => ({ ...prev, supplier_id: value }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder={t('settings.simpleOrder.selectSupplier', 'Lieferant auswählen')} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {suppliers?.map((supplier) => (
+                        <SelectItem key={supplier.id} value={supplier.id}>
+                          {supplier.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              <div className="space-y-2">
+                <Label>{t('settings.simpleOrder.location', 'Standort')} ({t('common.optional', 'optional')})</Label>
+                <Select
+                  value={editFormData.location_id || 'all'}
+                  onValueChange={(value) => setEditFormData(prev => ({ ...prev, location_id: value === 'all' ? '' : value }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder={t('settings.simpleOrder.allLocations', 'Alle Standorte')} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">
+                      {t('settings.simpleOrder.allLocations', 'Alle Standorte')}
+                    </SelectItem>
+                    {locations?.map((location) => (
+                      <SelectItem key={location.id} value={location.id}>
+                        {location.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>{t('settings.simpleOrder.label', 'Bezeichnung')} *</Label>
+                <Input
+                  value={editFormData.label}
+                  onChange={(e) => setEditFormData(prev => ({ ...prev, label: e.target.value }))}
+                  placeholder={t('settings.simpleOrder.labelPlaceholder', 'z.B. Küche YUM, Lager')}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>{t('settings.simpleOrder.language', 'Sprache')}</Label>
+                <Select
+                  value={editFormData.language}
+                  onValueChange={(value) => setEditFormData(prev => ({ ...prev, language: value }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {LANGUAGES.map((lang) => (
+                      <SelectItem key={lang.code} value={lang.code}>
+                        {lang.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+                {t('common.cancel')}
+              </Button>
+              <Button onClick={handleUpdate} disabled={updateToken.isPending}>
+                {updateToken.isPending ? t('common.saving') : t('common.save')}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </CardContent>
     </Card>
   );
