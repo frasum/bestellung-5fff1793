@@ -6,8 +6,6 @@ import { useCart } from '@/contexts/CartContext';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useOrders, useUpdateOrderStatus, useDeleteTestOrders, Order } from '@/hooks/useOrders';
 import { useCartDrafts, useDeleteCartDraft, CartDraft } from '@/hooks/useCartDrafts';
-import { usePendingSubmissionsCount } from '@/hooks/useEmployeeSubmissions';
-import { useHasRole } from '@/hooks/useUserRole';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -37,8 +35,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { format, isAfter, isBefore, startOfDay, endOfDay, subDays, subMonths, Locale } from 'date-fns';
 import { de, enUS, fr } from 'date-fns/locale';
-import { Loader2, Package, CheckCircle2, Clock, Truck, XCircle, Eye, Search, X, ChevronDown, Trash2, FlaskConical, Filter, FileText, ShoppingCart, Calendar, ClipboardList, Smartphone } from 'lucide-react';
-import StaffOrdersTab from '@/components/orders/StaffOrdersTab';
+import { Loader2, Package, CheckCircle2, Clock, Truck, XCircle, Eye, Search, X, ChevronDown, Trash2, FlaskConical, Filter, FileText, ShoppingCart, Calendar, Smartphone } from 'lucide-react';
 import { SimpleOrderTab } from '@/components/settings/SimpleOrderTab';
 import {
   Popover,
@@ -98,14 +95,9 @@ const Orders = () => {
   const [selectedDraft, setSelectedDraft] = useState<CartDraft | null>(null);
   const [loadDialogOpen, setLoadDialogOpen] = useState(false);
   
-  // Staff orders state
-  const { hasRole: canAccessStaffOrders } = useHasRole(['admin', 'manager', 'purchaser']);
-  const { hasRole: canSeeAllSubmissions } = useHasRole(['admin', 'manager']);
-  const { data: pendingCount = 0 } = usePendingSubmissionsCount();
-  
   // Tab state from URL
   const tabParam = searchParams.get('tab');
-  const activeTab = tabParam === 'drafts' ? 'drafts' : tabParam === 'staff' ? 'staff' : tabParam === 'simple-order' ? 'simple-order' : 'orders';
+  const activeTab = tabParam === 'drafts' ? 'drafts' : tabParam === 'simple-order' ? 'simple-order' : 'orders';
 
   // Fetch organization info for test mode
   const { data: orgData } = useQuery({
@@ -315,8 +307,6 @@ const Orders = () => {
   const handleTabChange = (value: string) => {
     if (value === 'drafts') {
       setSearchParams({ tab: 'drafts' }, { replace: true });
-    } else if (value === 'staff') {
-      setSearchParams({ tab: 'staff' }, { replace: true });
     } else if (value === 'simple-order') {
       setSearchParams({ tab: 'simple-order' }, { replace: true });
     } else {
@@ -408,7 +398,7 @@ const Orders = () => {
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-          <TabsList className="grid w-full max-w-2xl grid-cols-4">
+          <TabsList className="grid w-full max-w-2xl grid-cols-3">
             <TabsTrigger value="orders" className="flex items-center gap-2">
               <ShoppingCart className="w-4 h-4" />
               <span className="hidden sm:inline">{t('orders.title')}</span>
@@ -423,15 +413,6 @@ const Orders = () => {
                 <Badge variant="secondary" className="ml-1 text-xs">{drafts.length}</Badge>
               )}
             </TabsTrigger>
-            {canAccessStaffOrders && (
-              <TabsTrigger value="staff" className="flex items-center gap-2">
-                <ClipboardList className="w-4 h-4" />
-                <span className="hidden sm:inline">{t('nav.staffOrders')}</span>
-                {canSeeAllSubmissions && pendingCount > 0 && (
-                  <Badge variant="destructive" className="ml-1 text-xs">{pendingCount}</Badge>
-                )}
-              </TabsTrigger>
-            )}
             <TabsTrigger value="simple-order" className="flex items-center gap-2">
               <Smartphone className="w-4 h-4" />
               <span className="hidden sm:inline">EasyOrder</span>
@@ -977,13 +958,6 @@ const Orders = () => {
               </div>
             )}
           </TabsContent>
-
-          {/* Staff Orders Tab Content */}
-          {canAccessStaffOrders && (
-            <TabsContent value="staff" className="mt-6">
-              <StaffOrdersTab />
-            </TabsContent>
-          )}
 
           {/* Simple Order Tab Content */}
           <TabsContent value="simple-order" className="mt-6">
