@@ -866,5 +866,12 @@
     "source": "Quelle",
     "manual": "Manuell",
     "supplierApproved": "Lieferant (genehmigt)"
+  },
+  "simpleOrder": {
+    "yourName": "Ihr Name",
+    "namePlaceholder": "Bitte geben Sie Ihren Namen ein",
+    "selectLocation": "Standort wählen",
+    "nameRequired": "Bitte geben Sie Ihren Namen ein",
+    "locationRequired": "Bitte wählen Sie einen Standort"
   }
 }

@@ -19,7 +19,7 @@ serve(async (req) => {
   }
 
   try {
-    const { token, items } = await req.json();
+    const { token, items, employee_name, location_id } = await req.json();
 
     if (!token || !items || items.length === 0) {
       return new Response(
@@ -28,7 +28,14 @@ serve(async (req) => {
       );
     }
 
-    console.log('Processing simple order submission:', { token: token.substring(0, 8) + '...', itemCount: items.length });
+    if (!employee_name || !location_id) {
+      return new Response(
+        JSON.stringify({ error: 'Employee name and location are required' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    console.log('Processing simple order submission:', { token: token.substring(0, 8) + '...', itemCount: items.length, employee_name, location_id });
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -82,7 +89,7 @@ serve(async (req) => {
       .from('employee_order_submissions')
       .insert({
         organization_id: tokenData.organization_id,
-        location_id: tokenData.location_id,
+        location_id: location_id, // Use employee-selected location
         submitted_by: adminProfile.id,
         submission_type: 'simple',
         status: 'pending',
@@ -90,6 +97,7 @@ serve(async (req) => {
           token_label: tokenData.label,
           supplier_id: tokenData.supplier_id,
           supplier_name: tokenData.supplier?.name,
+          employee_name: employee_name,
         },
       })
       .select()

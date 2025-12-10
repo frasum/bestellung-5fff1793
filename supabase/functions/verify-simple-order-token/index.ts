@@ -74,7 +74,18 @@ serve(async (req) => {
       );
     }
 
-    console.log(`Token verified. Supplier: ${tokenData.supplier?.name}, Articles: ${articles?.length || 0}`);
+    // Get all locations for the organization
+    const { data: locations, error: locationsError } = await supabase
+      .from('locations')
+      .select('id, name, short_code')
+      .eq('organization_id', tokenData.organization_id)
+      .order('name', { ascending: true });
+
+    if (locationsError) {
+      console.error('Error fetching locations:', locationsError);
+    }
+
+    console.log(`Token verified. Supplier: ${tokenData.supplier?.name}, Articles: ${articles?.length || 0}, Locations: ${locations?.length || 0}`);
 
     return new Response(
       JSON.stringify({
@@ -88,6 +99,7 @@ serve(async (req) => {
           organization_id: tokenData.organization_id,
         },
         articles: articles || [],
+        locations: locations || [],
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
