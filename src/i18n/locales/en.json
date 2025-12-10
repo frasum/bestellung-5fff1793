@@ -625,7 +625,8 @@
     "price": "Price (€)",
     "searchArticles": "Search articles...",
     "selectSession": "Select inventory...",
-    "viewingCompleted": "You are viewing a completed inventory (read-only)."
+    "viewingCompleted": "You are viewing a completed inventory (read-only).",
+    "inProgressLabel": "In progress"
   },
   "scan": {
     "title": "Scan Order List",

@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useArticles, useUpdateArticle } from '@/hooks/useArticles';
 import { useSuppliers } from '@/hooks/useSuppliers';
 import {
-  useInventorySessions,
+  useInventorySessionsWithStats,
   useInventorySession,
   useInventoryItems,
   useCreateInventorySession,
@@ -11,6 +11,7 @@ import {
   useBulkUpsertInventoryItems,
   useDeleteInventorySession,
   InventoryItem,
+  InventorySessionWithStats,
 } from '@/hooks/useInventory';
 import { useUnits, useCreateUnit, useDeleteUnit } from '@/hooks/useUnits';
 import { useCategories } from '@/hooks/useCategories';
@@ -122,7 +123,7 @@ export const InventoryTab = () => {
 
   const { data: articles, isLoading: articlesLoading } = useArticles();
   const { data: suppliers } = useSuppliers();
-  const { data: sessions, isLoading: sessionsLoading } = useInventorySessions();
+  const { data: sessions, isLoading: sessionsLoading } = useInventorySessionsWithStats();
   const { data: activeSession } = useInventorySession(activeSessionId);
   const { data: inventoryItems } = useInventoryItems(activeSessionId);
   const { data: units } = useUnits();
@@ -472,15 +473,22 @@ export const InventoryTab = () => {
             <SelectContent>
               {sessions?.map((session) => (
                 <SelectItem key={session.id} value={session.id}>
-                  <div className="flex items-center gap-2">
-                    {session.status === 'in_progress' ? (
-                      <span className="text-amber-500">⏳</span>
-                    ) : (
-                      <span className="text-green-500">✓</span>
-                    )}
-                    <span className="truncate">{session.name}</span>
-                    <span className="text-muted-foreground text-xs">
-                      ({format(new Date(session.created_at), 'dd.MM.yy', { locale: getDateLocale() })})
+                  <div className="flex flex-col gap-0.5 py-0.5">
+                    <div className="flex items-center gap-2">
+                      {session.status === 'in_progress' ? (
+                        <span className="text-amber-500">⏳</span>
+                      ) : (
+                        <span className="text-green-500">✓</span>
+                      )}
+                      <span className="truncate font-medium">{session.name}</span>
+                      <span className="text-muted-foreground text-xs">
+                        ({format(new Date(session.created_at), 'dd.MM.yy', { locale: getDateLocale() })})
+                      </span>
+                    </div>
+                    <span className="text-xs text-muted-foreground pl-6">
+                      {session.itemCount} {t('inventory.articles')} · {session.status === 'completed' 
+                        ? `€${session.totalValue.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                        : t('inventory.inProgressLabel', 'In Bearbeitung')}
                     </span>
                   </div>
                 </SelectItem>
