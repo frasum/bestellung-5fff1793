@@ -15,6 +15,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerFooter } from '@/components/ui/drawer';
 import { useCreateOrder } from '@/hooks/useOrders';
 import { useDeliveryAddresses } from '@/hooks/useSettings';
+import { useUserDeliveryPreference } from '@/hooks/useUserDeliveryPreference';
 import { ArrowLeft, CalendarIcon, CheckCircle2, Clock, Eye, Loader2, Mail, MapPin, Minus, Plus, Send, Settings, Store, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { z } from 'zod';
@@ -50,7 +51,8 @@ const Checkout = () => {
   const { items, getTotal, clearCart, updateQuantity, removeItem } = useCart();
   const { activeLocation } = useLocationContext();
   const createOrder = useCreateOrder();
-  const { data: deliveryAddresses, isLoading: addressesLoading } = useDeliveryAddresses();
+  const { data: deliveryAddresses, isLoading: addressesLoading } = useDeliveryAddresses(activeLocation?.id);
+  const { data: userDeliveryPreference } = useUserDeliveryPreference();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [completedOrders, setCompletedOrders] = useState<{orderNumber: string; supplierName: string}[]>([]);
   const [showEmailPreview, setShowEmailPreview] = useState(false);
@@ -66,21 +68,30 @@ const Checkout = () => {
     defaultValues: { deliveryAddressId: '', notes: '', deliveryTimeWindow: '' },
   });
 
-  // Set default address when loaded
+  // Set address priority: 1. User preference, 2. Location default, 3. First available
   useEffect(() => {
     if (deliveryAddresses && deliveryAddresses.length > 0) {
       const currentValue = form.getValues('deliveryAddressId');
       if (!currentValue || currentValue === '') {
+        // Priority 1: User preference for this location
+        if (userDeliveryPreference?.delivery_address_id) {
+          const preferredAddr = deliveryAddresses.find(a => a.id === userDeliveryPreference.delivery_address_id);
+          if (preferredAddr) {
+            form.setValue('deliveryAddressId', preferredAddr.id);
+            return;
+          }
+        }
+        // Priority 2: Location default
         const defaultAddr = deliveryAddresses.find(a => a.is_default);
         if (defaultAddr) {
           form.setValue('deliveryAddressId', defaultAddr.id);
         } else if (deliveryAddresses[0]) {
-          // Fall back to first address if no default
+          // Priority 3: First available
           form.setValue('deliveryAddressId', deliveryAddresses[0].id);
         }
       }
     }
-  }, [deliveryAddresses, form]);
+  }, [deliveryAddresses, userDeliveryPreference, form]);
 
   useEffect(() => {
     if (!authLoading && !user) {
