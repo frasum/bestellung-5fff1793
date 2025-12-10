@@ -79,11 +79,26 @@ export const useUpdateMemberRole = () => {
 
       if (error) throw error;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['team-members'] });
-      toast.success('Role updated');
+    onMutate: async ({ userId, role }) => {
+      await queryClient.cancelQueries({ queryKey: ['team-members'] });
+      const previousMembers = queryClient.getQueryData<TeamMember[]>(['team-members']);
+      
+      queryClient.setQueryData<TeamMember[]>(['team-members'], (old) =>
+        old?.map((member) => member.id === userId ? { ...member, role } : member)
+      );
+      
+      return { previousMembers };
     },
-    onError: () => toast.error('Failed to update role'),
+    onError: (_err, _variables, context) => {
+      if (context?.previousMembers) {
+        queryClient.setQueryData(['team-members'], context.previousMembers);
+      }
+      toast.error('Failed to update role');
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['team-members'] });
+    },
+    onSuccess: () => toast.success('Role updated'),
   });
 };
 
@@ -92,18 +107,32 @@ export const useRemoveMember = () => {
 
   return useMutation({
     mutationFn: async (userId: string) => {
-      // Use security definer function to remove member
       const { error } = await supabase.rpc('remove_team_member', {
         member_user_id: userId
       });
 
       if (error) throw error;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['team-members'] });
-      toast.success('Member removed');
+    onMutate: async (userId) => {
+      await queryClient.cancelQueries({ queryKey: ['team-members'] });
+      const previousMembers = queryClient.getQueryData<TeamMember[]>(['team-members']);
+      
+      queryClient.setQueryData<TeamMember[]>(['team-members'], (old) =>
+        old?.filter((member) => member.id !== userId)
+      );
+      
+      return { previousMembers };
     },
-    onError: () => toast.error('Failed to remove member'),
+    onError: (_err, _userId, context) => {
+      if (context?.previousMembers) {
+        queryClient.setQueryData(['team-members'], context.previousMembers);
+      }
+      toast.error('Failed to remove member');
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['team-members'] });
+    },
+    onSuccess: () => toast.success('Member removed'),
   });
 };
 
