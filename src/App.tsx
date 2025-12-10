@@ -52,7 +52,7 @@ const App = () => (
                 <Route path="/supplier-portal" element={<SupplierPortal />} />
                 <Route path="/order-confirmed" element={<OrderConfirmed />} />
                 <Route path="/simple-order/:token" element={<SimpleOrder />} />
-                <Route path="/staff-orders" element={<Navigate to="/orders?tab=staff" replace />} />
+                {/* staff-orders route removed - EasyOrder now saves to cart drafts */}
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>

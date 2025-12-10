@@ -35,9 +35,6 @@ const PERMISSIONS: Permission[] = [
   { key: 'settings.editOrg', category: 'settings' },
   { key: 'settings.manageLocations', category: 'settings' },
   { key: 'settings.editTemplates', category: 'settings' },
-  // Employee Orders
-  { key: 'staffOrders.submit', category: 'staffOrders' },
-  { key: 'staffOrders.approve', category: 'staffOrders' },
   // Inventory
   { key: 'inventory.view', category: 'inventory' },
   { key: 'inventory.manage', category: 'inventory' },
@@ -68,9 +65,6 @@ const PERMISSION_MATRIX: Record<string, Record<Role, boolean>> = {
   'settings.editOrg': { admin: true, manager: false, purchaser: false, viewer: false },
   'settings.manageLocations': { admin: true, manager: true, purchaser: false, viewer: false },
   'settings.editTemplates': { admin: true, manager: true, purchaser: false, viewer: false },
-  // Employee Orders
-  'staffOrders.submit': { admin: true, manager: true, purchaser: true, viewer: false },
-  'staffOrders.approve': { admin: true, manager: true, purchaser: false, viewer: false },
   // Inventory
   'inventory.view': { admin: true, manager: true, purchaser: true, viewer: true },
   'inventory.manage': { admin: true, manager: true, purchaser: true, viewer: false },
@@ -93,7 +87,6 @@ export const PermissionsOverview = () => {
       orders: t('settings.permissions.categories.orders'),
       team: t('settings.permissions.categories.team'),
       settings: t('settings.permissions.categories.settings'),
-      staffOrders: t('settings.permissions.categories.staffOrders'),
       inventory: t('settings.permissions.categories.inventory'),
       supplierChanges: t('settings.permissions.categories.supplierChanges'),
     };
