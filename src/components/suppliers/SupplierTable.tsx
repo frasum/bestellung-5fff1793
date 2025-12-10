@@ -115,7 +115,7 @@ export const SupplierTable = ({
                         };
                         const changedFieldsText = activity.changedFields.map(f => fieldLabels[f] || f).join(', ');
                         return (
-                          <TooltipProvider>
+                          <TooltipProvider delayDuration={0}>
                             <Tooltip>
                               <TooltipTrigger asChild>
                                 <div className="flex items-center gap-1.5 cursor-help">
