@@ -146,10 +146,10 @@ export const TeamTab = () => {
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="viewer">Viewer</SelectItem>
-                            <SelectItem value="purchaser">Purchaser</SelectItem>
-                            <SelectItem value="manager">Manager</SelectItem>
-                            <SelectItem value="admin">Admin</SelectItem>
+                            <SelectItem value="viewer">{roleLabels.viewer}</SelectItem>
+                            <SelectItem value="purchaser">{roleLabels.purchaser}</SelectItem>
+                            <SelectItem value="manager">{roleLabels.manager}</SelectItem>
+                            <SelectItem value="admin">{roleLabels.admin}</SelectItem>
                           </SelectContent>
                         </Select>
                         <Button
