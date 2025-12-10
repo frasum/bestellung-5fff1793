@@ -638,15 +638,6 @@ export function SimpleOrderTab() {
               </div>
 
               <div className="space-y-2">
-                <Label>{t('settings.simpleOrder.label', 'Bezeichnung')} *</Label>
-                <Input
-                  value={editFormData.label}
-                  onChange={(e) => setEditFormData(prev => ({ ...prev, label: e.target.value }))}
-                  placeholder={t('settings.simpleOrder.labelPlaceholder', 'z.B. Küche YUM, Lager')}
-                />
-              </div>
-
-              <div className="space-y-2">
                 <Label>{t('settings.simpleOrder.language', 'Sprache')}</Label>
                 <Select
                   value={editFormData.language}
