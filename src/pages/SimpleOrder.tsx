@@ -247,12 +247,38 @@ const SimpleOrder = () => {
     );
   }
 
+  const languages = [
+    { code: 'th', flag: '🇹🇭', label: 'ไทย' },
+    { code: 'de', flag: '🇩🇪', label: 'DE' },
+    { code: 'en', flag: '🇬🇧', label: 'EN' },
+    { code: 'vi', flag: '🇻🇳', label: 'VI' },
+    { code: 'fr', flag: '🇫🇷', label: 'FR' },
+    { code: 'it', flag: '🇮🇹', label: 'IT' },
+  ];
+
   // Main order interface
   return (
     <div className="min-h-screen bg-background pb-32">
       {/* Header */}
       <div className="sticky top-0 z-10 bg-primary text-primary-foreground p-4 shadow-lg">
         <div className="max-w-2xl mx-auto">
+          {/* Language Switcher */}
+          <div className="flex justify-center gap-1 mb-3">
+            {languages.map((lang) => (
+              <button
+                key={lang.code}
+                onClick={() => i18n.changeLanguage(lang.code)}
+                className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
+                  i18n.language === lang.code
+                    ? 'bg-primary-foreground text-primary'
+                    : 'bg-primary-foreground/20 hover:bg-primary-foreground/30'
+                }`}
+              >
+                {lang.flag}
+              </button>
+            ))}
+          </div>
+          
           <h1 className="text-2xl font-bold text-center">
             {tokenData?.supplier?.name}
           </h1>
