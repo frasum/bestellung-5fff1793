@@ -378,41 +378,20 @@ const Checkout = () => {
           name="deliveryDate"
           render={({ field }) => (
             <>
-              {/* Mobile: Use Sheet instead of Popover to avoid touch conflicts with Drawer */}
+              {/* Mobile: Button only - Sheet rendered outside Drawer to avoid touch conflicts */}
               {isMobile && isMobileDevice ? (
-                <>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className={cn(
-                      "w-full justify-start text-left font-normal h-12 md:h-14",
-                      !field.value && "text-muted-foreground"
-                    )}
-                    onClick={() => setShowMobileCalendar(true)}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {field.value ? format(field.value, "PPP", { locale: de }) : t('checkout.selectDate')}
-                  </Button>
-                  <Sheet open={showMobileCalendar} onOpenChange={setShowMobileCalendar}>
-                    <SheetContent side="bottom" className="h-auto max-h-[85vh] z-[60]">
-                      <SheetHeader className="pb-4">
-                        <SheetTitle>{t('checkout.deliveryDate')}</SheetTitle>
-                      </SheetHeader>
-                      <div className="flex justify-center pb-6">
-                        <Calendar
-                          mode="single"
-                          selected={field.value}
-                          onSelect={(date) => {
-                            field.onChange(date);
-                            setShowMobileCalendar(false);
-                          }}
-                          disabled={(date) => date < new Date()}
-                          className="pointer-events-auto"
-                        />
-                      </div>
-                    </SheetContent>
-                  </Sheet>
-                </>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className={cn(
+                    "w-full justify-start text-left font-normal h-12 md:h-14",
+                    !field.value && "text-muted-foreground"
+                  )}
+                  onClick={() => setShowMobileCalendar(true)}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {field.value ? format(field.value, "PPP", { locale: de }) : t('checkout.selectDate')}
+                </Button>
               ) : (
                 /* Desktop: Use Popover */
                 <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
@@ -729,6 +708,29 @@ const Checkout = () => {
           </div>
         </DrawerContent>
       </Drawer>
+
+      {/* Mobile Calendar Sheet - rendered at root level to avoid Drawer touch conflicts on iOS */}
+      {isMobileDevice && (
+        <Sheet open={showMobileCalendar} onOpenChange={setShowMobileCalendar}>
+          <SheetContent side="bottom" className="h-auto max-h-[85vh] z-[100]">
+            <SheetHeader className="pb-4">
+              <SheetTitle>{t('checkout.deliveryDate')}</SheetTitle>
+            </SheetHeader>
+            <div className="flex justify-center pb-6">
+              <Calendar
+                mode="single"
+                selected={form.watch('deliveryDate')}
+                onSelect={(date) => {
+                  form.setValue('deliveryDate', date);
+                  setShowMobileCalendar(false);
+                }}
+                disabled={(date) => date < new Date()}
+                className="pointer-events-auto"
+              />
+            </div>
+          </SheetContent>
+        </Sheet>
+      )}
 
       <EmailPreviewDialog
         open={showEmailPreview}
