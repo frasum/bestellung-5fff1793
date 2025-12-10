@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Plus, Pencil, Trash2, Phone, Mail, User, UserCheck, UserX, MapPin, ChevronDown, ChevronRight, Package, Copy, MessageCircle, ExternalLink } from 'lucide-react';
+import { Plus, Pencil, Trash2, Phone, Mail, User, UserCheck, UserX, MapPin, ChevronDown, ChevronRight, Package, Copy, MessageCircle, ExternalLink, QrCode } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -26,6 +26,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import {
   Select,
   SelectContent,
@@ -538,19 +539,8 @@ export function EmployeesTab() {
                   !employee.is_active ? 'opacity-60 bg-muted/30' : ''
                 }`}
               >
-                <div className="flex gap-4">
-                  {/* QR Code links - direkt anzeigen */}
-                  {token && hasAssignments && (
-                    <div className="flex-shrink-0">
-                      <img 
-                        src={generateQrCodeUrl(token.token)} 
-                        alt="QR-Code" 
-                        className="w-24 h-24 rounded border bg-white"
-                      />
-                    </div>
-                  )}
-                  
-                  {/* Mitarbeiter-Infos rechts */}
+              <div className="flex gap-4">
+                  {/* Mitarbeiter-Infos */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex-1 min-w-0">
@@ -604,6 +594,24 @@ export function EmployeesTab() {
                         {/* Link Buttons - only show if token exists */}
                         {token && (
                           <>
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  title="QR-Code anzeigen"
+                                >
+                                  <QrCode className="h-4 w-4" />
+                                </Button>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-auto p-2">
+                                <img 
+                                  src={generateQrCodeUrl(token.token)} 
+                                  alt="QR-Code" 
+                                  className="w-40 h-40 rounded border bg-white"
+                                />
+                              </PopoverContent>
+                            </Popover>
                             <Button
                               variant="ghost"
                               size="icon"
