@@ -47,3 +47,9 @@ verify_jwt = true
 
 [functions.accept-invitation]
 verify_jwt = true
+
+[functions.verify-simple-order-token]
+verify_jwt = false
+
+[functions.submit-simple-order]
+verify_jwt = false
