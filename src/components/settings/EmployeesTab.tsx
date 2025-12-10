@@ -441,13 +441,13 @@ export function EmployeesTab() {
 
       {/* Create/Edit Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-lg !flex !flex-col !h-[85vh] !p-0 !gap-0">
+        <DialogContent className="max-w-lg max-h-[85vh] p-0 gap-0 overflow-hidden">
           <DialogHeader className="flex-shrink-0 px-6 pt-6 pb-4">
             <DialogTitle>
               {editingEmployee ? 'Mitarbeiter bearbeiten' : 'Neuen Mitarbeiter anlegen'}
             </DialogTitle>
           </DialogHeader>
-          <div className="overflow-y-auto min-h-0 px-6" style={{ maxHeight: 'calc(85vh - 140px)' }}>
+          <div className="flex-1 overflow-y-auto min-h-0 px-6">
             <div className="space-y-4 pb-6">
               <div>
                 <Label htmlFor="name">Name *</Label>
