@@ -106,8 +106,12 @@ export const generateCombinedOrderListPdf = (
     const articles = articlesBySupplier[supplier.id] || [];
     if (articles.length === 0) return;
     
-    // Check if we need a new page (minimum 60pt for header + few rows)
-    if (currentY > pageHeight - 80 && supplierIndex > 0) {
+    // Calculate estimated table height: ~8pt per row + 20pt for header
+    const estimatedTableHeight = articles.length * 8 + 20;
+    const remainingSpace = pageHeight - currentY - 20; // 20pt bottom margin
+    
+    // If supplier table won't fit completely on current page, start new page
+    if (estimatedTableHeight > remainingSpace && supplierIndex > 0) {
       doc.addPage();
       currentY = 15;
     }
