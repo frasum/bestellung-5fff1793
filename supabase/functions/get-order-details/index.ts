@@ -20,8 +20,10 @@ serve(async (req) => {
   try {
     const url = new URL(req.url);
     const orderId = url.searchParams.get("orderId");
+    const confirmToken = url.searchParams.get("token");
 
     console.log("Order ID from params:", orderId);
+    console.log("Token provided:", !!confirmToken);
 
     if (!orderId) {
       console.error("No orderId provided");
@@ -35,6 +37,36 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
+
+    // If token is provided, validate it first
+    if (confirmToken) {
+      console.log("Validating confirmation token...");
+      const { data: tokenData, error: tokenError } = await supabase
+        .from("order_confirmation_tokens")
+        .select("id, order_id, expires_at, confirmed_at")
+        .eq("token", confirmToken)
+        .eq("order_id", orderId)
+        .maybeSingle();
+
+      if (tokenError || !tokenData) {
+        console.error("Invalid or missing token:", tokenError);
+        return new Response(
+          JSON.stringify({ error: "Invalid confirmation token" }),
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // Check if token is expired
+      if (new Date(tokenData.expires_at) < new Date()) {
+        console.error("Token expired");
+        return new Response(
+          JSON.stringify({ error: "Confirmation token has expired" }),
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      console.log("Token validated successfully");
+    }
 
     console.log("Fetching order from database...");
 

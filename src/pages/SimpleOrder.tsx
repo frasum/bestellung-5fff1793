@@ -1,18 +1,15 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Minus, Plus, Search, Loader2, ShoppingCart, User, MapPin, ArrowLeft, Globe } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+
+// Extracted components
+import { SimpleOrderHeader } from '@/components/simple-order/SimpleOrderHeader';
+import { EmployeeInfoSection } from '@/components/simple-order/EmployeeInfoSection';
+import { SupplierSelection } from '@/components/simple-order/SupplierSelection';
+import { ArticleList } from '@/components/simple-order/ArticleList';
+import { SubmitBar } from '@/components/simple-order/SubmitBar';
+import { LoadingScreen, ErrorScreen, SuccessScreen } from '@/components/simple-order/StatusScreens';
 
 interface Article {
   id: string;
@@ -58,7 +55,7 @@ type OrderStatus = 'loading' | 'ready' | 'submitting' | 'success' | 'error';
 
 const SimpleOrder = () => {
   const { token } = useParams<{ token: string }>();
-  const { t, i18n } = useTranslation();
+  const { i18n } = useTranslation();
   
   const [status, setStatus] = useState<OrderStatus>('loading');
   const [error, setError] = useState<string | null>(null);
@@ -103,10 +100,8 @@ const SimpleOrder = () => {
         // Handle multi-supplier tokens
         if (data.tokenData?.is_multi_supplier && data.suppliers) {
           setSuppliers(data.suppliers);
-          // Don't filter articles yet - wait for supplier selection
           setArticles([]);
         } else {
-          // Single supplier - show articles directly
           setArticles(data.articles || []);
           if (data.tokenData?.supplier) {
             setSelectedSupplierId(data.tokenData.supplier.id);
@@ -154,7 +149,7 @@ const SimpleOrder = () => {
 
   const handleSupplierSelect = (supplierId: string) => {
     setSelectedSupplierId(supplierId);
-    setQuantities({}); // Reset quantities when switching supplier
+    setQuantities({});
     setSearch('');
   };
 
@@ -183,7 +178,6 @@ const SimpleOrder = () => {
   const validateForm = (): boolean => {
     const errors: { name?: boolean; location?: boolean } = {};
     
-    // Only validate name if not locked (not pre-filled from token)
     if (!isEmployeeNameLocked && !employeeName.trim()) {
       errors.name = true;
     }
@@ -198,9 +192,7 @@ const SimpleOrder = () => {
   const handleSubmit = async () => {
     if (getTotalItems() === 0) return;
     
-    if (!validateForm()) {
-      return;
-    }
+    if (!validateForm()) return;
 
     setStatus('submitting');
 
@@ -241,7 +233,7 @@ const SimpleOrder = () => {
     }
   };
 
-  // Get current supplier name
+  // Helper functions
   const getCurrentSupplierName = () => {
     if (!tokenData?.is_multi_supplier) {
       return tokenData?.supplier?.name || '';
@@ -252,460 +244,100 @@ const SimpleOrder = () => {
     return '';
   };
 
-  // Get article count for supplier
   const getSupplierArticleCount = (supplierId: string) => {
     return allArticles.filter(a => a.supplier_id === supplierId).length;
   };
 
-  // Filter articles by search
-  const filteredArticles = articles.filter(article => 
-    article.name.toLowerCase().includes(search.toLowerCase()) ||
-    article.category?.toLowerCase().includes(search.toLowerCase())
-  );
-
-  // Group by category
-  const groupedArticles = filteredArticles.reduce((acc, article) => {
-    const category = article.category || 'อื่นๆ / Sonstiges';
-    if (!acc[category]) acc[category] = [];
-    acc[category].push(article);
-    return acc;
-  }, {} as Record<string, Article[]>);
-
-  // Loading state
-  if (status === 'loading') {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-4">
-        <div className="text-center">
-          <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto mb-4" />
-          <p className="text-xl text-muted-foreground">กำลังโหลด... / Laden...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Error state
-  if (status === 'error') {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-4">
-        <Card className="p-8 text-center max-w-md">
-          <div className="text-6xl mb-4">❌</div>
-          <h1 className="text-2xl font-bold text-destructive mb-2">
-            ข้อผิดพลาด / Fehler
-          </h1>
-          <p className="text-muted-foreground text-lg">{error}</p>
-        </Card>
-      </div>
-    );
-  }
-
-  // Success state
-  if (status === 'success') {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-4">
-        <Card className="p-8 text-center max-w-md">
-          <div className="text-6xl mb-4">✅</div>
-          <h1 className="text-2xl font-bold text-primary mb-2">
-            ส่งสำเร็จ! / Erfolgreich gesendet!
-          </h1>
-          <p className="text-muted-foreground text-lg mb-6">
-            คำสั่งซื้อของคุณถูกส่งเพื่อตรวจสอบแล้ว
-            <br />
-            Ihre Bestellung wurde zur Prüfung eingereicht.
-          </p>
-          <Button
-            size="lg"
-            className="w-full h-14 text-lg"
-            onClick={() => {
-              setStatus('ready');
-              // Only reset employee name if not locked
-              if (!isEmployeeNameLocked) {
-                setEmployeeName('');
-              }
-            }}
-          >
-            สั่งซื้อใหม่ / Neue Bestellung
-          </Button>
-        </Card>
-      </div>
-    );
-  }
-
-  const languages = [
-    { code: 'th', flag: '🇹🇭', label: 'ไทย' },
-    { code: 'de', flag: '🇩🇪', label: 'Deutsch' },
-    { code: 'en', flag: '🇬🇧', label: 'English' },
-    { code: 'vi', flag: '🇻🇳', label: 'Tiếng Việt' },
-    { code: 'fr', flag: '🇫🇷', label: 'Français' },
-    { code: 'it', flag: '🇮🇹', label: 'Italiano' },
-  ];
-
-  const currentLanguage = languages.find(l => l.code === i18n.language) || languages[1];
-
-  // Get selected location name
   const getSelectedLocationName = () => {
     const location = locations.find(l => l.id === selectedLocationId);
     return location?.short_code || location?.name || '';
   };
 
-  // Show supplier selection for multi-supplier tokens
+  // Status screens
+  if (status === 'loading') {
+    return <LoadingScreen />;
+  }
+
+  if (status === 'error') {
+    return <ErrorScreen error={error} />;
+  }
+
+  if (status === 'success') {
+    return (
+      <SuccessScreen 
+        onNewOrder={() => {
+          setStatus('ready');
+          if (!isEmployeeNameLocked) {
+            setEmployeeName('');
+          }
+        }} 
+      />
+    );
+  }
+
   const showSupplierSelection = tokenData?.is_multi_supplier && !selectedSupplierId;
 
-  // Main order interface
   return (
     <div className="min-h-screen bg-background pb-32">
-      {/* Compact Header */}
-      <div className="sticky top-0 z-10 bg-primary text-primary-foreground shadow-lg">
-        <div className="max-w-2xl mx-auto px-3 py-2">
-          <div className="flex items-center justify-between gap-2">
-            {/* Left: Back button (if multi-supplier) */}
-            <div className="w-10">
-              {tokenData?.is_multi_supplier && selectedSupplierId && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-9 w-9 text-primary-foreground hover:bg-primary-foreground/20"
-                  onClick={handleBackToSuppliers}
-                >
-                  <ArrowLeft className="h-5 w-5" />
-                </Button>
-              )}
-            </div>
-
-            {/* Center: Supplier name or "Bestellung" */}
-            <div className="flex-1 text-center">
-              <h1 className="text-xl font-bold truncate">
-                {getCurrentSupplierName() || 'Bestellung'}
-              </h1>
-            </div>
-
-            {/* Right: Location badge + Language dropdown */}
-            <div className="flex items-center gap-2">
-              {selectedLocationId && (
-                <span className="text-xs bg-primary-foreground/20 px-2 py-1 rounded-full flex items-center gap-1">
-                  <MapPin className="h-3 w-3" />
-                  {getSelectedLocationName()}
-                </span>
-              )}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-9 w-9 text-primary-foreground hover:bg-primary-foreground/20"
-                  >
-                    <span className="text-lg">{currentLanguage.flag}</span>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="bg-popover">
-                  {languages.map((lang) => (
-                    <DropdownMenuItem
-                      key={lang.code}
-                      onClick={() => i18n.changeLanguage(lang.code)}
-                      className={i18n.language === lang.code ? 'bg-accent' : ''}
-                    >
-                      <span className="mr-2">{lang.flag}</span>
-                      {lang.label}
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-          </div>
-        </div>
-      </div>
+      <SimpleOrderHeader
+        supplierName={getCurrentSupplierName()}
+        showBackButton={!!(tokenData?.is_multi_supplier && selectedSupplierId)}
+        onBack={handleBackToSuppliers}
+        selectedLocationName={getSelectedLocationName()}
+        selectedLocationId={selectedLocationId}
+      />
 
       {/* Supplier Selection for Multi-Supplier Tokens */}
       {showSupplierSelection && (
-        <div className="max-w-2xl mx-auto p-4">
-          {/* Employee Info Section first */}
-          <div className="bg-muted/50 rounded-lg p-4 mb-6 space-y-4">
-            {/* Employee Name - Show greeting if locked, input if not */}
-            {isEmployeeNameLocked ? (
-              <div className="text-center py-2">
-                <p className="text-2xl font-bold text-primary">
-                  👋 {t('simpleOrder.hello', 'สวัสดี / Hallo')}, {employeeName}!
-                </p>
-              </div>
-            ) : (
-              <div>
-                <Label htmlFor="employeeName" className="flex items-center gap-2 text-base font-medium mb-2">
-                  <User className="h-5 w-5" />
-                  {t('simpleOrder.yourName', 'ชื่อของคุณ / Ihr Name')} *
-                </Label>
-                <Input
-                  id="employeeName"
-                  type="text"
-                  placeholder={t('simpleOrder.namePlaceholder', 'กรุณาใส่ชื่อของคุณ / Bitte Namen eingeben')}
-                  value={employeeName}
-                  onChange={(e) => {
-                    setEmployeeName(e.target.value);
-                    if (e.target.value.trim()) {
-                      setValidationErrors(prev => ({ ...prev, name: false }));
-                    }
-                  }}
-                  className={`h-14 text-lg ${validationErrors.name ? 'border-destructive ring-destructive' : ''}`}
-                />
-              </div>
-            )}
-
-            {/* Location Selection */}
-            <div>
-              <Label className="flex items-center gap-2 text-base font-medium mb-2">
-                <MapPin className="h-5 w-5" />
-                {t('simpleOrder.selectLocation', 'เลือกสถานที่ / Standort wählen')} *
-              </Label>
-              <div className="grid grid-cols-2 gap-2">
-                {locations.map((location) => (
-                  <Button
-                    key={location.id}
-                    type="button"
-                    variant={selectedLocationId === location.id ? "default" : "outline"}
-                    className="h-14 text-lg font-medium"
-                    onClick={() => {
-                      setSelectedLocationId(location.id);
-                      setValidationErrors(prev => ({ ...prev, location: false }));
-                    }}
-                  >
-                    {location.short_code || location.name}
-                  </Button>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Supplier Selection */}
-          <h2 className="text-xl font-semibold mb-4">
-            {t('simpleOrder.selectSupplier', 'เลือกผู้จำหน่าย / Lieferant wählen')}
-          </h2>
-          <div className="space-y-3">
-            {suppliers.map((supplier) => (
-              <Card
-                key={supplier.id}
-                className="p-4 cursor-pointer hover:shadow-md transition-all active:scale-[0.98]"
-                onClick={() => handleSupplierSelect(supplier.id)}
-              >
-                <div className="flex items-center justify-between">
-                  <h3 className="text-xl font-semibold">{supplier.name}</h3>
-                  <span className="text-muted-foreground">
-                    {getSupplierArticleCount(supplier.id)} {t('simpleOrder.articles', 'รายการ / Artikel')}
-                  </span>
-                </div>
-              </Card>
-            ))}
-          </div>
-        </div>
+        <>
+          <EmployeeInfoSection
+            employeeName={employeeName}
+            setEmployeeName={setEmployeeName}
+            isEmployeeNameLocked={isEmployeeNameLocked}
+            selectedLocationId={selectedLocationId}
+            setSelectedLocationId={setSelectedLocationId}
+            isLocationLocked={isLocationLocked}
+            locations={locations}
+            validationErrors={validationErrors}
+            setValidationErrors={setValidationErrors}
+            variant="supplier-selection"
+          />
+          <SupplierSelection
+            suppliers={suppliers}
+            onSelect={handleSupplierSelect}
+            getArticleCount={getSupplierArticleCount}
+          />
+        </>
       )}
 
-      {/* Employee Info Section - only show when supplier is selected (or single supplier) */}
+      {/* Single Supplier or Supplier Selected */}
       {!showSupplierSelection && (
-        <div className="bg-muted/50 border-b p-4">
-        <div className="max-w-2xl mx-auto space-y-4">
-            {/* Employee Name - Show greeting if locked, input if not */}
-            {isEmployeeNameLocked ? (
-              <div className="text-center py-2">
-                <p className="text-2xl font-bold text-primary">
-                  👋 {t('simpleOrder.hello', 'สวัสดี / Hallo')}, {employeeName}!
-                </p>
-              </div>
-            ) : (
-              <div>
-                <Label htmlFor="employeeName2" className="flex items-center gap-2 text-base font-medium mb-2">
-                  <User className="h-5 w-5" />
-                  {t('simpleOrder.yourName', 'ชื่อของคุณ / Ihr Name')} *
-                </Label>
-                <Input
-                  id="employeeName2"
-                  type="text"
-                  placeholder={t('simpleOrder.namePlaceholder', 'กรุณาใส่ชื่อของคุณ / Bitte Namen eingeben')}
-                  value={employeeName}
-                  onChange={(e) => {
-                    setEmployeeName(e.target.value);
-                    if (e.target.value.trim()) {
-                      setValidationErrors(prev => ({ ...prev, name: false }));
-                    }
-                  }}
-                  className={`h-14 text-lg ${validationErrors.name ? 'border-destructive ring-destructive' : ''}`}
-                />
-                {validationErrors.name && (
-                  <p className="text-destructive text-sm mt-1">
-                    {t('simpleOrder.nameRequired', 'กรุณาใส่ชื่อของคุณ / Bitte Namen eingeben')}
-                  </p>
-                )}
-              </div>
-            )}
-
-            {/* Location Selection - Show locked display or buttons */}
-            {isLocationLocked ? (
-              <div className="text-center py-2">
-                <Label className="flex items-center justify-center gap-2 text-base font-medium mb-1">
-                  <MapPin className="h-5 w-5" />
-                  {t('simpleOrder.location', 'Standort')}
-                </Label>
-                <p className="text-xl font-semibold text-primary">
-                  {locations.find(l => l.id === selectedLocationId)?.short_code || 
-                   locations.find(l => l.id === selectedLocationId)?.name}
-                </p>
-              </div>
-            ) : (
-              <div>
-                <Label className="flex items-center gap-2 text-base font-medium mb-2">
-                  <MapPin className="h-5 w-5" />
-                  {t('simpleOrder.selectLocation', 'เลือกสถานที่ / Standort wählen')} *
-                </Label>
-                <div className="grid grid-cols-2 gap-2">
-                  {locations.map((location) => (
-                    <Button
-                      key={location.id}
-                      type="button"
-                      variant={selectedLocationId === location.id ? "default" : "outline"}
-                      className={`h-14 text-lg font-medium ${
-                        validationErrors.location && !selectedLocationId ? 'border-destructive' : ''
-                      }`}
-                      onClick={() => {
-                        setSelectedLocationId(location.id);
-                        setValidationErrors(prev => ({ ...prev, location: false }));
-                      }}
-                    >
-                      {location.short_code || location.name}
-                    </Button>
-                  ))}
-                </div>
-                {validationErrors.location && (
-                  <p className="text-destructive text-sm mt-1">
-                    {t('simpleOrder.locationRequired', 'กรุณาเลือกสถานที่ / Bitte Standort wählen')}
-                  </p>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Search - only show when supplier is selected */}
-      {!showSupplierSelection && (
-        <div className="sticky top-[52px] z-10 bg-background border-b p-3">
-          <div className="max-w-2xl mx-auto relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-            <Input
-              type="text"
-              placeholder="ค้นหา... / Suchen..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-10 h-12 text-lg"
-            />
-          </div>
-        </div>
-      )}
-
-      {/* Articles - only show when supplier is selected */}
-      {!showSupplierSelection && (
-        <div className="max-w-2xl mx-auto p-4">
-          <div className="grid grid-cols-1 gap-2">
-            {filteredArticles
-              .sort((a, b) => a.name.localeCompare(b.name, 'de'))
-              .map((article) => {
-                  const qty = quantities[article.id] || 0;
-                  const isSelected = qty > 0;
-                  
-                  // Build compact unit string
-                  const unitInfo = [
-                    article.unit,
-                    article.packaging_unit && article.packaging_unit > 1 ? `${article.packaging_unit}er` : null
-                  ].filter(Boolean).join(' · ');
-                  
-                  return (
-                    <Card
-                      key={article.id}
-                      className={`p-3 transition-all ${
-                        isSelected 
-                          ? 'ring-2 ring-primary bg-primary/5' 
-                          : 'hover:shadow-md'
-                      }`}
-                    >
-                      <div className="flex items-center gap-3">
-                        {/* Article info */}
-                        <div className="flex-1 min-w-0">
-                          <h3 className="font-semibold text-base leading-tight">
-                            {article.name}
-                          </h3>
-                          <p className="text-muted-foreground text-sm">
-                            {article.description && (
-                              <span className="block text-xs text-muted-foreground/80">{article.description}</span>
-                            )}
-                            <span>{unitInfo}</span>
-                          </p>
-                        </div>
-
-                        {/* Quantity controls - more compact */}
-                        <div className="flex items-center gap-1">
-                          <Button
-                            variant={qty > 0 ? "default" : "outline"}
-                            size="icon"
-                            className="h-10 w-10 rounded-full"
-                            onClick={() => handleQuantityChange(article.id, -1)}
-                            disabled={qty === 0}
-                          >
-                            <Minus className="h-5 w-5" />
-                          </Button>
-                          
-                          <span className="w-10 text-center text-xl font-bold">
-                            {qty}
-                          </span>
-                          
-                          <Button
-                            variant="default"
-                            size="icon"
-                            className="h-10 w-10 rounded-full"
-                            onClick={() => handleQuantityChange(article.id, 1)}
-                          >
-                            <Plus className="h-5 w-5" />
-                          </Button>
-                        </div>
-                      </div>
-                    </Card>
-                  );
-                })}
-          </div>
-
-          {filteredArticles.length === 0 && (
-            <div className="text-center py-12">
-              <p className="text-xl text-muted-foreground">
-                ไม่พบสินค้า / Keine Artikel gefunden
-              </p>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Fixed bottom bar - only show when supplier is selected */}
-      {!showSupplierSelection && (
-        <div className="fixed bottom-0 left-0 right-0 bg-background border-t p-4 shadow-lg">
-          <div className="max-w-2xl mx-auto">
-            <Button
-              size="lg"
-              className="w-full h-16 text-xl font-bold gap-3"
-              onClick={handleSubmit}
-              disabled={getTotalItems() === 0 || status === 'submitting'}
-            >
-              {status === 'submitting' ? (
-                <>
-                  <Loader2 className="h-6 w-6 animate-spin" />
-                  กำลังส่ง... / Wird gesendet...
-                </>
-              ) : (
-                <>
-                  <ShoppingCart className="h-6 w-6" />
-                  ส่งคำสั่งซื้อ / Bestellung senden
-                  {getTotalItems() > 0 && (
-                    <span className="bg-primary-foreground text-primary px-3 py-1 rounded-full text-lg">
-                      {getTotalItems()}
-                    </span>
-                  )}
-                </>
-              )}
-            </Button>
-          </div>
-        </div>
+        <>
+          <EmployeeInfoSection
+            employeeName={employeeName}
+            setEmployeeName={setEmployeeName}
+            isEmployeeNameLocked={isEmployeeNameLocked}
+            selectedLocationId={selectedLocationId}
+            setSelectedLocationId={setSelectedLocationId}
+            isLocationLocked={isLocationLocked}
+            locations={locations}
+            validationErrors={validationErrors}
+            setValidationErrors={setValidationErrors}
+            variant="default"
+          />
+          <ArticleList
+            articles={articles}
+            quantities={quantities}
+            onQuantityChange={handleQuantityChange}
+            search={search}
+            onSearchChange={setSearch}
+          />
+          <SubmitBar
+            totalItems={getTotalItems()}
+            isSubmitting={status === 'submitting'}
+            onSubmit={handleSubmit}
+          />
+        </>
       )}
     </div>
   );
