@@ -2,7 +2,7 @@ import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
-import { loadNotoSansFont } from './fonts/loadNotoSansThai';
+import { loadNotoSansFont, loadNotoSansThaiFont } from './fonts/loadNotoSansThai';
 
 interface OrderListArticle {
   name: string;
@@ -18,15 +18,26 @@ interface OrderListSupplier {
   name: string;
 }
 
-// Helper to register universal font (supports Latin, Thai, Vietnamese, etc.)
-const registerUniversalFont = async (doc: jsPDF) => {
+// Check if text contains Thai characters (Unicode range U+0E00–U+0E7F)
+const containsThai = (text: string): boolean => /[\u0E00-\u0E7F]/.test(text);
+
+// Helper to register both fonts (Latin + Thai)
+const registerFonts = async (doc: jsPDF) => {
   try {
-    const fontBase64 = await loadNotoSansFont();
-    doc.addFileToVFS('NotoSans-Regular.ttf', fontBase64);
+    const [latinFont, thaiFont] = await Promise.all([
+      loadNotoSansFont(),
+      loadNotoSansThaiFont()
+    ]);
+    
+    doc.addFileToVFS('NotoSans-Regular.ttf', latinFont);
     doc.addFont('NotoSans-Regular.ttf', 'NotoSans', 'normal');
+    
+    doc.addFileToVFS('NotoSansThai-Regular.ttf', thaiFont);
+    doc.addFont('NotoSansThai-Regular.ttf', 'NotoSansThai', 'normal');
+    
     return true;
   } catch (error) {
-    console.error('Could not load Noto Sans font, falling back to Helvetica:', error);
+    console.error('Could not load fonts, falling back to Helvetica:', error);
     return false;
   }
 };
@@ -38,13 +49,13 @@ export const generateOrderListPdf = async (
   const doc = new jsPDF();
   const today = format(new Date(), 'dd.MM.yyyy', { locale: de });
   
-  // Register universal font (supports Latin + Thai + Vietnamese)
-  const hasUniversalFont = await registerUniversalFont(doc);
-  const fontName = hasUniversalFont ? 'NotoSans' : 'helvetica';
+  // Register both fonts (Latin + Thai)
+  const hasFonts = await registerFonts(doc);
+  const defaultFont = hasFonts ? 'NotoSans' : 'helvetica';
   
   // Header
   doc.setFontSize(20);
-  doc.setFont(fontName, 'normal');
+  doc.setFont(defaultFont, 'normal');
   doc.text(`Bestellliste - ${supplier.name}`, 14, 20);
   
   // Date
@@ -93,7 +104,7 @@ export const generateOrderListPdf = async (
       cellPadding: 4,
       lineColor: [200, 200, 200],
       lineWidth: 0.5,
-      font: fontName,
+      font: defaultFont,
     },
     headStyles: {
       fillColor: [80, 80, 80],
@@ -109,6 +120,16 @@ export const generateOrderListPdf = async (
     },
     alternateRowStyles: {
       fillColor: [250, 250, 250],
+    },
+    willDrawCell: (data) => {
+      if (hasFonts && data.cell.text) {
+        const cellText = Array.isArray(data.cell.text) ? data.cell.text.join('') : String(data.cell.text);
+        if (containsThai(cellText)) {
+          doc.setFont('NotoSansThai', 'normal');
+        } else {
+          doc.setFont('NotoSans', 'normal');
+        }
+      }
     },
   });
 
@@ -140,9 +161,9 @@ export const generateCombinedOrderListPdf = async (
   const pageWidth = doc.internal.pageSize.width;
   const pageHeight = doc.internal.pageSize.height;
   
-  // Register universal font (supports Latin + Thai + Vietnamese)
-  const hasUniversalFont = await registerUniversalFont(doc);
-  const fontName = hasUniversalFont ? 'NotoSans' : 'helvetica';
+  // Register both fonts (Latin + Thai)
+  const hasFonts = await registerFonts(doc);
+  const defaultFont = hasFonts ? 'NotoSans' : 'helvetica';
   
   let currentY = 15;
   
@@ -162,7 +183,7 @@ export const generateCombinedOrderListPdf = async (
     
     // Compact supplier header
     doc.setFontSize(11);
-    doc.setFont(fontName, 'normal');
+    doc.setFont(defaultFont, 'normal');
     doc.setTextColor(0);
     doc.text(supplier.name, 10, currentY);
     
@@ -209,7 +230,7 @@ export const generateCombinedOrderListPdf = async (
         lineColor: [180, 180, 180],
         lineWidth: 0.3,
         overflow: 'linebreak',
-        font: fontName,
+        font: defaultFont,
       },
       headStyles: {
         fillColor: [60, 60, 60],
@@ -226,6 +247,16 @@ export const generateCombinedOrderListPdf = async (
       },
       alternateRowStyles: {
         fillColor: [248, 248, 248],
+      },
+      willDrawCell: (data) => {
+        if (hasFonts && data.cell.text) {
+          const cellText = Array.isArray(data.cell.text) ? data.cell.text.join('') : String(data.cell.text);
+          if (containsThai(cellText)) {
+            doc.setFont('NotoSansThai', 'normal');
+          } else {
+            doc.setFont('NotoSans', 'normal');
+          }
+        }
       },
       didDrawPage: () => {
         // Reset for next supplier section on new page
