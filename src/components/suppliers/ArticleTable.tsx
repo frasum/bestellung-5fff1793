@@ -26,7 +26,7 @@ interface ArticleTableProps {
   getItemsBySupplier: () => Map<string, unknown>;
   pendingChangesBySupplier?: Record<string, number>;
   pendingArticleIds?: Set<string>;
-  recentlyActiveSuppliers?: Set<string>;
+  recentlyActiveSuppliers?: Map<string, Date>;
   lastOrderMap?: Record<string, LastOrderInfo>;
   onToggleSupplier: (supplierId: string) => void;
   onToggleArticle: (articleId: string) => void;
@@ -47,7 +47,7 @@ export const ArticleTable = ({
   getItemsBySupplier,
   pendingChangesBySupplier = {},
   pendingArticleIds = new Set(),
-  recentlyActiveSuppliers = new Set(),
+  recentlyActiveSuppliers = new Map(),
   lastOrderMap = {},
   onToggleSupplier,
   onToggleArticle,
@@ -85,10 +85,15 @@ export const ArticleTable = ({
                     {group.supplier.name}
                   </span>
                   {recentlyActiveSuppliers.has(group.supplier.id) && (
-                    <span 
-                      className="w-2 h-2 md:w-2.5 md:h-2.5 rounded-full bg-green-500 animate-pulse shrink-0" 
-                      title="Kürzlich aktiv - Änderungen eingereicht in den letzten 4 Monaten"
-                    />
+                    <div className="flex items-center gap-1">
+                      <span 
+                        className="w-2 h-2 md:w-2.5 md:h-2.5 rounded-full bg-green-500 animate-pulse shrink-0" 
+                        title="Kürzlich aktiv - Änderungen eingereicht in den letzten 4 Monaten"
+                      />
+                      <span className="text-xs text-muted-foreground">
+                        {recentlyActiveSuppliers.get(group.supplier.id)?.toLocaleDateString('de-DE')}
+                      </span>
+                    </div>
                   )}
                   {pendingChangesBySupplier[group.supplier.id] > 0 && (
                     <Badge 
@@ -152,10 +157,15 @@ export const ArticleTable = ({
                           getItemsBySupplier().has(group.supplier.id) ? "text-destructive" : "text-foreground"
                         )}>{group.supplier.name}</span>
                         {recentlyActiveSuppliers.has(group.supplier.id) && (
-                          <span 
-                            className="w-2 h-2 rounded-full bg-green-500 animate-pulse shrink-0" 
-                            title="Kürzlich aktiv - Änderungen eingereicht in den letzten 4 Monaten"
-                          />
+                          <div className="flex items-center gap-1">
+                            <span 
+                              className="w-2 h-2 rounded-full bg-green-500 animate-pulse shrink-0" 
+                              title="Kürzlich aktiv - Änderungen eingereicht in den letzten 4 Monaten"
+                            />
+                            <span className="text-xs text-muted-foreground">
+                              {recentlyActiveSuppliers.get(group.supplier.id)?.toLocaleDateString('de-DE')}
+                            </span>
+                          </div>
                         )}
                         <span className="text-xs text-muted-foreground">({group.articles?.length || 0} Artikel)</span>
                         {pendingChangesBySupplier[group.supplier.id] > 0 && (

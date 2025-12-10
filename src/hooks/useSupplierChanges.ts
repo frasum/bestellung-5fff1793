@@ -328,7 +328,7 @@ export const useRejectAllChanges = () => {
   });
 };
 
-// Get Set of supplier IDs that submitted changes in the last 4 months
+// Get Map of supplier IDs to their last activity date (changes in the last 4 months)
 export const useRecentlyActiveSuppliers = () => {
   return useQuery({
     queryKey: ['recently-active-suppliers'],
@@ -336,23 +336,30 @@ export const useRecentlyActiveSuppliers = () => {
       const fourMonthsAgo = new Date();
       fourMonthsAgo.setMonth(fourMonthsAgo.getMonth() - 4);
 
-      // Fetch changes from the last 4 months (any status)
+      // Fetch changes from the last 4 months with dates
       const { data: changes } = await supabase
         .from('supplier_article_changes')
-        .select('supplier_id')
+        .select('supplier_id, created_at')
         .gte('created_at', fourMonthsAgo.toISOString());
 
-      // Fetch suggested articles from the last 4 months
+      // Fetch suggested articles from the last 4 months with dates
       const { data: suggestions } = await supabase
         .from('suggested_articles')
-        .select('supplier_id')
+        .select('supplier_id, created_at')
         .gte('created_at', fourMonthsAgo.toISOString());
 
-      const activeSupplierIds = new Set<string>();
-      changes?.forEach(c => activeSupplierIds.add(c.supplier_id));
-      suggestions?.forEach(s => activeSupplierIds.add(s.supplier_id));
+      // Map: supplier_id -> latest activity date
+      const supplierActivityMap = new Map<string, Date>();
+      
+      [...(changes || []), ...(suggestions || [])].forEach(item => {
+        const date = new Date(item.created_at);
+        const existing = supplierActivityMap.get(item.supplier_id);
+        if (!existing || date > existing) {
+          supplierActivityMap.set(item.supplier_id, date);
+        }
+      });
 
-      return activeSupplierIds;
+      return supplierActivityMap;
     },
   });
 };

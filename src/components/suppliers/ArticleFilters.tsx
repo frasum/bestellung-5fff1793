@@ -25,7 +25,7 @@ interface ArticleFiltersProps {
   hasFilters: boolean;
   onClearFilters: () => void;
   showAdvancedToggle?: boolean;
-  recentlyActiveSuppliers?: Set<string>;
+  recentlyActiveSuppliers?: Map<string, Date>;
 }
 
 export const ArticleFilters = ({
@@ -44,7 +44,7 @@ export const ArticleFilters = ({
   hasFilters,
   onClearFilters,
   showAdvancedToggle = false,
-  recentlyActiveSuppliers = new Set()
+  recentlyActiveSuppliers = new Map()
 }: ArticleFiltersProps) => {
   const activeFilterCount = (selectedSuppliers.length > 0 ? 1 : 0) + (selectedCategory ? 1 : 0);
 
