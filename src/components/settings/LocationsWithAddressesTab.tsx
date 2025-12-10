@@ -185,7 +185,7 @@ const LocationFormDialog = ({
                   value={shortCode}
                   onChange={(e) => setShortCode(e.target.value)}
                   placeholder="z.B. YUM"
-                  maxLength={5}
+                  maxLength={10}
                 />
               </div>
             </div>

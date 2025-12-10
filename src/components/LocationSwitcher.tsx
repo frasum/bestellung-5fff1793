@@ -26,7 +26,7 @@ export const LocationSwitcher = ({ className, showIcon = true }: LocationSwitche
     return (
       <div className={cn("flex items-center gap-2 px-4 py-3 text-muted-foreground", className)}>
         {showIcon && <MapPin className="h-4 w-4" />}
-        <span className="truncate">{activeLocation?.name || locations[0]?.name}</span>
+        <span className="truncate">{activeLocation?.short_code || activeLocation?.name || locations[0]?.short_code || locations[0]?.name}</span>
       </div>
     );
   }
@@ -37,7 +37,7 @@ export const LocationSwitcher = ({ className, showIcon = true }: LocationSwitche
         <Button variant="outline" size="sm" className={cn("gap-2", className)}>
           {showIcon && <MapPin className="h-4 w-4" />}
           <span className="max-w-[150px] truncate">
-            {activeLocation?.name || 'Standort'}
+            {activeLocation?.short_code || activeLocation?.name || 'Standort'}
           </span>
           <ChevronDown className="h-3 w-3 opacity-50" />
         </Button>
