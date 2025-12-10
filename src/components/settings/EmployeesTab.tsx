@@ -86,7 +86,7 @@ export function EmployeesTab() {
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
   const [deleteConfirmEmployee, setDeleteConfirmEmployee] = useState<Employee | null>(null);
   const [expandedLocations, setExpandedLocations] = useState<Set<string>>(new Set());
-  
+  const [isMigratingTokens, setIsMigratingTokens] = useState(false);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -98,6 +98,65 @@ export function EmployeesTab() {
   
   // New structure: location -> suppliers mapping
   const [locationAssignments, setLocationAssignments] = useState<LocationAssignment[]>([]);
+
+  // Auto-migrate: Create missing tokens for employees with assignments but no token
+  useEffect(() => {
+    const createMissingTokens = async () => {
+      if (employees.length === 0 || tokens.length === undefined || isMigratingTokens) return;
+      
+      const employeesNeedingTokens: { employee: Employee; supplierIds: string[] }[] = [];
+      
+      for (const employee of employees) {
+        const hasToken = tokens.some(t => t.employee_id === employee.id);
+        if (hasToken) continue;
+        
+        // Get supplier IDs from employee's location-supplier assignments
+        const supplierIds = [...new Set(
+          employeeLocationSuppliers
+            .filter(els => els.employee_id === employee.id)
+            .map(els => els.supplier_id)
+        )];
+        
+        if (supplierIds.length > 0) {
+          employeesNeedingTokens.push({ employee, supplierIds });
+        }
+      }
+      
+      if (employeesNeedingTokens.length === 0) return;
+      
+      setIsMigratingTokens(true);
+      
+      try {
+        for (const { employee, supplierIds } of employeesNeedingTokens) {
+          const supplierNames = supplierIds
+            .map(id => suppliers.find(s => s.id === id)?.name)
+            .filter(Boolean)
+            .join(', ');
+          const label = supplierNames || employee.name;
+          
+          await createToken.mutateAsync({
+            label,
+            language: 'th',
+            is_multi_supplier: supplierIds.length > 1,
+            supplier_id: supplierIds.length === 1 ? supplierIds[0] : undefined,
+            supplier_ids: supplierIds.length > 1 ? supplierIds : undefined,
+            employee_id: employee.id,
+          });
+        }
+        
+        toast({
+          title: `${employeesNeedingTokens.length} QR-Code(s) generiert`,
+          description: 'Fehlende QR-Codes wurden automatisch erstellt.',
+        });
+      } catch (error) {
+        console.error('Error creating missing tokens:', error);
+      } finally {
+        setIsMigratingTokens(false);
+      }
+    };
+    
+    createMissingTokens();
+  }, [employees, tokens, employeeLocationSuppliers, suppliers]);
 
   const activeSuppliers = useMemo(() => 
     suppliers.filter(s => s.is_active), 
