@@ -167,12 +167,24 @@ export function useCreateSimpleOrderToken() {
   });
 }
 
+export interface UpdateSimpleOrderTokenInput {
+  id: string;
+  label?: string;
+  language?: string;
+  location_id?: string | null;
+  is_active?: boolean;
+  supplier_id?: string | null;
+  supplier_ids?: string[];
+  is_multi_supplier?: boolean;
+}
+
 export function useUpdateSimpleOrderToken() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, ...updates }: Partial<SimpleOrderToken> & { id: string }) => {
+    mutationFn: async ({ id, supplier_ids, ...updates }: UpdateSimpleOrderTokenInput) => {
+      // Update the token itself
       const { data, error } = await supabase
         .from('simple_order_tokens')
         .update(updates)
@@ -181,10 +193,37 @@ export function useUpdateSimpleOrderToken() {
         .single();
 
       if (error) throw error;
+
+      // If supplier_ids is provided, update the junction table
+      if (supplier_ids !== undefined) {
+        // Delete existing supplier links
+        await supabase
+          .from('simple_order_token_suppliers')
+          .delete()
+          .eq('token_id', id);
+
+        // Insert new supplier links
+        if (supplier_ids.length > 0) {
+          const tokenSupplierEntries = supplier_ids.map(supplierId => ({
+            token_id: id,
+            supplier_id: supplierId,
+          }));
+
+          const { error: junctionError } = await supabase
+            .from('simple_order_token_suppliers')
+            .insert(tokenSupplierEntries);
+
+          if (junctionError) throw junctionError;
+        }
+      }
+
       return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['simple-order-tokens'] });
+      toast({
+        title: 'Bestelllink aktualisiert',
+      });
     },
     onError: (error) => {
       toast({
