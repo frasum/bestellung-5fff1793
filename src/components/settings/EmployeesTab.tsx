@@ -441,14 +441,14 @@ export function EmployeesTab() {
 
       {/* Create/Edit Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-lg !flex !flex-col max-h-[85vh]">
-          <DialogHeader className="flex-shrink-0">
+        <DialogContent className="max-w-lg !flex !flex-col max-h-[85vh] !p-0 !gap-0">
+          <DialogHeader className="flex-shrink-0 px-6 pt-6 pb-4">
             <DialogTitle>
               {editingEmployee ? 'Mitarbeiter bearbeiten' : 'Neuen Mitarbeiter anlegen'}
             </DialogTitle>
           </DialogHeader>
-          <div className="flex-1 overflow-y-auto min-h-0 pr-2">
-            <div className="space-y-4 pb-2">
+          <div className="flex-1 overflow-y-auto min-h-0 px-6">
+            <div className="space-y-4 pb-6">
               <div>
                 <Label htmlFor="name">Name *</Label>
                 <Input
@@ -599,7 +599,7 @@ export function EmployeesTab() {
               </div>
             </div>
           </div>
-          <DialogFooter className="mt-4 flex-shrink-0">
+          <DialogFooter className="flex-shrink-0 px-6 pb-6 pt-4 border-t bg-background">
             <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
               Abbrechen
             </Button>
