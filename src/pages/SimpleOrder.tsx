@@ -123,7 +123,8 @@ const SimpleOrder = () => {
     };
 
     verifyToken();
-  }, [token, i18n]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token]);
 
   // Filter articles when supplier is selected
   useEffect(() => {
