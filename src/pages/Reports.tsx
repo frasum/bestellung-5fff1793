@@ -5,6 +5,9 @@ import { useAuth } from '@/contexts/AuthContext';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useOrders } from '@/hooks/useOrders';
 import { useSupplierAnnualRevenue } from '@/hooks/useSupplierAnnualRevenue';
+import { useSuppliers } from '@/hooks/useSuppliers';
+import { useArticles } from '@/hooks/useArticles';
+import { useInventorySessions, useInventoryItems } from '@/hooks/useInventory';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -232,6 +235,9 @@ const Reports = () => {
 
           {/* Overview Tab */}
           <TabsContent value="overview" className="space-y-6 mt-4">
+            {/* Quick Overview KPIs */}
+            <QuickOverviewKPIs />
+            
             {/* Time Range & Export */}
             <div className="flex items-center gap-3 justify-end">
               <Select value={timeRange} onValueChange={setTimeRange}>
