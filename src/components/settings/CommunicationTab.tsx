@@ -1,5 +1,5 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Bell, FileText, ExternalLink, Smartphone } from 'lucide-react';
+import { Bell, FileText, ExternalLink } from 'lucide-react';
 
 interface CommunicationTabProps {
   activeSubTab: string;
@@ -7,7 +7,6 @@ interface CommunicationTabProps {
   NotificationsContent: React.ComponentType;
   EmailTemplatesContent: React.ComponentType;
   SupplierPortalContent: React.ComponentType;
-  SimpleOrderContent?: React.ComponentType;
 }
 
 export const CommunicationTab = ({ 
@@ -16,7 +15,6 @@ export const CommunicationTab = ({
   NotificationsContent, 
   EmailTemplatesContent,
   SupplierPortalContent,
-  SimpleOrderContent
 }: CommunicationTabProps) => {
   return (
     <div className="bg-muted/30 rounded-lg p-4 border border-border/50">
@@ -46,16 +44,6 @@ export const CommunicationTab = ({
             <span className="hidden sm:inline">Lieferantenportal</span>
             <span className="sm:hidden">Portal</span>
           </TabsTrigger>
-          {SimpleOrderContent && (
-            <TabsTrigger 
-              value="simple-order" 
-              className="gap-1.5 text-xs sm:text-sm data-[state=active]:bg-background data-[state=active]:shadow-sm"
-            >
-              <Smartphone className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-              <span className="hidden sm:inline">Einfache Bestellung</span>
-              <span className="sm:hidden">Kiosk</span>
-            </TabsTrigger>
-          )}
         </TabsList>
 
         <TabsContent value="notifications" className="mt-4 animate-in fade-in-50 slide-in-from-left-2 duration-200">
@@ -69,12 +57,6 @@ export const CommunicationTab = ({
         <TabsContent value="supplier-portal" className="mt-4 animate-in fade-in-50 slide-in-from-right-2 duration-200">
           <SupplierPortalContent />
         </TabsContent>
-
-        {SimpleOrderContent && (
-          <TabsContent value="simple-order" className="mt-4 animate-in fade-in-50 slide-in-from-right-2 duration-200">
-            <SimpleOrderContent />
-          </TabsContent>
-        )}
       </Tabs>
     </div>
   );

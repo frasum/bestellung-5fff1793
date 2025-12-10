@@ -37,8 +37,9 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { format, isAfter, isBefore, startOfDay, endOfDay, subDays, subMonths, Locale } from 'date-fns';
 import { de, enUS, fr } from 'date-fns/locale';
-import { Loader2, Package, CheckCircle2, Clock, Truck, XCircle, Eye, Search, X, ChevronDown, Trash2, FlaskConical, Filter, FileText, ShoppingCart, Calendar, ClipboardList } from 'lucide-react';
+import { Loader2, Package, CheckCircle2, Clock, Truck, XCircle, Eye, Search, X, ChevronDown, Trash2, FlaskConical, Filter, FileText, ShoppingCart, Calendar, ClipboardList, Smartphone } from 'lucide-react';
 import StaffOrdersTab from '@/components/orders/StaffOrdersTab';
+import { SimpleOrderTab } from '@/components/settings/SimpleOrderTab';
 import {
   Popover,
   PopoverContent,
@@ -104,7 +105,7 @@ const Orders = () => {
   
   // Tab state from URL
   const tabParam = searchParams.get('tab');
-  const activeTab = tabParam === 'drafts' ? 'drafts' : tabParam === 'staff' ? 'staff' : 'orders';
+  const activeTab = tabParam === 'drafts' ? 'drafts' : tabParam === 'staff' ? 'staff' : tabParam === 'simple-order' ? 'simple-order' : 'orders';
 
   // Fetch organization info for test mode
   const { data: orgData } = useQuery({
@@ -316,6 +317,8 @@ const Orders = () => {
       setSearchParams({ tab: 'drafts' }, { replace: true });
     } else if (value === 'staff') {
       setSearchParams({ tab: 'staff' }, { replace: true });
+    } else if (value === 'simple-order') {
+      setSearchParams({ tab: 'simple-order' }, { replace: true });
     } else {
       setSearchParams({}, { replace: true });
     }
@@ -405,17 +408,17 @@ const Orders = () => {
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-          <TabsList className={`grid w-full max-w-xl ${canAccessStaffOrders ? 'grid-cols-3' : 'grid-cols-2'}`}>
+          <TabsList className={`grid w-full max-w-2xl ${canAccessStaffOrders ? 'grid-cols-4' : 'grid-cols-3'}`}>
             <TabsTrigger value="orders" className="flex items-center gap-2">
               <ShoppingCart className="w-4 h-4" />
-              {t('orders.title')}
+              <span className="hidden sm:inline">{t('orders.title')}</span>
               {orders && orders.length > 0 && (
                 <Badge variant="secondary" className="ml-1 text-xs">{orders.length}</Badge>
               )}
             </TabsTrigger>
             <TabsTrigger value="drafts" className="flex items-center gap-2">
               <FileText className="w-4 h-4" />
-              {t('nav.drafts')}
+              <span className="hidden sm:inline">{t('nav.drafts')}</span>
               {drafts && drafts.length > 0 && (
                 <Badge variant="secondary" className="ml-1 text-xs">{drafts.length}</Badge>
               )}
@@ -423,12 +426,16 @@ const Orders = () => {
             {canAccessStaffOrders && (
               <TabsTrigger value="staff" className="flex items-center gap-2">
                 <ClipboardList className="w-4 h-4" />
-                {t('nav.staffOrders')}
+                <span className="hidden sm:inline">{t('nav.staffOrders')}</span>
                 {canSeeAllSubmissions && pendingCount > 0 && (
                   <Badge variant="destructive" className="ml-1 text-xs">{pendingCount}</Badge>
                 )}
               </TabsTrigger>
             )}
+            <TabsTrigger value="simple-order" className="flex items-center gap-2">
+              <Smartphone className="w-4 h-4" />
+              <span className="hidden sm:inline">{t('settings.simpleOrder.title', 'Einfache Bestellung')}</span>
+            </TabsTrigger>
           </TabsList>
 
           {/* Orders Tab Content */}
@@ -977,6 +984,11 @@ const Orders = () => {
               <StaffOrdersTab />
             </TabsContent>
           )}
+
+          {/* Simple Order Tab Content */}
+          <TabsContent value="simple-order" className="mt-6">
+            <SimpleOrderTab />
+          </TabsContent>
         </Tabs>
       </div>
 
