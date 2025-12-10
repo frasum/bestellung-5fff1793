@@ -42,7 +42,6 @@ export function SimpleOrderTab() {
   const [formData, setFormData] = useState({
     supplier_id: '',
     location_id: '',
-    label: '',
     language: 'th',
     employee_name: '',
   });
@@ -55,7 +54,6 @@ export function SimpleOrderTab() {
   const [editFormData, setEditFormData] = useState({
     supplier_id: '',
     location_id: '',
-    label: '',
     language: 'th',
     employee_name: '',
   });
@@ -66,7 +64,6 @@ export function SimpleOrderTab() {
     setEditFormData({
       supplier_id: token.supplier_id || '',
       location_id: token.location_id || '',
-      label: token.label,
       language: token.language,
       employee_name: token.employee_name || '',
     });
@@ -82,18 +79,25 @@ export function SimpleOrderTab() {
     if (!editingTokenId) return;
 
     if (isEditMultiSupplier) {
-      if (editSelectedSupplierIds.length === 0 || !editFormData.label) {
+      if (editSelectedSupplierIds.length === 0) {
         toast({
           title: 'Fehler',
-          description: 'Bitte mindestens einen Lieferanten und eine Bezeichnung angeben',
+          description: 'Bitte mindestens einen Lieferanten auswählen',
           variant: 'destructive',
         });
         return;
       }
 
+      // Auto-generate label from supplier names
+      const supplierNames = editSelectedSupplierIds
+        .map(id => suppliers?.find(s => s.id === id)?.name)
+        .filter(Boolean)
+        .join(', ');
+      const label = supplierNames || 'Multi-Lieferanten';
+
       await updateToken.mutateAsync({
         id: editingTokenId,
-        label: editFormData.label,
+        label,
         location_id: editFormData.location_id || null,
         language: editFormData.language,
         is_multi_supplier: true,
@@ -102,18 +106,22 @@ export function SimpleOrderTab() {
         employee_name: editFormData.employee_name || null,
       });
     } else {
-      if (!editFormData.supplier_id || !editFormData.label) {
+      if (!editFormData.supplier_id) {
         toast({
           title: 'Fehler',
-          description: 'Bitte Lieferant und Bezeichnung angeben',
+          description: 'Bitte einen Lieferanten auswählen',
           variant: 'destructive',
         });
         return;
       }
 
+      // Auto-generate label from supplier name
+      const supplier = suppliers?.find(s => s.id === editFormData.supplier_id);
+      const label = supplier?.name || 'Bestellung';
+
       await updateToken.mutateAsync({
         id: editingTokenId,
-        label: editFormData.label,
+        label,
         location_id: editFormData.location_id || null,
         language: editFormData.language,
         is_multi_supplier: false,
@@ -137,44 +145,55 @@ export function SimpleOrderTab() {
 
   const handleCreate = async () => {
     if (isMultiSupplier) {
-      if (selectedSupplierIds.length === 0 || !formData.label) {
+      if (selectedSupplierIds.length === 0) {
         toast({
           title: 'Fehler',
-          description: 'Bitte mindestens einen Lieferanten und eine Bezeichnung angeben',
+          description: 'Bitte mindestens einen Lieferanten auswählen',
           variant: 'destructive',
         });
         return;
       }
 
+      // Auto-generate label from supplier names
+      const supplierNames = selectedSupplierIds
+        .map(id => suppliers?.find(s => s.id === id)?.name)
+        .filter(Boolean)
+        .join(', ');
+      const label = supplierNames || 'Multi-Lieferanten';
+
       await createToken.mutateAsync({
         supplier_ids: selectedSupplierIds,
         location_id: formData.location_id || null,
-        label: formData.label,
+        label,
         language: formData.language,
         is_multi_supplier: true,
         employee_name: formData.employee_name || null,
       });
     } else {
-      if (!formData.supplier_id || !formData.label) {
+      if (!formData.supplier_id) {
         toast({
           title: 'Fehler',
-          description: 'Bitte Lieferant und Bezeichnung angeben',
+          description: 'Bitte einen Lieferanten auswählen',
           variant: 'destructive',
         });
         return;
       }
 
+      // Auto-generate label from supplier name
+      const supplier = suppliers?.find(s => s.id === formData.supplier_id);
+      const label = supplier?.name || 'Bestellung';
+
       await createToken.mutateAsync({
         supplier_id: formData.supplier_id,
         location_id: formData.location_id || null,
-        label: formData.label,
+        label,
         language: formData.language,
         employee_name: formData.employee_name || null,
       });
     }
 
     setIsDialogOpen(false);
-    setFormData({ supplier_id: '', location_id: '', label: '', language: 'th', employee_name: '' });
+    setFormData({ supplier_id: '', location_id: '', language: 'th', employee_name: '' });
     setSelectedSupplierIds([]);
     setIsMultiSupplier(false);
   };
@@ -229,7 +248,7 @@ export function SimpleOrderTab() {
             if (!open) {
               setIsMultiSupplier(false);
               setSelectedSupplierIds([]);
-              setFormData({ supplier_id: '', location_id: '', label: '', language: 'th', employee_name: '' });
+              setFormData({ supplier_id: '', location_id: '', language: 'th', employee_name: '' });
             }
           }}>
             <DialogTrigger asChild>
@@ -349,14 +368,6 @@ export function SimpleOrderTab() {
                   </p>
                 </div>
 
-                <div className="space-y-2">
-                  <Label>{t('settings.simpleOrder.label', 'Bezeichnung')} *</Label>
-                  <Input
-                    value={formData.label}
-                    onChange={(e) => setFormData(prev => ({ ...prev, label: e.target.value }))}
-                    placeholder={t('settings.simpleOrder.labelPlaceholder', 'z.B. Küche YUM, Lager')}
-                  />
-                </div>
 
                 <div className="space-y-2">
                   <Label>{t('settings.simpleOrder.language', 'Sprache')}</Label>
