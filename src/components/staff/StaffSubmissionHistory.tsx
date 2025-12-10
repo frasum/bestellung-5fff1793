@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { useCart } from '@/contexts/CartContext';
 import { useArticles } from '@/hooks/useArticles';
 import { useToast } from '@/hooks/use-toast';
+import { useApproveSubmission } from '@/hooks/useEmployeeSubmissions';
 import type { EmployeeOrderSubmission } from '@/hooks/useEmployeeSubmissions';
 
 interface StaffSubmissionHistoryProps {
@@ -29,6 +30,7 @@ export default function StaffSubmissionHistory({
   const { toast } = useToast();
   const navigate = useNavigate();
   const [addedSubmissionIds, setAddedSubmissionIds] = useState<string[]>([]);
+  const approveSubmission = useApproveSubmission();
 
   if (submissions.length === 0) {
     return (
@@ -39,7 +41,7 @@ export default function StaffSubmissionHistory({
     );
   }
 
-  const handleAddToCart = (e: React.MouseEvent, submission: EmployeeOrderSubmission) => {
+  const handleAddToCart = async (e: React.MouseEvent, submission: EmployeeOrderSubmission) => {
     e.stopPropagation(); // Prevent card click
     
     if (!submission.items || submission.items.length === 0) {
@@ -71,6 +73,16 @@ export default function StaffSubmissionHistory({
 
     if (addedCount > 0) {
       setAddedSubmissionIds(prev => [...prev, submission.id]);
+      
+      // Auto-approve pending kiosk orders when added to cart
+      if (submission.status === 'pending' && submission.submission_type === 'simple') {
+        try {
+          await approveSubmission.mutateAsync(submission.id);
+        } catch (error) {
+          console.error('Failed to auto-approve submission:', error);
+        }
+      }
+      
       toast({
         title: 'In Warenkorb übernommen',
         description: `${addedCount} Artikel wurden zum Warenkorb hinzugefügt${skippedCount > 0 ? ` (${skippedCount} ohne Artikelzuordnung übersprungen)` : ''}`,
