@@ -34,31 +34,32 @@ export const useTeamMembers = () => {
 
       if (!profile?.organization_id) throw new Error('No organization found');
 
-      // Get all profiles in the organization with their roles
-      const { data: profiles, error } = await supabase
+      // Get all profiles in the organization
+      const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
         .select('id, email, full_name')
         .eq('organization_id', profile.organization_id);
 
-      if (error) throw error;
+      if (profilesError) throw profilesError;
+      if (!profiles?.length) return [];
 
-      // Get roles for each user
-      const membersWithRoles = await Promise.all(
-        profiles.map(async (p) => {
-          const { data: roleData } = await supabase
-            .from('user_roles')
-            .select('role')
-            .eq('user_id', p.id)
-            .single();
+      // Get all roles for these users in a single query
+      const userIds = profiles.map(p => p.id);
+      const { data: roles, error: rolesError } = await supabase
+        .from('user_roles')
+        .select('user_id, role')
+        .in('user_id', userIds);
 
-          return {
-            ...p,
-            role: (roleData?.role || 'viewer') as TeamMember['role'],
-          };
-        })
-      );
+      if (rolesError) throw rolesError;
 
-      return membersWithRoles as TeamMember[];
+      // Create a map for O(1) role lookups
+      const roleMap = new Map(roles?.map(r => [r.user_id, r.role]) || []);
+
+      // Combine profiles with roles
+      return profiles.map(p => ({
+        ...p,
+        role: (roleMap.get(p.id) || 'viewer') as TeamMember['role'],
+      }));
     },
     enabled: !!user,
   });
