@@ -447,7 +447,7 @@ export function EmployeesTab() {
               {editingEmployee ? 'Mitarbeiter bearbeiten' : 'Neuen Mitarbeiter anlegen'}
             </DialogTitle>
           </DialogHeader>
-          <div className="flex-1 overflow-y-auto min-h-0 px-6">
+          <div className="overflow-y-auto px-6" style={{ maxHeight: 'calc(85vh - 150px)' }}>
             <div className="space-y-4 pb-6">
               <div>
                 <Label htmlFor="name">Name *</Label>
