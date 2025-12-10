@@ -96,13 +96,11 @@ export const ArticleTable = ({
                     return (
                       <TooltipProvider delayDuration={0}>
                         <Tooltip>
-                          <TooltipTrigger asChild>
-                            <div className="flex items-center gap-1 cursor-help">
-                              <span className="w-2 h-2 md:w-2.5 md:h-2.5 rounded-full bg-green-500 animate-pulse shrink-0" />
-                              <span className="text-xs text-muted-foreground">
-                                {activity.lastDate.toLocaleDateString('de-DE')}
-                              </span>
-                            </div>
+                          <TooltipTrigger className="flex items-center gap-1 cursor-help p-1 -m-1 rounded hover:bg-muted/30">
+                            <span className="w-2 h-2 md:w-2.5 md:h-2.5 rounded-full bg-green-500 animate-pulse shrink-0" />
+                            <span className="text-xs text-muted-foreground">
+                              {activity.lastDate.toLocaleDateString('de-DE')}
+                            </span>
                           </TooltipTrigger>
                           <TooltipContent side="top" className="max-w-xs">
                             <div className="text-sm space-y-1">
@@ -190,13 +188,11 @@ export const ArticleTable = ({
                           return (
                             <TooltipProvider delayDuration={0}>
                               <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <div className="flex items-center gap-1 cursor-help">
-                                    <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse shrink-0" />
-                                    <span className="text-xs text-muted-foreground">
-                                      {activity.lastDate.toLocaleDateString('de-DE')}
-                                    </span>
-                                  </div>
+                                <TooltipTrigger className="flex items-center gap-1 cursor-help p-1 -m-1 rounded hover:bg-muted/30">
+                                  <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse shrink-0" />
+                                  <span className="text-xs text-muted-foreground">
+                                    {activity.lastDate.toLocaleDateString('de-DE')}
+                                  </span>
                                 </TooltipTrigger>
                                 <TooltipContent side="top" className="max-w-xs">
                                   <div className="text-sm space-y-1">
