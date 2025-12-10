@@ -577,10 +577,7 @@ const SimpleOrder = () => {
                             {article.name}
                           </h3>
                           <p className="text-muted-foreground text-sm">
-                            {article.unit}
-                            {article.packaging_unit && article.packaging_unit > 1 && (
-                              <span className="ml-1">({article.packaging_unit}er)</span>
-                            )}
+                            {article.description || article.unit}
                           </p>
                         </div>
 
