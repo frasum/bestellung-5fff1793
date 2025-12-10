@@ -39,12 +39,6 @@ verify_jwt = true
 [functions.populate-demo-data]
 verify_jwt = true
 
-[functions.transcribe-voice-order]
-verify_jwt = true
-
-[functions.parse-order-text]
-verify_jwt = true
-
 [functions.accept-invitation]
 verify_jwt = true
 
