@@ -456,6 +456,8 @@
     "categoriesMergeError": "Error merging categories",
     "manageLocations": "Locations",
     "manageLocationsDesc": "Manage your restaurant locations. Each location can have its own customer numbers and delivery addresses.",
+    "locationsWithAddressesDesc": "Manage locations and assign delivery addresses per location.",
+    "address": "Address",
     "addLocation": "Add Location",
     "editLocation": "Edit Location",
     "createLocation": "Create New Location",

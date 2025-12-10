@@ -7,11 +7,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
-import { Building2, MapPin, Users, Mail, Store } from 'lucide-react';
+import { Building2, Users, Mail, Store } from 'lucide-react';
 import { useOrganization, useUpdateOrganization } from '@/hooks/useSettings';
 import { TeamTab } from './TeamTab';
-import { LocationsTab } from './LocationsTab';
-import { AddressesTab } from './AddressesTab';
+import { LocationsWithAddressesTab } from './LocationsWithAddressesTab';
 
 interface OrganizationTabProps {
   activeSubTab: string;
@@ -228,11 +227,6 @@ export const OrganizationTab = ({ activeSubTab, onSubTabChange }: OrganizationTa
             <span className="hidden sm:inline">{t('locations.title')}</span>
             <span className="sm:hidden">{t('settings.locationsShort')}</span>
           </TabsTrigger>
-          <TabsTrigger value="addresses" className="gap-1.5 text-xs sm:text-sm data-[state=active]:bg-background data-[state=active]:shadow-sm">
-            <MapPin className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-            <span className="hidden sm:inline">{t('settings.addresses')}</span>
-            <span className="sm:hidden">{t('settings.addressesShort')}</span>
-          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="general" className="mt-4 animate-in fade-in-50 slide-in-from-left-2 duration-200">
@@ -244,11 +238,7 @@ export const OrganizationTab = ({ activeSubTab, onSubTabChange }: OrganizationTa
         </TabsContent>
 
         <TabsContent value="locations" className="mt-4 animate-in fade-in-50 slide-in-from-bottom-2 duration-200">
-          <LocationsTab />
-        </TabsContent>
-
-        <TabsContent value="addresses" className="mt-4 animate-in fade-in-50 slide-in-from-right-2 duration-200">
-          <AddressesTab />
+          <LocationsWithAddressesTab />
         </TabsContent>
       </Tabs>
     </div>
