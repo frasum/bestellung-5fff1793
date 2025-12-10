@@ -124,7 +124,7 @@ export const generateInventoryListPdf = (
     doc.setFont('helvetica', 'bold');
     doc.setFillColor(240, 240, 240);
     doc.rect(14, currentY - 5, pageWidth - 28, 8, 'F');
-    doc.text(`📁 ${group.category}`, 16, currentY);
+    doc.text(group.category, 16, currentY);
     currentY += 8;
 
     // Table data for this category
@@ -252,7 +252,7 @@ export const exportInventoryToExcel = async (
 
     // Category header row
     data.push({
-      'Artikel': `📁 ${group.category}`,
+      'Artikel': group.category,
       'Artikelnummer': '',
       'Lieferant': '',
       'Einheit': '',
