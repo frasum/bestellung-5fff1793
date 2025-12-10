@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Mail, Lock, User, Building2, ArrowRight, Loader2, Play } from 'lucide-react';
+import { Mail, Lock, User, Building2, ArrowRight, Loader2, Play, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -19,6 +19,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { useTranslation } from 'react-i18next';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 const loginSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
@@ -26,6 +27,16 @@ const loginSchema = z.object({
 });
 
 const signupSchema = z.object({
+  fullName: z.string().min(2, 'Name must be at least 2 characters'),
+  email: z.string().email('Please enter a valid email address'),
+  password: z.string().min(6, 'Password must be at least 6 characters'),
+  confirmPassword: z.string(),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Passwords don't match",
+  path: ['confirmPassword'],
+});
+
+const signupWithOrgSchema = z.object({
   fullName: z.string().min(2, 'Name must be at least 2 characters'),
   organizationName: z.string().min(2, 'Restaurant name must be at least 2 characters'),
   email: z.string().email('Please enter a valid email address'),
@@ -42,22 +53,67 @@ const demoSchema = z.object({
 
 type LoginFormData = z.infer<typeof loginSchema>;
 type SignupFormData = z.infer<typeof signupSchema>;
+type SignupWithOrgFormData = z.infer<typeof signupWithOrgSchema>;
 type DemoFormData = z.infer<typeof demoSchema>;
 
 const Auth = () => {
-  const [isLogin, setIsLogin] = useState(true);
+  const [searchParams] = useSearchParams();
+  const inviteToken = searchParams.get('invite');
+  
+  const [isLogin, setIsLogin] = useState(!inviteToken); // Default to signup if invite token present
   const [isLoading, setIsLoading] = useState(false);
   const [showDemoDialog, setShowDemoDialog] = useState(false);
   const [isDemoLoading, setIsDemoLoading] = useState(false);
+  const [isAcceptingInvitation, setIsAcceptingInvitation] = useState(false);
   const { user, signIn, signUp } = useAuth();
   const navigate = useNavigate();
   const { t } = useTranslation();
 
+  // Handle invitation acceptance after login/signup
+  const acceptInvitation = async () => {
+    if (!inviteToken) return true;
+    
+    setIsAcceptingInvitation(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('accept-invitation', {
+        body: { token: inviteToken }
+      });
+
+      if (error) {
+        console.error('Accept invitation error:', error);
+        toast.error('Fehler beim Annehmen der Einladung');
+        return false;
+      }
+
+      if (data?.error) {
+        toast.error(data.error);
+        return false;
+      }
+
+      toast.success(`Willkommen im Team von ${data.organizationName}!`);
+      return true;
+    } catch (err) {
+      console.error('Accept invitation error:', err);
+      toast.error('Fehler beim Annehmen der Einladung');
+      return false;
+    } finally {
+      setIsAcceptingInvitation(false);
+    }
+  };
+
   useEffect(() => {
-    if (user) {
+    if (user && !inviteToken) {
       navigate('/reports');
     }
-  }, [user, navigate]);
+    // If user is logged in and has invite token, accept the invitation
+    if (user && inviteToken) {
+      acceptInvitation().then((success) => {
+        if (success) {
+          navigate('/reports');
+        }
+      });
+    }
+  }, [user, navigate, inviteToken]);
 
   const loginForm = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -66,6 +122,11 @@ const Auth = () => {
 
   const signupForm = useForm<SignupFormData>({
     resolver: zodResolver(signupSchema),
+    defaultValues: { fullName: '', email: '', password: '', confirmPassword: '' },
+  });
+
+  const signupWithOrgForm = useForm<SignupWithOrgFormData>({
+    resolver: zodResolver(signupWithOrgSchema),
     defaultValues: { fullName: '', organizationName: '', email: '', password: '', confirmPassword: '' },
   });
 
@@ -77,9 +138,9 @@ const Auth = () => {
   const handleLogin = async (data: LoginFormData) => {
     setIsLoading(true);
     const { error } = await signIn(data.email, data.password);
-    setIsLoading(false);
-
+    
     if (error) {
+      setIsLoading(false);
       if (error.message.includes('Invalid login credentials')) {
         toast.error('Invalid email or password');
       } else if (error.message.includes('Email not confirmed')) {
@@ -87,13 +148,57 @@ const Auth = () => {
       } else {
         toast.error(error.message);
       }
+      return;
+    }
+
+    // If there's an invite token, wait for the user state to update
+    // The useEffect will handle accepting the invitation
+    if (inviteToken) {
+      // Wait a moment for auth state to propagate
+      await new Promise(resolve => setTimeout(resolve, 500));
+      const success = await acceptInvitation();
+      setIsLoading(false);
+      if (success) {
+        toast.success('Erfolgreich angemeldet!');
+        navigate('/reports');
+      }
     } else {
+      setIsLoading(false);
       toast.success('Welcome back!');
       navigate('/reports');
     }
   };
 
   const handleSignup = async (data: SignupFormData) => {
+    setIsLoading(true);
+    
+    // For invited users, we create account without organization name
+    // The organization will be set by accept-invitation
+    const { error } = await signUp(data.email, data.password, data.fullName, 'Pending Organization');
+    
+    if (error) {
+      setIsLoading(false);
+      if (error.message.includes('User already registered')) {
+        toast.error('Ein Konto mit dieser E-Mail existiert bereits. Bitte melden Sie sich an.');
+        setIsLogin(true);
+      } else {
+        toast.error(error.message);
+      }
+      return;
+    }
+
+    // Wait for auth state to propagate
+    await new Promise(resolve => setTimeout(resolve, 500));
+    const success = await acceptInvitation();
+    setIsLoading(false);
+    
+    if (success) {
+      toast.success('Konto erstellt! Weiterleitung...');
+      navigate('/reports');
+    }
+  };
+
+  const handleSignupWithOrg = async (data: SignupWithOrgFormData) => {
     setIsLoading(true);
     const { error } = await signUp(data.email, data.password, data.fullName, data.organizationName);
     setIsLoading(false);
@@ -152,6 +257,18 @@ const Auth = () => {
     setIsDemoLoading(false);
   };
 
+  // Show loading state while accepting invitation for logged-in user
+  if (user && inviteToken && isAcceptingInvitation) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-accent/5 flex items-center justify-center p-4">
+        <div className="text-center">
+          <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-primary" />
+          <p className="text-muted-foreground">Einladung wird angenommen...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-accent/5 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
@@ -160,6 +277,19 @@ const Auth = () => {
           <img src={logoImage} alt="Bestellung.pro" className="w-10 h-10 rounded-lg object-cover" />
           <span className="font-bold text-2xl text-foreground">Bestellung.pro</span>
         </div>
+
+        {/* Invitation Banner */}
+        {inviteToken && (
+          <Alert className="mb-4 border-primary/50 bg-primary/5">
+            <Users className="h-4 w-4" />
+            <AlertDescription>
+              Sie wurden eingeladen, einem Team beizutreten. 
+              {isLogin 
+                ? ' Melden Sie sich an oder erstellen Sie ein Konto, um die Einladung anzunehmen.'
+                : ' Erstellen Sie ein Konto, um die Einladung anzunehmen.'}
+            </AlertDescription>
+          </Alert>
+        )}
 
         {/* Card */}
         <div className="bg-card border border-border rounded-2xl shadow-lg p-8">
@@ -229,14 +359,14 @@ const Auth = () => {
                   <Loader2 className="w-4 h-4 animate-spin" />
                 ) : (
                   <>
-                    {t('auth.signIn')}
+                    {inviteToken ? 'Anmelden & Team beitreten' : t('auth.signIn')}
                     <ArrowRight className="w-4 h-4 ml-2" />
                   </>
                 )}
               </Button>
             </form>
-          ) : (
-            /* Signup Form */
+          ) : inviteToken ? (
+            /* Signup Form for Invited Users (no organization name) */
             <form onSubmit={signupForm.handleSubmit(handleSignup)} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="signup-name">{t('auth.fullName')}</Label>
@@ -245,30 +375,13 @@ const Auth = () => {
                   <Input
                     id="signup-name"
                     type="text"
-                    placeholder="John Doe"
+                    placeholder="Max Mustermann"
                     className="pl-10"
                     {...signupForm.register('fullName')}
                   />
                 </div>
                 {signupForm.formState.errors.fullName && (
                   <p className="text-sm text-destructive">{signupForm.formState.errors.fullName.message}</p>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="signup-org">Restaurant Name</Label>
-                <div className="relative">
-                  <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                  <Input
-                    id="signup-org"
-                    type="text"
-                    placeholder="Bella Vista Restaurant"
-                    className="pl-10"
-                    {...signupForm.register('organizationName')}
-                  />
-                </div>
-                {signupForm.formState.errors.organizationName && (
-                  <p className="text-sm text-destructive">{signupForm.formState.errors.organizationName.message}</p>
                 )}
               </div>
 
@@ -328,6 +441,105 @@ const Auth = () => {
                   <Loader2 className="w-4 h-4 animate-spin" />
                 ) : (
                   <>
+                    Konto erstellen & Team beitreten
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </>
+                )}
+              </Button>
+            </form>
+          ) : (
+            /* Signup Form with Organization Name */
+            <form onSubmit={signupWithOrgForm.handleSubmit(handleSignupWithOrg)} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="signup-name">{t('auth.fullName')}</Label>
+                <div className="relative">
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    id="signup-name"
+                    type="text"
+                    placeholder="John Doe"
+                    className="pl-10"
+                    {...signupWithOrgForm.register('fullName')}
+                  />
+                </div>
+                {signupWithOrgForm.formState.errors.fullName && (
+                  <p className="text-sm text-destructive">{signupWithOrgForm.formState.errors.fullName.message}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="signup-org">Restaurant Name</Label>
+                <div className="relative">
+                  <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    id="signup-org"
+                    type="text"
+                    placeholder="Bella Vista Restaurant"
+                    className="pl-10"
+                    {...signupWithOrgForm.register('organizationName')}
+                  />
+                </div>
+                {signupWithOrgForm.formState.errors.organizationName && (
+                  <p className="text-sm text-destructive">{signupWithOrgForm.formState.errors.organizationName.message}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="signup-email">Email</Label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    id="signup-email"
+                    type="email"
+                    placeholder="you@restaurant.com"
+                    className="pl-10"
+                    {...signupWithOrgForm.register('email')}
+                  />
+                </div>
+                {signupWithOrgForm.formState.errors.email && (
+                  <p className="text-sm text-destructive">{signupWithOrgForm.formState.errors.email.message}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="signup-password">{t('auth.password')}</Label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    id="signup-password"
+                    type="password"
+                    placeholder="••••••••"
+                    className="pl-10"
+                    {...signupWithOrgForm.register('password')}
+                  />
+                </div>
+                {signupWithOrgForm.formState.errors.password && (
+                  <p className="text-sm text-destructive">{signupWithOrgForm.formState.errors.password.message}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="signup-confirm">{t('settings.confirmPassword')}</Label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    id="signup-confirm"
+                    type="password"
+                    placeholder="••••••••"
+                    className="pl-10"
+                    {...signupWithOrgForm.register('confirmPassword')}
+                  />
+                </div>
+                {signupWithOrgForm.formState.errors.confirmPassword && (
+                  <p className="text-sm text-destructive">{signupWithOrgForm.formState.errors.confirmPassword.message}</p>
+                )}
+              </div>
+
+              <Button type="submit" className="w-full" disabled={isLoading}>
+                {isLoading ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <>
                     {t('auth.createAccount')}
                     <ArrowRight className="w-4 h-4 ml-2" />
                   </>
@@ -336,20 +548,22 @@ const Auth = () => {
             </form>
           )}
 
-          {/* Demo Button */}
-          <div className="mt-6 pt-6 border-t border-border">
-            <Button 
-              variant="outline" 
-              className="w-full gap-2"
-              onClick={() => setShowDemoDialog(true)}
-            >
-              <Play className="w-4 h-4" />
-              Demo starten
-            </Button>
-            <p className="text-xs text-muted-foreground text-center mt-2">
-              7 Tage kostenlos testen mit Beispieldaten
-            </p>
-          </div>
+          {/* Demo Button - only show when no invite token */}
+          {!inviteToken && (
+            <div className="mt-6 pt-6 border-t border-border">
+              <Button 
+                variant="outline" 
+                className="w-full gap-2"
+                onClick={() => setShowDemoDialog(true)}
+              >
+                <Play className="w-4 h-4" />
+                Demo starten
+              </Button>
+              <p className="text-xs text-muted-foreground text-center mt-2">
+                7 Tage kostenlos testen mit Beispieldaten
+              </p>
+            </div>
+          )}
 
           <p className="text-center text-sm text-muted-foreground mt-6">
             By continuing, you agree to our{' '}

@@ -44,3 +44,6 @@ verify_jwt = true
 
 [functions.parse-order-text]
 verify_jwt = true
+
+[functions.accept-invitation]
+verify_jwt = true
