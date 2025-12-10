@@ -37,6 +37,11 @@ export interface InventoryItem {
   };
 }
 
+export interface InventorySessionWithStats extends InventorySession {
+  itemCount: number;
+  totalValue: number;
+}
+
 export const useInventorySessions = () => {
   return useQuery({
     queryKey: ['inventory-sessions'],
@@ -48,6 +53,47 @@ export const useInventorySessions = () => {
 
       if (error) throw error;
       return data as InventorySession[];
+    },
+  });
+};
+
+export const useInventorySessionsWithStats = () => {
+  return useQuery({
+    queryKey: ['inventory-sessions-with-stats'],
+    queryFn: async () => {
+      // Get all sessions
+      const { data: sessions, error: sessionsError } = await supabase
+        .from('inventory_sessions')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (sessionsError) throw sessionsError;
+
+      // Get all inventory items with unit prices
+      const { data: allItems, error: itemsError } = await supabase
+        .from('inventory_items')
+        .select('session_id, storage_1, storage_2, unit_price');
+
+      if (itemsError) throw itemsError;
+
+      // Calculate stats per session
+      const sessionsWithStats: InventorySessionWithStats[] = (sessions || []).map(session => {
+        const sessionItems = allItems?.filter(item => item.session_id === session.id) || [];
+        const itemCount = sessionItems.length;
+        const totalValue = sessionItems.reduce((sum, item) => {
+          const quantity = (item.storage_1 || 0) + (item.storage_2 || 0);
+          const price = item.unit_price || 0;
+          return sum + (quantity * price);
+        }, 0);
+
+        return {
+          ...session,
+          itemCount,
+          totalValue,
+        } as InventorySessionWithStats;
+      });
+
+      return sessionsWithStats;
     },
   });
 };

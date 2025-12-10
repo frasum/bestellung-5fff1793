@@ -577,7 +577,8 @@
     "price": "Giá (€)",
     "searchArticles": "Tìm kiếm sản phẩm...",
     "selectSession": "Chọn kiểm kê...",
-    "viewingCompleted": "Bạn đang xem kiểm kê đã hoàn thành (chỉ đọc)."
+    "viewingCompleted": "Bạn đang xem kiểm kê đã hoàn thành (chỉ đọc).",
+    "inProgressLabel": "Đang thực hiện"
   },
   "scan": {
     "title": "Quét danh sách đơn hàng",

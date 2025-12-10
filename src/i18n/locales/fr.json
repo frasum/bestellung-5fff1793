@@ -577,7 +577,8 @@
     "price": "Prix (€)",
     "searchArticles": "Rechercher des articles...",
     "selectSession": "Sélectionner l'inventaire...",
-    "viewingCompleted": "Vous consultez un inventaire terminé (lecture seule)."
+    "viewingCompleted": "Vous consultez un inventaire terminé (lecture seule).",
+    "inProgressLabel": "En cours"
   },
   "scan": {
     "title": "Scanner la liste de commande",

@@ -627,7 +627,8 @@
     "price": "Preis (€)",
     "searchArticles": "Artikel suchen...",
     "selectSession": "Inventur auswählen...",
-    "viewingCompleted": "Sie sehen eine abgeschlossene Inventur (nur Ansicht)."
+    "viewingCompleted": "Sie sehen eine abgeschlossene Inventur (nur Ansicht).",
+    "inProgressLabel": "In Bearbeitung"
   },
   "scan": {
     "title": "Bestellliste scannen",
