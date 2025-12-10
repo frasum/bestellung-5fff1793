@@ -36,6 +36,7 @@ interface TokenData {
   label: string;
   language: string;
   is_multi_supplier: boolean;
+  employee_name: string | null;
   supplier: {
     id: string;
     name: string;
@@ -63,6 +64,7 @@ const SimpleOrder = () => {
   const [quantities, setQuantities] = useState<Record<string, number>>({});
   const [search, setSearch] = useState('');
   const [employeeName, setEmployeeName] = useState('');
+  const [isEmployeeNameLocked, setIsEmployeeNameLocked] = useState(false);
   const [selectedLocationId, setSelectedLocationId] = useState<string | null>(null);
   const [selectedSupplierId, setSelectedSupplierId] = useState<string | null>(null);
   const [validationErrors, setValidationErrors] = useState<{ name?: boolean; location?: boolean }>({});
@@ -107,6 +109,12 @@ const SimpleOrder = () => {
         // Set language from token
         if (data.tokenData?.language) {
           i18n.changeLanguage(data.tokenData.language);
+        }
+        
+        // Pre-fill employee name if set on token
+        if (data.tokenData?.employee_name) {
+          setEmployeeName(data.tokenData.employee_name);
+          setIsEmployeeNameLocked(true);
         }
         
         // Pre-select location if only one available
@@ -165,7 +173,8 @@ const SimpleOrder = () => {
   const validateForm = (): boolean => {
     const errors: { name?: boolean; location?: boolean } = {};
     
-    if (!employeeName.trim()) {
+    // Only validate name if not locked (not pre-filled from token)
+    if (!isEmployeeNameLocked && !employeeName.trim()) {
       errors.name = true;
     }
     if (!selectedLocationId) {
@@ -298,7 +307,10 @@ const SimpleOrder = () => {
             className="w-full h-14 text-lg"
             onClick={() => {
               setStatus('ready');
-              setEmployeeName('');
+              // Only reset employee name if not locked
+              if (!isEmployeeNameLocked) {
+                setEmployeeName('');
+              }
             }}
           >
             สั่งซื้อใหม่ / Neue Bestellung
@@ -374,26 +386,34 @@ const SimpleOrder = () => {
         <div className="max-w-2xl mx-auto p-4">
           {/* Employee Info Section first */}
           <div className="bg-muted/50 rounded-lg p-4 mb-6 space-y-4">
-            {/* Employee Name */}
-            <div>
-              <Label htmlFor="employeeName" className="flex items-center gap-2 text-base font-medium mb-2">
-                <User className="h-5 w-5" />
-                {t('simpleOrder.yourName', 'ชื่อของคุณ / Ihr Name')} *
-              </Label>
-              <Input
-                id="employeeName"
-                type="text"
-                placeholder={t('simpleOrder.namePlaceholder', 'กรุณาใส่ชื่อของคุณ / Bitte Namen eingeben')}
-                value={employeeName}
-                onChange={(e) => {
-                  setEmployeeName(e.target.value);
-                  if (e.target.value.trim()) {
-                    setValidationErrors(prev => ({ ...prev, name: false }));
-                  }
-                }}
-                className={`h-14 text-lg ${validationErrors.name ? 'border-destructive ring-destructive' : ''}`}
-              />
-            </div>
+            {/* Employee Name - Show greeting if locked, input if not */}
+            {isEmployeeNameLocked ? (
+              <div className="text-center py-2">
+                <p className="text-2xl font-bold text-primary">
+                  👋 {t('simpleOrder.hello', 'สวัสดี / Hallo')}, {employeeName}!
+                </p>
+              </div>
+            ) : (
+              <div>
+                <Label htmlFor="employeeName" className="flex items-center gap-2 text-base font-medium mb-2">
+                  <User className="h-5 w-5" />
+                  {t('simpleOrder.yourName', 'ชื่อของคุณ / Ihr Name')} *
+                </Label>
+                <Input
+                  id="employeeName"
+                  type="text"
+                  placeholder={t('simpleOrder.namePlaceholder', 'กรุณาใส่ชื่อของคุณ / Bitte Namen eingeben')}
+                  value={employeeName}
+                  onChange={(e) => {
+                    setEmployeeName(e.target.value);
+                    if (e.target.value.trim()) {
+                      setValidationErrors(prev => ({ ...prev, name: false }));
+                    }
+                  }}
+                  className={`h-14 text-lg ${validationErrors.name ? 'border-destructive ring-destructive' : ''}`}
+                />
+              </div>
+            )}
 
             {/* Location Selection */}
             <div>
@@ -446,32 +466,40 @@ const SimpleOrder = () => {
       {/* Employee Info Section - only show when supplier is selected (or single supplier) */}
       {!showSupplierSelection && (
         <div className="bg-muted/50 border-b p-4">
-          <div className="max-w-2xl mx-auto space-y-4">
-            {/* Employee Name */}
-            <div>
-              <Label htmlFor="employeeName2" className="flex items-center gap-2 text-base font-medium mb-2">
-                <User className="h-5 w-5" />
-                {t('simpleOrder.yourName', 'ชื่อของคุณ / Ihr Name')} *
-              </Label>
-              <Input
-                id="employeeName2"
-                type="text"
-                placeholder={t('simpleOrder.namePlaceholder', 'กรุณาใส่ชื่อของคุณ / Bitte Namen eingeben')}
-                value={employeeName}
-                onChange={(e) => {
-                  setEmployeeName(e.target.value);
-                  if (e.target.value.trim()) {
-                    setValidationErrors(prev => ({ ...prev, name: false }));
-                  }
-                }}
-                className={`h-14 text-lg ${validationErrors.name ? 'border-destructive ring-destructive' : ''}`}
-              />
-              {validationErrors.name && (
-                <p className="text-destructive text-sm mt-1">
-                  {t('simpleOrder.nameRequired', 'กรุณาใส่ชื่อของคุณ / Bitte Namen eingeben')}
+        <div className="max-w-2xl mx-auto space-y-4">
+            {/* Employee Name - Show greeting if locked, input if not */}
+            {isEmployeeNameLocked ? (
+              <div className="text-center py-2">
+                <p className="text-2xl font-bold text-primary">
+                  👋 {t('simpleOrder.hello', 'สวัสดี / Hallo')}, {employeeName}!
                 </p>
-              )}
-            </div>
+              </div>
+            ) : (
+              <div>
+                <Label htmlFor="employeeName2" className="flex items-center gap-2 text-base font-medium mb-2">
+                  <User className="h-5 w-5" />
+                  {t('simpleOrder.yourName', 'ชื่อของคุณ / Ihr Name')} *
+                </Label>
+                <Input
+                  id="employeeName2"
+                  type="text"
+                  placeholder={t('simpleOrder.namePlaceholder', 'กรุณาใส่ชื่อของคุณ / Bitte Namen eingeben')}
+                  value={employeeName}
+                  onChange={(e) => {
+                    setEmployeeName(e.target.value);
+                    if (e.target.value.trim()) {
+                      setValidationErrors(prev => ({ ...prev, name: false }));
+                    }
+                  }}
+                  className={`h-14 text-lg ${validationErrors.name ? 'border-destructive ring-destructive' : ''}`}
+                />
+                {validationErrors.name && (
+                  <p className="text-destructive text-sm mt-1">
+                    {t('simpleOrder.nameRequired', 'กรุณาใส่ชื่อของคุณ / Bitte Namen eingeben')}
+                  </p>
+                )}
+              </div>
+            )}
 
             {/* Location Selection */}
             <div>

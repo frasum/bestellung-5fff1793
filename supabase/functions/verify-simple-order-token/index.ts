@@ -159,7 +159,7 @@ serve(async (req) => {
       console.error('Error fetching locations:', locationsError);
     }
 
-    console.log(`Token verified. Multi-supplier: ${isMultiSupplier}, Suppliers: ${suppliers.length}, Articles: ${articles.length}, Locations: ${locations?.length || 0}`);
+    console.log(`Token verified. Multi-supplier: ${isMultiSupplier}, Suppliers: ${suppliers.length}, Articles: ${articles.length}, Locations: ${locations?.length || 0}, Employee: ${tokenData.employee_name || 'not set'}`);
 
     return new Response(
       JSON.stringify({
@@ -172,6 +172,7 @@ serve(async (req) => {
           location: tokenData.location,
           organization_id: tokenData.organization_id,
           is_multi_supplier: isMultiSupplier,
+          employee_name: tokenData.employee_name || null,
         },
         suppliers: suppliers,
         articles: articles,

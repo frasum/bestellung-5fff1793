@@ -963,6 +963,7 @@ export type Database = {
       simple_order_tokens: {
         Row: {
           created_at: string
+          employee_name: string | null
           expires_at: string | null
           id: string
           is_active: boolean
@@ -976,6 +977,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          employee_name?: string | null
           expires_at?: string | null
           id?: string
           is_active?: boolean
@@ -989,6 +991,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          employee_name?: string | null
           expires_at?: string | null
           id?: string
           is_active?: boolean

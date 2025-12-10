@@ -12,6 +12,7 @@ export interface SimpleOrderToken {
   label: string;
   is_active: boolean;
   is_multi_supplier: boolean;
+  employee_name: string | null;
   created_at: string;
   expires_at: string | null;
   supplier?: {
@@ -39,6 +40,7 @@ export interface CreateSimpleOrderTokenInput {
   language?: string;
   expires_at?: string | null;
   is_multi_supplier?: boolean;
+  employee_name?: string | null;
 }
 
 export function useSimpleOrderTokens() {
@@ -124,6 +126,7 @@ export function useCreateSimpleOrderToken() {
           expires_at: input.expires_at || null,
           organization_id: profile.organization_id,
           is_multi_supplier: isMultiSupplier,
+          employee_name: input.employee_name || null,
         })
         .select()
         .single();
@@ -176,6 +179,7 @@ export interface UpdateSimpleOrderTokenInput {
   supplier_id?: string | null;
   supplier_ids?: string[];
   is_multi_supplier?: boolean;
+  employee_name?: string | null;
 }
 
 export function useUpdateSimpleOrderToken() {
