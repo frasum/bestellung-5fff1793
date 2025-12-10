@@ -119,7 +119,7 @@ export function EmployeeTokensOverview({ tokens, onEdit, onToggleActive, onDelet
     if (!printWindow) return;
 
     const qrCodesHtml = groupTokens.map(token => {
-      const employeeName = token.employee_name || 'Ohne Zuordnung';
+      const employeeName = token.employee?.name || token.employee_name || 'Ohne Zuordnung';
       
       return `
         <div style="page-break-inside:avoid;text-align:center;margin:20px 0;padding:20px;border:1px solid #eee;border-radius:8px;">
@@ -236,7 +236,7 @@ export function EmployeeTokensOverview({ tokens, onEdit, onToggleActive, onDelet
                     {/* Token List */}
                     <div className="divide-y">
                       {group.tokens.map(token => {
-                        const employeeName = token.employee_name || 'Ohne Zuordnung';
+                        const employeeName = token.employee?.name || token.employee_name || 'Ohne Zuordnung';
                         const language = LANGUAGES.find(l => l.code === token.language);
                         
                         return (
@@ -315,7 +315,7 @@ export function EmployeeTokensOverview({ tokens, onEdit, onToggleActive, onDelet
         <Dialog open={!!selectedQrToken} onOpenChange={(open) => !open && setSelectedQrToken(null)}>
           <DialogContent className="max-w-sm">
             <DialogHeader>
-              <DialogTitle>QR-Code: {selectedToken.employee_name || 'Bestelllink'}</DialogTitle>
+              <DialogTitle>QR-Code: {selectedToken.employee?.name || selectedToken.employee_name || 'Bestelllink'}</DialogTitle>
               <DialogDescription>
                 {selectedToken.is_multi_supplier 
                   ? `Scannen Sie diesen QR-Code zum Bestellen bei ${selectedToken.token_suppliers?.length || 0} Lieferanten`
@@ -344,7 +344,7 @@ export function EmployeeTokensOverview({ tokens, onEdit, onToggleActive, onDelet
                 onClick={() => {
                   const printWindow = window.open('', '_blank');
                   if (printWindow) {
-                    const employeeName = selectedToken.employee_name || 'Bestelllink';
+                    const employeeName = selectedToken.employee?.name || selectedToken.employee_name || 'Bestelllink';
                     const supplierInfo = selectedToken.is_multi_supplier 
                       ? `${selectedToken.token_suppliers?.length || 0} Lieferanten`
                       : selectedToken.supplier?.name || '';
