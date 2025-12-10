@@ -408,7 +408,7 @@ const Orders = () => {
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-          <TabsList className={`grid w-full max-w-2xl ${canAccessStaffOrders ? 'grid-cols-4' : 'grid-cols-3'}`}>
+          <TabsList className="grid w-full max-w-2xl grid-cols-4">
             <TabsTrigger value="orders" className="flex items-center gap-2">
               <ShoppingCart className="w-4 h-4" />
               <span className="hidden sm:inline">{t('orders.title')}</span>
