@@ -279,7 +279,7 @@ export function EmployeeTokensOverview({ tokens, onEdit, onToggleActive, onDelet
                               <p className="text-xs text-muted-foreground mt-1">
                                 {language?.name || token.language}
                                 {group.isMulti && token.token_suppliers && (
-                                  <> • {getLinkedSupplierNames(token)}</>
+                                  <> • {token.token_suppliers.length} Lieferanten</>
                                 )}
                               </p>
                             </div>

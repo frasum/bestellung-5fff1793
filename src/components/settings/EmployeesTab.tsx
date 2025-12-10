@@ -300,11 +300,7 @@ export function EmployeesTab() {
       // Update or create token for this employee
       const existingToken = getTokenForEmployee(editingEmployee.id);
       if (allSupplierIds.length > 0) {
-        const supplierNames = allSupplierIds
-          .map(id => suppliers.find(s => s.id === id)?.name)
-          .filter(Boolean)
-          .join(', ');
-        const label = supplierNames || formData.name;
+        const label = formData.name;
 
         if (existingToken) {
           await updateToken.mutateAsync({
@@ -350,11 +346,7 @@ export function EmployeesTab() {
 
         // Create token for new employee if suppliers assigned
         if (allSupplierIds.length > 0) {
-          const supplierNames = allSupplierIds
-            .map(id => suppliers.find(s => s.id === id)?.name)
-            .filter(Boolean)
-            .join(', ');
-          const label = supplierNames || formData.name;
+          const label = formData.name;
 
           await createToken.mutateAsync({
             label,
@@ -558,11 +550,17 @@ export function EmployeesTab() {
                                 <MapPin className="h-3 w-3 text-muted-foreground" />
                                 <span className="font-medium text-muted-foreground">{info.locationName}:</span>
                                 {info.supplierNames.length > 0 ? (
-                                  info.supplierNames.map((name, sIdx) => (
-                                    <Badge key={sIdx} variant="secondary" className="text-xs">
-                                      {name}
+                                  info.supplierNames.length > 3 ? (
+                                    <Badge variant="secondary" className="text-xs">
+                                      {info.supplierNames.length} Lieferanten
                                     </Badge>
-                                  ))
+                                  ) : (
+                                    info.supplierNames.map((name, sIdx) => (
+                                      <Badge key={sIdx} variant="secondary" className="text-xs">
+                                        {name}
+                                      </Badge>
+                                    ))
+                                  )
                                 ) : (
                                   <span className="text-xs text-amber-600">Keine Lieferanten</span>
                                 )}
