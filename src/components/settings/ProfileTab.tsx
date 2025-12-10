@@ -7,9 +7,10 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Lock, MapPin } from 'lucide-react';
-import { useUserProfile, useUpdateUserProfile, useUpdatePassword, useDeliveryAddresses } from '@/hooks/useSettings';
-import { useLocationContext } from '@/contexts/LocationContext';
-import { useUserDeliveryPreference, useUpsertUserDeliveryPreference } from '@/hooks/useUserDeliveryPreference';
+import { useUserProfile, useUpdateUserProfile, useUpdatePassword } from '@/hooks/useSettings';
+import { useLocations } from '@/hooks/useLocations';
+import { useAllUserDeliveryPreferences, useAllDeliveryAddresses, useUpsertUserDeliveryPreferenceForLocation } from '@/hooks/useUserDeliveryPreference';
+
 const AdvancedSettingsSwitch = () => {
   const { t } = useTranslation();
   const [advancedMode, setAdvancedMode] = useState(() => 
@@ -50,23 +51,26 @@ export const ProfileTab = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [passwordError, setPasswordError] = useState('');
 
-  // Delivery address preference
-  const { activeLocation } = useLocationContext();
-  const { data: addresses = [] } = useDeliveryAddresses(activeLocation?.id);
-  const { data: preference } = useUserDeliveryPreference();
-  const upsertPreference = useUpsertUserDeliveryPreference();
-  const [selectedAddressId, setSelectedAddressId] = useState<string>('');
+  // All locations and delivery addresses
+  const { data: locations = [] } = useLocations();
+  const { data: allAddresses = [] } = useAllDeliveryAddresses();
+  const { data: allPreferences = [] } = useAllUserDeliveryPreferences();
+  const upsertPreference = useUpsertUserDeliveryPreferenceForLocation();
 
-  useEffect(() => {
-    if (preference?.delivery_address_id) {
-      setSelectedAddressId(preference.delivery_address_id);
-    }
-  }, [preference]);
-
-  const handleAddressChange = (addressId: string) => {
-    setSelectedAddressId(addressId);
-    upsertPreference.mutate(addressId);
+  // Get addresses for a specific location
+  const getAddressesForLocation = (locationId: string) => {
+    return allAddresses.filter(addr => addr.location_id === locationId);
   };
+
+  // Get current preference for a location
+  const getPreferenceForLocation = (locationId: string) => {
+    return allPreferences.find(pref => pref.location_id === locationId);
+  };
+
+  const handleAddressChange = (locationId: string, addressId: string) => {
+    upsertPreference.mutate({ locationId, deliveryAddressId: addressId });
+  };
+
   const handleProfileSave = () => {
     if (fullName.trim()) {
       updateProfile.mutate({ full_name: fullName.trim() });
@@ -139,33 +143,52 @@ export const ProfileTab = () => {
         </CardContent>
       </Card>
 
-      {/* Default Delivery Address Card */}
+      {/* Default Delivery Addresses Card - All Locations */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <MapPin className="h-5 w-5" />
-            {t('settings.defaultDeliveryAddress')}
+            {t('settings.defaultDeliveryAddresses')}
           </CardTitle>
           <CardDescription>
-            {t('settings.defaultDeliveryAddressDesc', { location: activeLocation?.short_code || activeLocation?.name || '' })}
+            {t('settings.defaultDeliveryAddressesDesc')}
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          {addresses.length > 0 ? (
-            <Select value={selectedAddressId} onValueChange={handleAddressChange}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder={t('settings.selectDefaultAddress')} />
-              </SelectTrigger>
-              <SelectContent>
-                {addresses.map((address) => (
-                  <SelectItem key={address.id} value={address.id}>
-                    {address.label} - {address.address_line1}, {address.city}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+        <CardContent className="space-y-4">
+          {locations.length > 0 ? (
+            locations.map((location) => {
+              const locationAddresses = getAddressesForLocation(location.id);
+              const currentPreference = getPreferenceForLocation(location.id);
+              
+              return (
+                <div key={location.id} className="space-y-2">
+                  <Label className="text-sm font-medium">
+                    {location.short_code || location.name}
+                  </Label>
+                  {locationAddresses.length > 0 ? (
+                    <Select 
+                      value={currentPreference?.delivery_address_id || ''} 
+                      onValueChange={(value) => handleAddressChange(location.id, value)}
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder={t('settings.selectDefaultAddress')} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {locationAddresses.map((address) => (
+                          <SelectItem key={address.id} value={address.id}>
+                            {address.label} - {address.address_line1}, {address.city}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">{t('settings.noAddressesForLocation')}</p>
+                  )}
+                </div>
+              );
+            })
           ) : (
-            <p className="text-sm text-muted-foreground">{t('settings.noAddressesForLocation')}</p>
+            <p className="text-sm text-muted-foreground">{t('settings.noLocations')}</p>
           )}
         </CardContent>
       </Card>
