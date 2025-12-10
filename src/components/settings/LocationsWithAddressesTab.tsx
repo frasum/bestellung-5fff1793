@@ -205,7 +205,7 @@ const LocationFormDialog = ({
           <div className="space-y-3">
             <div className="flex items-center gap-2 text-sm font-medium">
               <MapPin className="h-4 w-4" />
-              {t('settings.deliveryAddress')}
+              {t('common.deliveryAddress')}
             </div>
             
             <div className="space-y-1.5">
