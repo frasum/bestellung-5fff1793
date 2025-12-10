@@ -626,7 +626,18 @@
     "searchArticles": "Search articles...",
     "selectSession": "Select inventory...",
     "viewingCompleted": "You are viewing a completed inventory (read-only).",
-    "inProgressLabel": "In progress"
+    "inProgressLabel": "In progress",
+    "progress": "Progress",
+    "compare": "Compare",
+    "compareTitle": "Inventory Comparison",
+    "compareDescription": "Compare two inventory sessions to see differences.",
+    "oldSession": "Older Inventory",
+    "newSession": "Newer Inventory",
+    "changedArticles": "Changes",
+    "increased": "Increased",
+    "decreased": "Decreased",
+    "valueDiff": "Value Difference",
+    "noDifferences": "No differences found."
   },
   "scan": {
     "title": "Scan Order List",

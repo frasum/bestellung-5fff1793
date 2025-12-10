@@ -76,12 +76,14 @@ import {
   Filter,
   ChevronDown,
   ChevronRight,
+  GitCompareArrows,
 } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { format, Locale } from 'date-fns';
 import { de, enUS, fr, it, th, vi } from 'date-fns/locale';
 import { generateInventoryListPdf, exportInventoryToExcel } from '@/lib/inventoryListPdf';
 import { toast } from 'sonner';
+import { InventoryComparisonDialog } from './InventoryComparisonDialog';
 
 interface LocalInventoryItem {
   article_id: string;
@@ -104,6 +106,7 @@ export const InventoryTab = () => {
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
   const [showNewSessionDialog, setShowNewSessionDialog] = useState(false);
   const [showHistoryDialog, setShowHistoryDialog] = useState(false);
+  const [showComparisonDialog, setShowComparisonDialog] = useState(false);
   const [deleteSessionId, setDeleteSessionId] = useState<string | null>(null);
   const [newSessionName, setNewSessionName] = useState('');
   const [supplierFilter, setSupplierFilter] = useState<string>('all');
@@ -262,6 +265,28 @@ export const InventoryTab = () => {
       a.supplier.name.localeCompare(b.supplier.name, 'de')
     );
   }, [filteredArticles, localItems]);
+
+  // Calculate overall progress and total value for active session
+  const sessionStats = useMemo(() => {
+    let totalArticles = 0;
+    let capturedArticles = 0;
+    let totalValue = 0;
+
+    groupedInventoryArticles.forEach(group => {
+      totalArticles += group.articles.length;
+      capturedArticles += group.capturedCount;
+      totalValue += group.totalValue;
+    });
+
+    const progressPercent = totalArticles > 0 ? Math.round((capturedArticles / totalArticles) * 100) : 0;
+
+    return {
+      totalArticles,
+      capturedArticles,
+      totalValue,
+      progressPercent,
+    };
+  }, [groupedInventoryArticles]);
 
   useEffect(() => {
     if (searchQuery && groupedArticlesBySupplier.length > 0) {
@@ -497,6 +522,10 @@ export const InventoryTab = () => {
           </Select>
         </div>
         <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={() => setShowComparisonDialog(true)} className="h-9 lg:h-10">
+            <GitCompareArrows className="w-4 h-4 lg:mr-2" />
+            <span className="hidden lg:inline">{t('inventory.compare', 'Vergleichen')}</span>
+          </Button>
           <Button variant="outline" size="sm" onClick={() => setShowHistoryDialog(true)} className="h-9 lg:h-10">
             <History className="w-4 h-4 lg:mr-2" />
             <span className="hidden lg:inline">{t('inventory.history')}</span>
@@ -649,6 +678,7 @@ export const InventoryTab = () => {
                   </div>
                 )}
                 
+                {/* Mobile View */}
                 <div className="flex flex-col gap-3 sm:hidden">
                   <div className="flex items-center gap-2">
                     <ClipboardList className="w-5 h-5 text-primary flex-shrink-0" />
@@ -666,6 +696,23 @@ export const InventoryTab = () => {
                       </p>
                     </div>
                   </div>
+
+                  {/* Progress Stats - Mobile */}
+                  <div className="grid grid-cols-3 gap-2 p-2 bg-muted/50 rounded-lg">
+                    <div className="text-center">
+                      <div className="text-lg font-bold text-primary">{sessionStats.progressPercent}%</div>
+                      <div className="text-xs text-muted-foreground">{t('inventory.progress', 'Fortschritt')}</div>
+                    </div>
+                    <div className="text-center border-x">
+                      <div className="text-lg font-bold">{sessionStats.capturedArticles}/{sessionStats.totalArticles}</div>
+                      <div className="text-xs text-muted-foreground">{t('inventory.captured')}</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-lg font-bold text-green-600">€{sessionStats.totalValue.toFixed(0)}</div>
+                      <div className="text-xs text-muted-foreground">{t('inventory.value')}</div>
+                    </div>
+                  </div>
+
                   <div className={`grid gap-2 ${activeSession.status === 'completed' ? 'grid-cols-2' : 'grid-cols-4'}`}>
                     <Button variant="outline" size="sm" onClick={handleExportPdf} className="h-10">
                       <FileText className="w-4 h-4" />
@@ -692,49 +739,81 @@ export const InventoryTab = () => {
                   </div>
                 </div>
                 
-                <div className="hidden sm:flex items-center justify-between flex-wrap gap-2">
-                  <div className="flex items-center gap-3">
-                    <ClipboardList className="w-5 h-5 text-primary" />
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <CardTitle className="text-lg">{activeSession.name}</CardTitle>
-                        <Badge variant={activeSession.status === 'completed' ? 'default' : 'secondary'}>
-                          {activeSession.status === 'completed' ? t('inventory.completed') : t('inventory.inProgress')}
-                        </Badge>
+                {/* Desktop View */}
+                <div className="hidden sm:block">
+                  <div className="flex items-center justify-between flex-wrap gap-2 mb-4">
+                    <div className="flex items-center gap-3">
+                      <ClipboardList className="w-5 h-5 text-primary" />
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <CardTitle className="text-lg">{activeSession.name}</CardTitle>
+                          <Badge variant={activeSession.status === 'completed' ? 'default' : 'secondary'}>
+                            {activeSession.status === 'completed' ? t('inventory.completed') : t('inventory.inProgress')}
+                          </Badge>
+                        </div>
+                        <p className="text-sm text-muted-foreground">
+                          {activeSession.status === 'completed' && activeSession.completed_at
+                            ? `${t('inventory.completedAt')} ${format(new Date(activeSession.completed_at), 'dd.MM.yyyy HH:mm', { locale: getDateLocale() })}`
+                            : `${t('inventory.startedAt')} ${format(new Date(activeSession.created_at), 'dd.MM.yyyy HH:mm', { locale: getDateLocale() })}`}
+                        </p>
                       </div>
-                      <p className="text-sm text-muted-foreground">
-                        {activeSession.status === 'completed' && activeSession.completed_at
-                          ? `${t('inventory.completedAt')} ${format(new Date(activeSession.completed_at), 'dd.MM.yyyy HH:mm', { locale: getDateLocale() })}`
-                          : `${t('inventory.startedAt')} ${format(new Date(activeSession.created_at), 'dd.MM.yyyy HH:mm', { locale: getDateLocale() })}`}
-                      </p>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      <Button variant="outline" size="sm" onClick={handleExportPdf}>
+                        <FileText className="w-4 h-4 mr-2" />
+                        PDF
+                      </Button>
+                      <Button variant="outline" size="sm" onClick={handleExportExcel}>
+                        <FileSpreadsheet className="w-4 h-4 mr-2" />
+                        Excel
+                      </Button>
+                      {activeSession.status !== 'completed' && (
+                        <>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={handleSave}
+                            disabled={!hasChanges || bulkUpsertItems.isPending}
+                          >
+                            <Save className="w-4 h-4 mr-2" />
+                            {t('common.save')}
+                          </Button>
+                          <Button size="sm" onClick={handleComplete}>
+                            <CheckCircle className="w-4 h-4 mr-2" />
+                            {t('inventory.completeSession')}
+                          </Button>
+                        </>
+                      )}
                     </div>
                   </div>
-                  <div className="flex flex-wrap gap-2">
-                    <Button variant="outline" size="sm" onClick={handleExportPdf}>
-                      <FileText className="w-4 h-4 mr-2" />
-                      PDF
-                    </Button>
-                    <Button variant="outline" size="sm" onClick={handleExportExcel}>
-                      <FileSpreadsheet className="w-4 h-4 mr-2" />
-                      Excel
-                    </Button>
-                    {activeSession.status !== 'completed' && (
-                      <>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={handleSave}
-                          disabled={!hasChanges || bulkUpsertItems.isPending}
-                        >
-                          <Save className="w-4 h-4 mr-2" />
-                          {t('common.save')}
-                        </Button>
-                        <Button size="sm" onClick={handleComplete}>
-                          <CheckCircle className="w-4 h-4 mr-2" />
-                          {t('inventory.completeSession')}
-                        </Button>
-                      </>
-                    )}
+
+                  {/* Progress Stats - Desktop */}
+                  <div className="grid grid-cols-4 gap-4 p-3 bg-muted/50 rounded-lg">
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-primary">{sessionStats.progressPercent}%</div>
+                      <div className="text-sm text-muted-foreground">{t('inventory.progress', 'Fortschritt')}</div>
+                    </div>
+                    <div className="text-center border-x">
+                      <div className="text-2xl font-bold">{sessionStats.capturedArticles}</div>
+                      <div className="text-sm text-muted-foreground">{t('inventory.captured')} ({t('inventory.of')} {sessionStats.totalArticles})</div>
+                    </div>
+                    <div className="text-center border-r">
+                      <div className="text-2xl font-bold text-green-600">
+                        €{sessionStats.totalValue.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </div>
+                      <div className="text-sm text-muted-foreground">{t('inventory.totalValue')}</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="w-full bg-muted rounded-full h-3 mt-1">
+                        <div 
+                          className="bg-primary h-3 rounded-full transition-all duration-300" 
+                          style={{ width: `${sessionStats.progressPercent}%` }}
+                        />
+                      </div>
+                      <div className="text-sm text-muted-foreground mt-1">
+                        {sessionStats.capturedArticles} / {sessionStats.totalArticles} {t('inventory.articles')}
+                      </div>
+                    </div>
                   </div>
                 </div>
               </CardHeader>
@@ -1382,6 +1461,14 @@ export const InventoryTab = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Comparison Dialog */}
+      <InventoryComparisonDialog
+        open={showComparisonDialog}
+        onOpenChange={setShowComparisonDialog}
+        sessions={sessions || []}
+        currentSessionId={activeSessionId}
+      />
     </div>
   );
 };
