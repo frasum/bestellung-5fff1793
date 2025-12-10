@@ -623,7 +623,9 @@
     "article": "Article",
     "unit": "Unit",
     "price": "Price (€)",
-    "searchArticles": "Search articles..."
+    "searchArticles": "Search articles...",
+    "selectSession": "Select inventory...",
+    "viewingCompleted": "You are viewing a completed inventory (read-only)."
   },
   "scan": {
     "title": "Scan Order List",
