@@ -36,8 +36,11 @@ serve(async (req) => {
     console.log(`Sending invitation email to ${inviteeEmail} for organization ${organizationName}`);
 
     // Get the app URL from environment or use a default
-    const appUrl = Deno.env.get("APP_URL") || "https://lovable.dev";
+    const appUrl = Deno.env.get("APP_URL") || "https://bestellung.pro";
+    console.log(`APP_URL from env: ${Deno.env.get("APP_URL")}`);
+    console.log(`Using appUrl: ${appUrl}`);
     const signupUrl = `${appUrl}/signup?invite=${inviteToken}`;
+    console.log(`Generated signup URL: ${signupUrl}`);
 
     const roleDescription = roleDescriptions[role] || role;
 
