@@ -89,11 +89,10 @@ export const useRemoveMember = () => {
 
   return useMutation({
     mutationFn: async (userId: string) => {
-      // Remove user's organization association
-      const { error } = await supabase
-        .from('profiles')
-        .update({ organization_id: null })
-        .eq('id', userId);
+      // Use security definer function to remove member
+      const { error } = await supabase.rpc('remove_team_member', {
+        member_user_id: userId
+      });
 
       if (error) throw error;
     },
