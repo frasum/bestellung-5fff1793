@@ -1,9 +1,9 @@
-// Dynamic font loader for Noto Sans Thai
+// Dynamic font loader for Noto Sans (supports Latin, Thai, Vietnamese, etc.)
 // This loads the font file and converts it to base64 for jsPDF
 
-export const loadNotoSansThaiFont = async (): Promise<string> => {
+export const loadNotoSansFont = async (): Promise<string> => {
   try {
-    const response = await fetch('/fonts/NotoSansThai-Regular.ttf');
+    const response = await fetch('/fonts/NotoSans-Regular.ttf');
     if (!response.ok) {
       throw new Error('Failed to load font');
     }
@@ -15,7 +15,10 @@ export const loadNotoSansThaiFont = async (): Promise<string> => {
     }
     return btoa(binary);
   } catch (error) {
-    console.error('Error loading Noto Sans Thai font:', error);
+    console.error('Error loading Noto Sans font:', error);
     throw error;
   }
 };
+
+// Keep backward compatibility alias
+export const loadNotoSansThaiFont = loadNotoSansFont;

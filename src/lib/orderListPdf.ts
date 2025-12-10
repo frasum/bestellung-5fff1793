@@ -2,7 +2,7 @@ import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
-import { loadNotoSansThaiFont } from './fonts/loadNotoSansThai';
+import { loadNotoSansFont } from './fonts/loadNotoSansThai';
 
 interface OrderListArticle {
   name: string;
@@ -18,15 +18,15 @@ interface OrderListSupplier {
   name: string;
 }
 
-// Helper to register Thai-compatible font
-const registerThaiFont = async (doc: jsPDF) => {
+// Helper to register universal font (supports Latin, Thai, Vietnamese, etc.)
+const registerUniversalFont = async (doc: jsPDF) => {
   try {
-    const fontBase64 = await loadNotoSansThaiFont();
-    doc.addFileToVFS('NotoSansThai-Regular.ttf', fontBase64);
-    doc.addFont('NotoSansThai-Regular.ttf', 'NotoSansThai', 'normal');
+    const fontBase64 = await loadNotoSansFont();
+    doc.addFileToVFS('NotoSans-Regular.ttf', fontBase64);
+    doc.addFont('NotoSans-Regular.ttf', 'NotoSans', 'normal');
     return true;
   } catch (error) {
-    console.error('Could not load Thai font, falling back to Helvetica:', error);
+    console.error('Could not load Noto Sans font, falling back to Helvetica:', error);
     return false;
   }
 };
@@ -38,9 +38,9 @@ export const generateOrderListPdf = async (
   const doc = new jsPDF();
   const today = format(new Date(), 'dd.MM.yyyy', { locale: de });
   
-  // Register Thai font
-  const hasThai = await registerThaiFont(doc);
-  const fontName = hasThai ? 'NotoSansThai' : 'helvetica';
+  // Register universal font (supports Latin + Thai + Vietnamese)
+  const hasUniversalFont = await registerUniversalFont(doc);
+  const fontName = hasUniversalFont ? 'NotoSans' : 'helvetica';
   
   // Header
   doc.setFontSize(20);
@@ -140,9 +140,9 @@ export const generateCombinedOrderListPdf = async (
   const pageWidth = doc.internal.pageSize.width;
   const pageHeight = doc.internal.pageSize.height;
   
-  // Register Thai font
-  const hasThai = await registerThaiFont(doc);
-  const fontName = hasThai ? 'NotoSansThai' : 'helvetica';
+  // Register universal font (supports Latin + Thai + Vietnamese)
+  const hasUniversalFont = await registerUniversalFont(doc);
+  const fontName = hasUniversalFont ? 'NotoSans' : 'helvetica';
   
   let currentY = 15;
   
