@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Plus, Pencil, Trash2, Phone, Mail, User, UserCheck, UserX, MapPin, ChevronDown, ChevronRight, Package, QrCode, Copy, MessageCircle, ExternalLink } from 'lucide-react';
+import { Plus, Pencil, Trash2, Phone, Mail, User, UserCheck, UserX, MapPin, ChevronDown, ChevronRight, Package, Copy, MessageCircle, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -86,7 +86,7 @@ export function EmployeesTab() {
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
   const [deleteConfirmEmployee, setDeleteConfirmEmployee] = useState<Employee | null>(null);
   const [expandedLocations, setExpandedLocations] = useState<Set<string>>(new Set());
-  const [qrDialogEmployee, setQrDialogEmployee] = useState<Employee | null>(null);
+  
 
   const [formData, setFormData] = useState({
     name: '',
@@ -467,111 +467,121 @@ export function EmployeesTab() {
                   !employee.is_active ? 'opacity-60 bg-muted/30' : ''
                 }`}
               >
-                <div className="flex items-start justify-between gap-4">
+                <div className="flex gap-4">
+                  {/* QR Code links - direkt anzeigen */}
+                  {token && hasAssignments && (
+                    <div className="flex-shrink-0">
+                      <img 
+                        src={generateQrCodeUrl(token.token)} 
+                        alt="QR-Code" 
+                        className="w-24 h-24 rounded border bg-white"
+                      />
+                    </div>
+                  )}
+                  
+                  {/* Mitarbeiter-Infos rechts */}
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-medium">{employee.name}</span>
-                      {!employee.is_active && (
-                        <Badge variant="secondary">Inaktiv</Badge>
-                      )}
-                      {token && (
-                        <Badge variant="outline" className="text-green-600 border-green-600">
-                          <QrCode className="h-3 w-3 mr-1" />
-                          Link aktiv
-                        </Badge>
-                      )}
-                    </div>
-                    {/* Location + Suppliers badges */}
-                    {locationSuppliersInfo.length > 0 && (
-                      <div className="mt-2 space-y-1">
-                        {locationSuppliersInfo.map((info, idx) => (
-                          <div key={idx} className="flex items-center gap-1 flex-wrap text-sm">
-                            <MapPin className="h-3 w-3 text-muted-foreground" />
-                            <span className="font-medium text-muted-foreground">{info.locationName}:</span>
-                            {info.supplierNames.length > 0 ? (
-                              info.supplierNames.map((name, sIdx) => (
-                                <Badge key={sIdx} variant="secondary" className="text-xs">
-                                  {name}
-                                </Badge>
-                              ))
-                            ) : (
-                              <span className="text-xs text-amber-600">Keine Lieferanten</span>
-                            )}
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="font-medium">{employee.name}</span>
+                          {!employee.is_active && (
+                            <Badge variant="secondary">Inaktiv</Badge>
+                          )}
+                        </div>
+                        {/* Location + Suppliers badges */}
+                        {locationSuppliersInfo.length > 0 && (
+                          <div className="mt-2 space-y-1">
+                            {locationSuppliersInfo.map((info, idx) => (
+                              <div key={idx} className="flex items-center gap-1 flex-wrap text-sm">
+                                <MapPin className="h-3 w-3 text-muted-foreground" />
+                                <span className="font-medium text-muted-foreground">{info.locationName}:</span>
+                                {info.supplierNames.length > 0 ? (
+                                  info.supplierNames.map((name, sIdx) => (
+                                    <Badge key={sIdx} variant="secondary" className="text-xs">
+                                      {name}
+                                    </Badge>
+                                  ))
+                                ) : (
+                                  <span className="text-xs text-amber-600">Keine Lieferanten</span>
+                                )}
+                              </div>
+                            ))}
                           </div>
-                        ))}
-                      </div>
-                    )}
-                    <div className="flex flex-wrap gap-4 mt-2 text-sm text-muted-foreground">
-                      {employee.phone && (
-                        <div className="flex items-center gap-1">
-                          <Phone className="h-3 w-3" />
-                          <span>{employee.phone}</span>
-                        </div>
-                      )}
-                      {employee.email && (
-                        <div className="flex items-center gap-1">
-                          <Mail className="h-3 w-3" />
-                          <span>{employee.email}</span>
-                        </div>
-                      )}
-                    </div>
-                    {employee.notes && (
-                      <p className="text-sm text-muted-foreground mt-2">
-                        {employee.notes}
-                      </p>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-1 flex-shrink-0">
-                    {/* QR/Link Buttons - only show if token exists */}
-                    {token && (
-                      <>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => setQrDialogEmployee(employee)}
-                          title="QR-Code anzeigen"
-                        >
-                          <QrCode className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => copyToClipboard(token.token)}
-                          title="Link kopieren"
-                        >
-                          <Copy className="h-4 w-4" />
-                        </Button>
-                        {employee.phone && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => openWhatsApp(employee, token.token)}
-                            title="Per WhatsApp senden"
-                          >
-                            <MessageCircle className="h-4 w-4" />
-                          </Button>
                         )}
-                      </>
-                    )}
-                    <div className="w-px h-6 bg-border mx-1" />
-                    <Switch
-                      checked={employee.is_active}
-                      onCheckedChange={() => handleToggleActive(employee)}
-                    />
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => openEditDialog(employee)}
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => setDeleteConfirmEmployee(employee)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                        <div className="flex flex-wrap gap-4 mt-2 text-sm text-muted-foreground">
+                          {employee.phone && (
+                            <div className="flex items-center gap-1">
+                              <Phone className="h-3 w-3" />
+                              <span>{employee.phone}</span>
+                            </div>
+                          )}
+                          {employee.email && (
+                            <div className="flex items-center gap-1">
+                              <Mail className="h-3 w-3" />
+                              <span>{employee.email}</span>
+                            </div>
+                          )}
+                        </div>
+                        {employee.notes && (
+                          <p className="text-sm text-muted-foreground mt-2">
+                            {employee.notes}
+                          </p>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-1 flex-shrink-0">
+                        {/* Link Buttons - only show if token exists */}
+                        {token && (
+                          <>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => copyToClipboard(token.token)}
+                              title="Link kopieren"
+                            >
+                              <Copy className="h-4 w-4" />
+                            </Button>
+                            {employee.phone && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => openWhatsApp(employee, token.token)}
+                                title="Per WhatsApp senden"
+                              >
+                                <MessageCircle className="h-4 w-4" />
+                              </Button>
+                            )}
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => window.open(getOrderUrl(token.token), '_blank')}
+                              title="Link testen"
+                            >
+                              <ExternalLink className="h-4 w-4" />
+                            </Button>
+                          </>
+                        )}
+                        <div className="w-px h-6 bg-border mx-1" />
+                        <Switch
+                          checked={employee.is_active}
+                          onCheckedChange={() => handleToggleActive(employee)}
+                        />
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => openEditDialog(employee)}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => setDeleteConfirmEmployee(employee)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -771,56 +781,6 @@ export function EmployeesTab() {
               {editingEmployee ? 'Speichern' : 'Anlegen'}
             </Button>
           </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* QR Code Dialog */}
-      <Dialog open={!!qrDialogEmployee} onOpenChange={() => setQrDialogEmployee(null)}>
-        <DialogContent className="max-w-sm">
-          <DialogHeader>
-            <DialogTitle>QR-Code für {qrDialogEmployee?.name}</DialogTitle>
-          </DialogHeader>
-          {qrDialogEmployee && (() => {
-            const token = getTokenForEmployee(qrDialogEmployee.id);
-            if (!token) return <p className="text-muted-foreground">Kein Link vorhanden</p>;
-            return (
-              <div className="flex flex-col items-center gap-4">
-                <img
-                  src={generateQrCodeUrl(token.token)}
-                  alt="QR Code"
-                  className="w-64 h-64 border rounded-lg"
-                />
-                <div className="flex gap-2 w-full">
-                  <Button
-                    variant="outline"
-                    className="flex-1"
-                    onClick={() => copyToClipboard(token.token)}
-                  >
-                    <Copy className="h-4 w-4 mr-2" />
-                    Link kopieren
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className="flex-1"
-                    onClick={() => window.open(getOrderUrl(token.token), '_blank')}
-                  >
-                    <ExternalLink className="h-4 w-4 mr-2" />
-                    Öffnen
-                  </Button>
-                </div>
-                {qrDialogEmployee.phone && (
-                  <Button
-                    variant="secondary"
-                    className="w-full"
-                    onClick={() => openWhatsApp(qrDialogEmployee, token.token)}
-                  >
-                    <MessageCircle className="h-4 w-4 mr-2" />
-                    Per WhatsApp senden
-                  </Button>
-                )}
-              </div>
-            );
-          })()}
         </DialogContent>
       </Dialog>
 
