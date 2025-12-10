@@ -203,11 +203,6 @@ const LocationFormDialog = ({
 
           {/* Address Section */}
           <div className="space-y-3">
-            <div className="flex items-center gap-2 text-sm font-medium">
-              <MapPin className="h-4 w-4" />
-              {t('common.deliveryAddress')}
-            </div>
-            
             <div className="space-y-1.5">
               <Label htmlFor="address_line1" className="text-sm">{t('settings.addressLine1')} *</Label>
               <Input
