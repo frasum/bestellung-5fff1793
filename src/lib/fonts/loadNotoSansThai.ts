@@ -1,24 +1,26 @@
-// Dynamic font loader for Noto Sans (supports Latin, Thai, Vietnamese, etc.)
-// This loads the font file and converts it to base64 for jsPDF
+// Dynamic font loaders for jsPDF
+// Loads font files and converts to base64
 
-export const loadNotoSansFont = async (): Promise<string> => {
-  try {
-    const response = await fetch('/fonts/NotoSans-Regular.ttf');
-    if (!response.ok) {
-      throw new Error('Failed to load font');
-    }
-    const arrayBuffer = await response.arrayBuffer();
-    const uint8Array = new Uint8Array(arrayBuffer);
-    let binary = '';
-    for (let i = 0; i < uint8Array.length; i++) {
-      binary += String.fromCharCode(uint8Array[i]);
-    }
-    return btoa(binary);
-  } catch (error) {
-    console.error('Error loading Noto Sans font:', error);
-    throw error;
+const loadFontAsBase64 = async (path: string): Promise<string> => {
+  const response = await fetch(path);
+  if (!response.ok) {
+    throw new Error(`Failed to load font: ${path}`);
   }
+  const arrayBuffer = await response.arrayBuffer();
+  const uint8Array = new Uint8Array(arrayBuffer);
+  let binary = '';
+  for (let i = 0; i < uint8Array.length; i++) {
+    binary += String.fromCharCode(uint8Array[i]);
+  }
+  return btoa(binary);
 };
 
-// Keep backward compatibility alias
-export const loadNotoSansThaiFont = loadNotoSansFont;
+// Load Noto Sans (Latin, Vietnamese, etc.)
+export const loadNotoSansFont = async (): Promise<string> => {
+  return loadFontAsBase64('/fonts/NotoSans-Regular.ttf');
+};
+
+// Load Noto Sans Thai (Thai script)
+export const loadNotoSansThaiFont = async (): Promise<string> => {
+  return loadFontAsBase64('/fonts/NotoSansThai-Regular.ttf');
+};
