@@ -434,7 +434,7 @@ const Orders = () => {
             )}
             <TabsTrigger value="simple-order" className="flex items-center gap-2">
               <Smartphone className="w-4 h-4" />
-              <span className="hidden sm:inline">{t('settings.simpleOrder.title', 'Einfache Bestellung')}</span>
+              <span className="hidden sm:inline">EasyOrder</span>
             </TabsTrigger>
           </TabsList>
 
