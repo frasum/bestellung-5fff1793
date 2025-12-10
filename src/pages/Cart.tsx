@@ -1,10 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLocationContext } from '@/contexts/LocationContext';
 import { useCart } from '@/contexts/CartContext';
 import { useCreateCartDraft } from '@/hooks/useCartDrafts';
+import { useSupplierLocations } from '@/hooks/useSupplierLocations';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -27,10 +28,25 @@ const Cart = () => {
   const { t } = useTranslation();
   const { items, removeItem, updateQuantity, getTotal, clearCart } = useCart();
   const createDraft = useCreateCartDraft();
+  const { data: supplierLocations } = useSupplierLocations();
   
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const [draftName, setDraftName] = useState('');
   const [scanDialogOpen, setScanDialogOpen] = useState(false);
+
+  // Helper to get location-specific minimum order value with fallback to supplier default
+  const getMinimumOrderValue = useCallback((supplierId: string, supplierDefault: number | null): number => {
+    if (activeLocation && supplierLocations) {
+      const locationSpecific = supplierLocations.find(
+        sl => sl.supplier_id === supplierId && sl.location_id === activeLocation.id
+      );
+      if (locationSpecific?.minimum_order_value !== null && locationSpecific?.minimum_order_value !== undefined) {
+        return Number(locationSpecific.minimum_order_value);
+      }
+    }
+    // Fallback to supplier default
+    return supplierDefault ? Number(supplierDefault) : 0;
+  }, [activeLocation, supplierLocations]);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -58,11 +74,12 @@ const Cart = () => {
 
   const supplierTotals = Object.entries(itemsBySupplier).map(([name, supplierItems]) => {
     const supplier = supplierItems[0]?.article.suppliers;
+    const supplierId = supplierItems[0]?.article.supplier_id;
     return {
       name,
       total: supplierItems.reduce((sum, item) => sum + Number(item.article.price) * item.quantity, 0),
       items: supplierItems,
-      minimumOrderValue: supplier?.minimum_order_value ? Number(supplier.minimum_order_value) : 0,
+      minimumOrderValue: getMinimumOrderValue(supplierId, supplier?.minimum_order_value || null),
     };
   });
 
