@@ -68,11 +68,11 @@ export function EmployeesTab() {
   const { t } = useTranslation();
   const { toast } = useToast();
   const { data: employees = [], isLoading } = useEmployees();
-  const { data: tokens = [] } = useSimpleOrderTokens();
+  const { data: tokens = [], isLoading: isLoadingTokens } = useSimpleOrderTokens();
   const { data: locations = [] } = useLocations();
-  const { data: suppliers = [] } = useSuppliers();
+  const { data: suppliers = [], isLoading: isLoadingSuppliers } = useSuppliers();
   const { data: employeeLocations = [] } = useAllEmployeeLocations();
-  const { data: employeeLocationSuppliers = [] } = useAllEmployeeLocationSuppliers();
+  const { data: employeeLocationSuppliers = [], isLoading: isLoadingELS } = useAllEmployeeLocationSuppliers();
   const createEmployee = useCreateEmployee();
   const updateEmployee = useUpdateEmployee();
   const deleteEmployee = useDeleteEmployee();
@@ -87,6 +87,7 @@ export function EmployeesTab() {
   const [deleteConfirmEmployee, setDeleteConfirmEmployee] = useState<Employee | null>(null);
   const [expandedLocations, setExpandedLocations] = useState<Set<string>>(new Set());
   const [isMigratingTokens, setIsMigratingTokens] = useState(false);
+  const [hasMigrated, setHasMigrated] = useState(false);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -102,7 +103,9 @@ export function EmployeesTab() {
   // Auto-migrate: Create missing tokens for employees with assignments but no token
   useEffect(() => {
     const createMissingTokens = async () => {
-      if (employees.length === 0 || tokens.length === undefined || isMigratingTokens) return;
+      // Wait until ALL data is fully loaded
+      if (isLoading || isLoadingTokens || isLoadingSuppliers || isLoadingELS) return;
+      if (employees.length === 0 || isMigratingTokens || hasMigrated) return;
       
       const employeesNeedingTokens: { employee: Employee; supplierIds: string[] }[] = [];
       
@@ -152,11 +155,12 @@ export function EmployeesTab() {
         console.error('Error creating missing tokens:', error);
       } finally {
         setIsMigratingTokens(false);
+        setHasMigrated(true);
       }
     };
     
     createMissingTokens();
-  }, [employees, tokens, employeeLocationSuppliers, suppliers]);
+  }, [employees, tokens, employeeLocationSuppliers, suppliers, isLoading, isLoadingTokens, isLoadingSuppliers, isLoadingELS, isMigratingTokens, hasMigrated]);
 
   const activeSuppliers = useMemo(() => 
     suppliers.filter(s => s.is_active), 
