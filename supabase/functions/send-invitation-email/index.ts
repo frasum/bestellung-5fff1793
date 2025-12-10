@@ -1,6 +1,5 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "https://esm.sh/resend@2.0.0";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
@@ -15,13 +14,146 @@ interface InvitationEmailRequest {
   organizationName: string;
   role: string;
   inviteToken: string;
+  language?: string;
 }
 
-const roleDescriptions: Record<string, string> = {
-  admin: "full administrative access",
-  manager: "manage suppliers and articles",
-  purchaser: "place orders",
-  viewer: "view orders and articles",
+type TranslationKey = 'de' | 'en' | 'fr' | 'it' | 'th' | 'vi';
+
+const translations: Record<TranslationKey, {
+  subject: (orgName: string) => string;
+  header: string;
+  greeting: string;
+  invitedBy: string;
+  onPlatform: string;
+  roleAssigned: string;
+  whichAllows: string;
+  acceptButton: string;
+  noAccount: string;
+  expires: string;
+  footer: string;
+  ignore: string;
+  roleDescriptions: Record<string, string>;
+}> = {
+  de: {
+    subject: (orgName) => `Sie wurden eingeladen, ${orgName} auf Bestellung.pro beizutreten`,
+    header: "Sie sind eingeladen!",
+    greeting: "Hallo,",
+    invitedBy: "hat Sie eingeladen,",
+    onPlatform: "auf Bestellung.pro beizutreten.",
+    roleAssigned: "Sie haben die Rolle",
+    whichAllows: "erhalten, die Ihnen erlaubt,",
+    acceptButton: "Einladung annehmen",
+    noAccount: "Falls Sie noch kein Konto haben, können Sie eines erstellen, wenn Sie auf den Button klicken.",
+    expires: "Diese Einladung läuft in 7 Tagen ab.",
+    footer: "Bestellung.pro - Vereinfachen Sie Ihre Restaurant-Bestellungen",
+    ignore: "Falls Sie diese Einladung nicht erwartet haben, können Sie diese E-Mail ignorieren.",
+    roleDescriptions: {
+      admin: "vollen administrativen Zugriff zu haben",
+      manager: "Lieferanten und Artikel zu verwalten",
+      purchaser: "Bestellungen aufzugeben",
+      viewer: "Bestellungen und Artikel einzusehen",
+    }
+  },
+  en: {
+    subject: (orgName) => `You've been invited to join ${orgName} on Bestellung.pro`,
+    header: "You're Invited!",
+    greeting: "Hi there,",
+    invitedBy: "has invited you to join",
+    onPlatform: "on Bestellung.pro.",
+    roleAssigned: "You've been assigned the role of",
+    whichAllows: "which allows you to",
+    acceptButton: "Accept Invitation",
+    noAccount: "If you don't have an account yet, you'll be able to create one when you click the button above.",
+    expires: "This invitation will expire in 7 days.",
+    footer: "Bestellung.pro - Streamline your restaurant supply ordering",
+    ignore: "If you didn't expect this invitation, you can safely ignore this email.",
+    roleDescriptions: {
+      admin: "full administrative access",
+      manager: "manage suppliers and articles",
+      purchaser: "place orders",
+      viewer: "view orders and articles",
+    }
+  },
+  fr: {
+    subject: (orgName) => `Vous avez été invité(e) à rejoindre ${orgName} sur Bestellung.pro`,
+    header: "Vous êtes invité(e) !",
+    greeting: "Bonjour,",
+    invitedBy: "vous a invité(e) à rejoindre",
+    onPlatform: "sur Bestellung.pro.",
+    roleAssigned: "Vous avez reçu le rôle de",
+    whichAllows: "qui vous permet de",
+    acceptButton: "Accepter l'invitation",
+    noAccount: "Si vous n'avez pas encore de compte, vous pourrez en créer un en cliquant sur le bouton ci-dessus.",
+    expires: "Cette invitation expirera dans 7 jours.",
+    footer: "Bestellung.pro - Simplifiez vos commandes de restaurant",
+    ignore: "Si vous n'attendiez pas cette invitation, vous pouvez ignorer cet e-mail.",
+    roleDescriptions: {
+      admin: "un accès administratif complet",
+      manager: "gérer les fournisseurs et les articles",
+      purchaser: "passer des commandes",
+      viewer: "consulter les commandes et les articles",
+    }
+  },
+  it: {
+    subject: (orgName) => `Sei stato invitato a unirti a ${orgName} su Bestellung.pro`,
+    header: "Sei invitato!",
+    greeting: "Ciao,",
+    invitedBy: "ti ha invitato a unirti a",
+    onPlatform: "su Bestellung.pro.",
+    roleAssigned: "Ti è stato assegnato il ruolo di",
+    whichAllows: "che ti permette di",
+    acceptButton: "Accetta l'invito",
+    noAccount: "Se non hai ancora un account, potrai crearne uno cliccando il pulsante qui sopra.",
+    expires: "Questo invito scadrà tra 7 giorni.",
+    footer: "Bestellung.pro - Semplifica gli ordini del tuo ristorante",
+    ignore: "Se non ti aspettavi questo invito, puoi ignorare questa email.",
+    roleDescriptions: {
+      admin: "accesso amministrativo completo",
+      manager: "gestire fornitori e articoli",
+      purchaser: "effettuare ordini",
+      viewer: "visualizzare ordini e articoli",
+    }
+  },
+  th: {
+    subject: (orgName) => `คุณได้รับเชิญให้เข้าร่วม ${orgName} บน Bestellung.pro`,
+    header: "คุณได้รับเชิญ!",
+    greeting: "สวัสดี,",
+    invitedBy: "ได้เชิญคุณให้เข้าร่วม",
+    onPlatform: "บน Bestellung.pro",
+    roleAssigned: "คุณได้รับบทบาทเป็น",
+    whichAllows: "ซึ่งอนุญาตให้คุณ",
+    acceptButton: "ยอมรับคำเชิญ",
+    noAccount: "หากคุณยังไม่มีบัญชี คุณสามารถสร้างได้เมื่อคลิกปุ่มด้านบน",
+    expires: "คำเชิญนี้จะหมดอายุใน 7 วัน",
+    footer: "Bestellung.pro - จัดระเบียบการสั่งซื้อร้านอาหารของคุณ",
+    ignore: "หากคุณไม่ได้คาดหวังคำเชิญนี้ คุณสามารถเพิกเฉยอีเมลนี้ได้",
+    roleDescriptions: {
+      admin: "สิทธิ์การเข้าถึงระดับผู้ดูแลระบบเต็มรูปแบบ",
+      manager: "จัดการซัพพลายเออร์และสินค้า",
+      purchaser: "ทำการสั่งซื้อ",
+      viewer: "ดูคำสั่งซื้อและสินค้า",
+    }
+  },
+  vi: {
+    subject: (orgName) => `Bạn được mời tham gia ${orgName} trên Bestellung.pro`,
+    header: "Bạn được mời!",
+    greeting: "Xin chào,",
+    invitedBy: "đã mời bạn tham gia",
+    onPlatform: "trên Bestellung.pro.",
+    roleAssigned: "Bạn đã được gán vai trò",
+    whichAllows: "cho phép bạn",
+    acceptButton: "Chấp nhận lời mời",
+    noAccount: "Nếu bạn chưa có tài khoản, bạn có thể tạo tài khoản khi nhấp vào nút ở trên.",
+    expires: "Lời mời này sẽ hết hạn sau 7 ngày.",
+    footer: "Bestellung.pro - Đơn giản hóa đặt hàng nhà hàng của bạn",
+    ignore: "Nếu bạn không mong đợi lời mời này, bạn có thể bỏ qua email này.",
+    roleDescriptions: {
+      admin: "quyền truy cập quản trị đầy đủ",
+      manager: "quản lý nhà cung cấp và sản phẩm",
+      purchaser: "đặt hàng",
+      viewer: "xem đơn hàng và sản phẩm",
+    }
+  }
 };
 
 serve(async (req) => {
@@ -31,9 +163,13 @@ serve(async (req) => {
   }
 
   try {
-    const { inviteeEmail, inviterName, organizationName, role, inviteToken }: InvitationEmailRequest = await req.json();
+    const { inviteeEmail, inviterName, organizationName, role, inviteToken, language }: InvitationEmailRequest = await req.json();
 
-    console.log(`Sending invitation email to ${inviteeEmail} for organization ${organizationName}`);
+    console.log(`Sending invitation email to ${inviteeEmail} for organization ${organizationName} in language ${language}`);
+
+    // Get translations for the requested language, fallback to German
+    const lang = (language && translations[language as TranslationKey]) ? language as TranslationKey : 'de';
+    const t = translations[lang];
 
     // Get the app URL from environment or use a default
     const appUrl = Deno.env.get("APP_URL") || "https://bestellung.pro";
@@ -42,12 +178,12 @@ serve(async (req) => {
     const signupUrl = `${appUrl}/signup?invite=${inviteToken}`;
     console.log(`Generated signup URL: ${signupUrl}`);
 
-    const roleDescription = roleDescriptions[role] || role;
+    const roleDescription = t.roleDescriptions[role] || role;
 
     const emailResponse = await resend.emails.send({
       from: "Bestellung.pro <noreply@bestellung.pro>",
       to: [inviteeEmail],
-      subject: `You've been invited to join ${organizationName} on Bestellung.pro`,
+      subject: t.subject(organizationName),
       html: `
         <!DOCTYPE html>
         <html>
@@ -65,41 +201,45 @@ serve(async (req) => {
         <body>
           <div class="container">
             <div class="header">
-              <h1 style="margin: 0;">You're Invited!</h1>
+              <h1 style="margin: 0;">${t.header}</h1>
             </div>
             <div class="content">
-              <p>Hi there,</p>
-              <p><strong>${inviterName}</strong> has invited you to join <strong>${organizationName}</strong> on Bestellung.pro.</p>
-              <p>You've been assigned the role of <span class="role-badge">${role}</span>, which allows you to ${roleDescription}.</p>
+              <p>${t.greeting}</p>
+              <p><strong>${inviterName}</strong> ${t.invitedBy} <strong>${organizationName}</strong> ${t.onPlatform}</p>
+              <p>${t.roleAssigned} <span class="role-badge">${role}</span>, ${t.whichAllows} ${roleDescription}.</p>
               <p style="text-align: center;">
-                <a href="${signupUrl}" class="button">Accept Invitation</a>
+                <a href="${signupUrl}" class="button">${t.acceptButton}</a>
               </p>
-              <p style="font-size: 14px; color: #6b7280;">If you don't have an account yet, you'll be able to create one when you click the button above.</p>
-              <p style="font-size: 14px; color: #6b7280;">This invitation will expire in 7 days.</p>
+              <p style="font-size: 14px; color: #6b7280;">${t.noAccount}</p>
+              <p style="font-size: 14px; color: #6b7280;">${t.expires}</p>
             </div>
             <div class="footer">
-              <p>Bestellung.pro - Streamline your restaurant supply ordering</p>
-              <p style="font-size: 12px;">If you didn't expect this invitation, you can safely ignore this email.</p>
+              <p>${t.footer}</p>
+              <p style="font-size: 12px;">${t.ignore}</p>
             </div>
           </div>
         </body>
         </html>
       `,
       text: `
-You've been invited to join ${organizationName} on Bestellung.pro!
+${t.header}
 
-${inviterName} has invited you to join their organization with the role of ${role}, which allows you to ${roleDescription}.
+${t.greeting}
 
-Click here to accept the invitation: ${signupUrl}
+${inviterName} ${t.invitedBy} ${organizationName} ${t.onPlatform}
 
-If you don't have an account yet, you'll be able to create one when you click the link above.
+${t.roleAssigned} ${role}, ${t.whichAllows} ${roleDescription}.
 
-This invitation will expire in 7 days.
+${t.acceptButton}: ${signupUrl}
+
+${t.noAccount}
+
+${t.expires}
 
 ---
-Bestellung.pro - Streamline your restaurant supply ordering
+${t.footer}
 
-If you didn't expect this invitation, you can safely ignore this email.
+${t.ignore}
       `,
     });
 
