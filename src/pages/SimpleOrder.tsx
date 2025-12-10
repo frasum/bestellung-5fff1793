@@ -66,6 +66,7 @@ const SimpleOrder = () => {
   const [employeeName, setEmployeeName] = useState('');
   const [isEmployeeNameLocked, setIsEmployeeNameLocked] = useState(false);
   const [selectedLocationId, setSelectedLocationId] = useState<string | null>(null);
+  const [isLocationLocked, setIsLocationLocked] = useState(false);
   const [selectedSupplierId, setSelectedSupplierId] = useState<string | null>(null);
   const [validationErrors, setValidationErrors] = useState<{ name?: boolean; location?: boolean }>({});
 
@@ -120,6 +121,7 @@ const SimpleOrder = () => {
         // Pre-select location from token if set, otherwise from single location
         if (data.tokenData?.location?.id) {
           setSelectedLocationId(data.tokenData.location.id);
+          setIsLocationLocked(true);
         } else if (data.locations?.length === 1) {
           setSelectedLocationId(data.locations[0].id);
         }
@@ -503,36 +505,49 @@ const SimpleOrder = () => {
               </div>
             )}
 
-            {/* Location Selection */}
-            <div>
-              <Label className="flex items-center gap-2 text-base font-medium mb-2">
-                <MapPin className="h-5 w-5" />
-                {t('simpleOrder.selectLocation', 'เลือกสถานที่ / Standort wählen')} *
-              </Label>
-              <div className="grid grid-cols-2 gap-2">
-                {locations.map((location) => (
-                  <Button
-                    key={location.id}
-                    type="button"
-                    variant={selectedLocationId === location.id ? "default" : "outline"}
-                    className={`h-14 text-lg font-medium ${
-                      validationErrors.location && !selectedLocationId ? 'border-destructive' : ''
-                    }`}
-                    onClick={() => {
-                      setSelectedLocationId(location.id);
-                      setValidationErrors(prev => ({ ...prev, location: false }));
-                    }}
-                  >
-                    {location.short_code || location.name}
-                  </Button>
-                ))}
-              </div>
-              {validationErrors.location && (
-                <p className="text-destructive text-sm mt-1">
-                  {t('simpleOrder.locationRequired', 'กรุณาเลือกสถานที่ / Bitte Standort wählen')}
+            {/* Location Selection - Show locked display or buttons */}
+            {isLocationLocked ? (
+              <div className="text-center py-2">
+                <Label className="flex items-center justify-center gap-2 text-base font-medium mb-1">
+                  <MapPin className="h-5 w-5" />
+                  {t('simpleOrder.location', 'Standort')}
+                </Label>
+                <p className="text-xl font-semibold text-primary">
+                  {locations.find(l => l.id === selectedLocationId)?.short_code || 
+                   locations.find(l => l.id === selectedLocationId)?.name}
                 </p>
-              )}
-            </div>
+              </div>
+            ) : (
+              <div>
+                <Label className="flex items-center gap-2 text-base font-medium mb-2">
+                  <MapPin className="h-5 w-5" />
+                  {t('simpleOrder.selectLocation', 'เลือกสถานที่ / Standort wählen')} *
+                </Label>
+                <div className="grid grid-cols-2 gap-2">
+                  {locations.map((location) => (
+                    <Button
+                      key={location.id}
+                      type="button"
+                      variant={selectedLocationId === location.id ? "default" : "outline"}
+                      className={`h-14 text-lg font-medium ${
+                        validationErrors.location && !selectedLocationId ? 'border-destructive' : ''
+                      }`}
+                      onClick={() => {
+                        setSelectedLocationId(location.id);
+                        setValidationErrors(prev => ({ ...prev, location: false }));
+                      }}
+                    >
+                      {location.short_code || location.name}
+                    </Button>
+                  ))}
+                </div>
+                {validationErrors.location && (
+                  <p className="text-destructive text-sm mt-1">
+                    {t('simpleOrder.locationRequired', 'กรุณาเลือกสถานที่ / Bitte Standort wählen')}
+                  </p>
+                )}
+              </div>
+            )}
           </div>
         </div>
       )}
