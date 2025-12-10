@@ -458,6 +458,8 @@
     "categoriesMergeError": "Fehler beim Zusammenführen der Kategorien",
     "manageLocations": "Standorte",
     "manageLocationsDesc": "Verwalten Sie Ihre Restaurant-Standorte. Jeder Standort kann eigene Kundennummern und Lieferadressen haben.",
+    "locationsWithAddressesDesc": "Standorte verwalten und Lieferadressen pro Standort zuordnen.",
+    "address": "Adresse",
     "addLocation": "Standort hinzufügen",
     "editLocation": "Standort bearbeiten",
     "createLocation": "Neuen Standort erstellen",
