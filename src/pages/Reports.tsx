@@ -47,6 +47,107 @@ import { InventoryTab } from '@/components/reports/InventoryTab';
 
 const COLORS = ['hsl(var(--primary))', 'hsl(var(--accent))', 'hsl(142, 76%, 36%)', 'hsl(38, 92%, 50%)', 'hsl(0, 84%, 60%)', 'hsl(262, 83%, 58%)'];
 
+// Quick Overview KPIs Component
+const QuickOverviewKPIs = () => {
+  const { t } = useTranslation();
+  const { data: suppliers, isLoading: suppliersLoading } = useSuppliers();
+  const { data: articles, isLoading: articlesLoading } = useArticles();
+  const { data: orders, isLoading: ordersLoading } = useOrders();
+  const { data: sessions, isLoading: sessionsLoading } = useInventorySessions();
+  
+  // Find last completed inventory session
+  const lastCompletedSession = useMemo(() => {
+    if (!sessions) return null;
+    return sessions
+      .filter(s => s.status === 'completed')
+      .sort((a, b) => new Date(b.completed_at || 0).getTime() - new Date(a.completed_at || 0).getTime())[0];
+  }, [sessions]);
+  
+  const { data: inventoryItems } = useInventoryItems(lastCompletedSession?.id || '');
+  
+  // Calculate KPIs
+  const kpis = useMemo(() => {
+    const activeSuppliers = suppliers?.filter(s => s.is_active).length || 0;
+    const activeArticles = articles?.filter(a => a.is_active).length || 0;
+    const pendingOrders = orders?.filter(o => o.status === 'pending').length || 0;
+    
+    // Calculate inventory value
+    let inventoryValue = 0;
+    if (inventoryItems) {
+      inventoryValue = inventoryItems.reduce((sum, item) => {
+        const total = (item.storage_1 || 0) + (item.storage_2 || 0);
+        return sum + (total * (item.unit_price || 0));
+      }, 0);
+    }
+    
+    return { activeSuppliers, activeArticles, pendingOrders, inventoryValue };
+  }, [suppliers, articles, orders, inventoryItems]);
+  
+  const isLoading = suppliersLoading || articlesLoading || ordersLoading || sessionsLoading;
+  
+  const kpiCards = [
+    { 
+      label: t('reports.totalSuppliers', 'Lieferanten'), 
+      value: kpis.activeSuppliers, 
+      icon: Users,
+      format: 'number'
+    },
+    { 
+      label: t('reports.totalArticles', 'Artikel'), 
+      value: kpis.activeArticles, 
+      icon: Package,
+      format: 'number'
+    },
+    { 
+      label: t('reports.pendingOrders', 'Offene Bestellungen'), 
+      value: kpis.pendingOrders, 
+      icon: ShoppingCart,
+      format: 'number'
+    },
+    { 
+      label: t('reports.inventoryValue', 'Inventurwert'), 
+      value: kpis.inventoryValue, 
+      icon: ClipboardList,
+      format: 'currency'
+    },
+  ];
+
+  return (
+    <div className="space-y-3">
+      <h3 className="text-lg font-semibold">{t('reports.quickOverview', 'Schnellübersicht')}</h3>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        {kpiCards.map((kpi) => (
+          <Card key={kpi.label} className="relative overflow-hidden">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div className="space-y-1">
+                  <p className="text-sm text-muted-foreground">{kpi.label}</p>
+                  {isLoading ? (
+                    <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                  ) : (
+                    <p className="text-2xl font-bold">
+                      {kpi.format === 'currency' 
+                        ? `€${kpi.value.toLocaleString('de-DE', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`
+                        : kpi.value.toLocaleString('de-DE')
+                      }
+                    </p>
+                  )}
+                </div>
+                <kpi.icon className="h-8 w-8 text-muted-foreground/30" />
+              </div>
+              {kpi.label === t('reports.inventoryValue', 'Inventurwert') && lastCompletedSession && (
+                <p className="text-xs text-muted-foreground mt-2">
+                  {t('reports.lastInventory', 'Letzte Inventur')}: {format(new Date(lastCompletedSession.completed_at || lastCompletedSession.created_at), 'dd.MM.yyyy')}
+                </p>
+              )}
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    </div>
+  );
+};
+
 const Reports = () => {
   const { t } = useTranslation();
   const { user, loading: authLoading } = useAuth();
