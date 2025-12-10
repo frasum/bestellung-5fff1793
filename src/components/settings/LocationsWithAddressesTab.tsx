@@ -165,44 +165,37 @@ const LocationItem = ({
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen} className="border rounded-lg">
       <CollapsibleTrigger asChild>
-        <div className="flex items-center justify-between p-4 cursor-pointer hover:bg-muted/50 transition-colors">
-          <div className="flex items-center gap-3">
-            <ChevronRight className={`h-4 w-4 transition-transform ${isOpen ? 'rotate-90' : ''}`} />
-            <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-              <Store className="h-5 w-5 text-primary" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="font-medium">{location.name}</span>
-                {location.short_code && (
-                  <Badge variant="outline" className="text-xs">
-                    {location.short_code}
-                  </Badge>
-                )}
-                {location.is_default && (
-                  <Badge variant="secondary" className="text-xs">
-                    <Star className="h-3 w-3 mr-1" />
-                    {t('settings.defaultAddress')}
-                  </Badge>
-                )}
-              </div>
-              <p className="text-sm text-muted-foreground">
-                {addresses.length} {addresses.length === 1 ? t('settings.address') : t('settings.addresses')}
-              </p>
-            </div>
+        <div className="flex items-center justify-between p-3 cursor-pointer hover:bg-muted/50 transition-colors">
+          <div className="flex items-center gap-2">
+            <ChevronRight className={`h-4 w-4 text-muted-foreground transition-transform ${isOpen ? 'rotate-90' : ''}`} />
+            <Store className="h-4 w-4 text-primary" />
+            <span className="font-medium">{location.name}</span>
+            {location.short_code && (
+              <Badge variant="outline" className="text-xs px-1.5 py-0">
+                {location.short_code}
+              </Badge>
+            )}
+            {location.is_default && (
+              <Star className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400" />
+            )}
+            {!isOpen && (
+              <span className="text-xs text-muted-foreground">
+                ({addresses.length})
+              </span>
+            )}
           </div>
-          <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-            <Button size="sm" variant="ghost" onClick={() => onEditLocation(location)}>
-              <Pencil className="h-4 w-4" />
+          <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+            <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => onEditLocation(location)}>
+              <Pencil className="h-3.5 w-3.5" />
             </Button>
             {!location.is_default && (
               <Button
                 size="sm"
                 variant="ghost"
-                className="text-destructive hover:text-destructive"
+                className="h-7 w-7 p-0 text-destructive hover:text-destructive"
                 onClick={handleDeleteLocation}
               >
-                <Trash2 className="h-4 w-4" />
+                <Trash2 className="h-3.5 w-3.5" />
               </Button>
             )}
           </div>
@@ -210,57 +203,48 @@ const LocationItem = ({
       </CollapsibleTrigger>
 
       <CollapsibleContent>
-        <div className="px-4 pb-4 pt-0 space-y-2 border-t bg-muted/20">
+        <div className="px-3 pb-3 pt-0 space-y-1 border-t">
           {addresses.map((address) => (
-            <div key={address.id} className="flex items-start justify-between p-3 bg-background rounded-lg border ml-6">
-              <div className="flex items-start gap-3">
-                <MapPin className="h-4 w-4 text-muted-foreground mt-0.5" />
-                <div className="space-y-0.5">
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium text-sm">{address.label}</span>
-                    {address.is_default && (
-                      <Badge variant="secondary" className="text-xs gap-1">
-                        <Star className="h-2.5 w-2.5" />
-                        {t('settings.defaultAddress')}
-                      </Badge>
-                    )}
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    {address.address_line1}
-                    {address.address_line2 && `, ${address.address_line2}`}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {address.postal_code} {address.city}
-                  </p>
-                </div>
+            <div key={address.id} className="flex items-center justify-between py-1.5 px-2 ml-4 rounded hover:bg-muted/50 group">
+              <div className="flex items-center gap-2 min-w-0">
+                <MapPin className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                {address.is_default && (
+                  <Star className="h-3 w-3 fill-yellow-400 text-yellow-400 shrink-0" />
+                )}
+                <span className="text-sm truncate">
+                  {addresses.length > 1 && address.label !== location.name && (
+                    <span className="font-medium">{address.label}: </span>
+                  )}
+                  {address.address_line1}, {address.postal_code} {address.city}
+                </span>
               </div>
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
                 {!address.is_default && (
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-7 w-7 p-0"
+                    className="h-6 w-6 p-0"
                     onClick={() => updateAddress.mutate({ id: address.id, is_default: true })}
                     title={t('settings.setAsDefault')}
                   >
-                    <Star className="h-3.5 w-3.5" />
+                    <Star className="h-3 w-3" />
                   </Button>
                 )}
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="h-7 w-7 p-0"
+                  className="h-6 w-6 p-0"
                   onClick={() => handleEditAddress(address)}
                 >
-                  <Pencil className="h-3.5 w-3.5" />
+                  <Pencil className="h-3 w-3" />
                 </Button>
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="h-7 w-7 p-0 text-destructive hover:text-destructive"
+                  className="h-6 w-6 p-0 text-destructive hover:text-destructive"
                   onClick={() => deleteAddress.mutate(address.id)}
                 >
-                  <Trash2 className="h-3.5 w-3.5" />
+                  <Trash2 className="h-3 w-3" />
                 </Button>
               </div>
             </div>
@@ -269,10 +253,10 @@ const LocationItem = ({
           <Button 
             variant="ghost" 
             size="sm" 
-            className="ml-6 gap-2 text-muted-foreground hover:text-foreground"
+            className="ml-4 h-7 gap-1.5 text-xs text-muted-foreground hover:text-foreground"
             onClick={handleAddAddress}
           >
-            <Plus className="h-4 w-4" />
+            <Plus className="h-3 w-3" />
             {t('settings.addAddress')}
           </Button>
         </div>
