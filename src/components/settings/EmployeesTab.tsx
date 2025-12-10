@@ -137,13 +137,21 @@ export function EmployeesTab() {
             .join(', ');
           const label = supplierNames || employee.name;
           
+          // Find location for this employee (use first if multiple)
+          const employeeLocationIds = employeeLocations
+            .filter(el => el.employee_id === employee.id)
+            .map(el => el.location_id);
+          const locationId = employeeLocationIds.length >= 1 ? employeeLocationIds[0] : undefined;
+          
           await createToken.mutateAsync({
             label,
-            language: 'th',
+            language: 'de',
             is_multi_supplier: supplierIds.length > 1,
             supplier_id: supplierIds.length === 1 ? supplierIds[0] : undefined,
             supplier_ids: supplierIds.length > 1 ? supplierIds : undefined,
             employee_id: employee.id,
+            employee_name: employee.name,
+            location_id: locationId,
           });
         }
         
