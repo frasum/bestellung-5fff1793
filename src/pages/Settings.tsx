@@ -14,6 +14,7 @@ import { EmailTemplateTab } from '@/components/settings/EmailTemplateTab';
 import { SupplierPortalTab } from '@/components/settings/SupplierPortalTab';
 import { UnitsTab } from '@/components/settings/UnitsTab';
 import { CategoriesTab } from '@/components/settings/CategoriesTab';
+import { ArticleOrganizationTab } from '@/components/settings/ArticleOrganizationTab';
 
 const Settings = () => {
   const { t } = useTranslation();
@@ -83,6 +84,7 @@ const Settings = () => {
               onSubTabChange={(value) => setActiveSubTabs(prev => ({ ...prev, 'master-data': value }))}
               UnitsContent={UnitsTab}
               CategoriesContent={CategoriesTab}
+              ArticleOrganizationContent={ArticleOrganizationTab}
             />
           </TabsContent>
 
