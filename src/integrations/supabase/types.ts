@@ -924,6 +924,67 @@ export type Database = {
           },
         ]
       }
+      simple_order_tokens: {
+        Row: {
+          created_at: string
+          expires_at: string | null
+          id: string
+          is_active: boolean
+          label: string
+          language: string
+          location_id: string | null
+          organization_id: string
+          supplier_id: string
+          token: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          label: string
+          language?: string
+          location_id?: string | null
+          organization_id: string
+          supplier_id: string
+          token?: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          label?: string
+          language?: string
+          location_id?: string | null
+          organization_id?: string
+          supplier_id?: string
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "simple_order_tokens_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "simple_order_tokens_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "simple_order_tokens_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       suggested_articles: {
         Row: {
           category: string | null

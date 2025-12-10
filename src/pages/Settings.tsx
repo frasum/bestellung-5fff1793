@@ -12,6 +12,7 @@ import { OrganizationTab } from '@/components/settings/OrganizationTab';
 import { NotificationsTab } from '@/components/settings/NotificationsTab';
 import { EmailTemplateTab } from '@/components/settings/EmailTemplateTab';
 import { SupplierPortalTab } from '@/components/settings/SupplierPortalTab';
+import { SimpleOrderTab } from '@/components/settings/SimpleOrderTab';
 import { UnitsTab } from '@/components/settings/UnitsTab';
 import { CategoriesTab } from '@/components/settings/CategoriesTab';
 import { ArticleOrganizationTab } from '@/components/settings/ArticleOrganizationTab';
@@ -95,6 +96,7 @@ const Settings = () => {
               NotificationsContent={NotificationsTab}
               EmailTemplatesContent={EmailTemplateTab}
               SupplierPortalContent={SupplierPortalTab}
+              SimpleOrderContent={SimpleOrderTab}
             />
           </TabsContent>
 
