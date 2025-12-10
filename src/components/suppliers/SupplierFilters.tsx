@@ -62,7 +62,7 @@ export const SupplierFilters = ({
       {showMultiSelectToggle && (
         <div className="flex items-center gap-2">
           <Switch id="multi-select" checked={multiSelectEnabled} onCheckedChange={onMultiSelectChange} />
-          <Label htmlFor="multi-select" className="text-sm cursor-pointer whitespace-nowrap">Mehrfachauswahl</Label>
+          <Label htmlFor="multi-select" className="text-sm cursor-pointer whitespace-nowrap">Bestelllisten drucken</Label>
         </div>
       )}
       {multiSelectEnabled && selectedCount > 0 && (
