@@ -68,7 +68,7 @@ serve(async (req) => {
       );
     }
 
-    // Get an admin user from the organization to use as submitted_by
+    // Get an admin user from the organization to use as user_id for the draft
     const { data: adminProfile, error: adminError } = await supabase
       .from('profiles')
       .select('id')
@@ -84,64 +84,61 @@ serve(async (req) => {
       );
     }
 
-    // Create employee order submission
-    const { data: submission, error: submissionError } = await supabase
-      .from('employee_order_submissions')
+    const supplierName = tokenData.supplier?.name || 'Unbekannt';
+    const supplierId = requestSupplierId || tokenData.supplier_id;
+
+    // Create cart draft with EasyOrder naming convention
+    const draftName = `EasyOrder: ${employee_name} (${supplierName})`;
+    const notes = `EasyOrder-Bestellung von ${employee_name}\nLieferant: ${supplierName}\nToken: ${tokenData.label}`;
+
+    const { data: draft, error: draftError } = await supabase
+      .from('cart_drafts')
       .insert({
         organization_id: tokenData.organization_id,
-        location_id: location_id, // Use employee-selected location
-        submitted_by: adminProfile.id,
-        submission_type: 'simple',
-        status: 'pending',
-        source_data: {
-          token_label: tokenData.label,
-          supplier_id: requestSupplierId || tokenData.supplier_id,
-          supplier_name: tokenData.supplier?.name || null,
-          employee_name: employee_name,
-        },
+        user_id: adminProfile.id,
+        location_id: location_id,
+        name: draftName,
+        notes: notes,
       })
       .select()
       .single();
 
-    if (submissionError) {
-      console.error('Error creating submission:', submissionError);
+    if (draftError) {
+      console.error('Error creating cart draft:', draftError);
       return new Response(
-        JSON.stringify({ error: 'Failed to create order submission' }),
+        JSON.stringify({ error: 'Failed to create order draft' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Create order items
-    const orderItems = items.map((item: OrderItem) => ({
-      submission_id: submission.id,
+    // Create cart draft items
+    const draftItems = items.map((item: OrderItem) => ({
+      draft_id: draft.id,
       article_id: item.article_id,
-      recognized_text: item.article_name,
       quantity: item.quantity,
-      confidence: 1.0,
-      admin_corrected: false,
     }));
 
     const { error: itemsError } = await supabase
-      .from('employee_order_items')
-      .insert(orderItems);
+      .from('cart_draft_items')
+      .insert(draftItems);
 
     if (itemsError) {
-      console.error('Error creating order items:', itemsError);
-      // Rollback submission
-      await supabase.from('employee_order_submissions').delete().eq('id', submission.id);
+      console.error('Error creating draft items:', itemsError);
+      // Rollback draft
+      await supabase.from('cart_drafts').delete().eq('id', draft.id);
       return new Response(
         JSON.stringify({ error: 'Failed to create order items' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    console.log(`Simple order submitted successfully. Submission ID: ${submission.id}, Items: ${items.length}`);
+    console.log(`EasyOrder submitted successfully as cart draft. Draft ID: ${draft.id}, Items: ${items.length}`);
 
     return new Response(
       JSON.stringify({
         success: true,
-        submission_id: submission.id,
-        message: 'Order submitted for approval',
+        draft_id: draft.id,
+        message: 'Order saved as pre-order',
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
