@@ -27,8 +27,6 @@ export interface SupplierInput {
   contact_person?: string;
   customer_number?: string;
   minimum_order_value?: number;
-  main_category?: string;
-  top_category?: string;
   is_active?: boolean;
 }
 

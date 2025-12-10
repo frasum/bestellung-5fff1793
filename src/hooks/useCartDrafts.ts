@@ -30,6 +30,7 @@ export interface CartDraftItem {
     price: number;
     unit: string;
     category: string | null;
+    top_category: string | null;
     is_active: boolean;
     created_at: string;
     updated_at: string;
@@ -61,6 +62,7 @@ export const useCartDrafts = (locationId?: string) => {
               price,
               unit,
               category,
+              top_category,
               is_active,
               created_at,
               updated_at,

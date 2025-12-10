@@ -177,8 +177,8 @@ const Suppliers = () => {
     setInvitingSupplierId(null);
   };
 
-  // Extract unique categories from suppliers
-  const existingSupplierCategories = [...new Set(suppliers?.map(s => s.main_category).filter(Boolean) as string[])].sort();
+  // Extract article categories for supplier filter
+  const articleCategoriesForSupplierFilter = [...new Set(allArticles?.map(a => a.category).filter(Boolean) as string[])].sort();
 
   // Group articles by supplier
   const articlesBySupplier = allArticles?.reduce((acc, article) => {
@@ -332,11 +332,15 @@ const Suppliers = () => {
     }
   };
 
-  // Filtered suppliers
+  // Filtered suppliers - now filter by article categories
   const filteredSuppliers = suppliers?.filter(supplier => {
     const matchesSearch = supplier.name.toLowerCase().includes(searchQuery.toLowerCase()) || supplier.email.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesTopCategory = topCategoryFilter === 'all' || supplier.top_category === topCategoryFilter;
-    const matchesCategory = categoryFilter === 'all' || supplier.main_category === categoryFilter;
+    
+    // Filter by article categories instead of supplier categories
+    const supplierArticles = articlesBySupplier[supplier.id] || [];
+    const matchesTopCategory = topCategoryFilter === 'all' || supplierArticles.some(a => a.top_category === topCategoryFilter);
+    const matchesCategory = categoryFilter === 'all' || supplierArticles.some(a => a.category === categoryFilter);
+    
     return matchesSearch && matchesTopCategory && matchesCategory;
   });
 
@@ -437,7 +441,7 @@ const Suppliers = () => {
                 onTopCategoryChange={setTopCategoryFilter}
                 categoryFilter={categoryFilter}
                 onCategoryChange={setCategoryFilter}
-                existingCategories={existingSupplierCategories}
+                articleCategories={articleCategoriesForSupplierFilter}
                 multiSelectEnabled={supplierMultiSelectEnabled}
                 onMultiSelectChange={setSupplierMultiSelectEnabled}
                 selectedCount={selectedSuppliers.size}
@@ -475,7 +479,6 @@ const Suppliers = () => {
                 if (!open) setEditingSupplier(null);
               }}
               editingSupplier={editingSupplier}
-              existingCategories={existingSupplierCategories}
               onSubmit={handleSupplierSubmit}
               onImportArticles={(supplierId) => {
                 setArticleImportSupplierId(supplierId);

@@ -13,7 +13,7 @@ interface SupplierFiltersProps {
   onTopCategoryChange: (value: string) => void;
   categoryFilter: string;
   onCategoryChange: (value: string) => void;
-  existingCategories: string[];
+  articleCategories: string[];
   multiSelectEnabled: boolean;
   onMultiSelectChange: (value: boolean) => void;
   selectedCount: number;
@@ -28,7 +28,7 @@ export const SupplierFilters = ({
   onTopCategoryChange,
   categoryFilter,
   onCategoryChange,
-  existingCategories,
+  articleCategories,
   multiSelectEnabled,
   onMultiSelectChange,
   selectedCount,
@@ -56,7 +56,7 @@ export const SupplierFilters = ({
         </SelectTrigger>
         <SelectContent className="bg-card border border-border z-50">
           <SelectItem value="all">Alle Kategorien</SelectItem>
-          {existingCategories.map(cat => <SelectItem key={cat} value={cat}>{cat}</SelectItem>)}
+          {articleCategories.map(cat => <SelectItem key={cat} value={cat}>{cat}</SelectItem>)}
         </SelectContent>
       </Select>
       {showMultiSelectToggle && (
