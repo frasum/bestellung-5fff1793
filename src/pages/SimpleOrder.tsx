@@ -525,14 +525,11 @@ const SimpleOrder = () => {
 
       {/* Articles - only show when supplier is selected */}
       {!showSupplierSelection && (
-        <div className="max-w-2xl mx-auto p-4 space-y-6">
-          {Object.entries(groupedArticles).map(([category, categoryArticles]) => (
-            <div key={category}>
-              <h2 className="text-lg font-semibold text-muted-foreground mb-3 sticky top-[140px] bg-background py-2">
-                {category}
-              </h2>
-              <div className="grid grid-cols-1 gap-3">
-                {categoryArticles.map((article) => {
+        <div className="max-w-2xl mx-auto p-4">
+          <div className="grid grid-cols-1 gap-3">
+            {filteredArticles
+              .sort((a, b) => a.name.localeCompare(b.name, 'de'))
+              .map((article) => {
                   const qty = quantities[article.id] || 0;
                   const isSelected = qty > 0;
                   
@@ -588,9 +585,7 @@ const SimpleOrder = () => {
                     </Card>
                   );
                 })}
-              </div>
-            </div>
-          ))}
+          </div>
 
           {filteredArticles.length === 0 && (
             <div className="text-center py-12">
