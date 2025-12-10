@@ -13,7 +13,7 @@ export function SimpleOrderTab() {
           <div>
             <CardTitle className="flex items-center gap-2">
               <Smartphone className="h-5 w-5" />
-              {t('settings.simpleOrder.title', 'Einfache Bestellung')}
+              EasyOrder
             </CardTitle>
             <CardDescription>
               {t('settings.simpleOrder.description', 'QR-Codes für Mitarbeiter zum einfachen Bestellen erstellen')}
