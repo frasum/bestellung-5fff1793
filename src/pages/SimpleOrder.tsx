@@ -117,8 +117,10 @@ const SimpleOrder = () => {
           setIsEmployeeNameLocked(true);
         }
         
-        // Pre-select location if only one available
-        if (data.locations?.length === 1) {
+        // Pre-select location from token if set, otherwise from single location
+        if (data.tokenData?.location?.id) {
+          setSelectedLocationId(data.tokenData.location.id);
+        } else if (data.locations?.length === 1) {
           setSelectedLocationId(data.locations[0].id);
         }
         
