@@ -80,20 +80,29 @@ export const generateOrderListPdf = async (
   };
 
   const formatArticleName = (article: OrderListArticle) => {
-    let name = article.sku ? `${article.name} (${article.sku})` : article.name;
-    if (article.description) {
-      name += `\n${article.description}`;
-    }
-    return name;
+    return article.sku ? `${article.name} (${article.sku})` : article.name;
   };
 
-  const tableData = articles.map((article) => [
-    formatArticleName(article),
-    article.unit,
-    formatLastOrder(article),
-    '', // Menge (quantity) - empty for filling in
-    '', // Notiz (notes) - empty for filling in
-  ]);
+  // Build table data with separate rows for Thai descriptions
+  const tableData: (string | { content: string; colSpan?: number; styles?: any })[][] = [];
+  
+  articles.forEach((article) => {
+    // Main row with article name (Latin)
+    tableData.push([
+      formatArticleName(article),
+      article.unit,
+      formatLastOrder(article),
+      '', // Menge (quantity) - empty for filling in
+      '', // Notiz (notes) - empty for filling in
+    ]);
+    
+    // Add description row if it contains Thai characters
+    if (article.description && containsThai(article.description)) {
+      tableData.push([
+        { content: article.description, colSpan: 5, styles: { fontStyle: 'italic', textColor: [100, 100, 100], cellPadding: { top: 0, bottom: 3, left: 8, right: 4 } } },
+      ]);
+    }
+  });
 
   autoTable(doc, {
     head: [['Artikel', 'Einheit', 'Letzte', 'Menge', 'Notiz']],
@@ -205,19 +214,28 @@ export const generateCombinedOrderListPdf = async (
     };
 
     const formatArticleName = (article: OrderListArticle) => {
-      let name = article.sku ? `${article.name} (${article.sku})` : article.name;
-      if (article.description) {
-        name += `\n${article.description}`;
-      }
-      return name;
+      return article.sku ? `${article.name} (${article.sku})` : article.name;
     };
 
-    const tableData = articles.map((article) => [
-      formatArticleName(article),
-      article.unit,
-      formatLastOrder(article),
-      '', // Menge
-    ]);
+    // Build table data with separate rows for Thai descriptions
+    const tableData: (string | { content: string; colSpan?: number; styles?: any })[][] = [];
+    
+    articles.forEach((article) => {
+      // Main row with article name (Latin)
+      tableData.push([
+        formatArticleName(article),
+        article.unit,
+        formatLastOrder(article),
+        '', // Menge
+      ]);
+      
+      // Add description row if it contains Thai characters
+      if (article.description && containsThai(article.description)) {
+        tableData.push([
+          { content: article.description, colSpan: 4, styles: { fontStyle: 'italic', textColor: [100, 100, 100], cellPadding: { top: 0, bottom: 2, left: 6, right: 2 }, fontSize: 7 } },
+        ]);
+      }
+    });
 
     autoTable(doc, {
       head: [['Artikel', 'Einh.', 'Letzte', 'Menge']],
