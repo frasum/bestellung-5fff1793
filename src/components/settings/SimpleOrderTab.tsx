@@ -254,196 +254,215 @@ export function SimpleOrderTab() {
               {t('settings.simpleOrder.description', 'QR-Codes für Mitarbeiter zum einfachen Bestellen erstellen')}
             </CardDescription>
           </div>
-          <Dialog open={isDialogOpen} onOpenChange={(open) => {
-            setIsDialogOpen(open);
-            if (!open) {
-              setIsMultiSupplier(false);
-              setSelectedSupplierIds([]);
-              setFormData({ supplier_id: '', location_id: '', language: 'th', employee_name: '', employee_id: '' });
-            }
-          }}>
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                {t('settings.simpleOrder.createLink', 'Neuen Link erstellen')}
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-md">
-              <DialogHeader>
-                <DialogTitle>{t('settings.simpleOrder.createTitle', 'Bestelllink erstellen')}</DialogTitle>
-                <DialogDescription>
-                  {t('settings.simpleOrder.createDescription', 'Erstellen Sie einen QR-Code für einfache Bestellungen')}
-                </DialogDescription>
-              </DialogHeader>
-              <div className="space-y-4 py-4">
-                {/* Multi-Supplier Toggle */}
-                <div className="flex items-center justify-between rounded-lg border p-4">
-                  <div className="space-y-0.5">
-                    <Label className="font-medium flex items-center gap-2">
-                      <Users className="h-4 w-4" />
-                      Multi-Lieferanten
-                    </Label>
-                    <p className="text-sm text-muted-foreground">
-                      Ein QR-Code für mehrere Lieferanten
-                    </p>
-                  </div>
-                  <Switch
-                    checked={isMultiSupplier}
-                    onCheckedChange={(checked) => {
-                      setIsMultiSupplier(checked);
-                      if (!checked) {
-                        setSelectedSupplierIds([]);
-                      } else {
-                        setFormData(prev => ({ ...prev, supplier_id: '' }));
-                      }
-                    }}
-                  />
-                </div>
-
-                {/* Supplier Selection */}
-                {isMultiSupplier ? (
-                  <div className="space-y-2">
-                    <Label>Lieferanten auswählen *</Label>
-                    <div className="border rounded-lg max-h-48 overflow-y-auto">
-                      {suppliers?.map((supplier) => (
-                        <label
-                          key={supplier.id}
-                          className="flex items-center gap-3 p-3 hover:bg-muted/50 cursor-pointer border-b last:border-b-0"
-                        >
-                          <Checkbox
-                            checked={selectedSupplierIds.includes(supplier.id)}
-                            onCheckedChange={() => toggleSupplierSelection(supplier.id)}
-                          />
-                          <span className="flex-1">{supplier.name}</span>
-                        </label>
-                      ))}
-                    </div>
-                    {selectedSupplierIds.length > 0 && (
-                      <p className="text-sm text-muted-foreground">
-                        {selectedSupplierIds.length} Lieferanten ausgewählt
-                      </p>
-                    )}
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    <Label>{t('settings.simpleOrder.supplier', 'Lieferant')} *</Label>
-                    <Select
-                      value={formData.supplier_id}
-                      onValueChange={(value) => setFormData(prev => ({ ...prev, supplier_id: value }))}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder={t('settings.simpleOrder.selectSupplier', 'Lieferant auswählen')} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {suppliers?.map((supplier) => (
-                          <SelectItem key={supplier.id} value={supplier.id}>
-                            {supplier.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
-
-                <div className="space-y-2">
-                  <Label>{t('settings.simpleOrder.location', 'Standort')} ({t('common.optional', 'optional')})</Label>
-                  <Select
-                    value={formData.location_id || 'all'}
-                    onValueChange={(value) => setFormData(prev => ({ ...prev, location_id: value === 'all' ? '' : value }))}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder={t('settings.simpleOrder.allLocations', 'Alle Standorte')} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">
-                        {t('settings.simpleOrder.allLocations', 'Alle Standorte')}
-                      </SelectItem>
-                      {locations?.map((location) => (
-                        <SelectItem key={location.id} value={location.id}>
-                          {location.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label>{t('settings.simpleOrder.employee', 'Mitarbeiter')} ({t('common.optional', 'optional')})</Label>
-                  <Select
-                    value={formData.employee_id || 'none'}
-                    onValueChange={(value) => setFormData(prev => ({ 
-                      ...prev, 
-                      employee_id: value === 'none' ? '' : value,
-                      employee_name: value === 'none' ? prev.employee_name : ''
-                    }))}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Mitarbeiter auswählen" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">Kein Mitarbeiter zugewiesen</SelectItem>
-                      {employees.filter(e => e.is_active).map((employee) => (
-                        <SelectItem key={employee.id} value={employee.id}>
-                          {employee.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <p className="text-xs text-muted-foreground">
-                    {t('settings.simpleOrder.employeeHint', 'Der Name wird automatisch ausgefüllt und ist nicht änderbar')}
-                  </p>
-                </div>
-
-
-                <div className="space-y-2">
-                  <Label>{t('settings.simpleOrder.language', 'Sprache')}</Label>
-                  <Select
-                    value={formData.language}
-                    onValueChange={(value) => setFormData(prev => ({ ...prev, language: value }))}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {LANGUAGES.map((lang) => (
-                        <SelectItem key={lang.code} value={lang.code}>
-                          {lang.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
-                  {t('common.cancel')}
-                </Button>
-                <Button onClick={handleCreate} disabled={createToken.isPending}>
-                  {createToken.isPending ? t('common.saving') : t('common.save')}
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
         </div>
       </CardHeader>
       <CardContent>
         <Tabs value={mainTab} onValueChange={(v) => setMainTab(v as 'links' | 'employees')} className="space-y-4">
-          <TabsList>
-            <TabsTrigger value="links" className="flex items-center gap-2">
-              <QrCode className="h-4 w-4" />
-              Bestelllinks
-            </TabsTrigger>
-            <TabsTrigger value="employees" className="flex items-center gap-2">
-              <User className="h-4 w-4" />
-              Mitarbeiter
-            </TabsTrigger>
-          </TabsList>
+          <div className="flex items-center justify-between">
+            <TabsList>
+              <TabsTrigger value="links" className="flex items-center gap-2">
+                <QrCode className="h-4 w-4" />
+                {t('settings.simpleOrder.tabs.links', 'Bestelllinks')}
+              </TabsTrigger>
+              <TabsTrigger value="employees" className="flex items-center gap-2">
+                <UsersRound className="h-4 w-4" />
+                {t('settings.simpleOrder.tabs.employees', 'Mitarbeiter')}
+              </TabsTrigger>
+            </TabsList>
+            
+            {mainTab === 'links' && (
+              <Dialog open={isDialogOpen} onOpenChange={(open) => {
+                setIsDialogOpen(open);
+                if (!open) {
+                  setIsMultiSupplier(false);
+                  setSelectedSupplierIds([]);
+                  setFormData({ supplier_id: '', location_id: '', language: 'th', employee_name: '', employee_id: '' });
+                }
+              }}>
+                <DialogTrigger asChild>
+                  <Button size="sm">
+                    <Plus className="h-4 w-4 mr-2" />
+                    {t('settings.simpleOrder.createLink', 'Neuen Link erstellen')}
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-md">
+                  <DialogHeader>
+                    <DialogTitle>{t('settings.simpleOrder.createTitle', 'Bestelllink erstellen')}</DialogTitle>
+                    <DialogDescription>
+                      {t('settings.simpleOrder.createDescription', 'Erstellen Sie einen QR-Code für einfache Bestellungen')}
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-4 py-4">
+                    {/* Multi-Supplier Toggle */}
+                    <div className="flex items-center justify-between rounded-lg border p-4">
+                      <div className="space-y-0.5">
+                        <Label className="font-medium flex items-center gap-2">
+                          <Users className="h-4 w-4" />
+                          Multi-Lieferanten
+                        </Label>
+                        <p className="text-sm text-muted-foreground">
+                          Ein QR-Code für mehrere Lieferanten
+                        </p>
+                      </div>
+                      <Switch
+                        checked={isMultiSupplier}
+                        onCheckedChange={(checked) => {
+                          setIsMultiSupplier(checked);
+                          if (!checked) {
+                            setSelectedSupplierIds([]);
+                          } else {
+                            setFormData(prev => ({ ...prev, supplier_id: '' }));
+                          }
+                        }}
+                      />
+                    </div>
 
-          <TabsContent value="employees">
-            <EmployeesTab />
-          </TabsContent>
+                    {/* Supplier Selection */}
+                    {isMultiSupplier ? (
+                      <div className="space-y-2">
+                        <Label>Lieferanten auswählen *</Label>
+                        <div className="border rounded-lg max-h-48 overflow-y-auto">
+                          {suppliers?.map((supplier) => (
+                            <label
+                              key={supplier.id}
+                              className="flex items-center gap-3 p-3 hover:bg-muted/50 cursor-pointer border-b last:border-b-0"
+                            >
+                              <Checkbox
+                                checked={selectedSupplierIds.includes(supplier.id)}
+                                onCheckedChange={() => toggleSupplierSelection(supplier.id)}
+                              />
+                              <span className="flex-1">{supplier.name}</span>
+                            </label>
+                          ))}
+                        </div>
+                        {selectedSupplierIds.length > 0 && (
+                          <p className="text-sm text-muted-foreground">
+                            {selectedSupplierIds.length} Lieferanten ausgewählt
+                          </p>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        <Label>{t('settings.simpleOrder.supplier', 'Lieferant')} *</Label>
+                        <Select
+                          value={formData.supplier_id}
+                          onValueChange={(value) => setFormData(prev => ({ ...prev, supplier_id: value }))}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder={t('settings.simpleOrder.selectSupplier', 'Lieferant auswählen')} />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {suppliers?.map((supplier) => (
+                              <SelectItem key={supplier.id} value={supplier.id}>
+                                {supplier.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
 
-          <TabsContent value="links">
+                    <div className="space-y-2">
+                      <Label>{t('settings.simpleOrder.location', 'Standort')} ({t('common.optional', 'optional')})</Label>
+                      <Select
+                        value={formData.location_id || 'all'}
+                        onValueChange={(value) => setFormData(prev => ({ ...prev, location_id: value === 'all' ? '' : value }))}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder={t('settings.simpleOrder.allLocations', 'Alle Standorte')} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">
+                            {t('settings.simpleOrder.allLocations', 'Alle Standorte')}
+                          </SelectItem>
+                          {locations?.map((location) => (
+                            <SelectItem key={location.id} value={location.id}>
+                              {location.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>{t('settings.simpleOrder.employee', 'Mitarbeiter')} ({t('common.optional', 'optional')})</Label>
+                      <Select
+                        value={formData.employee_id || 'none'}
+                        onValueChange={(value) => setFormData(prev => ({ 
+                          ...prev, 
+                          employee_id: value === 'none' ? '' : value,
+                          employee_name: value === 'none' ? prev.employee_name : ''
+                        }))}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Mitarbeiter auswählen" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">Kein Mitarbeiter zugewiesen</SelectItem>
+                          {employees.filter(e => e.is_active).map((employee) => (
+                            <SelectItem key={employee.id} value={employee.id}>
+                              {employee.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <p className="text-xs text-muted-foreground">
+                        {t('settings.simpleOrder.employeeHint', 'Der Name wird automatisch ausgefüllt und ist nicht änderbar')}
+                      </p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>{t('settings.simpleOrder.language', 'Sprache')}</Label>
+                      <Select
+                        value={formData.language}
+                        onValueChange={(value) => setFormData(prev => ({ ...prev, language: value }))}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {LANGUAGES.map((lang) => (
+                            <SelectItem key={lang.code} value={lang.code}>
+                              {lang.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  <DialogFooter>
+                    <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
+                      {t('common.cancel')}
+                    </Button>
+                    <Button onClick={handleCreate} disabled={createToken.isPending}>
+                      {createToken.isPending ? t('common.saving') : t('common.save')}
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+            )}
+          </div>
+
+          <TabsContent value="links" className="space-y-4 mt-0">
+            <div className="flex items-center gap-2">
+              <Button
+                variant={viewMode === 'grouped' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setViewMode('grouped')}
+              >
+                <Package className="h-4 w-4 mr-2" />
+                {t('settings.simpleOrder.groupedView', 'Gruppiert')}
+              </Button>
+              <Button
+                variant={viewMode === 'list' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setViewMode('list')}
+              >
+                <List className="h-4 w-4 mr-2" />
+                {t('settings.simpleOrder.listView', 'Liste')}
+              </Button>
+            </div>
+
             {tokensLoading ? (
               <div className="text-center py-8 text-muted-foreground">
                 {t('common.loading')}
@@ -456,168 +475,139 @@ export function SimpleOrderTab() {
                   {t('settings.simpleOrder.noTokensDescription', 'Erstellen Sie einen Link, damit Mitarbeiter einfach bestellen können')}
                 </p>
               </div>
+            ) : viewMode === 'grouped' ? (
+              <EmployeeTokensOverview
+                tokens={tokens}
+                onEdit={openEditDialog}
+                onToggleActive={(id, isActive) => updateToken.mutate({ id, is_active: isActive })}
+                onDelete={(id) => deleteToken.mutate(id)}
+              />
             ) : (
-              <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as 'list' | 'grouped')}>
-                <TabsList className="mb-4">
-                  <TabsTrigger value="grouped" className="flex items-center gap-2">
-                    <UsersRound className="h-4 w-4" />
-                    Nach Lieferant
-                  </TabsTrigger>
-                  <TabsTrigger value="list" className="flex items-center gap-2">
-                    <List className="h-4 w-4" />
-                    Alle Links
-                  </TabsTrigger>
-                </TabsList>
-
-                <TabsContent value="grouped">
-                  <EmployeeTokensOverview
-                    tokens={tokens}
-                    onEdit={openEditDialog}
-                    onToggleActive={(id, isActive) => updateToken.mutate({ id, is_active: isActive })}
-                    onDelete={(id) => deleteToken.mutate(id)}
-                  />
-                </TabsContent>
-
-                <TabsContent value="list">
-                  <div className="space-y-4">
-                    {tokens.map((token) => (
-                      <Card key={token.id} className="p-4">
-                        <div className="flex items-start justify-between gap-4">
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              {(token.employee?.name || token.employee_name) ? (
-                                <h3 className="font-semibold flex items-center gap-2">
-                                  <User className="h-4 w-4" />
-                                  {token.employee?.name || token.employee_name}
-                                </h3>
-                              ) : (
-                                <h3 className="font-semibold">{token.label}</h3>
-                              )}
-                              {token.is_multi_supplier ? (
-                                <Badge variant="outline" className="flex items-center gap-1">
-                                  <Users className="h-3 w-3" />
-                                  {token.token_suppliers?.length || 0} Lieferanten
-                                </Badge>
-                              ) : (
-                                <Badge variant="outline">{token.supplier?.name}</Badge>
-                              )}
-                              {token.location && (
-                                <Badge variant="secondary">{token.location.name}</Badge>
-                              )}
-                              <Badge variant={token.is_active ? 'default' : 'destructive'}>
-                                {token.is_active ? 'Aktiv' : 'Inaktiv'}
-                              </Badge>
-                            </div>
-                            <p className="text-sm text-muted-foreground mt-1 truncate">
-                              {getOrderUrl(token.token)}
-                            </p>
-                          </div>
-                          <div className="flex items-center gap-2 flex-shrink-0">
-                            <Switch
-                              checked={token.is_active}
-                              onCheckedChange={(checked) => updateToken.mutate({ id: token.id, is_active: checked })}
-                            />
-                            <Button variant="outline" size="icon" onClick={() => copyToClipboard(token.token)}>
-                              <Copy className="h-4 w-4" />
-                            </Button>
-                            <Button variant="outline" size="icon" onClick={() => openEditDialog(token)}>
-                              <Pencil className="h-4 w-4" />
-                            </Button>
-
-                            <Dialog>
-                              <DialogTrigger asChild>
-                                <Button variant="outline" size="icon">
-                                  <QrCode className="h-4 w-4" />
-                                </Button>
-                              </DialogTrigger>
-                              <DialogContent className="max-w-sm">
-                                <DialogHeader>
-                                  <DialogTitle>QR-Code: {token.label}</DialogTitle>
-                                </DialogHeader>
-                                <div className="flex flex-col items-center gap-4 py-4">
-                                  <img
-                                    src={generateQrCodeUrl(token.token)}
-                                    alt="QR Code"
-                                    className="w-64 h-64"
-                                  />
-                                  <p className="text-sm text-muted-foreground text-center break-all">
-                                    {getOrderUrl(token.token)}
-                                  </p>
-                                  <div className="flex gap-2">
-                                    <Button variant="outline" onClick={() => copyToClipboard(token.token)}>
-                                      <Copy className="h-4 w-4 mr-2" />
-                                      Link kopieren
-                                    </Button>
-                                    <Button
-                                      variant="outline"
-                                      onClick={() => {
-                                        const supplierInfo = token.is_multi_supplier 
-                                          ? `Multi-Lieferanten (${token.token_suppliers?.length || 0})`
-                                          : token.supplier?.name || '';
-                                        const printWindow = window.open('', '_blank');
-                                        if (printWindow) {
-                                          printWindow.document.write(`
-                                            <html>
-                                              <head>
-                                                <title>QR-Code: ${token.label}</title>
-                                                <style>
-                                                  body { font-family: Arial, sans-serif; text-align: center; padding: 40px; }
-                                                  h1 { font-size: 24px; margin-bottom: 20px; }
-                                                  img { width: 300px; height: 300px; }
-                                                  p { color: #666; margin-top: 20px; }
-                                                </style>
-                                              </head>
-                                              <body>
-                                                <h1>${token.label}</h1>
-                                                <img src="${generateQrCodeUrl(token.token)}" alt="QR Code" />
-                                                <p style="margin-top:20px;color:#666;">${supplierInfo}</p>
-                                              </body>
-                                            </html>
-                                          `);
-                                          printWindow.document.close();
-                                          printWindow.print();
-                                        }
-                                      }}
-                                    >
-                                      Drucken
-                                    </Button>
-                                  </div>
-                                </div>
-                              </DialogContent>
-                            </Dialog>
-
-                            <AlertDialog>
-                              <AlertDialogTrigger asChild>
-                                <Button variant="outline" size="icon" className="text-destructive hover:text-destructive">
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent>
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>Bestelllink löschen?</AlertDialogTitle>
-                                  <AlertDialogDescription>
-                                    Der Link "{token.label}" wird dauerhaft gelöscht und kann nicht mehr verwendet werden.
-                                  </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>Abbrechen</AlertDialogCancel>
-                                  <AlertDialogAction
-                                    onClick={() => deleteToken.mutate(token.id)}
-                                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                  >
-                                    Löschen
-                                  </AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
-                          </div>
+              <div className="space-y-4">
+                {tokens.map((token) => (
+                  <Card key={token.id} className="p-4">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h4 className="font-medium truncate">{token.label}</h4>
+                          {token.is_multi_supplier && (
+                            <Badge variant="secondary" className="flex items-center gap-1">
+                              <Users className="h-3 w-3" />
+                              Multi
+                            </Badge>
+                          )}
+                          {!token.is_active && (
+                            <Badge variant="outline" className="text-muted-foreground">
+                              Inaktiv
+                            </Badge>
+                          )}
                         </div>
-                      </Card>
-                    ))}
-                  </div>
-                </TabsContent>
-              </Tabs>
+                        <p className="text-sm text-muted-foreground">
+                          {getSupplierNames(token)}
+                        </p>
+                        {token.location && (
+                          <p className="text-xs text-muted-foreground mt-1">
+                            📍 {token.location.name}
+                          </p>
+                        )}
+                        {(token.employee?.name || token.employee_name) && (
+                          <p className="text-xs text-muted-foreground mt-1">
+                            👤 {token.employee?.name || token.employee_name}
+                          </p>
+                        )}
+                        <div className="flex items-center gap-2 mt-2">
+                          <Badge variant="outline">{LANGUAGES.find(l => l.code === token.language)?.name}</Badge>
+                        </div>
+                      </div>
+                      <div className="flex flex-col gap-2">
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            onClick={() => copyToClipboard(token.token)}
+                          >
+                            <Copy className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            onClick={() => window.open(getOrderUrl(token.token), '_blank')}
+                          >
+                            <ExternalLink className="h-4 w-4" />
+                          </Button>
+                          <Dialog open={selectedQrToken === token.token} onOpenChange={(open) => setSelectedQrToken(open ? token.token : null)}>
+                            <DialogTrigger asChild>
+                              <Button variant="outline" size="icon">
+                                <QrCode className="h-4 w-4" />
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent className="max-w-sm">
+                              <DialogHeader>
+                                <DialogTitle>QR-Code</DialogTitle>
+                                <DialogDescription>
+                                  Scannen Sie diesen QR-Code um zu bestellen
+                                </DialogDescription>
+                              </DialogHeader>
+                              <div className="flex justify-center p-4">
+                                <img
+                                  src={generateQrCodeUrl(token.token)}
+                                  alt="QR Code"
+                                  className="rounded-lg"
+                                />
+                              </div>
+                              <div className="text-center text-sm text-muted-foreground break-all">
+                                {getOrderUrl(token.token)}
+                              </div>
+                            </DialogContent>
+                          </Dialog>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            onClick={() => openEditDialog(token)}
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Switch
+                            checked={token.is_active}
+                            onCheckedChange={(checked) => updateToken.mutate({ id: token.id, is_active: checked })}
+                          />
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button variant="outline" size="icon">
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Link löschen?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Dieser Bestelllink wird dauerhaft gelöscht. Diese Aktion kann nicht rückgängig gemacht werden.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={() => deleteToken.mutate(token.id)}
+                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                >
+                                  Löschen
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </div>
+                      </div>
+                    </div>
+                  </Card>
+                ))}
+              </div>
             )}
+          </TabsContent>
+
+          <TabsContent value="employees" className="mt-0">
+            <EmployeesTab />
           </TabsContent>
         </Tabs>
 
