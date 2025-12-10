@@ -628,7 +628,18 @@
     "searchArticles": "Artikel suchen...",
     "selectSession": "Inventur auswählen...",
     "viewingCompleted": "Sie sehen eine abgeschlossene Inventur (nur Ansicht).",
-    "inProgressLabel": "In Bearbeitung"
+    "inProgressLabel": "In Bearbeitung",
+    "progress": "Fortschritt",
+    "compare": "Vergleichen",
+    "compareTitle": "Inventur-Vergleich",
+    "compareDescription": "Vergleichen Sie zwei Inventursitzungen, um Differenzen zu sehen.",
+    "oldSession": "Ältere Inventur",
+    "newSession": "Neuere Inventur",
+    "changedArticles": "Änderungen",
+    "increased": "Erhöht",
+    "decreased": "Reduziert",
+    "valueDiff": "Wertdifferenz",
+    "noDifferences": "Keine Differenzen gefunden."
   },
   "scan": {
     "title": "Bestellliste scannen",
