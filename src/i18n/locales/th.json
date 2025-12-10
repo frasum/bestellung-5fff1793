@@ -314,7 +314,6 @@
         "orders": "คำสั่งซื้อ",
         "team": "ทีม",
         "settings": "การตั้งค่า",
-        "staffOrders": "คำสั่งซื้อพนักงาน",
         "inventory": "สินค้าคงคลัง",
         "supplierChanges": "การเปลี่ยนแปลงซัพพลายเออร์"
       },
@@ -335,8 +334,6 @@
       "settings.editOrg": "แก้ไของค์กร",
       "settings.manageLocations": "จัดการสถานที่",
       "settings.editTemplates": "แก้ไขเทมเพลตอีเมล",
-      "staffOrders.submit": "ส่งคำสั่งซื้อเสียง/รูปภาพ",
-      "staffOrders.approve": "อนุมัติการส่ง",
       "inventory.view": "ดูสินค้าคงคลัง",
       "inventory.manage": "จัดการสินค้าคงคลัง",
       "supplierChanges.review": "ตรวจสอบและอนุมัติการเปลี่ยนแปลง"
