@@ -25,7 +25,7 @@ export interface EmployeeOrderSubmission {
   organization_id: string;
   location_id: string | null;
   submitted_by: string;
-  submission_type: 'photo' | 'voice' | 'manual';
+  submission_type: 'photo' | 'voice' | 'manual' | 'simple';
   source_data: Record<string, unknown>;
   transcription: string | null;
   status: 'pending' | 'approved' | 'rejected';

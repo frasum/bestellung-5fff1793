@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
-import { Clock, Check, X, Mic, Camera, FileText, User, ShoppingCart, CheckCircle } from 'lucide-react';
+import { Clock, Check, X, Mic, Camera, FileText, User, ShoppingCart, CheckCircle, MapPin } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -106,9 +106,34 @@ export default function StaffSubmissionHistory({
         return <Mic className="h-4 w-4" />;
       case 'photo':
         return <Camera className="h-4 w-4" />;
+      case 'simple':
+        return <FileText className="h-4 w-4" />;
       default:
         return <FileText className="h-4 w-4" />;
     }
+  };
+
+  const getTypeName = (type: string) => {
+    switch (type) {
+      case 'voice':
+        return t('staffOrders.voice');
+      case 'photo':
+        return t('staffOrders.photo');
+      case 'simple':
+        return 'Kiosk';
+      default:
+        return 'Manual';
+    }
+  };
+
+  const getEmployeeName = (submission: EmployeeOrderSubmission): string | null => {
+    const sourceData = submission.source_data as { employee_name?: string } | null;
+    return sourceData?.employee_name || null;
+  };
+
+  const getSupplierName = (submission: EmployeeOrderSubmission): string | null => {
+    const sourceData = submission.source_data as { supplier_name?: string } | null;
+    return sourceData?.supplier_name || null;
   };
 
   return (
@@ -124,9 +149,14 @@ export default function StaffSubmissionHistory({
               <div className="flex items-center gap-2">
                 {getTypeIcon(submission.submission_type)}
                 <span className="text-sm font-medium">
-                  {submission.submission_type === 'voice' ? t('staffOrders.voice') : 
-                   submission.submission_type === 'photo' ? t('staffOrders.photo') : 'Manual'}
+                  {getTypeName(submission.submission_type)}
                 </span>
+                {/* Show supplier name for simple orders */}
+                {submission.submission_type === 'simple' && getSupplierName(submission) && (
+                  <Badge variant="outline" className="text-xs">
+                    {getSupplierName(submission)}
+                  </Badge>
+                )}
               </div>
               <div className="flex items-center gap-2">
                 {getStatusBadge(submission.status)}
@@ -154,7 +184,13 @@ export default function StaffSubmissionHistory({
               </div>
             </div>
 
-            {showSubmitter && submission.submitter && (
+            {/* Show employee name for simple orders or submitter for other types */}
+            {submission.submission_type === 'simple' && getEmployeeName(submission) ? (
+              <div className="flex items-center gap-1.5 text-sm font-medium text-foreground mb-2">
+                <User className="h-4 w-4 text-primary" />
+                <span>👤 {getEmployeeName(submission)}</span>
+              </div>
+            ) : showSubmitter && submission.submitter && (
               <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-2">
                 <User className="h-3 w-3" />
                 <span>{submission.submitter.full_name || submission.submitter.email}</span>

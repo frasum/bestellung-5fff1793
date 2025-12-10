@@ -866,5 +866,12 @@
     "source": "Source",
     "manual": "Manual",
     "supplierApproved": "Supplier (approved)"
+  },
+  "simpleOrder": {
+    "yourName": "Your Name",
+    "namePlaceholder": "Please enter your name",
+    "selectLocation": "Select Location",
+    "nameRequired": "Please enter your name",
+    "locationRequired": "Please select a location"
   }
 }

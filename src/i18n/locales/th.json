@@ -802,5 +802,12 @@
     "source": "แหล่งที่มา",
     "manual": "ด้วยตนเอง",
     "supplierApproved": "ซัพพลายเออร์ (อนุมัติแล้ว)"
+  },
+  "simpleOrder": {
+    "yourName": "ชื่อของคุณ",
+    "namePlaceholder": "กรุณาใส่ชื่อของคุณ",
+    "selectLocation": "เลือกสถานที่",
+    "nameRequired": "กรุณาใส่ชื่อของคุณ",
+    "locationRequired": "กรุณาเลือกสถานที่"
   }
 }

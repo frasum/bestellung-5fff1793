@@ -4,7 +4,8 @@ import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Minus, Plus, Send, Check, Search, Loader2, ShoppingCart } from 'lucide-react';
+import { Label } from '@/components/ui/label';
+import { Minus, Plus, Send, Check, Search, Loader2, ShoppingCart, User, MapPin } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
 interface Article {
@@ -16,6 +17,12 @@ interface Article {
   category: string | null;
   sku: string | null;
   packaging_unit: number | null;
+}
+
+interface Location {
+  id: string;
+  name: string;
+  short_code: string | null;
 }
 
 interface TokenData {
@@ -37,14 +44,18 @@ type OrderStatus = 'loading' | 'ready' | 'submitting' | 'success' | 'error';
 
 const SimpleOrder = () => {
   const { token } = useParams<{ token: string }>();
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   
   const [status, setStatus] = useState<OrderStatus>('loading');
   const [error, setError] = useState<string | null>(null);
   const [tokenData, setTokenData] = useState<TokenData | null>(null);
   const [articles, setArticles] = useState<Article[]>([]);
+  const [locations, setLocations] = useState<Location[]>([]);
   const [quantities, setQuantities] = useState<Record<string, number>>({});
   const [search, setSearch] = useState('');
+  const [employeeName, setEmployeeName] = useState('');
+  const [selectedLocationId, setSelectedLocationId] = useState<string | null>(null);
+  const [validationErrors, setValidationErrors] = useState<{ name?: boolean; location?: boolean }>({});
 
   // Verify token and load articles
   useEffect(() => {
@@ -68,10 +79,16 @@ const SimpleOrder = () => {
 
         setTokenData(data.tokenData);
         setArticles(data.articles || []);
+        setLocations(data.locations || []);
         
         // Set language from token
         if (data.tokenData?.language) {
           i18n.changeLanguage(data.tokenData.language);
+        }
+        
+        // Pre-select location if only one available
+        if (data.locations?.length === 1) {
+          setSelectedLocationId(data.locations[0].id);
         }
         
         setStatus('ready');
@@ -101,8 +118,26 @@ const SimpleOrder = () => {
     return Object.values(quantities).reduce((sum, qty) => sum + qty, 0);
   };
 
+  const validateForm = (): boolean => {
+    const errors: { name?: boolean; location?: boolean } = {};
+    
+    if (!employeeName.trim()) {
+      errors.name = true;
+    }
+    if (!selectedLocationId) {
+      errors.location = true;
+    }
+    
+    setValidationErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
   const handleSubmit = async () => {
     if (getTotalItems() === 0) return;
+    
+    if (!validateForm()) {
+      return;
+    }
 
     setStatus('submitting');
 
@@ -119,7 +154,12 @@ const SimpleOrder = () => {
 
     try {
       const { data, error: submitError } = await supabase.functions.invoke('submit-simple-order', {
-        body: { token, items },
+        body: { 
+          token, 
+          items,
+          employee_name: employeeName.trim(),
+          location_id: selectedLocationId,
+        },
       });
 
       if (submitError || data?.error) {
@@ -197,6 +237,7 @@ const SimpleOrder = () => {
             className="w-full h-14 text-lg"
             onClick={() => {
               setStatus('ready');
+              setEmployeeName('');
             }}
           >
             สั่งซื้อใหม่ / Neue Bestellung
@@ -218,6 +259,68 @@ const SimpleOrder = () => {
           <p className="text-center text-primary-foreground/80 text-sm mt-1">
             {tokenData?.label}
           </p>
+        </div>
+      </div>
+
+      {/* Employee Info Section */}
+      <div className="bg-muted/50 border-b p-4">
+        <div className="max-w-2xl mx-auto space-y-4">
+          {/* Employee Name */}
+          <div>
+            <Label htmlFor="employeeName" className="flex items-center gap-2 text-base font-medium mb-2">
+              <User className="h-5 w-5" />
+              {t('simpleOrder.yourName', 'ชื่อของคุณ / Ihr Name')} *
+            </Label>
+            <Input
+              id="employeeName"
+              type="text"
+              placeholder={t('simpleOrder.namePlaceholder', 'กรุณาใส่ชื่อของคุณ / Bitte Namen eingeben')}
+              value={employeeName}
+              onChange={(e) => {
+                setEmployeeName(e.target.value);
+                if (e.target.value.trim()) {
+                  setValidationErrors(prev => ({ ...prev, name: false }));
+                }
+              }}
+              className={`h-14 text-lg ${validationErrors.name ? 'border-destructive ring-destructive' : ''}`}
+            />
+            {validationErrors.name && (
+              <p className="text-destructive text-sm mt-1">
+                {t('simpleOrder.nameRequired', 'กรุณาใส่ชื่อของคุณ / Bitte Namen eingeben')}
+              </p>
+            )}
+          </div>
+
+          {/* Location Selection */}
+          <div>
+            <Label className="flex items-center gap-2 text-base font-medium mb-2">
+              <MapPin className="h-5 w-5" />
+              {t('simpleOrder.selectLocation', 'เลือกสถานที่ / Standort wählen')} *
+            </Label>
+            <div className="grid grid-cols-2 gap-2">
+              {locations.map((location) => (
+                <Button
+                  key={location.id}
+                  type="button"
+                  variant={selectedLocationId === location.id ? "default" : "outline"}
+                  className={`h-14 text-lg font-medium ${
+                    validationErrors.location && !selectedLocationId ? 'border-destructive' : ''
+                  }`}
+                  onClick={() => {
+                    setSelectedLocationId(location.id);
+                    setValidationErrors(prev => ({ ...prev, location: false }));
+                  }}
+                >
+                  {location.short_code || location.name}
+                </Button>
+              ))}
+            </div>
+            {validationErrors.location && (
+              <p className="text-destructive text-sm mt-1">
+                {t('simpleOrder.locationRequired', 'กรุณาเลือกสถานที่ / Bitte Standort wählen')}
+              </p>
+            )}
+          </div>
         </div>
       </div>
 
