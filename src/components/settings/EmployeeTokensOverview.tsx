@@ -7,7 +7,7 @@ import { Switch } from '@/components/ui/switch';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { User, ChevronDown, ChevronRight, Copy, QrCode, Pencil, Trash2, ExternalLink, Printer, Package, Link2 } from 'lucide-react';
+import { User, ChevronDown, ChevronRight, Copy, QrCode, Pencil, Trash2, ExternalLink, Printer, Package, Link2, Phone, Mail } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface EmployeeTokensOverviewProps {
@@ -252,6 +252,22 @@ export function EmployeeTokensOverview({ tokens, onEdit, onToggleActive, onDelet
                                   {token.is_active ? 'Aktiv' : 'Inaktiv'}
                                 </Badge>
                               </div>
+                              {(token.employee?.phone || token.employee?.email) && (
+                                <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
+                                  {token.employee?.phone && (
+                                    <span className="flex items-center gap-1">
+                                      <Phone className="h-3 w-3" />
+                                      {token.employee.phone}
+                                    </span>
+                                  )}
+                                  {token.employee?.email && (
+                                    <span className="flex items-center gap-1">
+                                      <Mail className="h-3 w-3" />
+                                      {token.employee.email}
+                                    </span>
+                                  )}
+                                </div>
+                              )}
                               <p className="text-xs text-muted-foreground mt-1">
                                 {language?.name || token.language}
                                 {group.isMulti && token.token_suppliers && (
