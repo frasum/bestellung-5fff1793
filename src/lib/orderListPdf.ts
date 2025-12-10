@@ -83,29 +83,51 @@ export const generateOrderListPdf = async (
     return article.sku ? `${article.name} (${article.sku})` : article.name;
   };
 
-  // Build table data with separate rows for Thai descriptions
-  const tableData: (string | { content: string; colSpan?: number; styles?: any })[][] = [];
-  
-  articles.forEach((article) => {
-    // Main row with article name (Latin)
-    tableData.push([
-      formatArticleName(article),
-      article.unit,
-      formatLastOrder(article),
-      '', // Menge (quantity) - empty for filling in
-      '', // Notiz (notes) - empty for filling in
-    ]);
+  // Check if any article has Thai description
+  const hasAnyThaiDescription = articles.some(
+    a => a.description && containsThai(a.description)
+  );
+
+  // Build table data with optional Thai column
+  const tableData = articles.map((article) => {
+    const row: string[] = [formatArticleName(article)];
     
-    // Add description row if it contains Thai characters
-    if (article.description && containsThai(article.description)) {
-      tableData.push([
-        { content: article.description, colSpan: 5, styles: { fontStyle: 'italic', textColor: [100, 100, 100], cellPadding: { top: 0, bottom: 3, left: 8, right: 4 } } },
-      ]);
+    if (hasAnyThaiDescription) {
+      // Add Thai column (empty if no Thai description)
+      row.push(article.description && containsThai(article.description) 
+        ? article.description 
+        : '');
     }
+    
+    row.push(article.unit, formatLastOrder(article), '', '');
+    return row;
   });
 
+  // Dynamic headers based on Thai content
+  const headers = hasAnyThaiDescription 
+    ? ['Artikel', 'Thai', 'Einheit', 'Letzte', 'Menge', 'Notiz']
+    : ['Artikel', 'Einheit', 'Letzte', 'Menge', 'Notiz'];
+
+  // Dynamic column styles based on Thai content
+  const columnStyles = hasAnyThaiDescription
+    ? {
+        0: { cellWidth: 'auto' as const },  // Artikel
+        1: { cellWidth: 45 },               // Thai
+        2: { cellWidth: 20 },               // Einheit
+        3: { cellWidth: 18, halign: 'center' as const }, // Letzte
+        4: { cellWidth: 20, halign: 'center' as const }, // Menge
+        5: { cellWidth: 30 },               // Notiz
+      }
+    : {
+        0: { cellWidth: 'auto' as const },
+        1: { cellWidth: 22 },
+        2: { cellWidth: 20, halign: 'center' as const },
+        3: { cellWidth: 22, halign: 'center' as const },
+        4: { cellWidth: 35 },
+      };
+
   autoTable(doc, {
-    head: [['Artikel', 'Einheit', 'Letzte', 'Menge', 'Notiz']],
+    head: [headers],
     body: tableData,
     startY: 54,
     styles: {
@@ -120,20 +142,14 @@ export const generateOrderListPdf = async (
       textColor: 255,
       fontStyle: 'normal',
     },
-    columnStyles: {
-      0: { cellWidth: 'auto' },
-      1: { cellWidth: 22 },
-      2: { cellWidth: 20, halign: 'center' },
-      3: { cellWidth: 22, halign: 'center' },
-      4: { cellWidth: 35 },
-    },
+    columnStyles,
     alternateRowStyles: {
       fillColor: [250, 250, 250],
     },
     willDrawCell: (data) => {
-      if (hasFonts && data.cell.text) {
-        const cellText = Array.isArray(data.cell.text) ? data.cell.text.join('') : String(data.cell.text);
-        if (containsThai(cellText)) {
+      if (hasFonts && data.section === 'body') {
+        // Thai column is index 1 when Thai descriptions exist
+        if (hasAnyThaiDescription && data.column.index === 1) {
           doc.setFont('NotoSansThai', 'normal');
         } else {
           doc.setFont('NotoSans', 'normal');
@@ -217,28 +233,48 @@ export const generateCombinedOrderListPdf = async (
       return article.sku ? `${article.name} (${article.sku})` : article.name;
     };
 
-    // Build table data with separate rows for Thai descriptions
-    const tableData: (string | { content: string; colSpan?: number; styles?: any })[][] = [];
-    
-    articles.forEach((article) => {
-      // Main row with article name (Latin)
-      tableData.push([
-        formatArticleName(article),
-        article.unit,
-        formatLastOrder(article),
-        '', // Menge
-      ]);
+    // Check if any article has Thai description
+    const hasAnyThaiDescription = articles.some(
+      a => a.description && containsThai(a.description)
+    );
+
+    // Build table data with optional Thai column
+    const tableData = articles.map((article) => {
+      const row: string[] = [formatArticleName(article)];
       
-      // Add description row if it contains Thai characters
-      if (article.description && containsThai(article.description)) {
-        tableData.push([
-          { content: article.description, colSpan: 4, styles: { fontStyle: 'italic', textColor: [100, 100, 100], cellPadding: { top: 0, bottom: 2, left: 6, right: 2 }, fontSize: 7 } },
-        ]);
+      if (hasAnyThaiDescription) {
+        row.push(article.description && containsThai(article.description) 
+          ? article.description 
+          : '');
       }
+      
+      row.push(article.unit, formatLastOrder(article), '');
+      return row;
     });
 
+    // Dynamic headers based on Thai content
+    const headers = hasAnyThaiDescription 
+      ? ['Artikel', 'Thai', 'Einh.', 'Letzte', 'Menge']
+      : ['Artikel', 'Einh.', 'Letzte', 'Menge'];
+
+    // Dynamic column styles based on Thai content
+    const columnStyles = hasAnyThaiDescription
+      ? {
+          0: { cellWidth: 'auto' as const },  // Artikel
+          1: { cellWidth: 35 },               // Thai
+          2: { cellWidth: 14, halign: 'center' as const }, // Einh.
+          3: { cellWidth: 16, halign: 'center' as const }, // Letzte
+          4: { cellWidth: 18, halign: 'center' as const }, // Menge
+        }
+      : {
+          0: { cellWidth: 'auto' as const },
+          1: { cellWidth: 15, halign: 'center' as const },
+          2: { cellWidth: 18, halign: 'center' as const },
+          3: { cellWidth: 20, halign: 'center' as const },
+        };
+
     autoTable(doc, {
-      head: [['Artikel', 'Einh.', 'Letzte', 'Menge']],
+      head: [headers],
       body: tableData,
       startY: currentY,
       margin: { left: 10, right: 10 },
@@ -257,19 +293,14 @@ export const generateCombinedOrderListPdf = async (
         fontSize: 7,
         cellPadding: 1.5,
       },
-      columnStyles: {
-        0: { cellWidth: 'auto' },
-        1: { cellWidth: 15, halign: 'center' },
-        2: { cellWidth: 18, halign: 'center' },
-        3: { cellWidth: 20, halign: 'center' },
-      },
+      columnStyles,
       alternateRowStyles: {
         fillColor: [248, 248, 248],
       },
       willDrawCell: (data) => {
-        if (hasFonts && data.cell.text) {
-          const cellText = Array.isArray(data.cell.text) ? data.cell.text.join('') : String(data.cell.text);
-          if (containsThai(cellText)) {
+        if (hasFonts && data.section === 'body') {
+          // Thai column is index 1 when Thai descriptions exist
+          if (hasAnyThaiDescription && data.column.index === 1) {
             doc.setFont('NotoSansThai', 'normal');
           } else {
             doc.setFont('NotoSans', 'normal');
