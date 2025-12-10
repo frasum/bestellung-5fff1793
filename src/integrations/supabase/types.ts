@@ -1238,12 +1238,10 @@ export type Database = {
           email: string
           id: string
           is_active: boolean
-          main_category: string | null
           minimum_order_value: number | null
           name: string
           organization_id: string
           phone: string | null
-          top_category: string | null
           updated_at: string
         }
         Insert: {
@@ -1254,12 +1252,10 @@ export type Database = {
           email: string
           id?: string
           is_active?: boolean
-          main_category?: string | null
           minimum_order_value?: number | null
           name: string
           organization_id: string
           phone?: string | null
-          top_category?: string | null
           updated_at?: string
         }
         Update: {
@@ -1270,12 +1266,10 @@ export type Database = {
           email?: string
           id?: string
           is_active?: boolean
-          main_category?: string | null
           minimum_order_value?: number | null
           name?: string
           organization_id?: string
           phone?: string | null
-          top_category?: string | null
           updated_at?: string
         }
         Relationships: [
