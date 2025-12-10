@@ -444,201 +444,180 @@ export function SimpleOrderTab() {
           </TabsContent>
 
           <TabsContent value="links">
-        {tokensLoading ? (
-          <div className="text-center py-8 text-muted-foreground">
-            {t('common.loading')}
-          </div>
-        ) : !tokens?.length ? (
-          <div className="text-center py-8 text-muted-foreground">
-            <Smartphone className="h-12 w-12 mx-auto mb-4 opacity-50" />
-            <p>{t('settings.simpleOrder.noTokens', 'Noch keine Bestelllinks erstellt')}</p>
-            <p className="text-sm mt-1">
-              {t('settings.simpleOrder.noTokensDescription', 'Erstellen Sie einen Link, damit Mitarbeiter einfach bestellen können')}
-            </p>
-          </div>
-        ) : (
-          <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as 'list' | 'grouped')}>
-            <TabsList className="mb-4">
-              <TabsTrigger value="grouped" className="flex items-center gap-2">
-                <UsersRound className="h-4 w-4" />
-                Nach Mitarbeiter
-              </TabsTrigger>
-              <TabsTrigger value="list" className="flex items-center gap-2">
-                <List className="h-4 w-4" />
-                Alle Links
-              </TabsTrigger>
-            </TabsList>
+            {tokensLoading ? (
+              <div className="text-center py-8 text-muted-foreground">
+                {t('common.loading')}
+              </div>
+            ) : !tokens?.length ? (
+              <div className="text-center py-8 text-muted-foreground">
+                <Smartphone className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                <p>{t('settings.simpleOrder.noTokens', 'Noch keine Bestelllinks erstellt')}</p>
+                <p className="text-sm mt-1">
+                  {t('settings.simpleOrder.noTokensDescription', 'Erstellen Sie einen Link, damit Mitarbeiter einfach bestellen können')}
+                </p>
+              </div>
+            ) : (
+              <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as 'list' | 'grouped')}>
+                <TabsList className="mb-4">
+                  <TabsTrigger value="grouped" className="flex items-center gap-2">
+                    <UsersRound className="h-4 w-4" />
+                    Nach Lieferant
+                  </TabsTrigger>
+                  <TabsTrigger value="list" className="flex items-center gap-2">
+                    <List className="h-4 w-4" />
+                    Alle Links
+                  </TabsTrigger>
+                </TabsList>
 
-            <TabsContent value="grouped">
-              <EmployeeTokensOverview
-                tokens={tokens}
-                onEdit={openEditDialog}
-                onToggleActive={(id, isActive) => updateToken.mutate({ id, is_active: isActive })}
-                onDelete={(id) => deleteToken.mutate(id)}
-            />
-          </TabsContent>
+                <TabsContent value="grouped">
+                  <EmployeeTokensOverview
+                    tokens={tokens}
+                    onEdit={openEditDialog}
+                    onToggleActive={(id, isActive) => updateToken.mutate({ id, is_active: isActive })}
+                    onDelete={(id) => deleteToken.mutate(id)}
+                  />
+                </TabsContent>
 
-          <TabsContent value="list">
-            <div className="space-y-4">
-              {tokens.map((token) => (
-                <Card key={token.id} className="p-4">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        {token.employee_name ? (
-                          <h3 className="font-semibold flex items-center gap-2">
-                            <User className="h-4 w-4" />
-                            {token.employee_name}
-                          </h3>
-                        ) : (
-                          <h3 className="font-semibold">{token.label}</h3>
-                        )}
-                        {token.is_multi_supplier ? (
-                          <Badge variant="outline" className="flex items-center gap-1">
-                            <Users className="h-3 w-3" />
-                            {token.token_suppliers?.length || 0} Lieferanten
-                          </Badge>
-                        ) : (
-                          <Badge variant="outline">{token.supplier?.name}</Badge>
-                        )}
-                        {token.location && (
-                          <Badge variant="secondary">{token.location.name}</Badge>
-                        )}
-                        <Badge variant={token.is_active ? 'default' : 'destructive'}>
-                          {token.is_active ? 'Aktiv' : 'Inaktiv'}
-                        </Badge>
-                      </div>
-                      {token.employee_name && (
-                        <p className="text-sm text-muted-foreground">{token.label}</p>
-                      )}
-                      {token.is_multi_supplier && token.token_suppliers && (
-                        <p className="text-sm text-muted-foreground mt-1">
-                          {getSupplierNames(token)}
-                        </p>
-                      )}
-                      <p className="text-sm text-muted-foreground mt-1">
-                        {LANGUAGES.find(l => l.code === token.language)?.name || token.language}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Switch
-                        checked={token.is_active}
-                        onCheckedChange={(checked) => 
-                          updateToken.mutate({ id: token.id, is_active: checked })
-                        }
-                      />
-                      
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={() => openEditDialog(token)}
-                        title="Bearbeiten"
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={() => copyToClipboard(token.token)}
-                        title="Link kopieren"
-                      >
-                        <Copy className="h-4 w-4" />
-                      </Button>
-
-                      <Dialog open={selectedQrToken === token.token} onOpenChange={(open) => setSelectedQrToken(open ? token.token : null)}>
-                        <DialogTrigger asChild>
-                          <Button variant="outline" size="icon" title="QR-Code anzeigen">
-                            <QrCode className="h-4 w-4" />
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent className="max-w-sm">
-                          <DialogHeader>
-                            <DialogTitle>QR-Code: {token.label}</DialogTitle>
-                            <DialogDescription>
-                              {token.is_multi_supplier 
-                                ? `Scannen Sie diesen QR-Code zum Bestellen bei ${token.token_suppliers?.length || 0} Lieferanten`
-                                : `Scannen Sie diesen QR-Code zum Bestellen bei ${token.supplier?.name}`
-                              }
-                            </DialogDescription>
-                          </DialogHeader>
-                          <div className="flex justify-center p-4">
-                            <img
-                              src={generateQrCodeUrl(token.token)}
-                              alt={`QR Code for ${token.label}`}
-                              className="w-64 h-64"
+                <TabsContent value="list">
+                  <div className="space-y-4">
+                    {tokens.map((token) => (
+                      <Card key={token.id} className="p-4">
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              {(token.employee?.name || token.employee_name) ? (
+                                <h3 className="font-semibold flex items-center gap-2">
+                                  <User className="h-4 w-4" />
+                                  {token.employee?.name || token.employee_name}
+                                </h3>
+                              ) : (
+                                <h3 className="font-semibold">{token.label}</h3>
+                              )}
+                              {token.is_multi_supplier ? (
+                                <Badge variant="outline" className="flex items-center gap-1">
+                                  <Users className="h-3 w-3" />
+                                  {token.token_suppliers?.length || 0} Lieferanten
+                                </Badge>
+                              ) : (
+                                <Badge variant="outline">{token.supplier?.name}</Badge>
+                              )}
+                              {token.location && (
+                                <Badge variant="secondary">{token.location.name}</Badge>
+                              )}
+                              <Badge variant={token.is_active ? 'default' : 'destructive'}>
+                                {token.is_active ? 'Aktiv' : 'Inaktiv'}
+                              </Badge>
+                            </div>
+                            <p className="text-sm text-muted-foreground mt-1 truncate">
+                              {getOrderUrl(token.token)}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-2 flex-shrink-0">
+                            <Switch
+                              checked={token.is_active}
+                              onCheckedChange={(checked) => updateToken.mutate({ id: token.id, is_active: checked })}
                             />
-                          </div>
-                          <div className="flex gap-2">
-                            <Button
-                              className="flex-1"
-                              variant="outline"
-                              onClick={() => window.open(getOrderUrl(token.token), '_blank')}
-                            >
-                              <ExternalLink className="h-4 w-4 mr-2" />
-                              Link öffnen
+                            <Button variant="outline" size="icon" onClick={() => copyToClipboard(token.token)}>
+                              <Copy className="h-4 w-4" />
                             </Button>
-                            <Button
-                              className="flex-1"
-                              onClick={() => {
-                                const printWindow = window.open('', '_blank');
-                                if (printWindow) {
-                                  const supplierInfo = token.is_multi_supplier 
-                                    ? `${token.token_suppliers?.length || 0} Lieferanten`
-                                    : token.supplier?.name || '';
-                                  printWindow.document.write(`
-                                    <html>
-                                      <head><title>QR-Code: ${token.label}</title></head>
-                                      <body style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;margin:0;font-family:sans-serif;">
-                                        <h1 style="margin-bottom:20px;">${token.label}</h1>
-                                        <img src="${generateQrCodeUrl(token.token)}" style="width:300px;height:300px;" />
-                                        <p style="margin-top:20px;color:#666;">${supplierInfo}</p>
-                                      </body>
-                                    </html>
-                                  `);
-                                  printWindow.document.close();
-                                  printWindow.print();
-                                }
-                              }}
-                            >
-                              Drucken
+                            <Button variant="outline" size="icon" onClick={() => openEditDialog(token)}>
+                              <Pencil className="h-4 w-4" />
                             </Button>
-                          </div>
-                        </DialogContent>
-                      </Dialog>
 
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button variant="outline" size="icon" className="text-destructive hover:text-destructive">
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Bestelllink löschen?</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              Der Link "{token.label}" wird dauerhaft gelöscht und kann nicht mehr verwendet werden.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
-                            <AlertDialogAction
-                              onClick={() => deleteToken.mutate(token.id)}
-                              className="bg-destructive hover:bg-destructive/90"
-                            >
-                              {t('common.delete')}
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    </div>
+                            <Dialog>
+                              <DialogTrigger asChild>
+                                <Button variant="outline" size="icon">
+                                  <QrCode className="h-4 w-4" />
+                                </Button>
+                              </DialogTrigger>
+                              <DialogContent className="max-w-sm">
+                                <DialogHeader>
+                                  <DialogTitle>QR-Code: {token.label}</DialogTitle>
+                                </DialogHeader>
+                                <div className="flex flex-col items-center gap-4 py-4">
+                                  <img
+                                    src={generateQrCodeUrl(token.token)}
+                                    alt="QR Code"
+                                    className="w-64 h-64"
+                                  />
+                                  <p className="text-sm text-muted-foreground text-center break-all">
+                                    {getOrderUrl(token.token)}
+                                  </p>
+                                  <div className="flex gap-2">
+                                    <Button variant="outline" onClick={() => copyToClipboard(token.token)}>
+                                      <Copy className="h-4 w-4 mr-2" />
+                                      Link kopieren
+                                    </Button>
+                                    <Button
+                                      variant="outline"
+                                      onClick={() => {
+                                        const supplierInfo = token.is_multi_supplier 
+                                          ? `Multi-Lieferanten (${token.token_suppliers?.length || 0})`
+                                          : token.supplier?.name || '';
+                                        const printWindow = window.open('', '_blank');
+                                        if (printWindow) {
+                                          printWindow.document.write(`
+                                            <html>
+                                              <head>
+                                                <title>QR-Code: ${token.label}</title>
+                                                <style>
+                                                  body { font-family: Arial, sans-serif; text-align: center; padding: 40px; }
+                                                  h1 { font-size: 24px; margin-bottom: 20px; }
+                                                  img { width: 300px; height: 300px; }
+                                                  p { color: #666; margin-top: 20px; }
+                                                </style>
+                                              </head>
+                                              <body>
+                                                <h1>${token.label}</h1>
+                                                <img src="${generateQrCodeUrl(token.token)}" alt="QR Code" />
+                                                <p style="margin-top:20px;color:#666;">${supplierInfo}</p>
+                                              </body>
+                                            </html>
+                                          `);
+                                          printWindow.document.close();
+                                          printWindow.print();
+                                        }
+                                      }}
+                                    >
+                                      Drucken
+                                    </Button>
+                                  </div>
+                                </div>
+                              </DialogContent>
+                            </Dialog>
+
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button variant="outline" size="icon" className="text-destructive hover:text-destructive">
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Bestelllink löschen?</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Der Link "{token.label}" wird dauerhaft gelöscht und kann nicht mehr verwendet werden.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={() => deleteToken.mutate(token.id)}
+                                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                  >
+                                    Löschen
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </div>
+                        </div>
+                      </Card>
+                    ))}
                   </div>
-                </Card>
-              ))}
-            </div>
-          </TabsContent>
-        </Tabs>
-        )}
+                </TabsContent>
+              </Tabs>
+            )}
           </TabsContent>
         </Tabs>
 
