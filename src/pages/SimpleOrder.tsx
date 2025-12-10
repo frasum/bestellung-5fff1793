@@ -577,7 +577,9 @@ const SimpleOrder = () => {
                             {article.name}
                           </h3>
                           <p className="text-muted-foreground text-sm">
-                            {article.description ? `${article.description} (${article.unit})` : article.unit}
+                            {article.description 
+                              ? `${article.description} (${article.unit}${article.packaging_unit && article.packaging_unit > 1 ? `, ${article.packaging_unit}er` : ''})` 
+                              : `${article.unit}${article.packaging_unit && article.packaging_unit > 1 ? ` (${article.packaging_unit}er)` : ''}`}
                           </p>
                         </div>
 
