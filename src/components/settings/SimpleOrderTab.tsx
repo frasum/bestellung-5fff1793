@@ -11,12 +11,14 @@ import { Switch } from '@/components/ui/switch';
 import { Checkbox } from '@/components/ui/checkbox';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, QrCode, Trash2, Copy, ExternalLink, Smartphone, Users, Pencil, User, List, UsersRound } from 'lucide-react';
+import { Plus, QrCode, Trash2, Copy, ExternalLink, Smartphone, Users, Pencil, User, List, UsersRound, Package } from 'lucide-react';
 import { useSuppliers } from '@/hooks/useSuppliers';
 import { useLocations } from '@/hooks/useLocations';
 import { useSimpleOrderTokens, useCreateSimpleOrderToken, useUpdateSimpleOrderToken, useDeleteSimpleOrderToken } from '@/hooks/useSimpleOrderTokens';
+import { useEmployees } from '@/hooks/useEmployees';
 import { useToast } from '@/hooks/use-toast';
 import { EmployeeTokensOverview } from './EmployeeTokensOverview';
+import { EmployeesTab } from './EmployeesTab';
 const LANGUAGES = [
   { code: 'th', name: 'ไทย (Thai)' },
   { code: 'de', name: 'Deutsch' },
@@ -30,10 +32,12 @@ export function SimpleOrderTab() {
   const { data: suppliers, isLoading: suppliersLoading } = useSuppliers();
   const { data: locations } = useLocations();
   const { data: tokens, isLoading: tokensLoading } = useSimpleOrderTokens();
+  const { data: employees = [] } = useEmployees();
   const createToken = useCreateSimpleOrderToken();
   const updateToken = useUpdateSimpleOrderToken();
   const deleteToken = useDeleteSimpleOrderToken();
 
+  const [mainTab, setMainTab] = useState<'links' | 'employees'>('links');
   const [viewMode, setViewMode] = useState<'list' | 'grouped'>('grouped');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedQrToken, setSelectedQrToken] = useState<string | null>(null);
@@ -44,6 +48,7 @@ export function SimpleOrderTab() {
     location_id: '',
     language: 'th',
     employee_name: '',
+    employee_id: '',
   });
 
   // Edit state
@@ -56,6 +61,7 @@ export function SimpleOrderTab() {
     location_id: '',
     language: 'th',
     employee_name: '',
+    employee_id: '',
   });
 
   const openEditDialog = (token: any) => {
@@ -66,6 +72,7 @@ export function SimpleOrderTab() {
       location_id: token.location_id || '',
       language: token.language,
       employee_name: token.employee_name || '',
+      employee_id: token.employee_id || token.employee?.id || '',
     });
     if (token.is_multi_supplier && token.token_suppliers) {
       setEditSelectedSupplierIds(token.token_suppliers.map((ts: any) => ts.supplier_id));
@@ -103,7 +110,8 @@ export function SimpleOrderTab() {
         is_multi_supplier: true,
         supplier_id: null,
         supplier_ids: editSelectedSupplierIds,
-        employee_name: editFormData.employee_name || null,
+        employee_id: editFormData.employee_id || null,
+        employee_name: !editFormData.employee_id ? (editFormData.employee_name || null) : null,
       });
     } else {
       if (!editFormData.supplier_id) {
@@ -127,7 +135,8 @@ export function SimpleOrderTab() {
         is_multi_supplier: false,
         supplier_id: editFormData.supplier_id,
         supplier_ids: [],
-        employee_name: editFormData.employee_name || null,
+        employee_id: editFormData.employee_id || null,
+        employee_name: !editFormData.employee_id ? (editFormData.employee_name || null) : null,
       });
     }
 
@@ -167,7 +176,8 @@ export function SimpleOrderTab() {
         label,
         language: formData.language,
         is_multi_supplier: true,
-        employee_name: formData.employee_name || null,
+        employee_id: formData.employee_id || null,
+        employee_name: !formData.employee_id ? (formData.employee_name || null) : null,
       });
     } else {
       if (!formData.supplier_id) {
@@ -188,12 +198,13 @@ export function SimpleOrderTab() {
         location_id: formData.location_id || null,
         label,
         language: formData.language,
-        employee_name: formData.employee_name || null,
+        employee_id: formData.employee_id || null,
+        employee_name: !formData.employee_id ? (formData.employee_name || null) : null,
       });
     }
 
     setIsDialogOpen(false);
-    setFormData({ supplier_id: '', location_id: '', language: 'th', employee_name: '' });
+    setFormData({ supplier_id: '', location_id: '', language: 'th', employee_name: '', employee_id: '' });
     setSelectedSupplierIds([]);
     setIsMultiSupplier(false);
   };
@@ -248,7 +259,7 @@ export function SimpleOrderTab() {
             if (!open) {
               setIsMultiSupplier(false);
               setSelectedSupplierIds([]);
-              setFormData({ supplier_id: '', location_id: '', language: 'th', employee_name: '' });
+              setFormData({ supplier_id: '', location_id: '', language: 'th', employee_name: '', employee_id: '' });
             }
           }}>
             <DialogTrigger asChild>
@@ -357,14 +368,29 @@ export function SimpleOrderTab() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label>{t('settings.simpleOrder.employeeName', 'Mitarbeitername')} ({t('common.optional', 'optional')})</Label>
-                  <Input
-                    value={formData.employee_name}
-                    onChange={(e) => setFormData(prev => ({ ...prev, employee_name: e.target.value }))}
-                    placeholder={t('settings.simpleOrder.employeeNamePlaceholder', 'z.B. Somchai, Maria')}
-                  />
+                  <Label>{t('settings.simpleOrder.employee', 'Mitarbeiter')} ({t('common.optional', 'optional')})</Label>
+                  <Select
+                    value={formData.employee_id || 'none'}
+                    onValueChange={(value) => setFormData(prev => ({ 
+                      ...prev, 
+                      employee_id: value === 'none' ? '' : value,
+                      employee_name: value === 'none' ? prev.employee_name : ''
+                    }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Mitarbeiter auswählen" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Kein Mitarbeiter zugewiesen</SelectItem>
+                      {employees.filter(e => e.is_active).map((employee) => (
+                        <SelectItem key={employee.id} value={employee.id}>
+                          {employee.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   <p className="text-xs text-muted-foreground">
-                    {t('settings.simpleOrder.employeeNameHint', 'Wenn gesetzt, wird der Name automatisch ausgefüllt und ist nicht änderbar')}
+                    {t('settings.simpleOrder.employeeHint', 'Der Name wird automatisch ausgefüllt und ist nicht änderbar')}
                   </p>
                 </div>
 
@@ -401,6 +427,23 @@ export function SimpleOrderTab() {
         </div>
       </CardHeader>
       <CardContent>
+        <Tabs value={mainTab} onValueChange={(v) => setMainTab(v as 'links' | 'employees')} className="space-y-4">
+          <TabsList>
+            <TabsTrigger value="links" className="flex items-center gap-2">
+              <QrCode className="h-4 w-4" />
+              Bestelllinks
+            </TabsTrigger>
+            <TabsTrigger value="employees" className="flex items-center gap-2">
+              <User className="h-4 w-4" />
+              Mitarbeiter
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="employees">
+            <EmployeesTab />
+          </TabsContent>
+
+          <TabsContent value="links">
         {tokensLoading ? (
           <div className="text-center py-8 text-muted-foreground">
             {t('common.loading')}
@@ -596,6 +639,8 @@ export function SimpleOrderTab() {
           </TabsContent>
         </Tabs>
         )}
+          </TabsContent>
+        </Tabs>
 
         {/* Edit Dialog */}
         <Dialog open={isEditDialogOpen} onOpenChange={(open) => {

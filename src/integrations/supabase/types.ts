@@ -493,6 +493,50 @@ export type Database = {
           },
         ]
       }
+      employees: {
+        Row: {
+          created_at: string
+          email: string | null
+          id: string
+          is_active: boolean
+          name: string
+          notes: string | null
+          organization_id: string
+          phone: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          notes?: string | null
+          organization_id: string
+          phone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          notes?: string | null
+          organization_id?: string
+          phone?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employees_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       inventory_items: {
         Row: {
           article_id: string
@@ -963,6 +1007,7 @@ export type Database = {
       simple_order_tokens: {
         Row: {
           created_at: string
+          employee_id: string | null
           employee_name: string | null
           expires_at: string | null
           id: string
@@ -977,6 +1022,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          employee_id?: string | null
           employee_name?: string | null
           expires_at?: string | null
           id?: string
@@ -991,6 +1037,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          employee_id?: string | null
           employee_name?: string | null
           expires_at?: string | null
           id?: string
@@ -1004,6 +1051,13 @@ export type Database = {
           token?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "simple_order_tokens_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "simple_order_tokens_location_id_fkey"
             columns: ["location_id"]
