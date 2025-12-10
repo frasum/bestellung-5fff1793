@@ -236,7 +236,19 @@ const Suppliers = () => {
 
   const handlePrintCombined = () => {
     const selectedSuppliersData = suppliers?.filter(s => selectedSuppliers.has(s.id)) || [];
-    generateCombinedOrderListPdf(selectedSuppliersData, articlesBySupplier);
+    // Enrich articles with last order quantities
+    const enrichedArticlesBySupplier = Object.fromEntries(
+      Object.entries(articlesBySupplier).map(([supplierId, articles]) => [
+        supplierId,
+        articles.map(a => ({
+          name: a.name,
+          unit: a.unit,
+          sku: a.sku,
+          lastOrderQuantity: lastOrderMap?.[a.id]?.quantity
+        }))
+      ])
+    );
+    generateCombinedOrderListPdf(selectedSuppliersData, enrichedArticlesBySupplier);
     setSelectedSuppliers(new Set());
   };
 
@@ -540,7 +552,12 @@ const Suppliers = () => {
                 onSendInvitation={handleSendInvitation}
                 onShowChanges={setChangesDialogSupplier}
                 onShowLocations={setLocationsDialogSupplier}
-                onPrintOrderList={(supplier, articles) => generateOrderListPdf(supplier, articles)}
+                onPrintOrderList={(supplier, articles) => generateOrderListPdf(supplier, articles.map(a => ({
+                  name: a.name,
+                  unit: a.unit,
+                  sku: a.sku,
+                  lastOrderQuantity: lastOrderMap?.[a.id]?.quantity
+                })))}
                 onArticleChangeClick={(article, supplier) => {
                   setChangesDialogSupplier(supplier);
                   setChangesDialogArticle({ id: article.id, name: article.name });

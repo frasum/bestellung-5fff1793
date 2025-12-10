@@ -7,6 +7,7 @@ interface OrderListArticle {
   name: string;
   unit: string;
   sku?: string | null;
+  lastOrderQuantity?: number;
 }
 
 interface OrderListSupplier {
@@ -41,12 +42,13 @@ export const generateOrderListPdf = (
   const tableData = articles.map((article) => [
     article.sku ? `${article.name} (${article.sku})` : article.name,
     article.unit,
+    article.lastOrderQuantity != null ? String(article.lastOrderQuantity) : '–',
     '', // Menge (quantity) - empty for filling in
     '', // Notiz (notes) - empty for filling in
   ]);
 
   autoTable(doc, {
-    head: [['Artikel', 'Einheit', 'Menge', 'Notiz']],
+    head: [['Artikel', 'Einheit', 'Letzte', 'Menge', 'Notiz']],
     body: tableData,
     startY: 54,
     styles: {
@@ -62,9 +64,10 @@ export const generateOrderListPdf = (
     },
     columnStyles: {
       0: { cellWidth: 'auto' },
-      1: { cellWidth: 25 },
-      2: { cellWidth: 25, halign: 'center' },
-      3: { cellWidth: 40 },
+      1: { cellWidth: 22 },
+      2: { cellWidth: 20, halign: 'center' },
+      3: { cellWidth: 22, halign: 'center' },
+      4: { cellWidth: 35 },
     },
     alternateRowStyles: {
       fillColor: [250, 250, 250],
@@ -133,11 +136,12 @@ export const generateCombinedOrderListPdf = (
     const tableData = articles.map((article) => [
       article.sku ? `${article.name} (${article.sku})` : article.name,
       article.unit,
+      article.lastOrderQuantity != null ? String(article.lastOrderQuantity) : '–',
       '', // Menge
     ]);
 
     autoTable(doc, {
-      head: [['Artikel', 'Einh.', 'Menge']],
+      head: [['Artikel', 'Einh.', 'Letzte', 'Menge']],
       body: tableData,
       startY: currentY,
       margin: { left: 10, right: 10 },
@@ -157,8 +161,9 @@ export const generateCombinedOrderListPdf = (
       },
       columnStyles: {
         0: { cellWidth: 'auto' },
-        1: { cellWidth: 18, halign: 'center' },
-        2: { cellWidth: 22, halign: 'center' },
+        1: { cellWidth: 15, halign: 'center' },
+        2: { cellWidth: 18, halign: 'center' },
+        3: { cellWidth: 20, halign: 'center' },
       },
       alternateRowStyles: {
         fillColor: [248, 248, 248],
