@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useCart } from '@/contexts/CartContext';
 import { useArticles } from '@/hooks/useArticles';
+import { useLocations } from '@/hooks/useLocations';
 import { useToast } from '@/hooks/use-toast';
 import { useApproveSubmission } from '@/hooks/useEmployeeSubmissions';
 import type { EmployeeOrderSubmission } from '@/hooks/useEmployeeSubmissions';
@@ -27,6 +28,7 @@ export default function StaffSubmissionHistory({
   const { t } = useTranslation();
   const { addItem } = useCart();
   const { data: articles = [] } = useArticles();
+  const { data: locations = [] } = useLocations();
   const { toast } = useToast();
   const navigate = useNavigate();
   const [addedSubmissionIds, setAddedSubmissionIds] = useState<string[]>([]);
@@ -148,6 +150,12 @@ export default function StaffSubmissionHistory({
     return sourceData?.supplier_name || null;
   };
 
+  const getLocationName = (locationId: string | null): string | null => {
+    if (!locationId) return null;
+    const location = locations.find(l => l.id === locationId);
+    return location?.short_code || location?.name || null;
+  };
+
   return (
     <div className="space-y-3">
       {submissions.map((submission) => (
@@ -198,11 +206,21 @@ export default function StaffSubmissionHistory({
               </div>
             </div>
 
-            {/* Show employee name for simple orders or submitter for other types */}
-            {submission.submission_type === 'simple' && getEmployeeName(submission) ? (
-              <div className="flex items-center gap-1.5 text-sm font-medium text-foreground mb-2">
-                <User className="h-4 w-4 text-primary" />
-                <span>👤 {getEmployeeName(submission)}</span>
+            {/* Show employee name and location for simple orders or submitter for other types */}
+            {submission.submission_type === 'simple' && (getEmployeeName(submission) || submission.location_id) ? (
+              <div className="flex items-center gap-3 text-sm font-medium text-foreground mb-2 flex-wrap">
+                {getEmployeeName(submission) && (
+                  <div className="flex items-center gap-1.5">
+                    <User className="h-4 w-4 text-primary" />
+                    <span>{getEmployeeName(submission)}</span>
+                  </div>
+                )}
+                {submission.location_id && getLocationName(submission.location_id) && (
+                  <div className="flex items-center gap-1.5 text-muted-foreground">
+                    <MapPin className="h-4 w-4" />
+                    <span>{getLocationName(submission.location_id)}</span>
+                  </div>
+                )}
               </div>
             ) : showSubmitter && submission.submitter && (
               <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-2">
