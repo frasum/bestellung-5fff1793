@@ -5,8 +5,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { LayoutDashboard, Users, Package, ShoppingCart, BarChart3, Settings, LogOut, Menu, X, FlaskConical, Search, Sparkles } from 'lucide-react';
-import { useHasRole } from '@/hooks/useUserRole';
-import { usePendingSubmissionsCount } from '@/hooks/useEmployeeSubmissions';
 import { GlobalSearch } from '@/components/GlobalSearch';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import { LocationSwitcher } from '@/components/LocationSwitcher';
@@ -43,8 +41,6 @@ export const DashboardLayout = ({
   
   
   const { data: organization } = useOrganization();
-  const { hasRole: canSeeAllSubmissions } = useHasRole(['admin', 'manager']);
-  const { data: pendingCount = 0 } = usePendingSubmissionsCount();
   
   // Calculate demo days remaining
   const getDemoDaysRemaining = () => {
@@ -60,12 +56,7 @@ export const DashboardLayout = ({
   
   const navItems = [
     { href: '/suppliers', label: t('nav.catalog'), icon: Users },
-    { 
-      href: '/orders', 
-      label: t('nav.orders'), 
-      icon: ShoppingCart,
-      badge: canSeeAllSubmissions && pendingCount > 0 ? pendingCount : undefined,
-    },
+    { href: '/orders', label: t('nav.orders'), icon: ShoppingCart },
     { href: '/reports', label: t('nav.reports'), icon: BarChart3 },
     { href: '/settings', label: t('nav.settings'), icon: Settings },
   ];
@@ -175,11 +166,6 @@ export const DashboardLayout = ({
                 >
                   <item.icon className="w-5 h-5" />
                   <span className="font-medium flex-1">{item.label}</span>
-                  {'badge' in item && item.badge && (
-                    <Badge variant="destructive" className="h-5 min-w-5 flex items-center justify-center text-xs">
-                      {item.badge}
-                    </Badge>
-                  )}
                 </Link>
               );
             })}
