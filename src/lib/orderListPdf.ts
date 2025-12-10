@@ -8,6 +8,7 @@ interface OrderListArticle {
   unit: string;
   sku?: string | null;
   lastOrderQuantity?: number;
+  lastOrderDate?: string;
 }
 
 interface OrderListSupplier {
@@ -39,10 +40,20 @@ export const generateOrderListPdf = (
   doc.text(`Artikel: ${articles.length}`, 14, 46);
   
   // Table with articles - empty columns for quantity and notes
+  const formatLastOrder = (article: OrderListArticle) => {
+    if (article.lastOrderQuantity == null) return '–';
+    const qty = String(article.lastOrderQuantity);
+    if (article.lastOrderDate) {
+      const dateStr = format(new Date(article.lastOrderDate), 'dd.MM.', { locale: de });
+      return `${qty} (${dateStr})`;
+    }
+    return qty;
+  };
+
   const tableData = articles.map((article) => [
     article.sku ? `${article.name} (${article.sku})` : article.name,
     article.unit,
-    article.lastOrderQuantity != null ? String(article.lastOrderQuantity) : '–',
+    formatLastOrder(article),
     '', // Menge (quantity) - empty for filling in
     '', // Notiz (notes) - empty for filling in
   ]);
@@ -133,10 +144,20 @@ export const generateCombinedOrderListPdf = (
     currentY += 3;
     
     // Compact table
+    const formatLastOrder = (article: OrderListArticle) => {
+      if (article.lastOrderQuantity == null) return '–';
+      const qty = String(article.lastOrderQuantity);
+      if (article.lastOrderDate) {
+        const dateStr = format(new Date(article.lastOrderDate), 'dd.MM.', { locale: de });
+        return `${qty} (${dateStr})`;
+      }
+      return qty;
+    };
+
     const tableData = articles.map((article) => [
       article.sku ? `${article.name} (${article.sku})` : article.name,
       article.unit,
-      article.lastOrderQuantity != null ? String(article.lastOrderQuantity) : '–',
+      formatLastOrder(article),
       '', // Menge
     ]);
 
