@@ -1,7 +1,8 @@
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Check, X, Shield } from 'lucide-react';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Check, X, Shield, ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 type Role = 'admin' | 'manager' | 'purchaser' | 'viewer';
@@ -81,6 +82,7 @@ const ROLES: Role[] = ['admin', 'manager', 'purchaser', 'viewer'];
 
 export const PermissionsOverview = () => {
   const { t } = useTranslation();
+  const [isOpen, setIsOpen] = useState(false);
 
   const categories = [...new Set(PERMISSIONS.map((p) => p.category))];
 
@@ -103,60 +105,68 @@ export const PermissionsOverview = () => {
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Shield className="h-5 w-5" />
-          {t('settings.permissions.title')}
-        </CardTitle>
-        <CardDescription>{t('settings.permissions.description')}</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="overflow-x-auto -mx-6 px-6">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[250px]">{t('settings.permissions.permission')}</TableHead>
-                {ROLES.map((role) => (
-                  <TableHead key={role} className="text-center w-[100px]">
-                    {t(`settings.roles.${role}`)}
-                  </TableHead>
-                ))}
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {categories.map((category) => (
-                <>
-                  <TableRow key={`category-${category}`} className="bg-muted/50">
-                    <TableCell colSpan={5} className="font-semibold text-sm py-2">
-                      {getCategoryLabel(category)}
-                    </TableCell>
-                  </TableRow>
-                  {PERMISSIONS.filter((p) => p.category === category).map((permission) => (
-                    <TableRow key={permission.key}>
-                      <TableCell className="text-sm pl-6">
-                        {getPermissionLabel(permission.key)}
-                      </TableCell>
-                      {ROLES.map((role) => {
-                        const hasPermission = PERMISSION_MATRIX[permission.key]?.[role] ?? false;
-                        return (
-                          <TableCell key={role} className="text-center">
-                            {hasPermission ? (
-                              <Check className={cn("h-5 w-5 mx-auto text-green-600 dark:text-green-400")} />
-                            ) : (
-                              <X className={cn("h-5 w-5 mx-auto text-muted-foreground/40")} />
-                            )}
-                          </TableCell>
-                        );
-                      })}
-                    </TableRow>
-                  ))}
-                </>
-              ))}
-            </TableBody>
-          </Table>
+    <Collapsible open={isOpen} onOpenChange={setIsOpen} className="border rounded-lg">
+      <CollapsibleTrigger className="flex items-center justify-between w-full p-4 hover:bg-muted/50 transition-colors">
+        <div className="flex items-center gap-2">
+          <Shield className="h-5 w-5 text-muted-foreground" />
+          <div className="text-left">
+            <h3 className="font-semibold">{t('settings.permissions.title')}</h3>
+            <p className="text-sm text-muted-foreground">{t('settings.permissions.description')}</p>
+          </div>
         </div>
-      </CardContent>
-    </Card>
+        <ChevronDown className={cn(
+          "h-5 w-5 text-muted-foreground transition-transform duration-200",
+          isOpen && "rotate-180"
+        )} />
+      </CollapsibleTrigger>
+      <CollapsibleContent>
+        <div className="border-t p-4">
+          <div className="overflow-x-auto -mx-4 px-4">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-[250px]">{t('settings.permissions.permission')}</TableHead>
+                  {ROLES.map((role) => (
+                    <TableHead key={role} className="text-center w-[100px]">
+                      {t(`settings.roles.${role}`)}
+                    </TableHead>
+                  ))}
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {categories.map((category) => (
+                  <>
+                    <TableRow key={`category-${category}`} className="bg-muted/50">
+                      <TableCell colSpan={5} className="font-semibold text-sm py-2">
+                        {getCategoryLabel(category)}
+                      </TableCell>
+                    </TableRow>
+                    {PERMISSIONS.filter((p) => p.category === category).map((permission) => (
+                      <TableRow key={permission.key}>
+                        <TableCell className="text-sm pl-6">
+                          {getPermissionLabel(permission.key)}
+                        </TableCell>
+                        {ROLES.map((role) => {
+                          const hasPermission = PERMISSION_MATRIX[permission.key]?.[role] ?? false;
+                          return (
+                            <TableCell key={role} className="text-center">
+                              {hasPermission ? (
+                                <Check className={cn("h-5 w-5 mx-auto text-green-600 dark:text-green-400")} />
+                              ) : (
+                                <X className={cn("h-5 w-5 mx-auto text-muted-foreground/40")} />
+                              )}
+                            </TableCell>
+                          );
+                        })}
+                      </TableRow>
+                    ))}
+                  </>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </div>
+      </CollapsibleContent>
+    </Collapsible>
   );
 };
