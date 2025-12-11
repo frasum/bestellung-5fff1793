@@ -582,7 +582,8 @@
     "loadTitle": "Vorbestellung laden",
     "loadDescription": "Der aktuelle Warenkorb wird durch die Vorbestellung ersetzt. Möchten Sie fortfahren?",
     "replaceCart": "Warenkorb ersetzen",
-    "more": "weitere"
+    "more": "weitere",
+    "newEasyOrder": "🔔 Neue EasyOrder eingegangen!"
   },
   "inventory": {
     "title": "Inventur",

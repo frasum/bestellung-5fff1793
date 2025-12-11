@@ -36,7 +36,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { format, isAfter, isBefore, startOfDay, endOfDay, subDays, subMonths, Locale } from 'date-fns';
 import { de, enUS, fr } from 'date-fns/locale';
-import { Loader2, Package, CheckCircle2, Clock, Truck, XCircle, Eye, Search, X, ChevronDown, Trash2, FlaskConical, Filter, FileText, ShoppingCart, Calendar, Smartphone, MapPin } from 'lucide-react';
+import { Loader2, Package, CheckCircle2, Clock, Truck, XCircle, Eye, Search, X, ChevronDown, Trash2, FlaskConical, Filter, FileText, ShoppingCart, Calendar, Smartphone, MapPin, Bell } from 'lucide-react';
 import { SimpleOrderTab } from '@/components/settings/SimpleOrderTab';
 import {
   Popover,
@@ -967,7 +967,10 @@ const Orders = () => {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-3 mb-2">
                           {draft.name.startsWith('EasyOrder:') ? (
-                            <Smartphone className="w-5 h-5 text-primary" />
+                            <div className="flex items-center gap-1.5">
+                              <Smartphone className="w-5 h-5 text-primary" />
+                              <Bell className="w-4 h-4 text-red-500 animate-pulse" />
+                            </div>
                           ) : (
                             <FileText className="w-5 h-5 text-primary" />
                           )}
