@@ -478,14 +478,14 @@ const Suppliers = () => {
                   />
                 )}
                 {advancedSettingsEnabled && (
-                  <Button variant="outline" onClick={() => setIsSupplierImportOpen(true)}>
-                    <Upload className="w-4 h-4 mr-2" />
-                    Importieren
+                  <Button variant="outline" className="h-10 sm:h-9" onClick={() => setIsSupplierImportOpen(true)}>
+                    <Upload className="w-4 h-4 sm:mr-2" />
+                    <span className="hidden sm:inline">Importieren</span>
                   </Button>
                 )}
-                <Button onClick={() => { setEditingSupplier(null); setIsSupplierDialogOpen(true); }}>
-                  <Plus className="w-4 h-4 mr-2" />
-                  Lieferant hinzufügen
+                <Button className="h-10 sm:h-9" onClick={() => { setEditingSupplier(null); setIsSupplierDialogOpen(true); }}>
+                  <Plus className="w-4 h-4 sm:mr-2" />
+                  <span className="hidden sm:inline">Lieferant hinzufügen</span>
                 </Button>
               </div>
             </div>
@@ -625,14 +625,14 @@ const Suppliers = () => {
                   />
                 )}
                 {advancedSettingsEnabled && (
-                  <Button variant="outline" onClick={() => setIsArticleImportOpen(true)}>
-                    <Upload className="w-4 h-4 mr-2" />
-                    Importieren
+                  <Button variant="outline" className="h-10 sm:h-9" onClick={() => setIsArticleImportOpen(true)}>
+                    <Upload className="w-4 h-4 sm:mr-2" />
+                    <span className="hidden sm:inline">Importieren</span>
                   </Button>
                 )}
-                <Button onClick={() => { setEditingArticle(null); setIsArticleDialogOpen(true); }}>
-                  <Plus className="w-4 h-4 mr-2" />
-                  Artikel hinzufügen
+                <Button className="h-10 sm:h-9" onClick={() => { setEditingArticle(null); setIsArticleDialogOpen(true); }}>
+                  <Plus className="w-4 h-4 sm:mr-2" />
+                  <span className="hidden sm:inline">Artikel hinzufügen</span>
                 </Button>
               </div>
             </div>
