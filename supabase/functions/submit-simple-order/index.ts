@@ -86,10 +86,21 @@ serve(async (req) => {
 
     const supplierId = requestSupplierId || tokenData.supplier_id;
 
+    // Fetch supplier name - for multi-supplier tokens, we need to query the DB
+    let supplierName = tokenData.supplier?.name;
+    if (!supplierName && supplierId) {
+      const { data: supplierData } = await supabase
+        .from('suppliers')
+        .select('name')
+        .eq('id', supplierId)
+        .single();
+      supplierName = supplierData?.name;
+    }
+    supplierName = supplierName || 'Unbekannt';
+
     // Create cart draft with EasyOrder naming convention
     const draftName = `EasyOrder: ${employee_name}`;
-    const supplierName = tokenData.supplier?.name || 'Lieferant';
-    const notes = `EasyOrder-Bestellung von ${employee_name}\nLieferant: ${supplierName}\nToken: ${tokenData.label}`;
+    const notes = `Lieferant: ${supplierName}`;
 
     const { data: draft, error: draftError } = await supabase
       .from('cart_drafts')

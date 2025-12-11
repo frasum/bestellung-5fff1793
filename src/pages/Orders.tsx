@@ -986,7 +986,7 @@ const Orders = () => {
                           </span>
                         </div>
                         {draft.notes && (
-                          <p className="text-sm text-muted-foreground mt-2 truncate">
+                          <p className="text-sm text-muted-foreground mt-2">
                             {draft.notes}
                           </p>
                         )}
