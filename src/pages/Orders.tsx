@@ -79,8 +79,8 @@ const Orders = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const { t, i18n } = useTranslation();
   
-  // Location filter state: 'active' = current location, 'all' = all locations, or specific location id
-  const [locationFilter, setLocationFilter] = useState<string>('active');
+  // Location filter state: 'all' = all locations (default), 'active' = current location, or specific location id
+  const [locationFilter, setLocationFilter] = useState<string>('all');
   
   // Compute locationId for query based on filter
   const queryLocationId = useMemo(() => {
