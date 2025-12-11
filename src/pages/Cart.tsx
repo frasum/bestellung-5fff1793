@@ -121,13 +121,14 @@ const Cart = () => {
             </p>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={() => setScanDialogOpen(true)}>
-              <Camera className="w-4 h-4 mr-2" />
-              {t('scan.title')}
+            <Button variant="outline" onClick={() => setScanDialogOpen(true)} className="h-10 sm:h-9">
+              <Camera className="w-4 h-4 sm:mr-2" />
+              <span className="hidden sm:inline">{t('scan.title')}</span>
             </Button>
             {items.length > 0 && (
-              <Button variant="outline" onClick={clearCart}>
-                {t('common.delete')}
+              <Button variant="outline" onClick={clearCart} className="h-10 sm:h-9">
+                <span className="hidden sm:inline">{t('common.delete')}</span>
+                <Trash2 className="w-4 h-4 sm:hidden" />
               </Button>
             )}
           </div>
@@ -361,27 +362,29 @@ const Cart = () => {
 
         {/* Save as Draft Dialog */}
         <Dialog open={saveDialogOpen} onOpenChange={setSaveDialogOpen}>
-          <DialogContent>
+          <DialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-md">
             <DialogHeader>
               <DialogTitle>{t('cart.saveAsDraft')}</DialogTitle>
               <DialogDescription>
                 {t('drafts.emptyDescription')}
               </DialogDescription>
             </DialogHeader>
-            <div className="py-4">
+            <div className="py-3 sm:py-4">
               <Input
                 placeholder={t('cart.draftName')}
                 value={draftName}
                 onChange={(e) => setDraftName(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSaveDraft()}
+                className="h-11 sm:h-9"
               />
             </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setSaveDialogOpen(false)}>
+            <DialogFooter className="flex-col sm:flex-row gap-2">
+              <Button variant="outline" onClick={() => setSaveDialogOpen(false)} className="w-full sm:w-auto h-10 sm:h-9">
                 {t('common.cancel')}
               </Button>
               <Button 
                 onClick={handleSaveDraft}
+                className="w-full sm:w-auto h-10 sm:h-9"
                 disabled={!draftName.trim() || createDraft.isPending}
               >
                 {createDraft.isPending ? (

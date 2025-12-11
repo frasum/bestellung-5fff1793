@@ -308,11 +308,11 @@ const Checkout = () => {
               })}
             </div>
           </div>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button variant="outline" onClick={() => navigate('/orders')}>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <Button variant="outline" onClick={() => navigate('/orders')} className="h-11 sm:h-10 w-full sm:w-auto">
               {t('nav.orders')}
             </Button>
-            <Button onClick={() => navigate('/articles')}>
+            <Button onClick={() => navigate('/articles')} className="h-11 sm:h-10 w-full sm:w-auto">
               {t('orders.browseArticles')}
             </Button>
           </div>
