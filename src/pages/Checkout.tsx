@@ -50,7 +50,7 @@ const Checkout = () => {
 
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
-  const { items, getTotal, clearCart, updateQuantity, removeItem } = useCart();
+  const { items, getTotal, clearCart, updateQuantity, removeItem, draftDeliveryDate, draftTimeWindow } = useCart();
   const { activeLocation } = useLocationContext();
   const createOrder = useCreateOrder();
   const { data: deliveryAddresses, isLoading: addressesLoading } = useDeliveryAddresses(activeLocation?.id);
@@ -96,6 +96,16 @@ const Checkout = () => {
       }
     }
   }, [deliveryAddresses, userDeliveryPreference, form]);
+
+  // Pre-fill delivery date and time window from draft
+  useEffect(() => {
+    if (draftDeliveryDate) {
+      form.setValue('deliveryDate', draftDeliveryDate);
+    }
+    if (draftTimeWindow) {
+      form.setValue('deliveryTimeWindow', draftTimeWindow);
+    }
+  }, [draftDeliveryDate, draftTimeWindow, form]);
 
   useEffect(() => {
     if (!authLoading && !user) {

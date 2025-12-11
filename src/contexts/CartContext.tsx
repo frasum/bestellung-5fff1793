@@ -16,7 +16,9 @@ interface CartContextType {
   getTotal: () => number;
   getItemCount: () => number;
   getItemsBySupplier: () => Map<string, CartItem[]>;
-  loadFromDraft: (draftItems: CartItem[]) => void;
+  loadFromDraft: (draftItems: CartItem[], deliveryDate?: string | null, timeWindow?: string | null) => void;
+  draftDeliveryDate: Date | null;
+  draftTimeWindow: string | null;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -31,6 +33,8 @@ export const useCart = () => {
 
 export const CartProvider = ({ children }: { children: ReactNode }) => {
   const [items, setItems] = useState<CartItem[]>([]);
+  const [draftDeliveryDate, setDraftDeliveryDate] = useState<Date | null>(null);
+  const [draftTimeWindow, setDraftTimeWindow] = useState<string | null>(null);
 
   const addItem = useCallback((article: Article, quantity = 1) => {
     setItems((prev) => {
@@ -67,6 +71,8 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
 
   const clearCart = useCallback(() => {
     setItems([]);
+    setDraftDeliveryDate(null);
+    setDraftTimeWindow(null);
   }, []);
 
   const getTotal = useCallback(() => {
@@ -91,8 +97,14 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     return supplierMap;
   }, [items]);
 
-  const loadFromDraft = useCallback((draftItems: CartItem[]) => {
+  const loadFromDraft = useCallback((
+    draftItems: CartItem[],
+    deliveryDate?: string | null,
+    timeWindow?: string | null
+  ) => {
     setItems(draftItems);
+    setDraftDeliveryDate(deliveryDate ? new Date(deliveryDate) : null);
+    setDraftTimeWindow(timeWindow || null);
     toast.success('Entwurf in den Warenkorb geladen');
   }, []);
 
@@ -108,6 +120,8 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         getItemCount,
         getItemsBySupplier,
         loadFromDraft,
+        draftDeliveryDate,
+        draftTimeWindow,
       }}
     >
       {children}
