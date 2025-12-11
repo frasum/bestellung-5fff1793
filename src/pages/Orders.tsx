@@ -727,14 +727,24 @@ const Orders = () => {
                                   </Badge>
                                 </div>
                                 <div className="flex items-center justify-between pl-6 text-sm">
-                                  <span className="text-muted-foreground">
-                                    {format(new Date(order.created_at), 'd. MMM', { locale })}
+                                  <div className="flex items-center gap-2 text-muted-foreground">
+                                    <span>
+                                      {format(new Date(order.created_at), 'd. MMM', { locale })}
+                                    </span>
                                     {order.is_test_order && (
-                                      <span className="ml-2 text-warning">
+                                      <span className="text-warning">
                                         <FlaskConical className="w-3 h-3 inline" />
                                       </span>
                                     )}
-                                  </span>
+                                    {order.location_id && locations && (() => {
+                                      const loc = locations.find(l => l.id === order.location_id);
+                                      return loc ? (
+                                        <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                                          {loc.short_code || loc.name}
+                                        </Badge>
+                                      ) : null;
+                                    })()}
+                                  </div>
                                   <span className="font-bold text-foreground">€{Number(order.total_amount).toFixed(2)}</span>
                                 </div>
                               </div>
@@ -767,6 +777,15 @@ const Orders = () => {
                                   <span className="text-sm text-muted-foreground">
                                     {format(new Date(order.created_at), 'EEEE d. MMM yyyy', { locale })}
                                   </span>
+                                  {order.location_id && locations && (() => {
+                                    const loc = locations.find(l => l.id === order.location_id);
+                                    return loc ? (
+                                      <Badge variant="outline" className="text-xs">
+                                        <MapPin className="w-3 h-3 mr-1" />
+                                        {loc.short_code || loc.name}
+                                      </Badge>
+                                    ) : null;
+                                  })()}
                                   <span className="font-bold text-foreground">€{Number(order.total_amount).toFixed(2)}</span>
                                 </div>
                               </div>
