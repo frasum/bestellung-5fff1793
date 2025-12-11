@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { Pencil, Trash2, Plus, Minus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -18,7 +19,7 @@ interface ArticleCardProps {
   onPendingClick?: () => void;
 }
 
-export const ArticleCard = ({
+export const ArticleCard = memo(({
   article,
   cartQty,
   hasPendingChanges = false,
@@ -149,4 +150,6 @@ export const ArticleCard = ({
       </div>
     </Card>
   );
-};
+});
+
+ArticleCard.displayName = 'ArticleCard';
