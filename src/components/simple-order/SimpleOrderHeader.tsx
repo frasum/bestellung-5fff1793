@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, MapPin } from 'lucide-react';
+import { ArrowLeft, MapPin, ChevronDown } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -8,12 +8,23 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
+interface Supplier {
+  id: string;
+  name: string;
+}
+
 interface SimpleOrderHeaderProps {
   supplierName: string;
   showBackButton: boolean;
   onBack: () => void;
   selectedLocationName: string;
   selectedLocationId: string | null;
+  // New props for quick supplier switch
+  isMultiSupplier?: boolean;
+  selectedSupplierId?: string | null;
+  suppliers?: Supplier[];
+  onSupplierChange?: (supplierId: string) => void;
+  getArticleCount?: (supplierId: string) => number;
 }
 
 const languages = [
@@ -31,9 +42,16 @@ export const SimpleOrderHeader = ({
   onBack,
   selectedLocationName,
   selectedLocationId,
+  isMultiSupplier = false,
+  selectedSupplierId,
+  suppliers = [],
+  onSupplierChange,
+  getArticleCount,
 }: SimpleOrderHeaderProps) => {
   const { i18n, t } = useTranslation();
   const currentLanguage = languages.find(l => l.code === i18n.language) || languages[1];
+
+  const showSupplierDropdown = isMultiSupplier && selectedSupplierId && suppliers.length > 1 && onSupplierChange;
 
   return (
     <div className="sticky top-0 z-10 bg-primary text-primary-foreground shadow-lg">
@@ -58,11 +76,41 @@ export const SimpleOrderHeader = ({
             )}
           </div>
 
-          {/* Center: Supplier name or "Bestellung" */}
+          {/* Center: Supplier name - clickable dropdown for multi-supplier */}
           <div className="flex-1 text-center min-w-0">
-            <h1 className="text-lg font-bold truncate">
-              {supplierName || t('simpleOrder.title', 'Bestellung')}
-            </h1>
+            {showSupplierDropdown ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    className="text-lg font-bold text-primary-foreground hover:bg-primary-foreground/20 gap-1 px-2"
+                  >
+                    <span className="truncate max-w-[150px]">{supplierName}</span>
+                    <ChevronDown className="h-4 w-4 flex-shrink-0" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="center" className="bg-popover min-w-[200px]">
+                  {suppliers.map((supplier) => (
+                    <DropdownMenuItem
+                      key={supplier.id}
+                      onClick={() => onSupplierChange(supplier.id)}
+                      className={supplier.id === selectedSupplierId ? 'bg-accent' : ''}
+                    >
+                      <span className="flex-1">{supplier.name}</span>
+                      {getArticleCount && (
+                        <span className="ml-2 text-muted-foreground text-sm">
+                          ({getArticleCount(supplier.id)})
+                        </span>
+                      )}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <h1 className="text-lg font-bold truncate">
+                {supplierName || t('simpleOrder.title', 'Bestellung')}
+              </h1>
+            )}
           </div>
 
           {/* Right: Location badge + Language dropdown */}
