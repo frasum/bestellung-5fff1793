@@ -806,6 +806,10 @@
     "namePlaceholder": "กรุณาใส่ชื่อของคุณ",
     "selectLocation": "เลือกสถานที่",
     "nameRequired": "กรุณาใส่ชื่อของคุณ",
-    "locationRequired": "กรุณาเลือกสถานที่"
+    "locationRequired": "กรุณาเลือกสถานที่",
+    "changeSupplier": "เปลี่ยน",
+    "title": "สั่งซื้อ",
+    "location": "สถานที่",
+    "hello": "สวัสดี"
   }
 }

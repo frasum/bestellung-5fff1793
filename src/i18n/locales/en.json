@@ -824,6 +824,10 @@
     "namePlaceholder": "Please enter your name",
     "selectLocation": "Select Location",
     "nameRequired": "Please enter your name",
-    "locationRequired": "Please select a location"
+    "locationRequired": "Please select a location",
+    "changeSupplier": "Change",
+    "title": "Order",
+    "location": "Location",
+    "hello": "Hello"
   }
 }

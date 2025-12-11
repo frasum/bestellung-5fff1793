@@ -32,36 +32,41 @@ export const SimpleOrderHeader = ({
   selectedLocationName,
   selectedLocationId,
 }: SimpleOrderHeaderProps) => {
-  const { i18n } = useTranslation();
+  const { i18n, t } = useTranslation();
   const currentLanguage = languages.find(l => l.code === i18n.language) || languages[1];
 
   return (
     <div className="sticky top-0 z-10 bg-primary text-primary-foreground shadow-lg">
       <div className="max-w-2xl mx-auto px-3 py-2">
         <div className="flex items-center justify-between gap-2">
-          {/* Left: Back button (if multi-supplier) */}
-          <div className="w-10">
-            {showBackButton && (
+          {/* Left: Back button with text (if multi-supplier) */}
+          <div className="flex-shrink-0">
+            {showBackButton ? (
               <Button
                 variant="ghost"
-                size="icon"
-                className="h-9 w-9 text-primary-foreground hover:bg-primary-foreground/20"
+                size="sm"
+                className="h-9 px-3 text-primary-foreground hover:bg-primary-foreground/20 gap-1"
                 onClick={onBack}
               >
-                <ArrowLeft className="h-5 w-5" />
+                <ArrowLeft className="h-4 w-4" />
+                <span className="text-sm font-medium">
+                  {t('simpleOrder.changeSupplier', 'Wechseln')}
+                </span>
               </Button>
+            ) : (
+              <div className="w-10" />
             )}
           </div>
 
           {/* Center: Supplier name or "Bestellung" */}
-          <div className="flex-1 text-center">
-            <h1 className="text-xl font-bold truncate">
-              {supplierName || 'Bestellung'}
+          <div className="flex-1 text-center min-w-0">
+            <h1 className="text-lg font-bold truncate">
+              {supplierName || t('simpleOrder.title', 'Bestellung')}
             </h1>
           </div>
 
           {/* Right: Location badge + Language dropdown */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 flex-shrink-0">
             {selectedLocationId && (
               <span className="text-xs bg-primary-foreground/20 px-2 py-1 rounded-full flex items-center gap-1">
                 <MapPin className="h-3 w-3" />
@@ -73,9 +78,9 @@ export const SimpleOrderHeader = ({
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-9 w-9 text-primary-foreground hover:bg-primary-foreground/20"
+                  className="h-8 w-8 text-primary-foreground hover:bg-primary-foreground/20"
                 >
-                  <span className="text-lg">{currentLanguage.flag}</span>
+                  <span className="text-base">{currentLanguage.flag}</span>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="bg-popover">
