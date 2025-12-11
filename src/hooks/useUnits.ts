@@ -23,6 +23,8 @@ export const useUnits = () => {
       if (error) throw error;
       return data as Unit[];
     },
+    staleTime: 10 * 60 * 1000, // 10 minutes
+    gcTime: 30 * 60 * 1000, // 30 minutes
   });
 };
 

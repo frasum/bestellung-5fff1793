@@ -22,6 +22,8 @@ export function useCategories() {
       if (error) throw error;
       return data as Category[];
     },
+    staleTime: 10 * 60 * 1000, // 10 minutes
+    gcTime: 30 * 60 * 1000, // 30 minutes
   });
 }
 

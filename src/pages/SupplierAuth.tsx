@@ -31,7 +31,6 @@ const SupplierAuth = () => {
         });
 
         if (error) {
-          console.error('Token verification error:', error);
           setStatus('error');
           setErrorMessage('Fehler bei der Überprüfung');
           return;
@@ -65,15 +64,12 @@ const SupplierAuth = () => {
         };
         localStorage.setItem('supplierSession', JSON.stringify(supplierSession));
 
-        console.log('Supplier session created:', supplierSession);
-
         setStatus('success');
         
         setTimeout(() => {
           navigate('/supplier-portal');
         }, 1500);
-      } catch (error: any) {
-        console.error('Token verification error:', error);
+      } catch {
         setStatus('error');
         setErrorMessage('Ein Fehler ist aufgetreten');
       }
@@ -105,8 +101,7 @@ const SupplierAuth = () => {
         title: 'Link gesendet',
         description: 'Ein neuer Zugangslink wurde an Ihre E-Mail-Adresse gesendet.',
       });
-    } catch (error: any) {
-      console.error('Error requesting new link:', error);
+    } catch {
       toast({
         title: 'Fehler',
         description: 'Der Link konnte nicht gesendet werden. Bitte versuchen Sie es später erneut.',

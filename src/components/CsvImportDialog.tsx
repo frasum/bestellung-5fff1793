@@ -118,17 +118,15 @@ export const CsvImportDialog = ({
     const firstSheetName = workbook.SheetNames[0];
     const worksheet = workbook.Sheets[firstSheetName];
     
-    console.log('Excel parsing - Sheet name:', firstSheetName);
-    console.log('Excel parsing - Worksheet keys:', Object.keys(worksheet).slice(0, 20));
     
     // Try sheet_to_json with default options first (uses first row as headers automatically)
     const jsonDataWithHeaders = XLSX.utils.sheet_to_json(worksheet) as Record<string, unknown>[];
-    console.log('Excel parsing - JSON with headers sample:', JSON.stringify(jsonDataWithHeaders.slice(0, 3)));
+    
     
     if (jsonDataWithHeaders.length > 0) {
       // Extract headers from the first object's keys
       const headers = Object.keys(jsonDataWithHeaders[0]);
-      console.log('Excel parsing - Detected headers:', headers);
+      
       
       const rows: Record<string, string>[] = jsonDataWithHeaders.map(row => {
         const stringRow: Record<string, string> = {};
@@ -138,13 +136,13 @@ export const CsvImportDialog = ({
         return stringRow;
       });
       
-      console.log('Excel parsing - Rows sample:', JSON.stringify(rows.slice(0, 3)));
+      
       return { headers, rows };
     }
     
     // Fallback to header: 1 approach
     const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 }) as unknown[][];
-    console.log('Excel parsing fallback - Raw data sample:', JSON.stringify(jsonData.slice(0, 3)));
+    
     
     if (jsonData.length === 0) throw new Error('Excel file is empty');
 
@@ -186,8 +184,7 @@ export const CsvImportDialog = ({
         setAiMapping(data.result.mappings);
         toast.success('KI hat Spalten automatisch zugeordnet');
       }
-    } catch (err) {
-      console.error('AI mapping error:', err);
+    } catch {
       toast.error('KI-Zuordnung fehlgeschlagen, verwende Standard-Zuordnung');
     } finally {
       setIsAIProcessing(false);
@@ -220,8 +217,8 @@ export const CsvImportDialog = ({
           return cleaned ? { ...row, ...cleaned } : row;
         });
       }
-    } catch (err) {
-      console.error('AI cleaning error:', err);
+    } catch {
+      // AI cleaning failed, use original data
     }
     
     return data;
@@ -254,8 +251,8 @@ export const CsvImportDialog = ({
           return row;
         });
       }
-    } catch (err) {
-      console.error('AI categorization error:', err);
+    } catch {
+      // AI categorization failed, use original data
     }
     
     return data;
@@ -325,20 +322,14 @@ export const CsvImportDialog = ({
     try {
       let dataToImport = [...parsedData];
       
-      console.log('Import START - parsedData sample:', JSON.stringify(parsedData.slice(0, 2)));
-      console.log('Import START - parsedData keys:', Object.keys(parsedData[0] || {}));
-
       // Run AI data cleaning if enabled
       if (useAI && enableAI) {
-        console.log('Before AI cleaning:', JSON.stringify(dataToImport.slice(0, 2)));
         dataToImport = await runAIDataCleaning(dataToImport);
-        console.log('After AI cleaning:', JSON.stringify(dataToImport.slice(0, 2)));
         
         // Run AI categorization for articles (if category field exists)
         const hasCategory = fields.some(f => f.name === 'category');
         if (hasCategory) {
           dataToImport = await runAICategorization(dataToImport);
-          console.log('After AI categorization:', JSON.stringify(dataToImport.slice(0, 2)));
         }
       }
 
@@ -346,9 +337,6 @@ export const CsvImportDialog = ({
 
       // Extract headers directly from data (in case state headers are empty)
       const effectiveHeaders = headers.length > 0 ? headers : Object.keys(dataToImport[0] || {});
-      
-      console.log('Import - Effective headers:', effectiveHeaders);
-      console.log('Import - Raw data sample:', dataToImport.slice(0, 2));
 
       // Common column name aliases (German -> English field names)
       const columnAliases: Record<string, string[]> = {
@@ -403,8 +391,6 @@ export const CsvImportDialog = ({
         });
         return mapped;
       });
-
-      console.log('Import - Mapped data sample:', mappedData.slice(0, 3));
 
       await onImport(mappedData, selectedSupplierId || undefined);
       setImportSuccess(true);
