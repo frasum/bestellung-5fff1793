@@ -15,10 +15,8 @@ interface DeliveryDateSectionProps {
 }
 
 const TIME_WINDOWS = [
-  { value: '06:00-10:00', label: '06-10', icon: '🌅' },
   { value: '10:00-12:00', label: '10-12', icon: '☀️' },
-  { value: '12:00-14:00', label: '12-14', icon: '🍽️' },
-  { value: '14:00-17:00', label: '14-17', icon: '🌆' },
+  { value: '12:00-15:00', label: '12-15', icon: '🍽️' },
   { value: 'flexible', label: 'Flex', icon: '🔄' },
 ];
 
