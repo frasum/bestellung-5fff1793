@@ -287,6 +287,11 @@ const SimpleOrder = () => {
         onBack={handleBackToSuppliers}
         selectedLocationName={getSelectedLocationName()}
         selectedLocationId={selectedLocationId}
+        isMultiSupplier={tokenData?.is_multi_supplier || false}
+        selectedSupplierId={selectedSupplierId}
+        suppliers={suppliers}
+        onSupplierChange={handleSupplierSelect}
+        getArticleCount={getSupplierArticleCount}
       />
 
       {/* Supplier Selection for Multi-Supplier Tokens */}
