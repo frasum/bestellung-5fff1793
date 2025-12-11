@@ -4,6 +4,7 @@ import { Card } from '@/components/ui/card';
 interface Supplier {
   id: string;
   name: string;
+  sort_order?: number;
 }
 
 interface SupplierSelectionProps {
@@ -12,12 +13,25 @@ interface SupplierSelectionProps {
   getArticleCount: (supplierId: string) => number;
 }
 
+// Sort suppliers: by sort_order if set, otherwise alphabetically
+const sortSuppliers = (suppliers: Supplier[]) => {
+  return [...suppliers].sort((a, b) => {
+    const orderA = a.sort_order || 0;
+    const orderB = b.sort_order || 0;
+    if (orderA !== orderB) {
+      return orderA - orderB;
+    }
+    return a.name.localeCompare(b.name, 'de');
+  });
+};
+
 export const SupplierSelection = ({
   suppliers,
   onSelect,
   getArticleCount,
 }: SupplierSelectionProps) => {
   const { t } = useTranslation();
+  const sortedSuppliers = sortSuppliers(suppliers);
 
   return (
     <div className="max-w-2xl mx-auto p-4">
@@ -25,7 +39,7 @@ export const SupplierSelection = ({
         {t('simpleOrder.selectSupplier', 'เลือกผู้จำหน่าย / Lieferant wählen')}
       </h2>
       <div className="space-y-3">
-        {suppliers.map((supplier) => (
+        {sortedSuppliers.map((supplier) => (
           <Card
             key={supplier.id}
             className="p-4 cursor-pointer hover:shadow-md transition-all active:scale-[0.98]"

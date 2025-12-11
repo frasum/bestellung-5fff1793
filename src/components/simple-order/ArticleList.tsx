@@ -14,7 +14,20 @@ interface Article {
   sku: string | null;
   packaging_unit: number | null;
   supplier_id: string;
+  sort_order?: number;
 }
+
+// Sort articles: by sort_order if set, otherwise alphabetically
+const sortArticles = (articles: Article[]) => {
+  return [...articles].sort((a, b) => {
+    const orderA = a.sort_order || 0;
+    const orderB = b.sort_order || 0;
+    if (orderA !== orderB) {
+      return orderA - orderB;
+    }
+    return a.name.localeCompare(b.name, 'de');
+  });
+};
 
 interface ArticleListProps {
   articles: Article[];
@@ -58,8 +71,7 @@ export const ArticleList = ({
       {/* Articles */}
       <div className="max-w-2xl mx-auto p-4">
         <div className="grid grid-cols-1 gap-2">
-          {filteredArticles
-            .sort((a, b) => a.name.localeCompare(b.name, 'de'))
+          {sortArticles(filteredArticles)
             .map((article) => {
               const qty = quantities[article.id] || 0;
               const isSelected = qty > 0;

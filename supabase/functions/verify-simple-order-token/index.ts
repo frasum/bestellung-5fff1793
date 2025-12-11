@@ -65,14 +65,16 @@ serve(async (req) => {
     let articles: any[] = [];
 
     if (isMultiSupplier) {
-      // Get all suppliers linked to this token
+      // Get all suppliers linked to this token with sort_order
       const { data: tokenSuppliers, error: tokenSuppliersError } = await supabase
         .from('simple_order_token_suppliers')
         .select(`
           supplier_id,
+          sort_order,
           supplier:suppliers(id, name, email, organization_id)
         `)
-        .eq('token_id', tokenData.id);
+        .eq('token_id', tokenData.id)
+        .order('sort_order', { ascending: true });
 
       if (tokenSuppliersError) {
         console.error('Error fetching token suppliers:', tokenSuppliersError);
@@ -87,13 +89,13 @@ serve(async (req) => {
       console.log('Multi-supplier token has suppliers:', supplierIds.length);
 
       if (supplierIds.length > 0) {
-        // Get all articles for these suppliers
+        // Get all articles for these suppliers with sort_order
         const { data: allArticles, error: articlesError } = await supabase
           .from('articles')
-          .select('id, name, description, price, unit, category, sku, packaging_unit, supplier_id')
+          .select('id, name, description, price, unit, category, sku, packaging_unit, supplier_id, sort_order')
           .in('supplier_id', supplierIds)
           .eq('is_active', true)
-          .order('category', { ascending: true })
+          .order('sort_order', { ascending: true })
           .order('name', { ascending: true });
 
         if (articlesError) {
@@ -106,7 +108,7 @@ serve(async (req) => {
 
         articles = allArticles || [];
 
-        // Build suppliers array with article counts
+        // Build suppliers array with article counts and sort_order
         suppliers = tokenSuppliers?.map(ts => {
           const sup = ts.supplier as any;
           return {
@@ -114,6 +116,7 @@ serve(async (req) => {
             name: sup?.name,
             email: sup?.email,
             organization_id: sup?.organization_id,
+            sort_order: ts.sort_order || 0,
             article_count: articles.filter(a => a.supplier_id === ts.supplier_id).length,
           };
         }) || [];
@@ -123,10 +126,10 @@ serve(async (req) => {
       if (tokenData.supplier_id) {
         const { data: singleArticles, error: articlesError } = await supabase
           .from('articles')
-          .select('id, name, description, price, unit, category, sku, packaging_unit, supplier_id')
+          .select('id, name, description, price, unit, category, sku, packaging_unit, supplier_id, sort_order')
           .eq('supplier_id', tokenData.supplier_id)
           .eq('is_active', true)
-          .order('category', { ascending: true })
+          .order('sort_order', { ascending: true })
           .order('name', { ascending: true });
 
         if (articlesError) {
