@@ -61,6 +61,8 @@ export const useEmailTemplate = () => {
       return data as EmailTemplate | null;
     },
     enabled: !!user,
+    staleTime: 15 * 60 * 1000, // 15 minutes
+    gcTime: 60 * 60 * 1000, // 60 minutes
   });
 };
 

@@ -44,6 +44,8 @@ export const useSupplierPendingChanges = () => {
         suppliers: { name: string } | null;
       })[];
     },
+    staleTime: 1 * 60 * 1000, // 1 minute
+    gcTime: 5 * 60 * 1000, // 5 minutes
   });
 };
 
@@ -69,6 +71,8 @@ export const usePendingChangesCount = () => {
 
       return (changesCount || 0) + (suggestionsCount || 0);
     },
+    staleTime: 1 * 60 * 1000, // 1 minute
+    gcTime: 5 * 60 * 1000, // 5 minutes
   });
 };
 

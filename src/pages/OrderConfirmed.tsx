@@ -49,8 +49,6 @@ const OrderConfirmed = () => {
   const fetchOrderDetails = async (id: string) => {
     setIsLoadingDetails(true);
     try {
-      console.log("Fetching order details for orderId:", id);
-      
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-order-details?orderId=${id}`,
         {
@@ -61,17 +59,12 @@ const OrderConfirmed = () => {
         }
       );
       
-      console.log("Response status:", response.status);
-      
       if (response.ok) {
         const details = await response.json();
-        console.log("Order details received:", details);
         setOrderDetails(details);
-      } else {
-        console.error("Failed to fetch order details:", response.status, await response.text());
       }
-    } catch (error) {
-      console.error("Failed to fetch order details:", error);
+    } catch {
+      // Silently handle fetch errors
     } finally {
       setIsLoadingDetails(false);
     }
