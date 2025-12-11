@@ -1,4 +1,4 @@
-import { Fragment } from 'react';
+import { Fragment, useCallback } from 'react';
 import { ChevronRight, Pencil, Trash2, Plus, Minus, Bell } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -60,6 +60,23 @@ export const ArticleTable = ({
   onShowChanges,
   onArticleChangeClick
 }: ArticleTableProps) => {
+  // Stable callback wrappers for ArticleCard to prevent unnecessary re-renders
+  const handleUpdateQuantity = useCallback((articleId: string, quantity: number) => {
+    onUpdateQuantity(articleId, quantity);
+  }, [onUpdateQuantity]);
+
+  const handleAddToCart = useCallback((article: Article, quantity: number) => {
+    onAddToCart(article, quantity);
+  }, [onAddToCart]);
+
+  const handleEdit = useCallback((article: Article) => {
+    onEdit(article);
+  }, [onEdit]);
+
+  const handleDelete = useCallback((article: Article) => {
+    onDelete(article);
+  }, [onDelete]);
+
   return (
     <>
       {/* Mobile & Tablet Card View */}
@@ -146,10 +163,10 @@ export const ArticleTable = ({
                     cartQty={getCartQuantity(article.id)}
                     hasPendingChanges={pendingArticleIds.has(article.id)}
                     lastOrder={lastOrderMap[article.id]}
-                    onUpdateQuantity={onUpdateQuantity}
-                    onAddToCart={onAddToCart}
-                    onEdit={onEdit}
-                    onDelete={onDelete}
+                    onUpdateQuantity={handleUpdateQuantity}
+                    onAddToCart={handleAddToCart}
+                    onEdit={handleEdit}
+                    onDelete={handleDelete}
                     onPendingClick={() => onArticleChangeClick?.(article, group.supplier.id, group.supplier.name)}
                   />
                 ))}

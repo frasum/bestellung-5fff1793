@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
@@ -20,6 +20,7 @@ import { SupplierLocationsDialog } from '@/components/suppliers/SupplierLocation
 import { useCategories } from '@/hooks/useCategories';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogTrigger } from '@/components/ui/dialog';
+import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 
 // Refactored components
 import { SUPPLIER_IMPORT_FIELDS, ARTICLE_IMPORT_FIELDS, DEFAULT_UNITS } from '@/components/suppliers/constants';
@@ -346,9 +347,13 @@ const Suppliers = () => {
     }
   };
 
+  // Debounced search values for performance
+  const debouncedSearchQuery = useDebouncedValue(searchQuery, 300);
+  const debouncedArticleSearchQuery = useDebouncedValue(articleSearchQuery, 300);
+
   // Filtered suppliers - now filter by article categories
   const filteredSuppliers = suppliers?.filter(supplier => {
-    const matchesSearch = supplier.name.toLowerCase().includes(searchQuery.toLowerCase()) || supplier.email.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSearch = supplier.name.toLowerCase().includes(debouncedSearchQuery.toLowerCase()) || supplier.email.toLowerCase().includes(debouncedSearchQuery.toLowerCase());
     
     // Filter by article categories instead of supplier categories
     const supplierArticles = articlesBySupplier[supplier.id] || [];
@@ -360,8 +365,8 @@ const Suppliers = () => {
 
   // Filtered articles
   const filteredArticles = allArticles?.filter((article) => {
-    const matchesSearch = article.name.toLowerCase().includes(articleSearchQuery.toLowerCase()) ||
-      article.description?.toLowerCase().includes(articleSearchQuery.toLowerCase());
+    const matchesSearch = article.name.toLowerCase().includes(debouncedArticleSearchQuery.toLowerCase()) ||
+      article.description?.toLowerCase().includes(debouncedArticleSearchQuery.toLowerCase());
     const matchesSupplier = selectedArticleSuppliers.length === 0 || selectedArticleSuppliers.includes(article.supplier_id);
     const matchesCategory = selectedCategory === 'all' || article.category === selectedCategory;
     return matchesSearch && matchesSupplier && matchesCategory;
@@ -398,14 +403,14 @@ const Suppliers = () => {
   }, [sortedArticles]);
 
   // Track previous search query to detect when search is cleared
-  const prevArticleSearchRef = useRef(articleSearchQuery);
+  const prevArticleSearchRef = useRef(debouncedArticleSearchQuery);
 
   // Auto-expand suppliers when article search query is active
   useEffect(() => {
     const prevSearch = prevArticleSearchRef.current;
-    prevArticleSearchRef.current = articleSearchQuery;
+    prevArticleSearchRef.current = debouncedArticleSearchQuery;
     
-    if (articleSearchQuery.trim() !== '') {
+    if (debouncedArticleSearchQuery.trim() !== '') {
       // Search active: open all filtered suppliers
       const supplierIds = groupedBySupplier.map(group => group.supplier.id);
       setOpenArticleSuppliers(new Set(supplierIds));
@@ -414,7 +419,7 @@ const Suppliers = () => {
       setOpenArticleSuppliers(new Set());
     }
     // If search was already empty: do nothing (allow manual toggle)
-  }, [articleSearchQuery, groupedBySupplier]);
+  }, [debouncedArticleSearchQuery, groupedBySupplier]);
 
   const articleCategoriesForFilter = (allArticles?.map((a) => a.category).filter(Boolean) || []) as string[];
 
