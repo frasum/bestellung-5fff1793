@@ -187,14 +187,15 @@ ${signatureText}`;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col">
+      <DialogContent className="max-w-[calc(100vw-1rem)] sm:max-w-2xl max-h-[95vh] flex flex-col">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
+          <DialogTitle className="flex items-center gap-2 flex-wrap">
             <Mail className="w-5 h-5 text-primary" />
-            E-Mail Vorschau
+            <span className="hidden sm:inline">E-Mail Vorschau</span>
+            <span className="sm:hidden">Vorschau</span>
             {emailPreviews.length > 1 && (
-              <span className="text-sm font-normal text-muted-foreground ml-2">
-                ({currentIndex + 1} von {emailPreviews.length} | {confirmedEmails.size}/{emailPreviews.length} geprüft)
+              <span className="text-xs sm:text-sm font-normal text-muted-foreground">
+                ({currentIndex + 1}/{emailPreviews.length} | {confirmedEmails.size} geprüft)
               </span>
             )}
           </DialogTitle>
@@ -332,8 +333,33 @@ ${signatureText}`;
                   )}
                 </div>
 
-                {/* Items Table */}
-                <div className="border border-border rounded-lg overflow-hidden">
+                {/* Items - Mobile Card View */}
+                <div className="sm:hidden space-y-2">
+                  {currentEmail.items.map((item, idx) => (
+                    <div key={idx} className="p-3 bg-muted/30 rounded-lg">
+                      <div className="flex justify-between items-start gap-2">
+                        <div className="min-w-0 flex-1">
+                          <p className="font-medium text-sm truncate">{item.article_name}</p>
+                          {item.sku && <p className="text-xs text-muted-foreground">SKU: {item.sku}</p>}
+                        </div>
+                        <p className="font-semibold text-sm">€{item.total_price.toFixed(2)}</p>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {item.quantity} {item.unit} × €{item.unit_price.toFixed(2)}
+                        {item.packaging_unit && item.packaging_unit > 1 && (
+                          <span className="ml-1 text-primary">({item.packaging_unit}er)</span>
+                        )}
+                      </p>
+                    </div>
+                  ))}
+                  <div className="bg-primary text-primary-foreground rounded-lg p-3 flex justify-between items-center">
+                    <span className="font-semibold">Gesamtbetrag</span>
+                    <span className="font-bold text-lg">€{currentEmail.totalAmount.toFixed(2)}</span>
+                  </div>
+                </div>
+
+                {/* Items - Desktop Table */}
+                <div className="hidden sm:block border border-border rounded-lg overflow-hidden">
                   <table className="w-full text-sm">
                     <thead className="bg-muted/50">
                       <tr>
@@ -395,7 +421,7 @@ ${signatureText}`;
                 checked={confirmedEmails.has(currentIndex)}
                 onCheckedChange={toggleCurrentEmailConfirmed}
                 onClick={(e) => e.stopPropagation()}
-                className="h-5 w-5"
+                className="h-6 w-6"
               />
               <Label 
                 htmlFor={`confirm-email-${currentIndex}`} 
@@ -409,48 +435,53 @@ ${signatureText}`;
             </div>
           </div>
 
-        <DialogFooter className="flex-col sm:flex-row gap-2 mt-4">
+        <DialogFooter className="flex-col-reverse sm:flex-row gap-2 mt-4">
           {emailPreviews.length > 1 && (
-            <div className="flex gap-2 mr-auto">
-              <Button variant="outline" size="sm" onClick={goPrev} disabled={currentIndex === 0}>
-                <ChevronLeft className="w-4 h-4 mr-1" />
-                Vorherige
+            <div className="flex gap-2 sm:mr-auto w-full sm:w-auto">
+              <Button variant="outline" size="sm" onClick={goPrev} disabled={currentIndex === 0} className="flex-1 sm:flex-none h-10 sm:h-9">
+                <ChevronLeft className="w-4 h-4 sm:mr-1" />
+                <span className="hidden sm:inline">Vorherige</span>
               </Button>
-              <Button variant="outline" size="sm" onClick={goNext} disabled={currentIndex === emailPreviews.length - 1}>
-                Nächste
-                <ChevronRight className="w-4 h-4 ml-1" />
+              <Button variant="outline" size="sm" onClick={goNext} disabled={currentIndex === emailPreviews.length - 1} className="flex-1 sm:flex-none h-10 sm:h-9">
+                <span className="hidden sm:inline">Nächste</span>
+                <ChevronRight className="w-4 h-4 sm:ml-1" />
               </Button>
             </div>
           )}
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isSubmitting}>
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isSubmitting} className="w-full sm:w-auto h-11 sm:h-9">
             Abbrechen
           </Button>
           <Button 
             variant="secondary" 
             onClick={emailPreviews.length > 1 ? handleOpenAllInEmailClient : handleOpenInEmailClient}
+            className="w-full sm:w-auto h-11 sm:h-9"
           >
-            <ExternalLink className="w-4 h-4 mr-2" />
-            Per E-Mail-Programm
+            <ExternalLink className="w-4 h-4 sm:mr-2" />
+            <span className="hidden sm:inline">Per E-Mail-Programm</span>
+            <span className="sm:hidden">E-Mail</span>
           </Button>
           <Button 
             onClick={onConfirm} 
             disabled={isSubmitting || !allEmailsConfirmed}
             title={!allEmailsConfirmed ? `Bitte alle ${emailPreviews.length} E-Mails prüfen` : undefined}
+            className="w-full sm:w-auto h-11 sm:h-9"
           >
             {isSubmitting ? (
               <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Sende Bestellungen...
+                <Loader2 className="w-4 h-4 sm:mr-2 animate-spin" />
+                <span className="hidden sm:inline">Sende Bestellungen...</span>
+                <span className="sm:hidden">Senden...</span>
               </>
             ) : !allEmailsConfirmed ? (
               <>
-                <Check className="w-4 h-4 mr-2" />
+                <Check className="w-4 h-4 sm:mr-2" />
                 {confirmedEmails.size}/{emailPreviews.length} geprüft
               </>
             ) : (
               <>
-                <Send className="w-4 h-4 mr-2" />
-                {emailPreviews.length} Bestellung{emailPreviews.length > 1 ? 'en' : ''} absenden
+                <Send className="w-4 h-4 sm:mr-2" />
+                <span className="hidden sm:inline">{emailPreviews.length} Bestellung{emailPreviews.length > 1 ? 'en' : ''} absenden</span>
+                <span className="sm:hidden">Absenden</span>
               </>
             )}
           </Button>

@@ -155,11 +155,12 @@ export const ScanOrderListDialog = ({ open, onOpenChange }: ScanOrderListDialogP
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-[calc(100vw-1rem)] sm:max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Camera className="w-5 h-5" />
-            Bestellliste scannen
+            <span className="hidden sm:inline">Bestellliste scannen</span>
+            <span className="sm:hidden">Scannen</span>
           </DialogTitle>
           <DialogDescription>
             {step === 'upload' 
@@ -169,7 +170,7 @@ export const ScanOrderListDialog = ({ open, onOpenChange }: ScanOrderListDialogP
         </DialogHeader>
 
         {step === 'upload' && (
-          <div className="py-8">
+          <div className="py-6 sm:py-8">
             <input
               ref={fileInputRef}
               type="file"
@@ -183,15 +184,15 @@ export const ScanOrderListDialog = ({ open, onOpenChange }: ScanOrderListDialogP
               {isScanning ? (
                 <div className="flex flex-col items-center gap-4 py-8">
                   <Loader2 className="w-12 h-12 animate-spin text-primary" />
-                  <p className="text-muted-foreground">Analysiere Bestellliste...</p>
+                  <p className="text-muted-foreground text-sm sm:text-base">Analysiere Bestellliste...</p>
                 </div>
               ) : (
                 <>
-                  <div className="grid grid-cols-2 gap-4 w-full max-w-md">
+                  <div className="grid grid-cols-2 gap-3 sm:gap-4 w-full max-w-md">
                     <Button
                       variant="outline"
                       size="lg"
-                      className="h-32 flex-col gap-2"
+                      className="h-28 sm:h-32 flex-col gap-2 touch-manipulation"
                       onClick={() => {
                         if (fileInputRef.current) {
                           fileInputRef.current.setAttribute('capture', 'environment');
@@ -199,13 +200,13 @@ export const ScanOrderListDialog = ({ open, onOpenChange }: ScanOrderListDialogP
                         }
                       }}
                     >
-                      <Camera className="w-8 h-8" />
-                      <span>Foto aufnehmen</span>
+                      <Camera className="w-7 h-7 sm:w-8 sm:h-8" />
+                      <span className="text-sm sm:text-base">Foto aufnehmen</span>
                     </Button>
                     <Button
                       variant="outline"
                       size="lg"
-                      className="h-32 flex-col gap-2"
+                      className="h-28 sm:h-32 flex-col gap-2 touch-manipulation"
                       onClick={() => {
                         if (fileInputRef.current) {
                           fileInputRef.current.removeAttribute('capture');
@@ -213,11 +214,11 @@ export const ScanOrderListDialog = ({ open, onOpenChange }: ScanOrderListDialogP
                         }
                       }}
                     >
-                      <Upload className="w-8 h-8" />
-                      <span>Bild hochladen</span>
+                      <Upload className="w-7 h-7 sm:w-8 sm:h-8" />
+                      <span className="text-sm sm:text-base">Bild hochladen</span>
                     </Button>
                   </div>
-                  <p className="text-sm text-muted-foreground text-center max-w-sm">
+                  <p className="text-xs sm:text-sm text-muted-foreground text-center max-w-sm px-2">
                     Für beste Ergebnisse: Gute Beleuchtung, deutliche Handschrift, 
                     gesamte Liste im Bild
                   </p>
@@ -228,12 +229,12 @@ export const ScanOrderListDialog = ({ open, onOpenChange }: ScanOrderListDialogP
         )}
 
         {step === 'review' && (
-          <div className="space-y-4 py-4">
-            <p className="text-sm text-muted-foreground">
+          <div className="space-y-3 sm:space-y-4 py-3 sm:py-4">
+            <p className="text-xs sm:text-sm text-muted-foreground">
               {scannedItems.length} Einträge erkannt. Korrigiere bei Bedarf die Zuordnung.
             </p>
             
-            <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2">
+            <div className="space-y-3 max-h-[350px] sm:max-h-[400px] overflow-y-auto pr-1 sm:pr-2">
               {scannedItems.map((item, index) => (
                 <div 
                   key={index} 
@@ -244,36 +245,36 @@ export const ScanOrderListDialog = ({ open, onOpenChange }: ScanOrderListDialogP
                   }`}
                 >
                   <div className="flex items-start justify-between gap-2 mb-2">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 min-w-0 flex-1">
                       {item.confidence === 'high' ? (
-                        <Check className="w-4 h-4 text-green-500" />
+                        <Check className="w-4 h-4 text-green-500 shrink-0" />
                       ) : (
-                        <AlertCircle className={`w-4 h-4 ${
+                        <AlertCircle className={`w-4 h-4 shrink-0 ${
                           item.confidence === 'medium' ? 'text-yellow-500' : 'text-red-500'
                         }`} />
                       )}
-                      <span className="text-sm font-medium">
-                        Erkannt: "{item.recognized_text}"
+                      <span className="text-xs sm:text-sm font-medium truncate">
+                        "{item.recognized_text}"
                       </span>
                     </div>
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-6 w-6"
+                      className="h-8 w-8 shrink-0"
                       onClick={() => removeItem(index)}
                     >
                       <X className="w-4 h-4" />
                     </Button>
                   </div>
                   
-                  <div className="grid grid-cols-[1fr,100px] gap-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-[1fr,100px] gap-2">
                     <div>
                       <Label className="text-xs text-muted-foreground">Artikel</Label>
                       <Select
                         value={item.selected_article_id || ''}
                         onValueChange={(value) => updateItem(index, 'selected_article_id', value)}
                       >
-                        <SelectTrigger className="h-9">
+                        <SelectTrigger className="h-11 sm:h-9">
                           <SelectValue placeholder="Artikel auswählen..." />
                         </SelectTrigger>
                         <SelectContent>
@@ -289,10 +290,11 @@ export const ScanOrderListDialog = ({ open, onOpenChange }: ScanOrderListDialogP
                       <Label className="text-xs text-muted-foreground">Menge</Label>
                       <Input
                         type="number"
+                        inputMode="numeric"
                         min="1"
                         value={item.corrected_quantity || ''}
                         onChange={(e) => updateItem(index, 'corrected_quantity', parseInt(e.target.value) || 0)}
-                        className="h-9"
+                        className="h-11 sm:h-9"
                       />
                     </div>
                   </div>
@@ -302,19 +304,20 @@ export const ScanOrderListDialog = ({ open, onOpenChange }: ScanOrderListDialogP
           </div>
         )}
 
-        <DialogFooter>
+        <DialogFooter className="flex-col sm:flex-row gap-2">
           {step === 'upload' ? (
-            <Button variant="outline" onClick={handleClose}>
+            <Button variant="outline" onClick={handleClose} className="w-full sm:w-auto h-11 sm:h-9">
               Abbrechen
             </Button>
           ) : (
             <>
-              <Button variant="outline" onClick={() => setStep('upload')}>
+              <Button variant="outline" onClick={() => setStep('upload')} className="w-full sm:w-auto h-11 sm:h-9">
                 Neues Bild
               </Button>
               <Button 
                 onClick={handleAddToCart}
                 disabled={validItemsCount === 0}
+                className="w-full sm:w-auto h-11 sm:h-9"
               >
                 {validItemsCount} Artikel hinzufügen
               </Button>
