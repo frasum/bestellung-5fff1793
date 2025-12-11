@@ -363,9 +363,9 @@ const Orders = () => {
             <h1 className="text-2xl md:text-3xl font-bold text-foreground">{t('orders.title')}</h1>
             <p className="text-sm md:text-base text-muted-foreground mt-0.5 md:mt-1">{t('orders.subtitle')}</p>
           </div>
-          <Button onClick={() => navigate('/suppliers?tab=articles')}>
-            <Package className="w-4 h-4 mr-2" />
-            {t('orders.newOrder')}
+          <Button onClick={() => navigate('/suppliers?tab=articles')} className="h-10 sm:h-9">
+            <Package className="w-4 h-4 sm:mr-2" />
+            <span className="hidden sm:inline">{t('orders.newOrder')}</span>
           </Button>
         </div>
 
@@ -470,18 +470,18 @@ const Orders = () => {
                       {t('orders.testMode.deleteAll')} ({testOrdersCount})
                     </Button>
                   </AlertDialogTrigger>
-                  <AlertDialogContent>
+                  <AlertDialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-lg">
                     <AlertDialogHeader>
                       <AlertDialogTitle>{t('orders.testMode.deleteConfirmTitle')}</AlertDialogTitle>
                       <AlertDialogDescription>
                         {t('orders.testMode.deleteConfirmDescription', { count: testOrdersCount })}
                       </AlertDialogDescription>
                     </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
+                    <AlertDialogFooter className="flex-col sm:flex-row gap-2">
+                      <AlertDialogCancel className="w-full sm:w-auto h-10 sm:h-9">{t('common.cancel')}</AlertDialogCancel>
                       <AlertDialogAction
                         onClick={() => deleteTestOrders.mutate()}
-                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        className="w-full sm:w-auto h-10 sm:h-9 bg-destructive text-destructive-foreground hover:bg-destructive/90"
                       >
                         {deleteTestOrders.isPending ? (
                           <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -599,7 +599,7 @@ const Orders = () => {
             />
           </div>
           <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as Order['status'] | 'all')}>
-            <SelectTrigger className="w-40">
+            <SelectTrigger className="w-40 h-10">
               <SelectValue placeholder={t('orders.filterByStatus')} />
             </SelectTrigger>
             <SelectContent>
@@ -613,7 +613,7 @@ const Orders = () => {
             </SelectContent>
           </Select>
           <Select value={dateFilter} onValueChange={(v) => setDateFilter(v as DateFilter)}>
-            <SelectTrigger className="w-40">
+            <SelectTrigger className="w-40 h-10">
               <SelectValue placeholder={t('orders.filterByDate')} />
             </SelectTrigger>
             <SelectContent>
@@ -626,7 +626,7 @@ const Orders = () => {
           </Select>
           {locations && locations.length > 1 && (
             <Select value={locationFilter} onValueChange={setLocationFilter}>
-              <SelectTrigger className="w-40">
+              <SelectTrigger className="w-40 h-10">
                 <div className="flex items-center gap-2">
                   <MapPin className="w-4 h-4" />
                   <span className="truncate">
@@ -1093,11 +1093,11 @@ const Orders = () => {
               {t('drafts.deleteDescription', { name: selectedDraft?.name })}
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
+          <AlertDialogFooter className="flex-col sm:flex-row gap-2">
+            <AlertDialogCancel className="w-full sm:w-auto h-10 sm:h-9">{t('common.cancel')}</AlertDialogCancel>
             <AlertDialogAction
               onClick={confirmDeleteDraft}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              className="w-full sm:w-auto h-10 sm:h-9 bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               {t('common.delete')}
             </AlertDialogAction>
@@ -1114,10 +1114,11 @@ const Orders = () => {
               {t('drafts.loadDescription')}
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
+          <AlertDialogFooter className="flex-col sm:flex-row gap-2">
+            <AlertDialogCancel className="w-full sm:w-auto h-10 sm:h-9">{t('common.cancel')}</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => selectedDraft && loadDraftToCart(selectedDraft)}
+              className="w-full sm:w-auto h-10 sm:h-9"
             >
               {t('drafts.replaceCart')}
             </AlertDialogAction>
