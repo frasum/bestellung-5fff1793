@@ -349,9 +349,9 @@ const Reports = () => {
             <QuickOverviewKPIs />
             
             {/* Time Range & Export */}
-            <div className="flex items-center gap-3 justify-end">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 sm:justify-end">
               <Select value={timeRange} onValueChange={setTimeRange}>
-                <SelectTrigger className="w-40 bg-card">
+                <SelectTrigger className="w-full sm:w-40 h-11 sm:h-10 bg-card">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="bg-card border border-border z-50">
@@ -360,7 +360,7 @@ const Reports = () => {
                   <SelectItem value="12">{t('reports.months', { count: 12 })}</SelectItem>
                 </SelectContent>
               </Select>
-              <Button onClick={exportToCSV} disabled={!stats?.filteredOrders?.length}>
+              <Button onClick={exportToCSV} disabled={!stats?.filteredOrders?.length} className="h-11 sm:h-10 w-full sm:w-auto">
                 <Download className="w-4 h-4 mr-2" />
                 {t('export.csv')}
               </Button>

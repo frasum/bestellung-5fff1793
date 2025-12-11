@@ -930,12 +930,15 @@ const Orders = () => {
           <TabsContent value="drafts" className="space-y-6 mt-6">
             {/* Search */}
             <div className="flex items-center gap-4">
-              <Input
-                placeholder={t('drafts.searchPlaceholder')}
-                value={draftsSearchQuery}
-                onChange={(e) => setDraftsSearchQuery(e.target.value)}
-                className="max-w-sm"
-              />
+              <div className="relative flex-1 max-w-sm">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  placeholder={t('drafts.searchPlaceholder')}
+                  value={draftsSearchQuery}
+                  onChange={(e) => setDraftsSearchQuery(e.target.value)}
+                  className="pl-9 h-11 sm:h-10"
+                />
+              </div>
             </div>
 
             {/* Loading State */}
@@ -965,13 +968,13 @@ const Orders = () => {
 
             {/* Drafts List */}
             {!draftsLoading && filteredDrafts.length > 0 && (
-              <div className="grid gap-4">
+              <div className="grid gap-3 sm:gap-4">
                 {filteredDrafts.map((draft) => (
                   <div
                     key={draft.id}
-                    className="bg-card border border-border rounded-xl p-6 hover:border-primary/50 transition-colors"
+                    className="bg-card border border-border rounded-xl p-4 sm:p-6 hover:border-primary/50 transition-colors"
                   >
-                    <div className="flex flex-col lg:flex-row lg:items-center gap-4">
+                    <div className="flex flex-col gap-4">
                       {/* Draft Info */}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-3 mb-2">
@@ -983,22 +986,22 @@ const Orders = () => {
                           ) : (
                             <FileText className="w-5 h-5 text-primary" />
                           )}
-                          <h3 className="text-lg font-semibold text-foreground truncate">
+                          <h3 className="text-base sm:text-lg font-semibold text-foreground truncate">
                             {draft.name}
                           </h3>
                         </div>
-                        <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
+                        <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:text-sm text-muted-foreground">
                           <span className="flex items-center gap-1">
-                            <Package className="w-4 h-4" />
+                            <Package className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                             {getDraftItemCount(draft)} {t('drafts.items')}
                           </span>
                           <span className="flex items-center gap-1">
-                            <Calendar className="w-4 h-4" />
-                            {format(new Date(draft.updated_at), 'PPp', { locale })}
+                            <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                            {format(new Date(draft.updated_at), 'dd.MM.yy', { locale })}
                           </span>
                           {draft.desired_delivery_date && (
                             <span className="flex items-center gap-1 text-primary">
-                              📅 {format(new Date(draft.desired_delivery_date), 'PP', { locale })}
+                              📅 {format(new Date(draft.desired_delivery_date), 'dd.MM.', { locale })}
                               {draft.desired_time_window && (
                                 <span className="ml-1">
                                   🕐 {draft.desired_time_window === 'flexible' ? t('checkout.flexible') : draft.desired_time_window}
@@ -1008,58 +1011,61 @@ const Orders = () => {
                           )}
                         </div>
                         {draft.notes && (
-                          <p className="text-sm text-muted-foreground mt-2">
+                          <p className="text-sm text-muted-foreground mt-2 line-clamp-2">
                             {draft.notes}
                           </p>
                         )}
                       </div>
 
-                      {/* Draft Items Preview */}
-                      <div className="flex-shrink-0 lg:text-right">
-                        <p className="text-2xl font-bold text-foreground">
-                          €{getDraftTotal(draft).toFixed(2)}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          {t('drafts.total')}
-                        </p>
-                      </div>
+                      {/* Price & Actions Row */}
+                      <div className="flex items-center justify-between gap-3 pt-3 border-t border-border">
+                        <div>
+                          <p className="text-xl sm:text-2xl font-bold text-foreground">
+                            €{getDraftTotal(draft).toFixed(2)}
+                          </p>
+                          <p className="text-xs sm:text-sm text-muted-foreground">
+                            {t('drafts.total')}
+                          </p>
+                        </div>
 
-                      {/* Actions */}
-                      <div className="flex items-center gap-2 flex-shrink-0">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleLoadDraft(draft)}
-                        >
-                          <ShoppingCart className="w-4 h-4 mr-2" />
-                          {t('drafts.loadToCart')}
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="text-destructive hover:text-destructive"
-                          onClick={() => handleDeleteDraft(draft)}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
+                        {/* Actions */}
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-10 sm:h-9"
+                            onClick={() => handleLoadDraft(draft)}
+                          >
+                            <ShoppingCart className="w-4 h-4 sm:mr-2" />
+                            <span className="hidden sm:inline">{t('drafts.loadToCart')}</span>
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-10 w-10 text-destructive hover:text-destructive"
+                            onClick={() => handleDeleteDraft(draft)}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
                       </div>
                     </div>
 
                     {/* Items Preview */}
                     {draft.items && draft.items.length > 0 && (
-                      <div className="mt-4 pt-4 border-t border-border">
-                        <div className="flex flex-wrap gap-2">
-                          {draft.items.slice(0, 5).map((item) => (
+                      <div className="mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-border">
+                        <div className="flex flex-wrap gap-1.5 sm:gap-2">
+                          {draft.items.slice(0, 4).map((item) => (
                             <span
                               key={item.id}
-                              className="inline-flex items-center px-2 py-1 rounded-md bg-muted text-sm"
+                              className="inline-flex items-center px-2 py-1 rounded-md bg-muted text-xs sm:text-sm"
                             >
                               {item.quantity}x {item.article?.name || 'Unknown'}
                             </span>
                           ))}
-                          {draft.items.length > 5 && (
-                            <span className="inline-flex items-center px-2 py-1 rounded-md bg-muted text-sm text-muted-foreground">
-                              +{draft.items.length - 5} {t('drafts.more')}
+                          {draft.items.length > 4 && (
+                            <span className="inline-flex items-center px-2 py-1 rounded-md bg-muted text-xs sm:text-sm text-muted-foreground">
+                              +{draft.items.length - 4} {t('drafts.more')}
                             </span>
                           )}
                         </div>
@@ -1080,7 +1086,7 @@ const Orders = () => {
 
       {/* Delete Draft Confirmation Dialog */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <AlertDialogContent>
+        <AlertDialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-lg">
           <AlertDialogHeader>
             <AlertDialogTitle>{t('drafts.deleteTitle')}</AlertDialogTitle>
             <AlertDialogDescription>
@@ -1101,7 +1107,7 @@ const Orders = () => {
 
       {/* Load Draft Confirmation Dialog */}
       <AlertDialog open={loadDialogOpen} onOpenChange={setLoadDialogOpen}>
-        <AlertDialogContent>
+        <AlertDialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-lg">
           <AlertDialogHeader>
             <AlertDialogTitle>{t('drafts.loadTitle')}</AlertDialogTitle>
             <AlertDialogDescription>
