@@ -95,16 +95,8 @@ export const EmployeeInfoSection = ({
   return (
     <div className={containerClass}>
       <div className={innerClass}>
-        {/* Employee Name - Show greeting if locked, input if not */}
-        {isEmployeeNameLocked ? (
-          variant === 'supplier-selection' ? (
-            <div className="text-center py-2">
-              <p className="text-2xl font-bold text-primary">
-                👋 {t('simpleOrder.hello', 'สวัสดี / Hallo')}, {employeeName}!
-              </p>
-            </div>
-          ) : null
-        ) : (
+        {/* Employee Name - input only if not locked (no greeting) */}
+        {!isEmployeeNameLocked && (
           <div>
             <Label htmlFor="employeeName" className="flex items-center gap-2 text-base font-medium mb-2">
               <User className="h-5 w-5" />
@@ -128,6 +120,14 @@ export const EmployeeInfoSection = ({
                 {t('simpleOrder.nameRequired', 'กรุณาใส่ชื่อของคุณ / Bitte Namen eingeben')}
               </p>
             )}
+          </div>
+        )}
+
+        {/* Show employee name label if locked in supplier selection */}
+        {isEmployeeNameLocked && variant === 'supplier-selection' && (
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <User className="h-4 w-4" />
+            <span className="font-medium">{employeeName}</span>
           </div>
         )}
 
