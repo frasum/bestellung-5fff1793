@@ -340,7 +340,7 @@ const Checkout = () => {
             name="deliveryAddressId"
             render={({ field }) => (
               <Select onValueChange={field.onChange} value={field.value}>
-                <SelectTrigger className={isMobile ? "h-12 md:h-14" : ""}>
+                <SelectTrigger className={isMobile ? "h-11" : "h-10"}>
                   <SelectValue placeholder={t('checkout.selectAddress')} />
                 </SelectTrigger>
                 <SelectContent>
@@ -363,7 +363,7 @@ const Checkout = () => {
         ) : (
           <div className="text-sm text-muted-foreground border border-dashed border-border rounded-md p-4 text-center">
             <p className="mb-2">{t('settings.noAddresses')}</p>
-            <Button variant="outline" size="sm" onClick={() => navigate('/settings')}>
+            <Button variant="outline" onClick={() => navigate('/settings')} className="h-10 sm:h-9">
               <Settings className="w-4 h-4 mr-2" />
               {t('settings.addAddress')}
             </Button>
@@ -392,7 +392,7 @@ const Checkout = () => {
                   type="button"
                   variant="outline"
                   className={cn(
-                    "w-full justify-start text-left font-normal h-12 md:h-14",
+                    "w-full justify-start text-left font-normal h-11",
                     !field.value && "text-muted-foreground"
                   )}
                   onClick={() => setShowMobileCalendar(true)}
@@ -407,8 +407,7 @@ const Checkout = () => {
                     <Button
                       variant="outline"
                       className={cn(
-                        "w-full justify-start text-left font-normal",
-                        isMobile && "h-12 md:h-14",
+                        "w-full justify-start text-left font-normal h-10",
                         !field.value && "text-muted-foreground"
                       )}
                     >
@@ -451,7 +450,7 @@ const Checkout = () => {
           name="deliveryTimeWindow"
           render={({ field }) => (
             <Select onValueChange={field.onChange} value={field.value}>
-              <SelectTrigger className={isMobile ? "h-12 md:h-14" : ""}>
+              <SelectTrigger className={isMobile ? "h-11" : "h-10"}>
                 <SelectValue placeholder={t('checkout.selectTimeWindow')} />
               </SelectTrigger>
               <SelectContent>
@@ -478,7 +477,7 @@ const Checkout = () => {
           {...form.register('notes')}
           placeholder={t('checkout.addNotes')}
           rows={3}
-          className="min-h-[100px] md:min-h-[120px]"
+          className="min-h-[100px] md:min-h-[120px] text-base"
         />
       </div>
 
@@ -495,7 +494,7 @@ const Checkout = () => {
             </div>
           </div>
 
-          <Button type="submit" className="w-full" size="lg">
+          <Button type="submit" className="w-full h-10" size="lg">
             <Eye className="w-4 h-4 mr-2" />
             {t('checkout.emailPreview')}
           </Button>
@@ -507,7 +506,7 @@ const Checkout = () => {
       )}
 
       {isMobile && (
-        <Button type="submit" className="w-full h-12 md:h-14" size="lg">
+        <Button type="submit" className="w-full h-11" size="lg">
           <Eye className="w-5 h-5 mr-2" />
           {t('checkout.emailPreview')}
         </Button>
@@ -518,9 +517,9 @@ const Checkout = () => {
   return (
     <DashboardLayout>
       <div className="max-w-4xl mx-auto pb-48 xl:pb-0">
-        <Button variant="ghost" onClick={() => navigate('/cart')} className="mb-4 xl:mb-6">
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          {t('common.back')}
+        <Button variant="ghost" onClick={() => navigate('/cart')} className="mb-4 xl:mb-6 h-10 sm:h-9">
+          <ArrowLeft className="w-4 h-4 sm:mr-2" />
+          <span className="hidden sm:inline">{t('common.back')}</span>
         </Button>
 
         <h1 className="text-2xl xl:text-3xl font-bold text-foreground mb-1 xl:mb-2">{t('checkout.title')}</h1>
@@ -698,7 +697,7 @@ const Checkout = () => {
             </p>
             <p className="text-xl font-bold text-foreground">€{getTotal().toFixed(2)}</p>
           </div>
-          <Button onClick={() => setShowMobileForm(true)} className="h-12 md:h-14 px-6 md:px-8">
+          <Button onClick={() => setShowMobileForm(true)} className="h-11 px-6 touch-manipulation">
             {t('checkout.selectAddress')}
             <ArrowLeft className="w-4 h-4 ml-2 rotate-180" />
           </Button>
