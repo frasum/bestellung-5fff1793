@@ -31,6 +31,8 @@ export interface SupplierInput {
 export const useSuppliers = () => {
   return useQuery({
     queryKey: ['suppliers'],
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes cache
     queryFn: async () => {
       const { data, error } = await supabase
         .from('suppliers')
@@ -48,7 +50,6 @@ export const useCreateSupplier = () => {
 
   return useMutation({
     mutationFn: async (input: SupplierInput) => {
-      // First get the user's organization_id
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
@@ -73,13 +74,42 @@ export const useCreateSupplier = () => {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['suppliers'] });
-      toast.success('Supplier created successfully');
+    onMutate: async (input) => {
+      await queryClient.cancelQueries({ queryKey: ['suppliers'] });
+      const previousSuppliers = queryClient.getQueryData<Supplier[]>(['suppliers']);
+      
+      const optimisticSupplier: Supplier = {
+        id: crypto.randomUUID(),
+        organization_id: '',
+        name: input.name,
+        email: input.email,
+        phone: input.phone || null,
+        address: input.address || null,
+        contact_person: input.contact_person || null,
+        customer_number: input.customer_number || null,
+        minimum_order_value: input.minimum_order_value || null,
+        is_active: input.is_active ?? true,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+      
+      queryClient.setQueryData<Supplier[]>(['suppliers'], (old) => {
+        const updated = [...(old || []), optimisticSupplier];
+        return updated.sort((a, b) => a.name.localeCompare(b.name));
+      });
+      
+      return { previousSuppliers };
     },
-    onError: (error: Error) => {
+    onError: (error: Error, _variables, context) => {
+      if (context?.previousSuppliers) {
+        queryClient.setQueryData(['suppliers'], context.previousSuppliers);
+      }
       toast.error(error.message);
     },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['suppliers'] });
+    },
+    onSuccess: () => toast.success('Supplier created successfully'),
   });
 };
 
@@ -98,13 +128,30 @@ export const useUpdateSupplier = () => {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['suppliers'] });
-      toast.success('Lieferant erfolgreich aktualisiert');
+    onMutate: async ({ id, ...input }) => {
+      await queryClient.cancelQueries({ queryKey: ['suppliers'] });
+      const previousSuppliers = queryClient.getQueryData<Supplier[]>(['suppliers']);
+      
+      queryClient.setQueryData<Supplier[]>(['suppliers'], (old) =>
+        old?.map((supplier) => 
+          supplier.id === id 
+            ? { ...supplier, ...input, updated_at: new Date().toISOString() } 
+            : supplier
+        )
+      );
+      
+      return { previousSuppliers };
     },
-    onError: (error: Error) => {
+    onError: (error: Error, _variables, context) => {
+      if (context?.previousSuppliers) {
+        queryClient.setQueryData(['suppliers'], context.previousSuppliers);
+      }
       toast.error(error.message);
     },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['suppliers'] });
+    },
+    onSuccess: () => toast.success('Lieferant erfolgreich aktualisiert'),
   });
 };
 
@@ -119,24 +166,36 @@ export const useDeleteSupplier = () => {
         .eq('id', id);
 
       if (error) {
-        // Check if it's a foreign key constraint error
         if (error.code === '23503') {
           throw new Error('FOREIGN_KEY_CONSTRAINT');
         }
         throw error;
       }
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['suppliers'] });
-      toast.success('Lieferant erfolgreich gelöscht');
+    onMutate: async (id) => {
+      await queryClient.cancelQueries({ queryKey: ['suppliers'] });
+      const previousSuppliers = queryClient.getQueryData<Supplier[]>(['suppliers']);
+      
+      queryClient.setQueryData<Supplier[]>(['suppliers'], (old) =>
+        old?.filter((supplier) => supplier.id !== id)
+      );
+      
+      return { previousSuppliers };
     },
-    onError: (error: Error) => {
+    onError: (error: Error, _id, context) => {
+      if (context?.previousSuppliers) {
+        queryClient.setQueryData(['suppliers'], context.previousSuppliers);
+      }
       if (error.message === 'FOREIGN_KEY_CONSTRAINT') {
         toast.error('Dieser Lieferant kann nicht gelöscht werden, da noch Bestellungen existieren. Möchten Sie ihn stattdessen deaktivieren?');
       } else {
         toast.error(error.message);
       }
     },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['suppliers'] });
+    },
+    onSuccess: () => toast.success('Lieferant erfolgreich gelöscht'),
   });
 };
 
@@ -152,12 +211,27 @@ export const useDeactivateSupplier = () => {
 
       if (error) throw error;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['suppliers'] });
-      toast.success('Lieferant erfolgreich deaktiviert');
+    onMutate: async (id) => {
+      await queryClient.cancelQueries({ queryKey: ['suppliers'] });
+      const previousSuppliers = queryClient.getQueryData<Supplier[]>(['suppliers']);
+      
+      queryClient.setQueryData<Supplier[]>(['suppliers'], (old) =>
+        old?.map((supplier) => 
+          supplier.id === id ? { ...supplier, is_active: false } : supplier
+        )
+      );
+      
+      return { previousSuppliers };
     },
-    onError: (error: Error) => {
+    onError: (error: Error, _id, context) => {
+      if (context?.previousSuppliers) {
+        queryClient.setQueryData(['suppliers'], context.previousSuppliers);
+      }
       toast.error(error.message);
     },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['suppliers'] });
+    },
+    onSuccess: () => toast.success('Lieferant erfolgreich deaktiviert'),
   });
 };
