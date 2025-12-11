@@ -21,6 +21,7 @@ interface Article {
   sku: string | null;
   packaging_unit: number | null;
   supplier_id: string;
+  sort_order?: number;
 }
 
 interface Location {
@@ -32,6 +33,7 @@ interface Location {
 interface Supplier {
   id: string;
   name: string;
+  sort_order?: number;
 }
 
 interface TokenData {

@@ -75,6 +75,7 @@ export type Database = {
           packaging_unit: number | null
           price: number
           sku: string | null
+          sort_order: number
           supplier_id: string
           top_category: string | null
           unit: string
@@ -92,6 +93,7 @@ export type Database = {
           packaging_unit?: number | null
           price: number
           sku?: string | null
+          sort_order?: number
           supplier_id: string
           top_category?: string | null
           unit?: string
@@ -109,6 +111,7 @@ export type Database = {
           packaging_unit?: number | null
           price?: number
           sku?: string | null
+          sort_order?: number
           supplier_id?: string
           top_category?: string | null
           unit?: string
@@ -967,18 +970,21 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          sort_order: number
           supplier_id: string
           token_id: string
         }
         Insert: {
           created_at?: string
           id?: string
+          sort_order?: number
           supplier_id: string
           token_id: string
         }
         Update: {
           created_at?: string
           id?: string
+          sort_order?: number
           supplier_id?: string
           token_id?: string
         }
