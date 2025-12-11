@@ -806,6 +806,9 @@
     "namePlaceholder": "Inserisci il tuo nome",
     "selectLocation": "Seleziona sede",
     "nameRequired": "Inserisci il tuo nome",
-    "locationRequired": "Seleziona una sede"
+    "locationRequired": "Seleziona una sede",
+    "deliveryDate": "Data di consegna desiderata",
+    "selectDate": "Seleziona data",
+    "timeWindow": "Fascia oraria"
   }
 }

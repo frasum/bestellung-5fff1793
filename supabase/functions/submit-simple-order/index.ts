@@ -19,7 +19,7 @@ serve(async (req) => {
   }
 
   try {
-    const { token, items, employee_name, location_id, supplier_id: requestSupplierId } = await req.json();
+    const { token, items, employee_name, location_id, supplier_id: requestSupplierId, delivery_date, time_window } = await req.json();
 
     if (!token || !items || items.length === 0) {
       return new Response(
@@ -35,7 +35,7 @@ serve(async (req) => {
       );
     }
 
-    console.log('Processing simple order submission:', { token: token.substring(0, 8) + '...', itemCount: items.length, employee_name, location_id });
+    console.log('Processing simple order submission:', { token: token.substring(0, 8) + '...', itemCount: items.length, employee_name, location_id, delivery_date, time_window });
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -110,6 +110,8 @@ serve(async (req) => {
         location_id: location_id,
         name: draftName,
         notes: notes,
+        desired_delivery_date: delivery_date || null,
+        desired_time_window: time_window || null,
       })
       .select()
       .single();

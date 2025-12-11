@@ -177,6 +177,8 @@ export type Database = {
         Row: {
           created_at: string
           delivery_address: string | null
+          desired_delivery_date: string | null
+          desired_time_window: string | null
           id: string
           location_id: string | null
           name: string
@@ -188,6 +190,8 @@ export type Database = {
         Insert: {
           created_at?: string
           delivery_address?: string | null
+          desired_delivery_date?: string | null
+          desired_time_window?: string | null
           id?: string
           location_id?: string | null
           name?: string
@@ -199,6 +203,8 @@ export type Database = {
         Update: {
           created_at?: string
           delivery_address?: string | null
+          desired_delivery_date?: string | null
+          desired_time_window?: string | null
           id?: string
           location_id?: string | null
           name?: string
