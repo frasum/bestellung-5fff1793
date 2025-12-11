@@ -28,13 +28,14 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Get token with supplier and organization info
+    // Get token with supplier, organization, location and employee info
     const { data: tokenData, error: tokenError } = await supabase
       .from('simple_order_tokens')
       .select(`
         *,
         supplier:suppliers(id, name, email, organization_id),
-        location:locations(id, name)
+        location:locations(id, name),
+        employee:employees(id, name)
       `)
       .eq('token', token)
       .eq('is_active', true)
@@ -175,7 +176,7 @@ serve(async (req) => {
           location: tokenData.location,
           organization_id: tokenData.organization_id,
           is_multi_supplier: isMultiSupplier,
-          employee_name: tokenData.employee_name || null,
+          employee_name: (tokenData.employee as any)?.name || tokenData.employee_name || null,
         },
         suppliers: suppliers,
         articles: articles,
