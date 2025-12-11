@@ -6,6 +6,7 @@ import { useCart } from '@/contexts/CartContext';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useOrders, useUpdateOrderStatus, useDeleteTestOrders, Order } from '@/hooks/useOrders';
 import { useCartDrafts, useDeleteCartDraft, CartDraft } from '@/hooks/useCartDrafts';
+import { useLocations } from '@/hooks/useLocations';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -35,7 +36,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { format, isAfter, isBefore, startOfDay, endOfDay, subDays, subMonths, Locale } from 'date-fns';
 import { de, enUS, fr } from 'date-fns/locale';
-import { Loader2, Package, CheckCircle2, Clock, Truck, XCircle, Eye, Search, X, ChevronDown, Trash2, FlaskConical, Filter, FileText, ShoppingCart, Calendar, Smartphone } from 'lucide-react';
+import { Loader2, Package, CheckCircle2, Clock, Truck, XCircle, Eye, Search, X, ChevronDown, Trash2, FlaskConical, Filter, FileText, ShoppingCart, Calendar, Smartphone, MapPin } from 'lucide-react';
 import { SimpleOrderTab } from '@/components/settings/SimpleOrderTab';
 import {
   Popover,
@@ -73,12 +74,23 @@ const statusIcons: Record<Order['status'], typeof Clock> = {
 const Orders = () => {
   const { user, loading: authLoading } = useAuth();
   const { activeLocation } = useLocationContext();
+  const { data: locations } = useLocations();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { t, i18n } = useTranslation();
   
+  // Location filter state: 'active' = current location, 'all' = all locations, or specific location id
+  const [locationFilter, setLocationFilter] = useState<string>('active');
+  
+  // Compute locationId for query based on filter
+  const queryLocationId = useMemo(() => {
+    if (locationFilter === 'all') return null;
+    if (locationFilter === 'active') return activeLocation?.id;
+    return locationFilter;
+  }, [locationFilter, activeLocation?.id]);
+  
   // Orders state
-  const { data: orders, isLoading } = useOrders(activeLocation?.id);
+  const { data: orders, isLoading } = useOrders(queryLocationId);
   const updateStatus = useUpdateOrderStatus();
   const deleteTestOrders = useDeleteTestOrders();
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
@@ -121,6 +133,15 @@ const Orders = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<Order['status'] | 'all'>('all');
   const [dateFilter, setDateFilter] = useState<DateFilter>('all');
+
+  const hasActiveFilters = searchQuery || statusFilter !== 'all' || dateFilter !== 'all' || locationFilter !== 'active';
+
+  const clearFilters = () => {
+    setSearchQuery('');
+    setStatusFilter('all');
+    setDateFilter('all');
+    setLocationFilter('active');
+  };
 
   // Count test orders
   const testOrdersCount = useMemo(() => {
@@ -244,12 +265,9 @@ const Orders = () => {
     setOpenOrders(newOpen);
   };
 
-  const hasActiveFilters = searchQuery || statusFilter !== 'all' || dateFilter !== 'all';
-
-  const clearFilters = () => {
-    setSearchQuery('');
-    setStatusFilter('all');
-    setDateFilter('all');
+  // Get location display name helper
+  const getLocationDisplayName = (loc: { name: string; short_code: string | null }) => {
+    return loc.short_code || loc.name;
   };
 
   // Drafts functions
@@ -489,7 +507,7 @@ const Orders = () => {
             <PopoverTrigger asChild>
               <Button variant="outline" size="icon" className="h-11 w-11 shrink-0 relative">
                 <Filter className="w-4 h-4" />
-                {(statusFilter !== 'all' || dateFilter !== 'all') && (
+                {(statusFilter !== 'all' || dateFilter !== 'all' || locationFilter !== 'active') && (
                   <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-primary rounded-full" />
                 )}
               </Button>
@@ -528,6 +546,27 @@ const Orders = () => {
                     </SelectContent>
                   </Select>
                 </div>
+                {locations && locations.length > 1 && (
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">{t('orders.filterByLocation')}</label>
+                    <Select value={locationFilter} onValueChange={setLocationFilter}>
+                      <SelectTrigger className="w-full">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="active">
+                          {activeLocation ? getLocationDisplayName(activeLocation) : t('orders.currentLocation')}
+                        </SelectItem>
+                        <SelectItem value="all">{t('orders.allLocations')}</SelectItem>
+                        {locations.map(loc => (
+                          <SelectItem key={loc.id} value={loc.id}>
+                            {getLocationDisplayName(loc)}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
                 {hasActiveFilters && (
                   <Button variant="outline" size="sm" onClick={clearFilters} className="w-full">
                     <X className="w-4 h-4 mr-2" />
@@ -576,6 +615,34 @@ const Orders = () => {
               <SelectItem value="3months">{t('orders.last3Months')}</SelectItem>
             </SelectContent>
           </Select>
+          {locations && locations.length > 1 && (
+            <Select value={locationFilter} onValueChange={setLocationFilter}>
+              <SelectTrigger className="w-40">
+                <div className="flex items-center gap-2">
+                  <MapPin className="w-4 h-4" />
+                  <span className="truncate">
+                    {locationFilter === 'active' 
+                      ? (activeLocation ? getLocationDisplayName(activeLocation) : t('orders.currentLocation'))
+                      : locationFilter === 'all'
+                        ? t('orders.allLocations')
+                        : getLocationDisplayName(locations.find(l => l.id === locationFilter) || { name: '', short_code: null })
+                    }
+                  </span>
+                </div>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="active">
+                  {activeLocation ? getLocationDisplayName(activeLocation) : t('orders.currentLocation')} ({t('orders.currentLocation')})
+                </SelectItem>
+                <SelectItem value="all">{t('orders.allLocations')}</SelectItem>
+                {locations.map(loc => (
+                  <SelectItem key={loc.id} value={loc.id}>
+                    {getLocationDisplayName(loc)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
           {hasActiveFilters && (
             <Button variant="ghost" size="icon" onClick={clearFilters} className="shrink-0">
               <X className="w-4 h-4" />
