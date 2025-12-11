@@ -133,14 +133,15 @@ export const CategoriesTab = () => {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-        <div className="flex gap-2">
+        <div className="flex flex-col sm:flex-row gap-2">
           <Input
             placeholder={t('settings.newCategoryPlaceholder')}
             value={newCategoryName}
             onChange={(e) => setNewCategoryName(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleAddCategory()}
+            className="h-11 sm:h-9"
           />
-          <Button onClick={handleAddCategory} disabled={createCategory.isPending || !newCategoryName.trim()}>
+          <Button onClick={handleAddCategory} disabled={createCategory.isPending || !newCategoryName.trim()} className="h-10 sm:h-9 w-full sm:w-auto">
             <Plus className="h-4 w-4 mr-2" />
             {t('common.add')}
           </Button>
@@ -153,7 +154,7 @@ export const CategoriesTab = () => {
                 <h4 className="font-medium text-sm">{t('settings.categoriesFromArticles')}</h4>
                 <p className="text-xs text-muted-foreground">{t('settings.categoriesFromArticlesDesc')}</p>
               </div>
-              <Button size="sm" variant="outline" onClick={handleAddAllMissingCategories}>
+              <Button size="sm" variant="outline" onClick={handleAddAllMissingCategories} className="h-10 sm:h-8">
                 <Plus className="h-4 w-4 mr-2" />
                 {t('settings.addAll')}
               </Button>
@@ -194,13 +195,13 @@ export const CategoriesTab = () => {
                         if (e.key === 'Enter') handleSaveEdit();
                         if (e.key === 'Escape') handleCancelEdit();
                       }}
-                      className="h-8"
+                      className="h-10 sm:h-8"
                       autoFocus
                     />
-                    <Button size="sm" variant="ghost" onClick={handleSaveEdit}>
+                    <Button size="icon" variant="ghost" onClick={handleSaveEdit} className="h-10 w-10 sm:h-8 sm:w-8">
                       <Check className="h-4 w-4 text-green-600" />
                     </Button>
-                    <Button size="sm" variant="ghost" onClick={handleCancelEdit}>
+                    <Button size="icon" variant="ghost" onClick={handleCancelEdit} className="h-10 w-10 sm:h-8 sm:w-8">
                       <X className="h-4 w-4" />
                     </Button>
                   </div>
@@ -209,21 +210,22 @@ export const CategoriesTab = () => {
                     <span className="font-medium">{category.name}</span>
                     <div className="flex items-center gap-1">
                       <Button
-                        size="sm"
+                        size="icon"
                         variant="ghost"
                         onClick={() => setMergingCategory(category)}
                         title={t('settings.mergeCategory')}
+                        className="h-10 w-10 sm:h-8 sm:w-8"
                       >
                         <Merge className="h-4 w-4" />
                       </Button>
-                      <Button size="sm" variant="ghost" onClick={() => handleStartEdit(category)}>
+                      <Button size="icon" variant="ghost" onClick={() => handleStartEdit(category)} className="h-10 w-10 sm:h-8 sm:w-8">
                         <Pencil className="h-4 w-4" />
                       </Button>
                       <Button
-                        size="sm"
+                        size="icon"
                         variant="ghost"
                         onClick={() => setDeletingCategory(category)}
-                        className="text-destructive hover:text-destructive"
+                        className="text-destructive hover:text-destructive h-10 w-10 sm:h-8 sm:w-8"
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -237,18 +239,18 @@ export const CategoriesTab = () => {
       </CardContent>
 
       <AlertDialog open={!!deletingCategory} onOpenChange={(open) => !open && setDeletingCategory(null)}>
-        <AlertDialogContent>
+        <AlertDialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-lg">
           <AlertDialogHeader>
             <AlertDialogTitle>{t('settings.deleteCategoryTitle')}</AlertDialogTitle>
             <AlertDialogDescription>
               {t('settings.deleteCategoryConfirm', { name: deletingCategory?.name })}
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
+          <AlertDialogFooter className="flex-col sm:flex-row gap-2">
+            <AlertDialogCancel className="w-full sm:w-auto h-10 sm:h-9">{t('common.cancel')}</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeleteConfirm}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90 w-full sm:w-auto h-10 sm:h-9"
             >
               {t('common.delete')}
             </AlertDialogAction>
@@ -257,7 +259,7 @@ export const CategoriesTab = () => {
       </AlertDialog>
 
       <AlertDialog open={!!mergingCategory} onOpenChange={(open) => !open && setMergingCategory(null)}>
-        <AlertDialogContent>
+        <AlertDialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-lg">
           <AlertDialogHeader>
             <AlertDialogTitle>{t('settings.mergeCategoriesTitle')}</AlertDialogTitle>
             <AlertDialogDescription className="space-y-4">
@@ -265,7 +267,7 @@ export const CategoriesTab = () => {
                 {t('settings.mergeCategoriesDesc', { name: mergingCategory?.name })}
               </p>
               <Select value={mergeTargetId} onValueChange={setMergeTargetId}>
-                <SelectTrigger>
+                <SelectTrigger className="h-11 sm:h-10">
                   <SelectValue placeholder={t('settings.selectTargetCategory')} />
                 </SelectTrigger>
                 <SelectContent>
@@ -278,11 +280,12 @@ export const CategoriesTab = () => {
               </Select>
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
+          <AlertDialogFooter className="flex-col sm:flex-row gap-2">
+            <AlertDialogCancel className="w-full sm:w-auto h-10 sm:h-9">{t('common.cancel')}</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleMergeConfirm}
               disabled={!mergeTargetId || isMerging}
+              className="w-full sm:w-auto h-10 sm:h-9"
             >
               {isMerging ? t('settings.merging') : t('settings.merge')}
             </AlertDialogAction>
