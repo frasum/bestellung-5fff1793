@@ -305,13 +305,13 @@ export const ProfileTab = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <Card>
         <CardHeader>
           <CardTitle>{t('settings.profileInfo')}</CardTitle>
           <CardDescription>{t('settings.updateDetails')}</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-3 sm:space-y-4">
           <div className="space-y-2">
             <Label htmlFor="email">{t('common.email')}</Label>
             <Input
@@ -355,7 +355,7 @@ export const ProfileTab = () => {
             {t('settings.defaultDeliveryAddressesDesc')}
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-3 sm:space-y-4">
           {locations.length > 0 ? (
             locations.map((location) => {
               const locationAddresses = getAddressesForLocation(location.id);

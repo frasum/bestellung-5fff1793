@@ -483,14 +483,14 @@ export function EmployeesTab() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h3 className="text-lg font-medium">Bestellberechtigte Mitarbeiter</h3>
           <p className="text-sm text-muted-foreground">
             Verwalte Mitarbeiter und ihre Easy Order Zugänge
           </p>
         </div>
-        <Button onClick={openCreateDialog} size="sm">
+        <Button onClick={openCreateDialog} size="sm" className="w-full sm:w-auto">
           <Plus className="h-4 w-4 mr-2" />
           Mitarbeiter hinzufügen
         </Button>
@@ -527,14 +527,14 @@ export function EmployeesTab() {
             return (
               <div
                 key={employee.id}
-                className={`border rounded-lg p-4 ${
+                className={`border rounded-lg p-3 sm:p-4 ${
                   !employee.is_active ? 'opacity-60 bg-muted/30' : ''
                 }`}
               >
-              <div className="flex gap-4">
+              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
                   {/* Mitarbeiter-Infos */}
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between gap-4">
+                    <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 sm:gap-4">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
                           <span className="font-medium">{employee.name}</span>
@@ -588,7 +588,7 @@ export function EmployeesTab() {
                           </p>
                         )}
                       </div>
-                      <div className="flex items-center gap-1 flex-shrink-0">
+                      <div className="flex items-center gap-1 flex-shrink-0 flex-wrap justify-end">
                         {/* Link Buttons - only show if token exists */}
                         {token && (
                           <>
@@ -597,6 +597,7 @@ export function EmployeesTab() {
                                 <Button
                                   variant="ghost"
                                   size="icon"
+                                  className="h-10 w-10"
                                   title="QR-Code anzeigen"
                                 >
                                   <QrCode className="h-4 w-4" />
@@ -613,6 +614,7 @@ export function EmployeesTab() {
                             <Button
                               variant="ghost"
                               size="icon"
+                              className="h-10 w-10"
                               onClick={() => copyToClipboard(token.token)}
                               title="Link kopieren"
                             >
@@ -622,6 +624,7 @@ export function EmployeesTab() {
                               <Button
                                 variant="ghost"
                                 size="icon"
+                                className="h-10 w-10"
                                 onClick={() => openWhatsApp(employee, token.token)}
                                 title="Per WhatsApp senden"
                               >
@@ -631,6 +634,7 @@ export function EmployeesTab() {
                             <Button
                               variant="ghost"
                               size="icon"
+                              className="h-10 w-10"
                               onClick={() => window.open(getOrderUrl(token.token), '_blank')}
                               title="Link testen"
                             >
@@ -638,7 +642,7 @@ export function EmployeesTab() {
                             </Button>
                           </>
                         )}
-                        <div className="w-px h-6 bg-border mx-1" />
+                        <div className="hidden sm:block w-px h-6 bg-border mx-1" />
                         <Switch
                           checked={employee.is_active}
                           onCheckedChange={() => handleToggleActive(employee)}
@@ -646,6 +650,7 @@ export function EmployeesTab() {
                         <Button
                           variant="ghost"
                           size="icon"
+                          className="h-10 w-10"
                           onClick={() => openEditDialog(employee)}
                         >
                           <Pencil className="h-4 w-4" />
@@ -653,6 +658,7 @@ export function EmployeesTab() {
                         <Button
                           variant="ghost"
                           size="icon"
+                          className="h-10 w-10"
                           onClick={() => setDeleteConfirmEmployee(employee)}
                         >
                           <Trash2 className="h-4 w-4" />
@@ -669,7 +675,7 @@ export function EmployeesTab() {
 
       {/* Create/Edit Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-lg max-h-[85vh] p-0 gap-0 overflow-hidden">
+        <DialogContent className="max-w-[calc(100vw-1rem)] sm:max-w-lg max-h-[90vh] p-0 gap-0 overflow-hidden">
           <DialogHeader className="flex-shrink-0 px-6 pt-6 pb-4">
             <DialogTitle>
               {editingEmployee ? 'Mitarbeiter bearbeiten' : 'Neuen Mitarbeiter anlegen'}

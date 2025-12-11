@@ -68,7 +68,7 @@ export const TeamTab = () => {
   return (
     <div className="space-y-6">
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
+        <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <CardTitle>{t('settings.teamMembers')}</CardTitle>
             <CardDescription>{t('settings.teamDescription')}</CardDescription>
@@ -76,12 +76,12 @@ export const TeamTab = () => {
           {isAdmin && (
             <Dialog open={inviteDialogOpen} onOpenChange={setInviteDialogOpen}>
               <DialogTrigger asChild>
-                <Button className="gap-2">
+                <Button className="gap-2 w-full sm:w-auto">
                   <Plus className="h-4 w-4" />
                   {t('settings.inviteMember')}
                 </Button>
               </DialogTrigger>
-              <DialogContent>
+              <DialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-md">
                 <DialogHeader>
                   <DialogTitle>{t('settings.inviteTitle')}</DialogTitle>
                 </DialogHeader>
@@ -125,24 +125,24 @@ export const TeamTab = () => {
           ) : (
             <div className="space-y-4">
               {members.map((member) => (
-                <div key={member.id} className="flex items-center justify-between p-4 border rounded-lg">
+                <div key={member.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 border rounded-lg gap-3">
                   <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                    <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
                       <User className="h-5 w-5 text-primary" />
                     </div>
-                    <div>
-                      <p className="font-medium">{member.full_name || t('settings.noName')}</p>
-                      <p className="text-sm text-muted-foreground">{member.email}</p>
+                    <div className="min-w-0">
+                      <p className="font-medium truncate">{member.full_name || t('settings.noName')}</p>
+                      <p className="text-sm text-muted-foreground truncate">{member.email}</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap ml-13 sm:ml-0">
                     {isAdmin && member.id !== user?.id ? (
                       <>
                         <Select
                           value={member.role}
                           onValueChange={(role) => updateRole.mutate({ userId: member.id, role: role as TeamMember['role'] })}
                         >
-                          <SelectTrigger className="w-32">
+                          <SelectTrigger className="w-full sm:w-32 h-10">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
@@ -155,6 +155,7 @@ export const TeamTab = () => {
                         <Button
                           variant="ghost"
                           size="icon"
+                          className="h-10 w-10 flex-shrink-0"
                           onClick={() => removeMember.mutate(member.id)}
                           disabled={removeMember.isPending}
                         >
@@ -187,10 +188,10 @@ export const TeamTab = () => {
           <CardContent>
             <div className="space-y-4">
               {invitations.map((invitation) => (
-                <div key={invitation.id} className="flex items-center justify-between p-4 border rounded-lg">
-                  <div className="space-y-1">
-                    <p className="font-medium">{invitation.email}</p>
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <div key={invitation.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 border rounded-lg gap-3">
+                  <div className="space-y-1 min-w-0">
+                    <p className="font-medium truncate">{invitation.email}</p>
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground flex-wrap">
                       <Badge variant="secondary">{roleLabels[invitation.role]}</Badge>
                       <span className="flex items-center gap-1">
                         <Clock className="h-3 w-3" />
@@ -201,6 +202,7 @@ export const TeamTab = () => {
                   <Button
                     variant="ghost"
                     size="icon"
+                    className="h-10 w-10 self-end sm:self-auto flex-shrink-0"
                     onClick={() => deleteInvitation.mutate(invitation.id)}
                     disabled={deleteInvitation.isPending}
                   >

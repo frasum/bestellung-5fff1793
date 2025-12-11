@@ -17,9 +17,10 @@ export const CommunicationTab = ({
   SupplierPortalContent,
 }: CommunicationTabProps) => {
   return (
-    <div className="bg-muted/30 rounded-lg p-4 border border-border/50">
+    <div className="bg-muted/30 rounded-lg p-2 sm:p-4 border border-border/50">
       <Tabs value={activeSubTab} onValueChange={onSubTabChange} className="space-y-4">
-        <TabsList className="bg-muted/50 p-1">
+        <div className="overflow-x-auto -mx-2 px-2 sm:mx-0 sm:px-0">
+          <TabsList className="bg-muted/50 p-1 w-max min-w-full sm:w-auto">
           <TabsTrigger 
             value="notifications" 
             className="gap-1.5 text-xs sm:text-sm data-[state=active]:bg-background data-[state=active]:shadow-sm"
@@ -44,7 +45,8 @@ export const CommunicationTab = ({
             <span className="hidden sm:inline">Lieferantenportal</span>
             <span className="sm:hidden">Portal</span>
           </TabsTrigger>
-        </TabsList>
+          </TabsList>
+        </div>
 
         <TabsContent value="notifications" className="mt-4 animate-in fade-in-50 slide-in-from-left-2 duration-200">
           <NotificationsContent />
