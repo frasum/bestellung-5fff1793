@@ -10,6 +10,7 @@ import { CartProvider } from "@/contexts/CartContext";
 import { LocationProvider } from "@/contexts/LocationContext";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { Loader2 } from "lucide-react";
+import { useRealtimeNotifications } from "@/hooks/useRealtimeNotifications";
 
 // Lazy load pages for better performance
 const Auth = lazy(() => import("./pages/Auth"));
@@ -35,6 +36,37 @@ const PageLoader = () => (
   </div>
 );
 
+// Inner component to use hooks inside providers
+const AppContent = () => {
+  useRealtimeNotifications();
+  
+  return (
+    <Suspense fallback={<PageLoader />}>
+      <Routes>
+        <Route path="/" element={<Auth />} />
+        <Route path="/signup" element={<Auth />} />
+        <Route path="/dashboard" element={<Navigate to="/reports" replace />} />
+        <Route path="/suppliers" element={<Suppliers />} />
+        <Route path="/articles" element={<Navigate to="/suppliers?tab=articles" replace />} />
+        <Route path="/cart" element={<Cart />} />
+        <Route path="/checkout" element={<Checkout />} />
+        <Route path="/orders" element={<Orders />} />
+        <Route path="/drafts" element={<Navigate to="/orders?tab=drafts" replace />} />
+        <Route path="/reports" element={<Reports />} />
+        <Route path="/inventory" element={<Navigate to="/reports?tab=inventur" replace />} />
+        <Route path="/settings" element={<Settings />} />
+        <Route path="/supplier-login" element={<SupplierLogin />} />
+        <Route path="/supplier-auth" element={<SupplierAuth />} />
+        <Route path="/supplier-portal" element={<SupplierPortal />} />
+        <Route path="/order-confirmed" element={<OrderConfirmed />} />
+        <Route path="/simple-order/:token" element={<SimpleOrder />} />
+        {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </Suspense>
+  );
+};
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
@@ -46,29 +78,7 @@ const App = () => (
                 <Toaster />
                 <Sonner />
                 <BrowserRouter>
-                  <Suspense fallback={<PageLoader />}>
-                    <Routes>
-                      <Route path="/" element={<Auth />} />
-                      <Route path="/signup" element={<Auth />} />
-                      <Route path="/dashboard" element={<Navigate to="/reports" replace />} />
-                      <Route path="/suppliers" element={<Suppliers />} />
-                      <Route path="/articles" element={<Navigate to="/suppliers?tab=articles" replace />} />
-                      <Route path="/cart" element={<Cart />} />
-                      <Route path="/checkout" element={<Checkout />} />
-                      <Route path="/orders" element={<Orders />} />
-                      <Route path="/drafts" element={<Navigate to="/orders?tab=drafts" replace />} />
-                      <Route path="/reports" element={<Reports />} />
-                      <Route path="/inventory" element={<Navigate to="/reports?tab=inventur" replace />} />
-                      <Route path="/settings" element={<Settings />} />
-                      <Route path="/supplier-login" element={<SupplierLogin />} />
-                      <Route path="/supplier-auth" element={<SupplierAuth />} />
-                      <Route path="/supplier-portal" element={<SupplierPortal />} />
-                      <Route path="/order-confirmed" element={<OrderConfirmed />} />
-                      <Route path="/simple-order/:token" element={<SimpleOrder />} />
-                      {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-                      <Route path="*" element={<NotFound />} />
-                    </Routes>
-                  </Suspense>
+                  <AppContent />
                 </BrowserRouter>
               </ErrorBoundary>
             </TooltipProvider>
