@@ -140,7 +140,10 @@ const TestModeCard = () => {
   };
 
   return (
-    <Card>
+    <Card className={organization?.test_mode_enabled 
+      ? "border-amber-300 dark:border-amber-700 bg-amber-50/50 dark:bg-amber-950/20" 
+      : ""
+    }>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Mail className="h-5 w-5" />
