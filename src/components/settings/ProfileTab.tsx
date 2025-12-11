@@ -88,12 +88,28 @@ const TestModeCard = () => {
   const updateOrganization = useUpdateOrganization();
   const [testEmail, setTestEmail] = useState('');
   const [testEmailError, setTestEmailError] = useState('');
+  
+  const [advancedMode, setAdvancedMode] = useState(() => 
+    localStorage.getItem('advanced-settings-enabled') === 'true'
+  );
+
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'advanced-settings-enabled') {
+        setAdvancedMode(e.newValue === 'true');
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
 
   useEffect(() => {
     if (organization?.test_email) {
       setTestEmail(organization.test_email);
     }
   }, [organization?.test_email]);
+
+  if (!advancedMode) return null;
 
   const validateEmail = (email: string): boolean => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
