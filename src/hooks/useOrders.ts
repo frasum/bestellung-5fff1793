@@ -69,6 +69,8 @@ export const useOrders = (locationId?: string) => {
       if (error) throw error;
       return data as Order[];
     },
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
   });
 };
 
@@ -208,12 +210,37 @@ export const useUpdateOrderStatus = () => {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['orders'] });
-      toast.success('Order status updated');
+    onMutate: async ({ orderId, status }) => {
+      // Cancel outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ['orders'] });
+
+      // Snapshot previous value
+      const previousOrders = queryClient.getQueriesData<Order[]>({ queryKey: ['orders'] });
+
+      // Optimistically update all matching queries
+      queryClient.setQueriesData<Order[]>({ queryKey: ['orders'] }, (old) => {
+        if (!old) return old;
+        return old.map((order) =>
+          order.id === orderId ? { ...order, status } : order
+        );
+      });
+
+      return { previousOrders };
     },
-    onError: (error: Error) => {
+    onError: (error: Error, _variables, context) => {
+      // Rollback on error
+      if (context?.previousOrders) {
+        context.previousOrders.forEach(([queryKey, data]) => {
+          queryClient.setQueryData(queryKey, data);
+        });
+      }
       toast.error(error.message);
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+    },
+    onSuccess: () => {
+      toast.success('Order status updated');
     },
   });
 };
@@ -262,12 +289,35 @@ export const useDeleteTestOrders = () => {
 
       return { deletedCount: testOrders.length };
     },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['orders'] });
-      toast.success(`${data.deletedCount} Test-Bestellungen gelöscht`);
+    onMutate: async () => {
+      // Cancel outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ['orders'] });
+
+      // Snapshot previous value
+      const previousOrders = queryClient.getQueriesData<Order[]>({ queryKey: ['orders'] });
+
+      // Optimistically remove test orders
+      queryClient.setQueriesData<Order[]>({ queryKey: ['orders'] }, (old) => {
+        if (!old) return old;
+        return old.filter((order) => !order.is_test_order);
+      });
+
+      return { previousOrders };
     },
-    onError: (error: Error) => {
+    onError: (error: Error, _variables, context) => {
+      // Rollback on error
+      if (context?.previousOrders) {
+        context.previousOrders.forEach(([queryKey, data]) => {
+          queryClient.setQueryData(queryKey, data);
+        });
+      }
       toast.error(error.message);
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+    },
+    onSuccess: (data) => {
+      toast.success(`${data.deletedCount} Test-Bestellungen gelöscht`);
     },
   });
 };
