@@ -213,18 +213,39 @@ export const useCreateInvitation = () => {
 
         if (emailError) {
           console.error('Failed to send invitation email:', emailError);
-          // Don't throw - invitation was created, just email failed
         }
       } catch (emailErr) {
         console.error('Error calling send-invitation-email:', emailErr);
-        // Don't throw - invitation was created successfully
       }
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['team-invitations'] });
-      toast.success('Invitation sent');
+    onMutate: async ({ email, role }) => {
+      await queryClient.cancelQueries({ queryKey: ['team-invitations'] });
+      const previousInvitations = queryClient.getQueryData<TeamInvitation[]>(['team-invitations']);
+      
+      const optimisticInvitation: TeamInvitation = {
+        id: crypto.randomUUID(),
+        email: email.toLowerCase().trim(),
+        role,
+        expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+        created_at: new Date().toISOString(),
+      };
+      
+      queryClient.setQueryData<TeamInvitation[]>(['team-invitations'], (old) =>
+        [optimisticInvitation, ...(old || [])]
+      );
+      
+      return { previousInvitations };
     },
-    onError: (error: Error) => toast.error(error.message || 'Failed to send invitation'),
+    onError: (error: Error, _variables, context) => {
+      if (context?.previousInvitations) {
+        queryClient.setQueryData(['team-invitations'], context.previousInvitations);
+      }
+      toast.error(error.message || 'Failed to send invitation');
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['team-invitations'] });
+    },
+    onSuccess: () => toast.success('Invitation sent'),
   });
 };
 
@@ -240,11 +261,26 @@ export const useDeleteInvitation = () => {
 
       if (error) throw error;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['team-invitations'] });
-      toast.success('Invitation cancelled');
+    onMutate: async (id) => {
+      await queryClient.cancelQueries({ queryKey: ['team-invitations'] });
+      const previousInvitations = queryClient.getQueryData<TeamInvitation[]>(['team-invitations']);
+      
+      queryClient.setQueryData<TeamInvitation[]>(['team-invitations'], (old) =>
+        old?.filter((inv) => inv.id !== id)
+      );
+      
+      return { previousInvitations };
     },
-    onError: () => toast.error('Failed to cancel invitation'),
+    onError: (_err, _id, context) => {
+      if (context?.previousInvitations) {
+        queryClient.setQueryData(['team-invitations'], context.previousInvitations);
+      }
+      toast.error('Failed to cancel invitation');
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['team-invitations'] });
+    },
+    onSuccess: () => toast.success('Invitation cancelled'),
   });
 };
 
