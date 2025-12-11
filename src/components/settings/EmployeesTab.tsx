@@ -753,10 +753,10 @@ export function EmployeesTab() {
                                 htmlFor={`location-${location.id}`}
                                 className="text-sm font-medium cursor-pointer"
                               >
-                                {location.name}
+                              {location.short_code || location.name}
                                 {location.short_code && (
                                   <span className="text-muted-foreground ml-1">
-                                    ({location.short_code})
+                                    ({location.name})
                                   </span>
                                 )}
                               </label>

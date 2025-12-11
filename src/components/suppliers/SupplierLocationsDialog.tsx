@@ -89,9 +89,9 @@ export const SupplierLocationsDialog = ({ open, onOpenChange, supplier }: Suppli
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <MapPin className="h-4 w-4 text-muted-foreground" />
-                      <span className="font-medium">{location.name}</span>
+                      <span className="font-medium">{location.short_code || location.name}</span>
                       {location.short_code && (
-                        <span className="text-xs text-muted-foreground">({location.short_code})</span>
+                        <span className="text-sm text-muted-foreground ml-1">({location.name})</span>
                       )}
                     </div>
                     <div className="flex items-center gap-2">
