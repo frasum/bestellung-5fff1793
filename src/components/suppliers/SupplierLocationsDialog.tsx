@@ -65,11 +65,11 @@ export const SupplierLocationsDialog = ({ open, onOpenChange, supplier }: Suppli
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+      <DialogContent className="max-w-[calc(100vw-1rem)] sm:max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Store className="h-5 w-5" />
-            Standort-Zuordnungen: {supplier.name}
+          <DialogTitle className="flex items-center gap-2 text-base sm:text-lg">
+            <Store className="h-5 w-5 shrink-0" />
+            <span className="line-clamp-1">Standort-Zuordnungen: {supplier.name}</span>
           </DialogTitle>
         </DialogHeader>
         
@@ -107,7 +107,7 @@ export const SupplierLocationsDialog = ({ open, onOpenChange, supplier }: Suppli
                     </div>
                   </div>
                   
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                     <div className="space-y-1">
                       <Label htmlFor={`customer-${location.id}`} className="text-sm">Kundennummer</Label>
                       <Input
@@ -118,6 +118,7 @@ export const SupplierLocationsDialog = ({ open, onOpenChange, supplier }: Suppli
                           [location.id]: { ...prev[location.id], customer_number: e.target.value }
                         }))}
                         placeholder="z.B. KD-12345"
+                        className="h-11 sm:h-9"
                       />
                     </div>
                     <div className="space-y-1">
@@ -130,6 +131,8 @@ export const SupplierLocationsDialog = ({ open, onOpenChange, supplier }: Suppli
                           [location.id]: { ...prev[location.id], minimum_order_value: e.target.value }
                         }))}
                         placeholder="0,00"
+                        inputMode="decimal"
+                        className="h-11 sm:h-9"
                       />
                     </div>
                   </div>
@@ -140,7 +143,7 @@ export const SupplierLocationsDialog = ({ open, onOpenChange, supplier }: Suppli
 
           {locations.length > 0 && (
             <div className="flex justify-end pt-4 border-t">
-              <Button onClick={handleSaveAll} className="gap-2">
+              <Button onClick={handleSaveAll} className="gap-2 w-full sm:w-auto h-10 sm:h-9">
                 <Save className="h-4 w-4" />
                 Alle speichern
               </Button>

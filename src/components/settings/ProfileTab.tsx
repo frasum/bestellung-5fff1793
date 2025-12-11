@@ -318,7 +318,7 @@ export const ProfileTab = () => {
               id="email"
               value={profile?.email || ''}
               disabled
-              className="bg-muted"
+              className="bg-muted h-11 sm:h-9"
             />
             <p className="text-xs text-muted-foreground">{t('settings.emailCannotChange')}</p>
           </div>
@@ -330,10 +330,11 @@ export const ProfileTab = () => {
               defaultValue={profile?.full_name || ''}
               onChange={(e) => setFullName(e.target.value)}
               placeholder={t('auth.fullName')}
+              className="h-11 sm:h-9"
             />
           </div>
 
-          <Button onClick={handleProfileSave} disabled={updateProfile.isPending}>
+          <Button onClick={handleProfileSave} disabled={updateProfile.isPending} className="w-full sm:w-auto h-10 sm:h-9">
             {updateProfile.isPending ? t('settings.savingProfile') : t('settings.saveProfile')}
           </Button>
 
@@ -371,9 +372,9 @@ export const ProfileTab = () => {
                       value={currentPreference?.delivery_address_id || ''} 
                       onValueChange={(value) => handleAddressChange(location.id, value)}
                     >
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder={t('settings.selectDefaultAddress')} />
-                      </SelectTrigger>
+                  <SelectTrigger className="w-full h-11 sm:h-10">
+                    <SelectValue placeholder={t('settings.selectDefaultAddress')} />
+                  </SelectTrigger>
                       <SelectContent>
                         {locationAddresses.map((address) => (
                           <SelectItem key={address.id} value={address.id}>
@@ -413,6 +414,7 @@ export const ProfileTab = () => {
                 onChange={(e) => setNewPassword(e.target.value)}
                 placeholder={t('settings.newPasswordPlaceholder')}
                 required
+                className="h-11 sm:h-9"
               />
             </div>
 
@@ -425,6 +427,7 @@ export const ProfileTab = () => {
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder={t('settings.confirmPasswordPlaceholder')}
                 required
+                className="h-11 sm:h-9"
               />
             </div>
 
@@ -432,7 +435,7 @@ export const ProfileTab = () => {
               <p className="text-sm text-destructive">{passwordError}</p>
             )}
 
-            <Button type="submit" disabled={updatePassword.isPending}>
+            <Button type="submit" disabled={updatePassword.isPending} className="w-full sm:w-auto h-10 sm:h-9">
               {updatePassword.isPending ? t('settings.updatingPassword') : t('settings.updatePassword')}
             </Button>
           </form>

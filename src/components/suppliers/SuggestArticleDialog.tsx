@@ -92,10 +92,10 @@ export const SuggestArticleDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Plus className="h-5 w-5" />
+          <DialogTitle className="flex items-center gap-2 text-base sm:text-lg">
+            <Plus className="h-5 w-5 shrink-0" />
             Neuen Artikel vorschlagen
           </DialogTitle>
           <DialogDescription>
@@ -112,10 +112,11 @@ export const SuggestArticleDialog = ({
               onChange={(e) => setName(e.target.value)}
               placeholder="z.B. Bio-Tomaten"
               required
+              className="h-11 sm:h-9"
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             <div className="space-y-2">
               <Label htmlFor="sku">SKU / Artikelnummer</Label>
               <Input
@@ -123,6 +124,7 @@ export const SuggestArticleDialog = ({
                 value={sku}
                 onChange={(e) => setSku(e.target.value)}
                 placeholder="optional"
+                className="h-11 sm:h-9"
               />
             </div>
             <div className="space-y-2">
@@ -134,11 +136,12 @@ export const SuggestArticleDialog = ({
                 value={priceInput}
                 onChange={(e) => setPriceInput(e.target.value)}
                 placeholder="0,00"
+                className="h-11 sm:h-9"
               />
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             <div className="space-y-2">
               <Label>Einheit</Label>
               <SupplierUnitSelect
@@ -168,6 +171,7 @@ export const SuggestArticleDialog = ({
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="optional"
+              className="h-11 sm:h-9"
             />
           </div>
 
@@ -179,14 +183,15 @@ export const SuggestArticleDialog = ({
               onChange={(e) => setComment(e.target.value)}
               placeholder="Warum schlagen Sie diesen Artikel vor?"
               rows={2}
+              className="min-h-[80px]"
             />
           </div>
 
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+          <DialogFooter className="flex-col sm:flex-row gap-2 pt-2">
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="w-full sm:w-auto h-10 sm:h-9">
               Abbrechen
             </Button>
-            <Button type="submit" disabled={!name.trim() || submitting}>
+            <Button type="submit" disabled={!name.trim() || submitting} className="w-full sm:w-auto h-10 sm:h-9">
               {submitting ? (
                 <Loader2 className="h-4 w-4 animate-spin mr-2" />
               ) : (
