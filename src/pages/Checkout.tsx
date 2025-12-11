@@ -259,6 +259,7 @@ const Checkout = () => {
           notes: preview.notes,
           restaurantName: preview.restaurantName,
           isTestOrder: preview.isTestMode || false,
+          locationId: activeLocation?.id,
         });
         orderNumbers.push({ orderNumber: result.orderNumber, supplierName: preview.supplierName });
       }
