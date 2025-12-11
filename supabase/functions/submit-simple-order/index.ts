@@ -84,11 +84,11 @@ serve(async (req) => {
       );
     }
 
-    const supplierName = tokenData.supplier?.name || 'Unbekannt';
     const supplierId = requestSupplierId || tokenData.supplier_id;
 
     // Create cart draft with EasyOrder naming convention
-    const draftName = `EasyOrder: ${employee_name} (${supplierName})`;
+    const draftName = `EasyOrder: ${employee_name}`;
+    const supplierName = tokenData.supplier?.name || 'Lieferant';
     const notes = `EasyOrder-Bestellung von ${employee_name}\nLieferant: ${supplierName}\nToken: ${tokenData.label}`;
 
     const { data: draft, error: draftError } = await supabase
