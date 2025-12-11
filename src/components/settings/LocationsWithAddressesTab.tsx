@@ -157,7 +157,7 @@ const LocationFormDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Store className="h-5 w-5" />
@@ -355,15 +355,15 @@ const LocationItem = ({
           )}
         </div>
       </div>
-      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-        <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={onEdit}>
+      <div className="flex items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity flex-shrink-0">
+        <Button size="sm" variant="ghost" className="h-10 w-10 sm:h-8 sm:w-8 p-0" onClick={onEdit}>
           <Pencil className="h-4 w-4" />
         </Button>
         {!location.is_default && (
           <Button
             size="sm"
             variant="ghost"
-            className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+            className="h-10 w-10 sm:h-8 sm:w-8 p-0 text-destructive hover:text-destructive"
             onClick={handleDelete}
           >
             <Trash2 className="h-4 w-4" />
@@ -392,7 +392,7 @@ export const LocationsWithAddressesTab = () => {
 
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
+      <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <CardTitle className="flex items-center gap-2">
             <Store className="h-5 w-5" />
@@ -402,9 +402,9 @@ export const LocationsWithAddressesTab = () => {
             {t('settings.locationsWithAddressesDesc')}
           </CardDescription>
         </div>
-        <Button className="gap-2" onClick={() => handleOpenDialog()}>
+        <Button className="gap-2 w-full sm:w-auto" onClick={() => handleOpenDialog()}>
           <Plus className="h-4 w-4" />
-          {t('settings.addLocation')}
+          <span className="sm:inline">{t('settings.addLocation')}</span>
         </Button>
       </CardHeader>
       <CardContent>
