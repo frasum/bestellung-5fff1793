@@ -43,6 +43,7 @@ interface TokenData {
   language: string;
   is_multi_supplier: boolean;
   employee_name: string | null;
+  has_employee: boolean;
   supplier: {
     id: string;
     name: string;
@@ -77,6 +78,8 @@ const SimpleOrder = () => {
   const [validationErrors, setValidationErrors] = useState<{ name?: boolean; location?: boolean }>({});
   const [deliveryDate, setDeliveryDate] = useState<Date | undefined>(undefined);
   const [timeWindow, setTimeWindow] = useState<string>('flexible');
+  const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set());
+  const [hasEmployee, setHasEmployee] = useState(false);
 
   // Verify token and load articles
   useEffect(() => {
@@ -101,6 +104,12 @@ const SimpleOrder = () => {
         setTokenData(data.tokenData);
         setAllArticles(data.articles || []);
         setLocations(data.locations || []);
+        setHasEmployee(data.tokenData?.has_employee || false);
+        
+        // Load favorites from response
+        if (data.favorite_article_ids?.length > 0) {
+          setFavoriteIds(new Set(data.favorite_article_ids));
+        }
         
         // Handle multi-supplier tokens
         if (data.tokenData?.is_multi_supplier && data.suppliers) {
@@ -174,6 +183,47 @@ const SimpleOrder = () => {
       }
       return { ...prev, [articleId]: newValue };
     });
+  };
+
+  const toggleFavorite = async (articleId: string) => {
+    const isFavorite = favoriteIds.has(articleId);
+    const action = isFavorite ? 'remove' : 'add';
+    
+    // Optimistic update
+    setFavoriteIds(prev => {
+      const next = new Set(prev);
+      if (isFavorite) {
+        next.delete(articleId);
+      } else {
+        next.add(articleId);
+      }
+      return next;
+    });
+
+    // Only persist if employee is assigned
+    if (hasEmployee && token) {
+      try {
+        const { data, error } = await supabase.functions.invoke('manage-simple-order-favorites', {
+          body: { token, article_id: articleId, action },
+        });
+        
+        if (error || data?.error) {
+          console.error('Error toggling favorite:', error || data?.error);
+          // Revert optimistic update on error
+          setFavoriteIds(prev => {
+            const next = new Set(prev);
+            if (isFavorite) {
+              next.add(articleId);
+            } else {
+              next.delete(articleId);
+            }
+            return next;
+          });
+        }
+      } catch (err) {
+        console.error('Error toggling favorite:', err);
+      }
+    }
   };
 
   const getTotalItems = () => {
@@ -351,6 +401,8 @@ const SimpleOrder = () => {
             suppliers={suppliers}
             selectedSupplierId={selectedSupplierId}
             onSupplierChange={handleSupplierSelect}
+            favoriteIds={favoriteIds}
+            onToggleFavorite={toggleFavorite}
           />
           <SubmitBar
             totalItems={getTotalItems()}

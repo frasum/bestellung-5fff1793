@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Minus, Plus, Search } from 'lucide-react';
+import { Minus, Plus, Search, Star } from 'lucide-react';
 
 interface Article {
   id: string;
@@ -22,14 +22,20 @@ interface Supplier {
   name: string;
 }
 
-// Sort articles: by sort_order if set, otherwise alphabetically
-const sortArticles = (articles: Article[]) => {
+// Sort articles: favorites first, then by sort_order, then alphabetically
+const sortArticles = (articles: Article[], favoriteIds: Set<string>) => {
   return [...articles].sort((a, b) => {
+    // Favorites first
+    const aIsFav = favoriteIds.has(a.id) ? 0 : 1;
+    const bIsFav = favoriteIds.has(b.id) ? 0 : 1;
+    if (aIsFav !== bIsFav) return aIsFav - bIsFav;
+    
+    // Then by sort_order
     const orderA = a.sort_order || 0;
     const orderB = b.sort_order || 0;
-    if (orderA !== orderB) {
-      return orderA - orderB;
-    }
+    if (orderA !== orderB) return orderA - orderB;
+    
+    // Then alphabetically
     return a.name.localeCompare(b.name, 'de');
   });
 };
@@ -45,6 +51,9 @@ interface ArticleListProps {
   suppliers?: Supplier[];
   selectedSupplierId?: string | null;
   onSupplierChange?: (supplierId: string) => void;
+  // Favorites
+  favoriteIds?: Set<string>;
+  onToggleFavorite?: (articleId: string) => void;
 }
 
 export const ArticleList = ({
@@ -57,6 +66,8 @@ export const ArticleList = ({
   suppliers = [],
   selectedSupplierId,
   onSupplierChange,
+  favoriteIds = new Set(),
+  onToggleFavorite,
 }: ArticleListProps) => {
   const { t } = useTranslation();
 
@@ -71,6 +82,11 @@ export const ArticleList = ({
     article.description?.toLowerCase().includes(searchLower) ||
     article.category?.toLowerCase().includes(searchLower)
   );
+
+  // Split into favorites and non-favorites for display
+  const sortedArticles = sortArticles(filteredCurrentArticles, favoriteIds);
+  const favoriteArticles = sortedArticles.filter(a => favoriteIds.has(a.id));
+  const nonFavoriteArticles = sortedArticles.filter(a => !favoriteIds.has(a.id));
 
   // Other suppliers' articles (only when searching)
   const otherSuppliersArticles = isGlobalSearch
@@ -109,17 +125,45 @@ export const ArticleList = ({
 
       {/* Articles */}
       <div className="max-w-2xl mx-auto p-4">
-        {/* Current supplier articles */}
-        <div className="grid grid-cols-1 gap-2">
-          {sortArticles(filteredCurrentArticles).map((article) => (
-            <ArticleCard
-              key={article.id}
-              article={article}
-              quantity={quantities[article.id] || 0}
-              onQuantityChange={onQuantityChange}
-            />
-          ))}
-        </div>
+        {/* Favorites Section */}
+        {favoriteArticles.length > 0 && (
+          <div className="mb-4">
+            <div className="flex items-center gap-2 mb-2 px-1">
+              <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+              <span className="text-sm font-medium text-muted-foreground">
+                {t('simpleOrder.favorites', 'Favoriten')}
+              </span>
+            </div>
+            <div className="grid grid-cols-1 gap-2">
+              {favoriteArticles.map((article) => (
+                <ArticleCard
+                  key={article.id}
+                  article={article}
+                  quantity={quantities[article.id] || 0}
+                  onQuantityChange={onQuantityChange}
+                  isFavorite={true}
+                  onToggleFavorite={onToggleFavorite}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* All Articles Section */}
+        {nonFavoriteArticles.length > 0 && (
+          <div className="grid grid-cols-1 gap-2">
+            {nonFavoriteArticles.map((article) => (
+              <ArticleCard
+                key={article.id}
+                article={article}
+                quantity={quantities[article.id] || 0}
+                onQuantityChange={onQuantityChange}
+                isFavorite={false}
+                onToggleFavorite={onToggleFavorite}
+              />
+            ))}
+          </div>
+        )}
 
         {/* Other suppliers' articles (global search results) */}
         {Object.entries(groupedOtherArticles).map(([supplierId, supplierArticles]) => {
@@ -140,7 +184,7 @@ export const ArticleList = ({
                 </span>
               </button>
               <div className="grid grid-cols-1 gap-2 opacity-75">
-                {sortArticles(supplierArticles).slice(0, 3).map((article) => (
+                {sortArticles(supplierArticles, favoriteIds).slice(0, 3).map((article) => (
                   <ArticleCard
                     key={article.id}
                     article={article}
@@ -177,9 +221,18 @@ interface ArticleCardProps {
   quantity: number;
   onQuantityChange: (articleId: string, delta: number) => void;
   isOtherSupplier?: boolean;
+  isFavorite?: boolean;
+  onToggleFavorite?: (articleId: string) => void;
 }
 
-const ArticleCard = ({ article, quantity, onQuantityChange, isOtherSupplier }: ArticleCardProps) => {
+const ArticleCard = ({ 
+  article, 
+  quantity, 
+  onQuantityChange, 
+  isOtherSupplier,
+  isFavorite = false,
+  onToggleFavorite,
+}: ArticleCardProps) => {
   const isSelected = quantity > 0;
   
   const unitInfo = [
@@ -197,6 +250,25 @@ const ArticleCard = ({ article, quantity, onQuantityChange, isOtherSupplier }: A
       onClick={isOtherSupplier ? () => onQuantityChange(article.id, 0) : undefined}
     >
       <div className="flex items-center gap-3">
+        {/* Favorite Star */}
+        {!isOtherSupplier && onToggleFavorite && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onToggleFavorite(article.id);
+            }}
+            className="flex-shrink-0 p-1 -ml-1 rounded-full hover:bg-muted transition-colors"
+          >
+            <Star 
+              className={`h-5 w-5 transition-colors ${
+                isFavorite 
+                  ? 'fill-yellow-400 text-yellow-400' 
+                  : 'text-muted-foreground/40 hover:text-yellow-400'
+              }`} 
+            />
+          </button>
+        )}
+
         <div className="flex-1 min-w-0">
           <h3 className="font-semibold text-base leading-tight">
             {article.name}

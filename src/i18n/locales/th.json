@@ -814,6 +814,7 @@
     "hello": "สวัสดี",
     "deliveryDate": "วันที่ต้องการรับสินค้า",
     "selectDate": "เลือกวันที่",
-    "timeWindow": "ช่วงเวลา"
+    "timeWindow": "ช่วงเวลา",
+    "favorites": "รายการโปรด"
   }
 }

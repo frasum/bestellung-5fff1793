@@ -831,6 +831,7 @@
     "hello": "Hallo",
     "deliveryDate": "Gewünschtes Lieferdatum",
     "selectDate": "Datum wählen",
-    "timeWindow": "Zeitfenster"
+    "timeWindow": "Zeitfenster",
+    "favorites": "Favoriten"
   }
 }
