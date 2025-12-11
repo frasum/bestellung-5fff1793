@@ -16,9 +16,10 @@ interface CartContextType {
   getTotal: () => number;
   getItemCount: () => number;
   getItemsBySupplier: () => Map<string, CartItem[]>;
-  loadFromDraft: (draftItems: CartItem[], deliveryDate?: string | null, timeWindow?: string | null) => void;
+  loadFromDraft: (draftItems: CartItem[], deliveryDate?: string | null, timeWindow?: string | null, locationId?: string | null) => void;
   draftDeliveryDate: Date | null;
   draftTimeWindow: string | null;
+  draftLocationId: string | null;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -35,6 +36,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   const [items, setItems] = useState<CartItem[]>([]);
   const [draftDeliveryDate, setDraftDeliveryDate] = useState<Date | null>(null);
   const [draftTimeWindow, setDraftTimeWindow] = useState<string | null>(null);
+  const [draftLocationId, setDraftLocationId] = useState<string | null>(null);
 
   const addItem = useCallback((article: Article, quantity = 1) => {
     setItems((prev) => {
@@ -73,6 +75,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     setItems([]);
     setDraftDeliveryDate(null);
     setDraftTimeWindow(null);
+    setDraftLocationId(null);
   }, []);
 
   const getTotal = useCallback(() => {
@@ -100,11 +103,13 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   const loadFromDraft = useCallback((
     draftItems: CartItem[],
     deliveryDate?: string | null,
-    timeWindow?: string | null
+    timeWindow?: string | null,
+    locationId?: string | null
   ) => {
     setItems(draftItems);
     setDraftDeliveryDate(deliveryDate ? new Date(deliveryDate) : null);
     setDraftTimeWindow(timeWindow || null);
+    setDraftLocationId(locationId || null);
     toast.success('Entwurf in den Warenkorb geladen');
   }, []);
 
@@ -122,6 +127,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         loadFromDraft,
         draftDeliveryDate,
         draftTimeWindow,
+        draftLocationId,
       }}
     >
       {children}

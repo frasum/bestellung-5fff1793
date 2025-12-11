@@ -48,7 +48,7 @@ const Checkout = () => {
 
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
-  const { items, getTotal, clearCart, updateQuantity, removeItem, draftDeliveryDate, draftTimeWindow } = useCart();
+  const { items, getTotal, clearCart, updateQuantity, removeItem, draftDeliveryDate, draftTimeWindow, draftLocationId } = useCart();
   const { activeLocation } = useLocationContext();
   const createOrder = useCreateOrder();
   const { data: deliveryAddresses, isLoading: addressesLoading } = useDeliveryAddresses(activeLocation?.id);
@@ -259,7 +259,7 @@ const Checkout = () => {
           notes: preview.notes,
           restaurantName: preview.restaurantName,
           isTestOrder: preview.isTestMode || false,
-          locationId: activeLocation?.id,
+          locationId: draftLocationId || activeLocation?.id,
         });
         orderNumbers.push({ orderNumber: result.orderNumber, supplierName: preview.supplierName });
       }
