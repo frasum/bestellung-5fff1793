@@ -6,10 +6,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Lock, MapPin } from 'lucide-react';
+import { Lock, MapPin, Globe } from 'lucide-react';
 import { useUserProfile, useUpdateUserProfile, useUpdatePassword } from '@/hooks/useSettings';
 import { useLocations } from '@/hooks/useLocations';
 import { useAllUserDeliveryPreferences, useAllDeliveryAddresses, useUpsertUserDeliveryPreferenceForLocation } from '@/hooks/useUserDeliveryPreference';
+import { I18nCheckDialog } from './I18nCheckDialog';
 
 const AdvancedSettingsSwitch = () => {
   const { t } = useTranslation();
@@ -37,6 +38,31 @@ const AdvancedSettingsSwitch = () => {
           onCheckedChange={handleToggle}
         />
       </div>
+    </div>
+  );
+};
+
+const I18nCheckButton = () => {
+  const { t } = useTranslation();
+  const [dialogOpen, setDialogOpen] = useState(false);
+
+  return (
+    <div className="pt-4 border-t">
+      <div className="flex items-center justify-between">
+        <div>
+          <Label className="mb-1 block flex items-center gap-2">
+            <Globe className="h-4 w-4" />
+            i18n Check
+          </Label>
+          <p className="text-xs text-muted-foreground">
+            Überprüft Übersetzungen auf Vollständigkeit
+          </p>
+        </div>
+        <Button variant="outline" size="sm" onClick={() => setDialogOpen(true)}>
+          Prüfen
+        </Button>
+      </div>
+      <I18nCheckDialog open={dialogOpen} onOpenChange={setDialogOpen} />
     </div>
   );
 };
@@ -140,6 +166,7 @@ export const ProfileTab = () => {
           </Button>
 
           <AdvancedSettingsSwitch />
+          <I18nCheckButton />
         </CardContent>
       </Card>
 
