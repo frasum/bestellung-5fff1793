@@ -27,16 +27,16 @@ export const DeleteConfirmationDialogs = ({
   return (
     <>
       <AlertDialog open={!!deletingSupplier} onOpenChange={() => onSupplierClose()}>
-        <AlertDialogContent>
+        <AlertDialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-lg">
           <AlertDialogHeader>
             <AlertDialogTitle>Lieferant löschen</AlertDialogTitle>
             <AlertDialogDescription>
               Sind Sie sicher, dass Sie "{deletingSupplier?.name}" löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
-            <AlertDialogAction onClick={onSupplierDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+          <AlertDialogFooter className="flex-col sm:flex-row gap-2 sm:gap-0">
+            <AlertDialogCancel className="w-full sm:w-auto h-10 sm:h-9">Abbrechen</AlertDialogCancel>
+            <AlertDialogAction onClick={onSupplierDelete} className="w-full sm:w-auto h-10 sm:h-9 bg-destructive text-destructive-foreground hover:bg-destructive/90">
               {isSupplierDeleting ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Löschen'}
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -44,16 +44,16 @@ export const DeleteConfirmationDialogs = ({
       </AlertDialog>
 
       <AlertDialog open={!!deletingArticle} onOpenChange={() => onArticleClose()}>
-        <AlertDialogContent>
+        <AlertDialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-lg">
           <AlertDialogHeader>
             <AlertDialogTitle>Artikel löschen</AlertDialogTitle>
             <AlertDialogDescription>
               Sind Sie sicher, dass Sie "{deletingArticle?.name}" löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
-            <AlertDialogAction onClick={onArticleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+          <AlertDialogFooter className="flex-col sm:flex-row gap-2 sm:gap-0">
+            <AlertDialogCancel className="w-full sm:w-auto h-10 sm:h-9">Abbrechen</AlertDialogCancel>
+            <AlertDialogAction onClick={onArticleDelete} className="w-full sm:w-auto h-10 sm:h-9 bg-destructive text-destructive-foreground hover:bg-destructive/90">
               {isArticleDeleting ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Löschen'}
             </AlertDialogAction>
           </AlertDialogFooter>
