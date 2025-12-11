@@ -6,8 +6,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Lock, MapPin, Globe } from 'lucide-react';
-import { useUserProfile, useUpdateUserProfile, useUpdatePassword } from '@/hooks/useSettings';
+import { Lock, MapPin, Globe, Mail } from 'lucide-react';
+import { useUserProfile, useUpdateUserProfile, useUpdatePassword, useOrganization, useUpdateOrganization } from '@/hooks/useSettings';
 import { useLocations } from '@/hooks/useLocations';
 import { useAllUserDeliveryPreferences, useAllDeliveryAddresses, useUpsertUserDeliveryPreferenceForLocation } from '@/hooks/useUserDeliveryPreference';
 import { I18nCheckDialog } from './I18nCheckDialog';
@@ -79,6 +79,144 @@ const I18nCheckButton = () => {
       </div>
       <I18nCheckDialog open={dialogOpen} onOpenChange={setDialogOpen} />
     </div>
+  );
+};
+
+const TestModeCard = () => {
+  const { t } = useTranslation();
+  const { data: organization } = useOrganization();
+  const updateOrganization = useUpdateOrganization();
+  const [testEmail, setTestEmail] = useState('');
+  const [testEmailError, setTestEmailError] = useState('');
+
+  useEffect(() => {
+    if (organization?.test_email) {
+      setTestEmail(organization.test_email);
+    }
+  }, [organization?.test_email]);
+
+  const validateEmail = (email: string): boolean => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
+  const handleTestModeToggle = (enabled: boolean) => {
+    if (!organization) return;
+    
+    if (enabled && !testEmail) {
+      setTestEmailError(t('settings.testEmailError'));
+      return;
+    }
+
+    if (enabled && testEmail && !validateEmail(testEmail)) {
+      setTestEmailError(t('settings.testEmailInvalid'));
+      return;
+    }
+
+    updateOrganization.mutate({
+      id: organization.id,
+      test_mode_enabled: enabled,
+      test_email: testEmail || organization.test_email,
+    });
+  };
+
+  const handleTestEmailSave = () => {
+    if (!organization) return;
+    
+    if (!testEmail) {
+      setTestEmailError(t('settings.testEmailRequired'));
+      return;
+    }
+
+    if (!validateEmail(testEmail)) {
+      setTestEmailError(t('settings.testEmailInvalid'));
+      return;
+    }
+
+    updateOrganization.mutate({
+      id: organization.id,
+      test_email: testEmail,
+    });
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Mail className="h-5 w-5" />
+          {t('testMode.title')}
+        </CardTitle>
+        <CardDescription>
+          {t('settings.testModeDescription')}
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        {!organization?.is_demo && (
+          <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg border">
+            <div className="space-y-0.5">
+              <Label htmlFor="test-mode" className="text-base font-medium">
+                {t('settings.testModeEnable')}
+              </Label>
+              <p className="text-sm text-muted-foreground">
+                {t('settings.testModeEnabledDesc')}
+              </p>
+            </div>
+            <Switch
+              id="test-mode"
+              checked={organization?.test_mode_enabled || false}
+              onCheckedChange={handleTestModeToggle}
+            />
+          </div>
+        )}
+
+        <div className="space-y-2">
+          <Label htmlFor="test-email">{t('settings.testEmailAddress')}</Label>
+          <div className="flex gap-2">
+            <Input
+              id="test-email"
+              type="email"
+              value={testEmail}
+              onChange={(e) => {
+                setTestEmail(e.target.value);
+                setTestEmailError('');
+              }}
+              placeholder={t('settings.testEmailPlaceholder')}
+              className="flex-1"
+              disabled={organization?.is_demo}
+            />
+            {!organization?.is_demo && (
+              <Button 
+                onClick={handleTestEmailSave} 
+                disabled={updateOrganization.isPending || !testEmail}
+                variant="outline"
+              >
+                {t('common.save')}
+              </Button>
+            )}
+          </div>
+          {testEmailError && (
+            <p className="text-sm text-destructive">{testEmailError}</p>
+          )}
+          {organization?.is_demo && (
+            <p className="text-sm text-muted-foreground">
+              {t('settings.demoModeNote')}
+            </p>
+          )}
+        </div>
+
+        {organization?.test_mode_enabled && (
+          <div className="flex items-start gap-3 p-4 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg">
+            <span className="text-xl">⚠️</span>
+            <div>
+              <p className="font-medium text-amber-800 dark:text-amber-200">{t('settings.testModeActive')}</p>
+              <p className="text-sm text-amber-700 dark:text-amber-300 mt-1">
+                {t('settings.testModeActiveDesc', { email: organization.test_email })}
+              </p>
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 };
 
@@ -184,6 +322,8 @@ export const ProfileTab = () => {
           <I18nCheckButton />
         </CardContent>
       </Card>
+
+      <TestModeCard />
 
       {/* Default Delivery Addresses Card - All Locations */}
       <Card>
