@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, MapPin, ChevronDown } from 'lucide-react';
+import { MapPin, ChevronDown } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,11 +15,9 @@ interface Supplier {
 
 interface SimpleOrderHeaderProps {
   supplierName: string;
-  showBackButton: boolean;
-  onBack: () => void;
   selectedLocationName: string;
   selectedLocationId: string | null;
-  // New props for quick supplier switch
+  // Props for quick supplier switch
   isMultiSupplier?: boolean;
   selectedSupplierId?: string | null;
   suppliers?: Supplier[];
@@ -38,8 +36,6 @@ const languages = [
 
 export const SimpleOrderHeader = ({
   supplierName,
-  showBackButton,
-  onBack,
   selectedLocationName,
   selectedLocationId,
   isMultiSupplier = false,
@@ -57,25 +53,6 @@ export const SimpleOrderHeader = ({
     <div className="sticky top-0 z-10 bg-primary text-primary-foreground shadow-lg">
       <div className="max-w-2xl mx-auto px-3 py-2">
         <div className="flex items-center justify-between gap-2">
-          {/* Left: Back button with text (if multi-supplier) */}
-          <div className="flex-shrink-0">
-            {showBackButton ? (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-9 px-3 text-primary-foreground hover:bg-primary-foreground/20 gap-1"
-                onClick={onBack}
-              >
-                <ArrowLeft className="h-4 w-4" />
-                <span className="text-sm font-medium">
-                  {t('simpleOrder.changeSupplier', 'Wechseln')}
-                </span>
-              </Button>
-            ) : (
-              <div className="w-10" />
-            )}
-          </div>
-
           {/* Center: Supplier name - clickable dropdown for multi-supplier */}
           <div className="flex-1 text-center min-w-0">
             {showSupplierDropdown ? (

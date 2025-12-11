@@ -283,8 +283,6 @@ const SimpleOrder = () => {
     <div className="min-h-screen bg-background pb-32">
       <SimpleOrderHeader
         supplierName={getCurrentSupplierName()}
-        showBackButton={!!(tokenData?.is_multi_supplier && selectedSupplierId)}
-        onBack={handleBackToSuppliers}
         selectedLocationName={getSelectedLocationName()}
         selectedLocationId={selectedLocationId}
         isMultiSupplier={tokenData?.is_multi_supplier || false}
