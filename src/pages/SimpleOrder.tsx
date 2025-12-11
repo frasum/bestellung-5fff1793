@@ -338,6 +338,10 @@ const SimpleOrder = () => {
             onQuantityChange={handleQuantityChange}
             search={search}
             onSearchChange={setSearch}
+            allArticles={allArticles}
+            suppliers={suppliers}
+            selectedSupplierId={selectedSupplierId}
+            onSupplierChange={handleSupplierSelect}
           />
           <SubmitBar
             totalItems={getTotalItems()}
