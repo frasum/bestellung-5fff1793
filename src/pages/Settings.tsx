@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -23,11 +23,29 @@ const Settings = () => {
   const isAdmin = userRole === 'admin';
 
   const [activeTab, setActiveTab] = useState('profile');
+  const [advancedMode, setAdvancedMode] = useState(() => 
+    localStorage.getItem('advanced-settings-enabled') === 'true'
+  );
   const [activeSubTabs, setActiveSubTabs] = useState({
     'organization': 'general',
     'master-data': 'units',
     'communication': 'notifications',
   });
+
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'advanced-settings-enabled') {
+        const newValue = e.newValue === 'true';
+        setAdvancedMode(newValue);
+        // Reset to profile tab if demo-accounts tab is hidden
+        if (!newValue && activeTab === 'demo-accounts') {
+          setActiveTab('profile');
+        }
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, [activeTab]);
 
   return (
     <DashboardLayout>
@@ -58,7 +76,7 @@ const Settings = () => {
                 <span className="hidden sm:inline">{t('settings.communication')}</span>
                 <span className="sm:hidden">{t('settings.communicationShort')}</span>
               </TabsTrigger>
-              {isAdmin && (
+              {isAdmin && advancedMode && (
                 <TabsTrigger value="demo-accounts" className="gap-1.5 text-xs sm:text-sm whitespace-nowrap">
                   <FlaskConical className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                   <span className="hidden sm:inline">{t('settings.demoAccounts')}</span>
@@ -99,7 +117,7 @@ const Settings = () => {
             />
           </TabsContent>
 
-          {isAdmin && (
+          {isAdmin && advancedMode && (
             <TabsContent value="demo-accounts" className="animate-in fade-in-50 slide-in-from-right-2 duration-200">
               <DemoAccountsTab />
             </TabsContent>
