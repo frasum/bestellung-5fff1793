@@ -354,6 +354,7 @@
     "defaultAddress": "Adresse par défaut",
     "setAsDefault": "Définir par défaut",
     "noAddresses": "Pas encore d'adresses pour {{location}}. Ajoutez votre première adresse de livraison.",
+    "noAddress": "Aucune adresse de livraison configurée",
     "defaultDeliveryAddress": "Adresse de livraison par défaut",
     "defaultDeliveryAddresses": "Adresses de livraison par défaut",
     "defaultDeliveryAddressDesc": "Votre adresse de livraison préférée pour {{location}}",
@@ -799,5 +800,12 @@
     "source": "Source",
     "manual": "Manuel",
     "supplierApproved": "Fournisseur (approuvé)"
+  },
+  "simpleOrder": {
+    "yourName": "Votre nom",
+    "namePlaceholder": "Veuillez entrer votre nom",
+    "selectLocation": "Sélectionner l'emplacement",
+    "nameRequired": "Veuillez entrer votre nom",
+    "locationRequired": "Veuillez sélectionner un emplacement"
   }
 }

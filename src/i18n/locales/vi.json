@@ -354,6 +354,7 @@
     "defaultAddress": "Địa chỉ mặc định",
     "setAsDefault": "Đặt làm mặc định",
     "noAddresses": "Chưa có địa chỉ cho {{location}}. Thêm địa chỉ giao hàng đầu tiên.",
+    "noAddress": "Chưa cấu hình địa chỉ giao hàng",
     "defaultDeliveryAddress": "Địa chỉ giao hàng mặc định",
     "defaultDeliveryAddresses": "Địa chỉ giao hàng mặc định",
     "defaultDeliveryAddressDesc": "Địa chỉ giao hàng ưa thích của bạn cho {{location}}",
@@ -799,5 +800,12 @@
     "source": "Nguồn",
     "manual": "Thủ công",
     "supplierApproved": "Nhà cung cấp (đã phê duyệt)"
+  },
+  "simpleOrder": {
+    "yourName": "Tên của bạn",
+    "namePlaceholder": "Vui lòng nhập tên của bạn",
+    "selectLocation": "Chọn địa điểm",
+    "nameRequired": "Vui lòng nhập tên của bạn",
+    "locationRequired": "Vui lòng chọn một địa điểm"
   }
 }

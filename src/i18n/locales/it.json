@@ -354,6 +354,7 @@
     "defaultAddress": "Indirizzo predefinito",
     "setAsDefault": "Imposta come predefinito",
     "noAddresses": "Nessun indirizzo per {{location}} ancora. Aggiungi il tuo primo indirizzo di consegna.",
+    "noAddress": "Nessun indirizzo di consegna configurato",
     "defaultDeliveryAddress": "Indirizzo di consegna predefinito",
     "defaultDeliveryAddresses": "Indirizzi di consegna predefiniti",
     "defaultDeliveryAddressDesc": "Il tuo indirizzo di consegna preferito per {{location}}",
@@ -799,5 +800,12 @@
     "source": "Fonte",
     "manual": "Manuale",
     "supplierApproved": "Fornitore (approvato)"
+  },
+  "simpleOrder": {
+    "yourName": "Il tuo nome",
+    "namePlaceholder": "Inserisci il tuo nome",
+    "selectLocation": "Seleziona sede",
+    "nameRequired": "Inserisci il tuo nome",
+    "locationRequired": "Seleziona una sede"
   }
 }
