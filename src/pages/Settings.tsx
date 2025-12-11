@@ -2,20 +2,15 @@ import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Building2, User, FlaskConical, Layers, MessageSquare } from 'lucide-react';
+import { Building2, User, FlaskConical, MessageSquare } from 'lucide-react';
 import { useUserRole } from '@/hooks/useTeam';
 import { DemoAccountsTab } from '@/components/settings/DemoAccountsTab';
-import { MasterDataTab } from '@/components/settings/MasterDataTab';
 import { CommunicationTab } from '@/components/settings/CommunicationTab';
 import { ProfileTab } from '@/components/settings/ProfileTab';
 import { OrganizationTab } from '@/components/settings/OrganizationTab';
 import { NotificationsTab } from '@/components/settings/NotificationsTab';
 import { EmailTemplateTab } from '@/components/settings/EmailTemplateTab';
 import { SupplierPortalTab } from '@/components/settings/SupplierPortalTab';
-
-import { UnitsTab } from '@/components/settings/UnitsTab';
-import { CategoriesTab } from '@/components/settings/CategoriesTab';
-import { ArticleOrganizationTab } from '@/components/settings/ArticleOrganizationTab';
 
 const Settings = () => {
   const { t } = useTranslation();
@@ -28,7 +23,6 @@ const Settings = () => {
   );
   const [activeSubTabs, setActiveSubTabs] = useState({
     'organization': 'general',
-    'master-data': 'units',
     'communication': 'notifications',
   });
 
@@ -66,11 +60,6 @@ const Settings = () => {
                 <Building2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                 <span>{t('settings.organization')}</span>
               </TabsTrigger>
-              <TabsTrigger value="master-data" className="gap-1.5 text-xs sm:text-sm whitespace-nowrap">
-                <Layers className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                <span className="hidden sm:inline">{t('settings.masterData')}</span>
-                <span className="sm:hidden">{t('settings.masterDataShort')}</span>
-              </TabsTrigger>
               <TabsTrigger value="communication" className="gap-1.5 text-xs sm:text-sm whitespace-nowrap">
                 <MessageSquare className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                 <span className="hidden sm:inline">{t('settings.communication')}</span>
@@ -97,15 +86,6 @@ const Settings = () => {
             />
           </TabsContent>
 
-          <TabsContent value="master-data" className="animate-in fade-in-50 slide-in-from-bottom-2 duration-200">
-            <MasterDataTab
-              activeSubTab={activeSubTabs['master-data']}
-              onSubTabChange={(value) => setActiveSubTabs(prev => ({ ...prev, 'master-data': value }))}
-              UnitsContent={UnitsTab}
-              CategoriesContent={CategoriesTab}
-              ArticleOrganizationContent={ArticleOrganizationTab}
-            />
-          </TabsContent>
 
           <TabsContent value="communication" className="animate-in fade-in-50 slide-in-from-right-2 duration-200">
             <CommunicationTab
