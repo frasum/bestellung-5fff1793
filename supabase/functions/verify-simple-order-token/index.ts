@@ -64,6 +64,25 @@ serve(async (req) => {
 
     let suppliers: any[] = [];
     let articles: any[] = [];
+    let favoriteArticleIds: string[] = [];
+
+    // Get employee_id for favorites lookup
+    const employeeId = tokenData.employee_id || (tokenData.employee as any)?.id;
+    
+    // Load favorites if employee is assigned
+    if (employeeId) {
+      const { data: favorites, error: favError } = await supabase
+        .from('employee_article_favorites')
+        .select('article_id')
+        .eq('employee_id', employeeId);
+      
+      if (favError) {
+        console.error('Error fetching favorites:', favError);
+      } else {
+        favoriteArticleIds = favorites?.map(f => f.article_id) || [];
+        console.log(`Loaded ${favoriteArticleIds.length} favorites for employee ${employeeId}`);
+      }
+    }
 
     if (isMultiSupplier) {
       // Get all suppliers linked to this token with sort_order
@@ -177,10 +196,12 @@ serve(async (req) => {
           organization_id: tokenData.organization_id,
           is_multi_supplier: isMultiSupplier,
           employee_name: (tokenData.employee as any)?.name || tokenData.employee_name || null,
+          has_employee: !!employeeId,
         },
         suppliers: suppliers,
         articles: articles,
         locations: locations || [],
+        favorite_article_ids: favoriteArticleIds,
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
