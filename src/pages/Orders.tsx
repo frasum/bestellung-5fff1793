@@ -308,7 +308,8 @@ const Orders = () => {
           quantity: item.quantity,
         })),
         draft.desired_delivery_date,
-        draft.desired_time_window
+        draft.desired_time_window,
+        draft.location_id
       );
       navigate('/cart');
     }
