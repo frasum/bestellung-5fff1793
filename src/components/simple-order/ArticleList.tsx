@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Minus, Plus, Search, Star } from 'lucide-react';
-
+import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 interface Article {
   id: string;
   name: string;
@@ -233,7 +233,18 @@ const ArticleCard = ({
   isFavorite = false,
   onToggleFavorite,
 }: ArticleCardProps) => {
+  const { lightTap, mediumTap } = useHapticFeedback();
   const isSelected = quantity > 0;
+
+  const handleQuantityChange = (delta: number) => {
+    lightTap();
+    onQuantityChange(article.id, delta);
+  };
+
+  const handleFavoriteToggle = () => {
+    mediumTap();
+    onToggleFavorite?.(article.id);
+  };
   
   const unitInfo = [
     article.unit,
@@ -255,7 +266,7 @@ const ArticleCard = ({
           <button
             onClick={(e) => {
               e.stopPropagation();
-              onToggleFavorite(article.id);
+              handleFavoriteToggle();
             }}
             className="flex-shrink-0 min-h-11 min-w-11 p-2 -ml-1 rounded-full hover:bg-muted transition-colors touch-manipulation"
           >
@@ -287,7 +298,7 @@ const ArticleCard = ({
               variant={quantity > 0 ? "default" : "outline"}
               size="icon"
               className="h-12 w-12 rounded-full touch-manipulation"
-              onClick={() => onQuantityChange(article.id, -1)}
+              onClick={() => handleQuantityChange(-1)}
               disabled={quantity === 0}
             >
               <Minus className="h-6 w-6" />
@@ -301,7 +312,7 @@ const ArticleCard = ({
               variant="default"
               size="icon"
               className="h-12 w-12 rounded-full touch-manipulation"
-              onClick={() => onQuantityChange(article.id, 1)}
+              onClick={() => handleQuantityChange(1)}
             >
               <Plus className="h-6 w-6" />
             </Button>

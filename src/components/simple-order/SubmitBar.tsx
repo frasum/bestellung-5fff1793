@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Loader2, ShoppingCart } from 'lucide-react';
+import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 
 interface SubmitBarProps {
   totalItems: number;
@@ -10,6 +11,12 @@ interface SubmitBarProps {
 
 export const SubmitBar = ({ totalItems, isSubmitting, onSubmit }: SubmitBarProps) => {
   const { t } = useTranslation();
+  const { heavyTap } = useHapticFeedback();
+
+  const handleSubmit = () => {
+    heavyTap();
+    onSubmit();
+  };
 
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-background border-t p-4 pb-[max(1rem,env(safe-area-inset-bottom))] shadow-lg">
@@ -17,7 +24,7 @@ export const SubmitBar = ({ totalItems, isSubmitting, onSubmit }: SubmitBarProps
         <Button
           size="lg"
           className="w-full h-16 text-xl font-bold gap-3 touch-manipulation"
-          onClick={onSubmit}
+          onClick={handleSubmit}
           disabled={totalItems === 0 || isSubmitting}
         >
           {isSubmitting ? (

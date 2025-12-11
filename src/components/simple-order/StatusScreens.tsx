@@ -1,7 +1,9 @@
 import { useTranslation } from 'react-i18next';
+import { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Loader2 } from 'lucide-react';
+import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 
 interface LoadingScreenProps {}
 
@@ -26,6 +28,11 @@ interface ErrorScreenProps {
 
 export const ErrorScreen = ({ error }: ErrorScreenProps) => {
   const { t } = useTranslation();
+  const { error: errorVibration } = useHapticFeedback();
+
+  useEffect(() => {
+    errorVibration();
+  }, []);
   
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
@@ -46,6 +53,16 @@ interface SuccessScreenProps {
 
 export const SuccessScreen = ({ onNewOrder }: SuccessScreenProps) => {
   const { t } = useTranslation();
+  const { success, mediumTap } = useHapticFeedback();
+
+  useEffect(() => {
+    success();
+  }, []);
+
+  const handleNewOrder = () => {
+    mediumTap();
+    onNewOrder();
+  };
   
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
@@ -60,7 +77,7 @@ export const SuccessScreen = ({ onNewOrder }: SuccessScreenProps) => {
         <Button
           size="lg"
           className="w-full h-16 text-xl font-bold touch-manipulation"
-          onClick={onNewOrder}
+          onClick={handleNewOrder}
         >
           {t('simpleOrder.newOrder', 'สั่งซื้อใหม่ / Neue Bestellung')}
         </Button>
