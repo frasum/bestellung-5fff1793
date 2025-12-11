@@ -576,7 +576,8 @@
     "loadTitle": "Carica pre-ordine",
     "loadDescription": "Il carrello attuale verrà sostituito dal pre-ordine. Vuoi continuare?",
     "replaceCart": "Sostituisci carrello",
-    "more": "altri"
+    "more": "altri",
+    "newEasyOrder": "🔔 Nuovo EasyOrder ricevuto!"
   },
   "inventory": {
     "title": "Inventario",

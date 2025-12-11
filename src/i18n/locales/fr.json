@@ -576,7 +576,8 @@
     "loadTitle": "Charger la précommande",
     "loadDescription": "Votre panier actuel sera remplacé par cette précommande. Voulez-vous continuer ?",
     "replaceCart": "Remplacer le panier",
-    "more": "autres"
+    "more": "autres",
+    "newEasyOrder": "🔔 Nouvelle commande EasyOrder reçue!"
   },
   "inventory": {
     "title": "Inventaire",

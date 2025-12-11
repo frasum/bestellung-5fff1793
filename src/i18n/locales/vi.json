@@ -576,7 +576,8 @@
     "loadTitle": "Tải đơn đặt trước",
     "loadDescription": "Giỏ hàng hiện tại sẽ được thay thế bằng đơn đặt trước. Tiếp tục?",
     "replaceCart": "Thay thế giỏ hàng",
-    "more": "khác"
+    "more": "khác",
+    "newEasyOrder": "🔔 Đơn EasyOrder mới!"
   },
   "inventory": {
     "title": "Kiểm kê",

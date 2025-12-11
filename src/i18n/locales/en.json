@@ -583,7 +583,8 @@
     "loadTitle": "Load Pre-order",
     "loadDescription": "Your current cart will be replaced with this pre-order. Do you want to continue?",
     "replaceCart": "Replace Cart",
-    "more": "more"
+    "more": "more",
+    "newEasyOrder": "🔔 New EasyOrder received!"
   },
   "inventory": {
     "title": "Inventory",
