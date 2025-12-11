@@ -36,7 +36,8 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { format, isAfter, isBefore, startOfDay, endOfDay, subDays, subMonths, Locale } from 'date-fns';
 import { de, enUS, fr } from 'date-fns/locale';
-import { Loader2, Package, CheckCircle2, Clock, Truck, XCircle, Eye, Search, X, ChevronDown, Trash2, FlaskConical, Filter, FileText, ShoppingCart, Calendar, Smartphone, MapPin, Bell } from 'lucide-react';
+import { Loader2, Package, CheckCircle2, Clock, Truck, XCircle, Eye, Search, X, ChevronDown, Trash2, FlaskConical, Filter, FileText, ShoppingCart, Calendar, Smartphone, MapPin, Bell, AlertTriangle } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { SimpleOrderTab } from '@/components/settings/SimpleOrderTab';
 import {
   Popover,
@@ -150,6 +151,12 @@ const Orders = () => {
   const testOrdersCount = useMemo(() => {
     if (!orders) return 0;
     return orders.filter(order => order.is_test_order).length;
+  }, [orders]);
+
+  // Count orders without location
+  const ordersWithoutLocation = useMemo(() => {
+    if (!orders) return [];
+    return orders.filter(order => !order.location_id);
   }, [orders]);
 
   // Filter orders
@@ -372,6 +379,21 @@ const Orders = () => {
             <span className="hidden sm:inline">{t('orders.newOrder')}</span>
           </Button>
         </div>
+
+        {/* Warning for orders without location */}
+        {ordersWithoutLocation.length > 0 && locations && locations.length > 1 && (
+          <Alert variant="default" className="border-warning/50 bg-warning/10">
+            <AlertTriangle className="h-4 w-4 text-warning" />
+            <AlertDescription className="flex flex-col sm:flex-row sm:items-center gap-2">
+              <span className="text-warning">
+                {ordersWithoutLocation.length} {ordersWithoutLocation.length === 1 ? 'Bestellung' : 'Bestellungen'} ohne Standort-Zuordnung
+              </span>
+              <span className="text-xs text-muted-foreground">
+                (Filter auf "Alle Standorte" setzen um diese zu sehen)
+              </span>
+            </AlertDescription>
+          </Alert>
+        )}
 
         {/* Recent Orders Card */}
         <div className="bg-card border border-border rounded-xl p-4">
@@ -1019,10 +1041,10 @@ const Orders = () => {
                             {draft.name}
                           </h3>
                           {/* Location Badge */}
-                          {(draft as any).location && (
-                            <Badge variant="outline" className="text-xs shrink-0">
+                          {(draft as { location?: { id: string; name: string; short_code: string | null } }).location && (
+                            <Badge variant="secondary" className="text-xs shrink-0">
                               <MapPin className="w-3 h-3 mr-1" />
-                              {(draft as any).location.short_code || (draft as any).location.name}
+                              {(draft as { location?: { id: string; name: string; short_code: string | null } }).location!.short_code || (draft as { location?: { id: string; name: string; short_code: string | null } }).location!.name}
                             </Badge>
                           )}
                         </div>
