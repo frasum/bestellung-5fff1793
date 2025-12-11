@@ -257,10 +257,10 @@ const ArticleCard = ({
               e.stopPropagation();
               onToggleFavorite(article.id);
             }}
-            className="flex-shrink-0 p-1 -ml-1 rounded-full hover:bg-muted transition-colors"
+            className="flex-shrink-0 min-h-11 min-w-11 p-2 -ml-1 rounded-full hover:bg-muted transition-colors touch-manipulation"
           >
             <Star 
-              className={`h-5 w-5 transition-colors ${
+              className={`h-6 w-6 transition-colors ${
                 isFavorite 
                   ? 'fill-yellow-400 text-yellow-400' 
                   : 'text-muted-foreground/40 hover:text-yellow-400'
@@ -282,15 +282,15 @@ const ArticleCard = ({
         </div>
 
         {!isOtherSupplier && (
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-2">
             <Button
               variant={quantity > 0 ? "default" : "outline"}
               size="icon"
-              className="h-10 w-10 rounded-full"
+              className="h-12 w-12 rounded-full touch-manipulation"
               onClick={() => onQuantityChange(article.id, -1)}
               disabled={quantity === 0}
             >
-              <Minus className="h-5 w-5" />
+              <Minus className="h-6 w-6" />
             </Button>
             
             <span className="w-10 text-center text-xl font-bold">
@@ -300,10 +300,10 @@ const ArticleCard = ({
             <Button
               variant="default"
               size="icon"
-              className="h-10 w-10 rounded-full"
+              className="h-12 w-12 rounded-full touch-manipulation"
               onClick={() => onQuantityChange(article.id, 1)}
             >
-              <Plus className="h-5 w-5" />
+              <Plus className="h-6 w-6" />
             </Button>
           </div>
         )}

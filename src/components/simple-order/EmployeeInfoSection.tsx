@@ -63,7 +63,7 @@ export const EmployeeInfoSection = ({
                   type="button"
                   variant={selectedLocationId === location.id ? "default" : "outline"}
                   size="sm"
-                  className="h-8"
+                  className="h-11 px-4 touch-manipulation"
                   onClick={() => {
                     setSelectedLocationId(location.id);
                     setValidationErrors({ ...validationErrors, location: false });
@@ -113,7 +113,7 @@ export const EmployeeInfoSection = ({
                   setValidationErrors({ ...validationErrors, name: false });
                 }
               }}
-              className={`h-14 text-lg ${validationErrors.name ? 'border-destructive ring-destructive' : ''}`}
+              className={`h-14 text-lg touch-manipulation ${validationErrors.name ? 'border-destructive ring-destructive' : ''}`}
             />
             {validationErrors.name && (
               <p className="text-destructive text-sm mt-1">
@@ -138,13 +138,13 @@ export const EmployeeInfoSection = ({
               <MapPin className="h-5 w-5" />
               {t('simpleOrder.selectLocation', 'เลือกสถานที่ / Standort wählen')} *
             </Label>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {locations.map((location) => (
                 <Button
                   key={location.id}
                   type="button"
                   variant={selectedLocationId === location.id ? "default" : "outline"}
-                  className="h-14 text-lg font-medium"
+                  className="h-14 text-lg font-medium touch-manipulation"
                   onClick={() => {
                     setSelectedLocationId(location.id);
                     setValidationErrors({ ...validationErrors, location: false });
@@ -166,13 +166,13 @@ export const EmployeeInfoSection = ({
               <MapPin className="h-5 w-5" />
               {t('simpleOrder.selectLocation', 'เลือกสถานที่ / Standort wählen')} *
             </Label>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {locations.map((location) => (
                 <Button
                   key={location.id}
                   type="button"
                   variant={selectedLocationId === location.id ? "default" : "outline"}
-                  className={`h-14 text-lg font-medium ${
+                  className={`h-14 text-lg font-medium touch-manipulation ${
                     validationErrors.location && !selectedLocationId ? 'border-destructive' : ''
                   }`}
                   onClick={() => {

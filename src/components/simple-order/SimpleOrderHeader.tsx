@@ -60,10 +60,10 @@ export const SimpleOrderHeader = ({
                 <DropdownMenuTrigger asChild>
                   <Button
                     variant="ghost"
-                    className="text-lg font-bold text-primary-foreground hover:bg-primary-foreground/20 gap-1 px-2"
+                    className="text-lg font-bold text-primary-foreground hover:bg-primary-foreground/20 gap-1 px-3 min-h-11 touch-manipulation"
                   >
                     <span className="truncate max-w-[150px]">{supplierName}</span>
-                    <ChevronDown className="h-4 w-4 flex-shrink-0" />
+                    <ChevronDown className="h-5 w-5 flex-shrink-0" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="center" className="bg-popover min-w-[200px]">
@@ -93,8 +93,8 @@ export const SimpleOrderHeader = ({
           {/* Right: Location badge + Language dropdown */}
           <div className="flex items-center gap-1 flex-shrink-0">
             {selectedLocationId && (
-              <span className="text-xs bg-primary-foreground/20 px-2 py-1 rounded-full flex items-center gap-1">
-                <MapPin className="h-3 w-3" />
+              <span className="text-sm bg-primary-foreground/20 px-3 py-1.5 rounded-full flex items-center gap-1.5">
+                <MapPin className="h-4 w-4" />
                 {selectedLocationName}
               </span>
             )}
@@ -103,9 +103,9 @@ export const SimpleOrderHeader = ({
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-8 w-8 text-primary-foreground hover:bg-primary-foreground/20"
+                  className="h-11 w-11 text-primary-foreground hover:bg-primary-foreground/20 touch-manipulation"
                 >
-                  <span className="text-base">{currentLanguage.flag}</span>
+                  <span className="text-xl">{currentLanguage.flag}</span>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="bg-popover">

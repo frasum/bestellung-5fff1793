@@ -15,9 +15,9 @@ interface DeliveryDateSectionProps {
 }
 
 const TIME_WINDOWS = [
-  { value: '10:00-12:00', label: '10-12', icon: '☀️' },
-  { value: '12:00-15:00', label: '12-15', icon: '🍽️' },
-  { value: 'flexible', label: 'Flex', icon: '🔄' },
+  { value: '10:00-12:00', label: '10-12 Uhr', icon: '☀️' },
+  { value: '12:00-15:00', label: '12-15 Uhr', icon: '🍽️' },
+  { value: 'flexible', label: 'Flexibel', icon: '🔄' },
 ];
 
 const getDateLocale = (lang: string) => {
@@ -59,11 +59,11 @@ export const DeliveryDateSection = ({
             <Button
               variant="outline"
               className={cn(
-                "w-full justify-start text-left font-normal h-12",
+                "w-full justify-start text-left font-normal h-14 text-base touch-manipulation",
                 !deliveryDate && "text-muted-foreground"
               )}
             >
-              <CalendarIcon className="mr-2 h-4 w-4" />
+              <CalendarIcon className="mr-3 h-5 w-5" />
               {deliveryDate ? (
                 format(deliveryDate, 'EEEE, d. MMMM yyyy', { locale })
               ) : (
@@ -71,7 +71,7 @@ export const DeliveryDateSection = ({
               )}
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-auto p-0" align="start">
+          <PopoverContent className="w-auto p-0" align="center" side="bottom">
             <Calendar
               mode="single"
               selected={deliveryDate}
@@ -89,19 +89,19 @@ export const DeliveryDateSection = ({
         <label className="text-sm font-medium text-muted-foreground flex items-center gap-2 mb-2">
           🕐 {t('simpleOrder.timeWindow', 'Zeitfenster')}
         </label>
-        <div className="grid grid-cols-5 gap-2">
+        <div className="grid grid-cols-3 gap-3">
           {TIME_WINDOWS.map((window) => (
             <Button
               key={window.value}
               type="button"
               variant={timeWindow === window.value ? "default" : "outline"}
               className={cn(
-                "h-12 flex flex-col items-center justify-center p-1 text-xs",
+                "h-14 flex flex-col items-center justify-center p-2 text-sm touch-manipulation",
                 timeWindow === window.value && "ring-2 ring-primary ring-offset-2"
               )}
               onClick={() => onTimeWindowChange(window.value)}
             >
-              <span className="text-base">{window.icon}</span>
+              <span className="text-lg">{window.icon}</span>
               <span className="font-medium">{window.label}</span>
             </Button>
           ))}
