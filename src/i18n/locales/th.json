@@ -354,6 +354,7 @@
     "defaultAddress": "ที่อยู่เริ่มต้น",
     "setAsDefault": "ตั้งเป็นค่าเริ่มต้น",
     "noAddresses": "ยังไม่มีที่อยู่สำหรับ {{location}} เพิ่มที่อยู่จัดส่งแรก",
+    "noAddress": "ไม่มีที่อยู่จัดส่งที่กำหนดไว้",
     "defaultDeliveryAddress": "ที่อยู่จัดส่งเริ่มต้น",
     "defaultDeliveryAddresses": "ที่อยู่จัดส่งเริ่มต้น",
     "defaultDeliveryAddressDesc": "ที่อยู่จัดส่งที่คุณต้องการสำหรับ {{location}}",
