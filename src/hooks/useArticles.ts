@@ -39,6 +39,8 @@ export interface ArticleInput {
 export const useArticles = () => {
   return useQuery({
     queryKey: ['articles'],
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes cache
     queryFn: async () => {
       const { data, error } = await supabase
         .from('articles')
@@ -54,6 +56,8 @@ export const useArticles = () => {
 export const useArticlesBySupplier = (supplierId: string | null) => {
   return useQuery({
     queryKey: ['articles', 'supplier', supplierId],
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
     queryFn: async () => {
       let query = supabase
         .from('articles')
@@ -96,19 +100,50 @@ export const useCreateArticle = () => {
           ...input,
           organization_id: profile.organization_id,
         })
-        .select()
+        .select('*, suppliers(id, name, minimum_order_value)')
         .single();
 
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['articles'] });
-      toast.success('Article created successfully');
+    onMutate: async (input) => {
+      await queryClient.cancelQueries({ queryKey: ['articles'] });
+      const previousArticles = queryClient.getQueryData<Article[]>(['articles']);
+      
+      const optimisticArticle: Article = {
+        id: crypto.randomUUID(),
+        organization_id: '',
+        supplier_id: input.supplier_id,
+        name: input.name,
+        description: input.description || null,
+        sku: input.sku || null,
+        unit: input.unit,
+        price: input.price,
+        category: input.category || null,
+        top_category: null,
+        packaging_unit: input.packaging_unit || null,
+        is_active: input.is_active ?? true,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+      
+      queryClient.setQueryData<Article[]>(['articles'], (old) => {
+        const updated = [...(old || []), optimisticArticle];
+        return updated.sort((a, b) => a.name.localeCompare(b.name));
+      });
+      
+      return { previousArticles };
     },
-    onError: (error: Error) => {
+    onError: (error: Error, _variables, context) => {
+      if (context?.previousArticles) {
+        queryClient.setQueryData(['articles'], context.previousArticles);
+      }
       toast.error(error.message);
     },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['articles'] });
+    },
+    onSuccess: () => toast.success('Article created successfully'),
   });
 };
 
@@ -126,7 +161,6 @@ export const useUpdateArticle = () => {
           .single();
 
         if (currentArticle && currentArticle.price !== input.price) {
-          // Record price history
           await supabase
             .from('article_price_history')
             .insert({
@@ -149,14 +183,31 @@ export const useUpdateArticle = () => {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['articles'] });
-      queryClient.invalidateQueries({ queryKey: ['price-history'] });
-      toast.success('Article updated successfully');
+    onMutate: async ({ id, ...input }) => {
+      await queryClient.cancelQueries({ queryKey: ['articles'] });
+      const previousArticles = queryClient.getQueryData<Article[]>(['articles']);
+      
+      queryClient.setQueryData<Article[]>(['articles'], (old) =>
+        old?.map((article) => 
+          article.id === id 
+            ? { ...article, ...input, updated_at: new Date().toISOString() } 
+            : article
+        )
+      );
+      
+      return { previousArticles };
     },
-    onError: (error: Error) => {
+    onError: (error: Error, _variables, context) => {
+      if (context?.previousArticles) {
+        queryClient.setQueryData(['articles'], context.previousArticles);
+      }
       toast.error(error.message);
     },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['articles'] });
+      queryClient.invalidateQueries({ queryKey: ['price-history'] });
+    },
+    onSuccess: () => toast.success('Article updated successfully'),
   });
 };
 
@@ -172,13 +223,26 @@ export const useDeleteArticle = () => {
 
       if (error) throw error;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['articles'] });
-      toast.success('Article deleted successfully');
+    onMutate: async (id) => {
+      await queryClient.cancelQueries({ queryKey: ['articles'] });
+      const previousArticles = queryClient.getQueryData<Article[]>(['articles']);
+      
+      queryClient.setQueryData<Article[]>(['articles'], (old) =>
+        old?.filter((article) => article.id !== id)
+      );
+      
+      return { previousArticles };
     },
-    onError: (error: Error) => {
+    onError: (error: Error, _id, context) => {
+      if (context?.previousArticles) {
+        queryClient.setQueryData(['articles'], context.previousArticles);
+      }
       toast.error(error.message);
     },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['articles'] });
+    },
+    onSuccess: () => toast.success('Article deleted successfully'),
   });
 };
 
@@ -194,12 +258,29 @@ export const useBulkUpdateArticles = () => {
 
       if (error) throw error;
     },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['articles'] });
-      toast.success(`${variables.ids.length} Artikel aktualisiert`);
+    onMutate: async ({ ids, updates }) => {
+      await queryClient.cancelQueries({ queryKey: ['articles'] });
+      const previousArticles = queryClient.getQueryData<Article[]>(['articles']);
+      
+      queryClient.setQueryData<Article[]>(['articles'], (old) =>
+        old?.map((article) => 
+          ids.includes(article.id) 
+            ? { ...article, ...updates, updated_at: new Date().toISOString() } 
+            : article
+        )
+      );
+      
+      return { previousArticles };
     },
-    onError: (error: Error) => {
+    onError: (error: Error, _variables, context) => {
+      if (context?.previousArticles) {
+        queryClient.setQueryData(['articles'], context.previousArticles);
+      }
       toast.error(error.message);
     },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['articles'] });
+    },
+    onSuccess: (_, variables) => toast.success(`${variables.ids.length} Artikel aktualisiert`),
   });
 };
