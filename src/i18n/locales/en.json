@@ -401,6 +401,8 @@
     "emailDesignMinimalist": "Minimalist",
     "emailDesignMinimalistDesc": "Simple, text-focused, subtle",
     "masterData": "Master Data",
+    "unitsAndCategories": "Units & Categories",
+    "unitsAndCategoriesShort": "Units & Cat.",
     "communication": "Communication",
     "demoAccounts": "Demo Accounts",
     "general": "General",
