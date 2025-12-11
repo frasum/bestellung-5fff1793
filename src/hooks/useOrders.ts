@@ -69,8 +69,8 @@ export const useOrders = (locationId?: string | null) => {
         .order('created_at', { ascending: false });
 
       if (locationId) {
-        // Show orders for this location OR orders without location (backward compatibility)
-        query = query.or(`location_id.eq.${locationId},location_id.is.null`);
+        // Show ONLY orders for this specific location (strict filtering)
+        query = query.eq('location_id', locationId);
       }
       // If locationId is null or undefined, load all orders without location filter
 
