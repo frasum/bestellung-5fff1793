@@ -12,6 +12,8 @@ export interface CartDraft {
   delivery_address: string | null;
   created_at: string;
   updated_at: string;
+  desired_delivery_date: string | null;
+  desired_time_window: string | null;
   items?: CartDraftItem[];
 }
 

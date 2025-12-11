@@ -828,6 +828,9 @@
     "changeSupplier": "Change",
     "title": "Order",
     "location": "Location",
-    "hello": "Hello"
+    "hello": "Hello",
+    "deliveryDate": "Desired Delivery Date",
+    "selectDate": "Select date",
+    "timeWindow": "Time Window"
   }
 }

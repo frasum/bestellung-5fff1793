@@ -9,6 +9,7 @@ import { EmployeeInfoSection } from '@/components/simple-order/EmployeeInfoSecti
 import { SupplierSelection } from '@/components/simple-order/SupplierSelection';
 import { ArticleList } from '@/components/simple-order/ArticleList';
 import { SubmitBar } from '@/components/simple-order/SubmitBar';
+import { DeliveryDateSection } from '@/components/simple-order/DeliveryDateSection';
 import { LoadingScreen, ErrorScreen, SuccessScreen } from '@/components/simple-order/StatusScreens';
 
 interface Article {
@@ -74,6 +75,8 @@ const SimpleOrder = () => {
   const [isLocationLocked, setIsLocationLocked] = useState(false);
   const [selectedSupplierId, setSelectedSupplierId] = useState<string | null>(null);
   const [validationErrors, setValidationErrors] = useState<{ name?: boolean; location?: boolean }>({});
+  const [deliveryDate, setDeliveryDate] = useState<Date | undefined>(undefined);
+  const [timeWindow, setTimeWindow] = useState<string>('flexible');
 
   // Verify token and load articles
   useEffect(() => {
@@ -217,6 +220,8 @@ const SimpleOrder = () => {
           employee_name: employeeName.trim(),
           location_id: selectedLocationId,
           supplier_id: selectedSupplierId,
+          delivery_date: deliveryDate?.toISOString().split('T')[0] || null,
+          time_window: timeWindow || null,
         },
       });
 
@@ -329,6 +334,12 @@ const SimpleOrder = () => {
             validationErrors={validationErrors}
             setValidationErrors={setValidationErrors}
             variant="default"
+          />
+          <DeliveryDateSection
+            deliveryDate={deliveryDate}
+            onDeliveryDateChange={setDeliveryDate}
+            timeWindow={timeWindow}
+            onTimeWindowChange={setTimeWindow}
           />
           <ArticleList
             articles={articles}

@@ -984,6 +984,16 @@ const Orders = () => {
                             <Calendar className="w-4 h-4" />
                             {format(new Date(draft.updated_at), 'PPp', { locale })}
                           </span>
+                          {draft.desired_delivery_date && (
+                            <span className="flex items-center gap-1 text-primary">
+                              📅 {format(new Date(draft.desired_delivery_date), 'PP', { locale })}
+                              {draft.desired_time_window && (
+                                <span className="ml-1">
+                                  🕐 {draft.desired_time_window === 'flexible' ? t('checkout.flexible') : draft.desired_time_window}
+                                </span>
+                              )}
+                            </span>
+                          )}
                         </div>
                         {draft.notes && (
                           <p className="text-sm text-muted-foreground mt-2">

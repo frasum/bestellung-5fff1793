@@ -810,6 +810,9 @@
     "changeSupplier": "เปลี่ยน",
     "title": "สั่งซื้อ",
     "location": "สถานที่",
-    "hello": "สวัสดี"
+    "hello": "สวัสดี",
+    "deliveryDate": "วันที่ต้องการรับสินค้า",
+    "selectDate": "เลือกวันที่",
+    "timeWindow": "ช่วงเวลา"
   }
 }

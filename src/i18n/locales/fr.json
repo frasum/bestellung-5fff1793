@@ -806,6 +806,9 @@
     "namePlaceholder": "Veuillez entrer votre nom",
     "selectLocation": "Sélectionner l'emplacement",
     "nameRequired": "Veuillez entrer votre nom",
-    "locationRequired": "Veuillez sélectionner un emplacement"
+    "locationRequired": "Veuillez sélectionner un emplacement",
+    "deliveryDate": "Date de livraison souhaitée",
+    "selectDate": "Choisir une date",
+    "timeWindow": "Créneau horaire"
   }
 }

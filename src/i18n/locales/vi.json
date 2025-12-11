@@ -806,6 +806,9 @@
     "namePlaceholder": "Vui lòng nhập tên của bạn",
     "selectLocation": "Chọn địa điểm",
     "nameRequired": "Vui lòng nhập tên của bạn",
-    "locationRequired": "Vui lòng chọn một địa điểm"
+    "locationRequired": "Vui lòng chọn một địa điểm",
+    "deliveryDate": "Ngày giao hàng mong muốn",
+    "selectDate": "Chọn ngày",
+    "timeWindow": "Khung giờ"
   }
 }

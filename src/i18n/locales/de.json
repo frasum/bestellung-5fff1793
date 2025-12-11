@@ -827,6 +827,9 @@
     "changeSupplier": "Wechseln",
     "title": "Bestellung",
     "location": "Standort",
-    "hello": "Hallo"
+    "hello": "Hallo",
+    "deliveryDate": "Gewünschtes Lieferdatum",
+    "selectDate": "Datum wählen",
+    "timeWindow": "Zeitfenster"
   }
 }
