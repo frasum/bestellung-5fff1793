@@ -9,6 +9,7 @@ export interface Order {
   organization_id: string;
   supplier_id: string;
   user_id: string;
+  location_id?: string | null;
   status: 'pending' | 'confirmed' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
   total_amount: number;
   notes: string | null;
@@ -24,6 +25,11 @@ export interface Order {
     email: string;
     customer_number?: string | null;
   };
+  locations?: {
+    id: string;
+    name: string;
+    short_code: string | null;
+  } | null;
   order_items?: OrderItem[];
 }
 
@@ -50,19 +56,23 @@ interface CreateOrderInput {
   isTestOrder?: boolean;
 }
 
-export const useOrders = (locationId?: string) => {
+// locationId: string = filter by specific location
+// locationId: null = load all orders (no location filter)
+// locationId: undefined = load all orders (no location filter)
+export const useOrders = (locationId?: string | null) => {
   return useQuery({
     queryKey: ['orders', locationId],
     queryFn: async () => {
       let query = supabase
         .from('orders')
-        .select('*, suppliers(id, name, email, customer_number), order_items(*)')
+        .select('*, suppliers(id, name, email, customer_number), order_items(*), locations(id, name, short_code)')
         .order('created_at', { ascending: false });
 
       if (locationId) {
         // Show orders for this location OR orders without location (backward compatibility)
         query = query.or(`location_id.eq.${locationId},location_id.is.null`);
       }
+      // If locationId is null or undefined, load all orders without location filter
 
       const { data, error } = await query;
 
