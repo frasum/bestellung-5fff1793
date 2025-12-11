@@ -254,7 +254,7 @@ export function EmployeeTokensOverview({ tokens, onEdit, onToggleActive, onDelet
                                 <User className="h-4 w-4 text-muted-foreground" />
                                 <span className="font-medium">{employeeName}</span>
                                 {token.location && (
-                                  <Badge variant="secondary" className="text-xs">{token.location.name}</Badge>
+                                  <Badge variant="secondary" className="text-xs">{token.location.short_code || token.location.name}</Badge>
                                 )}
                                 <Badge variant={token.is_active ? 'default' : 'destructive'} className="text-xs">
                                   {token.is_active ? 'Aktiv' : 'Inaktiv'}
