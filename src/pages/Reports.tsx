@@ -602,7 +602,7 @@ const Reports = () => {
                     {annualRevenue && annualRevenue.suppliers.length > 0 && (
                       <Button
                         variant="outline"
-                        size="sm"
+                        className="h-10 sm:h-9"
                         onClick={() => {
                           const headers = ['Lieferant', 'Artikel gesamt', 'Mit Wert', 'Jahresumsatz', 'Vollständigkeit'];
                           const rows = annualRevenue.suppliers.map((s) => [
@@ -620,8 +620,8 @@ const Reports = () => {
                           link.click();
                         }}
                       >
-                        <Download className="w-4 h-4 mr-2" />
-                        CSV
+                        <Download className="w-4 h-4 sm:mr-2" />
+                        <span className="hidden sm:inline">CSV</span>
                       </Button>
                     )}
                   </div>
@@ -663,12 +663,12 @@ const Reports = () => {
                           <CardTitle className="text-lg">Top 10 Lieferanten nach Jahresumsatz</CardTitle>
                         </CardHeader>
                         <CardContent>
-                          <div className="h-64">
+                          <div className="h-48 sm:h-64">
                             <ResponsiveContainer width="100%" height="100%">
                               <BarChart
                                 data={annualRevenue.suppliers.slice(0, 10)}
                                 layout="vertical"
-                                margin={{ left: 80 }}
+                                margin={{ left: 60, right: 5 }}
                               >
                                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                                 <XAxis
@@ -681,8 +681,8 @@ const Reports = () => {
                                   type="category"
                                   dataKey="name"
                                   tick={{ fill: 'hsl(var(--muted-foreground))' }}
-                                  fontSize={12}
-                                  width={75}
+                                  fontSize={11}
+                                  width={55}
                                 />
                                 <Tooltip
                                   contentStyle={{
@@ -701,51 +701,80 @@ const Reports = () => {
                     </div>
                   )}
 
-                  {/* Supplier Table */}
+                  {/* Supplier Table/Cards */}
                   {annualRevenue && annualRevenue.suppliers.length > 0 && (
                     <Card>
                       <CardHeader>
                         <CardTitle className="text-lg">Übersicht aller Lieferanten</CardTitle>
                       </CardHeader>
                       <CardContent>
-                        <Table>
-                          <TableHeader>
-                            <TableRow>
-                              <TableHead>Lieferant</TableHead>
-                              <TableHead className="text-right">Artikel</TableHead>
-                              <TableHead className="text-right">Erfasst</TableHead>
-                              <TableHead className="text-right">Jahresumsatz</TableHead>
-                              <TableHead className="text-right">Vollständigkeit</TableHead>
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            {annualRevenue.suppliers.map((supplier) => {
-                              const completeness = supplier.articleCount > 0
-                                ? (supplier.articlesWithValue / supplier.articleCount) * 100
-                                : 0;
-                              return (
-                                <TableRow key={supplier.id}>
-                                  <TableCell className="font-medium">{supplier.name}</TableCell>
-                                  <TableCell className="text-right">{supplier.articleCount}</TableCell>
-                                  <TableCell className="text-right">
-                                    {supplier.articlesWithValue}/{supplier.articleCount}
-                                  </TableCell>
-                                  <TableCell className="text-right font-semibold">
-                                    €{supplier.totalRevenue.toLocaleString('de-DE', { minimumFractionDigits: 2 })}
-                                  </TableCell>
-                                  <TableCell className="text-right">
-                                    <div className="flex items-center justify-end gap-2">
-                                      <Progress value={completeness} className="w-16" />
-                                      <span className={`text-sm ${completeness === 100 ? 'text-green-600' : 'text-muted-foreground'}`}>
-                                        {completeness.toFixed(0)}%
-                                      </span>
-                                    </div>
-                                  </TableCell>
-                                </TableRow>
-                              );
-                            })}
-                          </TableBody>
-                        </Table>
+                        {/* Mobile Card View */}
+                        <div className="sm:hidden space-y-3">
+                          {annualRevenue.suppliers.map((supplier) => {
+                            const completeness = supplier.articleCount > 0
+                              ? (supplier.articlesWithValue / supplier.articleCount) * 100
+                              : 0;
+                            return (
+                              <div key={supplier.id} className="p-3 border rounded-lg space-y-2">
+                                <div className="flex justify-between items-start">
+                                  <p className="font-medium">{supplier.name}</p>
+                                  <span className="font-semibold text-primary">
+                                    €{supplier.totalRevenue.toLocaleString('de-DE', { maximumFractionDigits: 0 })}
+                                  </span>
+                                </div>
+                                <div className="flex items-center justify-between text-sm text-muted-foreground">
+                                  <span>{supplier.articlesWithValue}/{supplier.articleCount} Artikel</span>
+                                  <div className="flex items-center gap-2">
+                                    <Progress value={completeness} className="w-12" />
+                                    <span className={completeness === 100 ? 'text-green-600' : ''}>{completeness.toFixed(0)}%</span>
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+
+                        {/* Desktop Table */}
+                        <div className="hidden sm:block">
+                          <Table>
+                            <TableHeader>
+                              <TableRow>
+                                <TableHead>Lieferant</TableHead>
+                                <TableHead className="text-right">Artikel</TableHead>
+                                <TableHead className="text-right">Erfasst</TableHead>
+                                <TableHead className="text-right">Jahresumsatz</TableHead>
+                                <TableHead className="text-right">Vollständigkeit</TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {annualRevenue.suppliers.map((supplier) => {
+                                const completeness = supplier.articleCount > 0
+                                  ? (supplier.articlesWithValue / supplier.articleCount) * 100
+                                  : 0;
+                                return (
+                                  <TableRow key={supplier.id}>
+                                    <TableCell className="font-medium">{supplier.name}</TableCell>
+                                    <TableCell className="text-right">{supplier.articleCount}</TableCell>
+                                    <TableCell className="text-right">
+                                      {supplier.articlesWithValue}/{supplier.articleCount}
+                                    </TableCell>
+                                    <TableCell className="text-right font-semibold">
+                                      €{supplier.totalRevenue.toLocaleString('de-DE', { minimumFractionDigits: 2 })}
+                                    </TableCell>
+                                    <TableCell className="text-right">
+                                      <div className="flex items-center justify-end gap-2">
+                                        <Progress value={completeness} className="w-16" />
+                                        <span className={`text-sm ${completeness === 100 ? 'text-green-600' : 'text-muted-foreground'}`}>
+                                          {completeness.toFixed(0)}%
+                                        </span>
+                                      </div>
+                                    </TableCell>
+                                  </TableRow>
+                                );
+                              })}
+                            </TableBody>
+                          </Table>
+                        </div>
                       </CardContent>
                     </Card>
                   )}
