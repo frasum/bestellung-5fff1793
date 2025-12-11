@@ -299,10 +299,14 @@ const Orders = () => {
 
   const loadDraftToCart = (draft: CartDraft) => {
     if (draft.items && loadFromDraft) {
-      loadFromDraft(draft.items.filter(item => item.article).map(item => ({
-        article: item.article!,
-        quantity: item.quantity,
-      })));
+      loadFromDraft(
+        draft.items.filter(item => item.article).map(item => ({
+          article: item.article!,
+          quantity: item.quantity,
+        })),
+        draft.desired_delivery_date,
+        draft.desired_time_window
+      );
       navigate('/cart');
     }
     setLoadDialogOpen(false);
