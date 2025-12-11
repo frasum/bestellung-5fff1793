@@ -213,7 +213,9 @@
     "cannotCheckout": "Sie können nicht zur Kasse gehen, bis alle Mindestbestellwerte erreicht sind.",
     "saveAsDraft": "Als Vorbestellung speichern",
     "draftName": "Entwurfsname",
-    "draftSaved": "Entwurf gespeichert"
+    "draftSaved": "Entwurf gespeichert",
+    "addArticle": "Artikel",
+    "inCart": "Im Warenkorb"
   },
   "checkout": {
     "title": "Kasse",
