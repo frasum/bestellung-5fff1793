@@ -32,10 +32,8 @@ const Checkout = () => {
   const { t } = useTranslation();
 
   const TIME_WINDOWS = [
-    { value: 'morning', label: '06:00 - 10:00' },
-    { value: 'late-morning', label: '10:00 - 12:00' },
-    { value: 'noon', label: '12:00 - 14:00' },
-    { value: 'afternoon', label: '14:00 - 17:00' },
+    { value: 'morning', label: '10:00 - 12:00' },
+    { value: 'afternoon', label: '12:00 - 15:00' },
     { value: 'flexible', label: t('checkout.flexible') },
   ];
 
