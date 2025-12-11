@@ -59,7 +59,7 @@ export const SuccessScreen = ({ onNewOrder }: SuccessScreenProps) => {
         </p>
         <Button
           size="lg"
-          className="w-full h-14 text-lg"
+          className="w-full h-16 text-xl font-bold touch-manipulation"
           onClick={onNewOrder}
         >
           {t('simpleOrder.newOrder', 'สั่งซื้อใหม่ / Neue Bestellung')}

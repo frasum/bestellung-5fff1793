@@ -42,13 +42,13 @@ export const SupplierSelection = ({
         {sortedSuppliers.map((supplier) => (
           <Card
             key={supplier.id}
-            className="p-4 cursor-pointer hover:shadow-md transition-all active:scale-[0.98]"
+            className="p-5 min-h-[72px] cursor-pointer hover:shadow-md transition-all active:scale-[0.98] touch-manipulation"
             onClick={() => onSelect(supplier.id)}
           >
             <div className="flex items-center justify-between">
               <h3 className="text-xl font-semibold">{supplier.name}</h3>
-              <span className="text-muted-foreground">
-                {getArticleCount(supplier.id)} {t('simpleOrder.articles', 'รายการ / Artikel')}
+              <span className="text-base text-muted-foreground font-medium">
+                {getArticleCount(supplier.id)} {t('simpleOrder.articles', 'Artikel')}
               </span>
             </div>
           </Card>
