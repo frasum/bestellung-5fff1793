@@ -730,7 +730,7 @@ export function EmployeesTab() {
               </div>
 
               {/* Location + Supplier Assignment */}
-              {locations.length > 0 && (
+              {locations.length > 0 ? (
                 <div>
                   <Label className="mb-2 block">Standorte & Lieferanten</Label>
                   <div className="border rounded-lg divide-y">
@@ -832,6 +832,16 @@ export function EmployeesTab() {
                       Ohne Standortzuweisung kann der Mitarbeiter keine Bestellungen aufgeben
                     </p>
                   )}
+                </div>
+              ) : (
+                <div className="border rounded-lg p-4 bg-muted/50">
+                  <Label className="mb-2 block text-muted-foreground">Standorte & Lieferanten</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Noch keine Standorte angelegt.{' '}
+                    <a href="/settings?tab=locations" className="text-primary underline">
+                      Standort in den Einstellungen anlegen
+                    </a>
+                  </p>
                 </div>
               )}
 
