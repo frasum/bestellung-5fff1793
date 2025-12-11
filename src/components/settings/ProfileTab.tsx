@@ -45,6 +45,21 @@ const AdvancedSettingsSwitch = () => {
 const I18nCheckButton = () => {
   const { t } = useTranslation();
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [advancedMode, setAdvancedMode] = useState(() => 
+    localStorage.getItem('advanced-settings-enabled') === 'true'
+  );
+
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'advanced-settings-enabled') {
+        setAdvancedMode(e.newValue === 'true');
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
+
+  if (!advancedMode) return null;
 
   return (
     <div className="pt-4 border-t">
