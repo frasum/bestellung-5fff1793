@@ -43,11 +43,12 @@ export const OrderEmailViewDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl h-[85vh] flex flex-col">
+      <DialogContent className="max-w-[calc(100vw-1rem)] sm:max-w-2xl max-h-[90vh] flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Mail className="w-5 h-5 text-primary" />
-            {t('orders.emailPreview')} - {order.order_number}
+            <span className="hidden sm:inline">{t('orders.emailPreview')} - {order.order_number}</span>
+            <span className="sm:hidden truncate">{order.order_number}</span>
           </DialogTitle>
         </DialogHeader>
 
@@ -112,8 +113,31 @@ export const OrderEmailViewDialog = ({
                   </div>
                 )}
 
-                {/* Items Table */}
-                <div className="border border-border rounded-lg overflow-hidden">
+                {/* Mobile Card View */}
+                <div className="sm:hidden space-y-2">
+                  {order.order_items && order.order_items.length > 0 ? (
+                    order.order_items.map((item, idx) => (
+                      <div key={idx} className="p-3 bg-muted/30 rounded-lg">
+                        <div className="flex justify-between items-start">
+                          <p className="font-medium text-sm">{item.article_name}</p>
+                          <p className="font-medium text-sm">€{Number(item.total_price).toFixed(2)}</p>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {item.quantity} {item.unit} × €{Number(item.unit_price).toFixed(2)}
+                        </p>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-center text-muted-foreground py-4">{t('common.noData')}</p>
+                  )}
+                  <div className="bg-primary text-primary-foreground rounded-lg p-3 flex justify-between items-center">
+                    <span className="font-semibold">{t('orders.totalAmount')}</span>
+                    <span className="font-bold text-lg">€{Number(order.total_amount).toFixed(2)}</span>
+                  </div>
+                </div>
+
+                {/* Desktop Table */}
+                <div className="hidden sm:block border border-border rounded-lg overflow-hidden">
                   <table className="w-full text-sm">
                     <thead className="bg-muted/50">
                       <tr>
