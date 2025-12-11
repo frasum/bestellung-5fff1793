@@ -10,7 +10,7 @@ const corsHeaders = {
 };
 
 // App URL for redirects
-const APP_URL = "https://orderfox.lovable.app";
+const APP_URL = Deno.env.get('APP_URL') || 'https://bestellung.pro';
 
 interface OrderItem {
   article_name: string;
