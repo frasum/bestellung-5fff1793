@@ -432,7 +432,12 @@ const Orders = () => {
               <FileText className="w-4 h-4" />
               <span className="hidden sm:inline">{t('nav.drafts')}</span>
               {drafts && drafts.length > 0 && (
-                <Badge variant="secondary" className="ml-1 text-xs">{drafts.length}</Badge>
+                <div className="flex items-center gap-1 ml-1">
+                  {drafts.some(d => d.name.startsWith('EasyOrder:')) && (
+                    <Bell className="w-3.5 h-3.5 text-red-500 animate-pulse" />
+                  )}
+                  <Badge variant="secondary" className="text-xs">{drafts.length}</Badge>
+                </div>
               )}
             </TabsTrigger>
             <TabsTrigger value="simple-order" className="flex items-center gap-2">
