@@ -135,7 +135,7 @@ export const InventoryComparisonDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col">
+      <DialogContent className="max-w-[calc(100vw-1rem)] sm:max-w-4xl max-h-[90vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>{t('inventory.compareTitle', 'Inventur-Vergleich')}</DialogTitle>
           <DialogDescription>
@@ -147,7 +147,7 @@ export const InventoryComparisonDialog = ({
           <div className="space-y-2">
             <Label>{t('inventory.oldSession', 'Ältere Inventur')}</Label>
             <Select value={oldSessionId} onValueChange={setOldSessionId}>
-              <SelectTrigger>
+              <SelectTrigger className="h-11 sm:h-10">
                 <SelectValue placeholder={t('inventory.selectSession', 'Inventur auswählen...')} />
               </SelectTrigger>
               <SelectContent>
@@ -168,7 +168,7 @@ export const InventoryComparisonDialog = ({
           <div className="space-y-2">
             <Label>{t('inventory.newSession', 'Neuere Inventur')}</Label>
             <Select value={newSessionId} onValueChange={setNewSessionId}>
-              <SelectTrigger>
+              <SelectTrigger className="h-11 sm:h-10">
                 <SelectValue placeholder={t('inventory.selectSession', 'Inventur auswählen...')} />
               </SelectTrigger>
               <SelectContent>
@@ -218,45 +218,49 @@ export const InventoryComparisonDialog = ({
                   {t('inventory.noDifferences', 'Keine Differenzen gefunden.')}
                 </div>
               ) : (
-                <div className="space-y-2 pb-4">
+              <div className="space-y-2 pb-4">
                   {comparison.map(item => (
                     <div
                       key={item.articleId}
-                      className="flex items-center gap-3 p-3 rounded-lg border bg-card"
+                      className="p-3 rounded-lg border bg-card space-y-2"
                     >
-                      <div className="flex-1 min-w-0">
-                        <div className="font-medium truncate">{item.articleName}</div>
-                        <div className="text-xs text-muted-foreground">{item.supplierName}</div>
+                      {/* Header: Article name + quantity badge */}
+                      <div className="flex justify-between items-start gap-2">
+                        <div className="min-w-0 flex-1">
+                          <div className="font-medium truncate">{item.articleName}</div>
+                          <div className="text-xs text-muted-foreground">{item.supplierName}</div>
+                        </div>
+                        <Badge
+                          variant={item.quantityDiff > 0 ? 'default' : item.quantityDiff < 0 ? 'destructive' : 'secondary'}
+                          className="shrink-0"
+                        >
+                          {item.quantityDiff > 0 ? (
+                            <TrendingUp className="w-3 h-3 mr-1" />
+                          ) : item.quantityDiff < 0 ? (
+                            <TrendingDown className="w-3 h-3 mr-1" />
+                          ) : (
+                            <Minus className="w-3 h-3 mr-1" />
+                          )}
+                          {item.quantityDiff > 0 ? '+' : ''}{formatNumber(item.quantityDiff)}
+                        </Badge>
                       </div>
 
-                      <div className="flex items-center gap-2 text-sm">
-                        <span className="text-muted-foreground">
-                          {formatNumber(item.oldQuantity)} {item.unit}
+                      {/* Quantity change + value */}
+                      <div className="flex items-center justify-between text-sm">
+                        <div className="flex items-center gap-2">
+                          <span className="text-muted-foreground">
+                            {formatNumber(item.oldQuantity)} {item.unit}
+                          </span>
+                          <ArrowRight className="w-4 h-4 text-muted-foreground shrink-0" />
+                          <span className="font-medium">
+                            {formatNumber(item.newQuantity)} {item.unit}
+                          </span>
+                        </div>
+                        <span className={`font-medium shrink-0 ${
+                          item.valueDiff > 0 ? 'text-green-600' : item.valueDiff < 0 ? 'text-red-600' : ''
+                        }`}>
+                          {item.valueDiff > 0 ? '+' : ''}{formatCurrency(item.valueDiff)}
                         </span>
-                        <ArrowRight className="w-4 h-4 text-muted-foreground" />
-                        <span className="font-medium">
-                          {formatNumber(item.newQuantity)} {item.unit}
-                        </span>
-                      </div>
-
-                      <Badge
-                        variant={item.quantityDiff > 0 ? 'default' : item.quantityDiff < 0 ? 'destructive' : 'secondary'}
-                        className="min-w-[70px] justify-center"
-                      >
-                        {item.quantityDiff > 0 ? (
-                          <TrendingUp className="w-3 h-3 mr-1" />
-                        ) : item.quantityDiff < 0 ? (
-                          <TrendingDown className="w-3 h-3 mr-1" />
-                        ) : (
-                          <Minus className="w-3 h-3 mr-1" />
-                        )}
-                        {item.quantityDiff > 0 ? '+' : ''}{formatNumber(item.quantityDiff)}
-                      </Badge>
-
-                      <div className={`text-sm font-medium min-w-[80px] text-right ${
-                        item.valueDiff > 0 ? 'text-green-600' : item.valueDiff < 0 ? 'text-red-600' : ''
-                      }`}>
-                        {item.valueDiff > 0 ? '+' : ''}{formatCurrency(item.valueDiff)}
                       </div>
                     </div>
                   ))}
