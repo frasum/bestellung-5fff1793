@@ -45,9 +45,9 @@ export interface CartDraftItem {
   };
 }
 
-export const useCartDrafts = (locationId?: string) => {
+export const useCartDrafts = (locationId?: string, showAllLocations?: boolean) => {
   return useQuery({
-    queryKey: ['cart-drafts', locationId],
+    queryKey: ['cart-drafts', showAllLocations ? 'all' : locationId],
     queryFn: async () => {
       let query = supabase
         .from('cart_drafts')
@@ -71,11 +71,13 @@ export const useCartDrafts = (locationId?: string) => {
               supplier_id,
               suppliers(id, name, minimum_order_value)
             )
-          )
+          ),
+          location:locations(id, name, short_code)
         `)
         .order('updated_at', { ascending: false });
 
-      if (locationId) {
+      // Only apply location filter if not showing all locations
+      if (!showAllLocations && locationId) {
         // Show drafts for this location OR drafts without location (backward compatibility)
         query = query.or(`location_id.eq.${locationId},location_id.is.null`);
       }
@@ -83,7 +85,7 @@ export const useCartDrafts = (locationId?: string) => {
       const { data, error } = await query;
 
       if (error) throw error;
-      return data as CartDraft[];
+      return data as (CartDraft & { location?: { id: string; name: string; short_code: string | null } })[];
     },
     staleTime: 1 * 60 * 1000, // 1 minute
     gcTime: 5 * 60 * 1000, // 5 minutes

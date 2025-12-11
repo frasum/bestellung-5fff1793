@@ -99,7 +99,10 @@ const Orders = () => {
   const highlightedOrderRef = useRef<HTMLDivElement>(null);
   
   // Drafts state
-  const { data: drafts, isLoading: draftsLoading } = useCartDrafts(activeLocation?.id);
+  const [draftsLocationFilter, setDraftsLocationFilter] = useState<string>('all'); // 'all' or specific location id
+  const showAllDraftLocations = draftsLocationFilter === 'all';
+  const draftsQueryLocationId = draftsLocationFilter === 'all' ? undefined : draftsLocationFilter;
+  const { data: drafts, isLoading: draftsLoading } = useCartDrafts(draftsQueryLocationId, showAllDraftLocations);
   const deleteDraft = useDeleteCartDraft();
   const { loadFromDraft, items: cartItems } = useCart();
   const [draftsSearchQuery, setDraftsSearchQuery] = useState('');
@@ -928,9 +931,9 @@ const Orders = () => {
 
           {/* Drafts Tab Content */}
           <TabsContent value="drafts" className="space-y-6 mt-6">
-            {/* Search */}
-            <div className="flex items-center gap-4">
-              <div className="relative flex-1 max-w-sm">
+            {/* Search and Location Filter */}
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
+              <div className="relative flex-1 max-w-sm w-full">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
                   placeholder={t('drafts.searchPlaceholder')}
@@ -939,6 +942,22 @@ const Orders = () => {
                   className="pl-9 h-11 sm:h-10"
                 />
               </div>
+              {locations && locations.length > 1 && (
+                <Select value={draftsLocationFilter} onValueChange={setDraftsLocationFilter}>
+                  <SelectTrigger className="w-full sm:w-[180px] h-11 sm:h-10">
+                    <MapPin className="w-4 h-4 mr-2 text-muted-foreground" />
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">{t('orders.allLocations', 'Alle Standorte')}</SelectItem>
+                    {locations.map((loc) => (
+                      <SelectItem key={loc.id} value={loc.id}>
+                        {loc.short_code || loc.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
             </div>
 
             {/* Loading State */}
@@ -989,6 +1008,13 @@ const Orders = () => {
                           <h3 className="text-base sm:text-lg font-semibold text-foreground truncate">
                             {draft.name}
                           </h3>
+                          {/* Location Badge */}
+                          {(draft as any).location && (
+                            <Badge variant="outline" className="text-xs shrink-0">
+                              <MapPin className="w-3 h-3 mr-1" />
+                              {(draft as any).location.short_code || (draft as any).location.name}
+                            </Badge>
+                          )}
                         </div>
                         <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:text-sm text-muted-foreground">
                           <span className="flex items-center gap-1">
