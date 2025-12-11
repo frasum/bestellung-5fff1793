@@ -212,7 +212,9 @@
     "cannotCheckout": "You cannot proceed to checkout until all minimum order values are met.",
     "saveAsDraft": "Save as Draft",
     "draftName": "Draft Name",
-    "draftSaved": "Draft saved"
+    "draftSaved": "Draft saved",
+    "addArticle": "Articles",
+    "inCart": "In cart"
   },
   "checkout": {
     "title": "Checkout",

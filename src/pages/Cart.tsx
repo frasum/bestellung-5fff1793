@@ -17,9 +17,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Trash2, Plus, Minus, ShoppingCart, ArrowRight, Loader2, AlertTriangle, Save, Camera } from 'lucide-react';
+import { Trash2, Plus, Minus, ShoppingCart, ArrowRight, Loader2, AlertTriangle, Save, Camera, PlusCircle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { ScanOrderListDialog } from '@/components/cart/ScanOrderListDialog';
+import { AddArticleSheet } from '@/components/cart/AddArticleSheet';
 
 const Cart = () => {
   const { user, loading: authLoading } = useAuth();
@@ -33,6 +34,11 @@ const Cart = () => {
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const [draftName, setDraftName] = useState('');
   const [scanDialogOpen, setScanDialogOpen] = useState(false);
+  const [addArticleSheet, setAddArticleSheet] = useState<{ open: boolean; supplierId: string; supplierName: string }>({
+    open: false,
+    supplierId: '',
+    supplierName: '',
+  });
 
   // Helper to get location-specific minimum order value with fallback to supplier default
   const getMinimumOrderValue = useCallback((supplierId: string, supplierDefault: number | null): number => {
@@ -185,11 +191,26 @@ const Cart = () => {
               <div className="xl:col-span-2 space-y-4 md:space-y-5 xl:space-y-6">
                 {supplierTotals.map(({ name, items: supplierItems, total, minimumOrderValue }) => (
                   <div key={name} className="bg-card border border-border rounded-xl overflow-hidden">
-                    <div className="bg-muted/50 px-4 md:px-5 xl:px-6 py-3 md:py-4 border-b border-border flex items-center justify-between">
-                      <h3 className="font-semibold text-foreground text-sm md:text-base">{name}</h3>
-                      <span className="text-xs md:text-sm text-muted-foreground">
-                        €{total.toFixed(2)}
-                      </span>
+                    <div className="bg-muted/50 px-4 md:px-5 xl:px-6 py-3 md:py-4 border-b border-border flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2 flex-1 min-w-0">
+                        <h3 className="font-semibold text-foreground text-sm md:text-base truncate">{name}</h3>
+                        <span className="text-xs md:text-sm text-muted-foreground shrink-0">
+                          €{total.toFixed(2)}
+                        </span>
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-9 md:h-8 shrink-0"
+                        onClick={() => setAddArticleSheet({
+                          open: true,
+                          supplierId: supplierItems[0]?.article.supplier_id,
+                          supplierName: name,
+                        })}
+                      >
+                        <PlusCircle className="w-4 h-4 md:mr-1.5" />
+                        <span className="hidden md:inline">{t('cart.addArticle')}</span>
+                      </Button>
                     </div>
                     {minimumOrderValue > 0 && total < minimumOrderValue && (
                       <Alert variant="destructive" className="m-3 md:m-4 mb-0">
@@ -402,6 +423,14 @@ const Cart = () => {
         <ScanOrderListDialog 
           open={scanDialogOpen} 
           onOpenChange={setScanDialogOpen} 
+        />
+
+        {/* Add Article Sheet */}
+        <AddArticleSheet
+          open={addArticleSheet.open}
+          onOpenChange={(open) => setAddArticleSheet(prev => ({ ...prev, open }))}
+          supplierId={addArticleSheet.supplierId}
+          supplierName={addArticleSheet.supplierName}
         />
       </div>
     </DashboardLayout>
