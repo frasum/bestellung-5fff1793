@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { Card } from '@/components/ui/card';
+import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 
 interface Supplier {
   id: string;
@@ -31,7 +32,13 @@ export const SupplierSelection = ({
   getArticleCount,
 }: SupplierSelectionProps) => {
   const { t } = useTranslation();
+  const { mediumTap } = useHapticFeedback();
   const sortedSuppliers = sortSuppliers(suppliers);
+
+  const handleSelect = (supplierId: string) => {
+    mediumTap();
+    onSelect(supplierId);
+  };
 
   return (
     <div className="max-w-2xl mx-auto p-4">
@@ -43,7 +50,7 @@ export const SupplierSelection = ({
           <Card
             key={supplier.id}
             className="p-5 min-h-[72px] cursor-pointer hover:shadow-md transition-all active:scale-[0.98] touch-manipulation"
-            onClick={() => onSelect(supplier.id)}
+            onClick={() => handleSelect(supplier.id)}
           >
             <div className="flex items-center justify-between">
               <h3 className="text-xl font-semibold">{supplier.name}</h3>
