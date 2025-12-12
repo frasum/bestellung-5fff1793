@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Plus, Pencil, Trash2, Phone, Mail, User, UserCheck, UserX, MapPin, ChevronDown, ChevronRight, Package, Copy, MessageCircle, ExternalLink, QrCode } from 'lucide-react';
+import { Plus, Pencil, Trash2, Phone, Mail, User, UserCheck, UserX, MapPin, ChevronDown, ChevronRight, Package, Copy, MessageCircle, ExternalLink, QrCode, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -541,6 +541,12 @@ export function EmployeesTab() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
                           <span className="font-medium">{employee.name}</span>
+                          {employee.auto_approve_orders && (
+                            <Badge variant="default" className="text-xs bg-green-600 hover:bg-green-600">
+                              <Zap className="h-3 w-3 mr-1" />
+                              Auto-Freigabe
+                            </Badge>
+                          )}
                           {!employee.is_active && (
                             <Badge variant="secondary">Inaktiv</Badge>
                           )}
