@@ -40,7 +40,7 @@ export const OrderUnitsTab = () => {
       u.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
       u.quantity.toString().includes(searchTerm)
     )
-    .sort((a, b) => a.quantity - b.quantity);
+    .sort((a, b) => a.name.localeCompare(b.name, 'de'));
 
   const handleAddAllUnits = async () => {
     if (articleOrderUnits.length === 0) return;
