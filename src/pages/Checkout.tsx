@@ -567,6 +567,9 @@ const Checkout = () => {
                             <span className="text-primary font-medium"> ({item.article.packaging_unit}er)</span>
                           )}
                           {' '}× €{Number(item.article.price).toFixed(2)}
+                          {item.article.reference_price && item.article.reference_unit && (
+                            <span className="text-muted-foreground/70"> (€{Number(item.article.reference_price).toFixed(2)}/{item.article.reference_unit})</span>
+                          )}
                         </p>
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-1">
@@ -624,6 +627,9 @@ const Checkout = () => {
                             <span className="text-primary font-medium"> ({item.article.packaging_unit}er)</span>
                           )}
                           {' '}× €{Number(item.article.price).toFixed(2)}
+                          {item.article.reference_price && item.article.reference_unit && (
+                            <span className="text-muted-foreground/70"> (€{Number(item.article.reference_price).toFixed(2)}/{item.article.reference_unit})</span>
+                          )}
                         </p>
                       </div>
                       <div className="flex items-center gap-2">

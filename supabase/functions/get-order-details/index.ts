@@ -82,7 +82,7 @@ serve(async (req) => {
         total_amount,
         created_at,
         suppliers(name),
-        order_items(article_name, quantity, unit, unit_price, total_price)
+        order_items(article_name, quantity, unit, unit_price, total_price, article_id)
       `)
       .eq("id", orderId)
       .eq("status", "confirmed")
@@ -107,8 +107,36 @@ serve(async (req) => {
     console.log("Order found:", order.order_number);
     console.log("Order items count:", order.order_items?.length || 0);
 
+    // Fetch reference prices from articles
+    const articleIds = (order.order_items || []).map((item: any) => item.article_id).filter(Boolean);
+    let articleRefPrices = new Map<string, { reference_price: number | null; reference_unit: string | null }>();
+    
+    if (articleIds.length > 0) {
+      const { data: articles } = await supabase
+        .from("articles")
+        .select("id, reference_price, reference_unit")
+        .in("id", articleIds);
+      
+      articles?.forEach((a: any) => {
+        articleRefPrices.set(a.id, { reference_price: a.reference_price, reference_unit: a.reference_unit });
+      });
+    }
+
     // Format the response - handle suppliers as relation
     const supplierData = order.suppliers as unknown as { name: string } | null;
+    const itemsWithRefPrices = (order.order_items || []).map((item: any) => {
+      const refData = articleRefPrices.get(item.article_id) || { reference_price: null, reference_unit: null };
+      return {
+        article_name: item.article_name,
+        quantity: item.quantity,
+        unit: item.unit,
+        unit_price: item.unit_price,
+        total_price: item.total_price,
+        reference_price: refData.reference_price,
+        reference_unit: refData.reference_unit,
+      };
+    });
+
     const response = {
       orderNumber: order.order_number,
       supplierName: supplierData?.name || "",
@@ -116,7 +144,7 @@ serve(async (req) => {
       notes: order.notes,
       totalAmount: order.total_amount,
       confirmedAt: new Date().toISOString(),
-      items: order.order_items || [],
+      items: itemsWithRefPrices,
     };
 
     console.log("Returning response with", response.items.length, "items");
