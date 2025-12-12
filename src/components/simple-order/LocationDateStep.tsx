@@ -58,17 +58,17 @@ interface StepIndicatorProps {
 const StepIndicator = ({ number, status, title, completedValue, icon }: StepIndicatorProps) => {
   return (
     <div className="flex items-center gap-3 mb-3">
-      {/* Step number badge */}
+      {/* Step number badge with animation */}
       <div
         className={cn(
-          "w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-300",
-          status === 'completed' && "bg-green-500 text-white",
-          status === 'active' && "bg-primary text-primary-foreground ring-2 ring-primary ring-offset-2",
-          status === 'pending' && "bg-muted text-muted-foreground"
+          "w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-500 ease-out",
+          status === 'completed' && "bg-green-500 text-white scale-110",
+          status === 'active' && "bg-primary text-primary-foreground ring-2 ring-primary ring-offset-2 animate-pulse",
+          status === 'pending' && "bg-muted text-muted-foreground scale-95"
         )}
       >
         {status === 'completed' ? (
-          <Check className="h-4 w-4" />
+          <Check className="h-4 w-4 animate-scale-in" />
         ) : (
           number
         )}
@@ -77,7 +77,7 @@ const StepIndicator = ({ number, status, title, completedValue, icon }: StepIndi
       {/* Title and completed value */}
       <div className="flex items-center gap-2 flex-1">
         <span className={cn(
-          "flex items-center gap-2 font-semibold transition-colors duration-300",
+          "flex items-center gap-2 font-semibold transition-all duration-300",
           status === 'completed' && "text-green-600 dark:text-green-400",
           status === 'active' && "text-foreground",
           status === 'pending' && "text-muted-foreground"
@@ -87,7 +87,7 @@ const StepIndicator = ({ number, status, title, completedValue, icon }: StepIndi
         </span>
         
         {status === 'completed' && completedValue && (
-          <span className="text-sm font-medium text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-900/30 px-2 py-0.5 rounded-full">
+          <span className="text-sm font-medium text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-900/30 px-2 py-0.5 rounded-full animate-fade-in">
             {completedValue}
           </span>
         )}
@@ -99,19 +99,34 @@ const StepIndicator = ({ number, status, title, completedValue, icon }: StepIndi
 interface StepSectionProps {
   status: StepStatus;
   children: React.ReactNode;
+  isExpanded?: boolean;
 }
 
-const StepSection = ({ status, children }: StepSectionProps) => {
+const StepSection = ({ status, children, isExpanded = true }: StepSectionProps) => {
   return (
     <div
       className={cn(
-        "transition-all duration-300 rounded-xl p-4 border",
+        "rounded-xl p-4 border overflow-hidden",
+        // Smooth transitions for all properties
+        "transition-all duration-500 ease-out",
+        // Status-based styles
         status === 'completed' && "bg-green-50/50 dark:bg-green-900/10 border-green-200 dark:border-green-800",
-        status === 'active' && "bg-card border-primary/30 ring-2 ring-primary/20",
-        status === 'pending' && "bg-muted/30 border-muted opacity-50 pointer-events-none"
+        status === 'active' && "bg-card border-primary/30 ring-2 ring-primary/20 shadow-lg shadow-primary/10",
+        status === 'pending' && "bg-muted/30 border-muted opacity-40 pointer-events-none blur-[0.5px]",
+        // Expansion animation
+        isExpanded ? "max-h-[500px]" : "max-h-[80px]"
       )}
+      style={{
+        // Staggered animation delay based on status
+        transitionDelay: status === 'active' ? '150ms' : '0ms'
+      }}
     >
-      {children}
+      <div className={cn(
+        "transition-all duration-300",
+        status === 'active' && "animate-fade-in"
+      )}>
+        {children}
+      </div>
     </div>
   );
 };
