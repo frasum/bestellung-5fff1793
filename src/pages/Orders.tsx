@@ -36,7 +36,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { format, isAfter, isBefore, startOfDay, endOfDay, subDays, subMonths, Locale } from 'date-fns';
 import { de, enUS, fr } from 'date-fns/locale';
-import { Loader2, Package, CheckCircle2, Clock, Truck, XCircle, Eye, Search, X, ChevronRight, Trash2, FlaskConical, Filter, FileText, ShoppingCart, Calendar, Smartphone, MapPin, Bell, AlertTriangle, Send } from 'lucide-react';
+import { Loader2, Package, CheckCircle2, Clock, Truck, XCircle, Eye, Search, X, ChevronRight, Trash2, FlaskConical, Filter, FileText, ShoppingCart, Calendar, Smartphone, MapPin, Bell, AlertTriangle, Send, User } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { SimpleOrderTab } from '@/components/settings/SimpleOrderTab';
 import {
@@ -737,6 +737,14 @@ const Orders = () => {
                                         </Badge>
                                       ) : null;
                                     })()}
+                                    {order.employees?.name && (
+                                      <span className="flex items-center gap-1">
+                                        <Smartphone className="w-3 h-3" />
+                                        <span className="truncate max-w-[80px]">
+                                          {order.employees.name}
+                                        </span>
+                                      </span>
+                                    )}
                                   </div>
                                   <span className="font-bold text-foreground">€{Number(order.total_amount).toFixed(2)}</span>
                                 </div>
@@ -765,6 +773,12 @@ const Orders = () => {
                                   <span className="text-xs text-muted-foreground">
                                     {order.order_items?.length || 0} {t('orders.items')}
                                   </span>
+                                  {order.employees?.name && (
+                                    <span className="text-xs text-muted-foreground flex items-center gap-1">
+                                      <Smartphone className="w-3 h-3" />
+                                      {order.employees.name}
+                                    </span>
+                                  )}
                                 </div>
                                 <div className="flex items-center gap-4">
                                   <span className="text-sm text-muted-foreground">

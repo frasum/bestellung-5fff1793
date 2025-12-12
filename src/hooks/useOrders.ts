@@ -9,6 +9,7 @@ export interface Order {
   organization_id: string;
   supplier_id: string;
   user_id: string;
+  employee_id?: string | null;
   location_id?: string | null;
   status: 'pending' | 'confirmed' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
   total_amount: number;
@@ -29,6 +30,10 @@ export interface Order {
     id: string;
     name: string;
     short_code: string | null;
+  } | null;
+  employees?: {
+    id: string;
+    name: string;
   } | null;
   order_items?: OrderItem[];
 }
@@ -67,7 +72,7 @@ export const useOrders = (locationId?: string | null) => {
     queryFn: async () => {
       let query = supabase
         .from('orders')
-        .select('*, suppliers(id, name, email, customer_number), order_items(*), locations(id, name, short_code)')
+        .select('*, suppliers(id, name, email, customer_number), order_items(*), locations(id, name, short_code), employees(id, name)')
         .order('created_at', { ascending: false });
 
       if (locationId) {
