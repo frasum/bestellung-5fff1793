@@ -68,9 +68,9 @@ export const OrderUnitsTab = () => {
       if (error) throw error;
 
       queryClient.invalidateQueries({ queryKey: ['order-units'] });
-      toast.success(t('settings.packagingUnitsAddedSuccess', { count: articleOrderUnits.length }));
+      toast.success(t('settings.orderUnitsAddedSuccess', { count: articleOrderUnits.length }));
     } catch (error) {
-      toast.error(t('settings.packagingUnitsAddError'));
+      toast.error(t('settings.orderUnitsAddError'));
     } finally {
       setIsAddingAll(false);
     }
@@ -116,7 +116,7 @@ export const OrderUnitsTab = () => {
   };
 
   const handleDelete = (id: string) => {
-    if (confirm(t('settings.deletePackagingUnitConfirm'))) {
+    if (confirm(t('settings.deleteOrderUnitConfirm'))) {
       deleteUnit.mutate(id);
     }
   };
@@ -130,16 +130,16 @@ export const OrderUnitsTab = () => {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Package className="h-5 w-5" />
-          {t('settings.managePackagingUnits')}
+          {t('settings.manageOrderUnits')}
         </CardTitle>
         <CardDescription>
-          {t('settings.managePackagingUnitsDesc')}
+          {t('settings.manageOrderUnitsDesc')}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="flex flex-col sm:flex-row gap-2">
           <Input
-            placeholder={t('settings.packagingUnitNamePlaceholder')}
+            placeholder={t('settings.orderUnitNamePlaceholder')}
             value={newUnitName}
             onChange={(e) => setNewUnitName(e.target.value)}
             className="h-11 sm:h-9 flex-1"
@@ -147,7 +147,7 @@ export const OrderUnitsTab = () => {
           <Input
             type="number"
             min="1"
-            placeholder={t('settings.packagingUnitQuantityPlaceholder')}
+            placeholder={t('settings.orderUnitQuantityPlaceholder')}
             value={newUnitQuantity}
             onChange={(e) => setNewUnitQuantity(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleAddUnit()}
@@ -166,7 +166,7 @@ export const OrderUnitsTab = () => {
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder={t('settings.searchPackagingUnits')}
+            placeholder={t('settings.searchOrderUnits')}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-9 h-11 sm:h-9"
@@ -174,9 +174,9 @@ export const OrderUnitsTab = () => {
         </div>
 
         <div className="space-y-2">
-          <h3 className="text-sm font-medium text-muted-foreground">{t('settings.savedPackagingUnits')} ({filteredDbUnits.length})</h3>
+          <h3 className="text-sm font-medium text-muted-foreground">{t('settings.savedOrderUnits')} ({filteredDbUnits.length})</h3>
           {filteredDbUnits.length === 0 ? (
-            <p className="text-muted-foreground text-center py-4 text-sm">{t('settings.noSavedPackagingUnits')}</p>
+            <p className="text-muted-foreground text-center py-4 text-sm">{t('settings.noSavedOrderUnits')}</p>
           ) : (
             filteredDbUnits.map((unit) => (
               <div key={unit.id} className="flex items-center justify-between p-3 border rounded-lg">
@@ -230,7 +230,7 @@ export const OrderUnitsTab = () => {
         {articleOrderUnits.length > 0 && (
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-medium text-muted-foreground">{t('settings.packagingUnitsFromArticles')} ({articleOrderUnits.length})</h3>
+              <h3 className="text-sm font-medium text-muted-foreground">{t('settings.orderUnitsFromArticles')} ({articleOrderUnits.length})</h3>
               <Button 
                 size="sm" 
                 variant="outline"
@@ -242,7 +242,7 @@ export const OrderUnitsTab = () => {
                 {isAddingAll ? t('settings.addingAll') : t('settings.addAll')}
               </Button>
             </div>
-            <p className="text-xs text-muted-foreground">{t('settings.packagingUnitsFromArticlesDesc')}</p>
+            <p className="text-xs text-muted-foreground">{t('settings.orderUnitsFromArticlesDesc')}</p>
             <div className="flex flex-wrap gap-2">
               {articleOrderUnits.map((qty) => (
                 <Badge 
