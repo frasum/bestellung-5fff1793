@@ -231,10 +231,27 @@ serve(async (req) => {
       const articleIds = items.map((item: OrderItem) => item.article_id);
       const { data: articlesData } = await supabase
         .from('articles')
-        .select('id, name, price, unit')
+        .select('id, name, price, unit, order_unit_id')
         .in('id', articleIds);
 
       const articleMap = new Map(articlesData?.map(a => [a.id, a]) || []);
+
+      // Load order units for formatting
+      const orderUnitIds = articlesData?.map(a => a.order_unit_id).filter(Boolean) || [];
+      let orderUnitsMap = new Map();
+      if (orderUnitIds.length > 0) {
+        const { data: orderUnits } = await supabase
+          .from('order_units')
+          .select('id, name, quantity')
+          .in('id', orderUnitIds);
+        orderUnitsMap = new Map(orderUnits?.map(u => [u.id, u]) || []);
+      }
+
+      const formatOrderUnit = (orderUnitId: string | null | undefined) => {
+        if (!orderUnitId) return undefined;
+        const unit = orderUnitsMap.get(orderUnitId);
+        return unit ? `${unit.quantity}× ${unit.name}` : undefined;
+      };
 
       // Calculate total and prepare order items
       interface PreparedOrderItem {
@@ -244,6 +261,7 @@ serve(async (req) => {
         unit_price: number;
         unit: string;
         total_price: number;
+        order_unit?: string;
       }
       
       let totalAmount = 0;
@@ -260,6 +278,7 @@ serve(async (req) => {
           unit_price: unitPrice,
           unit: article?.unit || item.unit || 'Stk',
           total_price: totalPrice,
+          order_unit: formatOrderUnit(article?.order_unit_id),
         };
       });
 
@@ -346,6 +365,7 @@ serve(async (req) => {
               unit: item.unit,
               unit_price: item.unit_price,
               total_price: item.total_price,
+              order_unit: item.order_unit,
             })),
             totalAmount: totalAmount,
             notes: notesText,
