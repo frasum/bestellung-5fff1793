@@ -64,7 +64,7 @@ const Checkout = () => {
   const formatOrderUnit = (orderUnitId: string | null | undefined) => {
     if (!orderUnitId || !orderUnits) return null;
     const unit = orderUnits.find(u => u.id === orderUnitId);
-    return unit ? `${unit.quantity}× ${unit.name}` : null;
+    return unit ? unit.name : null;
   };
   const [showEmailPreview, setShowEmailPreview] = useState(false);
   const [emailPreviews, setEmailPreviews] = useState<EmailPreviewData[]>([]);
