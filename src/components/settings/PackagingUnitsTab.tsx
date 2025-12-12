@@ -62,7 +62,7 @@ export const PackagingUnitsTab = () => {
       }));
 
       const { error } = await supabase
-        .from('packaging_units')
+        .from('order_units')
         .insert(unitsToAdd);
 
       if (error) throw error;
