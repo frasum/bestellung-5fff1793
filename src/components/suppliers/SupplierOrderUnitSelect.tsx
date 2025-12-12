@@ -9,8 +9,8 @@ import { useOrderUnits, useCreateOrderUnit, useUpdateOrderUnit, useDeleteOrderUn
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 
 interface SupplierOrderUnitSelectProps {
-  value: string;
-  onChange: (value: string) => void;
+  value: string | null;
+  onChange: (value: string | null) => void;
   hasPending?: boolean;
   pendingInfo?: { old_value: string | null } | null;
   className?: string;
@@ -51,26 +51,25 @@ export function SupplierOrderUnitSelect({
       onSuccess: () => {
         setDeleteUnit(null);
         // Clear selection if deleted unit was selected
-        const deletedQty = String(deleteUnit.quantity);
-        if (value === deletedQty) {
-          onChange('');
+        if (value === deleteUnit.id) {
+          onChange(null);
         }
       }
     });
   };
 
   const getDisplayLabel = () => {
-    if (!value) return <span className="text-muted-foreground">-</span>;
-    const pu = orderUnits.find(p => String(p.quantity) === value);
+    if (!value) return <span className="text-muted-foreground">—</span>;
+    const pu = orderUnits.find(p => p.id === value);
     if (pu) {
       return (
         <span className="flex items-center gap-2">
           <Package className="h-3.5 w-3.5 text-muted-foreground" />
-          {pu.name}
+          {pu.quantity}× {pu.name}
         </span>
       );
     }
-    return value;
+    return <span className="text-muted-foreground">—</span>;
   };
 
   return (
@@ -139,8 +138,8 @@ export function SupplierOrderUnitSelect({
                             name: customName,
                             quantity: parseInt(customQuantity)
                           }, {
-                            onSuccess: () => {
-                              onChange(customQuantity);
+                            onSuccess: (newUnit) => {
+                              if (newUnit) onChange(newUnit.id);
                               setOpen(false);
                               setCustomQuantity('');
                               setCustomName('');
@@ -191,17 +190,17 @@ export function SupplierOrderUnitSelect({
                       </Button>
                     </div>
                   ) : (
-                    <CommandItem
+                  <CommandItem
                       key={pu.id}
                       value={pu.name}
                       onSelect={() => {
-                        onChange(String(pu.quantity));
+                        onChange(pu.id);
                         setOpen(false);
                         setCustomQuantity('');
                       }}
                       className="group"
                     >
-                      <Check className={cn("mr-2 h-4 w-4", value === String(pu.quantity) ? "opacity-100" : "opacity-0")} />
+                      <Check className={cn("mr-2 h-4 w-4", value === pu.id ? "opacity-100" : "opacity-0")} />
                       <Package className="mr-2 h-4 w-4 text-muted-foreground" />
                       <span className="flex-1">{pu.name}</span>
                       <span className="text-muted-foreground text-xs mr-2">({pu.quantity})</span>
@@ -235,7 +234,7 @@ export function SupplierOrderUnitSelect({
                 <CommandItem
                   value="clear"
                   onSelect={() => {
-                    onChange('');
+                    onChange(null);
                     setOpen(false);
                     setCustomQuantity('');
                   }}
