@@ -17,8 +17,9 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sh
 import { useCreateOrder } from '@/hooks/useOrders';
 import { useDeliveryAddresses } from '@/hooks/useSettings';
 import { useUserDeliveryPreference } from '@/hooks/useUserDeliveryPreference';
+import { useOrderUnits } from '@/hooks/useOrderUnits';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { ArrowLeft, CalendarIcon, CheckCircle2, Clock, Eye, Loader2, Mail, MapPin, Minus, Plus, Send, Settings, Store, Trash2 } from 'lucide-react';
+import { ArrowLeft, CalendarIcon, CheckCircle2, Clock, Eye, Loader2, Mail, MapPin, Minus, Package, Plus, Send, Settings, Store, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { z } from 'zod';
 import { useForm, Controller } from 'react-hook-form';
@@ -26,6 +27,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
+import { Badge } from '@/components/ui/badge';
 import { EmailPreviewDialog, EmailPreviewData } from '@/components/checkout/EmailPreviewDialog';
 
 const Checkout = () => {
@@ -53,9 +55,17 @@ const Checkout = () => {
   const createOrder = useCreateOrder();
   const { data: deliveryAddresses, isLoading: addressesLoading } = useDeliveryAddresses(activeLocation?.id);
   const { data: userDeliveryPreference } = useUserDeliveryPreference();
+  const { data: orderUnits } = useOrderUnits();
   const isMobileDevice = useIsMobile();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [completedOrders, setCompletedOrders] = useState<{orderNumber: string; supplierName: string}[]>([]);
+  
+  // Helper to format order unit display
+  const formatOrderUnit = (orderUnitId: string | null | undefined) => {
+    if (!orderUnitId || !orderUnits) return null;
+    const unit = orderUnits.find(u => u.id === orderUnitId);
+    return unit ? `${unit.quantity}× ${unit.name}` : null;
+  };
   const [showEmailPreview, setShowEmailPreview] = useState(false);
   const [emailPreviews, setEmailPreviews] = useState<EmailPreviewData[]>([]);
   const [pendingOrderData, setPendingOrderData] = useState<CheckoutFormData | null>(null);
@@ -221,6 +231,7 @@ const Checkout = () => {
             total_price: Number(item.article.price) * item.quantity,
             sku: item.article.sku || undefined,
             packaging_unit: item.article.packaging_unit || undefined,
+            order_unit: formatOrderUnit(item.article.order_unit_id) || undefined,
           })),
           totalAmount: supplier.total,
           notes: fullNotes,
@@ -561,17 +572,25 @@ const Checkout = () => {
                             €{(Number(item.article.price) * item.quantity).toFixed(2)}
                           </p>
                         </div>
-                        <p className="text-xs md:text-sm text-muted-foreground mb-3">
-                          {item.article.sku && <span>SKU: {item.article.sku} • </span>}
-                          {item.article.unit}
-                          {item.article.packaging_unit && item.article.packaging_unit > 1 && (
-                            <span className="text-primary font-medium"> ({item.article.packaging_unit}er)</span>
+                        <div className="text-xs md:text-sm text-muted-foreground mb-3 space-y-1">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            {item.article.sku && <span>SKU: {item.article.sku} • </span>}
+                            {item.article.unit}
+                            {item.article.packaging_unit && item.article.packaging_unit > 1 && (
+                              <span className="text-primary font-medium"> ({item.article.packaging_unit}er)</span>
+                            )}
+                            {' '}× €{Number(item.article.price).toFixed(2)}
+                            {item.article.reference_price && item.article.reference_unit && (
+                              <span className="text-muted-foreground/70"> (€{Number(item.article.reference_price).toFixed(2)}/{item.article.reference_unit})</span>
+                            )}
+                          </div>
+                          {formatOrderUnit(item.article.order_unit_id) && (
+                            <Badge variant="secondary" className="text-xs gap-1">
+                              <Package className="h-3 w-3" />
+                              {formatOrderUnit(item.article.order_unit_id)}
+                            </Badge>
                           )}
-                          {' '}× €{Number(item.article.price).toFixed(2)}
-                          {item.article.reference_price && item.article.reference_unit && (
-                            <span className="text-muted-foreground/70"> (€{Number(item.article.reference_price).toFixed(2)}/{item.article.reference_unit})</span>
-                          )}
-                        </p>
+                        </div>
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-1">
                             <Button
@@ -621,17 +640,25 @@ const Checkout = () => {
                     <div key={item.article.id} className="p-4 flex items-center justify-between gap-4">
                       <div className="flex-1 min-w-0">
                         <p className="font-medium text-foreground truncate">{item.article.name}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {item.article.sku && <span className="mr-2">SKU: {item.article.sku}</span>}
-                          {item.article.unit}
-                          {item.article.packaging_unit && item.article.packaging_unit > 1 && (
-                            <span className="text-primary font-medium"> ({item.article.packaging_unit}er)</span>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <p className="text-sm text-muted-foreground">
+                            {item.article.sku && <span className="mr-2">SKU: {item.article.sku}</span>}
+                            {item.article.unit}
+                            {item.article.packaging_unit && item.article.packaging_unit > 1 && (
+                              <span className="text-primary font-medium"> ({item.article.packaging_unit}er)</span>
+                            )}
+                            {' '}× €{Number(item.article.price).toFixed(2)}
+                            {item.article.reference_price && item.article.reference_unit && (
+                              <span className="text-muted-foreground/70"> (€{Number(item.article.reference_price).toFixed(2)}/{item.article.reference_unit})</span>
+                            )}
+                          </p>
+                          {formatOrderUnit(item.article.order_unit_id) && (
+                            <Badge variant="secondary" className="text-xs gap-1">
+                              <Package className="h-3 w-3" />
+                              {formatOrderUnit(item.article.order_unit_id)}
+                            </Badge>
                           )}
-                          {' '}× €{Number(item.article.price).toFixed(2)}
-                          {item.article.reference_price && item.article.reference_unit && (
-                            <span className="text-muted-foreground/70"> (€{Number(item.article.reference_price).toFixed(2)}/{item.article.reference_unit})</span>
-                          )}
-                        </p>
+                        </div>
                       </div>
                       <div className="flex items-center gap-2">
                         <div className="flex items-center gap-1">

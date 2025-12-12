@@ -14,6 +14,7 @@ interface OrderItem {
   total_price: number;
   reference_price?: number | null;
   reference_unit?: string | null;
+  order_unit?: string | null;
 }
 
 interface OrderDetails {
@@ -211,7 +212,7 @@ const OrderConfirmed = () => {
                       </div>
                       <div className="space-y-2">
                         {orderDetails.items.map((item, index) => (
-                          <div key={index} className="flex justify-between items-center py-2 border-b last:border-0">
+                          <div key={index} className="flex justify-between items-start py-2 border-b last:border-0">
                             <div>
                               <p className="font-medium text-foreground">{item.article_name}</p>
                               <p className="text-sm text-muted-foreground">
@@ -220,6 +221,12 @@ const OrderConfirmed = () => {
                                   <span className="text-muted-foreground/70"> (€{item.reference_price.toFixed(2)}/{item.reference_unit})</span>
                                 )}
                               </p>
+                              {item.order_unit && (
+                                <p className="text-xs text-primary font-medium mt-0.5">
+                                  <Package className="h-3 w-3 inline mr-1" />
+                                  {item.order_unit}
+                                </p>
+                              )}
                             </div>
                             <p className="font-semibold text-foreground">€{item.total_price.toFixed(2)}</p>
                           </div>
