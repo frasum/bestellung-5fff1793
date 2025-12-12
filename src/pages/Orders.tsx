@@ -450,7 +450,7 @@ const Orders = () => {
                               })()}
                             </div>
                             <span className="text-xs text-muted-foreground">
-                              {format(new Date(order.created_at), 'dd.MM.yy', { locale })}
+                              {format(new Date(order.created_at), 'dd.MM.yy, HH:mm', { locale })}
                             </span>
                           </div>
                         </div>
@@ -806,7 +806,7 @@ const Orders = () => {
                                 <div className="flex items-center justify-between pl-6 text-sm">
                                   <div className="flex items-center gap-2 text-muted-foreground">
                                     <span>
-                                      {format(new Date(order.created_at), 'd. MMM', { locale })}
+                                      {format(new Date(order.created_at), 'd. MMM, HH:mm', { locale })}
                                     </span>
                                     {order.is_test_order && (
                                       <span className="text-warning">
@@ -852,7 +852,7 @@ const Orders = () => {
                                 </div>
                                 <div className="flex items-center gap-4">
                                   <span className="text-sm text-muted-foreground">
-                                    {format(new Date(order.created_at), 'EEEE d. MMM yyyy', { locale })}
+                                    {format(new Date(order.created_at), 'EEEE d. MMM yyyy, HH:mm', { locale })} Uhr
                                   </span>
                                   {order.location_id && locations && (() => {
                                     const loc = locations.find(l => l.id === order.location_id);
@@ -1173,7 +1173,7 @@ const Orders = () => {
                           </span>
                           <span className="flex items-center gap-1">
                             <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                            {format(new Date(draft.updated_at), 'dd.MM.yy', { locale })}
+                            {format(new Date(draft.created_at), 'dd.MM.yy, HH:mm', { locale })}
                           </span>
                           {draft.desired_delivery_date && (
                             <span className="flex items-center gap-1 text-primary">
