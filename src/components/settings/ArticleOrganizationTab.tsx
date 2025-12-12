@@ -500,7 +500,7 @@ export const ArticleOrganizationTab = () => {
                           value={article.order_unit_id || 'none'}
                           onValueChange={(v) => handleInlineUpdate(article.id, 'order_unit_id', v === 'none' ? null : v)}
                         >
-                          <SelectTrigger className="h-8 w-[120px]">
+                          <SelectTrigger className="h-8 w-[180px]">
                             <SelectValue>
                               {article.order_unit_id ? formatOrderUnit(article.order_unit_id) : <span className="text-muted-foreground">—</span>}
                             </SelectValue>
