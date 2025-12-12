@@ -109,10 +109,10 @@ serve(async (req) => {
       console.log('Multi-supplier token has suppliers:', supplierIds.length);
 
       if (supplierIds.length > 0) {
-        // Get all articles for these suppliers with sort_order
+        // Get all articles for these suppliers with sort_order and order_unit
         const { data: allArticles, error: articlesError } = await supabase
           .from('articles')
-          .select('id, name, description, price, unit, category, sku, packaging_unit, supplier_id, sort_order')
+          .select('id, name, description, price, unit, category, sku, packaging_unit, supplier_id, sort_order, order_unit_id, order_unit:order_units(id, name, quantity)')
           .in('supplier_id', supplierIds)
           .eq('is_active', true)
           .order('sort_order', { ascending: true })
@@ -146,7 +146,7 @@ serve(async (req) => {
       if (tokenData.supplier_id) {
         const { data: singleArticles, error: articlesError } = await supabase
           .from('articles')
-          .select('id, name, description, price, unit, category, sku, packaging_unit, supplier_id, sort_order')
+          .select('id, name, description, price, unit, category, sku, packaging_unit, supplier_id, sort_order, order_unit_id, order_unit:order_units(id, name, quantity)')
           .eq('supplier_id', tokenData.supplier_id)
           .eq('is_active', true)
           .order('sort_order', { ascending: true })

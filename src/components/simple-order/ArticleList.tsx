@@ -15,6 +15,12 @@ interface Article {
   packaging_unit: number | null;
   supplier_id: string;
   sort_order?: number;
+  order_unit_id?: string | null;
+  order_unit?: {
+    id: string;
+    name: string;
+    quantity: number;
+  } | null;
 }
 
 interface Supplier {
@@ -304,9 +310,14 @@ const ArticleCard = ({
               <Minus className="h-6 w-6" />
             </Button>
             
-            <span className="w-10 text-center text-xl font-bold">
-              {quantity}
-            </span>
+            <div className="min-w-16 text-center">
+              <span className="text-xl font-bold">{quantity}</span>
+              {article.order_unit && (
+                <span className="block text-xs text-muted-foreground leading-tight">
+                  {article.order_unit.name}
+                </span>
+              )}
+            </div>
             
             <Button
               variant="default"
