@@ -1029,6 +1029,24 @@ export type Database = {
         }
         Relationships: []
       }
+      pin_verification_rate_limits: {
+        Row: {
+          created_at: string
+          id: string
+          token: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          token: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          token?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           color_scheme: string | null
@@ -1705,6 +1723,7 @@ export type Database = {
     Functions: {
       cleanup_old_magic_link_rate_limits: { Args: never; Returns: undefined }
       cleanup_old_rate_limits: { Args: never; Returns: undefined }
+      cleanup_pin_verification_rate_limits: { Args: never; Returns: undefined }
       cleanup_simple_order_rate_limits: { Args: never; Returns: undefined }
       generate_order_number: { Args: never; Returns: string }
       get_user_organization_id: { Args: { user_id: string }; Returns: string }
