@@ -288,7 +288,7 @@ export const MultiSupplierCartOverview = ({
                               <span>{article.price.toFixed(2)} €/{article.unit}</span>
                               {article.order_unit && (
                                 <Badge variant="outline" className="text-xs">
-                                  {article.order_unit.quantity}× {article.order_unit.name}
+                                  {article.order_unit.name}
                                 </Badge>
                               )}
                             </div>

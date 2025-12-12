@@ -250,7 +250,7 @@ serve(async (req) => {
       const formatOrderUnit = (orderUnitId: string | null | undefined) => {
         if (!orderUnitId) return undefined;
         const unit = orderUnitsMap.get(orderUnitId);
-        return unit ? `${unit.quantity}× ${unit.name}` : undefined;
+        return unit ? unit.name : undefined;
       };
 
       // Calculate total and prepare order items
