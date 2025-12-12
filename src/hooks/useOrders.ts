@@ -266,11 +266,13 @@ export const useUpdateOrderLocation = () => {
         .from('orders')
         .update({ location_id: locationId })
         .eq('id', orderId)
-        .select()
-        .single();
+        .select();
 
       if (error) throw error;
-      return data;
+      if (!data || data.length === 0) {
+        throw new Error('Keine Berechtigung zum Aktualisieren dieser Bestellung');
+      }
+      return data[0];
     },
     onMutate: async ({ orderId, locationId }) => {
       await queryClient.cancelQueries({ queryKey: ['orders'] });
