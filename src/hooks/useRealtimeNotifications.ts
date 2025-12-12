@@ -48,6 +48,28 @@ export const useRealtimeNotifications = () => {
           }
         }
       )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'cart_drafts'
+        },
+        (payload) => {
+          // Invalidate all cart-drafts queries to refresh the list
+          queryClient.invalidateQueries({ 
+            predicate: (query) => query.queryKey[0] === 'cart-drafts'
+          });
+          
+          // Show toast notification for updated EasyOrder
+          const updatedDraft = payload.new as { name?: string; id?: string };
+          if (updatedDraft.name?.startsWith('EasyOrder:')) {
+            toast.info(t('drafts.orderUpdated', 'Bestellung aktualisiert'), {
+              description: updatedDraft.name,
+            });
+          }
+        }
+      )
       .subscribe();
 
     return () => {
