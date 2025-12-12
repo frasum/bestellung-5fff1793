@@ -305,6 +305,89 @@ export const useUpdateOrderLocation = () => {
   });
 };
 
+export const useResendOrderEmail = () => {
+  return useMutation({
+    mutationFn: async (order: Order) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      // Get organization info for restaurant name
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('organization_id, organizations(name)')
+        .eq('id', user.id)
+        .single();
+
+      const restaurantName = (profile?.organizations as { name: string } | null)?.name || 'Restaurant';
+
+      // Get article SKUs for items
+      const articleIds = order.order_items?.map(item => item.article_id) || [];
+      const { data: articles } = await supabase
+        .from('articles')
+        .select('id, sku, packaging_unit')
+        .in('id', articleIds);
+
+      const articleMap = new Map(articles?.map(a => [a.id, a]) || []);
+
+      // Check for existing valid token or create a new one
+      const { data: existingToken } = await supabase
+        .from('order_confirmation_tokens')
+        .select('token, expires_at')
+        .eq('order_id', order.id)
+        .gte('expires_at', new Date().toISOString())
+        .maybeSingle();
+
+      let confirmationToken = existingToken?.token;
+
+      // Create new token if none exists or expired
+      if (!confirmationToken) {
+        const { data: newToken } = await supabase
+          .from('order_confirmation_tokens')
+          .insert({ order_id: order.id })
+          .select('token')
+          .single();
+        confirmationToken = newToken?.token;
+      }
+
+      // Call send-order-email edge function
+      const { error } = await supabase.functions.invoke('send-order-email', {
+        body: {
+          orderId: order.id,
+          orderNumber: order.order_number,
+          supplierEmail: order.suppliers?.email,
+          supplierName: order.suppliers?.name,
+          restaurantName,
+          deliveryAddress: order.delivery_address,
+          items: order.order_items?.map(item => {
+            const article = articleMap.get(item.article_id);
+            return {
+              article_name: item.article_name,
+              quantity: item.quantity,
+              unit: item.unit,
+              unit_price: item.unit_price,
+              total_price: item.total_price,
+              sku: article?.sku || undefined,
+              packaging_unit: article?.packaging_unit || undefined,
+            };
+          }) || [],
+          totalAmount: order.total_amount,
+          notes: order.notes,
+          confirmationToken,
+        },
+      });
+
+      if (error) throw error;
+      return order;
+    },
+    onSuccess: () => {
+      toast.success('E-Mail wurde erneut gesendet');
+    },
+    onError: (error: Error) => {
+      toast.error(`Fehler beim Senden: ${error.message}`);
+    },
+  });
+};
+
 export const useDeleteTestOrders = () => {
   const queryClient = useQueryClient();
 
