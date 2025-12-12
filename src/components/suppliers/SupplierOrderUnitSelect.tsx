@@ -14,6 +14,8 @@ interface SupplierOrderUnitSelectProps {
   hasPending?: boolean;
   pendingInfo?: { old_value: string | null } | null;
   className?: string;
+  isFilter?: boolean;
+  filterLabel?: string;
 }
 
 export function SupplierOrderUnitSelect({
@@ -22,6 +24,8 @@ export function SupplierOrderUnitSelect({
   hasPending = false,
   pendingInfo,
   className,
+  isFilter = false,
+  filterLabel = 'Alle',
 }: SupplierOrderUnitSelectProps) {
   const [open, setOpen] = useState(false);
   const [customQuantity, setCustomQuantity] = useState('');
@@ -59,13 +63,16 @@ export function SupplierOrderUnitSelect({
   };
 
   const getDisplayLabel = () => {
-    if (!value) return <span className="text-muted-foreground">—</span>;
+    if (!value) {
+      if (isFilter) return <span className="truncate">{filterLabel}</span>;
+      return <span className="text-muted-foreground">—</span>;
+    }
     const pu = orderUnits.find(p => p.id === value);
     if (pu) {
       return (
-        <span className="flex items-center gap-2">
-          <Package className="h-3.5 w-3.5 text-muted-foreground" />
-          {pu.quantity}× {pu.name}
+        <span className="flex items-center gap-2 truncate">
+          <Package className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+          <span className="truncate">{pu.quantity}× {pu.name}</span>
         </span>
       );
     }
@@ -240,7 +247,8 @@ export function SupplierOrderUnitSelect({
                   }}
                   className="text-muted-foreground"
                 >
-                  Keine BE
+                  <Check className={cn("mr-2 h-4 w-4", value === null ? "opacity-100" : "opacity-0")} />
+                  {isFilter ? filterLabel : 'Keine BE'}
                 </CommandItem>
               </CommandGroup>
             </CommandList>

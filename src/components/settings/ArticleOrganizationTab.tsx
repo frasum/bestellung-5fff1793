@@ -312,24 +312,13 @@ export const ArticleOrganizationTab = () => {
                 ))}
               </SelectContent>
             </Select>
-            <Select value={filterOrderUnit} onValueChange={setFilterOrderUnit}>
-              <SelectTrigger className="w-[140px]">
-                <span className="truncate">
-                  {filterOrderUnit === 'all' 
-                    ? t('settings.orderUnitsShort')
-                    : formatOrderUnit(filterOrderUnit) || filterOrderUnit
-                  }
-                </span>
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">{t('common.all')}</SelectItem>
-                {orderUnits.map(unit => (
-                  <SelectItem key={unit.id} value={unit.id}>
-                    {unit.quantity}× {unit.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <SupplierOrderUnitSelect
+              value={filterOrderUnit === 'all' ? null : filterOrderUnit}
+              onChange={(v) => setFilterOrderUnit(v || 'all')}
+              isFilter={true}
+              filterLabel={t('settings.orderUnitsShort')}
+              className="w-[160px]"
+            />
             <Select value={filterSupplier} onValueChange={setFilterSupplier}>
               <SelectTrigger className="w-[140px]">
                 <span className="truncate">
