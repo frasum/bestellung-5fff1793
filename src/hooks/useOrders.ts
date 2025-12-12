@@ -55,6 +55,7 @@ interface CreateOrderInput {
   restaurantName: string;
   isTestOrder?: boolean;
   locationId?: string;
+  employeeId?: string | null;
 }
 
 // locationId: string = filter by specific location
@@ -122,6 +123,7 @@ export const useCreateOrder = () => {
           supplier_id: input.supplierId,
           user_id: user.id,
           location_id: input.locationId || null,
+          employee_id: input.employeeId || null,
           total_amount: totalAmount,
           delivery_address: input.deliveryAddress,
           notes: input.notes || null,

@@ -16,10 +16,11 @@ interface CartContextType {
   getTotal: () => number;
   getItemCount: () => number;
   getItemsBySupplier: () => Map<string, CartItem[]>;
-  loadFromDraft: (draftItems: CartItem[], deliveryDate?: string | null, timeWindow?: string | null, locationId?: string | null) => void;
+  loadFromDraft: (draftItems: CartItem[], deliveryDate?: string | null, timeWindow?: string | null, locationId?: string | null, employeeId?: string | null) => void;
   draftDeliveryDate: Date | null;
   draftTimeWindow: string | null;
   draftLocationId: string | null;
+  draftEmployeeId: string | null;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -37,6 +38,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   const [draftDeliveryDate, setDraftDeliveryDate] = useState<Date | null>(null);
   const [draftTimeWindow, setDraftTimeWindow] = useState<string | null>(null);
   const [draftLocationId, setDraftLocationId] = useState<string | null>(null);
+  const [draftEmployeeId, setDraftEmployeeId] = useState<string | null>(null);
 
   const addItem = useCallback((article: Article, quantity = 1) => {
     setItems((prev) => {
@@ -76,6 +78,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     setDraftDeliveryDate(null);
     setDraftTimeWindow(null);
     setDraftLocationId(null);
+    setDraftEmployeeId(null);
   }, []);
 
   const getTotal = useCallback(() => {
@@ -104,12 +107,14 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     draftItems: CartItem[],
     deliveryDate?: string | null,
     timeWindow?: string | null,
-    locationId?: string | null
+    locationId?: string | null,
+    employeeId?: string | null
   ) => {
     setItems(draftItems);
     setDraftDeliveryDate(deliveryDate ? new Date(deliveryDate) : null);
     setDraftTimeWindow(timeWindow || null);
     setDraftLocationId(locationId || null);
+    setDraftEmployeeId(employeeId || null);
     toast.success('Entwurf in den Warenkorb geladen');
   }, []);
 
@@ -128,6 +133,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         draftDeliveryDate,
         draftTimeWindow,
         draftLocationId,
+        draftEmployeeId,
       }}
     >
       {children}

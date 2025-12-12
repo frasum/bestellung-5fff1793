@@ -857,6 +857,9 @@
     "orderDeleted": "ยกเลิกคำสั่งซื้อแล้ว",
     "orderUpdated": "อัปเดตคำสั่งซื้อแล้ว",
     "confirmDelete": "ยืนยันยกเลิกคำสั่งซื้อ?",
-    "searchArticle": "ค้นหาสินค้า..."
+    "searchArticle": "ค้นหาสินค้า...",
+    "openOrders": "คำสั่งซื้อที่รอดำเนินการ",
+    "completedOrders": "คำสั่งซื้อที่เสร็จสิ้น",
+    "viewOnly": "ดูเท่านั้น"
   }
 }

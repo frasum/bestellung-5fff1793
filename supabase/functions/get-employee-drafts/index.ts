@@ -90,11 +90,44 @@ serve(async (req) => {
       );
     }
 
-    console.log(`Found ${drafts?.length || 0} drafts for employee ${employeeId}`);
+    // Fetch completed orders for this employee
+    const { data: orders, error: ordersError } = await supabase
+      .from('orders')
+      .select(`
+        id,
+        order_number,
+        status,
+        total_amount,
+        delivery_address,
+        notes,
+        created_at,
+        location_id,
+        location:locations(id, name, short_code),
+        supplier:suppliers(id, name),
+        items:order_items(
+          id,
+          article_name,
+          quantity,
+          unit,
+          unit_price,
+          total_price
+        )
+      `)
+      .eq('organization_id', tokenData.organization_id)
+      .eq('employee_id', employeeId)
+      .order('created_at', { ascending: false });
+
+    if (ordersError) {
+      console.error('Error fetching orders:', ordersError);
+      // Don't fail completely, just return empty orders
+    }
+
+    console.log(`Found ${drafts?.length || 0} drafts and ${orders?.length || 0} orders for employee ${employeeId}`);
 
     return new Response(
       JSON.stringify({ 
         drafts: drafts || [],
+        orders: orders || [],
         employee_name: tokenData.employee?.name || tokenData.employee_name
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

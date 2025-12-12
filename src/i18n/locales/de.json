@@ -876,6 +876,9 @@
     "orderDeleted": "Bestellung storniert",
     "orderUpdated": "Bestellung aktualisiert",
     "confirmDelete": "Bestellung wirklich stornieren?",
-    "searchArticle": "Artikel suchen..."
+    "searchArticle": "Artikel suchen...",
+    "openOrders": "Offene Bestellungen",
+    "completedOrders": "Abgeschlossene Bestellungen",
+    "viewOnly": "Nur Ansicht"
   }
 }
