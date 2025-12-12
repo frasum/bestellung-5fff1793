@@ -19,6 +19,7 @@ interface OrderItem {
   total_price: number;
   sku?: string;
   packaging_unit?: number;
+  order_unit?: string;
 }
 
 export interface EmailPreviewData {

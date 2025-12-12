@@ -107,33 +107,56 @@ serve(async (req) => {
     console.log("Order found:", order.order_number);
     console.log("Order items count:", order.order_items?.length || 0);
 
-    // Fetch reference prices from articles
+    // Fetch reference prices and order units from articles
     const articleIds = (order.order_items || []).map((item: any) => item.article_id).filter(Boolean);
-    let articleRefPrices = new Map<string, { reference_price: number | null; reference_unit: string | null }>();
+    let articleData = new Map<string, { reference_price: number | null; reference_unit: string | null; order_unit_id: string | null }>();
     
     if (articleIds.length > 0) {
       const { data: articles } = await supabase
         .from("articles")
-        .select("id, reference_price, reference_unit")
+        .select("id, reference_price, reference_unit, order_unit_id")
         .in("id", articleIds);
       
       articles?.forEach((a: any) => {
-        articleRefPrices.set(a.id, { reference_price: a.reference_price, reference_unit: a.reference_unit });
+        articleData.set(a.id, { 
+          reference_price: a.reference_price, 
+          reference_unit: a.reference_unit,
+          order_unit_id: a.order_unit_id
+        });
+      });
+    }
+
+    // Fetch order units to resolve order_unit_id to display format
+    const orderUnitIds = Array.from(articleData.values())
+      .map(a => a.order_unit_id)
+      .filter(Boolean) as string[];
+    
+    let orderUnitsMap = new Map<string, { name: string; quantity: number }>();
+    if (orderUnitIds.length > 0) {
+      const { data: orderUnits } = await supabase
+        .from("order_units")
+        .select("id, name, quantity")
+        .in("id", orderUnitIds);
+      
+      orderUnits?.forEach((ou: any) => {
+        orderUnitsMap.set(ou.id, { name: ou.name, quantity: ou.quantity });
       });
     }
 
     // Format the response - handle suppliers as relation
     const supplierData = order.suppliers as unknown as { name: string } | null;
     const itemsWithRefPrices = (order.order_items || []).map((item: any) => {
-      const refData = articleRefPrices.get(item.article_id) || { reference_price: null, reference_unit: null };
+      const artData = articleData.get(item.article_id) || { reference_price: null, reference_unit: null, order_unit_id: null };
+      const orderUnit = artData.order_unit_id ? orderUnitsMap.get(artData.order_unit_id) : null;
       return {
         article_name: item.article_name,
         quantity: item.quantity,
         unit: item.unit,
         unit_price: item.unit_price,
         total_price: item.total_price,
-        reference_price: refData.reference_price,
-        reference_unit: refData.reference_unit,
+        reference_price: artData.reference_price,
+        reference_unit: artData.reference_unit,
+        order_unit: orderUnit ? `${orderUnit.quantity}× ${orderUnit.name}` : null,
       };
     });
 
