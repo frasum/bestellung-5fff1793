@@ -6,12 +6,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { Building2, Users, Store, Ruler, Tag, FolderTree } from 'lucide-react';
+import { Building2, Users, Store, Ruler, Tag, FolderTree, Package } from 'lucide-react';
 import { useOrganization, useUpdateOrganization } from '@/hooks/useSettings';
 import { TeamTab } from './TeamTab';
 import { LocationsWithAddressesTab } from './LocationsWithAddressesTab';
 import { UnitsTab } from './UnitsTab';
 import { CategoriesTab } from './CategoriesTab';
+import { PackagingUnitsTab } from './PackagingUnitsTab';
 import { ArticleOrganizationTab } from './ArticleOrganizationTab';
 
 interface OrganizationTabProps {
@@ -141,6 +142,11 @@ export const OrganizationTab = ({ activeSubTab, onSubTabChange }: OrganizationTa
                   <span className="hidden sm:inline">{t('settings.categories')}</span>
                   <span className="sm:hidden">{t('settings.categoriesShort')}</span>
                 </TabsTrigger>
+                <TabsTrigger value="packaging-units" className="gap-1.5 text-xs sm:text-sm data-[state=active]:bg-background data-[state=active]:shadow-sm">
+                  <Package className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                  <span className="hidden sm:inline">{t('settings.packagingUnits')}</span>
+                  <span className="sm:hidden">{t('settings.packagingUnitsShort')}</span>
+                </TabsTrigger>
                 {advancedEnabled && (
                   <TabsTrigger value="article-organization" className="gap-1.5 text-xs sm:text-sm data-[state=active]:bg-background data-[state=active]:shadow-sm">
                     <FolderTree className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
@@ -157,6 +163,10 @@ export const OrganizationTab = ({ activeSubTab, onSubTabChange }: OrganizationTa
 
               <TabsContent value="categories" className="mt-4 animate-in fade-in-50 slide-in-from-right-2 duration-200">
                 <CategoriesTab />
+              </TabsContent>
+
+              <TabsContent value="packaging-units" className="mt-4 animate-in fade-in-50 slide-in-from-right-2 duration-200">
+                <PackagingUnitsTab />
               </TabsContent>
 
               {advancedEnabled && (
