@@ -194,7 +194,10 @@
     "addToCart": "Aggiungi al carrello",
     "selectSupplier": "Seleziona fornitore",
     "allSuppliers": "Tutti i fornitori",
-    "allCategories": "Tutte le categorie"
+    "allCategories": "Tutte le categorie",
+    "referencePrice": "Prezzo di riferimento",
+    "referenceUnit": "Unità di riferimento",
+    "referencePriceHint": "Per il confronto dei prezzi (es. €/kg)"
   },
   "cart": {
     "title": "Carrello",

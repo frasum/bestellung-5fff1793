@@ -194,7 +194,10 @@
     "addToCart": "Thêm vào giỏ",
     "selectSupplier": "Chọn nhà cung cấp",
     "allSuppliers": "Tất cả nhà cung cấp",
-    "allCategories": "Tất cả danh mục"
+    "allCategories": "Tất cả danh mục",
+    "referencePrice": "Giá tham chiếu",
+    "referenceUnit": "Đơn vị tham chiếu",
+    "referencePriceHint": "Để so sánh giá (ví dụ: ₫/kg)"
   },
   "cart": {
     "title": "Giỏ hàng",

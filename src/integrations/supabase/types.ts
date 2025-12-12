@@ -74,6 +74,8 @@ export type Database = {
           organization_id: string
           packaging_unit: number | null
           price: number
+          reference_price: number | null
+          reference_unit: string | null
           sku: string | null
           sort_order: number
           supplier_id: string
@@ -92,6 +94,8 @@ export type Database = {
           organization_id: string
           packaging_unit?: number | null
           price: number
+          reference_price?: number | null
+          reference_unit?: string | null
           sku?: string | null
           sort_order?: number
           supplier_id: string
@@ -110,6 +114,8 @@ export type Database = {
           organization_id?: string
           packaging_unit?: number | null
           price?: number
+          reference_price?: number | null
+          reference_unit?: string | null
           sku?: string | null
           sort_order?: number
           supplier_id?: string

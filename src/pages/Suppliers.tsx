@@ -330,6 +330,8 @@ const Suppliers = () => {
       price: Number(data.price),
       category: data.category || undefined,
       packaging_unit: data.packaging_unit ? Number(data.packaging_unit) : undefined,
+      reference_price: data.reference_price ? Number(data.reference_price.replace(',', '.')) : undefined,
+      reference_unit: data.reference_unit || undefined,
     };
     if (editingArticle) {
       await updateArticle.mutateAsync({ id: editingArticle.id, ...input });

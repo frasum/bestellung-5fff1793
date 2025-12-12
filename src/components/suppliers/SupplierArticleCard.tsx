@@ -19,6 +19,8 @@ interface Article {
   is_active: boolean;
   annual_order_value: number | null;
   packaging_unit: number | null;
+  reference_price: number | null;
+  reference_unit: string | null;
 }
 
 interface PendingChange {
@@ -47,6 +49,7 @@ interface SupplierArticleCardProps {
   priceInputs: Record<string, string>;
   annualOrderValueInputs: Record<string, string>;
   packagingUnitInputs: Record<string, string>;
+  referencePriceInputs: Record<string, string>;
   pendingChanges: PendingChange[];
   saving: string | null;
   units: Unit[];
@@ -56,6 +59,7 @@ interface SupplierArticleCardProps {
   onPriceChange: (articleId: string, value: string) => void;
   onAnnualOrderValueChange: (articleId: string, value: string) => void;
   onPackagingUnitChange: (articleId: string, value: string) => void;
+  onReferencePriceChange: (articleId: string, value: string) => void;
   onSave: (articleId: string) => void;
   onCreateUnit: (name: string) => Promise<void>;
   onCreateCategory: (name: string) => Promise<void>;
@@ -67,6 +71,7 @@ export function SupplierArticleCard({
   priceInputs,
   annualOrderValueInputs,
   packagingUnitInputs,
+  referencePriceInputs,
   pendingChanges,
   saving,
   units,
@@ -76,6 +81,7 @@ export function SupplierArticleCard({
   onPriceChange,
   onAnnualOrderValueChange,
   onPackagingUnitChange,
+  onReferencePriceChange,
   onSave,
   onCreateUnit,
   onCreateCategory,
@@ -92,7 +98,8 @@ export function SupplierArticleCard({
     const hasPriceChange = priceInputs[article.id] !== undefined;
     const hasAOVChange = annualOrderValueInputs[article.id] !== undefined;
     const hasPUChange = packagingUnitInputs[article.id] !== undefined;
-    return hasFieldChanges || hasPriceChange || hasAOVChange || hasPUChange;
+    const hasRefPriceChange = referencePriceInputs[article.id] !== undefined;
+    return hasFieldChanges || hasPriceChange || hasAOVChange || hasPUChange || hasRefPriceChange;
   };
 
   const getPendingChangesForArticle = () => {
@@ -280,6 +287,52 @@ export function SupplierArticleCard({
             />
           </div>
         </div>
+
+        {/* Reference Price */}
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="text-xs text-muted-foreground font-medium">Referenzpreis (€)</label>
+            <Input
+              type="text"
+              inputMode="decimal"
+              value={referencePriceInputs[article.id] !== undefined 
+                ? referencePriceInputs[article.id]
+                : getPendingChangeForField('reference_price')?.new_value?.replace('.', ',') 
+                  ?? (article.reference_price !== null ? String(article.reference_price).replace('.', ',') : '')}
+              onChange={(e) => onReferencePriceChange(article.id, e.target.value)}
+              className={cn("h-11 mt-1", hasPendingChange('reference_price') && "border-amber-500")}
+              placeholder="z.B. 10,00"
+            />
+            {getPendingChangeForField('reference_price') && (
+              <p className="text-xs mt-1">
+                <span className="text-amber-600">Ausstehend</span>
+                <span className="text-muted-foreground ml-1">
+                  (vorher: {getPendingChangeForField('reference_price')?.old_value?.replace('.', ',') || '—'} €)
+                </span>
+              </p>
+            )}
+          </div>
+          <div>
+            <label className="text-xs text-muted-foreground font-medium">Referenzeinheit</label>
+            <Input
+              value={(getDisplayValue('reference_unit') as string) || ''}
+              onChange={(e) => onFieldChange(article.id, 'reference_unit', e.target.value || null)}
+              className={cn("h-11 mt-1", hasPendingChange('reference_unit') && "border-amber-500")}
+              placeholder="z.B. kg, L"
+            />
+            {getPendingChangeForField('reference_unit') && (
+              <p className="text-xs mt-1">
+                <span className="text-amber-600">Ausstehend</span>
+                <span className="text-muted-foreground ml-1">
+                  (vorher: {getPendingChangeForField('reference_unit')?.old_value || '—'})
+                </span>
+              </p>
+            )}
+          </div>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          Referenzpreis für Preisvergleiche (z.B. €/kg)
+        </p>
       </div>
 
       {/* Save Button */}

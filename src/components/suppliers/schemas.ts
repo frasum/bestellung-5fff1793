@@ -22,6 +22,11 @@ export const articleSchema = z.object({
     (val) => !val || (!isNaN(Number(val)) && Number(val) > 0),
     'VPE muss eine positive Zahl sein'
   ),
+  reference_price: z.string().optional().refine(
+    (val) => !val || (!isNaN(Number(val.replace(',', '.'))) && Number(val.replace(',', '.')) > 0),
+    'Referenzpreis muss eine positive Zahl sein'
+  ),
+  reference_unit: z.string().optional(),
 });
 
 export type SupplierFormData = z.infer<typeof supplierSchema>;

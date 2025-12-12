@@ -194,7 +194,10 @@
     "addToCart": "เพิ่มลงตะกร้า",
     "selectSupplier": "เลือกซัพพลายเออร์",
     "allSuppliers": "ซัพพลายเออร์ทั้งหมด",
-    "allCategories": "หมวดหมู่ทั้งหมด"
+    "allCategories": "หมวดหมู่ทั้งหมด",
+    "referencePrice": "ราคาอ้างอิง",
+    "referenceUnit": "หน่วยอ้างอิง",
+    "referencePriceHint": "สำหรับเปรียบเทียบราคา (เช่น ฿/กก.)"
   },
   "cart": {
     "title": "ตะกร้าสินค้า",

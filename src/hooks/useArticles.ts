@@ -14,6 +14,8 @@ export interface Article {
   category: string | null;
   top_category: string | null;
   packaging_unit?: number | null;
+  reference_price?: number | null;
+  reference_unit?: string | null;
   is_active: boolean;
   created_at: string;
   updated_at: string;
@@ -33,6 +35,8 @@ export interface ArticleInput {
   price: number;
   category?: string;
   packaging_unit?: number;
+  reference_price?: number;
+  reference_unit?: string;
   is_active?: boolean;
 }
 
