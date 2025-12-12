@@ -257,6 +257,52 @@ export const useUpdateOrderStatus = () => {
   });
 };
 
+export const useUpdateOrderLocation = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ orderId, locationId }: { orderId: string; locationId: string | null }) => {
+      const { data, error } = await supabase
+        .from('orders')
+        .update({ location_id: locationId })
+        .eq('id', orderId)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onMutate: async ({ orderId, locationId }) => {
+      await queryClient.cancelQueries({ queryKey: ['orders'] });
+
+      const previousOrders = queryClient.getQueriesData<Order[]>({ queryKey: ['orders'] });
+
+      queryClient.setQueriesData<Order[]>({ queryKey: ['orders'] }, (old) => {
+        if (!old) return old;
+        return old.map((order) =>
+          order.id === orderId ? { ...order, location_id: locationId } : order
+        );
+      });
+
+      return { previousOrders };
+    },
+    onError: (error: Error, _variables, context) => {
+      if (context?.previousOrders) {
+        context.previousOrders.forEach(([queryKey, data]) => {
+          queryClient.setQueryData(queryKey, data);
+        });
+      }
+      toast.error(error.message);
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+    },
+    onSuccess: () => {
+      toast.success('Standort zugewiesen');
+    },
+  });
+};
+
 export const useDeleteTestOrders = () => {
   const queryClient = useQueryClient();
 

@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useLocationContext } from '@/contexts/LocationContext';
 import { useCart } from '@/contexts/CartContext';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
-import { useOrders, useUpdateOrderStatus, useDeleteTestOrders, Order } from '@/hooks/useOrders';
+import { useOrders, useUpdateOrderStatus, useDeleteTestOrders, useUpdateOrderLocation, Order } from '@/hooks/useOrders';
 import { useCartDrafts, useDeleteCartDraft, CartDraft } from '@/hooks/useCartDrafts';
 import { useLocations } from '@/hooks/useLocations';
 import { Badge } from '@/components/ui/badge';
@@ -93,6 +93,7 @@ const Orders = () => {
   // Orders state
   const { data: orders, isLoading } = useOrders(queryLocationId);
   const updateStatus = useUpdateOrderStatus();
+  const updateLocation = useUpdateOrderLocation();
   const deleteTestOrders = useDeleteTestOrders();
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [emailDialogOpen, setEmailDialogOpen] = useState(false);
@@ -856,6 +857,47 @@ const Orders = () => {
                                     {order.delivery_address.split('\n').join(' • ')}
                                   </p>
                                 </div>
+                                
+                                {/* Location Assignment */}
+                                {locations && locations.length > 1 && (
+                                  <div className="pt-3 border-t border-border">
+                                    <div className="flex items-center gap-3">
+                                      <span className="text-sm text-muted-foreground flex items-center gap-1.5">
+                                        <MapPin className="w-4 h-4" />
+                                        Standort:
+                                      </span>
+                                      <Select
+                                        value={order.location_id || 'none'}
+                                        onValueChange={(value) => {
+                                          updateLocation.mutate({ 
+                                            orderId: order.id, 
+                                            locationId: value === 'none' ? null : value 
+                                          });
+                                        }}
+                                      >
+                                        <SelectTrigger 
+                                          className={cn(
+                                            "w-40 h-9 bg-card",
+                                            !order.location_id && "border-warning text-warning"
+                                          )}
+                                          onClick={(e) => e.stopPropagation()}
+                                        >
+                                          <SelectValue placeholder="Standort wählen" />
+                                        </SelectTrigger>
+                                        <SelectContent className="bg-card border border-border z-50">
+                                          <SelectItem value="none" className="text-muted-foreground">
+                                            Kein Standort
+                                          </SelectItem>
+                                          {locations.map(loc => (
+                                            <SelectItem key={loc.id} value={loc.id}>
+                                              {loc.short_code || loc.name}
+                                            </SelectItem>
+                                          ))}
+                                        </SelectContent>
+                                      </Select>
+                                    </div>
+                                  </div>
+                                )}
                                 
                                 {/* Mobile Actions - Touch-friendly */}
                                 <div className="flex flex-col gap-3 pt-3 border-t border-border sm:hidden">
