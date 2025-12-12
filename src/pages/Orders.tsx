@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useLocationContext } from '@/contexts/LocationContext';
 import { useCart } from '@/contexts/CartContext';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
-import { useOrders, useUpdateOrderStatus, useDeleteTestOrders, useUpdateOrderLocation, Order } from '@/hooks/useOrders';
+import { useOrders, useUpdateOrderStatus, useDeleteTestOrders, useUpdateOrderLocation, useResendOrderEmail, Order } from '@/hooks/useOrders';
 import { useCartDrafts, useDeleteCartDraft, CartDraft } from '@/hooks/useCartDrafts';
 import { useLocations } from '@/hooks/useLocations';
 import { Badge } from '@/components/ui/badge';
@@ -36,7 +36,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { format, isAfter, isBefore, startOfDay, endOfDay, subDays, subMonths, Locale } from 'date-fns';
 import { de, enUS, fr } from 'date-fns/locale';
-import { Loader2, Package, CheckCircle2, Clock, Truck, XCircle, Eye, Search, X, ChevronDown, Trash2, FlaskConical, Filter, FileText, ShoppingCart, Calendar, Smartphone, MapPin, Bell, AlertTriangle } from 'lucide-react';
+import { Loader2, Package, CheckCircle2, Clock, Truck, XCircle, Eye, Search, X, ChevronDown, Trash2, FlaskConical, Filter, FileText, ShoppingCart, Calendar, Smartphone, MapPin, Bell, AlertTriangle, Send } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { SimpleOrderTab } from '@/components/settings/SimpleOrderTab';
 import {
@@ -95,6 +95,7 @@ const Orders = () => {
   const updateStatus = useUpdateOrderStatus();
   const updateLocation = useUpdateOrderLocation();
   const deleteTestOrders = useDeleteTestOrders();
+  const resendEmail = useResendOrderEmail();
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [emailDialogOpen, setEmailDialogOpen] = useState(false);
   const locale = localeMap[i18n.language] || de;
@@ -937,17 +938,37 @@ const Orders = () => {
                                 {/* Mobile Actions - Touch-friendly */}
                                 <div className="flex flex-col gap-3 pt-3 border-t border-border sm:hidden">
                                   {order.email_sent && (
-                                    <Button
-                                      variant="outline"
-                                      className="w-full h-11 justify-start"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleViewEmail(order);
-                                      }}
-                                    >
-                                      <Eye className="w-5 h-5 mr-2" />
-                                      {t('orders.viewEmail')}
-                                    </Button>
+                                    <div className="flex gap-2">
+                                      <Button
+                                        variant="outline"
+                                        className="flex-1 h-11 justify-center"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleViewEmail(order);
+                                        }}
+                                      >
+                                        <Eye className="w-5 h-5 mr-2" />
+                                        {t('orders.viewEmail')}
+                                      </Button>
+                                      <Button
+                                        variant="outline"
+                                        className="flex-1 h-11 justify-center"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          resendEmail.mutate(order);
+                                        }}
+                                        disabled={resendEmail.isPending}
+                                      >
+                                        {resendEmail.isPending ? (
+                                          <Loader2 className="w-5 h-5 animate-spin" />
+                                        ) : (
+                                          <>
+                                            <Send className="w-5 h-5 mr-2" />
+                                            Erneut senden
+                                          </>
+                                        )}
+                                      </Button>
+                                    </div>
                                   )}
                                   <div className="grid grid-cols-3 gap-2">
                                     <Button
@@ -993,17 +1014,37 @@ const Orders = () => {
                                 <div className="hidden sm:flex items-center justify-between pt-3 border-t border-border">
                                   <div className="flex items-center gap-2">
                                     {order.email_sent && (
-                                      <Button
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          handleViewEmail(order);
-                                        }}
-                                      >
-                                        <Eye className="w-4 h-4 mr-1" />
-                                        {t('orders.viewEmail')}
-                                      </Button>
+                                      <>
+                                        <Button
+                                          variant="outline"
+                                          size="sm"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleViewEmail(order);
+                                          }}
+                                        >
+                                          <Eye className="w-4 h-4 mr-1" />
+                                          {t('orders.viewEmail')}
+                                        </Button>
+                                        <Button
+                                          variant="outline"
+                                          size="sm"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            resendEmail.mutate(order);
+                                          }}
+                                          disabled={resendEmail.isPending}
+                                        >
+                                          {resendEmail.isPending ? (
+                                            <Loader2 className="w-4 h-4 animate-spin" />
+                                          ) : (
+                                            <>
+                                              <Send className="w-4 h-4 mr-1" />
+                                              Erneut senden
+                                            </>
+                                          )}
+                                        </Button>
+                                      </>
                                     )}
                                   </div>
                                   <Select
