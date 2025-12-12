@@ -35,7 +35,7 @@ serve(async (req) => {
         *,
         supplier:suppliers(id, name, email, organization_id),
         location:locations(id, name),
-        employee:employees(id, name)
+        employee:employees(id, name, auto_approve_orders, email)
       `)
       .eq('token', token)
       .eq('is_active', true)
@@ -216,6 +216,9 @@ serve(async (req) => {
 
     console.log(`Token verified. Multi-supplier: ${isMultiSupplier}, Suppliers: ${suppliers.length}, Articles: ${articles.length}, Locations: ${locations?.length || 0}, Employee: ${tokenData.employee_name || 'not set'}`);
 
+    // Get auto_approve status from employee
+    const autoApproveOrders = (tokenData.employee as any)?.auto_approve_orders || false;
+
     return new Response(
       JSON.stringify({
         success: true,
@@ -229,6 +232,7 @@ serve(async (req) => {
           is_multi_supplier: isMultiSupplier,
           employee_name: (tokenData.employee as any)?.name || tokenData.employee_name || null,
           has_employee: !!employeeId,
+          auto_approve_orders: autoApproveOrders,
         },
         suppliers: suppliers,
         articles: articles,

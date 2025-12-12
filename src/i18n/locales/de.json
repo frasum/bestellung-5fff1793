@@ -883,6 +883,13 @@
     "searchArticle": "Artikel suchen...",
     "openOrders": "Offene Bestellungen",
     "completedOrders": "Abgeschlossene Bestellungen",
-    "viewOnly": "Nur Ansicht"
+    "viewOnly": "Nur Ansicht",
+    "reviewOrder": "Zur Bestätigung",
+    "confirmOrder": "Bestellung bestätigen",
+    "orderSummary": "Bestellübersicht",
+    "totalAmount": "Gesamtsumme",
+    "backToArticles": "Zurück zu Artikeln",
+    "noDateSelected": "Kein Datum gewählt",
+    "submitting": "Wird gesendet..."
   }
 }

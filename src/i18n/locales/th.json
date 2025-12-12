@@ -864,6 +864,13 @@
     "searchArticle": "ค้นหาสินค้า...",
     "openOrders": "คำสั่งซื้อที่รอดำเนินการ",
     "completedOrders": "คำสั่งซื้อที่เสร็จสิ้น",
-    "viewOnly": "ดูเท่านั้น"
+    "viewOnly": "ดูเท่านั้น",
+    "reviewOrder": "ตรวจสอบคำสั่งซื้อ",
+    "confirmOrder": "ยืนยันคำสั่งซื้อ",
+    "orderSummary": "สรุปคำสั่งซื้อ",
+    "totalAmount": "ยอดรวม",
+    "backToArticles": "กลับไปที่สินค้า",
+    "noDateSelected": "ยังไม่ได้เลือกวันที่",
+    "submitting": "กำลังส่ง..."
   }
 }
