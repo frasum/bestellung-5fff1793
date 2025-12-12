@@ -381,6 +381,8 @@
     "supplierUpdatesDesc": "Über Änderungen bei Lieferanten informiert werden",
     "weeklyReport": "Wöchentliche Berichte",
     "weeklyReportDesc": "Wöchentliche Ausgabenübersichten erhalten",
+    "preorderReceived": "EasyOrder-Benachrichtigungen",
+    "preorderReceivedDesc": "E-Mail erhalten, wenn eine neue Vorbestellung eingegangen ist",
     "emailTemplates": "E-Mail-Vorlagen",
     "emailTemplateTitle": "Bestellungs-E-Mail-Vorlage",
     "emailTemplateDescription": "Passen Sie die E-Mail-Vorlage für Bestellungen an Lieferanten an",

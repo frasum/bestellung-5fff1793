@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
@@ -14,18 +14,20 @@ export const NotificationsTab = () => {
     email_order_status: true,
     email_weekly_report: false,
     email_supplier_updates: true,
+    email_preorder_received: true,
   });
 
-  useState(() => {
+  useEffect(() => {
     if (preferences) {
       setPrefs({
         email_order_confirmation: preferences.email_order_confirmation,
         email_order_status: preferences.email_order_status,
         email_weekly_report: preferences.email_weekly_report,
         email_supplier_updates: preferences.email_supplier_updates,
+        email_preorder_received: preferences.email_preorder_received ?? true,
       });
     }
-  });
+  }, [preferences]);
 
   const handleToggle = (key: keyof typeof prefs) => {
     const newPrefs = { ...prefs, [key]: !prefs[key] };
@@ -88,6 +90,17 @@ export const NotificationsTab = () => {
             <Switch
               checked={currentPrefs.email_supplier_updates}
               onCheckedChange={() => handleToggle('email_supplier_updates')}
+            />
+          </div>
+
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <Label>{t('settings.preorderReceived')}</Label>
+              <p className="text-sm text-muted-foreground">{t('settings.preorderReceivedDesc')}</p>
+            </div>
+            <Switch
+              checked={currentPrefs.email_preorder_received}
+              onCheckedChange={() => handleToggle('email_preorder_received')}
             />
           </div>
         </div>

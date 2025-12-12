@@ -375,6 +375,8 @@
     "supplierUpdatesDesc": "รับอีเมลสำหรับการเปลี่ยนแปลงสำคัญของซัพพลายเออร์",
     "weeklyReport": "รายงานรายสัปดาห์",
     "weeklyReportDesc": "สรุปค่าใช้จ่ายและคำสั่งซื้อรายสัปดาห์",
+    "preorderReceived": "การแจ้งเตือน EasyOrder",
+    "preorderReceivedDesc": "รับอีเมลเมื่อมีคำสั่งซื้อล่วงหน้าใหม่",
     "emailTemplates": "เทมเพลตอีเมล",
     "emailTemplateTitle": "เทมเพลตอีเมลคำสั่งซื้อ",
     "emailTemplateDescription": "ปรับแต่งเทมเพลตอีเมลสำหรับคำสั่งซื้อถึงซัพพลายเออร์",

@@ -147,6 +147,33 @@ serve(async (req) => {
 
     console.log(`EasyOrder submitted successfully as cart draft. Draft ID: ${draft.id}, Items: ${items.length}`);
 
+    // Get location name for notification
+    let locationName = 'Unbekannt';
+    if (location_id) {
+      const { data: locationData } = await supabase
+        .from('locations')
+        .select('name, short_code')
+        .eq('id', location_id)
+        .single();
+      if (locationData) {
+        locationName = locationData.short_code || locationData.name;
+      }
+    }
+
+    // Send notification to admins/managers (fire and forget, don't block response)
+    supabase.functions.invoke('notify-preorder-received', {
+      body: {
+        organization_id: tokenData.organization_id,
+        employee_name,
+        supplier_name: supplierName,
+        location_name: locationName,
+        items: items.map((item: OrderItem) => ({
+          article_name: item.article_name,
+          quantity: item.quantity,
+        })),
+      },
+    }).catch(err => console.error('Failed to send preorder notification:', err));
+
     return new Response(
       JSON.stringify({
         success: true,

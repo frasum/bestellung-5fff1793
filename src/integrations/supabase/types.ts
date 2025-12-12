@@ -717,6 +717,7 @@ export type Database = {
           created_at: string
           email_order_confirmation: boolean
           email_order_status: boolean
+          email_preorder_received: boolean
           email_supplier_updates: boolean
           email_weekly_report: boolean
           id: string
@@ -727,6 +728,7 @@ export type Database = {
           created_at?: string
           email_order_confirmation?: boolean
           email_order_status?: boolean
+          email_preorder_received?: boolean
           email_supplier_updates?: boolean
           email_weekly_report?: boolean
           id?: string
@@ -737,6 +739,7 @@ export type Database = {
           created_at?: string
           email_order_confirmation?: boolean
           email_order_status?: boolean
+          email_preorder_received?: boolean
           email_supplier_updates?: boolean
           email_weekly_report?: boolean
           id?: string
