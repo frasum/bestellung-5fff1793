@@ -291,6 +291,15 @@ const Suppliers = () => {
     setSelectedArticles(new Set());
   };
 
+  const handleBulkOrderUnitAssign = async (orderUnitId: string | null) => {
+    if (selectedArticles.size === 0) return;
+    await bulkUpdateArticles.mutateAsync({
+      ids: Array.from(selectedArticles),
+      updates: { order_unit_id: orderUnitId || undefined }
+    });
+    setSelectedArticles(new Set());
+  };
+
   const getCartQuantity = (articleId: string) => {
     const item = cartItems.find(i => i.article.id === articleId);
     return item?.quantity || 0;
@@ -669,7 +678,9 @@ const Suppliers = () => {
               <BulkCategoryToolbar
                 selectedCount={selectedArticles.size}
                 categories={allArticleCategories}
+                orderUnits={orderUnits || []}
                 onAssignCategory={handleBulkCategoryAssign}
+                onAssignOrderUnit={handleBulkOrderUnitAssign}
                 onClearSelection={() => setSelectedArticles(new Set())}
               />
             )}
