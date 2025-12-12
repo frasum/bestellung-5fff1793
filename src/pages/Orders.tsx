@@ -884,7 +884,11 @@ const Orders = () => {
                                         >
                                           <SelectValue placeholder="Standort wählen" />
                                         </SelectTrigger>
-                                        <SelectContent className="bg-card border border-border z-50">
+                                        <SelectContent 
+                                          className="bg-card border border-border z-50"
+                                          onClick={(e) => e.stopPropagation()}
+                                          onPointerDown={(e) => e.stopPropagation()}
+                                        >
                                           <SelectItem value="none" className="text-muted-foreground">
                                             Kein Standort
                                           </SelectItem>
