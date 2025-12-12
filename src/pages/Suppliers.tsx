@@ -646,20 +646,7 @@ const Suppliers = () => {
               </div>
             </div>
 
-            {/* Article Form Dialog */}
-            <ArticleFormDialog
-              open={isArticleDialogOpen}
-              onOpenChange={(open) => {
-                setIsArticleDialogOpen(open);
-                if (!open) setEditingArticle(null);
-              }}
-              editingArticle={editingArticle}
-              suppliers={suppliers || []}
-              categories={allArticleCategories}
-              units={existingUnits}
-              onSubmit={handleArticleSubmit}
-              isPending={createArticle.isPending || updateArticle.isPending}
-            />
+            {/* Article Form Dialog moved outside Tabs for global availability */}
 
             <CsvImportDialog
               open={isArticleImportOpen}
@@ -732,6 +719,21 @@ const Suppliers = () => {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Article Form Dialog - outside Tabs for global availability */}
+      <ArticleFormDialog
+        open={isArticleDialogOpen}
+        onOpenChange={(open) => {
+          setIsArticleDialogOpen(open);
+          if (!open) setEditingArticle(null);
+        }}
+        editingArticle={editingArticle}
+        suppliers={suppliers || []}
+        categories={allArticleCategories}
+        units={existingUnits}
+        onSubmit={handleArticleSubmit}
+        isPending={createArticle.isPending || updateArticle.isPending}
+      />
 
       {/* Delete Confirmation Dialogs */}
       <DeleteConfirmationDialogs
