@@ -91,8 +91,6 @@ const generateModernEmail = (data: OrderEmailRequest, template: EmailTemplate): 
         <span style="display: inline-block; background: #dbeafe; color: #1e40af; font-weight: 700; padding: 6px 14px; border-radius: 6px; font-size: 15px;">${item.quantity}</span>
         <div style="font-size: 12px; color: #6b7280; margin-top: 4px;">${displayUnit}${vpeDisplay}</div>
       </td>
-      <td style="padding: 16px 12px; border-bottom: 1px solid #e5e7eb; text-align: right; vertical-align: middle; color: #6b7280; font-size: 13px;">€${item.unit_price.toFixed(2)}</td>
-      <td style="padding: 16px 12px; border-bottom: 1px solid #e5e7eb; text-align: right; vertical-align: middle; font-weight: 700; color: #1f2937; font-size: 15px;">€${item.total_price.toFixed(2)}</td>
     </tr>
   `;
   }).join('');
@@ -121,14 +119,10 @@ const generateModernEmail = (data: OrderEmailRequest, template: EmailTemplate): 
           </div>
 
           <!-- Quick Summary -->
-          <div style="display: flex; margin-bottom: 28px; padding: 20px; background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border-radius: 12px; border: 1px solid #bae6fd;">
-            <div style="flex: 1; text-align: center; border-right: 1px solid #bae6fd;">
+          <div style="margin-bottom: 28px; padding: 20px; background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border-radius: 12px; border: 1px solid #bae6fd;">
+            <div style="text-align: center;">
               <div style="font-size: 28px; font-weight: 700; color: #0369a1;">${data.items.length}</div>
               <div style="font-size: 12px; color: #0c4a6e; text-transform: uppercase; letter-spacing: 0.5px;">Positionen</div>
-            </div>
-            <div style="flex: 1; text-align: center;">
-              <div style="font-size: 28px; font-weight: 700; color: #0369a1;">€${data.totalAmount.toFixed(2)}</div>
-              <div style="font-size: 12px; color: #0c4a6e; text-transform: uppercase; letter-spacing: 0.5px;">Gesamtsumme</div>
             </div>
           </div>
 
@@ -185,19 +179,11 @@ const generateModernEmail = (data: OrderEmailRequest, template: EmailTemplate): 
                 <tr style="background: #1e3a5f;">
                   <th style="padding: 14px 12px; text-align: left; font-weight: 600; color: white; font-size: 13px;">Artikel</th>
                   <th style="padding: 14px 12px; text-align: center; font-weight: 600; color: white; font-size: 13px;">Menge</th>
-                  <th style="padding: 14px 12px; text-align: right; font-weight: 600; color: white; font-size: 13px;">Stückpreis</th>
-                  <th style="padding: 14px 12px; text-align: right; font-weight: 600; color: white; font-size: 13px;">Gesamt</th>
                 </tr>
               </thead>
               <tbody>
                 ${itemRows}
               </tbody>
-              <tfoot>
-                <tr style="background: linear-gradient(135deg, #059669 0%, #10b981 100%);">
-                  <td colspan="3" style="padding: 18px 12px; color: white; font-weight: 700; font-size: 16px;">Gesamtbetrag</td>
-                  <td style="padding: 18px 12px; text-align: right; color: white; font-weight: 800; font-size: 20px;">€${data.totalAmount.toFixed(2)}</td>
-                </tr>
-              </tfoot>
             </table>
           </div>
 
@@ -231,8 +217,6 @@ const generateClassicEmail = (data: OrderEmailRequest, template: EmailTemplate):
     <tr>
       <td style="padding: 12px 8px; border: 1px solid #d1d5db; vertical-align: top;">${item.article_name}${skuDisplay}</td>
       <td style="padding: 12px 8px; border: 1px solid #d1d5db; text-align: center;">${item.quantity} ${displayUnit}${vpeDisplay}</td>
-      <td style="padding: 12px 8px; border: 1px solid #d1d5db; text-align: right;">€${item.unit_price.toFixed(2)}</td>
-      <td style="padding: 12px 8px; border: 1px solid #d1d5db; text-align: right; font-weight: 600;">€${item.total_price.toFixed(2)}</td>
     </tr>
   `;
   }).join('');
@@ -298,19 +282,11 @@ const generateClassicEmail = (data: OrderEmailRequest, template: EmailTemplate):
               <tr style="background: #374151;">
                 <th style="padding: 12px 8px; text-align: left; color: white; font-size: 13px; border: 1px solid #374151;">Artikel</th>
                 <th style="padding: 12px 8px; text-align: center; color: white; font-size: 13px; border: 1px solid #374151;">Menge</th>
-                <th style="padding: 12px 8px; text-align: right; color: white; font-size: 13px; border: 1px solid #374151;">Einzelpreis</th>
-                <th style="padding: 12px 8px; text-align: right; color: white; font-size: 13px; border: 1px solid #374151;">Gesamt</th>
               </tr>
             </thead>
             <tbody>
               ${itemRows}
             </tbody>
-            <tfoot>
-              <tr style="background: #f3f4f6;">
-                <td colspan="3" style="padding: 14px 8px; border: 1px solid #d1d5db; font-weight: 700; font-size: 15px;">Gesamtbetrag</td>
-                <td style="padding: 14px 8px; border: 1px solid #d1d5db; text-align: right; font-weight: 700; font-size: 16px;">€${data.totalAmount.toFixed(2)}</td>
-              </tr>
-            </tfoot>
           </table>
 
           <!-- Closing & Signature -->
@@ -338,7 +314,7 @@ const generateMinimalistEmail = (data: OrderEmailRequest, template: EmailTemplat
     const vpeDisplay = item.packaging_unit && item.packaging_unit > 1 ? ` (${item.packaging_unit}er)` : '';
     // order_unit replaces unit when available
     const displayUnit = item.order_unit || item.unit;
-    return `<li style="padding: 8px 0; border-bottom: 1px solid #f3f4f6;">${item.quantity}× ${item.article_name}${skuDisplay} (${displayUnit}${vpeDisplay}) — €${item.total_price.toFixed(2)}</li>`;
+    return `<li style="padding: 8px 0; border-bottom: 1px solid #f3f4f6;">${item.quantity}× ${item.article_name}${skuDisplay} (${displayUnit}${vpeDisplay})</li>`;
   }).join('');
 
   const signature = generateSignature(template, data.restaurantName).replace(/\n/g, '<br>');
@@ -380,12 +356,6 @@ const generateMinimalistEmail = (data: OrderEmailRequest, template: EmailTemplat
           ${itemList}
         </ul>
 
-        <div style="padding: 16px 0; border-top: 2px solid #111827;">
-          <p style="margin: 0; font-size: 16px; font-weight: 600; color: #111827;">
-            Gesamt: €${data.totalAmount.toFixed(2)}
-          </p>
-        </div>
-
         <div style="margin-top: 32px;">
           <p style="margin: 0 0 16px 0; font-size: 15px; color: #374151;">${template.closing}</p>
           <p style="margin: 0; font-size: 15px; color: #374151;">${signature}</p>
@@ -423,7 +393,8 @@ const generatePlainText = (data: OrderEmailRequest, template: EmailTemplate): st
     const skuPart = item.sku ? ` (SKU: ${item.sku})` : '';
     // order_unit replaces unit when available
     const displayUnit = item.order_unit || item.unit;
-    return `- ${item.article_name}${skuPart}: ${item.quantity} ${displayUnit} x €${item.unit_price.toFixed(2)} = €${item.total_price.toFixed(2)}`;
+    const vpePart = item.packaging_unit && item.packaging_unit > 1 ? ` (${item.packaging_unit}er)` : '';
+    return `- ${item.article_name}${skuPart}: ${item.quantity} ${displayUnit}${vpePart}`;
   }).join('\n');
 
   return `
@@ -446,8 +417,6 @@ ${data.notes ? `HINWEISE\n--------\n${data.notes}\n` : ''}
 BESTELLTE ARTIKEL
 -----------------
 ${itemLines}
-
-GESAMT: €${data.totalAmount.toFixed(2)}
 
 ${template.closing}
 
