@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
-import { MapPin, ChevronDown } from 'lucide-react';
+import { MapPin, ChevronDown, ClipboardList } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -23,6 +23,9 @@ interface SimpleOrderHeaderProps {
   suppliers?: Supplier[];
   onSupplierChange?: (supplierId: string) => void;
   getArticleCount?: (supplierId: string) => number;
+  // Order history access
+  hasEmployee?: boolean;
+  onViewOrders?: () => void;
 }
 
 const languages = [
@@ -43,11 +46,14 @@ export const SimpleOrderHeader = ({
   suppliers = [],
   onSupplierChange,
   getArticleCount,
+  hasEmployee = false,
+  onViewOrders,
 }: SimpleOrderHeaderProps) => {
   const { i18n, t } = useTranslation();
   const currentLanguage = languages.find(l => l.code === i18n.language) || languages[1];
 
   const showSupplierDropdown = isMultiSupplier && selectedSupplierId && suppliers.length > 1 && onSupplierChange;
+  const showOrderHistory = hasEmployee && onViewOrders;
 
   return (
     <div className="sticky top-0 z-10 bg-primary text-primary-foreground shadow-lg">
@@ -90,8 +96,19 @@ export const SimpleOrderHeader = ({
             )}
           </div>
 
-          {/* Right: Location badge + Language dropdown */}
+          {/* Right: Order history + Location badge + Language dropdown */}
           <div className="flex items-center gap-1 flex-shrink-0">
+            {showOrderHistory && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={onViewOrders}
+                className="h-11 w-11 text-primary-foreground hover:bg-primary-foreground/20 touch-manipulation"
+                title={t('simpleOrder.myOrders', 'Meine Bestellungen')}
+              >
+                <ClipboardList className="h-5 w-5" />
+              </Button>
+            )}
             {selectedLocationId && (
               <span className="text-sm bg-primary-foreground/20 px-3 py-1.5 rounded-full flex items-center gap-1.5">
                 <MapPin className="h-4 w-4" />

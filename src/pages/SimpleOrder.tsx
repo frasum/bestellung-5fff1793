@@ -785,6 +785,11 @@ const SimpleOrder = () => {
         suppliers={suppliers}
         onSupplierChange={handleSupplierSelect}
         getArticleCount={getSupplierArticleCount}
+        hasEmployee={!!tokenData?.has_employee}
+        onViewOrders={() => {
+          fetchDrafts();
+          setStatus('viewing-history');
+        }}
       />
 
       {/* Supplier Selection for Multi-Supplier Tokens */}
