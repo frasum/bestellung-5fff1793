@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { SupplierOrderUnitSelect } from '@/components/suppliers/SupplierOrderUnitSelect';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
@@ -495,26 +496,11 @@ export const ArticleOrganizationTab = () => {
                         </Select>
                       </TableCell>
                       <TableCell>
-                        <Select
-                          value={article.order_unit_id || 'none'}
-                          onValueChange={(v) => handleInlineUpdate(article.id, 'order_unit_id', v === 'none' ? null : v)}
-                        >
-                          <SelectTrigger className="h-8 w-[180px]">
-                            <SelectValue>
-                              {article.order_unit_id ? formatOrderUnit(article.order_unit_id) : <span className="text-muted-foreground">—</span>}
-                            </SelectValue>
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="none">
-                              <span className="text-muted-foreground">—</span>
-                            </SelectItem>
-                            {orderUnits.map(unit => (
-                              <SelectItem key={unit.id} value={unit.id}>
-                                {unit.quantity}× {unit.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        <SupplierOrderUnitSelect
+                          value={article.order_unit_id}
+                          onChange={(v) => handleInlineUpdate(article.id, 'order_unit_id', v)}
+                          className="h-8 w-[180px]"
+                        />
                       </TableCell>
                     </TableRow>
                   ))
