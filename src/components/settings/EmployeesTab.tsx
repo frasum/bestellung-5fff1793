@@ -97,6 +97,7 @@ export function EmployeesTab() {
     notes: '',
     language: 'th',
     autoApprove: false,
+    pinCode: '',
   });
   
   // New structure: location -> suppliers mapping
@@ -212,7 +213,7 @@ export function EmployeesTab() {
 
   const openCreateDialog = () => {
     setEditingEmployee(null);
-    setFormData({ name: '', phone: '', email: '', notes: '', language: 'th', autoApprove: false });
+    setFormData({ name: '', phone: '', email: '', notes: '', language: 'th', autoApprove: false, pinCode: '' });
     initializeLocationAssignments();
     setIsDialogOpen(true);
   };
@@ -228,6 +229,7 @@ export function EmployeesTab() {
       notes: employee.notes || '',
       language: existingToken?.language || 'th',
       autoApprove: employee.auto_approve_orders || false,
+      pinCode: employee.pin_code || '',
     });
     initializeLocationAssignments(employee.id);
     setIsDialogOpen(true);
@@ -288,6 +290,7 @@ export function EmployeesTab() {
         email: formData.email || null,
         notes: formData.notes || null,
         auto_approve_orders: formData.autoApprove,
+        pin_code: formData.autoApprove && formData.pinCode ? formData.pinCode : null,
       });
       // Update locations
       await updateEmployeeLocations.mutateAsync({
@@ -873,9 +876,65 @@ export function EmployeesTab() {
                 <Switch
                   id="auto-approve"
                   checked={formData.autoApprove}
-                  onCheckedChange={(checked) => setFormData({ ...formData, autoApprove: checked })}
+                  onCheckedChange={(checked) => setFormData({ ...formData, autoApprove: checked, pinCode: checked ? formData.pinCode : '' })}
                 />
               </div>
+
+              {/* PIN Code - only visible when Auto-Approve is enabled */}
+              {formData.autoApprove && (
+                <div className="p-3 border rounded-lg bg-muted/30 space-y-3">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="pin-code" className="text-sm font-medium">
+                      PIN-Code (optional)
+                    </Label>
+                    <p className="text-xs text-muted-foreground">
+                      4-stelliger Code, den der Mitarbeiter eingeben muss, bevor er bestellen kann
+                    </p>
+                  </div>
+                  <div className="flex gap-2 items-center">
+                    <Input
+                      id="pin-code"
+                      type="text"
+                      inputMode="numeric"
+                      maxLength={4}
+                      pattern="[0-9]*"
+                      value={formData.pinCode}
+                      onChange={(e) => {
+                        const value = e.target.value.replace(/\D/g, '').slice(0, 4);
+                        setFormData({ ...formData, pinCode: value });
+                      }}
+                      placeholder="z.B. 1234"
+                      className="w-32 font-mono text-center tracking-widest"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        const randomPin = String(Math.floor(1000 + Math.random() * 9000));
+                        setFormData({ ...formData, pinCode: randomPin });
+                      }}
+                    >
+                      Generieren
+                    </Button>
+                    {formData.pinCode && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setFormData({ ...formData, pinCode: '' })}
+                      >
+                        Entfernen
+                      </Button>
+                    )}
+                  </div>
+                  {formData.pinCode && formData.pinCode.length !== 4 && (
+                    <p className="text-xs text-destructive">
+                      PIN muss genau 4 Ziffern haben
+                    </p>
+                  )}
+                </div>
+              )}
 
               <div>
                 <Label htmlFor="notes">Notizen</Label>

@@ -890,6 +890,14 @@
     "totalAmount": "Gesamtsumme",
     "backToArticles": "Zurück zu Artikeln",
     "noDateSelected": "Kein Datum gewählt",
-    "submitting": "Wird gesendet..."
+    "submitting": "Wird gesendet...",
+    "enterPin": "PIN eingeben",
+    "enterPinDescription": "Bitte gib deinen 4-stelligen PIN ein",
+    "confirmPin": "PIN bestätigen",
+    "wrongPin": "Falscher PIN",
+    "tooManyAttempts": "Zu viele Fehlversuche. Bitte warten.",
+    "lockedFor": "Gesperrt für",
+    "pinIncomplete": "Bitte alle 4 Ziffern eingeben",
+    "pinVerifyError": "Fehler bei der Überprüfung"
   }
 }
