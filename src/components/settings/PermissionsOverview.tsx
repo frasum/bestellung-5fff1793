@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { Check, X, Shield, ChevronDown } from 'lucide-react';
+import { Check, X, Shield, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 type Role = 'admin' | 'manager' | 'purchaser' | 'viewer';
@@ -107,9 +107,9 @@ export const PermissionsOverview = () => {
             <p className="text-sm text-muted-foreground">{t('settings.permissions.description')}</p>
           </div>
         </div>
-        <ChevronDown className={cn(
+        <ChevronRight className={cn(
           "h-5 w-5 text-muted-foreground transition-transform duration-200",
-          isOpen && "rotate-180"
+          isOpen && "rotate-90"
         )} />
       </CollapsibleTrigger>
       <CollapsibleContent>

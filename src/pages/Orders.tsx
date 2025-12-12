@@ -36,7 +36,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { format, isAfter, isBefore, startOfDay, endOfDay, subDays, subMonths, Locale } from 'date-fns';
 import { de, enUS, fr } from 'date-fns/locale';
-import { Loader2, Package, CheckCircle2, Clock, Truck, XCircle, Eye, Search, X, ChevronDown, Trash2, FlaskConical, Filter, FileText, ShoppingCart, Calendar, Smartphone, MapPin, Bell, AlertTriangle, Send } from 'lucide-react';
+import { Loader2, Package, CheckCircle2, Clock, Truck, XCircle, Eye, Search, X, ChevronRight, Trash2, FlaskConical, Filter, FileText, ShoppingCart, Calendar, Smartphone, MapPin, Bell, AlertTriangle, Send } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { SimpleOrderTab } from '@/components/settings/SimpleOrderTab';
 import {
@@ -427,7 +427,7 @@ const Orders = () => {
                     <CollapsibleTrigger asChild>
                       <button className="w-full flex items-center justify-between p-2.5 bg-muted/50 hover:bg-muted rounded-lg transition-colors text-left">
                         <div className="flex items-center gap-2 min-w-0 flex-1">
-                          <ChevronDown className={cn("w-4 h-4 shrink-0 transition-transform text-muted-foreground", isExpanded && "rotate-180")} />
+                          <ChevronRight className={cn("w-4 h-4 shrink-0 transition-transform text-muted-foreground", isExpanded && "rotate-90")} />
                           <div className="min-w-0 flex-1">
                             <div className="flex items-center gap-2 flex-wrap">
                               <span className="text-sm font-medium text-foreground truncate">
@@ -761,9 +761,9 @@ const Orders = () => {
                   <CollapsibleTrigger className="w-full">
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 bg-card border border-border rounded-lg hover:bg-muted/50 transition-colors min-h-[56px]">
                       <div className="flex items-center gap-3">
-                        <ChevronDown className={cn(
+                        <ChevronRight className={cn(
                           "w-5 h-5 text-muted-foreground transition-transform duration-200 shrink-0",
-                          isOpen && "rotate-180"
+                          isOpen && "rotate-90"
                         )} />
                         <span className="font-semibold text-foreground text-left">{supplierName}</span>
                         <Badge variant="secondary" className="shrink-0">{supplierOrders.length}</Badge>
@@ -792,9 +792,9 @@ const Orders = () => {
                               <div className="flex flex-col gap-2 p-3 bg-card border border-border rounded-lg min-h-[64px]">
                                 <div className="flex items-center justify-between">
                                   <div className="flex items-center gap-2">
-                                    <ChevronDown className={cn(
+                                    <ChevronRight className={cn(
                                       "w-4 h-4 text-muted-foreground transition-transform duration-200 shrink-0",
-                                      isOrderOpen && "rotate-180"
+                                      isOrderOpen && "rotate-90"
                                     )} />
                                     <StatusIcon className="w-4 h-4 text-primary shrink-0" />
                                     <span className="font-medium text-foreground text-sm truncate max-w-[140px]">{order.order_number}</span>
@@ -831,9 +831,9 @@ const Orders = () => {
                             <CollapsibleTrigger className="w-full hidden sm:block">
                               <div className="flex items-center justify-between p-3 bg-card border border-border rounded-lg">
                                 <div className="flex items-center gap-3">
-                                  <ChevronDown className={cn(
+                                  <ChevronRight className={cn(
                                     "w-4 h-4 text-muted-foreground transition-transform duration-200",
-                                    isOrderOpen && "rotate-180"
+                                    isOrderOpen && "rotate-90"
                                   )} />
                                   <StatusIcon className="w-4 h-4 text-primary" />
                                   <span className="font-medium text-foreground">{order.order_number}</span>
