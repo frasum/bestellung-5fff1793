@@ -116,13 +116,6 @@ export const ArticleFormDialog = ({
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="article-price">Preis (€) *</Label>
-              <Input id="article-price" type="number" step="0.01" {...form.register('price')} placeholder="4.50" />
-              {form.formState.errors.price && (
-                <p className="text-sm text-destructive">{form.formState.errors.price.message}</p>
-              )}
-            </div>
-            <div className="space-y-2">
               <Label>Einheit *</Label>
               <Controller
                 name="unit"
@@ -169,6 +162,13 @@ export const ArticleFormDialog = ({
                   </Popover>
                 )}
               />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="article-price">Preis (€) *</Label>
+              <Input id="article-price" type="number" step="0.01" {...form.register('price')} placeholder="4.50" />
+              {form.formState.errors.price && (
+                <p className="text-sm text-destructive">{form.formState.errors.price.message}</p>
+              )}
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
