@@ -405,51 +405,78 @@ const Orders = () => {
           <h2 className="text-base font-semibold text-foreground mb-3">{t('dashboard.recentOrders')}</h2>
           {orders && orders.length > 0 ? (
             <div className="space-y-2">
-              {orders.slice(0, 5).map((order) => (
-                <button
-                  key={order.id}
-                  onClick={() => {
-                    const supplierName = order.suppliers?.name || t('common.unknown');
-                    setOpenSuppliers(prev => new Set([...prev, supplierName]));
-                    setOpenOrders(prev => new Set([...prev, order.id]));
-                    setTimeout(() => {
-                      document.getElementById(`order-${order.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    }, 100);
-                  }}
-                  className="w-full flex items-center justify-between p-2.5 bg-muted/50 hover:bg-muted rounded-lg transition-colors text-left"
-                >
-                  <div className="flex items-center gap-3 min-w-0 flex-1">
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-sm font-medium text-foreground truncate">
-                          {order.suppliers?.name || t('common.unknown')}
+              {orders.slice(0, 5).map((order) => {
+                const isExpanded = openOrders.has(order.id);
+                return (
+                  <Collapsible
+                    key={order.id}
+                    open={isExpanded}
+                    onOpenChange={() => {
+                      setOpenOrders(prev => {
+                        const next = new Set(prev);
+                        if (next.has(order.id)) {
+                          next.delete(order.id);
+                        } else {
+                          next.add(order.id);
+                        }
+                        return next;
+                      });
+                    }}
+                  >
+                    <CollapsibleTrigger asChild>
+                      <button className="w-full flex items-center justify-between p-2.5 bg-muted/50 hover:bg-muted rounded-lg transition-colors text-left">
+                        <div className="flex items-center gap-2 min-w-0 flex-1">
+                          <ChevronDown className={cn("w-4 h-4 shrink-0 transition-transform text-muted-foreground", isExpanded && "rotate-180")} />
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="text-sm font-medium text-foreground truncate">
+                                {order.suppliers?.name || t('common.unknown')}
+                              </span>
+                              <Badge 
+                                variant="outline" 
+                                className={`text-[10px] px-1.5 py-0 ${statusColors[order.status] || ''}`}
+                              >
+                                {t(`orders.status.${order.status}`)}
+                              </Badge>
+                              {order.location_id && locations && (() => {
+                                const loc = locations.find(l => l.id === order.location_id);
+                                return loc ? (
+                                  <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+                                    <MapPin className="w-3 h-3 mr-0.5" />
+                                    {loc.short_code || loc.name}
+                                  </Badge>
+                                ) : null;
+                              })()}
+                            </div>
+                            <span className="text-xs text-muted-foreground">
+                              {format(new Date(order.created_at), 'dd.MM.yy', { locale })}
+                            </span>
+                          </div>
+                        </div>
+                        <span className="text-sm font-medium text-foreground whitespace-nowrap ml-2">
+                          €{Number(order.total_amount).toLocaleString(i18n.language)}
                         </span>
-                        <Badge 
-                          variant="outline" 
-                          className={`text-[10px] px-1.5 py-0 ${statusColors[order.status] || ''}`}
-                        >
-                          {t(`orders.status.${order.status}`)}
-                        </Badge>
-                        {order.location_id && locations && (() => {
-                          const loc = locations.find(l => l.id === order.location_id);
-                          return loc ? (
-                            <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
-                              <MapPin className="w-3 h-3 mr-0.5" />
-                              {loc.short_code || loc.name}
-                            </Badge>
-                          ) : null;
-                        })()}
+                      </button>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                      <div className="mt-1 ml-6 p-3 bg-muted/30 rounded-lg space-y-1.5">
+                        {order.order_items && order.order_items.length > 0 ? (
+                          order.order_items.map((item) => (
+                            <div key={item.id} className="flex justify-between text-sm gap-2">
+                              <span className="text-foreground truncate">{item.article_name}</span>
+                              <span className="text-muted-foreground whitespace-nowrap">
+                                {item.quantity} {item.unit} • €{Number(item.total_price).toFixed(2)}
+                              </span>
+                            </div>
+                          ))
+                        ) : (
+                          <span className="text-sm text-muted-foreground">{t('orders.noItems', 'Keine Artikel')}</span>
+                        )}
                       </div>
-                      <span className="text-xs text-muted-foreground">
-                        {format(new Date(order.created_at), 'dd.MM.yy', { locale })}
-                      </span>
-                    </div>
-                  </div>
-                  <span className="text-sm font-medium text-foreground whitespace-nowrap ml-2">
-                    €{Number(order.total_amount).toLocaleString(i18n.language)}
-                  </span>
-                </button>
-              ))}
+                    </CollapsibleContent>
+                  </Collapsible>
+                );
+              })}
             </div>
           ) : (
             <p className="text-sm text-muted-foreground py-4 text-center">
