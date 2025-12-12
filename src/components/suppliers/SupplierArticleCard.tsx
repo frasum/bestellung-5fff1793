@@ -6,6 +6,7 @@ import { Save, Loader2, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { SupplierUnitSelect } from './SupplierUnitSelect';
 import { SupplierCategorySelect } from './SupplierCategorySelect';
+import { SupplierPackagingUnitSelect } from './SupplierPackagingUnitSelect';
 
 interface Article {
   id: string;
@@ -196,25 +197,18 @@ export function SupplierArticleCard({
           </div>
           <div>
             <label className="text-xs text-muted-foreground font-medium">VPE</label>
-            <Input
-              type="text"
-              inputMode="numeric"
-              value={packagingUnitInputs[article.id] !== undefined 
-                ? packagingUnitInputs[article.id]
-                : getPendingChangeForField('packaging_unit')?.new_value 
-                  ?? (article.packaging_unit !== null ? String(article.packaging_unit) : '')}
-              onChange={(e) => onPackagingUnitChange(article.id, e.target.value)}
-              className={cn("h-11 mt-1", hasPendingChange('packaging_unit') && "border-amber-500")}
-              placeholder="-"
-            />
-            {getPendingChangeForField('packaging_unit') && (
-              <p className="text-xs mt-1">
-                <span className="text-amber-600">Ausstehend</span>
-                <span className="text-muted-foreground ml-1">
-                  (vorher: {getPendingChangeForField('packaging_unit')?.old_value || '—'})
-                </span>
-              </p>
-            )}
+            <div className="mt-1">
+              <SupplierPackagingUnitSelect
+                value={packagingUnitInputs[article.id] !== undefined 
+                  ? packagingUnitInputs[article.id]
+                  : getPendingChangeForField('packaging_unit')?.new_value 
+                    ?? (article.packaging_unit !== null ? String(article.packaging_unit) : '')}
+                onChange={(value) => onPackagingUnitChange(article.id, value)}
+                hasPending={hasPendingChange('packaging_unit')}
+                pendingInfo={getPendingChangeForField('packaging_unit')}
+                className="h-11"
+              />
+            </div>
           </div>
         </div>
 
