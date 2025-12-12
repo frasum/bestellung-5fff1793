@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon, MapPin, Clock, ChevronRight, AlertCircle } from 'lucide-react';
+import { CalendarIcon, MapPin, Clock, ChevronRight, Check } from 'lucide-react';
 import { format } from 'date-fns';
 import { de, enUS, fr, it, th, vi } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
@@ -45,6 +45,77 @@ const getDateLocale = (lang: string) => {
   }
 };
 
+type StepStatus = 'pending' | 'active' | 'completed';
+
+interface StepIndicatorProps {
+  number: number;
+  status: StepStatus;
+  title: string;
+  completedValue?: string;
+  icon: React.ReactNode;
+}
+
+const StepIndicator = ({ number, status, title, completedValue, icon }: StepIndicatorProps) => {
+  return (
+    <div className="flex items-center gap-3 mb-3">
+      {/* Step number badge */}
+      <div
+        className={cn(
+          "w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-300",
+          status === 'completed' && "bg-green-500 text-white",
+          status === 'active' && "bg-primary text-primary-foreground ring-2 ring-primary ring-offset-2",
+          status === 'pending' && "bg-muted text-muted-foreground"
+        )}
+      >
+        {status === 'completed' ? (
+          <Check className="h-4 w-4" />
+        ) : (
+          number
+        )}
+      </div>
+      
+      {/* Title and completed value */}
+      <div className="flex items-center gap-2 flex-1">
+        <span className={cn(
+          "flex items-center gap-2 font-semibold transition-colors duration-300",
+          status === 'completed' && "text-green-600 dark:text-green-400",
+          status === 'active' && "text-foreground",
+          status === 'pending' && "text-muted-foreground"
+        )}>
+          {icon}
+          {title}
+        </span>
+        
+        {status === 'completed' && completedValue && (
+          <span className="text-sm font-medium text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-900/30 px-2 py-0.5 rounded-full">
+            {completedValue}
+          </span>
+        )}
+      </div>
+    </div>
+  );
+};
+
+interface StepSectionProps {
+  status: StepStatus;
+  children: React.ReactNode;
+}
+
+const StepSection = ({ status, children }: StepSectionProps) => {
+  return (
+    <div
+      className={cn(
+        "transition-all duration-300 rounded-xl p-4 border",
+        status === 'completed' && "bg-green-50/50 dark:bg-green-900/10 border-green-200 dark:border-green-800",
+        status === 'active' && "bg-card border-primary/30 ring-2 ring-primary/20",
+        status === 'pending' && "bg-muted/30 border-muted opacity-50 pointer-events-none"
+      )}
+    >
+      {children}
+    </div>
+  );
+};
+
 export const LocationDateStep = ({
   locations,
   selectedLocationId,
@@ -61,8 +132,41 @@ export const LocationDateStep = ({
   const { mediumTap, lightTap } = useHapticFeedback();
   const dateLocale = getDateLocale(i18n.language);
 
-  const canContinue = selectedLocationId && deliveryDate;
+  // Step completion logic
   const showLocationSelection = locations.length > 1 && !isLocationLocked;
+  const step1Complete = !!selectedLocationId || locations.length === 1 || isLocationLocked;
+  const step2Complete = !!deliveryDate;
+  const step3Complete = !!timeWindow;
+  const canContinue = step1Complete && step2Complete;
+
+  // Step statuses
+  const getStep1Status = (): StepStatus => {
+    if (step1Complete) return 'completed';
+    return 'active';
+  };
+
+  const getStep2Status = (): StepStatus => {
+    if (step2Complete) return 'completed';
+    if (step1Complete) return 'active';
+    return 'pending';
+  };
+
+  const getStep3Status = (): StepStatus => {
+    if (step3Complete && step2Complete) return 'completed';
+    if (step1Complete && step2Complete) return 'active';
+    return 'pending';
+  };
+
+  const step1Status = getStep1Status();
+  const step2Status = getStep2Status();
+  const step3Status = getStep3Status();
+
+  // Get selected location name for completed display
+  const selectedLocation = locations.find(l => l.id === selectedLocationId);
+  const selectedLocationName = selectedLocation?.short_code || selectedLocation?.name || '';
+
+  // Get time window label for completed display
+  const selectedTimeWindowLabel = TIME_WINDOWS.find(tw => tw.value === timeWindow)?.label || '';
 
   const handleLocationSelect = (locationId: string) => {
     mediumTap();
@@ -97,15 +201,19 @@ export const LocationDateStep = ({
         </div>
       </div>
 
-      <div className="max-w-2xl mx-auto p-4 space-y-6">
-        {/* Location Selection */}
-        {showLocationSelection && (
-          <div>
-            <h2 className="text-lg font-semibold mb-3 flex items-center gap-2">
-              <MapPin className="h-5 w-5 text-primary" />
-              {t('simpleOrder.location', 'Standort')}
-            </h2>
-            <div className="grid grid-cols-2 gap-3">
+      <div className="max-w-2xl mx-auto p-4 space-y-4">
+        {/* Step 1: Location */}
+        <StepSection status={step1Status}>
+          <StepIndicator
+            number={1}
+            status={step1Status}
+            title={t('simpleOrder.location', 'Standort')}
+            completedValue={step1Complete ? selectedLocationName : undefined}
+            icon={<MapPin className="h-5 w-5" />}
+          />
+          
+          {step1Status !== 'completed' && showLocationSelection && (
+            <div className="grid grid-cols-2 gap-3 mt-2">
               {locations.map((location) => (
                 <Card
                   key={location.id}
@@ -123,71 +231,76 @@ export const LocationDateStep = ({
                 </Card>
               ))}
             </div>
-          </div>
-        )}
+          )}
 
-        {/* Single location display */}
-        {(locations.length === 1 || isLocationLocked) && selectedLocationId && (
-          <div>
-            <h2 className="text-lg font-semibold mb-3 flex items-center gap-2">
-              <MapPin className="h-5 w-5 text-primary" />
-              {t('simpleOrder.location', 'Standort')}
-            </h2>
-            <Card className="p-4 border-primary bg-primary/5">
-              <span className="text-lg font-semibold">
-                {locations.find(l => l.id === selectedLocationId)?.short_code ||
-                 locations.find(l => l.id === selectedLocationId)?.name}
-              </span>
-            </Card>
-          </div>
-        )}
+          {step1Status === 'completed' && !showLocationSelection && (
+            <div className="text-sm text-muted-foreground">
+              {selectedLocationName}
+            </div>
+          )}
+        </StepSection>
 
-        {/* Delivery Date */}
-        <div>
-          <h2 className="text-lg font-semibold mb-3 flex items-center gap-2">
-            <CalendarIcon className="h-5 w-5 text-primary" />
-            {t('simpleOrder.deliveryDate', 'Lieferdatum')}
-          </h2>
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                className={cn(
-                  "w-full h-14 justify-start text-left font-normal text-lg",
-                  !deliveryDate && "text-muted-foreground",
-                  !deliveryDate && "border-orange-400"
-                )}
-              >
-                <CalendarIcon className="mr-3 h-5 w-5" />
-                {deliveryDate ? (
-                  format(deliveryDate, 'EEEE, d. MMMM yyyy', { locale: dateLocale })
-                ) : (
-                  <span className="flex items-center gap-2">
-                    <AlertCircle className="h-4 w-4 text-orange-500" />
-                    {t('simpleOrder.selectDate', 'Datum wählen')}
-                  </span>
-                )}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
-              <Calendar
-                mode="single"
-                selected={deliveryDate}
-                onSelect={onDeliveryDateChange}
-                disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
-                locale={dateLocale}
-                initialFocus
-              />
-            </PopoverContent>
-          </Popover>
-        </div>
+        {/* Step 2: Delivery Date */}
+        <StepSection status={step2Status}>
+          <StepIndicator
+            number={2}
+            status={step2Status}
+            title={t('simpleOrder.deliveryDate', 'Lieferdatum')}
+            completedValue={deliveryDate ? format(deliveryDate, 'd. MMM', { locale: dateLocale }) : undefined}
+            icon={<CalendarIcon className="h-5 w-5" />}
+          />
+          
+          {step2Status !== 'completed' && (
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "w-full h-14 justify-start text-left font-normal text-lg",
+                    !deliveryDate && "text-muted-foreground border-dashed"
+                  )}
+                >
+                  <CalendarIcon className="mr-3 h-5 w-5" />
+                  {deliveryDate ? (
+                    format(deliveryDate, 'EEEE, d. MMMM yyyy', { locale: dateLocale })
+                  ) : (
+                    t('simpleOrder.selectDate', 'Datum wählen')
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={deliveryDate}
+                  onSelect={onDeliveryDateChange}
+                  disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
+                  locale={dateLocale}
+                  initialFocus
+                />
+              </PopoverContent>
+            </Popover>
+          )}
 
-        {/* Time Window */}
-        <div>
-          <h2 className="text-lg font-semibold mb-3 flex items-center gap-2">
-            <Clock className="h-5 w-5 text-primary" />
-            {t('simpleOrder.timeWindow', 'Zeitfenster')}
-          </h2>
+          {step2Status === 'completed' && (
+            <button
+              onClick={() => onDeliveryDateChange(undefined)}
+              className="text-sm text-primary hover:underline"
+            >
+              {format(deliveryDate!, 'EEEE, d. MMMM yyyy', { locale: dateLocale })} — {t('common.change', 'ändern')}
+            </button>
+          )}
+        </StepSection>
+
+        {/* Step 3: Time Window */}
+        <StepSection status={step3Status}>
+          <StepIndicator
+            number={3}
+            status={step3Status}
+            title={t('simpleOrder.timeWindow', 'Zeitfenster')}
+            completedValue={step3Complete && step2Complete ? selectedTimeWindowLabel : undefined}
+            icon={<Clock className="h-5 w-5" />}
+          />
+          
           <div className="grid grid-cols-3 gap-3">
             {TIME_WINDOWS.map((tw) => (
               <Button
@@ -204,14 +317,16 @@ export const LocationDateStep = ({
               </Button>
             ))}
           </div>
-        </div>
+        </StepSection>
 
         {/* Continue Button */}
         <div className="pt-4">
           <Button
             className={cn(
-              "w-full h-16 text-xl font-semibold touch-manipulation",
-              !canContinue && "bg-muted text-muted-foreground"
+              "w-full h-16 text-xl font-semibold touch-manipulation transition-all duration-300",
+              canContinue 
+                ? "bg-primary hover:bg-primary/90 animate-pulse" 
+                : "bg-muted text-muted-foreground"
             )}
             disabled={!canContinue}
             onClick={handleContinue}
@@ -220,24 +335,6 @@ export const LocationDateStep = ({
             <ChevronRight className="ml-2 h-6 w-6" />
           </Button>
         </div>
-
-        {/* Validation hints */}
-        {!canContinue && (
-          <div className="text-center text-sm text-muted-foreground">
-            {!selectedLocationId && showLocationSelection && (
-              <p className="flex items-center justify-center gap-1">
-                <AlertCircle className="h-4 w-4 text-orange-500" />
-                {t('simpleOrder.pleaseSelectLocation', 'Bitte Standort wählen')}
-              </p>
-            )}
-            {!deliveryDate && (
-              <p className="flex items-center justify-center gap-1">
-                <AlertCircle className="h-4 w-4 text-orange-500" />
-                {t('simpleOrder.pleaseSelectDate', 'Bitte Lieferdatum wählen')}
-              </p>
-            )}
-          </div>
-        )}
       </div>
     </div>
   );
