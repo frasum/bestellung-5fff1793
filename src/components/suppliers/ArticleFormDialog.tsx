@@ -8,12 +8,12 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
-import { Check, ChevronsUpDown, Loader2, Plus, Package } from 'lucide-react';
+import { Check, ChevronsUpDown, Loader2, Plus, Package, Save } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Article } from '@/hooks/useArticles';
 import { Supplier } from '@/hooks/useSuppliers';
 import { articleSchema, ArticleFormData } from './schemas';
-import { usePackagingUnits } from '@/hooks/usePackagingUnits';
+import { usePackagingUnits, useCreatePackagingUnit } from '@/hooks/usePackagingUnits';
 
 interface ArticleFormDialogProps {
   open: boolean;
@@ -39,8 +39,11 @@ export const ArticleFormDialog = ({
   const [unitPopoverOpen, setUnitPopoverOpen] = useState(false);
   const [customUnit, setCustomUnit] = useState('');
   const [packagingUnitPopoverOpen, setPackagingUnitPopoverOpen] = useState(false);
+  const [customPackagingQuantity, setCustomPackagingQuantity] = useState('');
+  const [customPackagingName, setCustomPackagingName] = useState('');
   
   const { data: packagingUnits = [] } = usePackagingUnits();
+  const createPackagingUnit = useCreatePackagingUnit();
 
   const form = useForm<ArticleFormData>({
     resolver: zodResolver(articleSchema),
@@ -191,29 +194,68 @@ export const ArticleFormDialog = ({
                         <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-[220px] p-0" align="start">
+                    <PopoverContent className="w-[260px] p-0" align="start">
                       <Command>
-                        <CommandInput placeholder="VPE suchen oder eingeben..." />
+                        <CommandInput 
+                          placeholder="VPE suchen oder eingeben..." 
+                          value={customPackagingQuantity}
+                          onValueChange={setCustomPackagingQuantity}
+                        />
                         <CommandList>
                           <CommandEmpty>
-                            <div className="p-2">
+                            <div className="p-2 space-y-2">
                               <Input
                                 type="number"
                                 inputMode="numeric"
                                 min="1"
                                 placeholder="Menge eingeben..."
                                 className="h-9"
+                                value={customPackagingQuantity}
+                                onChange={(e) => setCustomPackagingQuantity(e.target.value)}
                                 onKeyDown={(e) => {
                                   if (e.key === 'Enter') {
                                     e.preventDefault();
-                                    const value = (e.target as HTMLInputElement).value;
-                                    if (value) {
-                                      field.onChange(value);
+                                    if (customPackagingQuantity) {
+                                      field.onChange(customPackagingQuantity);
                                       setPackagingUnitPopoverOpen(false);
+                                      setCustomPackagingQuantity('');
+                                      setCustomPackagingName('');
                                     }
                                   }
                                 }}
                               />
+                              {customPackagingQuantity && !packagingUnits.find(pu => pu.quantity === parseInt(customPackagingQuantity)) && (
+                                <div className="space-y-2 pt-2 border-t">
+                                  <p className="text-xs text-muted-foreground">Als neue VPE speichern:</p>
+                                  <Input
+                                    placeholder={`z.B. ${customPackagingQuantity}er Kiste`}
+                                    className="h-9"
+                                    value={customPackagingName}
+                                    onChange={(e) => setCustomPackagingName(e.target.value)}
+                                  />
+                                  <Button 
+                                    size="sm" 
+                                    className="w-full h-8"
+                                    disabled={!customPackagingName || createPackagingUnit.isPending}
+                                    onClick={() => {
+                                      createPackagingUnit.mutate({
+                                        name: customPackagingName,
+                                        quantity: parseInt(customPackagingQuantity)
+                                      }, {
+                                        onSuccess: () => {
+                                          field.onChange(customPackagingQuantity);
+                                          setPackagingUnitPopoverOpen(false);
+                                          setCustomPackagingQuantity('');
+                                          setCustomPackagingName('');
+                                        }
+                                      });
+                                    }}
+                                  >
+                                    <Save className="mr-2 h-3 w-3" />
+                                    VPE speichern
+                                  </Button>
+                                </div>
+                              )}
                             </div>
                           </CommandEmpty>
                           <CommandGroup heading="Gespeicherte VPE">
@@ -224,6 +266,7 @@ export const ArticleFormDialog = ({
                                 onSelect={() => {
                                   field.onChange(String(pu.quantity));
                                   setPackagingUnitPopoverOpen(false);
+                                  setCustomPackagingQuantity('');
                                 }}
                               >
                                 <Check className={cn("mr-2 h-4 w-4", field.value === String(pu.quantity) ? "opacity-100" : "opacity-0")} />
@@ -240,6 +283,7 @@ export const ArticleFormDialog = ({
                                 onSelect={() => {
                                   field.onChange('');
                                   setPackagingUnitPopoverOpen(false);
+                                  setCustomPackagingQuantity('');
                                 }}
                                 className="text-muted-foreground"
                               >
