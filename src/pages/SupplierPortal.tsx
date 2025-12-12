@@ -47,6 +47,8 @@ interface Article {
   is_active: boolean;
   annual_order_value: number | null;
   packaging_unit: number | null;
+  reference_price: number | null;
+  reference_unit: string | null;
 }
 
 interface PendingChange {
@@ -74,6 +76,7 @@ interface DraftData {
   priceInputs: Record<string, string>;
   annualOrderValueInputs: Record<string, string>;
   packagingUnitInputs: Record<string, string>;
+  referencePriceInputs: Record<string, string>;
 }
 
 const SupplierPortal = () => {
@@ -90,6 +93,7 @@ const SupplierPortal = () => {
   const [priceInputs, setPriceInputs] = useState<Record<string, string>>({});
   const [annualOrderValueInputs, setAnnualOrderValueInputs] = useState<Record<string, string>>({});
   const [packagingUnitInputs, setPackagingUnitInputs] = useState<Record<string, string>>({});
+  const [referencePriceInputs, setReferencePriceInputs] = useState<Record<string, string>>({});
   const [units, setUnits] = useState<Unit[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [suggestDialogOpen, setSuggestDialogOpen] = useState(false);
@@ -990,6 +994,7 @@ const SupplierPortal = () => {
                       priceInputs={priceInputs}
                       annualOrderValueInputs={annualOrderValueInputs}
                       packagingUnitInputs={packagingUnitInputs}
+                      referencePriceInputs={referencePriceInputs}
                       pendingChanges={pendingChanges}
                       saving={saving}
                       units={units}
@@ -1004,6 +1009,9 @@ const SupplierPortal = () => {
                       }}
                       onPackagingUnitChange={(articleId, value) => {
                         setPackagingUnitInputs(prev => ({ ...prev, [articleId]: value }));
+                      }}
+                      onReferencePriceChange={(articleId, value) => {
+                        setReferencePriceInputs(prev => ({ ...prev, [articleId]: value }));
                       }}
                       onSave={handleSave}
                       onCreateUnit={handleCreateUnit}

@@ -197,7 +197,10 @@
     "addToCart": "Add to Cart",
     "selectSupplier": "Select Supplier",
     "allSuppliers": "All Suppliers",
-    "allCategories": "All Categories"
+    "allCategories": "All Categories",
+    "referencePrice": "Reference Price",
+    "referenceUnit": "Reference Unit",
+    "referencePriceHint": "For price comparison (e.g., €/kg)"
   },
   "cart": {
     "title": "Cart",

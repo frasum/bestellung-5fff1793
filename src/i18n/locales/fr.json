@@ -194,7 +194,10 @@
     "addToCart": "Ajouter au panier",
     "selectSupplier": "Sélectionner un fournisseur",
     "allSuppliers": "Tous les fournisseurs",
-    "allCategories": "Toutes les catégories"
+    "allCategories": "Toutes les catégories",
+    "referencePrice": "Prix de référence",
+    "referenceUnit": "Unité de référence",
+    "referencePriceHint": "Pour la comparaison des prix (ex. €/kg)"
   },
   "cart": {
     "title": "Panier",
