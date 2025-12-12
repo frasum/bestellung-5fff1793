@@ -7,7 +7,7 @@ import { Check, ChevronsUpDown, Package, Save } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useOrderUnits, useCreateOrderUnit } from '@/hooks/useOrderUnits';
 
-interface SupplierPackagingUnitSelectProps {
+interface SupplierOrderUnitSelectProps {
   value: string;
   onChange: (value: string) => void;
   hasPending?: boolean;
@@ -15,13 +15,13 @@ interface SupplierPackagingUnitSelectProps {
   className?: string;
 }
 
-export function SupplierPackagingUnitSelect({
+export function SupplierOrderUnitSelect({
   value,
   onChange,
   hasPending = false,
   pendingInfo,
   className,
-}: SupplierPackagingUnitSelectProps) {
+}: SupplierOrderUnitSelectProps) {
   const [open, setOpen] = useState(false);
   const [customQuantity, setCustomQuantity] = useState('');
   const [customName, setCustomName] = useState('');
@@ -64,7 +64,7 @@ export function SupplierPackagingUnitSelect({
         <PopoverContent className="w-[260px] p-0" align="start">
           <Command>
             <CommandInput 
-              placeholder="VPE suchen..." 
+              placeholder="BE suchen..." 
               value={customQuantity}
               onValueChange={setCustomQuantity}
             />
@@ -93,7 +93,7 @@ export function SupplierPackagingUnitSelect({
                   />
                   {customQuantity && !orderUnits.find(pu => pu.quantity === parseInt(customQuantity)) && (
                     <div className="space-y-2 pt-2 border-t">
-                      <p className="text-xs text-muted-foreground">Als neue VPE speichern:</p>
+                      <p className="text-xs text-muted-foreground">Als neue BE speichern:</p>
                       <Input
                         placeholder={`z.B. ${customQuantity}er Kiste`}
                         className="h-9"
@@ -119,13 +119,13 @@ export function SupplierPackagingUnitSelect({
                         }}
                       >
                         <Save className="mr-2 h-3 w-3" />
-                        VPE speichern
+                        BE speichern
                       </Button>
                     </div>
                   )}
                 </div>
               </CommandEmpty>
-              <CommandGroup heading="Gespeicherte VPE">
+              <CommandGroup heading="Gespeicherte BE">
                 {orderUnits.map((pu) => (
                   <CommandItem
                     key={pu.id}
@@ -153,7 +153,7 @@ export function SupplierPackagingUnitSelect({
                   }}
                   className="text-muted-foreground"
                 >
-                  Keine VPE
+                  Keine BE
                 </CommandItem>
               </CommandGroup>
             </CommandList>

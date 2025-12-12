@@ -6,7 +6,7 @@ import { Save, Loader2, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { SupplierUnitSelect } from './SupplierUnitSelect';
 
-import { SupplierPackagingUnitSelect } from './SupplierPackagingUnitSelect';
+import { SupplierOrderUnitSelect } from './SupplierOrderUnitSelect';
 
 interface Article {
   id: string;
@@ -48,7 +48,7 @@ interface SupplierArticleCardProps {
   editedArticles: Record<string, Partial<Article>>;
   priceInputs: Record<string, string>;
   annualOrderValueInputs: Record<string, string>;
-  packagingUnitInputs: Record<string, string>;
+  orderUnitInputs: Record<string, string>;
   referencePriceInputs: Record<string, string>;
   pendingChanges: PendingChange[];
   saving: string | null;
@@ -59,7 +59,7 @@ interface SupplierArticleCardProps {
   onFieldChange: (articleId: string, field: keyof Article, value: any) => void;
   onPriceChange: (articleId: string, value: string) => void;
   onAnnualOrderValueChange: (articleId: string, value: string) => void;
-  onPackagingUnitChange: (articleId: string, value: string) => void;
+  onOrderUnitChange: (articleId: string, value: string) => void;
   onReferencePriceChange: (articleId: string, value: string) => void;
   onSave: (articleId: string) => void;
   onCreateUnit: (name: string) => Promise<void>;
@@ -71,7 +71,7 @@ export function SupplierArticleCard({
   editedArticles,
   priceInputs,
   annualOrderValueInputs,
-  packagingUnitInputs,
+  orderUnitInputs,
   referencePriceInputs,
   pendingChanges,
   saving,
@@ -82,7 +82,7 @@ export function SupplierArticleCard({
   onFieldChange,
   onPriceChange,
   onAnnualOrderValueChange,
-  onPackagingUnitChange,
+  onOrderUnitChange,
   onReferencePriceChange,
   onSave,
   onCreateUnit,
@@ -102,7 +102,7 @@ export function SupplierArticleCard({
     const hasFieldChanges = !!editedArticles[article.id] && Object.keys(editedArticles[article.id]).length > 0;
     const hasPriceChange = priceInputs[article.id] !== undefined;
     const hasAOVChange = annualOrderValueInputs[article.id] !== undefined;
-    const hasPUChange = packagingUnitInputs[article.id] !== undefined;
+    const hasPUChange = orderUnitInputs[article.id] !== undefined;
     const hasRefPriceChange = referencePriceInputs[article.id] !== undefined;
     return hasFieldChanges || hasPriceChange || hasAOVChange || hasPUChange || hasRefPriceChange;
   };
@@ -241,19 +241,19 @@ export function SupplierArticleCard({
           </div>
         )}
 
-        {/* Row 2: VPE + Bestellwert */}
+        {/* Row 2: BE + Bestellwert */}
         {(isVisible('packaging_unit') || isVisible('annual_order_value')) && (
           <div className="grid grid-cols-2 gap-3">
             {isVisible('packaging_unit') && (
               <div>
-                <label className="text-xs text-muted-foreground font-medium">VPE</label>
+                <label className="text-xs text-muted-foreground font-medium">BE</label>
                 <div className="mt-1">
-                  <SupplierPackagingUnitSelect
-                    value={packagingUnitInputs[article.id] !== undefined 
-                      ? packagingUnitInputs[article.id]
+                  <SupplierOrderUnitSelect
+                    value={orderUnitInputs[article.id] !== undefined 
+                      ? orderUnitInputs[article.id]
                       : getPendingChangeForField('packaging_unit')?.new_value 
                         ?? (article.packaging_unit !== null ? String(article.packaging_unit) : '')}
-                    onChange={(value) => onPackagingUnitChange(article.id, value)}
+                    onChange={(value) => onOrderUnitChange(article.id, value)}
                     hasPending={hasPendingChange('packaging_unit')}
                     pendingInfo={getPendingChangeForField('packaging_unit')}
                     className="h-11"

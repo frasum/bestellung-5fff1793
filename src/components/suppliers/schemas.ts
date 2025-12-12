@@ -20,7 +20,7 @@ export const articleSchema = z.object({
   category: z.string().optional(),
   packaging_unit: z.string().optional().refine(
     (val) => !val || (!isNaN(Number(val)) && Number(val) > 0),
-    'VPE muss eine positive Zahl sein'
+    'BE muss eine positive Zahl sein'
   ),
   reference_price: z.string().optional().refine(
     (val) => !val || (!isNaN(Number(val.replace(',', '.'))) && Number(val.replace(',', '.')) > 0),
