@@ -1400,6 +1400,7 @@ export type Database = {
           organization_id: string
           portal_title: string
           updated_at: string
+          visible_columns: Json | null
           welcome_message: string | null
         }
         Insert: {
@@ -1413,6 +1414,7 @@ export type Database = {
           organization_id: string
           portal_title?: string
           updated_at?: string
+          visible_columns?: Json | null
           welcome_message?: string | null
         }
         Update: {
@@ -1426,6 +1428,7 @@ export type Database = {
           organization_id?: string
           portal_title?: string
           updated_at?: string
+          visible_columns?: Json | null
           welcome_message?: string | null
         }
         Relationships: [
