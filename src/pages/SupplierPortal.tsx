@@ -69,6 +69,7 @@ interface PortalSettings {
   info_text: string | null;
   footer_text: string | null;
   logo_url: string | null;
+  visible_columns: string[] | null;
 }
 
 interface DraftData {
@@ -106,6 +107,7 @@ const SupplierPortal = () => {
     info_text: null,
     footer_text: null,
     logo_url: null,
+    visible_columns: null,
   });
 
   useEffect(() => {
@@ -615,6 +617,12 @@ const SupplierPortal = () => {
     (a.category && a.category.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
+  // Default visible columns if not set
+  const defaultVisibleColumns = ['sku', 'description', 'unit', 'packaging_unit', 'price', 'annual_order_value'];
+  const visibleColumns = portalSettings.visible_columns || defaultVisibleColumns;
+  
+  const isColumnVisible = (column: string) => visibleColumns.includes(column);
+
   if (!session) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -798,12 +806,14 @@ const SupplierPortal = () => {
                     <TableHeader>
                       <TableRow>
                         <TableHead className="min-w-[280px]">Artikelname</TableHead>
-                        <TableHead className="w-[100px]">SKU</TableHead>
-                        <TableHead className="min-w-[150px]">Beschreibung</TableHead>
-                        <TableHead className="w-[80px]">Einheit</TableHead>
-                        <TableHead className="w-[60px]">VPE</TableHead>
-                        <TableHead className="w-[100px]">Preis (€)</TableHead>
-                        <TableHead className="w-[120px]">Bestellwert (365T) *</TableHead>
+                        {isColumnVisible('sku') && <TableHead className="w-[100px]">SKU</TableHead>}
+                        {isColumnVisible('description') && <TableHead className="min-w-[150px]">Beschreibung</TableHead>}
+                        {isColumnVisible('unit') && <TableHead className="w-[80px]">Einheit</TableHead>}
+                        {isColumnVisible('packaging_unit') && <TableHead className="w-[60px]">VPE</TableHead>}
+                        {isColumnVisible('price') && <TableHead className="w-[100px]">Preis (€)</TableHead>}
+                        {isColumnVisible('annual_order_value') && <TableHead className="w-[120px]">Bestellwert (365T)</TableHead>}
+                        {isColumnVisible('reference_price') && <TableHead className="w-[100px]">Ref.-Preis (€)</TableHead>}
+                        {isColumnVisible('reference_unit') && <TableHead className="w-[80px]">Ref.-Einheit</TableHead>}
                         <TableHead className="w-[80px]"></TableHead>
                       </TableRow>
                     </TableHeader>
@@ -814,141 +824,203 @@ const SupplierPortal = () => {
                             <TableCell>
                               <span className="font-medium">{article.name}</span>
                             </TableCell>
-                            <TableCell>
-                              <div className="space-y-1">
-                                <Input
-                                  value={(getDisplayValue(article, 'sku') as string) || ''}
-                                  onChange={(e) => handleFieldChange(article.id, 'sku', e.target.value || null)}
-                                  className={`h-8 ${hasPendingChange(article.id, 'sku') ? 'border-amber-500' : ''}`}
-                                  placeholder="-"
-                                />
-                                {getPendingChangeForField(article.id, 'sku') && (
-                                  <div className="text-xs">
-                                    <span className="text-amber-600">Ausstehend</span>
-                                    <span className="text-muted-foreground ml-1">
-                                      (vorher: {getPendingChangeForField(article.id, 'sku')?.old_value || '-'})
-                                    </span>
-                                  </div>
-                                )}
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              <div className="space-y-1">
-                                <Input
-                                  value={(getDisplayValue(article, 'description') as string) || ''}
-                                  onChange={(e) => handleFieldChange(article.id, 'description', e.target.value || null)}
-                                  className={`h-8 ${hasPendingChange(article.id, 'description') ? 'border-amber-500' : ''}`}
-                                  placeholder="-"
-                                />
-                                {getPendingChangeForField(article.id, 'description') && (
-                                  <div className="text-xs">
-                                    <span className="text-amber-600">Ausstehend</span>
-                                    <span className="text-muted-foreground ml-1">
-                                      (vorher: {getPendingChangeForField(article.id, 'description')?.old_value || '-'})
-                                    </span>
-                                  </div>
-                                )}
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              <SupplierUnitSelect
-                                value={getDisplayValue(article, 'unit') as string}
-                                units={units}
-                                onChange={(value) => handleFieldChange(article.id, 'unit', value)}
-                                onCreateUnit={handleCreateUnit}
-                                hasPending={hasPendingChange(article.id, 'unit')}
-                                pendingInfo={getPendingChangeForField(article.id, 'unit')}
-                              />
-                            </TableCell>
-                            <TableCell>
-                              <div className="space-y-1">
-                                <Input
-                                  type="text"
-                                  inputMode="numeric"
-                                  value={packagingUnitInputs[article.id] !== undefined 
-                                    ? packagingUnitInputs[article.id]
-                                    : getPendingChangeForField(article.id, 'packaging_unit')?.new_value 
-                                      ?? (article.packaging_unit !== null ? String(article.packaging_unit) : '')}
-                                  onChange={(e) => {
-                                    setPackagingUnitInputs(prev => ({
-                                      ...prev,
-                                      [article.id]: e.target.value
-                                    }));
-                                  }}
-                                  className={cn(
-                                    "h-8",
-                                    hasPendingChange(article.id, 'packaging_unit') && "border-amber-500"
+                            {isColumnVisible('sku') && (
+                              <TableCell>
+                                <div className="space-y-1">
+                                  <Input
+                                    value={(getDisplayValue(article, 'sku') as string) || ''}
+                                    onChange={(e) => handleFieldChange(article.id, 'sku', e.target.value || null)}
+                                    className={`h-8 ${hasPendingChange(article.id, 'sku') ? 'border-amber-500' : ''}`}
+                                    placeholder="-"
+                                  />
+                                  {getPendingChangeForField(article.id, 'sku') && (
+                                    <div className="text-xs">
+                                      <span className="text-amber-600">Ausstehend</span>
+                                      <span className="text-muted-foreground ml-1">
+                                        (vorher: {getPendingChangeForField(article.id, 'sku')?.old_value || '-'})
+                                      </span>
+                                    </div>
                                   )}
-                                  placeholder="-"
-                                />
-                                {getPendingChangeForField(article.id, 'packaging_unit') && (
-                                  <div className="text-xs">
-                                    <span className="text-amber-600">Ausstehend</span>
-                                    <span className="text-muted-foreground ml-1">
-                                      (vorher: {getPendingChangeForField(article.id, 'packaging_unit')?.old_value || '-'})
-                                    </span>
-                                  </div>
-                                )}
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              <div className="space-y-1">
-                                <Input
-                                  type="text"
-                                  inputMode="decimal"
-                                  value={priceInputs[article.id] !== undefined 
-                                    ? priceInputs[article.id]
-                                    : getPendingChangeForField(article.id, 'price')?.new_value?.replace('.', ',') 
-                                      ?? String(article.price).replace('.', ',')}
-                                  onChange={(e) => {
-                                    setPriceInputs(prev => ({
-                                      ...prev,
-                                      [article.id]: e.target.value
-                                    }));
-                                  }}
-                                  className={`h-8 ${hasPendingChange(article.id, 'price') ? 'border-amber-500' : ''}`}
-                                />
-                                {getPendingChangeForField(article.id, 'price') && (
-                                  <div className="text-xs">
-                                    <span className="text-amber-600">Ausstehend</span>
-                                    <span className="text-muted-foreground ml-1">
-                                      (vorher: {getPendingChangeForField(article.id, 'price')?.old_value?.replace('.', ',') || '-'} €)
-                                    </span>
-                                  </div>
-                                )}
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              <div className="space-y-1">
-                                <Input
-                                  type="text"
-                                  inputMode="decimal"
-                                  value={annualOrderValueInputs[article.id] !== undefined 
-                                    ? annualOrderValueInputs[article.id]
-                                    : getPendingChangeForField(article.id, 'annual_order_value')?.new_value?.replace('.', ',') 
-                                      ?? (article.annual_order_value !== null ? String(article.annual_order_value).replace('.', ',') : '')}
-                                  onChange={(e) => {
-                                    setAnnualOrderValueInputs(prev => ({
-                                      ...prev,
-                                      [article.id]: e.target.value
-                                    }));
-                                  }}
-                                  className={cn(
-                                    "h-8",
-                                    hasPendingChange(article.id, 'annual_order_value') && "border-amber-500"
+                                </div>
+                              </TableCell>
+                            )}
+                            {isColumnVisible('description') && (
+                              <TableCell>
+                                <div className="space-y-1">
+                                  <Input
+                                    value={(getDisplayValue(article, 'description') as string) || ''}
+                                    onChange={(e) => handleFieldChange(article.id, 'description', e.target.value || null)}
+                                    className={`h-8 ${hasPendingChange(article.id, 'description') ? 'border-amber-500' : ''}`}
+                                    placeholder="-"
+                                  />
+                                  {getPendingChangeForField(article.id, 'description') && (
+                                    <div className="text-xs">
+                                      <span className="text-amber-600">Ausstehend</span>
+                                      <span className="text-muted-foreground ml-1">
+                                        (vorher: {getPendingChangeForField(article.id, 'description')?.old_value || '-'})
+                                      </span>
+                                    </div>
                                   )}
-                                  placeholder="Optional"
+                                </div>
+                              </TableCell>
+                            )}
+                            {isColumnVisible('unit') && (
+                              <TableCell>
+                                <SupplierUnitSelect
+                                  value={getDisplayValue(article, 'unit') as string}
+                                  units={units}
+                                  onChange={(value) => handleFieldChange(article.id, 'unit', value)}
+                                  onCreateUnit={handleCreateUnit}
+                                  hasPending={hasPendingChange(article.id, 'unit')}
+                                  pendingInfo={getPendingChangeForField(article.id, 'unit')}
                                 />
-                                {getPendingChangeForField(article.id, 'annual_order_value') && (
-                                  <div className="text-xs">
-                                    <span className="text-amber-600">Ausstehend</span>
-                                    <span className="text-muted-foreground ml-1">
-                                      (vorher: {getPendingChangeForField(article.id, 'annual_order_value')?.old_value?.replace('.', ',') || '-'} €)
-                                    </span>
-                                  </div>
-                                )}
-                              </div>
-                            </TableCell>
+                              </TableCell>
+                            )}
+                            {isColumnVisible('packaging_unit') && (
+                              <TableCell>
+                                <div className="space-y-1">
+                                  <Input
+                                    type="text"
+                                    inputMode="numeric"
+                                    value={packagingUnitInputs[article.id] !== undefined 
+                                      ? packagingUnitInputs[article.id]
+                                      : getPendingChangeForField(article.id, 'packaging_unit')?.new_value 
+                                        ?? (article.packaging_unit !== null ? String(article.packaging_unit) : '')}
+                                    onChange={(e) => {
+                                      setPackagingUnitInputs(prev => ({
+                                        ...prev,
+                                        [article.id]: e.target.value
+                                      }));
+                                    }}
+                                    className={cn(
+                                      "h-8",
+                                      hasPendingChange(article.id, 'packaging_unit') && "border-amber-500"
+                                    )}
+                                    placeholder="-"
+                                  />
+                                  {getPendingChangeForField(article.id, 'packaging_unit') && (
+                                    <div className="text-xs">
+                                      <span className="text-amber-600">Ausstehend</span>
+                                      <span className="text-muted-foreground ml-1">
+                                        (vorher: {getPendingChangeForField(article.id, 'packaging_unit')?.old_value || '-'})
+                                      </span>
+                                    </div>
+                                  )}
+                                </div>
+                              </TableCell>
+                            )}
+                            {isColumnVisible('price') && (
+                              <TableCell>
+                                <div className="space-y-1">
+                                  <Input
+                                    type="text"
+                                    inputMode="decimal"
+                                    value={priceInputs[article.id] !== undefined 
+                                      ? priceInputs[article.id]
+                                      : getPendingChangeForField(article.id, 'price')?.new_value?.replace('.', ',') 
+                                        ?? String(article.price).replace('.', ',')}
+                                    onChange={(e) => {
+                                      setPriceInputs(prev => ({
+                                        ...prev,
+                                        [article.id]: e.target.value
+                                      }));
+                                    }}
+                                    className={`h-8 ${hasPendingChange(article.id, 'price') ? 'border-amber-500' : ''}`}
+                                  />
+                                  {getPendingChangeForField(article.id, 'price') && (
+                                    <div className="text-xs">
+                                      <span className="text-amber-600">Ausstehend</span>
+                                      <span className="text-muted-foreground ml-1">
+                                        (vorher: {getPendingChangeForField(article.id, 'price')?.old_value?.replace('.', ',') || '-'} €)
+                                      </span>
+                                    </div>
+                                  )}
+                                </div>
+                              </TableCell>
+                            )}
+                            {isColumnVisible('annual_order_value') && (
+                              <TableCell>
+                                <div className="space-y-1">
+                                  <Input
+                                    type="text"
+                                    inputMode="decimal"
+                                    value={annualOrderValueInputs[article.id] !== undefined 
+                                      ? annualOrderValueInputs[article.id]
+                                      : getPendingChangeForField(article.id, 'annual_order_value')?.new_value?.replace('.', ',') 
+                                        ?? (article.annual_order_value !== null ? String(article.annual_order_value).replace('.', ',') : '')}
+                                    onChange={(e) => {
+                                      setAnnualOrderValueInputs(prev => ({
+                                        ...prev,
+                                        [article.id]: e.target.value
+                                      }));
+                                    }}
+                                    className={cn(
+                                      "h-8",
+                                      hasPendingChange(article.id, 'annual_order_value') && "border-amber-500"
+                                    )}
+                                    placeholder="Optional"
+                                  />
+                                  {getPendingChangeForField(article.id, 'annual_order_value') && (
+                                    <div className="text-xs">
+                                      <span className="text-amber-600">Ausstehend</span>
+                                      <span className="text-muted-foreground ml-1">
+                                        (vorher: {getPendingChangeForField(article.id, 'annual_order_value')?.old_value?.replace('.', ',') || '-'} €)
+                                      </span>
+                                    </div>
+                                  )}
+                                </div>
+                              </TableCell>
+                            )}
+                            {isColumnVisible('reference_price') && (
+                              <TableCell>
+                                <div className="space-y-1">
+                                  <Input
+                                    type="text"
+                                    inputMode="decimal"
+                                    value={referencePriceInputs[article.id] !== undefined 
+                                      ? referencePriceInputs[article.id]
+                                      : getPendingChangeForField(article.id, 'reference_price')?.new_value?.replace('.', ',') 
+                                        ?? (article.reference_price !== null ? String(article.reference_price).replace('.', ',') : '')}
+                                    onChange={(e) => {
+                                      setReferencePriceInputs(prev => ({
+                                        ...prev,
+                                        [article.id]: e.target.value
+                                      }));
+                                    }}
+                                    className={`h-8 ${hasPendingChange(article.id, 'reference_price') ? 'border-amber-500' : ''}`}
+                                    placeholder="-"
+                                  />
+                                  {getPendingChangeForField(article.id, 'reference_price') && (
+                                    <div className="text-xs">
+                                      <span className="text-amber-600">Ausstehend</span>
+                                      <span className="text-muted-foreground ml-1">
+                                        (vorher: {getPendingChangeForField(article.id, 'reference_price')?.old_value?.replace('.', ',') || '-'} €)
+                                      </span>
+                                    </div>
+                                  )}
+                                </div>
+                              </TableCell>
+                            )}
+                            {isColumnVisible('reference_unit') && (
+                              <TableCell>
+                                <div className="space-y-1">
+                                  <Input
+                                    value={(getDisplayValue(article, 'reference_unit') as string) || ''}
+                                    onChange={(e) => handleFieldChange(article.id, 'reference_unit', e.target.value || null)}
+                                    className={`h-8 ${hasPendingChange(article.id, 'reference_unit') ? 'border-amber-500' : ''}`}
+                                    placeholder="-"
+                                  />
+                                  {getPendingChangeForField(article.id, 'reference_unit') && (
+                                    <div className="text-xs">
+                                      <span className="text-amber-600">Ausstehend</span>
+                                      <span className="text-muted-foreground ml-1">
+                                        (vorher: {getPendingChangeForField(article.id, 'reference_unit')?.old_value || '-'})
+                                      </span>
+                                    </div>
+                                  )}
+                                </div>
+                              </TableCell>
+                            )}
                             <TableCell>
                               <Button
                                 size="sm"
@@ -988,6 +1060,7 @@ const SupplierPortal = () => {
                       saving={saving}
                       units={units}
                       categories={categories}
+                      visibleColumns={visibleColumns}
                       isMissingAnnualValue={false}
                       onFieldChange={handleFieldChange}
                       onPriceChange={(articleId, value) => {

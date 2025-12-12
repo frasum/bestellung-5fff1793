@@ -2,6 +2,21 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
+export type PortalColumnKey = 'sku' | 'description' | 'unit' | 'packaging_unit' | 'price' | 'annual_order_value' | 'reference_price' | 'reference_unit';
+
+export const PORTAL_COLUMN_OPTIONS: { key: PortalColumnKey; label: string }[] = [
+  { key: 'sku', label: 'SKU (Artikelnummer)' },
+  { key: 'description', label: 'Beschreibung' },
+  { key: 'unit', label: 'Einheit' },
+  { key: 'packaging_unit', label: 'VPE (Verpackungseinheit)' },
+  { key: 'price', label: 'Preis (€)' },
+  { key: 'annual_order_value', label: 'Bestellwert (365T)' },
+  { key: 'reference_price', label: 'Referenzpreis (€)' },
+  { key: 'reference_unit', label: 'Referenzeinheit' },
+];
+
+export const DEFAULT_VISIBLE_COLUMNS: PortalColumnKey[] = ['sku', 'description', 'unit', 'packaging_unit', 'price', 'annual_order_value'];
+
 export interface SupplierPortalSettings {
   id: string;
   organization_id: string;
@@ -12,6 +27,7 @@ export interface SupplierPortalSettings {
   info_text: string | null;
   footer_text: string | null;
   logo_url: string | null;
+  visible_columns: PortalColumnKey[] | null;
   created_at: string;
   updated_at: string;
 }
@@ -24,6 +40,7 @@ export const DEFAULT_PORTAL_SETTINGS: Omit<SupplierPortalSettings, 'id' | 'organ
   info_text: null,
   footer_text: null,
   logo_url: null,
+  visible_columns: DEFAULT_VISIBLE_COLUMNS,
 };
 
 export const useSupplierPortalSettings = () => {

@@ -5,12 +5,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { ExternalLink, FileText, ImageIcon, Upload, Trash2, Loader2, RotateCcw } from 'lucide-react';
+import { ExternalLink, FileText, ImageIcon, Upload, Trash2, Loader2, RotateCcw, Columns } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { useSupplierPortalSettings, useUpsertSupplierPortalSettings, DEFAULT_PORTAL_SETTINGS } from '@/hooks/useSupplierPortalSettings';
+import { useSupplierPortalSettings, useUpsertSupplierPortalSettings, DEFAULT_PORTAL_SETTINGS, PortalColumnKey, DEFAULT_VISIBLE_COLUMNS } from '@/hooks/useSupplierPortalSettings';
 import { PortalPreview } from '@/components/suppliers/PortalPreview';
+import { PortalColumnsConfig } from './PortalColumnsConfig';
 
 export const SupplierPortalTab = () => {
   const { t } = useTranslation();
@@ -24,6 +25,7 @@ export const SupplierPortalTab = () => {
   const [infoText, setInfoText] = useState('');
   const [footerText, setFooterText] = useState('');
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  const [visibleColumns, setVisibleColumns] = useState<PortalColumnKey[]>(DEFAULT_VISIBLE_COLUMNS);
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [initialized, setInitialized] = useState(false);
 
@@ -35,6 +37,7 @@ export const SupplierPortalTab = () => {
     setInfoText(settings.info_text || '');
     setFooterText(settings.footer_text || '');
     setLogoUrl(settings.logo_url || null);
+    setVisibleColumns(settings.visible_columns || DEFAULT_VISIBLE_COLUMNS);
     setInitialized(true);
   } else if (!settings && !isLoading && !initialized) {
     setPortalTitle(DEFAULT_PORTAL_SETTINGS.portal_title);
@@ -44,6 +47,7 @@ export const SupplierPortalTab = () => {
     setInfoText('');
     setFooterText('');
     setLogoUrl(null);
+    setVisibleColumns(DEFAULT_VISIBLE_COLUMNS);
     setInitialized(true);
   }
 
@@ -132,6 +136,7 @@ export const SupplierPortalTab = () => {
       card_description: cardDescription,
       info_text: infoText || null,
       footer_text: footerText || null,
+      visible_columns: visibleColumns,
     });
   };
 
@@ -142,6 +147,7 @@ export const SupplierPortalTab = () => {
     setCardDescription(DEFAULT_PORTAL_SETTINGS.card_description);
     setInfoText('');
     setFooterText('');
+    setVisibleColumns(DEFAULT_VISIBLE_COLUMNS);
   };
 
   if (isLoading) {
@@ -390,6 +396,14 @@ export const SupplierPortalTab = () => {
                   )}
                 </div>
               </div>
+            </div>
+
+            {/* Visible Columns Configuration */}
+            <div className="border-t pt-4 mt-4">
+              <PortalColumnsConfig
+                visibleColumns={visibleColumns}
+                onChange={setVisibleColumns}
+              />
             </div>
           </div>
 
