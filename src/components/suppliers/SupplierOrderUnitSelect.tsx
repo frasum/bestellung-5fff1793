@@ -3,9 +3,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList, CommandInput } from '@/components/ui/command';
-import { Check, ChevronsUpDown, Package, Save } from 'lucide-react';
+import { Check, ChevronsUpDown, Package, Save, Pencil, Trash2, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useOrderUnits, useCreateOrderUnit } from '@/hooks/useOrderUnits';
+import { useOrderUnits, useCreateOrderUnit, useUpdateOrderUnit, useDeleteOrderUnit, OrderUnit } from '@/hooks/useOrderUnits';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 
 interface SupplierOrderUnitSelectProps {
   value: string;
@@ -25,9 +26,38 @@ export function SupplierOrderUnitSelect({
   const [open, setOpen] = useState(false);
   const [customQuantity, setCustomQuantity] = useState('');
   const [customName, setCustomName] = useState('');
+  const [editingUnit, setEditingUnit] = useState<{ id: string; name: string; quantity: number } | null>(null);
+  const [deleteUnit, setDeleteUnit] = useState<OrderUnit | null>(null);
   
   const { data: orderUnits = [] } = useOrderUnits();
   const createOrderUnit = useCreateOrderUnit();
+  const updateOrderUnit = useUpdateOrderUnit();
+  const deleteOrderUnitMutation = useDeleteOrderUnit();
+
+  const handleSaveEdit = () => {
+    if (!editingUnit || !editingUnit.name.trim() || editingUnit.quantity < 1) return;
+    updateOrderUnit.mutate({
+      id: editingUnit.id,
+      name: editingUnit.name.trim(),
+      quantity: editingUnit.quantity
+    }, {
+      onSuccess: () => setEditingUnit(null)
+    });
+  };
+
+  const handleConfirmDelete = () => {
+    if (!deleteUnit) return;
+    deleteOrderUnitMutation.mutate(deleteUnit.id, {
+      onSuccess: () => {
+        setDeleteUnit(null);
+        // Clear selection if deleted unit was selected
+        const deletedQty = String(deleteUnit.quantity);
+        if (value === deletedQty) {
+          onChange('');
+        }
+      }
+    });
+  };
 
   const getDisplayLabel = () => {
     if (!value) return <span className="text-muted-foreground">-</span>;
@@ -127,20 +157,78 @@ export function SupplierOrderUnitSelect({
               </CommandEmpty>
               <CommandGroup heading="Gespeicherte BE">
                 {orderUnits.map((pu) => (
-                  <CommandItem
-                    key={pu.id}
-                    value={pu.name}
-                    onSelect={() => {
-                      onChange(String(pu.quantity));
-                      setOpen(false);
-                      setCustomQuantity('');
-                    }}
-                  >
-                    <Check className={cn("mr-2 h-4 w-4", value === String(pu.quantity) ? "opacity-100" : "opacity-0")} />
-                    <Package className="mr-2 h-4 w-4 text-muted-foreground" />
-                    <span>{pu.name}</span>
-                    <span className="ml-auto text-muted-foreground text-xs">({pu.quantity})</span>
-                  </CommandItem>
+                  editingUnit?.id === pu.id ? (
+                    <div key={pu.id} className="flex items-center gap-1 px-2 py-1.5">
+                      <Input
+                        value={editingUnit.name}
+                        onChange={(e) => setEditingUnit({ ...editingUnit, name: e.target.value })}
+                        className="h-7 flex-1 text-sm"
+                        autoFocus
+                      />
+                      <Input
+                        type="number"
+                        min="1"
+                        value={editingUnit.quantity}
+                        onChange={(e) => setEditingUnit({ ...editingUnit, quantity: parseInt(e.target.value) || 1 })}
+                        className="h-7 w-14 text-sm"
+                      />
+                      <Button 
+                        size="icon" 
+                        variant="ghost" 
+                        className="h-7 w-7"
+                        onClick={handleSaveEdit}
+                        disabled={updateOrderUnit.isPending}
+                      >
+                        <Check className="h-3.5 w-3.5 text-green-600" />
+                      </Button>
+                      <Button 
+                        size="icon" 
+                        variant="ghost" 
+                        className="h-7 w-7"
+                        onClick={() => setEditingUnit(null)}
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <CommandItem
+                      key={pu.id}
+                      value={pu.name}
+                      onSelect={() => {
+                        onChange(String(pu.quantity));
+                        setOpen(false);
+                        setCustomQuantity('');
+                      }}
+                      className="group"
+                    >
+                      <Check className={cn("mr-2 h-4 w-4", value === String(pu.quantity) ? "opacity-100" : "opacity-0")} />
+                      <Package className="mr-2 h-4 w-4 text-muted-foreground" />
+                      <span className="flex-1">{pu.name}</span>
+                      <span className="text-muted-foreground text-xs mr-2">({pu.quantity})</span>
+                      <Button 
+                        size="icon" 
+                        variant="ghost" 
+                        className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setEditingUnit({ id: pu.id, name: pu.name, quantity: pu.quantity });
+                        }}
+                      >
+                        <Pencil className="h-3 w-3" />
+                      </Button>
+                      <Button 
+                        size="icon" 
+                        variant="ghost" 
+                        className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setDeleteUnit(pu);
+                        }}
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    </CommandItem>
+                  )
                 ))}
               </CommandGroup>
               <CommandGroup>
@@ -168,6 +256,27 @@ export function SupplierOrderUnitSelect({
           </span>
         </p>
       )}
+
+      <AlertDialog open={!!deleteUnit} onOpenChange={(open) => !open && setDeleteUnit(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Bestelleinheit löschen?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Möchten Sie die Bestelleinheit "{deleteUnit?.name}" wirklich löschen? 
+              Artikel, die diese BE verwenden, werden nicht mehr mit dieser BE verknüpft.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleConfirmDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Löschen
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
