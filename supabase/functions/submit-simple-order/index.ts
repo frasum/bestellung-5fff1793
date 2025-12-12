@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { Resend } from "https://esm.sh/resend@2.0.0";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -13,6 +14,86 @@ interface OrderItem {
   unit_price?: number;
   unit?: string;
 }
+
+// Email translations for employee confirmation
+const employeeEmailTranslations: Record<string, {
+  subject: (supplierName: string) => string;
+  heading: string;
+  orderNumber: string;
+  supplier: string;
+  deliveryDate: string;
+  timeWindow: string;
+  location: string;
+  items: string;
+  footer: string;
+}> = {
+  de: {
+    subject: (s) => `Bestellung erfolgreich: ${s}`,
+    heading: 'Deine Bestellung wurde gesendet!',
+    orderNumber: 'Bestellnummer',
+    supplier: 'Lieferant',
+    deliveryDate: 'Lieferdatum',
+    timeWindow: 'Zeitfenster',
+    location: 'Standort',
+    items: 'Bestellte Artikel',
+    footer: 'Diese E-Mail wurde automatisch von Bestellung.pro gesendet.',
+  },
+  en: {
+    subject: (s) => `Order successful: ${s}`,
+    heading: 'Your order has been sent!',
+    orderNumber: 'Order Number',
+    supplier: 'Supplier',
+    deliveryDate: 'Delivery Date',
+    timeWindow: 'Time Window',
+    location: 'Location',
+    items: 'Ordered Items',
+    footer: 'This email was automatically sent by Bestellung.pro.',
+  },
+  fr: {
+    subject: (s) => `Commande réussie: ${s}`,
+    heading: 'Votre commande a été envoyée!',
+    orderNumber: 'Numéro de commande',
+    supplier: 'Fournisseur',
+    deliveryDate: 'Date de livraison',
+    timeWindow: 'Créneau horaire',
+    location: 'Emplacement',
+    items: 'Articles commandés',
+    footer: 'Cet email a été envoyé automatiquement par Bestellung.pro.',
+  },
+  it: {
+    subject: (s) => `Ordine riuscito: ${s}`,
+    heading: 'Il tuo ordine è stato inviato!',
+    orderNumber: 'Numero ordine',
+    supplier: 'Fornitore',
+    deliveryDate: 'Data di consegna',
+    timeWindow: 'Fascia oraria',
+    location: 'Posizione',
+    items: 'Articoli ordinati',
+    footer: 'Questa email è stata inviata automaticamente da Bestellung.pro.',
+  },
+  th: {
+    subject: (s) => `สั่งซื้อสำเร็จ: ${s}`,
+    heading: 'คำสั่งซื้อของคุณถูกส่งแล้ว!',
+    orderNumber: 'หมายเลขคำสั่งซื้อ',
+    supplier: 'ผู้จัดจำหน่าย',
+    deliveryDate: 'วันที่จัดส่ง',
+    timeWindow: 'ช่วงเวลา',
+    location: 'สถานที่',
+    items: 'รายการที่สั่งซื้อ',
+    footer: 'อีเมลนี้ถูกส่งโดยอัตโนมัติจาก Bestellung.pro',
+  },
+  vi: {
+    subject: (s) => `Đặt hàng thành công: ${s}`,
+    heading: 'Đơn hàng của bạn đã được gửi!',
+    orderNumber: 'Số đơn hàng',
+    supplier: 'Nhà cung cấp',
+    deliveryDate: 'Ngày giao hàng',
+    timeWindow: 'Khung giờ',
+    location: 'Địa điểm',
+    items: 'Sản phẩm đã đặt',
+    footer: 'Email này được gửi tự động bởi Bestellung.pro.',
+  },
+};
 
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -100,15 +181,17 @@ serve(async (req) => {
     }
     const supplierName = supplierData?.name || tokenData.supplier?.name || 'Unbekannt';
 
-    // Check if employee has auto_approve_orders enabled
+    // Check if employee has auto_approve_orders enabled and get email
     let autoApprove = false;
+    let employeeEmail: string | null = null;
     if (tokenData.employee_id) {
       const { data: employee } = await supabase
         .from('employees')
-        .select('auto_approve_orders')
+        .select('auto_approve_orders, email')
         .eq('id', tokenData.employee_id)
         .single();
       autoApprove = employee?.auto_approve_orders || false;
+      employeeEmail = employee?.email || null;
     }
 
     console.log(`Auto-approve check: employee_id=${tokenData.employee_id}, auto_approve=${autoApprove}`);
@@ -258,6 +341,55 @@ serve(async (req) => {
       } catch (emailError) {
         console.error('Failed to send order email:', emailError);
         // Don't fail the whole operation, order is created
+      }
+
+      // Send confirmation email to employee if they have an email
+      if (employeeEmail) {
+        try {
+          const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
+          const lang = tokenData.language || 'de';
+          const t = employeeEmailTranslations[lang] || employeeEmailTranslations.de;
+
+          const itemsHtml = orderItems.map((item: PreparedOrderItem) => 
+            `<li style="padding: 8px 0; border-bottom: 1px solid #eee;">${item.quantity}× ${item.article_name}</li>`
+          ).join('');
+
+          const emailHtml = `
+            <!DOCTYPE html>
+            <html>
+            <head><meta charset="utf-8"></head>
+            <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+              <div style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); padding: 30px; border-radius: 12px 12px 0 0; text-align: center;">
+                <h1 style="color: white; margin: 0; font-size: 24px;">✓ ${t.heading}</h1>
+              </div>
+              <div style="background: #f9fafb; padding: 30px; border-radius: 0 0 12px 12px;">
+                <table style="width: 100%; border-collapse: collapse;">
+                  <tr><td style="padding: 8px 0; color: #6b7280;">${t.orderNumber}:</td><td style="padding: 8px 0; font-weight: 600;">${orderNumber}</td></tr>
+                  <tr><td style="padding: 8px 0; color: #6b7280;">${t.supplier}:</td><td style="padding: 8px 0;">${supplierData.name}</td></tr>
+                  ${delivery_date ? `<tr><td style="padding: 8px 0; color: #6b7280;">${t.deliveryDate}:</td><td style="padding: 8px 0;">${delivery_date}</td></tr>` : ''}
+                  ${time_window ? `<tr><td style="padding: 8px 0; color: #6b7280;">${t.timeWindow}:</td><td style="padding: 8px 0;">${time_window}</td></tr>` : ''}
+                  <tr><td style="padding: 8px 0; color: #6b7280;">${t.location}:</td><td style="padding: 8px 0;">${locationName}</td></tr>
+                </table>
+                <h3 style="margin-top: 24px; color: #374151;">${t.items}</h3>
+                <ul style="list-style: none; padding: 0; margin: 0;">${itemsHtml}</ul>
+              </div>
+              <p style="text-align: center; color: #9ca3af; font-size: 12px; margin-top: 20px;">${t.footer}</p>
+            </body>
+            </html>
+          `;
+
+          await resend.emails.send({
+            from: 'Bestellung.pro <bestellungen@bestellung.pro>',
+            to: [employeeEmail],
+            subject: t.subject(supplierData.name),
+            html: emailHtml,
+          });
+
+          console.log(`Employee confirmation email sent to ${employeeEmail}`);
+        } catch (employeeEmailError) {
+          console.error('Failed to send employee confirmation email:', employeeEmailError);
+          // Don't fail - employee confirmation is optional
+        }
       }
 
       console.log(`Auto-approved order created. Order ID: ${order.id}, Order Number: ${orderNumber}`);
