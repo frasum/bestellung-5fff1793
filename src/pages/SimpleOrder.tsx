@@ -10,7 +10,7 @@ import { EmployeeInfoSection } from '@/components/simple-order/EmployeeInfoSecti
 import { SupplierSelection } from '@/components/simple-order/SupplierSelection';
 import { ArticleList } from '@/components/simple-order/ArticleList';
 import { SubmitBar } from '@/components/simple-order/SubmitBar';
-import { DeliveryDateSection } from '@/components/simple-order/DeliveryDateSection';
+import { DeliveryInfoBar } from '@/components/simple-order/DeliveryInfoBar';
 import { LoadingScreen, ErrorScreen, SuccessScreen } from '@/components/simple-order/StatusScreens';
 import { EmployeeOrderHistory } from '@/components/simple-order/EmployeeOrderHistory';
 import { EmployeeOrderEdit } from '@/components/simple-order/EmployeeOrderEdit';
@@ -819,11 +819,9 @@ const SimpleOrder = () => {
             setValidationErrors={setValidationErrors}
             variant="default"
           />
-          <DeliveryDateSection
+          <DeliveryInfoBar
             deliveryDate={deliveryDate}
-            onDeliveryDateChange={setDeliveryDate}
             timeWindow={timeWindow}
-            onTimeWindowChange={setTimeWindow}
             hasError={validationErrors.deliveryDate}
           />
           <ArticleList
