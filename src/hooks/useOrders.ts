@@ -169,6 +169,17 @@ export const useCreateOrder = () => {
 
       if (itemsError) throw itemsError;
 
+      // Load order units for formatting
+      const { data: orderUnits } = await supabase
+        .from('order_units')
+        .select('id, name, quantity');
+
+      const formatOrderUnit = (orderUnitId: string | null | undefined) => {
+        if (!orderUnitId || !orderUnits) return undefined;
+        const unit = orderUnits.find(u => u.id === orderUnitId);
+        return unit ? `${unit.quantity}× ${unit.name}` : undefined;
+      };
+
       // Send email notification to supplier
       try {
         const { error: emailError } = await supabase.functions.invoke('send-order-email', {
@@ -187,6 +198,7 @@ export const useCreateOrder = () => {
               total_price: Number(item.article.price) * item.quantity,
               sku: item.article.sku || undefined,
               packaging_unit: item.article.packaging_unit || undefined,
+              order_unit: formatOrderUnit(item.article.order_unit_id),
             })),
             totalAmount,
             notes: input.notes,
@@ -327,14 +339,25 @@ export const useResendOrderEmail = () => {
 
       const restaurantName = (profile?.organizations as { name: string } | null)?.name || 'Restaurant';
 
-      // Get article SKUs for items
+      // Get article SKUs and order_unit_id for items
       const articleIds = order.order_items?.map(item => item.article_id) || [];
       const { data: articles } = await supabase
         .from('articles')
-        .select('id, sku, packaging_unit')
+        .select('id, sku, packaging_unit, order_unit_id')
         .in('id', articleIds);
 
       const articleMap = new Map(articles?.map(a => [a.id, a]) || []);
+
+      // Load order units for formatting
+      const { data: orderUnits } = await supabase
+        .from('order_units')
+        .select('id, name, quantity');
+
+      const formatOrderUnit = (orderUnitId: string | null | undefined) => {
+        if (!orderUnitId || !orderUnits) return undefined;
+        const unit = orderUnits.find(u => u.id === orderUnitId);
+        return unit ? `${unit.quantity}× ${unit.name}` : undefined;
+      };
 
       // Check for existing valid token or create a new one
       const { data: existingToken } = await supabase
@@ -375,6 +398,7 @@ export const useResendOrderEmail = () => {
               total_price: item.total_price,
               sku: article?.sku || undefined,
               packaging_unit: article?.packaging_unit || undefined,
+              order_unit: formatOrderUnit(article?.order_unit_id),
             };
           }) || [],
           totalAmount: order.total_amount,
