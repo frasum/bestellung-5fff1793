@@ -47,7 +47,7 @@ export const ArticleFormDialog = ({
 
   const form = useForm<ArticleFormData>({
     resolver: zodResolver(articleSchema),
-    defaultValues: { supplier_id: '', name: '', description: '', sku: '', unit: 'pcs', price: '', category: '', packaging_unit: '', reference_price: '', reference_unit: '' },
+    defaultValues: { supplier_id: '', name: '', description: '', sku: '', unit: 'pcs', price: '', category: '', packaging_unit: '', order_unit_id: '', reference_price: '', reference_unit: '' },
   });
 
   useEffect(() => {
@@ -61,11 +61,12 @@ export const ArticleFormDialog = ({
         price: String(editingArticle.price),
         category: editingArticle.category || '',
         packaging_unit: editingArticle.packaging_unit ? String(editingArticle.packaging_unit) : '',
+        order_unit_id: editingArticle.order_unit_id || '',
         reference_price: editingArticle.reference_price ? String(editingArticle.reference_price).replace('.', ',') : '',
         reference_unit: editingArticle.reference_unit || '',
       });
     } else {
-      form.reset({ supplier_id: '', name: '', description: '', sku: '', unit: 'pcs', price: '', category: '', packaging_unit: '', reference_price: '', reference_unit: '' });
+      form.reset({ supplier_id: '', name: '', description: '', sku: '', unit: 'pcs', price: '', category: '', packaging_unit: '', order_unit_id: '', reference_price: '', reference_unit: '' });
     }
   }, [editingArticle, form]);
 
@@ -177,131 +178,119 @@ export const ArticleFormDialog = ({
               <Input id="article-sku" {...form.register('sku')} placeholder="TOM-001" />
             </div>
             <div className="space-y-2">
-              <Label>BE</Label>
+              <Label>Bestelleinheit</Label>
               <Controller
-                name="packaging_unit"
+                name="order_unit_id"
                 control={form.control}
-                render={({ field }) => (
-                  <Popover open={orderUnitPopoverOpen} onOpenChange={setOrderUnitPopoverOpen}>
-                    <PopoverTrigger asChild>
-                      <Button variant="outline" role="combobox" aria-expanded={orderUnitPopoverOpen} className="w-full justify-between bg-card">
-                        {field.value ? (
-                          <span className="flex items-center gap-2">
-                            <Package className="h-3.5 w-3.5 text-muted-foreground" />
-                            {orderUnits.find(pu => String(pu.quantity) === field.value)?.name || field.value}
-                          </span>
-                        ) : (
-                          <span className="text-muted-foreground">Auswählen</span>
-                        )}
-                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-[260px] p-0" align="start">
-                      <Command>
-                        <CommandInput 
-                          placeholder="BE suchen oder eingeben..." 
-                          value={customOrderQuantity}
-                          onValueChange={setCustomOrderQuantity}
-                        />
-                        <CommandList>
-                          <CommandEmpty>
-                            <div className="p-2 space-y-2">
-                              <Input
-                                type="number"
-                                inputMode="numeric"
-                                min="1"
-                                placeholder="Menge eingeben..."
-                                className="h-9"
-                                value={customOrderQuantity}
-                                onChange={(e) => setCustomOrderQuantity(e.target.value)}
-                                onKeyDown={(e) => {
-                                  if (e.key === 'Enter') {
-                                    e.preventDefault();
-                                    if (customOrderQuantity) {
-                                      field.onChange(customOrderQuantity);
-                                      setOrderUnitPopoverOpen(false);
-                                      setCustomOrderQuantity('');
-                                      setCustomOrderName('');
-                                    }
-                                  }
-                                }}
-                              />
-                              {customOrderQuantity && !orderUnits.find(pu => pu.quantity === parseInt(customOrderQuantity)) && (
-                                <div className="space-y-2 pt-2 border-t">
-                                  <p className="text-xs text-muted-foreground">Als neue BE speichern:</p>
-                                  <Input
-                                    placeholder={`z.B. ${customOrderQuantity}er Kiste`}
-                                    className="h-9"
-                                    value={customOrderName}
-                                    onChange={(e) => setCustomOrderName(e.target.value)}
-                                  />
-                                  <Button 
-                                    size="sm" 
-                                    className="w-full h-8"
-                                    disabled={!customOrderName || createOrderUnit.isPending}
-                                    onClick={() => {
-                                      createOrderUnit.mutate({
-                                        name: customOrderName,
-                                        quantity: parseInt(customOrderQuantity)
-                                      }, {
-                                        onSuccess: () => {
-                                          field.onChange(customOrderQuantity);
-                                          setOrderUnitPopoverOpen(false);
-                                          setCustomOrderQuantity('');
-                                          setCustomOrderName('');
-                                        }
-                                      });
-                                    }}
-                                  >
-                                    <Save className="mr-2 h-3 w-3" />
-                                    BE speichern
-                                  </Button>
-                                </div>
-                              )}
-                            </div>
-                          </CommandEmpty>
-                          <CommandGroup heading="Gespeicherte BE">
-                            {orderUnits.map((pu) => (
-                              <CommandItem 
-                                key={pu.id} 
-                                value={pu.name}
-                                onSelect={() => {
-                                  field.onChange(String(pu.quantity));
-                                  setOrderUnitPopoverOpen(false);
-                                  setCustomOrderQuantity('');
-                                }}
-                              >
-                                <Check className={cn("mr-2 h-4 w-4", field.value === String(pu.quantity) ? "opacity-100" : "opacity-0")} />
-                                <Package className="mr-2 h-4 w-4 text-muted-foreground" />
-                                <span>{pu.name}</span>
-                                <span className="ml-auto text-muted-foreground text-xs">({pu.quantity})</span>
-                              </CommandItem>
-                            ))}
-                          </CommandGroup>
-                          {field.value && (
-                            <CommandGroup>
-                              <CommandItem
-                                value="clear"
-                                onSelect={() => {
-                                  field.onChange('');
-                                  setOrderUnitPopoverOpen(false);
-                                  setCustomOrderQuantity('');
-                                }}
-                                className="text-muted-foreground"
-                              >
-                                Keine BE
-                              </CommandItem>
-                            </CommandGroup>
+                render={({ field }) => {
+                  const selectedUnit = orderUnits.find(u => u.id === field.value);
+                  return (
+                    <Popover open={orderUnitPopoverOpen} onOpenChange={setOrderUnitPopoverOpen}>
+                      <PopoverTrigger asChild>
+                        <Button variant="outline" role="combobox" aria-expanded={orderUnitPopoverOpen} className="w-full justify-between bg-card">
+                          {selectedUnit ? (
+                            <span className="flex items-center gap-2">
+                              <Package className="h-3.5 w-3.5 text-muted-foreground" />
+                              {selectedUnit.quantity}× {selectedUnit.name}
+                            </span>
+                          ) : (
+                            <span className="text-muted-foreground">Auswählen</span>
                           )}
-                        </CommandList>
-                      </Command>
-                    </PopoverContent>
-                  </Popover>
-                )}
+                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-[260px] p-0" align="start">
+                        <Command>
+                          <CommandInput 
+                            placeholder="BE suchen..." 
+                            value={customOrderQuantity}
+                            onValueChange={setCustomOrderQuantity}
+                          />
+                          <CommandList>
+                            <CommandEmpty>
+                              <div className="p-2 space-y-2">
+                                <p className="text-xs text-muted-foreground">Neue BE erstellen:</p>
+                                <Input
+                                  type="number"
+                                  inputMode="numeric"
+                                  min="1"
+                                  placeholder="Menge eingeben..."
+                                  className="h-9"
+                                  value={customOrderQuantity}
+                                  onChange={(e) => setCustomOrderQuantity(e.target.value)}
+                                />
+                                {customOrderQuantity && (
+                                  <div className="space-y-2 pt-2 border-t">
+                                    <Input
+                                      placeholder={`z.B. ${customOrderQuantity}er Kiste`}
+                                      className="h-9"
+                                      value={customOrderName}
+                                      onChange={(e) => setCustomOrderName(e.target.value)}
+                                    />
+                                    <Button 
+                                      size="sm" 
+                                      className="w-full h-8"
+                                      disabled={!customOrderName || createOrderUnit.isPending}
+                                      onClick={() => {
+                                        createOrderUnit.mutate({
+                                          name: customOrderName,
+                                          quantity: parseInt(customOrderQuantity)
+                                        }, {
+                                          onSuccess: (newUnit) => {
+                                            field.onChange(newUnit.id);
+                                            setOrderUnitPopoverOpen(false);
+                                            setCustomOrderQuantity('');
+                                            setCustomOrderName('');
+                                          }
+                                        });
+                                      }}
+                                    >
+                                      <Save className="mr-2 h-3 w-3" />
+                                      BE speichern
+                                    </Button>
+                                  </div>
+                                )}
+                              </div>
+                            </CommandEmpty>
+                            <CommandGroup heading="Bestelleinheiten">
+                              {orderUnits.map((unit) => (
+                                <CommandItem 
+                                  key={unit.id} 
+                                  value={unit.name}
+                                  onSelect={() => {
+                                    field.onChange(unit.id);
+                                    setOrderUnitPopoverOpen(false);
+                                    setCustomOrderQuantity('');
+                                  }}
+                                >
+                                  <Check className={cn("mr-2 h-4 w-4", field.value === unit.id ? "opacity-100" : "opacity-0")} />
+                                  <Package className="mr-2 h-4 w-4 text-muted-foreground" />
+                                  <span>{unit.quantity}× {unit.name}</span>
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                            {field.value && (
+                              <CommandGroup>
+                                <CommandItem
+                                  value="clear"
+                                  onSelect={() => {
+                                    field.onChange('');
+                                    setOrderUnitPopoverOpen(false);
+                                    setCustomOrderQuantity('');
+                                  }}
+                                  className="text-muted-foreground"
+                                >
+                                  Keine BE
+                                </CommandItem>
+                              </CommandGroup>
+                            )}
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
+                  );
+                }}
               />
-              {form.formState.errors.packaging_unit && (
-                <p className="text-sm text-destructive">{form.formState.errors.packaging_unit.message}</p>
-              )}
             </div>
           </div>
           <div className="space-y-2">

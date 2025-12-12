@@ -1,5 +1,5 @@
 import { Fragment, useCallback } from 'react';
-import { ChevronRight, Pencil, Trash2, Plus, Minus, Bell } from 'lucide-react';
+import { ChevronRight, Pencil, Trash2, Plus, Minus, Bell, Package } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
@@ -11,6 +11,7 @@ import { ArticleCard } from '@/components/suppliers/ArticleCard';
 import { Article } from '@/hooks/useArticles';
 import { SupplierActivityInfo } from '@/hooks/useSupplierChanges';
 import { LastOrderInfo } from '@/hooks/useLastOrderByArticle';
+import { OrderUnit } from '@/hooks/useOrderUnits';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 
@@ -30,6 +31,7 @@ interface ArticleTableProps {
   pendingArticleIds?: Set<string>;
   recentlyActiveSuppliers?: Map<string, SupplierActivityInfo>;
   lastOrderMap?: Record<string, LastOrderInfo>;
+  orderUnits?: OrderUnit[];
   onToggleSupplier: (supplierId: string) => void;
   onToggleArticle: (articleId: string) => void;
   onAddToCart: (article: Article, quantity: number) => void;
@@ -51,6 +53,7 @@ export const ArticleTable = ({
   pendingArticleIds = new Set(),
   recentlyActiveSuppliers = new Map(),
   lastOrderMap = {},
+  orderUnits = [],
   onToggleSupplier,
   onToggleArticle,
   onAddToCart,
@@ -163,6 +166,7 @@ export const ArticleTable = ({
                     cartQty={getCartQuantity(article.id)}
                     hasPendingChanges={pendingArticleIds.has(article.id)}
                     lastOrder={lastOrderMap[article.id]}
+                    orderUnits={orderUnits}
                     onUpdateQuantity={handleUpdateQuantity}
                     onAddToCart={handleAddToCart}
                     onEdit={handleEdit}
@@ -343,13 +347,24 @@ export const ArticleTable = ({
                                   €{Number(article.price).toFixed(2)}
                                   <span className="text-xs text-muted-foreground ml-1">
                                     /{article.unit}
-                                    {article.packaging_unit && article.packaging_unit > 1 && (
-                                      <span className="ml-1 text-primary font-medium">({article.packaging_unit}er)</span>
-                                    )}
                                   </span>
                                 </span>
                                 <PriceHistoryPopover articleId={article.id} articleName={article.name} />
                               </div>
+                              {(() => {
+                                const orderUnit = article.order_unit_id 
+                                  ? orderUnits.find(u => u.id === article.order_unit_id)
+                                  : null;
+                                if (orderUnit) {
+                                  return (
+                                    <Badge variant="outline" className="text-xs gap-1 font-normal">
+                                      <Package className="h-3 w-3" />
+                                      {orderUnit.quantity}× {orderUnit.name}
+                                    </Badge>
+                                  );
+                                }
+                                return null;
+                              })()}
                               {article.reference_price && article.reference_unit && (
                                 <span className="text-xs text-muted-foreground/70 italic">
                                   (€{Number(article.reference_price).toFixed(2)}/{article.reference_unit})

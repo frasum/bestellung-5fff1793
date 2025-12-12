@@ -18,6 +18,7 @@ import { useLastOrderByArticle } from '@/hooks/useLastOrderByArticle';
 import { SupplierChangesDialog } from '@/components/suppliers/SupplierChangesDialog';
 import { SupplierLocationsDialog } from '@/components/suppliers/SupplierLocationsDialog';
 import { useCategories } from '@/hooks/useCategories';
+import { useOrderUnits } from '@/hooks/useOrderUnits';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogTrigger } from '@/components/ui/dialog';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
@@ -75,6 +76,7 @@ const Suppliers = () => {
   const { data: suppliers, isLoading: suppliersLoading } = useSuppliers();
   const { data: allArticles, isLoading: articlesLoading } = useArticles();
   const { data: dbCategories } = useCategories();
+  const { data: orderUnits } = useOrderUnits();
 
   // Supplier mutations
   const createSupplier = useCreateSupplier();
@@ -330,6 +332,7 @@ const Suppliers = () => {
       price: Number(data.price),
       category: data.category || undefined,
       packaging_unit: data.packaging_unit ? Number(data.packaging_unit) : undefined,
+      order_unit_id: data.order_unit_id || undefined,
       reference_price: data.reference_price ? Number(data.reference_price.replace(',', '.')) : undefined,
       reference_unit: data.reference_unit || undefined,
     };
@@ -697,6 +700,7 @@ const Suppliers = () => {
                 pendingArticleIds={pendingArticleIds || new Set()}
                 recentlyActiveSuppliers={recentlyActiveSuppliers || new Map()}
                 lastOrderMap={lastOrderMap || {}}
+                orderUnits={orderUnits || []}
                 onToggleSupplier={toggleArticleSupplier}
                 onToggleArticle={toggleArticleSelected}
                 onAddToCart={addItem}
