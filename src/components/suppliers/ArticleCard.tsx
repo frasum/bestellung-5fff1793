@@ -1,8 +1,10 @@
 import { memo } from 'react';
-import { Pencil, Trash2, Plus, Minus } from 'lucide-react';
+import { Pencil, Trash2, Plus, Minus, Package } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { Article } from '@/hooks/useArticles';
+import { OrderUnit } from '@/hooks/useOrderUnits';
 import { cn } from '@/lib/utils';
 import { LastOrderInfo } from '@/hooks/useLastOrderByArticle';
 import { format } from 'date-fns';
@@ -12,6 +14,7 @@ interface ArticleCardProps {
   cartQty: number;
   hasPendingChanges?: boolean;
   lastOrder?: LastOrderInfo;
+  orderUnits?: OrderUnit[];
   onUpdateQuantity: (articleId: string, quantity: number) => void;
   onAddToCart: (article: Article, quantity: number) => void;
   onEdit: (article: Article) => void;
@@ -24,12 +27,16 @@ export const ArticleCard = memo(({
   cartQty,
   hasPendingChanges = false,
   lastOrder,
+  orderUnits = [],
   onUpdateQuantity,
   onAddToCart,
   onEdit,
   onDelete,
   onPendingClick
 }: ArticleCardProps) => {
+  const orderUnit = article.order_unit_id 
+    ? orderUnits.find(u => u.id === article.order_unit_id)
+    : null;
   return (
     <Card className={cn(
       "p-2 md:p-3",
@@ -75,12 +82,13 @@ export const ArticleCard = memo(({
         </div>
         <div className="text-right shrink-0">
           <p className="font-semibold text-foreground">€{Number(article.price).toFixed(2)}</p>
-          <p className="text-xs text-muted-foreground">
-            /{article.unit}
-            {article.packaging_unit && article.packaging_unit > 1 && (
-              <span className="ml-1 text-primary font-medium">({article.packaging_unit}er)</span>
-            )}
-          </p>
+          <p className="text-xs text-muted-foreground">/{article.unit}</p>
+          {orderUnit && (
+            <Badge variant="outline" className="text-xs gap-1 font-normal mt-1">
+              <Package className="h-3 w-3" />
+              {orderUnit.quantity}× {orderUnit.name}
+            </Badge>
+          )}
           {article.reference_price && article.reference_unit && (
             <p className="text-xs text-muted-foreground/70 italic">
               (€{Number(article.reference_price).toFixed(2)}/{article.reference_unit})

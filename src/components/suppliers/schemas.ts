@@ -22,6 +22,7 @@ export const articleSchema = z.object({
     (val) => !val || (!isNaN(Number(val)) && Number(val) > 0),
     'BE muss eine positive Zahl sein'
   ),
+  order_unit_id: z.string().optional(),
   reference_price: z.string().optional().refine(
     (val) => !val || (!isNaN(Number(val.replace(',', '.'))) && Number(val.replace(',', '.')) > 0),
     'Referenzpreis muss eine positive Zahl sein'
