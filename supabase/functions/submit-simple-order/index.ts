@@ -320,10 +320,15 @@ serve(async (req) => {
         );
       }
 
-      // Create order items with order_id
+      // Create order items with order_id (exclude order_unit as it's only for email)
       const orderItemsWithOrderId = orderItems.map((item: PreparedOrderItem) => ({
-        ...item,
         order_id: order.id,
+        article_id: item.article_id,
+        article_name: item.article_name,
+        quantity: item.quantity,
+        unit_price: item.unit_price,
+        unit: item.unit,
+        total_price: item.total_price,
       }));
 
       const { error: itemsError } = await supabase
