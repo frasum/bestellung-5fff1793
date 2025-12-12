@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 // Extracted components
 import { SimpleOrderHeader } from '@/components/simple-order/SimpleOrderHeader';
@@ -11,6 +12,8 @@ import { ArticleList } from '@/components/simple-order/ArticleList';
 import { SubmitBar } from '@/components/simple-order/SubmitBar';
 import { DeliveryDateSection } from '@/components/simple-order/DeliveryDateSection';
 import { LoadingScreen, ErrorScreen, SuccessScreen } from '@/components/simple-order/StatusScreens';
+import { EmployeeOrderHistory } from '@/components/simple-order/EmployeeOrderHistory';
+import { EmployeeOrderEdit } from '@/components/simple-order/EmployeeOrderEdit';
 
 interface Article {
   id: string;
@@ -55,11 +58,44 @@ interface TokenData {
   organization_id: string;
 }
 
-type OrderStatus = 'loading' | 'ready' | 'submitting' | 'success' | 'error';
+interface DraftItem {
+  id: string;
+  quantity: number;
+  article: {
+    id: string;
+    name: string;
+    unit: string;
+    price: number;
+    supplier_id: string;
+    supplier: {
+      id: string;
+      name: string;
+    };
+  };
+}
+
+interface Draft {
+  id: string;
+  name: string;
+  notes: string | null;
+  location_id: string | null;
+  desired_delivery_date: string | null;
+  desired_time_window: string | null;
+  created_at: string;
+  updated_at: string;
+  location: {
+    id: string;
+    name: string;
+    short_code: string | null;
+  } | null;
+  items: DraftItem[];
+}
+
+type OrderStatus = 'loading' | 'ready' | 'submitting' | 'success' | 'error' | 'viewing-history' | 'editing';
 
 const SimpleOrder = () => {
   const { token } = useParams<{ token: string }>();
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   
   const [status, setStatus] = useState<OrderStatus>('loading');
   const [error, setError] = useState<string | null>(null);
@@ -80,6 +116,13 @@ const SimpleOrder = () => {
   const [timeWindow, setTimeWindow] = useState<string>('flexible');
   const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set());
   const [hasEmployee, setHasEmployee] = useState(false);
+  
+  // Order history states
+  const [drafts, setDrafts] = useState<Draft[]>([]);
+  const [isLoadingDrafts, setIsLoadingDrafts] = useState(false);
+  const [isDeletingDraft, setIsDeletingDraft] = useState<string | null>(null);
+  const [editingDraft, setEditingDraft] = useState<Draft | null>(null);
+  const [isSavingDraft, setIsSavingDraft] = useState(false);
 
   // Verify token and load articles
   useEffect(() => {
@@ -290,6 +333,117 @@ const SimpleOrder = () => {
     }
   };
 
+  // Fetch employee drafts
+  const fetchDrafts = async () => {
+    if (!token || !hasEmployee) return;
+    
+    setIsLoadingDrafts(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('get-employee-drafts', {
+        body: { token },
+      });
+
+      if (error || data?.error) {
+        console.error('Error fetching drafts:', error || data?.error);
+        toast.error('Fehler beim Laden der Bestellungen');
+      } else {
+        setDrafts(data.drafts || []);
+      }
+    } catch (err) {
+      console.error('Error fetching drafts:', err);
+    } finally {
+      setIsLoadingDrafts(false);
+    }
+  };
+
+  // View order history
+  const handleViewOrders = async () => {
+    setStatus('viewing-history');
+    await fetchDrafts();
+  };
+
+  // Edit a draft
+  const handleEditDraft = (draftId: string) => {
+    const draft = drafts.find(d => d.id === draftId);
+    if (draft) {
+      // Get supplier_id from the first item
+      const supplierId = draft.items[0]?.article?.supplier_id;
+      if (supplierId) {
+        // Filter articles for this supplier
+        const supplierArticles = allArticles.filter(a => a.supplier_id === supplierId);
+        setArticles(supplierArticles);
+        setSelectedSupplierId(supplierId);
+      }
+      setEditingDraft(draft);
+      setStatus('editing');
+    }
+  };
+
+  // Save edited draft
+  const handleSaveDraft = async (
+    items: { article_id: string; quantity: number }[],
+    newDeliveryDate: Date | undefined,
+    newTimeWindow: string
+  ) => {
+    if (!editingDraft || !token) return;
+    
+    setIsSavingDraft(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('update-employee-draft', {
+        body: {
+          token,
+          draft_id: editingDraft.id,
+          items,
+          delivery_date: newDeliveryDate?.toISOString().split('T')[0] || null,
+          time_window: newTimeWindow || null,
+        },
+      });
+
+      if (error || data?.error) {
+        toast.error(data?.error || 'Fehler beim Speichern');
+      } else {
+        toast.success(t('simpleOrder.orderUpdated'));
+        setEditingDraft(null);
+        setStatus('viewing-history');
+        await fetchDrafts();
+      }
+    } catch (err) {
+      console.error('Error saving draft:', err);
+      toast.error('Fehler beim Speichern');
+    } finally {
+      setIsSavingDraft(false);
+    }
+  };
+
+  // Delete a draft
+  const handleDeleteDraft = async (draftId: string) => {
+    if (!token) return;
+    
+    setIsDeletingDraft(draftId);
+    try {
+      const { data, error } = await supabase.functions.invoke('delete-employee-draft', {
+        body: { token, draft_id: draftId },
+      });
+
+      if (error || data?.error) {
+        toast.error(data?.error || 'Fehler beim Löschen');
+      } else {
+        toast.success(t('simpleOrder.orderDeleted'));
+        setDrafts(prev => prev.filter(d => d.id !== draftId));
+        // If we were editing this draft, go back to history
+        if (editingDraft?.id === draftId) {
+          setEditingDraft(null);
+          setStatus('viewing-history');
+        }
+      }
+    } catch (err) {
+      console.error('Error deleting draft:', err);
+      toast.error('Fehler beim Löschen');
+    } finally {
+      setIsDeletingDraft(null);
+    }
+  };
+
   // Helper functions
   const getCurrentSupplierName = () => {
     if (!tokenData?.is_multi_supplier) {
@@ -327,7 +481,42 @@ const SimpleOrder = () => {
           if (!isEmployeeNameLocked) {
             setEmployeeName('');
           }
-        }} 
+        }}
+        onViewOrders={hasEmployee ? handleViewOrders : undefined}
+        hasEmployee={hasEmployee}
+      />
+    );
+  }
+
+  if (status === 'viewing-history') {
+    return (
+      <EmployeeOrderHistory
+        drafts={drafts}
+        isLoading={isLoadingDrafts}
+        employeeName={employeeName}
+        onEdit={handleEditDraft}
+        onDelete={handleDeleteDraft}
+        onBack={() => setStatus('ready')}
+        isDeleting={isDeletingDraft}
+      />
+    );
+  }
+
+  if (status === 'editing' && editingDraft) {
+    return (
+      <EmployeeOrderEdit
+        draft={editingDraft}
+        articles={articles}
+        favoriteIds={favoriteIds}
+        onToggleFavorite={toggleFavorite}
+        onSave={handleSaveDraft}
+        onCancel={() => {
+          setEditingDraft(null);
+          setStatus('viewing-history');
+        }}
+        onDelete={() => handleDeleteDraft(editingDraft.id)}
+        isSaving={isSavingDraft}
+        isDeleting={isDeletingDraft === editingDraft.id}
       />
     );
   }

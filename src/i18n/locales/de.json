@@ -863,6 +863,19 @@
     "deliveryDate": "Gewünschtes Lieferdatum",
     "selectDate": "Datum wählen",
     "timeWindow": "Zeitfenster",
-    "favorites": "Favoriten"
+    "favorites": "Favoriten",
+    "myOrders": "Meine Bestellungen",
+    "viewMyOrders": "Meine Bestellungen ansehen",
+    "noOrdersYet": "Noch keine Bestellungen vorhanden",
+    "items": "Artikel",
+    "moreItems": "weitere",
+    "edit": "Bearbeiten",
+    "editOrder": "Bestellung bearbeiten",
+    "saveChanges": "Änderungen speichern",
+    "createdAt": "Erstellt am",
+    "orderDeleted": "Bestellung storniert",
+    "orderUpdated": "Bestellung aktualisiert",
+    "confirmDelete": "Bestellung wirklich stornieren?",
+    "searchArticle": "Artikel suchen..."
   }
 }

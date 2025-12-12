@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Loader2 } from 'lucide-react';
+import { Loader2, ClipboardList } from 'lucide-react';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 
 interface LoadingScreenProps {}
@@ -49,9 +49,11 @@ export const ErrorScreen = ({ error }: ErrorScreenProps) => {
 
 interface SuccessScreenProps {
   onNewOrder: () => void;
+  onViewOrders?: () => void;
+  hasEmployee?: boolean;
 }
 
-export const SuccessScreen = ({ onNewOrder }: SuccessScreenProps) => {
+export const SuccessScreen = ({ onNewOrder, onViewOrders, hasEmployee = false }: SuccessScreenProps) => {
   const { t } = useTranslation();
   const { success, mediumTap } = useHapticFeedback();
 
@@ -63,10 +65,15 @@ export const SuccessScreen = ({ onNewOrder }: SuccessScreenProps) => {
     mediumTap();
     onNewOrder();
   };
+
+  const handleViewOrders = () => {
+    mediumTap();
+    onViewOrders?.();
+  };
   
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <Card className="p-8 text-center max-w-md">
+      <Card className="p-8 text-center max-w-md w-full">
         <div className="text-6xl mb-4">✅</div>
         <h1 className="text-2xl font-bold text-primary mb-2">
           {t('simpleOrder.success', 'ส่งสำเร็จ! / Erfolgreich gesendet!')}
@@ -74,13 +81,26 @@ export const SuccessScreen = ({ onNewOrder }: SuccessScreenProps) => {
         <p className="text-muted-foreground text-lg mb-6">
           {t('simpleOrder.successMessage', 'คำสั่งซื้อของคุณถูกส่งเพื่อตรวจสอบแล้ว / Ihre Bestellung wurde zur Prüfung eingereicht.')}
         </p>
-        <Button
-          size="lg"
-          className="w-full h-16 text-xl font-bold touch-manipulation"
-          onClick={handleNewOrder}
-        >
-          {t('simpleOrder.newOrder', 'สั่งซื้อใหม่ / Neue Bestellung')}
-        </Button>
+        <div className="space-y-3">
+          <Button
+            size="lg"
+            className="w-full h-16 text-xl font-bold touch-manipulation"
+            onClick={handleNewOrder}
+          >
+            {t('simpleOrder.newOrder', 'สั่งซื้อใหม่ / Neue Bestellung')}
+          </Button>
+          {hasEmployee && onViewOrders && (
+            <Button
+              size="lg"
+              variant="outline"
+              className="w-full h-14 text-lg font-medium touch-manipulation"
+              onClick={handleViewOrders}
+            >
+              <ClipboardList className="h-5 w-5 mr-2" />
+              {t('simpleOrder.viewMyOrders', 'Meine Bestellungen ansehen')}
+            </Button>
+          )}
+        </div>
       </Card>
     </div>
   );

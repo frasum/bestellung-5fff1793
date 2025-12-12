@@ -53,3 +53,12 @@ verify_jwt = false
 
 [functions.notify-preorder-received]
 verify_jwt = false
+
+[functions.get-employee-drafts]
+verify_jwt = false
+
+[functions.update-employee-draft]
+verify_jwt = false
+
+[functions.delete-employee-draft]
+verify_jwt = false

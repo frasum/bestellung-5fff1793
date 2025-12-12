@@ -185,6 +185,7 @@ export type Database = {
           delivery_address: string | null
           desired_delivery_date: string | null
           desired_time_window: string | null
+          employee_id: string | null
           id: string
           location_id: string | null
           name: string
@@ -198,6 +199,7 @@ export type Database = {
           delivery_address?: string | null
           desired_delivery_date?: string | null
           desired_time_window?: string | null
+          employee_id?: string | null
           id?: string
           location_id?: string | null
           name?: string
@@ -211,6 +213,7 @@ export type Database = {
           delivery_address?: string | null
           desired_delivery_date?: string | null
           desired_time_window?: string | null
+          employee_id?: string | null
           id?: string
           location_id?: string | null
           name?: string
@@ -220,6 +223,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "cart_drafts_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "cart_drafts_location_id_fkey"
             columns: ["location_id"]
