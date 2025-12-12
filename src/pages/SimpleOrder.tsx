@@ -14,6 +14,7 @@ import { DeliveryDateSection } from '@/components/simple-order/DeliveryDateSecti
 import { LoadingScreen, ErrorScreen, SuccessScreen } from '@/components/simple-order/StatusScreens';
 import { EmployeeOrderHistory } from '@/components/simple-order/EmployeeOrderHistory';
 import { EmployeeOrderEdit } from '@/components/simple-order/EmployeeOrderEdit';
+import { OrderConfirmationScreen } from '@/components/simple-order/OrderConfirmationScreen';
 
 interface Article {
   id: string;
@@ -26,6 +27,11 @@ interface Article {
   packaging_unit: number | null;
   supplier_id: string;
   sort_order?: number;
+  order_unit?: {
+    id: string;
+    name: string;
+    quantity: number;
+  } | null;
 }
 
 interface Location {
@@ -47,6 +53,7 @@ interface TokenData {
   is_multi_supplier: boolean;
   employee_name: string | null;
   has_employee: boolean;
+  auto_approve_orders: boolean;
   supplier: {
     id: string;
     name: string;
@@ -121,7 +128,7 @@ interface CompletedOrder {
   items: CompletedOrderItem[];
 }
 
-type OrderStatus = 'loading' | 'ready' | 'submitting' | 'success' | 'error' | 'viewing-history' | 'editing';
+type OrderStatus = 'loading' | 'ready' | 'confirming' | 'submitting' | 'success' | 'error' | 'viewing-history' | 'editing';
 
 const SimpleOrder = () => {
   const { token } = useParams<{ token: string }>();
@@ -322,6 +329,21 @@ const SimpleOrder = () => {
     return Object.keys(errors).length === 0;
   };
 
+  // Handle submit button click - either go to confirmation or submit directly
+  const handleSubmitClick = () => {
+    if (getTotalItems() === 0) return;
+    if (!validateForm()) return;
+
+    // If auto-approve employee, show confirmation screen first
+    if (tokenData?.auto_approve_orders) {
+      setStatus('confirming');
+    } else {
+      // Regular employee - submit directly as pre-order
+      handleSubmit();
+    }
+  };
+
+  // Actually submit the order
   const handleSubmit = async () => {
     if (getTotalItems() === 0) return;
     
@@ -374,6 +396,27 @@ const SimpleOrder = () => {
       console.error('Error submitting order:', err);
       setError('เกิดข้อผิดพลาดในการส่ง / Fehler beim Senden');
       setStatus('error');
+    }
+  };
+
+  // Handle quantity change in confirmation screen (remove item if quantity becomes 0)
+  const handleConfirmationQuantityChange = (articleId: string, delta: number) => {
+    setQuantities(prev => {
+      const current = prev[articleId] || 0;
+      const newValue = Math.max(1, current + delta); // Minimum 1 in confirmation
+      return { ...prev, [articleId]: newValue };
+    });
+  };
+
+  // Remove item from order in confirmation screen
+  const handleRemoveItem = (articleId: string) => {
+    setQuantities(prev => {
+      const { [articleId]: _, ...rest } = prev;
+      return rest;
+    });
+    // If no items left, go back to article list
+    if (Object.keys(quantities).length <= 1) {
+      setStatus('ready');
     }
   };
 
@@ -571,6 +614,24 @@ const SimpleOrder = () => {
     );
   }
 
+  // Confirmation screen for auto-approve employees
+  if (status === 'confirming' || status === 'submitting') {
+    return (
+      <OrderConfirmationScreen
+        articles={articles}
+        quantities={quantities}
+        supplierName={getCurrentSupplierName()}
+        deliveryDate={deliveryDate}
+        timeWindow={timeWindow}
+        onQuantityChange={handleConfirmationQuantityChange}
+        onRemoveItem={handleRemoveItem}
+        onBack={() => setStatus('ready')}
+        onConfirm={handleSubmit}
+        isSubmitting={status === 'submitting'}
+      />
+    );
+  }
+
   const showSupplierSelection = tokenData?.is_multi_supplier && !selectedSupplierId;
 
   return (
@@ -645,8 +706,9 @@ const SimpleOrder = () => {
           />
           <SubmitBar
             totalItems={getTotalItems()}
-            isSubmitting={status === 'submitting'}
-            onSubmit={handleSubmit}
+            isSubmitting={false}
+            onSubmit={handleSubmitClick}
+            isAutoApproveEmployee={tokenData?.auto_approve_orders || false}
           />
         </>
       )}

@@ -1,15 +1,16 @@
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
-import { Loader2, ShoppingCart } from 'lucide-react';
+import { Loader2, ShoppingCart, ClipboardCheck } from 'lucide-react';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 
 interface SubmitBarProps {
   totalItems: number;
   isSubmitting: boolean;
   onSubmit: () => void;
+  isAutoApproveEmployee?: boolean;
 }
 
-export const SubmitBar = ({ totalItems, isSubmitting, onSubmit }: SubmitBarProps) => {
+export const SubmitBar = ({ totalItems, isSubmitting, onSubmit, isAutoApproveEmployee = false }: SubmitBarProps) => {
   const { t } = useTranslation();
   const { heavyTap } = useHapticFeedback();
 
@@ -17,6 +18,12 @@ export const SubmitBar = ({ totalItems, isSubmitting, onSubmit }: SubmitBarProps
     heavyTap();
     onSubmit();
   };
+
+  const buttonText = isAutoApproveEmployee 
+    ? t('simpleOrder.reviewOrder', 'Zur Bestätigung')
+    : t('simpleOrder.submit', 'ส่งคำสั่งซื้อ / Bestellung senden');
+
+  const ButtonIcon = isAutoApproveEmployee ? ClipboardCheck : ShoppingCart;
 
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-background border-t p-4 pb-[max(1rem,env(safe-area-inset-bottom))] shadow-lg">
@@ -34,8 +41,8 @@ export const SubmitBar = ({ totalItems, isSubmitting, onSubmit }: SubmitBarProps
             </>
           ) : (
             <>
-              <ShoppingCart className="h-6 w-6" />
-              {t('simpleOrder.submit', 'ส่งคำสั่งซื้อ / Bestellung senden')}
+              <ButtonIcon className="h-6 w-6" />
+              {buttonText}
               {totalItems > 0 && (
                 <span className="bg-primary-foreground text-primary px-3 py-1 rounded-full text-lg">
                   {totalItems}
