@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
-import { MapPin, ChevronDown, ClipboardList } from 'lucide-react';
+import { ChevronDown, ClipboardList } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,8 +15,6 @@ interface Supplier {
 
 interface SimpleOrderHeaderProps {
   supplierName: string;
-  selectedLocationName: string;
-  selectedLocationId: string | null;
   // Props for quick supplier switch
   isMultiSupplier?: boolean;
   selectedSupplierId?: string | null;
@@ -39,8 +37,6 @@ const languages = [
 
 export const SimpleOrderHeader = ({
   supplierName,
-  selectedLocationName,
-  selectedLocationId,
   isMultiSupplier = false,
   selectedSupplierId,
   suppliers = [],

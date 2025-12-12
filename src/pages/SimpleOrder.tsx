@@ -778,8 +778,6 @@ const SimpleOrder = () => {
     <div className="min-h-screen bg-background pb-32">
       <SimpleOrderHeader
         supplierName={getCurrentSupplierName()}
-        selectedLocationName={getSelectedLocationName()}
-        selectedLocationId={selectedLocationId}
         isMultiSupplier={tokenData?.is_multi_supplier || false}
         selectedSupplierId={selectedSupplierId}
         suppliers={suppliers}
