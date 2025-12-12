@@ -76,7 +76,7 @@ interface DraftData {
   editedArticles: Record<string, Partial<Article>>;
   priceInputs: Record<string, string>;
   annualOrderValueInputs: Record<string, string>;
-  packagingUnitInputs: Record<string, string>;
+  orderUnitInputs: Record<string, string>;
   referencePriceInputs: Record<string, string>;
 }
 
@@ -93,7 +93,7 @@ const SupplierPortal = () => {
   const [editedArticles, setEditedArticles] = useState<Record<string, Partial<Article>>>({});
   const [priceInputs, setPriceInputs] = useState<Record<string, string>>({});
   const [annualOrderValueInputs, setAnnualOrderValueInputs] = useState<Record<string, string>>({});
-  const [packagingUnitInputs, setPackagingUnitInputs] = useState<Record<string, string>>({});
+  const [orderUnitInputs, setOrderUnitInputs] = useState<Record<string, string>>({});
   const [referencePriceInputs, setReferencePriceInputs] = useState<Record<string, string>>({});
   const [units, setUnits] = useState<Unit[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -209,7 +209,7 @@ const SupplierPortal = () => {
           setEditedArticles(draft.editedArticles || {});
           setPriceInputs(draft.priceInputs || {});
           setAnnualOrderValueInputs(draft.annualOrderValueInputs || {});
-          setPackagingUnitInputs(draft.packagingUnitInputs || {});
+          setOrderUnitInputs(draft.orderUnitInputs || {});
           setHasDraft(true);
         }
       } catch (error: any) {
@@ -254,7 +254,7 @@ const SupplierPortal = () => {
             editedArticles,
             priceInputs,
             annualOrderValueInputs,
-            packagingUnitInputs,
+            orderUnitInputs,
           },
         },
       });
@@ -313,8 +313,8 @@ const SupplierPortal = () => {
     }
 
     // Parse packaging_unit from input string if it was edited
-    if (packagingUnitInputs[articleId] !== undefined) {
-      const puValue = packagingUnitInputs[articleId];
+    if (orderUnitInputs[articleId] !== undefined) {
+      const puValue = orderUnitInputs[articleId];
       const parsed = parseInt(puValue, 10);
       if (!isNaN(parsed) && parsed > 0) {
         changes.packaging_unit = parsed;
@@ -360,7 +360,7 @@ const SupplierPortal = () => {
         delete newState[articleId];
         return newState;
       });
-      setPackagingUnitInputs(prev => {
+      setOrderUnitInputs(prev => {
         const newState = { ...prev };
         delete newState[articleId];
         return newState;
@@ -391,7 +391,7 @@ const SupplierPortal = () => {
     const hasFieldChanges = !!editedArticles[articleId] && Object.keys(editedArticles[articleId]).length > 0;
     const hasPriceChange = priceInputs[articleId] !== undefined;
     const hasAOVChange = annualOrderValueInputs[articleId] !== undefined;
-    const hasPUChange = packagingUnitInputs[articleId] !== undefined;
+    const hasPUChange = orderUnitInputs[articleId] !== undefined;
     return hasFieldChanges || hasPriceChange || hasAOVChange || hasPUChange;
   };
 
@@ -399,7 +399,7 @@ const SupplierPortal = () => {
     return Object.keys(editedArticles).length > 0 || 
            Object.keys(priceInputs).length > 0 || 
            Object.keys(annualOrderValueInputs).length > 0 ||
-           Object.keys(packagingUnitInputs).length > 0;
+           Object.keys(orderUnitInputs).length > 0;
   };
 
   const getChangedArticleCount = () => {
@@ -407,7 +407,7 @@ const SupplierPortal = () => {
       ...Object.keys(editedArticles),
       ...Object.keys(priceInputs),
       ...Object.keys(annualOrderValueInputs),
-      ...Object.keys(packagingUnitInputs),
+      ...Object.keys(orderUnitInputs),
     ]);
     return changedIds.size;
   };
@@ -423,7 +423,7 @@ const SupplierPortal = () => {
         ...Object.keys(editedArticles),
         ...Object.keys(priceInputs),
         ...Object.keys(annualOrderValueInputs),
-        ...Object.keys(packagingUnitInputs),
+        ...Object.keys(orderUnitInputs),
       ]);
 
       // Build the changes array for each article
@@ -453,8 +453,8 @@ const SupplierPortal = () => {
         }
 
         // Parse packaging_unit from input string if it was edited
-        if (packagingUnitInputs[articleId] !== undefined) {
-          const puValue = packagingUnitInputs[articleId];
+        if (orderUnitInputs[articleId] !== undefined) {
+          const puValue = orderUnitInputs[articleId];
           const parsed = parseInt(puValue, 10);
           if (!isNaN(parsed) && parsed > 0) {
             changes.packaging_unit = parsed;
@@ -493,7 +493,7 @@ const SupplierPortal = () => {
       setEditedArticles({});
       setPriceInputs({});
       setAnnualOrderValueInputs({});
-      setPackagingUnitInputs({});
+      setOrderUnitInputs({});
 
       // Delete draft after successful submission
       if (hasDraft) {
@@ -809,7 +809,7 @@ const SupplierPortal = () => {
                         {isColumnVisible('sku') && <TableHead className="w-[100px]">SKU</TableHead>}
                         {isColumnVisible('description') && <TableHead className="min-w-[150px]">Beschreibung</TableHead>}
                         {isColumnVisible('unit') && <TableHead className="w-[80px]">Einheit</TableHead>}
-                        {isColumnVisible('packaging_unit') && <TableHead className="w-[60px]">VPE</TableHead>}
+                        {isColumnVisible('packaging_unit') && <TableHead className="w-[60px]">BE</TableHead>}
                         {isColumnVisible('price') && <TableHead className="w-[100px]">Preis (€)</TableHead>}
                         {isColumnVisible('annual_order_value') && <TableHead className="w-[120px]">Bestellwert (365T)</TableHead>}
                         {isColumnVisible('reference_price') && <TableHead className="w-[100px]">Ref.-Preis (€)</TableHead>}
@@ -882,12 +882,12 @@ const SupplierPortal = () => {
                                   <Input
                                     type="text"
                                     inputMode="numeric"
-                                    value={packagingUnitInputs[article.id] !== undefined 
-                                      ? packagingUnitInputs[article.id]
+                                    value={orderUnitInputs[article.id] !== undefined 
+                                      ? orderUnitInputs[article.id]
                                       : getPendingChangeForField(article.id, 'packaging_unit')?.new_value 
                                         ?? (article.packaging_unit !== null ? String(article.packaging_unit) : '')}
                                     onChange={(e) => {
-                                      setPackagingUnitInputs(prev => ({
+                                      setOrderUnitInputs(prev => ({
                                         ...prev,
                                         [article.id]: e.target.value
                                       }));
@@ -1054,7 +1054,7 @@ const SupplierPortal = () => {
                       editedArticles={editedArticles}
                       priceInputs={priceInputs}
                       annualOrderValueInputs={annualOrderValueInputs}
-                      packagingUnitInputs={packagingUnitInputs}
+                      orderUnitInputs={orderUnitInputs}
                       referencePriceInputs={referencePriceInputs}
                       pendingChanges={pendingChanges}
                       saving={saving}
@@ -1069,8 +1069,8 @@ const SupplierPortal = () => {
                       onAnnualOrderValueChange={(articleId, value) => {
                         setAnnualOrderValueInputs(prev => ({ ...prev, [articleId]: value }));
                       }}
-                      onPackagingUnitChange={(articleId, value) => {
-                        setPackagingUnitInputs(prev => ({ ...prev, [articleId]: value }));
+                      onOrderUnitChange={(articleId, value) => {
+                        setOrderUnitInputs(prev => ({ ...prev, [articleId]: value }));
                       }}
                       onReferencePriceChange={(articleId, value) => {
                         setReferencePriceInputs(prev => ({ ...prev, [articleId]: value }));

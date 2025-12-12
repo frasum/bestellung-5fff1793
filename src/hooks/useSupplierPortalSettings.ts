@@ -9,7 +9,7 @@ export const PORTAL_COLUMN_OPTIONS: { key: PortalColumnKey; label: string }[] = 
   { key: 'sku', label: 'SKU (Artikelnummer)' },
   { key: 'description', label: 'Beschreibung' },
   { key: 'unit', label: 'Einheit' },
-  { key: 'packaging_unit', label: 'VPE (Verpackungseinheit)' },
+  { key: 'packaging_unit', label: 'BE (Bestelleinheit)' },
   { key: 'price', label: 'Preis (€)' },
   { key: 'annual_order_value', label: 'Bestellwert (365T)' },
   { key: 'reference_price', label: 'Referenzpreis (€)' },
