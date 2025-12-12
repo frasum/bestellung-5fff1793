@@ -58,11 +58,11 @@ export const useCreatePackagingUnit = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['packaging-units'] });
-      toast.success('Verpackungseinheit hinzugefügt');
+      toast.success('Bestelleinheit hinzugefügt');
     },
     onError: (error: Error) => {
       if (error.message.includes('duplicate')) {
-        toast.error('Diese Verpackungseinheit existiert bereits');
+        toast.error('Diese Bestelleinheit existiert bereits');
       } else {
         toast.error('Fehler beim Hinzufügen');
       }
@@ -87,7 +87,7 @@ export const useUpdatePackagingUnit = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['packaging-units'] });
-      toast.success('Verpackungseinheit aktualisiert');
+      toast.success('Bestelleinheit aktualisiert');
     },
     onError: () => {
       toast.error('Fehler beim Aktualisieren');
@@ -109,7 +109,7 @@ export const useDeletePackagingUnit = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['packaging-units'] });
-      toast.success('Verpackungseinheit gelöscht');
+      toast.success('Bestelleinheit gelöscht');
     },
     onError: () => {
       toast.error('Fehler beim Löschen');
