@@ -319,6 +319,10 @@ const Orders = () => {
         draft.desired_time_window,
         draft.location_id
       );
+      
+      // Vorbestellung nach dem Laden löschen
+      deleteDraft.mutate(draft.id);
+      
       navigate('/cart');
     }
     setLoadDialogOpen(false);
