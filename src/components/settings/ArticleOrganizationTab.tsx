@@ -8,12 +8,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Search, CheckSquare, Square, Loader2, ArrowRightLeft } from 'lucide-react';
+import { Search, CheckSquare, Square, Loader2 } from 'lucide-react';
 import { useArticles, useBulkUpdateArticles } from '@/hooks/useArticles';
 import { useSuppliers } from '@/hooks/useSuppliers';
 import { useCategories } from '@/hooks/useCategories';
 import { toast } from 'sonner';
-import { CategoryTransferDialog } from './CategoryTransferDialog';
+
 
 const TOP_CATEGORIES = ['Küche', 'Getränke', 'Bedarfsartikel'] as const;
 type TopCategory = typeof TOP_CATEGORIES[number];
@@ -40,7 +40,7 @@ export const ArticleOrganizationTab = () => {
   const [filterSupplier, setFilterSupplier] = useState<string>('all');
   const [filterUnassigned, setFilterUnassigned] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [transferDialogOpen, setTransferDialogOpen] = useState(false);
+  
 
   // Cast articles to include top_category
   const articlesWithTopCategory = articles as unknown as ArticleWithTopCategory[];
@@ -216,21 +216,8 @@ export const ArticleOrganizationTab = () => {
       {/* Filters and Bulk Actions */}
       <Card>
         <CardHeader className="pb-3">
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <CardTitle className="text-lg">{t('settings.articleOrganization.title')}</CardTitle>
-              <CardDescription>{t('settings.articleOrganization.description')}</CardDescription>
-            </div>
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={() => setTransferDialogOpen(true)}
-              className="shrink-0"
-            >
-              <ArrowRightLeft className="h-4 w-4 mr-2" />
-              Kategorien übernehmen
-            </Button>
-          </div>
+          <CardTitle className="text-lg">{t('settings.articleOrganization.title')}</CardTitle>
+          <CardDescription>{t('settings.articleOrganization.description')}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           {/* Filters */}
@@ -418,14 +405,6 @@ export const ArticleOrganizationTab = () => {
           </p>
         </CardContent>
       </Card>
-
-      {/* Category Transfer Dialog */}
-      <CategoryTransferDialog
-        open={transferDialogOpen}
-        onOpenChange={setTransferDialogOpen}
-        suppliers={suppliers}
-        articles={articlesWithTopCategory}
-      />
     </div>
   );
 };
