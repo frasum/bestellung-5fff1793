@@ -844,6 +844,19 @@
     "deliveryDate": "วันที่ต้องการรับสินค้า",
     "selectDate": "เลือกวันที่",
     "timeWindow": "ช่วงเวลา",
-    "favorites": "รายการโปรด"
+    "favorites": "รายการโปรด",
+    "myOrders": "คำสั่งซื้อของฉัน",
+    "viewMyOrders": "ดูคำสั่งซื้อของฉัน",
+    "noOrdersYet": "ยังไม่มีคำสั่งซื้อ",
+    "items": "รายการ",
+    "moreItems": "อื่นๆ",
+    "edit": "แก้ไข",
+    "editOrder": "แก้ไขคำสั่งซื้อ",
+    "saveChanges": "บันทึกการเปลี่ยนแปลง",
+    "createdAt": "สร้างเมื่อ",
+    "orderDeleted": "ยกเลิกคำสั่งซื้อแล้ว",
+    "orderUpdated": "อัปเดตคำสั่งซื้อแล้ว",
+    "confirmDelete": "ยืนยันยกเลิกคำสั่งซื้อ?",
+    "searchArticle": "ค้นหาสินค้า..."
   }
 }

@@ -112,6 +112,7 @@ serve(async (req) => {
         notes: notes,
         desired_delivery_date: delivery_date || null,
         desired_time_window: time_window || null,
+        employee_id: tokenData.employee_id || null,
       })
       .select()
       .single();
