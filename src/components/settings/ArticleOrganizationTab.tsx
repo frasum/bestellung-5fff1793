@@ -339,8 +339,8 @@ export const ArticleOrganizationTab = () => {
                       )}
                     </Button>
                   </TableHead>
-                  <TableHead>{t('articles.name')}</TableHead>
-                  <TableHead className="hidden sm:table-cell">{t('suppliers.supplier')}</TableHead>
+                  <TableHead>{t('articles.articleName')}</TableHead>
+                  <TableHead className="hidden sm:table-cell">{t('articles.supplier')}</TableHead>
                   <TableHead>{t('settings.articleOrganization.topCategory')}</TableHead>
                   <TableHead>{t('settings.articleOrganization.mainCategory')}</TableHead>
                 </TableRow>
