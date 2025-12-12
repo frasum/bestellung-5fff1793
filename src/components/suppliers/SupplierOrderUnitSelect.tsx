@@ -72,7 +72,7 @@ export function SupplierOrderUnitSelect({
       return (
         <span className="flex items-center gap-2 truncate">
           <Package className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-          <span className="truncate">{pu.quantity}× {pu.name}</span>
+          <span className="truncate">{pu.name}</span>
         </span>
       );
     }
@@ -107,58 +107,48 @@ export function SupplierOrderUnitSelect({
             <CommandList>
               <CommandEmpty>
                 <div className="p-2 space-y-2">
+                  <p className="text-xs text-muted-foreground">Neue BE erstellen:</p>
                   <Input
-                    type="number"
-                    inputMode="numeric"
-                    min="1"
-                    placeholder="Menge eingeben..."
+                    placeholder="z.B. Kiste, Box, Fass..."
                     className="h-9"
-                    value={customQuantity}
-                    onChange={(e) => setCustomQuantity(e.target.value)}
+                    value={customName}
+                    onChange={(e) => setCustomName(e.target.value)}
                     onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
+                      if (e.key === 'Enter' && customName.trim()) {
                         e.preventDefault();
-                        if (customQuantity) {
-                          onChange(customQuantity);
-                          setOpen(false);
-                          setCustomQuantity('');
-                          setCustomName('');
-                        }
+                        createOrderUnit.mutate({
+                          name: customName.trim(),
+                          quantity: 1
+                        }, {
+                          onSuccess: (newUnit) => {
+                            if (newUnit) onChange(newUnit.id);
+                            setOpen(false);
+                            setCustomName('');
+                          }
+                        });
                       }
                     }}
                   />
-                  {customQuantity && !orderUnits.find(pu => pu.quantity === parseInt(customQuantity)) && (
-                    <div className="space-y-2 pt-2 border-t">
-                      <p className="text-xs text-muted-foreground">Als neue BE speichern:</p>
-                      <Input
-                        placeholder={`z.B. ${customQuantity}er Kiste`}
-                        className="h-9"
-                        value={customName}
-                        onChange={(e) => setCustomName(e.target.value)}
-                      />
-                      <Button 
-                        size="sm" 
-                        className="w-full h-8"
-                        disabled={!customName || createOrderUnit.isPending}
-                        onClick={() => {
-                          createOrderUnit.mutate({
-                            name: customName,
-                            quantity: parseInt(customQuantity)
-                          }, {
-                            onSuccess: (newUnit) => {
-                              if (newUnit) onChange(newUnit.id);
-                              setOpen(false);
-                              setCustomQuantity('');
-                              setCustomName('');
-                            }
-                          });
-                        }}
-                      >
-                        <Save className="mr-2 h-3 w-3" />
-                        BE speichern
-                      </Button>
-                    </div>
-                  )}
+                  <Button 
+                    size="sm" 
+                    className="w-full h-8"
+                    disabled={!customName.trim() || createOrderUnit.isPending}
+                    onClick={() => {
+                      createOrderUnit.mutate({
+                        name: customName.trim(),
+                        quantity: 1
+                      }, {
+                        onSuccess: (newUnit) => {
+                          if (newUnit) onChange(newUnit.id);
+                          setOpen(false);
+                          setCustomName('');
+                        }
+                      });
+                    }}
+                  >
+                    <Save className="mr-2 h-3 w-3" />
+                    BE speichern
+                  </Button>
                 </div>
               </CommandEmpty>
               <CommandGroup heading="Gespeicherte BE">
@@ -170,13 +160,10 @@ export function SupplierOrderUnitSelect({
                         onChange={(e) => setEditingUnit({ ...editingUnit, name: e.target.value })}
                         className="h-7 flex-1 text-sm"
                         autoFocus
-                      />
-                      <Input
-                        type="number"
-                        min="1"
-                        value={editingUnit.quantity}
-                        onChange={(e) => setEditingUnit({ ...editingUnit, quantity: parseInt(e.target.value) || 1 })}
-                        className="h-7 w-14 text-sm"
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') handleSaveEdit();
+                          if (e.key === 'Escape') setEditingUnit(null);
+                        }}
                       />
                       <Button 
                         size="icon" 
@@ -210,8 +197,7 @@ export function SupplierOrderUnitSelect({
                       <Check className={cn("mr-2 h-4 w-4", value === pu.id ? "opacity-100" : "opacity-0")} />
                       <Package className="mr-2 h-4 w-4 text-muted-foreground" />
                       <span className="flex-1">{pu.name}</span>
-                      <span className="text-muted-foreground text-xs mr-2">({pu.quantity})</span>
-                      <Button 
+                      <Button
                         size="icon" 
                         variant="ghost" 
                         className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
