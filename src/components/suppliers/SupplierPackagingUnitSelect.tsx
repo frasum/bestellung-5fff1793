@@ -5,7 +5,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList, CommandInput } from '@/components/ui/command';
 import { Check, ChevronsUpDown, Package, Save } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { usePackagingUnits, useCreatePackagingUnit } from '@/hooks/usePackagingUnits';
+import { useOrderUnits, useCreateOrderUnit } from '@/hooks/useOrderUnits';
 
 interface SupplierPackagingUnitSelectProps {
   value: string;
@@ -26,12 +26,12 @@ export function SupplierPackagingUnitSelect({
   const [customQuantity, setCustomQuantity] = useState('');
   const [customName, setCustomName] = useState('');
   
-  const { data: packagingUnits = [] } = usePackagingUnits();
-  const createPackagingUnit = useCreatePackagingUnit();
+  const { data: orderUnits = [] } = useOrderUnits();
+  const createOrderUnit = useCreateOrderUnit();
 
   const getDisplayLabel = () => {
     if (!value) return <span className="text-muted-foreground">-</span>;
-    const pu = packagingUnits.find(p => String(p.quantity) === value);
+    const pu = orderUnits.find(p => String(p.quantity) === value);
     if (pu) {
       return (
         <span className="flex items-center gap-2">
@@ -91,7 +91,7 @@ export function SupplierPackagingUnitSelect({
                       }
                     }}
                   />
-                  {customQuantity && !packagingUnits.find(pu => pu.quantity === parseInt(customQuantity)) && (
+                  {customQuantity && !orderUnits.find(pu => pu.quantity === parseInt(customQuantity)) && (
                     <div className="space-y-2 pt-2 border-t">
                       <p className="text-xs text-muted-foreground">Als neue VPE speichern:</p>
                       <Input
@@ -103,9 +103,9 @@ export function SupplierPackagingUnitSelect({
                       <Button 
                         size="sm" 
                         className="w-full h-8"
-                        disabled={!customName || createPackagingUnit.isPending}
+                        disabled={!customName || createOrderUnit.isPending}
                         onClick={() => {
-                          createPackagingUnit.mutate({
+                          createOrderUnit.mutate({
                             name: customName,
                             quantity: parseInt(customQuantity)
                           }, {
@@ -126,7 +126,7 @@ export function SupplierPackagingUnitSelect({
                 </div>
               </CommandEmpty>
               <CommandGroup heading="Gespeicherte VPE">
-                {packagingUnits.map((pu) => (
+                {orderUnits.map((pu) => (
                   <CommandItem
                     key={pu.id}
                     value={pu.name}

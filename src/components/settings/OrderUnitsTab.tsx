@@ -9,18 +9,18 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { usePackagingUnits, useCreatePackagingUnit, useUpdatePackagingUnit, useDeletePackagingUnit } from '@/hooks/usePackagingUnits';
+import { useOrderUnits, useCreateOrderUnit, useUpdateOrderUnit, useDeleteOrderUnit } from '@/hooks/useOrderUnits';
 import { useArticles } from '@/hooks/useArticles';
 
-export const PackagingUnitsTab = () => {
+export const OrderUnitsTab = () => {
   const { t } = useTranslation();
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const { data: packagingUnits = [], isLoading: unitsLoading } = usePackagingUnits();
+  const { data: orderUnits = [], isLoading: unitsLoading } = useOrderUnits();
   const { data: articles = [], isLoading: articlesLoading } = useArticles();
-  const createUnit = useCreatePackagingUnit();
-  const updateUnit = useUpdatePackagingUnit();
-  const deleteUnit = useDeletePackagingUnit();
+  const createUnit = useCreateOrderUnit();
+  const updateUnit = useUpdateOrderUnit();
+  const deleteUnit = useDeleteOrderUnit();
   const [newUnitName, setNewUnitName] = useState('');
   const [newUnitQuantity, setNewUnitQuantity] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -30,12 +30,12 @@ export const PackagingUnitsTab = () => {
   const [isAddingAll, setIsAddingAll] = useState(false);
 
   // Get unique packaging_unit values from articles that are not in the database
-  const dbQuantities = new Set(packagingUnits.map(u => u.quantity));
-  const articlePackagingUnits = [...new Set(articles.map(a => a.packaging_unit).filter((v): v is number => v !== null && v > 1))]
+  const dbQuantities = new Set(orderUnits.map(u => u.quantity));
+  const articleOrderUnits = [...new Set(articles.map(a => a.packaging_unit).filter((v): v is number => v !== null && v > 1))]
     .filter(qty => !dbQuantities.has(qty))
     .sort((a, b) => a - b);
 
-  const filteredDbUnits = packagingUnits
+  const filteredDbUnits = orderUnits
     .filter(u => 
       u.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
       u.quantity.toString().includes(searchTerm)
@@ -43,7 +43,7 @@ export const PackagingUnitsTab = () => {
     .sort((a, b) => a.quantity - b.quantity);
 
   const handleAddAllUnits = async () => {
-    if (articlePackagingUnits.length === 0) return;
+    if (articleOrderUnits.length === 0) return;
     
     setIsAddingAll(true);
     try {
@@ -55,7 +55,7 @@ export const PackagingUnitsTab = () => {
 
       if (!profile?.organization_id) throw new Error('No organization found');
 
-      const unitsToAdd = articlePackagingUnits.map(qty => ({
+      const unitsToAdd = articleOrderUnits.map(qty => ({
         name: `${qty}er`,
         quantity: qty,
         organization_id: profile.organization_id,
@@ -67,8 +67,8 @@ export const PackagingUnitsTab = () => {
 
       if (error) throw error;
 
-      queryClient.invalidateQueries({ queryKey: ['packaging-units'] });
-      toast.success(t('settings.packagingUnitsAddedSuccess', { count: articlePackagingUnits.length }));
+      queryClient.invalidateQueries({ queryKey: ['order-units'] });
+      toast.success(t('settings.packagingUnitsAddedSuccess', { count: articleOrderUnits.length }));
     } catch (error) {
       toast.error(t('settings.packagingUnitsAddError'));
     } finally {
@@ -227,10 +227,10 @@ export const PackagingUnitsTab = () => {
           )}
         </div>
 
-        {articlePackagingUnits.length > 0 && (
+        {articleOrderUnits.length > 0 && (
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-medium text-muted-foreground">{t('settings.packagingUnitsFromArticles')} ({articlePackagingUnits.length})</h3>
+              <h3 className="text-sm font-medium text-muted-foreground">{t('settings.packagingUnitsFromArticles')} ({articleOrderUnits.length})</h3>
               <Button 
                 size="sm" 
                 variant="outline"
@@ -244,7 +244,7 @@ export const PackagingUnitsTab = () => {
             </div>
             <p className="text-xs text-muted-foreground">{t('settings.packagingUnitsFromArticlesDesc')}</p>
             <div className="flex flex-wrap gap-2">
-              {articlePackagingUnits.map((qty) => (
+              {articleOrderUnits.map((qty) => (
                 <Badge 
                   key={qty} 
                   variant="outline" 

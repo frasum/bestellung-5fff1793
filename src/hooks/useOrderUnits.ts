@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
 
-export interface PackagingUnit {
+export interface OrderUnit {
   id: string;
   organization_id: string;
   name: string;
@@ -12,9 +12,9 @@ export interface PackagingUnit {
   updated_at: string;
 }
 
-export const usePackagingUnits = () => {
+export const useOrderUnits = () => {
   return useQuery({
-    queryKey: ['packaging-units'],
+    queryKey: ['order-units'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('order_units')
@@ -22,14 +22,14 @@ export const usePackagingUnits = () => {
         .order('name', { ascending: true });
 
       if (error) throw error;
-      return data as PackagingUnit[];
+      return data as OrderUnit[];
     },
     staleTime: 10 * 60 * 1000,
     gcTime: 30 * 60 * 1000,
   });
 };
 
-export const useCreatePackagingUnit = () => {
+export const useCreateOrderUnit = () => {
   const queryClient = useQueryClient();
   const { user } = useAuth();
 
@@ -57,7 +57,7 @@ export const useCreatePackagingUnit = () => {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['packaging-units'] });
+      queryClient.invalidateQueries({ queryKey: ['order-units'] });
       toast.success('Bestelleinheit hinzugefügt');
     },
     onError: (error: Error) => {
@@ -70,7 +70,7 @@ export const useCreatePackagingUnit = () => {
   });
 };
 
-export const useUpdatePackagingUnit = () => {
+export const useUpdateOrderUnit = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -86,7 +86,7 @@ export const useUpdatePackagingUnit = () => {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['packaging-units'] });
+      queryClient.invalidateQueries({ queryKey: ['order-units'] });
       toast.success('Bestelleinheit aktualisiert');
     },
     onError: () => {
@@ -95,7 +95,7 @@ export const useUpdatePackagingUnit = () => {
   });
 };
 
-export const useDeletePackagingUnit = () => {
+export const useDeleteOrderUnit = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -108,7 +108,7 @@ export const useDeletePackagingUnit = () => {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['packaging-units'] });
+      queryClient.invalidateQueries({ queryKey: ['order-units'] });
       toast.success('Bestelleinheit gelöscht');
     },
     onError: () => {

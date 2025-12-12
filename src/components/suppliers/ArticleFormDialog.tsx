@@ -13,7 +13,7 @@ import { cn } from '@/lib/utils';
 import { Article } from '@/hooks/useArticles';
 import { Supplier } from '@/hooks/useSuppliers';
 import { articleSchema, ArticleFormData } from './schemas';
-import { usePackagingUnits, useCreatePackagingUnit } from '@/hooks/usePackagingUnits';
+import { useOrderUnits, useCreateOrderUnit } from '@/hooks/useOrderUnits';
 
 interface ArticleFormDialogProps {
   open: boolean;
@@ -42,8 +42,8 @@ export const ArticleFormDialog = ({
   const [customPackagingQuantity, setCustomPackagingQuantity] = useState('');
   const [customPackagingName, setCustomPackagingName] = useState('');
   
-  const { data: packagingUnits = [] } = usePackagingUnits();
-  const createPackagingUnit = useCreatePackagingUnit();
+  const { data: orderUnits = [] } = useOrderUnits();
+  const createOrderUnit = useCreateOrderUnit();
 
   const form = useForm<ArticleFormData>({
     resolver: zodResolver(articleSchema),
@@ -188,7 +188,7 @@ export const ArticleFormDialog = ({
                         {field.value ? (
                           <span className="flex items-center gap-2">
                             <Package className="h-3.5 w-3.5 text-muted-foreground" />
-                            {packagingUnits.find(pu => String(pu.quantity) === field.value)?.name || field.value}
+                            {orderUnits.find(pu => String(pu.quantity) === field.value)?.name || field.value}
                           </span>
                         ) : (
                           <span className="text-muted-foreground">Auswählen</span>
@@ -226,7 +226,7 @@ export const ArticleFormDialog = ({
                                   }
                                 }}
                               />
-                              {customPackagingQuantity && !packagingUnits.find(pu => pu.quantity === parseInt(customPackagingQuantity)) && (
+                              {customPackagingQuantity && !orderUnits.find(pu => pu.quantity === parseInt(customPackagingQuantity)) && (
                                 <div className="space-y-2 pt-2 border-t">
                                   <p className="text-xs text-muted-foreground">Als neue VPE speichern:</p>
                                   <Input
@@ -238,9 +238,9 @@ export const ArticleFormDialog = ({
                                   <Button 
                                     size="sm" 
                                     className="w-full h-8"
-                                    disabled={!customPackagingName || createPackagingUnit.isPending}
+                                    disabled={!customPackagingName || createOrderUnit.isPending}
                                     onClick={() => {
-                                      createPackagingUnit.mutate({
+                                      createOrderUnit.mutate({
                                         name: customPackagingName,
                                         quantity: parseInt(customPackagingQuantity)
                                       }, {
@@ -261,7 +261,7 @@ export const ArticleFormDialog = ({
                             </div>
                           </CommandEmpty>
                           <CommandGroup heading="Gespeicherte VPE">
-                            {packagingUnits.map((pu) => (
+                            {orderUnits.map((pu) => (
                               <CommandItem 
                                 key={pu.id} 
                                 value={pu.name}
