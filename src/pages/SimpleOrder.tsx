@@ -150,7 +150,7 @@ const SimpleOrder = () => {
   const [selectedLocationId, setSelectedLocationId] = useState<string | null>(null);
   const [isLocationLocked, setIsLocationLocked] = useState(false);
   const [selectedSupplierId, setSelectedSupplierId] = useState<string | null>(null);
-  const [validationErrors, setValidationErrors] = useState<{ name?: boolean; location?: boolean }>({});
+  const [validationErrors, setValidationErrors] = useState<{ name?: boolean; location?: boolean; deliveryDate?: boolean }>({});
   const [deliveryDate, setDeliveryDate] = useState<Date | undefined>(undefined);
   const [timeWindow, setTimeWindow] = useState<string>('flexible');
   const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set());
@@ -326,13 +326,16 @@ const SimpleOrder = () => {
   };
 
   const validateForm = (): boolean => {
-    const errors: { name?: boolean; location?: boolean } = {};
+    const errors: { name?: boolean; location?: boolean; deliveryDate?: boolean } = {};
     
     if (!isEmployeeNameLocked && !employeeName.trim()) {
       errors.name = true;
     }
     if (!selectedLocationId) {
       errors.location = true;
+    }
+    if (!deliveryDate) {
+      errors.deliveryDate = true;
     }
     
     setValidationErrors(errors);
@@ -734,6 +737,7 @@ const SimpleOrder = () => {
             onDeliveryDateChange={setDeliveryDate}
             timeWindow={timeWindow}
             onTimeWindowChange={setTimeWindow}
+            hasError={validationErrors.deliveryDate}
           />
           <ArticleList
             articles={articles}

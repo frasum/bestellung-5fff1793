@@ -12,6 +12,7 @@ interface DeliveryDateSectionProps {
   onDeliveryDateChange: (date: Date | undefined) => void;
   timeWindow: string;
   onTimeWindowChange: (window: string) => void;
+  hasError?: boolean;
 }
 
 const TIME_WINDOWS = [
@@ -36,6 +37,7 @@ export const DeliveryDateSection = ({
   onDeliveryDateChange,
   timeWindow,
   onTimeWindowChange,
+  hasError = false,
 }: DeliveryDateSectionProps) => {
   const { t, i18n } = useTranslation();
   const locale = getDateLocale(i18n.language);
@@ -60,7 +62,8 @@ export const DeliveryDateSection = ({
               variant="outline"
               className={cn(
                 "w-full justify-start text-left font-normal h-14 text-base touch-manipulation",
-                !deliveryDate && "text-muted-foreground"
+                !deliveryDate && "text-muted-foreground",
+                hasError && "border-destructive ring-1 ring-destructive"
               )}
             >
               <CalendarIcon className="mr-3 h-5 w-5" />
