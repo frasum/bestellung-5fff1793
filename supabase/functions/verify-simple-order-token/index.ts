@@ -171,15 +171,47 @@ serve(async (req) => {
       }
     }
 
-    // Get all locations for the organization
-    const { data: locations, error: locationsError } = await supabase
-      .from('locations')
-      .select('id, name, short_code')
-      .eq('organization_id', tokenData.organization_id)
-      .order('name', { ascending: true });
-
-    if (locationsError) {
-      console.error('Error fetching locations:', locationsError);
+    // Get locations - filtered by employee_locations if employee is assigned
+    let locations: any[] = [];
+    
+    if (employeeId) {
+      // Employee is assigned - only get their permitted locations
+      const { data: employeeLocations, error: empLocError } = await supabase
+        .from('employee_locations')
+        .select('location:locations(id, name, short_code)')
+        .eq('employee_id', employeeId);
+      
+      if (empLocError) {
+        console.error('Error fetching employee locations:', empLocError);
+      } else if (employeeLocations && employeeLocations.length > 0) {
+        // Use only employee's permitted locations
+        locations = employeeLocations
+          .map(el => el.location)
+          .filter(Boolean)
+          .sort((a: any, b: any) => a.name.localeCompare(b.name));
+        console.log(`Employee ${employeeId} has ${locations.length} permitted locations`);
+      } else {
+        // Fallback: No employee_locations configured, show all
+        console.log(`No employee_locations configured for ${employeeId}, showing all`);
+        const { data: allLocations } = await supabase
+          .from('locations')
+          .select('id, name, short_code')
+          .eq('organization_id', tokenData.organization_id)
+          .order('name', { ascending: true });
+        locations = allLocations || [];
+      }
+    } else {
+      // No employee - show all organization locations
+      const { data: allLocations, error: locationsError } = await supabase
+        .from('locations')
+        .select('id, name, short_code')
+        .eq('organization_id', tokenData.organization_id)
+        .order('name', { ascending: true });
+      
+      if (locationsError) {
+        console.error('Error fetching locations:', locationsError);
+      }
+      locations = allLocations || [];
     }
 
     console.log(`Token verified. Multi-supplier: ${isMultiSupplier}, Suppliers: ${suppliers.length}, Articles: ${articles.length}, Locations: ${locations?.length || 0}, Employee: ${tokenData.employee_name || 'not set'}`);
