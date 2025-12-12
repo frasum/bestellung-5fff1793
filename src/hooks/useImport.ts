@@ -93,6 +93,8 @@ export const useImportArticles = () => {
           unit: a.unit?.trim() || 'pcs',
           price: parseFloat(a.price?.replace(',', '.')) || 0,
           category: a.category?.trim() || null,
+          reference_price: a.reference_price ? parseFloat(a.reference_price.replace(',', '.')) : null,
+          reference_unit: a.reference_unit?.trim() || null,
           is_active: true,
         };
       }).filter((a): a is NonNullable<typeof a> => a !== null && !!a.name);

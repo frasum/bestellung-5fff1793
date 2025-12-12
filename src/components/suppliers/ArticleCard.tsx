@@ -81,6 +81,11 @@ export const ArticleCard = memo(({
               <span className="ml-1 text-primary font-medium">({article.packaging_unit}er)</span>
             )}
           </p>
+          {article.reference_price && article.reference_unit && (
+            <p className="text-xs text-muted-foreground/70 italic">
+              (€{Number(article.reference_price).toFixed(2)}/{article.reference_unit})
+            </p>
+          )}
         </div>
       </div>
       

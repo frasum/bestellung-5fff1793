@@ -337,17 +337,24 @@ export const ArticleTable = ({
                           </TableCell>
                           <TableCell className="hidden sm:table-cell text-muted-foreground py-2">{article.suppliers?.name}</TableCell>
                           <TableCell className="text-right font-medium py-2">
-                            <div className="flex items-center justify-end gap-1">
-                              <span>
-                                €{Number(article.price).toFixed(2)}
-                                <span className="text-xs text-muted-foreground ml-1">
-                                  /{article.unit}
-                                  {article.packaging_unit && article.packaging_unit > 1 && (
-                                    <span className="ml-1 text-primary font-medium">({article.packaging_unit}er)</span>
-                                  )}
+                            <div className="flex flex-col items-end gap-0.5">
+                              <div className="flex items-center justify-end gap-1">
+                                <span>
+                                  €{Number(article.price).toFixed(2)}
+                                  <span className="text-xs text-muted-foreground ml-1">
+                                    /{article.unit}
+                                    {article.packaging_unit && article.packaging_unit > 1 && (
+                                      <span className="ml-1 text-primary font-medium">({article.packaging_unit}er)</span>
+                                    )}
+                                  </span>
                                 </span>
-                              </span>
-                              <PriceHistoryPopover articleId={article.id} articleName={article.name} />
+                                <PriceHistoryPopover articleId={article.id} articleName={article.name} />
+                              </div>
+                              {article.reference_price && article.reference_unit && (
+                                <span className="text-xs text-muted-foreground/70 italic">
+                                  (€{Number(article.reference_price).toFixed(2)}/{article.reference_unit})
+                                </span>
+                              )}
                             </div>
                           </TableCell>
                         </TableRow>
