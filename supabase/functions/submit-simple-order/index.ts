@@ -294,6 +294,13 @@ serve(async (req) => {
         ? `${deliveryAddress.address_line1}, ${deliveryAddress.postal_code} ${deliveryAddress.city}`
         : locationName;
 
+      // Fetch organization data (including test_mode_enabled) before creating order
+      const { data: orgData } = await supabase
+        .from('organizations')
+        .select('name, test_mode_enabled')
+        .eq('id', tokenData.organization_id)
+        .single();
+
       // Create order
       const { data: order, error: orderError } = await supabase
         .from('orders')
@@ -308,6 +315,7 @@ serve(async (req) => {
           status: 'pending',
           notes: `EasyOrder: ${employee_name}${delivery_date ? ` | Lieferdatum: ${delivery_date}` : ''}${time_window ? ` | Zeitfenster: ${time_window}` : ''}`,
           employee_id: tokenData.employee_id || null,
+          is_test_order: orgData?.test_mode_enabled || false,
         })
         .select()
         .single();
@@ -345,12 +353,7 @@ serve(async (req) => {
         );
       }
 
-      // Fetch organization name for email
-      const { data: orgData } = await supabase
-        .from('organizations')
-        .select('name')
-        .eq('id', tokenData.organization_id)
-        .single();
+      // orgData already fetched above with name and test_mode_enabled
 
       // Send email to supplier
       try {
