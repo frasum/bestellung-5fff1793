@@ -267,10 +267,27 @@ export const SupplierTable = ({
                                   </TableCell>
                                   <TableCell className="py-1.5 text-right">
                                     <div className="flex justify-end gap-0.5">
-                                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onEditArticle(article)}>
+                                      <Button 
+                                        variant="ghost" 
+                                        size="icon" 
+                                        className="h-7 w-7" 
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          console.log('Edit article clicked:', article.id, article.name);
+                                          onEditArticle(article);
+                                        }}
+                                      >
                                         <Pencil className="w-3 h-3" />
                                       </Button>
-                                      <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => onDeleteArticle(article)}>
+                                      <Button 
+                                        variant="ghost" 
+                                        size="icon" 
+                                        className="h-7 w-7 text-destructive hover:text-destructive" 
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          onDeleteArticle(article);
+                                        }}
+                                      >
                                         <Trash2 className="w-3 h-3" />
                                       </Button>
                                     </div>
