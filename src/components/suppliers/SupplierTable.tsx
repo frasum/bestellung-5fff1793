@@ -185,7 +185,8 @@ export const SupplierTable = ({
                               <TableHead className="h-8 text-xs text-center w-[80px]">Menge</TableHead>
                               <TableHead className="h-8 text-xs">Artikel</TableHead>
                               <TableHead className="h-8 text-xs hidden md:table-cell">Beschreibung</TableHead>
-                              <TableHead className="h-8 text-xs text-right">Preis</TableHead>
+                              <TableHead className="h-8 text-xs">Einheit</TableHead>
+                              <TableHead className="h-8 text-xs text-right">Preis (€)</TableHead>
                               <TableHead className="h-8 text-xs text-right w-[80px]">Aktionen</TableHead>
                             </TableRow>
                           </TableHeader>
@@ -258,9 +259,11 @@ export const SupplierTable = ({
                                       {article.description || '-'}
                                     </p>
                                   </TableCell>
+                                  <TableCell className="py-1.5 text-sm">
+                                    {article.unit}
+                                  </TableCell>
                                   <TableCell className="py-1.5 text-right text-sm">
-                                    €{Number(article.price).toFixed(2)}
-                                    <span className="text-xs text-muted-foreground ml-1">/{article.unit}</span>
+                                    {Number(article.price).toFixed(2)}
                                   </TableCell>
                                   <TableCell className="py-1.5 text-right">
                                     <div className="flex justify-end gap-0.5 opacity-0 group-hover/article:opacity-100 transition-opacity">
