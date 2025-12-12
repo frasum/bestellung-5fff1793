@@ -8,8 +8,10 @@ import { useSupplierAnnualRevenue } from '@/hooks/useSupplierAnnualRevenue';
 import { useSuppliers } from '@/hooks/useSuppliers';
 import { useArticles } from '@/hooks/useArticles';
 import { useInventorySessions, useInventoryItems } from '@/hooks/useInventory';
+import { useLocations } from '@/hooks/useLocations';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import {
   Select,
   SelectContent,
@@ -17,6 +19,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible';
 import {
   Table,
   TableBody,
@@ -42,10 +49,139 @@ import {
   Line,
 } from 'recharts';
 import { format, subMonths, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns';
-import { Download, TrendingUp, TrendingDown, Euro, ShoppingCart, Users, Loader2, Package, BarChart3, ClipboardList } from 'lucide-react';
+import { Download, TrendingUp, TrendingDown, Euro, ShoppingCart, Users, Loader2, Package, BarChart3, ClipboardList, ChevronRight, MapPin } from 'lucide-react';
 import { InventoryTab } from '@/components/reports/InventoryTab';
+import { cn } from '@/lib/utils';
 
 const COLORS = ['hsl(var(--primary))', 'hsl(var(--accent))', 'hsl(142, 76%, 36%)', 'hsl(38, 92%, 50%)', 'hsl(0, 84%, 60%)', 'hsl(262, 83%, 58%)'];
+
+// Recent Orders Card Component
+const RecentOrdersCard = () => {
+  const { t, i18n } = useTranslation();
+  const navigate = useNavigate();
+  const { data: orders, isLoading } = useOrders();
+  const { data: locations } = useLocations();
+  const [openOrders, setOpenOrders] = useState<Set<string>>(new Set());
+  
+  const recentOrders = useMemo(() => {
+    if (!orders) return [];
+    return orders.slice(0, 5);
+  }, [orders]);
+
+  const statusColors: Record<string, string> = {
+    pending: 'bg-warning/20 text-warning',
+    confirmed: 'bg-success/20 text-success',
+    processing: 'bg-purple-500/20 text-purple-500',
+    shipped: 'bg-cyan-500/20 text-cyan-500',
+    delivered: 'bg-success/20 text-success',
+    cancelled: 'bg-destructive/20 text-destructive',
+  };
+
+  if (isLoading) {
+    return (
+      <Card>
+        <CardContent className="p-4 flex items-center justify-center">
+          <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card>
+      <CardHeader className="pb-2">
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-base font-semibold">{t('dashboard.recentOrders')}</CardTitle>
+          <Button variant="ghost" size="sm" onClick={() => navigate('/orders')} className="text-xs">
+            {t('common.viewAll', 'Alle anzeigen')}
+          </Button>
+        </div>
+      </CardHeader>
+      <CardContent className="pt-0">
+        {recentOrders.length > 0 ? (
+          <div className="space-y-2">
+            {recentOrders.map((order) => {
+              const isExpanded = openOrders.has(order.id);
+              return (
+                <Collapsible
+                  key={order.id}
+                  open={isExpanded}
+                  onOpenChange={() => {
+                    setOpenOrders(prev => {
+                      const next = new Set(prev);
+                      if (next.has(order.id)) {
+                        next.delete(order.id);
+                      } else {
+                        next.add(order.id);
+                      }
+                      return next;
+                    });
+                  }}
+                >
+                  <CollapsibleTrigger asChild>
+                    <button className="w-full flex items-center justify-between p-2.5 bg-muted/50 hover:bg-muted rounded-lg transition-colors text-left">
+                      <div className="flex items-center gap-2 min-w-0 flex-1">
+                        <ChevronRight className={cn("w-4 h-4 shrink-0 transition-transform text-muted-foreground", isExpanded && "rotate-90")} />
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-sm font-medium text-foreground truncate">
+                              {order.suppliers?.name || t('common.unknown')}
+                            </span>
+                            <Badge 
+                              variant="outline" 
+                              className={`text-[10px] px-1.5 py-0 ${statusColors[order.status] || ''}`}
+                            >
+                              {t(`orders.status.${order.status}`)}
+                            </Badge>
+                            {order.location_id && locations && (() => {
+                              const loc = locations.find(l => l.id === order.location_id);
+                              return loc ? (
+                                <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+                                  <MapPin className="w-3 h-3 mr-0.5" />
+                                  {loc.short_code || loc.name}
+                                </Badge>
+                              ) : null;
+                            })()}
+                          </div>
+                          <span className="text-xs text-muted-foreground">
+                            {format(new Date(order.created_at), 'dd.MM.yy, HH:mm')}
+                          </span>
+                        </div>
+                      </div>
+                      <span className="text-sm font-medium text-foreground whitespace-nowrap ml-2">
+                        €{Number(order.total_amount).toLocaleString(i18n.language)}
+                      </span>
+                    </button>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <div className="mt-1 ml-6 p-3 bg-muted/30 rounded-lg space-y-1.5">
+                      {order.order_items && order.order_items.length > 0 ? (
+                        order.order_items.map((item) => (
+                          <div key={item.id} className="flex justify-between text-sm gap-2">
+                            <span className="text-foreground truncate">{item.article_name}</span>
+                            <span className="text-muted-foreground whitespace-nowrap">
+                              {item.quantity} {item.unit} • €{Number(item.total_price).toFixed(2)}
+                            </span>
+                          </div>
+                        ))
+                      ) : (
+                        <span className="text-sm text-muted-foreground">{t('orders.noItems', 'Keine Artikel')}</span>
+                      )}
+                    </div>
+                  </CollapsibleContent>
+                </Collapsible>
+              );
+            })}
+          </div>
+        ) : (
+          <p className="text-sm text-muted-foreground py-4 text-center">
+            {t('orders.noOrders', 'Noch keine Bestellungen vorhanden')}
+          </p>
+        )}
+      </CardContent>
+    </Card>
+  );
+};
 
 // Quick Overview KPIs Component
 const QuickOverviewKPIs = () => {
@@ -347,6 +483,9 @@ const Reports = () => {
           <TabsContent value="overview" className="space-y-6 mt-4">
             {/* Quick Overview KPIs */}
             <QuickOverviewKPIs />
+
+            {/* Recent Orders */}
+            <RecentOrdersCard />
             
             {/* Time Range & Export */}
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 sm:justify-end">
