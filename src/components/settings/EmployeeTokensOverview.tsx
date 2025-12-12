@@ -4,10 +4,12 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { User, ChevronDown, ChevronRight, Copy, QrCode, Pencil, Trash2, ExternalLink, Printer, Package, Link2, Phone, Mail, MessageCircle } from 'lucide-react';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { User, ChevronDown, ChevronRight, Copy, QrCode, Pencil, Trash2, ExternalLink, Printer, Package, Link2, Phone, Mail, MessageCircle, KeyRound, Shield, ShieldAlert } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface EmployeeTokensOverviewProps {
@@ -15,6 +17,7 @@ interface EmployeeTokensOverviewProps {
   onEdit: (token: any) => void;
   onToggleActive: (id: string, isActive: boolean) => void;
   onDelete: (id: string) => void;
+  onUpdateEmployeePin?: (employeeId: string, pinCode: string | null) => Promise<void>;
 }
 
 const LANGUAGES = [
@@ -24,11 +27,58 @@ const LANGUAGES = [
   { code: 'vi', name: 'Tiếng Việt' },
 ];
 
-export function EmployeeTokensOverview({ tokens, onEdit, onToggleActive, onDelete }: EmployeeTokensOverviewProps) {
+export function EmployeeTokensOverview({ tokens, onEdit, onToggleActive, onDelete, onUpdateEmployeePin }: EmployeeTokensOverviewProps) {
   const { t } = useTranslation();
   const { toast } = useToast();
   const [expandedSuppliers, setExpandedSuppliers] = useState<Set<string>>(new Set());
   const [selectedQrToken, setSelectedQrToken] = useState<string | null>(null);
+  
+  // PIN Dialog state
+  const [pinDialogToken, setPinDialogToken] = useState<any | null>(null);
+  const [pinValue, setPinValue] = useState('');
+  const [isSavingPin, setIsSavingPin] = useState(false);
+
+  const openPinDialog = (token: any) => {
+    setPinDialogToken(token);
+    setPinValue(token.employee?.pin_code || '');
+  };
+
+  const closePinDialog = () => {
+    setPinDialogToken(null);
+    setPinValue('');
+  };
+
+  const handleSavePin = async () => {
+    if (!pinDialogToken?.employee?.id || !onUpdateEmployeePin) return;
+    
+    setIsSavingPin(true);
+    try {
+      await onUpdateEmployeePin(
+        pinDialogToken.employee.id, 
+        pinValue.length === 4 ? pinValue : null
+      );
+      toast({
+        title: pinValue.length === 4 ? 'PIN gespeichert' : 'PIN entfernt',
+        description: pinValue.length === 4 
+          ? `PIN für ${pinDialogToken.employee.name} wurde gesetzt.`
+          : `PIN für ${pinDialogToken.employee.name} wurde entfernt.`,
+      });
+      closePinDialog();
+    } catch (error) {
+      toast({
+        title: 'Fehler',
+        description: 'PIN konnte nicht gespeichert werden.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSavingPin(false);
+    }
+  };
+
+  const generateRandomPin = () => {
+    const randomPin = String(Math.floor(1000 + Math.random() * 9000));
+    setPinValue(randomPin);
+  };
 
   // Group tokens by supplier
   const groupedTokens = useMemo(() => {
@@ -259,6 +309,20 @@ export function EmployeeTokensOverview({ tokens, onEdit, onToggleActive, onDelet
                                 <Badge variant={token.is_active ? 'default' : 'destructive'} className="text-xs">
                                   {token.is_active ? 'Aktiv' : 'Inaktiv'}
                                 </Badge>
+                                {/* PIN Status Badge for Auto-Approve employees */}
+                                {token.employee?.auto_approve_orders && (
+                                  token.employee?.pin_code ? (
+                                    <Badge variant="outline" className="text-xs border-green-500 text-green-600">
+                                      <Shield className="h-3 w-3 mr-1" />
+                                      PIN aktiv
+                                    </Badge>
+                                  ) : (
+                                    <Badge variant="outline" className="text-xs border-amber-500 text-amber-600">
+                                      <ShieldAlert className="h-3 w-3 mr-1" />
+                                      Kein PIN
+                                    </Badge>
+                                  )
+                                )}
                               </div>
                               {(token.employee?.phone || token.employee?.email) && (
                                 <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
@@ -291,6 +355,18 @@ export function EmployeeTokensOverview({ tokens, onEdit, onToggleActive, onDelet
                               <Button variant="ghost" size="icon" onClick={() => onEdit(token)} title="Bearbeiten">
                                 <Pencil className="h-4 w-4" />
                               </Button>
+                              {/* PIN Edit Button for Auto-Approve employees */}
+                              {token.employee?.auto_approve_orders && onUpdateEmployeePin && (
+                                <Button 
+                                  variant="ghost" 
+                                  size="icon" 
+                                  onClick={() => openPinDialog(token)}
+                                  title="PIN bearbeiten"
+                                  className={token.employee?.pin_code ? "text-green-600 hover:text-green-700" : "text-amber-600 hover:text-amber-700"}
+                                >
+                                  <KeyRound className="h-4 w-4" />
+                                </Button>
+                              )}
                               <Button variant="ghost" size="icon" onClick={() => copyToClipboard(token.token)} title="Link kopieren">
                                 <Copy className="h-4 w-4" />
                               </Button>
@@ -404,6 +480,77 @@ export function EmployeeTokensOverview({ tokens, onEdit, onToggleActive, onDelet
           </DialogContent>
         </Dialog>
       )}
+
+      {/* PIN Edit Dialog */}
+      <Dialog open={!!pinDialogToken} onOpenChange={(open) => !open && closePinDialog()}>
+        <DialogContent className="max-w-xs">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <KeyRound className="h-5 w-5" />
+              PIN bearbeiten
+            </DialogTitle>
+            <DialogDescription>
+              PIN für {pinDialogToken?.employee?.name || 'Mitarbeiter'}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="pin-edit">4-stelliger PIN-Code</Label>
+              <Input
+                id="pin-edit"
+                type="text"
+                inputMode="numeric"
+                maxLength={4}
+                pattern="[0-9]*"
+                value={pinValue}
+                onChange={(e) => {
+                  const value = e.target.value.replace(/\D/g, '').slice(0, 4);
+                  setPinValue(value);
+                }}
+                placeholder="z.B. 1234"
+                className="font-mono text-center tracking-widest text-lg"
+              />
+              {pinValue && pinValue.length !== 4 && pinValue.length > 0 && (
+                <p className="text-xs text-destructive">
+                  PIN muss genau 4 Ziffern haben
+                </p>
+              )}
+            </div>
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={generateRandomPin}
+                className="flex-1"
+              >
+                Generieren
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setPinValue('')}
+                className="flex-1"
+                disabled={!pinValue}
+              >
+                Entfernen
+              </Button>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={closePinDialog}>
+              Abbrechen
+            </Button>
+            <Button 
+              onClick={handleSavePin} 
+              disabled={isSavingPin || (pinValue.length > 0 && pinValue.length !== 4)}
+            >
+              {isSavingPin ? 'Speichern...' : 'Speichern'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

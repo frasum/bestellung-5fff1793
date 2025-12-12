@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Plus, Pencil, Trash2, Phone, Mail, User, UserCheck, UserX, MapPin, ChevronDown, ChevronRight, Package, Copy, MessageCircle, ExternalLink, QrCode, Zap } from 'lucide-react';
+import { Plus, Pencil, Trash2, Phone, Mail, User, UserCheck, UserX, MapPin, ChevronDown, ChevronRight, Package, Copy, MessageCircle, ExternalLink, QrCode, Zap, KeyRound, Shield, ShieldAlert } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -89,6 +89,11 @@ export function EmployeesTab() {
   const [expandedLocations, setExpandedLocations] = useState<Set<string>>(new Set());
   const [isMigratingTokens, setIsMigratingTokens] = useState(false);
   const [hasMigrated, setHasMigrated] = useState(false);
+  
+  // PIN Quick-Edit Dialog
+  const [pinDialogEmployee, setPinDialogEmployee] = useState<Employee | null>(null);
+  const [pinValue, setPinValue] = useState('');
+  const [isSavingPin, setIsSavingPin] = useState(false);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -263,6 +268,49 @@ export function EmployeesTab() {
   const generateQrCodeUrl = (token: string) => {
     const url = encodeURIComponent(getOrderUrl(token));
     return `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${url}`;
+  };
+
+  // PIN Quick-Edit handlers
+  const openPinDialog = (employee: Employee) => {
+    setPinDialogEmployee(employee);
+    setPinValue(employee.pin_code || '');
+  };
+
+  const closePinDialog = () => {
+    setPinDialogEmployee(null);
+    setPinValue('');
+  };
+
+  const handleSavePin = async () => {
+    if (!pinDialogEmployee) return;
+    
+    setIsSavingPin(true);
+    try {
+      await updateEmployee.mutateAsync({
+        id: pinDialogEmployee.id,
+        pin_code: pinValue.length === 4 ? pinValue : null,
+      });
+      toast({
+        title: pinValue.length === 4 ? 'PIN gespeichert' : 'PIN entfernt',
+        description: pinValue.length === 4 
+          ? `PIN für ${pinDialogEmployee.name} wurde gesetzt.`
+          : `PIN für ${pinDialogEmployee.name} wurde entfernt.`,
+      });
+      closePinDialog();
+    } catch (error) {
+      toast({
+        title: 'Fehler',
+        description: 'PIN konnte nicht gespeichert werden.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSavingPin(false);
+    }
+  };
+
+  const generateRandomPin = () => {
+    const randomPin = String(Math.floor(1000 + Math.random() * 9000));
+    setPinValue(randomPin);
   };
 
   const handleSubmit = async () => {
@@ -550,6 +598,20 @@ export function EmployeesTab() {
                               Auto-Freigabe
                             </Badge>
                           )}
+                          {/* PIN Status Badge for Auto-Approve employees */}
+                          {employee.auto_approve_orders && (
+                            employee.pin_code ? (
+                              <Badge variant="outline" className="text-xs border-green-500 text-green-600">
+                                <Shield className="h-3 w-3 mr-1" />
+                                PIN aktiv
+                              </Badge>
+                            ) : (
+                              <Badge variant="outline" className="text-xs border-amber-500 text-amber-600">
+                                <ShieldAlert className="h-3 w-3 mr-1" />
+                                Kein PIN
+                              </Badge>
+                            )
+                          )}
                           {!employee.is_active && (
                             <Badge variant="secondary">Inaktiv</Badge>
                           )}
@@ -653,6 +715,18 @@ export function EmployeesTab() {
                               <ExternalLink className="h-4 w-4" />
                             </Button>
                           </>
+                        )}
+                        {/* PIN Quick-Edit Button for Auto-Approve employees */}
+                        {employee.auto_approve_orders && (
+                          <Button 
+                            variant="ghost" 
+                            size="icon"
+                            className={`h-10 w-10 ${employee.pin_code ? "text-green-600 hover:text-green-700" : "text-amber-600 hover:text-amber-700"}`}
+                            onClick={() => openPinDialog(employee)}
+                            title="PIN bearbeiten"
+                          >
+                            <KeyRound className="h-4 w-4" />
+                          </Button>
                         )}
                         <div className="hidden sm:block w-px h-6 bg-border mx-1" />
                         <Switch
@@ -980,6 +1054,77 @@ export function EmployeesTab() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* PIN Quick-Edit Dialog */}
+      <Dialog open={!!pinDialogEmployee} onOpenChange={(open) => !open && closePinDialog()}>
+        <DialogContent className="max-w-xs">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <KeyRound className="h-5 w-5" />
+              PIN bearbeiten
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <p className="text-sm text-muted-foreground">
+              PIN für <span className="font-medium">{pinDialogEmployee?.name}</span>
+            </p>
+            <div className="space-y-2">
+              <Label htmlFor="pin-quick-edit">4-stelliger PIN-Code</Label>
+              <Input
+                id="pin-quick-edit"
+                type="text"
+                inputMode="numeric"
+                maxLength={4}
+                pattern="[0-9]*"
+                value={pinValue}
+                onChange={(e) => {
+                  const value = e.target.value.replace(/\D/g, '').slice(0, 4);
+                  setPinValue(value);
+                }}
+                placeholder="z.B. 1234"
+                className="font-mono text-center tracking-widest text-lg"
+              />
+              {pinValue && pinValue.length !== 4 && pinValue.length > 0 && (
+                <p className="text-xs text-destructive">
+                  PIN muss genau 4 Ziffern haben
+                </p>
+              )}
+            </div>
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={generateRandomPin}
+                className="flex-1"
+              >
+                Generieren
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setPinValue('')}
+                className="flex-1"
+                disabled={!pinValue}
+              >
+                Entfernen
+              </Button>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={closePinDialog}>
+              Abbrechen
+            </Button>
+            <Button 
+              onClick={handleSavePin} 
+              disabled={isSavingPin || (pinValue.length > 0 && pinValue.length !== 4)}
+            >
+              {isSavingPin ? 'Speichern...' : 'Speichern'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
