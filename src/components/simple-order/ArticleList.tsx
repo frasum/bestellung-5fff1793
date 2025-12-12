@@ -290,12 +290,9 @@ const ArticleCard = ({
           <h3 className="font-semibold text-base leading-tight">
             {article.name}
           </h3>
-          <p className="text-muted-foreground text-sm">
-            {article.description && (
-              <span className="block text-xs text-muted-foreground/80">{article.description}</span>
-            )}
-            <span>{unitInfo}</span>
-          </p>
+          {article.description && (
+            <p className="text-xs text-muted-foreground/80">{article.description}</p>
+          )}
         </div>
 
         {!isOtherSupplier && (
