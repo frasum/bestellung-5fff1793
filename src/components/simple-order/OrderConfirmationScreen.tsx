@@ -1,3 +1,4 @@
+import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -57,6 +58,27 @@ export const OrderConfirmationScreen = ({
 }: OrderConfirmationScreenProps) => {
   const { t, i18n } = useTranslation();
   const { lightTap, heavyTap } = useHapticFeedback();
+  const [animatingIds, setAnimatingIds] = useState<Set<string>>(new Set());
+  const prevQuantitiesRef = useRef<Record<string, number>>({});
+
+  // Track quantity changes for animation
+  useEffect(() => {
+    const newAnimatingIds = new Set<string>();
+    Object.keys(quantities).forEach(id => {
+      if (prevQuantitiesRef.current[id] !== undefined && 
+          prevQuantitiesRef.current[id] !== quantities[id]) {
+        newAnimatingIds.add(id);
+      }
+    });
+    
+    if (newAnimatingIds.size > 0) {
+      setAnimatingIds(newAnimatingIds);
+      const timer = setTimeout(() => setAnimatingIds(new Set()), 200);
+      return () => clearTimeout(timer);
+    }
+    
+    prevQuantitiesRef.current = { ...quantities };
+  }, [quantities]);
 
   // Get only articles that are in the order
   const orderedArticles = articles.filter(article => quantities[article.id] > 0);
@@ -68,6 +90,7 @@ export const OrderConfirmationScreen = ({
 
   const handleQuantityChange = (articleId: string, delta: number) => {
     lightTap();
+    prevQuantitiesRef.current = { ...quantities };
     onQuantityChange(articleId, delta);
   };
 
@@ -184,7 +207,10 @@ export const OrderConfirmationScreen = ({
                         >
                           <Minus className="h-5 w-5" />
                         </Button>
-                        <span className="w-12 text-center text-xl font-bold">
+                        <span className={cn(
+                          "w-12 text-center text-xl font-bold transition-transform duration-200",
+                          animatingIds.has(article.id) && "scale-125 text-primary"
+                        )}>
                           {quantity}
                         </span>
                         <Button
