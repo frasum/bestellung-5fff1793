@@ -267,7 +267,7 @@ export const ArticleOrganizationTab = () => {
               <SelectTrigger className="w-[160px]">
                 <span className="truncate">
                   {filterSupplier === 'all' 
-                    ? t('suppliers.supplier')
+                    ? t('articles.supplier')
                     : suppliers.find(s => s.id === filterSupplier)?.name || filterSupplier
                   }
                 </span>
