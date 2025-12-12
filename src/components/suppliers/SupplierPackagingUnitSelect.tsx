@@ -3,9 +3,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList, CommandInput } from '@/components/ui/command';
-import { Check, ChevronsUpDown, Package } from 'lucide-react';
+import { Check, ChevronsUpDown, Package, Save } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { usePackagingUnits, PackagingUnit } from '@/hooks/usePackagingUnits';
+import { usePackagingUnits, useCreatePackagingUnit } from '@/hooks/usePackagingUnits';
 
 interface SupplierPackagingUnitSelectProps {
   value: string;
@@ -23,7 +23,11 @@ export function SupplierPackagingUnitSelect({
   className,
 }: SupplierPackagingUnitSelectProps) {
   const [open, setOpen] = useState(false);
+  const [customQuantity, setCustomQuantity] = useState('');
+  const [customName, setCustomName] = useState('');
+  
   const { data: packagingUnits = [] } = usePackagingUnits();
+  const createPackagingUnit = useCreatePackagingUnit();
 
   const getDisplayLabel = () => {
     if (!value) return <span className="text-muted-foreground">-</span>;
@@ -57,29 +61,68 @@ export function SupplierPackagingUnitSelect({
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-[220px] p-0" align="start">
+        <PopoverContent className="w-[260px] p-0" align="start">
           <Command>
-            <CommandInput placeholder="VPE suchen..." />
+            <CommandInput 
+              placeholder="VPE suchen..." 
+              value={customQuantity}
+              onValueChange={setCustomQuantity}
+            />
             <CommandList>
               <CommandEmpty>
-                <div className="p-2">
+                <div className="p-2 space-y-2">
                   <Input
                     type="number"
                     inputMode="numeric"
                     min="1"
                     placeholder="Menge eingeben..."
                     className="h-9"
+                    value={customQuantity}
+                    onChange={(e) => setCustomQuantity(e.target.value)}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') {
                         e.preventDefault();
-                        const inputValue = (e.target as HTMLInputElement).value;
-                        if (inputValue) {
-                          onChange(inputValue);
+                        if (customQuantity) {
+                          onChange(customQuantity);
                           setOpen(false);
+                          setCustomQuantity('');
+                          setCustomName('');
                         }
                       }
                     }}
                   />
+                  {customQuantity && !packagingUnits.find(pu => pu.quantity === parseInt(customQuantity)) && (
+                    <div className="space-y-2 pt-2 border-t">
+                      <p className="text-xs text-muted-foreground">Als neue VPE speichern:</p>
+                      <Input
+                        placeholder={`z.B. ${customQuantity}er Kiste`}
+                        className="h-9"
+                        value={customName}
+                        onChange={(e) => setCustomName(e.target.value)}
+                      />
+                      <Button 
+                        size="sm" 
+                        className="w-full h-8"
+                        disabled={!customName || createPackagingUnit.isPending}
+                        onClick={() => {
+                          createPackagingUnit.mutate({
+                            name: customName,
+                            quantity: parseInt(customQuantity)
+                          }, {
+                            onSuccess: () => {
+                              onChange(customQuantity);
+                              setOpen(false);
+                              setCustomQuantity('');
+                              setCustomName('');
+                            }
+                          });
+                        }}
+                      >
+                        <Save className="mr-2 h-3 w-3" />
+                        VPE speichern
+                      </Button>
+                    </div>
+                  )}
                 </div>
               </CommandEmpty>
               <CommandGroup heading="Gespeicherte VPE">
@@ -90,6 +133,7 @@ export function SupplierPackagingUnitSelect({
                     onSelect={() => {
                       onChange(String(pu.quantity));
                       setOpen(false);
+                      setCustomQuantity('');
                     }}
                   >
                     <Check className={cn("mr-2 h-4 w-4", value === String(pu.quantity) ? "opacity-100" : "opacity-0")} />
@@ -105,6 +149,7 @@ export function SupplierPackagingUnitSelect({
                   onSelect={() => {
                     onChange('');
                     setOpen(false);
+                    setCustomQuantity('');
                   }}
                   className="text-muted-foreground"
                 >
