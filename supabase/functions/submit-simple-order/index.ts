@@ -170,11 +170,11 @@ serve(async (req) => {
     const supplierId = requestSupplierId || tokenData.supplier_id;
 
     // Fetch supplier details
-    let supplierData: { id: string; name: string; email: string } | null = null;
+    let supplierData: { id: string; name: string; email: string; customer_number: string | null } | null = null;
     if (supplierId) {
       const { data: supplier } = await supabase
         .from('suppliers')
-        .select('id, name, email')
+        .select('id, name, email, customer_number')
         .eq('id', supplierId)
         .single();
       supplierData = supplier;
@@ -321,13 +321,35 @@ serve(async (req) => {
         );
       }
 
+      // Fetch organization name for email
+      const { data: orgData } = await supabase
+        .from('organizations')
+        .select('name')
+        .eq('id', tokenData.organization_id)
+        .single();
+
       // Send email to supplier
       try {
+        const notesText = `EasyOrder: ${employee_name}${delivery_date ? ` | Lieferdatum: ${delivery_date}` : ''}${time_window ? ` | Zeitfenster: ${time_window}` : ''}`;
+        
         await supabase.functions.invoke('send-order-email', {
           body: {
             orderId: order.id,
+            orderNumber: orderNumber,
             supplierEmail: supplierData.email,
             supplierName: supplierData.name,
+            restaurantName: orgData?.name || 'Restaurant',
+            deliveryAddress: deliveryAddressText,
+            items: orderItems.map((item: PreparedOrderItem) => ({
+              article_name: item.article_name,
+              quantity: item.quantity,
+              unit: item.unit,
+              unit_price: item.unit_price,
+              total_price: item.total_price,
+            })),
+            totalAmount: totalAmount,
+            notes: notesText,
+            customerNumber: supplierData.customer_number || null,
           },
         });
         
