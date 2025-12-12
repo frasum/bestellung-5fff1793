@@ -1,6 +1,10 @@
 import { useTranslation } from 'react-i18next';
 import { Card } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { ShoppingCart, Check, ChevronRight } from 'lucide-react';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
+import { cn } from '@/lib/utils';
 
 interface Supplier {
   id: string;
@@ -12,6 +16,9 @@ interface SupplierSelectionProps {
   suppliers: Supplier[];
   onSelect: (supplierId: string) => void;
   getArticleCount: (supplierId: string) => number;
+  getCartCount?: (supplierId: string) => number;
+  onViewCart?: () => void;
+  totalCartItems?: number;
 }
 
 // Sort suppliers: by sort_order if set, otherwise alphabetically
@@ -30,9 +37,12 @@ export const SupplierSelection = ({
   suppliers,
   onSelect,
   getArticleCount,
+  getCartCount,
+  onViewCart,
+  totalCartItems = 0,
 }: SupplierSelectionProps) => {
   const { t } = useTranslation();
-  const { mediumTap } = useHapticFeedback();
+  const { mediumTap, heavyTap } = useHapticFeedback();
   const sortedSuppliers = sortSuppliers(suppliers);
 
   const handleSelect = (supplierId: string) => {
@@ -40,27 +50,77 @@ export const SupplierSelection = ({
     onSelect(supplierId);
   };
 
+  const handleViewCart = () => {
+    heavyTap();
+    onViewCart?.();
+  };
+
   return (
     <div className="max-w-2xl mx-auto p-4">
       <h2 className="text-xl font-semibold mb-4">
-        {t('simpleOrder.selectSupplier', 'เลือกผู้จำหน่าย / Lieferant wählen')}
+        {t('simpleOrder.selectSupplier', 'Lieferant wählen')}
       </h2>
       <div className="space-y-3">
-        {sortedSuppliers.map((supplier) => (
-          <Card
-            key={supplier.id}
-            className="p-5 min-h-[72px] cursor-pointer hover:shadow-md transition-all active:scale-[0.98] touch-manipulation"
-            onClick={() => handleSelect(supplier.id)}
-          >
-            <div className="flex items-center justify-between">
-              <h3 className="text-xl font-semibold">{supplier.name}</h3>
-              <span className="text-base text-muted-foreground font-medium">
-                {getArticleCount(supplier.id)} {t('simpleOrder.articles', 'Artikel')}
-              </span>
-            </div>
-          </Card>
-        ))}
+        {sortedSuppliers.map((supplier) => {
+          const cartCount = getCartCount?.(supplier.id) || 0;
+          const hasItems = cartCount > 0;
+
+          return (
+            <Card
+              key={supplier.id}
+              className={cn(
+                "p-5 min-h-[72px] cursor-pointer transition-all active:scale-[0.98] touch-manipulation",
+                hasItems 
+                  ? "border-primary/50 bg-primary/5 hover:bg-primary/10" 
+                  : "hover:shadow-md"
+              )}
+              onClick={() => handleSelect(supplier.id)}
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  {hasItems && (
+                    <div className="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center">
+                      <Check className="h-5 w-5 text-primary" />
+                    </div>
+                  )}
+                  <div>
+                    <h3 className="text-xl font-semibold">{supplier.name}</h3>
+                    {hasItems && (
+                      <span className="text-sm text-primary font-medium">
+                        {cartCount} {t('simpleOrder.inCart', 'im Warenkorb')}
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-base text-muted-foreground font-medium">
+                    {getArticleCount(supplier.id)} {t('simpleOrder.articles', 'Artikel')}
+                  </span>
+                  <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                </div>
+              </div>
+            </Card>
+          );
+        })}
       </div>
+
+      {/* Floating Cart Button */}
+      {totalCartItems > 0 && onViewCart && (
+        <div className="fixed bottom-0 left-0 right-0 p-4 pb-safe bg-background/95 backdrop-blur-sm border-t">
+          <div className="max-w-2xl mx-auto">
+            <Button
+              className="w-full h-16 text-lg font-semibold touch-manipulation"
+              onClick={handleViewCart}
+            >
+              <ShoppingCart className="mr-2 h-6 w-6" />
+              {t('simpleOrder.viewCart', 'Warenkorb anzeigen')}
+              <Badge variant="secondary" className="ml-2 text-lg px-3 py-1">
+                {totalCartItems}
+              </Badge>
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
