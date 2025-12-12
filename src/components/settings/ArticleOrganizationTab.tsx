@@ -13,10 +13,9 @@ import { useArticles, useBulkUpdateArticles } from '@/hooks/useArticles';
 import { useSuppliers } from '@/hooks/useSuppliers';
 import { useCategories } from '@/hooks/useCategories';
 import { useOrderUnits } from '@/hooks/useOrderUnits';
+import { TOP_CATEGORIES } from '@/components/suppliers/constants';
 import { toast } from 'sonner';
 
-
-const TOP_CATEGORIES = ['Küche', 'Getränke', 'Bedarfsartikel'] as const;
 type TopCategory = typeof TOP_CATEGORIES[number];
 
 interface ArticleWithTopCategory {
