@@ -20,5 +20,7 @@ export const ARTICLE_IMPORT_FIELDS: ImportField[] = [
   { name: 'unit', label: 'Unit', required: false },
   { name: 'sku', label: 'SKU', required: false },
   { name: 'category', label: 'Category', required: false },
-  { name: 'description', label: 'Description', required: false }
+  { name: 'description', label: 'Description', required: false },
+  { name: 'reference_price', label: 'Reference Price', required: false },
+  { name: 'reference_unit', label: 'Reference Unit', required: false },
 ];
