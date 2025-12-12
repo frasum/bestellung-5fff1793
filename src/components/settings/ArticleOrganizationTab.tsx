@@ -12,6 +12,7 @@ import { Search, CheckSquare, Square, Loader2 } from 'lucide-react';
 import { useArticles, useBulkUpdateArticles } from '@/hooks/useArticles';
 import { useSuppliers } from '@/hooks/useSuppliers';
 import { useCategories } from '@/hooks/useCategories';
+import { useOrderUnits } from '@/hooks/useOrderUnits';
 import { toast } from 'sonner';
 
 
@@ -23,6 +24,7 @@ interface ArticleWithTopCategory {
   name: string;
   category: string | null;
   top_category: string | null;
+  order_unit_id: string | null;
   supplier_id: string;
   suppliers?: { id: string; name: string } | null;
 }
@@ -32,17 +34,20 @@ export const ArticleOrganizationTab = () => {
   const { data: articles = [], isLoading: articlesLoading } = useArticles();
   const { data: suppliers = [] } = useSuppliers();
   const { data: categories = [] } = useCategories();
+  const { data: orderUnits = [] } = useOrderUnits();
   const bulkUpdate = useBulkUpdateArticles();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [filterTopCategory, setFilterTopCategory] = useState<string>('all');
   const [filterMainCategory, setFilterMainCategory] = useState<string>('all');
   const [filterSupplier, setFilterSupplier] = useState<string>('all');
+  const [filterOrderUnit, setFilterOrderUnit] = useState<string>('all');
   const [filterUnassigned, setFilterUnassigned] = useState(false);
+  const [filterNoOrderUnit, setFilterNoOrderUnit] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   
 
-  // Cast articles to include top_category
+  // Cast articles to include top_category and order_unit_id
   const articlesWithTopCategory = articles as unknown as ArticleWithTopCategory[];
 
   // Statistics
@@ -50,14 +55,18 @@ export const ArticleOrganizationTab = () => {
     const total = articlesWithTopCategory.length;
     const withTopCategory = articlesWithTopCategory.filter(a => a.top_category).length;
     const withMainCategory = articlesWithTopCategory.filter(a => a.category).length;
+    const withOrderUnit = articlesWithTopCategory.filter(a => a.order_unit_id).length;
     return {
       total,
       withTopCategory,
       withMainCategory,
+      withOrderUnit,
       missingTopCategory: total - withTopCategory,
       missingMainCategory: total - withMainCategory,
+      missingOrderUnit: total - withOrderUnit,
       progressTop: total > 0 ? (withTopCategory / total) * 100 : 0,
       progressMain: total > 0 ? (withMainCategory / total) * 100 : 0,
+      progressOrderUnit: total > 0 ? (withOrderUnit / total) * 100 : 0,
     };
   }, [articlesWithTopCategory]);
 
@@ -81,7 +90,13 @@ export const ArticleOrganizationTab = () => {
         if (filterSupplier !== 'all' && article.supplier_id !== filterSupplier) {
           return false;
         }
+        if (filterOrderUnit !== 'all' && article.order_unit_id !== filterOrderUnit) {
+          return false;
+        }
         if (filterUnassigned && article.top_category) {
+          return false;
+        }
+        if (filterNoOrderUnit && article.order_unit_id) {
           return false;
         }
         return true;
@@ -99,7 +114,7 @@ export const ArticleOrganizationTab = () => {
         if (supplierCompare !== 0) return supplierCompare;
         return a.name.localeCompare(b.name, 'de');
       });
-  }, [articlesWithTopCategory, searchQuery, filterTopCategory, filterMainCategory, filterSupplier, filterUnassigned]);
+  }, [articlesWithTopCategory, searchQuery, filterTopCategory, filterMainCategory, filterSupplier, filterOrderUnit, filterUnassigned, filterNoOrderUnit]);
 
   // Selection handlers
   const toggleSelect = (id: string) => {
@@ -147,8 +162,21 @@ export const ArticleOrganizationTab = () => {
     );
   };
 
+  const handleBulkAssignOrderUnit = (orderUnitId: string) => {
+    if (selectedIds.size === 0) return;
+    bulkUpdate.mutate(
+      { ids: Array.from(selectedIds), updates: { order_unit_id: orderUnitId } as any },
+      {
+        onSuccess: () => {
+          setSelectedIds(new Set());
+          toast.success(t('settings.articleOrganization.bulkAssignSuccess', { count: selectedIds.size }));
+        },
+      }
+    );
+  };
+
   // Inline update handler
-  const handleInlineUpdate = (id: string, field: 'top_category' | 'category', value: string | null) => {
+  const handleInlineUpdate = (id: string, field: 'top_category' | 'category' | 'order_unit_id', value: string | null) => {
     bulkUpdate.mutate({
       ids: [id],
       updates: { [field]: value } as any,
@@ -161,6 +189,13 @@ export const ArticleOrganizationTab = () => {
       return 'bg-red-50 dark:bg-red-950/30';
     }
     return '';
+  };
+
+  // Format order unit display
+  const formatOrderUnit = (unitId: string | null) => {
+    if (!unitId) return null;
+    const unit = orderUnits.find(u => u.id === unitId);
+    return unit ? `${unit.quantity}× ${unit.name}` : null;
   };
 
   if (articlesLoading) {
@@ -180,7 +215,7 @@ export const ArticleOrganizationTab = () => {
           <CardDescription>{t('settings.articleOrganization.statisticsDesc')}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
                 <span>{t('settings.articleOrganization.topCategoryProgress')}</span>
@@ -209,6 +244,20 @@ export const ArticleOrganizationTab = () => {
                 </p>
               )}
             </div>
+            <div className="space-y-2">
+              <div className="flex justify-between text-sm">
+                <span>{t('settings.articleOrganization.orderUnitProgress')}</span>
+                <span className="text-muted-foreground">
+                  {stats.withOrderUnit}/{stats.total}
+                </span>
+              </div>
+              <Progress value={stats.progressOrderUnit} className="h-2" />
+              {stats.missingOrderUnit > 0 && (
+                <p className="text-xs text-muted-foreground">
+                  {t('settings.articleOrganization.missingOrderUnit', { count: stats.missingOrderUnit })}
+                </p>
+              )}
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -232,7 +281,7 @@ export const ArticleOrganizationTab = () => {
               />
             </div>
             <Select value={filterTopCategory} onValueChange={setFilterTopCategory}>
-              <SelectTrigger className="w-[160px]">
+              <SelectTrigger className="w-[140px]">
                 <span className="truncate">
                   {filterTopCategory === 'all' 
                     ? t('settings.articleOrganization.topCategory')
@@ -248,7 +297,7 @@ export const ArticleOrganizationTab = () => {
               </SelectContent>
             </Select>
             <Select value={filterMainCategory} onValueChange={setFilterMainCategory}>
-              <SelectTrigger className="w-[160px]">
+              <SelectTrigger className="w-[140px]">
                 <span className="truncate">
                   {filterMainCategory === 'all' 
                     ? t('settings.articleOrganization.mainCategory')
@@ -263,8 +312,26 @@ export const ArticleOrganizationTab = () => {
                 ))}
               </SelectContent>
             </Select>
+            <Select value={filterOrderUnit} onValueChange={setFilterOrderUnit}>
+              <SelectTrigger className="w-[140px]">
+                <span className="truncate">
+                  {filterOrderUnit === 'all' 
+                    ? t('settings.orderUnitsShort')
+                    : formatOrderUnit(filterOrderUnit) || filterOrderUnit
+                  }
+                </span>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{t('common.all')}</SelectItem>
+                {orderUnits.map(unit => (
+                  <SelectItem key={unit.id} value={unit.id}>
+                    {unit.quantity}× {unit.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             <Select value={filterSupplier} onValueChange={setFilterSupplier}>
-              <SelectTrigger className="w-[160px]">
+              <SelectTrigger className="w-[140px]">
                 <span className="truncate">
                   {filterSupplier === 'all' 
                     ? t('articles.supplier')
@@ -286,6 +353,13 @@ export const ArticleOrganizationTab = () => {
             >
               {t('settings.articleOrganization.onlyUnassigned')}
             </Button>
+            <Button
+              variant={filterNoOrderUnit ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setFilterNoOrderUnit(!filterNoOrderUnit)}
+            >
+              {t('settings.articleOrganization.onlyNoOrderUnit')}
+            </Button>
           </div>
 
           {/* Bulk Actions Toolbar */}
@@ -295,7 +369,7 @@ export const ArticleOrganizationTab = () => {
                 {t('settings.articleOrganization.selectedCount', { count: selectedIds.size })}
               </Badge>
               <Select onValueChange={(v) => handleBulkAssignTopCategory(v as TopCategory)}>
-                <SelectTrigger className="w-[180px] h-8">
+                <SelectTrigger className="w-[160px] h-8">
                   <SelectValue placeholder={t('settings.articleOrganization.assignTopCategory')} />
                 </SelectTrigger>
                 <SelectContent>
@@ -305,12 +379,24 @@ export const ArticleOrganizationTab = () => {
                 </SelectContent>
               </Select>
               <Select onValueChange={handleBulkAssignMainCategory}>
-                <SelectTrigger className="w-[180px] h-8">
+                <SelectTrigger className="w-[160px] h-8">
                   <SelectValue placeholder={t('settings.articleOrganization.assignMainCategory')} />
                 </SelectTrigger>
                 <SelectContent>
                   {categories.map(cat => (
                     <SelectItem key={cat.id} value={cat.name}>{cat.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select onValueChange={handleBulkAssignOrderUnit}>
+                <SelectTrigger className="w-[160px] h-8">
+                  <SelectValue placeholder={t('settings.articleOrganization.assignOrderUnit')} />
+                </SelectTrigger>
+                <SelectContent>
+                  {orderUnits.map(unit => (
+                    <SelectItem key={unit.id} value={unit.id}>
+                      {unit.quantity}× {unit.name}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -343,12 +429,13 @@ export const ArticleOrganizationTab = () => {
                   <TableHead className="hidden sm:table-cell">{t('articles.supplier')}</TableHead>
                   <TableHead>{t('settings.articleOrganization.topCategory')}</TableHead>
                   <TableHead>{t('settings.articleOrganization.mainCategory')}</TableHead>
+                  <TableHead>{t('settings.orderUnitsShort')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredArticles.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                       {t('settings.articleOrganization.noArticles')}
                     </TableCell>
                   </TableRow>
@@ -377,7 +464,7 @@ export const ArticleOrganizationTab = () => {
                           value={article.top_category || 'none'}
                           onValueChange={(v) => handleInlineUpdate(article.id, 'top_category', v === 'none' ? null : v)}
                         >
-                          <SelectTrigger className="h-8 w-[130px]">
+                          <SelectTrigger className="h-8 w-[120px]">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
@@ -395,7 +482,7 @@ export const ArticleOrganizationTab = () => {
                           value={article.category || 'none'}
                           onValueChange={(v) => handleInlineUpdate(article.id, 'category', v === 'none' ? null : v)}
                         >
-                          <SelectTrigger className="h-8 w-[130px]">
+                          <SelectTrigger className="h-8 w-[120px]">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
@@ -404,6 +491,28 @@ export const ArticleOrganizationTab = () => {
                             </SelectItem>
                             {categories.map(cat => (
                               <SelectItem key={cat.id} value={cat.name}>{cat.name}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </TableCell>
+                      <TableCell>
+                        <Select
+                          value={article.order_unit_id || 'none'}
+                          onValueChange={(v) => handleInlineUpdate(article.id, 'order_unit_id', v === 'none' ? null : v)}
+                        >
+                          <SelectTrigger className="h-8 w-[120px]">
+                            <SelectValue>
+                              {article.order_unit_id ? formatOrderUnit(article.order_unit_id) : <span className="text-muted-foreground">—</span>}
+                            </SelectValue>
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="none">
+                              <span className="text-muted-foreground">—</span>
+                            </SelectItem>
+                            {orderUnits.map(unit => (
+                              <SelectItem key={unit.id} value={unit.id}>
+                                {unit.quantity}× {unit.name}
+                              </SelectItem>
                             ))}
                           </SelectContent>
                         </Select>

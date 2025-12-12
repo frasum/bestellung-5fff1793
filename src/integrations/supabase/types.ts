@@ -71,6 +71,7 @@ export type Database = {
           id: string
           is_active: boolean
           name: string
+          order_unit_id: string | null
           organization_id: string
           packaging_unit: number | null
           price: number
@@ -91,6 +92,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           name: string
+          order_unit_id?: string | null
           organization_id: string
           packaging_unit?: number | null
           price: number
@@ -111,6 +113,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           name?: string
+          order_unit_id?: string | null
           organization_id?: string
           packaging_unit?: number | null
           price?: number
@@ -124,6 +127,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "articles_order_unit_id_fkey"
+            columns: ["order_unit_id"]
+            isOneToOne: false
+            referencedRelation: "order_units"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "articles_organization_id_fkey"
             columns: ["organization_id"]
