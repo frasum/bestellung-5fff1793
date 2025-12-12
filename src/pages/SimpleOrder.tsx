@@ -17,6 +17,7 @@ import { EmployeeOrderEdit } from '@/components/simple-order/EmployeeOrderEdit';
 import { OrderConfirmationScreen } from '@/components/simple-order/OrderConfirmationScreen';
 import { PinEntryScreen } from '@/components/simple-order/PinEntryScreen';
 import { LocationDateStep } from '@/components/simple-order/LocationDateStep';
+import { MultiSupplierCartOverview } from '@/components/simple-order/MultiSupplierCartOverview';
 
 interface Article {
   id: string;
@@ -734,13 +735,32 @@ const SimpleOrder = () => {
 
   // Confirmation screen for auto-approve employees (multi-supplier support)
   if (status === 'confirming' || status === 'submitting') {
-    // For multi-supplier: show all articles with quantities
+    // For multi-supplier: show MultiSupplierCartOverview
+    if (tokenData?.is_multi_supplier) {
+      return (
+        <MultiSupplierCartOverview
+          articles={allArticles}
+          quantities={quantities}
+          suppliers={suppliers}
+          deliveryDate={deliveryDate}
+          timeWindow={timeWindow}
+          locationName={getSelectedLocationName()}
+          onQuantityChange={handleConfirmationQuantityChange}
+          onRemoveItem={handleRemoveItem}
+          onBack={() => setStatus('ready')}
+          onConfirm={handleSubmit}
+          isSubmitting={status === 'submitting'}
+        />
+      );
+    }
+    
+    // Single supplier: show OrderConfirmationScreen
     const orderedArticles = allArticles.filter(a => quantities[a.id] > 0);
     return (
       <OrderConfirmationScreen
         articles={orderedArticles}
         quantities={quantities}
-        supplierName={tokenData?.is_multi_supplier ? t('simpleOrder.multipleSuppliers', 'Mehrere Lieferanten') : getCurrentSupplierName()}
+        supplierName={getCurrentSupplierName()}
         deliveryDate={deliveryDate}
         timeWindow={timeWindow}
         onQuantityChange={handleConfirmationQuantityChange}
