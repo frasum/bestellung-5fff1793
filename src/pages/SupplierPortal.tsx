@@ -804,7 +804,6 @@ const SupplierPortal = () => {
                         <TableHead className="w-[60px]">VPE</TableHead>
                         <TableHead className="w-[100px]">Preis (€)</TableHead>
                         <TableHead className="w-[120px]">Bestellwert (365T) *</TableHead>
-                        <TableHead className="w-[120px]">Kategorie</TableHead>
                         <TableHead className="w-[80px]"></TableHead>
                       </TableRow>
                     </TableHeader>
@@ -949,16 +948,6 @@ const SupplierPortal = () => {
                                   </div>
                                 )}
                               </div>
-                            </TableCell>
-                            <TableCell>
-                              <SupplierCategorySelect
-                                value={(getDisplayValue(article, 'category') as string) || ''}
-                                categories={categories}
-                                onChange={(value) => handleFieldChange(article.id, 'category', value)}
-                                onCreateCategory={handleCreateCategory}
-                                hasPending={hasPendingChange(article.id, 'category')}
-                                pendingInfo={getPendingChangeForField(article.id, 'category')}
-                              />
                             </TableCell>
                             <TableCell>
                               <Button
