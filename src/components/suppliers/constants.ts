@@ -1,6 +1,6 @@
 import { ImportField } from '@/components/CsvImportDialog';
 
-export const TOP_CATEGORIES = ['Küche', 'Getränke', 'Bedarfsartikel'] as const;
+export const TOP_CATEGORIES = ['Küche', 'Getränke', 'Non-Food'] as const;
 export const DEFAULT_UNITS = ['kg', 'g', 'L', 'ml', 'Stk', 'Karton', 'Bund', 'Packung'];
 
 export const SUPPLIER_IMPORT_FIELDS: ImportField[] = [
