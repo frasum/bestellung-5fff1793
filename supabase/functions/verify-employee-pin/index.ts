@@ -6,6 +6,9 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+const MAX_ATTEMPTS = 3;
+const RATE_LIMIT_WINDOW_MINUTES = 15;
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -27,6 +30,37 @@ serve(async (req) => {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    // --- SERVER-SIDE RATE LIMITING ---
+    // Clean up old rate limit entries first
+    await supabase.rpc('cleanup_pin_verification_rate_limits');
+
+    // Check current rate limit count for this token
+    const windowStart = new Date(Date.now() - RATE_LIMIT_WINDOW_MINUTES * 60 * 1000).toISOString();
+    const { count: attemptCount, error: countError } = await supabase
+      .from('pin_verification_rate_limits')
+      .select('*', { count: 'exact', head: true })
+      .eq('token', token)
+      .gte('created_at', windowStart);
+
+    if (countError) {
+      console.error('Error checking rate limit:', countError);
+    }
+
+    const currentAttempts = attemptCount || 0;
+    console.log(`Rate limit check: ${currentAttempts}/${MAX_ATTEMPTS} attempts in last ${RATE_LIMIT_WINDOW_MINUTES} minutes`);
+
+    if (currentAttempts >= MAX_ATTEMPTS) {
+      console.log('Rate limit exceeded for token');
+      return new Response(
+        JSON.stringify({ 
+          valid: false, 
+          error: 'rate_limit_exceeded',
+          remainingMinutes: RATE_LIMIT_WINDOW_MINUTES 
+        }),
+        { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
     // Get token with employee info including pin_code
     const { data: tokenData, error: tokenError } = await supabase
@@ -63,8 +97,34 @@ serve(async (req) => {
     
     console.log('PIN verification result:', isValid ? 'valid' : 'invalid');
 
+    // Record this attempt for rate limiting (only for failed attempts)
+    if (!isValid) {
+      const { error: insertError } = await supabase
+        .from('pin_verification_rate_limits')
+        .insert({ token });
+      
+      if (insertError) {
+        console.error('Error recording rate limit:', insertError);
+      }
+      
+      const remainingAttempts = MAX_ATTEMPTS - currentAttempts - 1;
+      return new Response(
+        JSON.stringify({ 
+          valid: false,
+          remainingAttempts: Math.max(0, remainingAttempts)
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // On successful verification, clear rate limit entries for this token
+    await supabase
+      .from('pin_verification_rate_limits')
+      .delete()
+      .eq('token', token);
+
     return new Response(
-      JSON.stringify({ valid: isValid }),
+      JSON.stringify({ valid: true }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
