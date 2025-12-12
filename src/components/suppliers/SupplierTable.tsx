@@ -30,6 +30,8 @@ interface SupplierTableProps {
   onShowLocations: (supplier: Supplier) => void;
   onPrintOrderList: (supplier: Supplier, articles: Article[]) => void;
   onArticleChangeClick?: (article: Article, supplier: Supplier) => void;
+  onEditArticle: (article: Article) => void;
+  onDeleteArticle: (article: Article) => void;
   invitingSupplierId: string | null;
   sendingInvitation: boolean;
   getCartQuantity: (articleId: string) => number;
@@ -56,6 +58,8 @@ export const SupplierTable = ({
   onShowLocations,
   onPrintOrderList,
   onArticleChangeClick,
+  onEditArticle,
+  onDeleteArticle,
   invitingSupplierId,
   sendingInvitation,
   getCartQuantity,
@@ -182,13 +186,14 @@ export const SupplierTable = ({
                               <TableHead className="h-8 text-xs">Artikel</TableHead>
                               <TableHead className="h-8 text-xs hidden md:table-cell">Beschreibung</TableHead>
                               <TableHead className="h-8 text-xs text-right">Preis</TableHead>
+                              <TableHead className="h-8 text-xs text-right w-[80px]">Aktionen</TableHead>
                             </TableRow>
                           </TableHeader>
                           <TableBody>
                             {supplierArticles.map(article => {
                               const cartQty = getCartQuantity(article.id);
                               return (
-                                <TableRow key={article.id} className={`border-b border-border/30 hover:bg-muted/50 ${cartQty > 0 ? 'bg-destructive/10 text-destructive' : ''}`}>
+                                <TableRow key={article.id} className={cn("group/article border-b border-border/30 hover:bg-muted/50", cartQty > 0 && "bg-destructive/10 text-destructive")}>
                                   <TableCell className="py-1.5">
                                     <div className="flex items-center justify-center gap-1 md:gap-1.5">
                                       <Button 
@@ -256,6 +261,16 @@ export const SupplierTable = ({
                                   <TableCell className="py-1.5 text-right text-sm">
                                     €{Number(article.price).toFixed(2)}
                                     <span className="text-xs text-muted-foreground ml-1">/{article.unit}</span>
+                                  </TableCell>
+                                  <TableCell className="py-1.5 text-right">
+                                    <div className="flex justify-end gap-0.5 opacity-0 group-hover/article:opacity-100 transition-opacity">
+                                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onEditArticle(article)}>
+                                        <Pencil className="w-3 h-3" />
+                                      </Button>
+                                      <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => onDeleteArticle(article)}>
+                                        <Trash2 className="w-3 h-3" />
+                                      </Button>
+                                    </div>
                                   </TableCell>
                                 </TableRow>
                               );

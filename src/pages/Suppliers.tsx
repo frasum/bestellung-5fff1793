@@ -573,6 +573,11 @@ const Suppliers = () => {
                   setChangesDialogSupplier(supplier);
                   setChangesDialogArticle({ id: article.id, name: article.name });
                 }}
+                onEditArticle={(article) => {
+                  setEditingArticle(article);
+                  setIsArticleDialogOpen(true);
+                }}
+                onDeleteArticle={setDeletingArticle}
                 invitingSupplierId={invitingSupplierId}
                 sendingInvitation={sendingInvitation}
                 getCartQuantity={getCartQuantity}
