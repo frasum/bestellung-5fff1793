@@ -380,6 +380,8 @@
     "supplierUpdatesDesc": "Receive email for important supplier changes",
     "weeklyReport": "Weekly Report",
     "weeklyReportDesc": "Weekly summary of spending and orders",
+    "preorderReceived": "EasyOrder Notifications",
+    "preorderReceivedDesc": "Receive email when a new pre-order is submitted",
     "emailTemplates": "Email Templates",
     "emailTemplateTitle": "Order Email Template",
     "emailTemplateDescription": "Customize the email template for orders to suppliers",

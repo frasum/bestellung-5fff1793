@@ -25,6 +25,7 @@ export interface NotificationPreferences {
   email_order_status: boolean;
   email_weekly_report: boolean;
   email_supplier_updates: boolean;
+  email_preorder_received: boolean;
 }
 
 export interface Organization {

@@ -375,6 +375,8 @@
     "supplierUpdatesDesc": "Recevoir un e-mail pour les changements importants",
     "weeklyReport": "Rapport hebdomadaire",
     "weeklyReportDesc": "Résumé hebdomadaire des dépenses et commandes",
+    "preorderReceived": "Notifications EasyOrder",
+    "preorderReceivedDesc": "Recevoir un e-mail lors d'une nouvelle précommande",
     "emailTemplates": "Modèles d'e-mail",
     "emailTemplateTitle": "Modèle d'e-mail de commande",
     "emailTemplateDescription": "Personnalisez le modèle d'e-mail pour les commandes aux fournisseurs",

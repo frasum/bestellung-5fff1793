@@ -375,6 +375,8 @@
     "supplierUpdatesDesc": "Nhận email về các thay đổi quan trọng của nhà cung cấp",
     "weeklyReport": "Báo cáo hàng tuần",
     "weeklyReportDesc": "Tóm tắt chi tiêu và đơn hàng hàng tuần",
+    "preorderReceived": "Thông báo EasyOrder",
+    "preorderReceivedDesc": "Nhận email khi có đơn đặt trước mới",
     "emailTemplates": "Mẫu email",
     "emailTemplateTitle": "Mẫu email đơn hàng",
     "emailTemplateDescription": "Tùy chỉnh mẫu email cho đơn hàng gửi đến nhà cung cấp",
