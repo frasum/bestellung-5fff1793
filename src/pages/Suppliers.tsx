@@ -613,7 +613,7 @@ const Suppliers = () => {
                   <ExportMenu
                     filename="articles"
                     title="Artikel"
-                    headers={['Name', 'Lieferant', 'Preis', 'Einheit', 'SKU', 'Kategorie', 'Status']}
+                    headers={['Name', 'Lieferant', 'Preis', 'Einheit', 'SKU', 'Kategorie', 'Status', 'Referenzpreis', 'Referenzeinheit']}
                     getData={() => allArticles?.map(a => [
                       a.name,
                       a.suppliers?.name || '',
@@ -621,7 +621,9 @@ const Suppliers = () => {
                       a.unit,
                       a.sku || '',
                       a.category || '',
-                      a.is_active ? 'Aktiv' : 'Inaktiv'
+                      a.is_active ? 'Aktiv' : 'Inaktiv',
+                      a.reference_price ? `€${Number(a.reference_price).toFixed(2)}` : '',
+                      a.reference_unit || ''
                     ]) || []}
                     disabled={!allArticles?.length}
                   />
