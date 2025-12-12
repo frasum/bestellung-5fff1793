@@ -12,6 +12,8 @@ interface OrderItem {
   unit: string;
   unit_price: number;
   total_price: number;
+  reference_price?: number | null;
+  reference_unit?: string | null;
 }
 
 interface OrderDetails {
@@ -214,6 +216,9 @@ const OrderConfirmed = () => {
                               <p className="font-medium text-foreground">{item.article_name}</p>
                               <p className="text-sm text-muted-foreground">
                                 {item.quantity} {item.unit} × €{item.unit_price.toFixed(2)}
+                                {item.reference_price && item.reference_unit && (
+                                  <span className="text-muted-foreground/70"> (€{item.reference_price.toFixed(2)}/{item.reference_unit})</span>
+                                )}
                               </p>
                             </div>
                             <p className="font-semibold text-foreground">€{item.total_price.toFixed(2)}</p>
