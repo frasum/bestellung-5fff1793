@@ -233,7 +233,12 @@ export const ArticleOrganizationTab = () => {
             </div>
             <Select value={filterTopCategory} onValueChange={setFilterTopCategory}>
               <SelectTrigger className="w-[160px]">
-                <SelectValue placeholder={t('settings.articleOrganization.topCategory')} />
+                <span className="truncate">
+                  {filterTopCategory === 'all' 
+                    ? t('settings.articleOrganization.topCategory')
+                    : filterTopCategory
+                  }
+                </span>
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">{t('common.all')}</SelectItem>
@@ -244,7 +249,12 @@ export const ArticleOrganizationTab = () => {
             </Select>
             <Select value={filterMainCategory} onValueChange={setFilterMainCategory}>
               <SelectTrigger className="w-[160px]">
-                <SelectValue placeholder={t('settings.articleOrganization.mainCategory')} />
+                <span className="truncate">
+                  {filterMainCategory === 'all' 
+                    ? t('settings.articleOrganization.mainCategory')
+                    : filterMainCategory
+                  }
+                </span>
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">{t('common.all')}</SelectItem>
@@ -255,7 +265,12 @@ export const ArticleOrganizationTab = () => {
             </Select>
             <Select value={filterSupplier} onValueChange={setFilterSupplier}>
               <SelectTrigger className="w-[160px]">
-                <SelectValue placeholder={t('suppliers.supplier')} />
+                <span className="truncate">
+                  {filterSupplier === 'all' 
+                    ? t('suppliers.supplier')
+                    : suppliers.find(s => s.id === filterSupplier)?.name || filterSupplier
+                  }
+                </span>
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">{t('common.all')}</SelectItem>
