@@ -540,6 +540,7 @@ export type Database = {
       }
       employees: {
         Row: {
+          auto_approve_orders: boolean
           created_at: string
           email: string | null
           id: string
@@ -551,6 +552,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          auto_approve_orders?: boolean
           created_at?: string
           email?: string | null
           id?: string
@@ -562,6 +564,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          auto_approve_orders?: boolean
           created_at?: string
           email?: string | null
           id?: string
