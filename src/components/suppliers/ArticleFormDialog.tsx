@@ -8,11 +8,12 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
-import { Check, ChevronsUpDown, Loader2, Plus } from 'lucide-react';
+import { Check, ChevronsUpDown, Loader2, Plus, Package } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Article } from '@/hooks/useArticles';
 import { Supplier } from '@/hooks/useSuppliers';
 import { articleSchema, ArticleFormData } from './schemas';
+import { usePackagingUnits } from '@/hooks/usePackagingUnits';
 
 interface ArticleFormDialogProps {
   open: boolean;
@@ -37,6 +38,9 @@ export const ArticleFormDialog = ({
 }: ArticleFormDialogProps) => {
   const [unitPopoverOpen, setUnitPopoverOpen] = useState(false);
   const [customUnit, setCustomUnit] = useState('');
+  const [packagingUnitPopoverOpen, setPackagingUnitPopoverOpen] = useState(false);
+  
+  const { data: packagingUnits = [] } = usePackagingUnits();
 
   const form = useForm<ArticleFormData>({
     resolver: zodResolver(articleSchema),
@@ -168,14 +172,86 @@ export const ArticleFormDialog = ({
               <Input id="article-sku" {...form.register('sku')} placeholder="TOM-001" />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="article-packaging-unit">VPE</Label>
-              <Input 
-                id="article-packaging-unit" 
-                type="number" 
-                inputMode="numeric"
-                min="1"
-                {...form.register('packaging_unit')} 
-                placeholder="z.B. 6" 
+              <Label>VPE</Label>
+              <Controller
+                name="packaging_unit"
+                control={form.control}
+                render={({ field }) => (
+                  <Popover open={packagingUnitPopoverOpen} onOpenChange={setPackagingUnitPopoverOpen}>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" role="combobox" aria-expanded={packagingUnitPopoverOpen} className="w-full justify-between bg-card">
+                        {field.value ? (
+                          <span className="flex items-center gap-2">
+                            <Package className="h-3.5 w-3.5 text-muted-foreground" />
+                            {packagingUnits.find(pu => String(pu.quantity) === field.value)?.name || field.value}
+                          </span>
+                        ) : (
+                          <span className="text-muted-foreground">Auswählen</span>
+                        )}
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[220px] p-0" align="start">
+                      <Command>
+                        <CommandInput placeholder="VPE suchen oder eingeben..." />
+                        <CommandList>
+                          <CommandEmpty>
+                            <div className="p-2">
+                              <Input
+                                type="number"
+                                inputMode="numeric"
+                                min="1"
+                                placeholder="Menge eingeben..."
+                                className="h-9"
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') {
+                                    e.preventDefault();
+                                    const value = (e.target as HTMLInputElement).value;
+                                    if (value) {
+                                      field.onChange(value);
+                                      setPackagingUnitPopoverOpen(false);
+                                    }
+                                  }
+                                }}
+                              />
+                            </div>
+                          </CommandEmpty>
+                          <CommandGroup heading="Gespeicherte VPE">
+                            {packagingUnits.map((pu) => (
+                              <CommandItem 
+                                key={pu.id} 
+                                value={pu.name}
+                                onSelect={() => {
+                                  field.onChange(String(pu.quantity));
+                                  setPackagingUnitPopoverOpen(false);
+                                }}
+                              >
+                                <Check className={cn("mr-2 h-4 w-4", field.value === String(pu.quantity) ? "opacity-100" : "opacity-0")} />
+                                <Package className="mr-2 h-4 w-4 text-muted-foreground" />
+                                <span>{pu.name}</span>
+                                <span className="ml-auto text-muted-foreground text-xs">({pu.quantity})</span>
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                          {field.value && (
+                            <CommandGroup>
+                              <CommandItem
+                                value="clear"
+                                onSelect={() => {
+                                  field.onChange('');
+                                  setPackagingUnitPopoverOpen(false);
+                                }}
+                                className="text-muted-foreground"
+                              >
+                                Keine VPE
+                              </CommandItem>
+                            </CommandGroup>
+                          )}
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+                )}
               />
               {form.formState.errors.packaging_unit && (
                 <p className="text-sm text-destructive">{form.formState.errors.packaging_unit.message}</p>
