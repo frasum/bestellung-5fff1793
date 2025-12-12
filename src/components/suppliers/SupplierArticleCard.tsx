@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Save, Loader2, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { SupplierUnitSelect } from './SupplierUnitSelect';
-import { SupplierCategorySelect } from './SupplierCategorySelect';
+
 import { SupplierPackagingUnitSelect } from './SupplierPackagingUnitSelect';
 
 interface Article {
@@ -272,21 +272,6 @@ export function SupplierArticleCard({
           </div>
         </div>
 
-        {/* Category */}
-        <div>
-          <label className="text-xs text-muted-foreground font-medium">Kategorie</label>
-          <div className="mt-1">
-            <SupplierCategorySelect
-              value={(getDisplayValue('category') as string) || ''}
-              categories={categories}
-              onChange={(value) => onFieldChange(article.id, 'category', value)}
-              onCreateCategory={onCreateCategory}
-              hasPending={hasPendingChange('category')}
-              pendingInfo={getPendingChangeForField('category')}
-              className="h-11"
-            />
-          </div>
-        </div>
 
         {/* Reference Price */}
         <div className="grid grid-cols-2 gap-3">
