@@ -185,7 +185,7 @@ export const ArticleOrganizationTab = () => {
 
   // Row highlight for incomplete articles
   const getRowHighlightClass = (article: ArticleWithTopCategory) => {
-    if (!article.top_category || !article.category) {
+    if (!article.top_category || !article.category || !article.order_unit_id) {
       return 'bg-red-50 dark:bg-red-950/30';
     }
     return '';
