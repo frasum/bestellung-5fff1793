@@ -15,6 +15,7 @@ export interface CartDraft {
   desired_delivery_date: string | null;
   desired_time_window: string | null;
   location_id: string | null;
+  employee_id: string | null;
   items?: CartDraftItem[];
 }
 

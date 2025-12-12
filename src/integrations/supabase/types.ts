@@ -856,6 +856,7 @@ export type Database = {
           delivery_address: string
           email_sent: boolean
           email_sent_at: string | null
+          employee_id: string | null
           id: string
           is_test_order: boolean
           location_id: string | null
@@ -873,6 +874,7 @@ export type Database = {
           delivery_address: string
           email_sent?: boolean
           email_sent_at?: string | null
+          employee_id?: string | null
           id?: string
           is_test_order?: boolean
           location_id?: string | null
@@ -890,6 +892,7 @@ export type Database = {
           delivery_address?: string
           email_sent?: boolean
           email_sent_at?: string | null
+          employee_id?: string | null
           id?: string
           is_test_order?: boolean
           location_id?: string | null
@@ -903,6 +906,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "orders_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "orders_location_id_fkey"
             columns: ["location_id"]

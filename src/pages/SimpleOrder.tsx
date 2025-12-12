@@ -91,6 +91,36 @@ interface Draft {
   items: DraftItem[];
 }
 
+interface CompletedOrderItem {
+  id: string;
+  article_name: string;
+  quantity: number;
+  unit: string;
+  unit_price: number;
+  total_price: number;
+}
+
+interface CompletedOrder {
+  id: string;
+  order_number: string;
+  status: string;
+  total_amount: number;
+  delivery_address: string;
+  notes: string | null;
+  created_at: string;
+  location_id: string | null;
+  location: {
+    id: string;
+    name: string;
+    short_code: string | null;
+  } | null;
+  supplier: {
+    id: string;
+    name: string;
+  } | null;
+  items: CompletedOrderItem[];
+}
+
 type OrderStatus = 'loading' | 'ready' | 'submitting' | 'success' | 'error' | 'viewing-history' | 'editing';
 
 const SimpleOrder = () => {
@@ -119,6 +149,7 @@ const SimpleOrder = () => {
   
   // Order history states
   const [drafts, setDrafts] = useState<Draft[]>([]);
+  const [completedOrders, setCompletedOrders] = useState<CompletedOrder[]>([]);
   const [isLoadingDrafts, setIsLoadingDrafts] = useState(false);
   const [isDeletingDraft, setIsDeletingDraft] = useState<string | null>(null);
   const [editingDraft, setEditingDraft] = useState<Draft | null>(null);
@@ -333,7 +364,7 @@ const SimpleOrder = () => {
     }
   };
 
-  // Fetch employee drafts
+  // Fetch employee drafts and completed orders
   const fetchDrafts = async () => {
     if (!token || !hasEmployee) return;
     
@@ -348,6 +379,7 @@ const SimpleOrder = () => {
         toast.error('Fehler beim Laden der Bestellungen');
       } else {
         setDrafts(data.drafts || []);
+        setCompletedOrders(data.orders || []);
       }
     } catch (err) {
       console.error('Error fetching drafts:', err);
@@ -492,6 +524,7 @@ const SimpleOrder = () => {
     return (
       <EmployeeOrderHistory
         drafts={drafts}
+        orders={completedOrders}
         isLoading={isLoadingDrafts}
         employeeName={employeeName}
         onEdit={handleEditDraft}

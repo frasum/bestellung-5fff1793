@@ -318,7 +318,8 @@ const Orders = () => {
         })),
         draft.desired_delivery_date,
         draft.desired_time_window,
-        draft.location_id
+        draft.location_id,
+        draft.employee_id
       );
       
       // Vorbestellung nach dem Laden löschen
