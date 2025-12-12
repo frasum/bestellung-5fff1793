@@ -177,7 +177,7 @@ export const SupplierTable = ({
                 </TableRow>
                 {isExpanded && supplierArticles.length > 0 && (
                   <TableRow className="bg-muted/30">
-                    <TableCell colSpan={5} className="p-0">
+                    <TableCell colSpan={multiSelectEnabled ? 5 : 4} className="p-0">
                       <div className="p-4 pl-16">
                         <Table>
                           <TableHeader>
@@ -266,7 +266,7 @@ export const SupplierTable = ({
                                     {Number(article.price).toFixed(2)}
                                   </TableCell>
                                   <TableCell className="py-1.5 text-right">
-                                    <div className="flex justify-end gap-0.5 opacity-0 group-hover/article:opacity-100 transition-opacity">
+                                    <div className="flex justify-end gap-0.5">
                                       <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onEditArticle(article)}>
                                         <Pencil className="w-3 h-3" />
                                       </Button>
