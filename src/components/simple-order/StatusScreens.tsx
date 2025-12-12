@@ -51,9 +51,17 @@ interface SuccessScreenProps {
   onNewOrder: () => void;
   onViewOrders?: () => void;
   hasEmployee?: boolean;
+  orderNumber?: string | null;
+  isAutoApproved?: boolean;
 }
 
-export const SuccessScreen = ({ onNewOrder, onViewOrders, hasEmployee = false }: SuccessScreenProps) => {
+export const SuccessScreen = ({ 
+  onNewOrder, 
+  onViewOrders, 
+  hasEmployee = false,
+  orderNumber = null,
+  isAutoApproved = false 
+}: SuccessScreenProps) => {
   const { t } = useTranslation();
   const { success, mediumTap } = useHapticFeedback();
 
@@ -76,10 +84,21 @@ export const SuccessScreen = ({ onNewOrder, onViewOrders, hasEmployee = false }:
       <Card className="p-8 text-center max-w-md w-full">
         <div className="text-6xl mb-4">✅</div>
         <h1 className="text-2xl font-bold text-primary mb-2">
-          {t('simpleOrder.success', 'ส่งสำเร็จ! / Erfolgreich gesendet!')}
+          {isAutoApproved 
+            ? t('simpleOrder.orderSent', 'Bestellung gesendet!')
+            : t('simpleOrder.success', 'ส่งสำเร็จ! / Erfolgreich gesendet!')
+          }
         </h1>
+        {isAutoApproved && orderNumber && (
+          <p className="text-lg font-medium text-muted-foreground mb-2">
+            {t('simpleOrder.orderNumber', 'Bestellnummer')}: {orderNumber}
+          </p>
+        )}
         <p className="text-muted-foreground text-lg mb-6">
-          {t('simpleOrder.successMessage', 'คำสั่งซื้อของคุณถูกส่งเพื่อตรวจสอบแล้ว / Ihre Bestellung wurde zur Prüfung eingereicht.')}
+          {isAutoApproved
+            ? t('simpleOrder.orderSentMessage', 'Ihre Bestellung wurde direkt an den Lieferanten gesendet.')
+            : t('simpleOrder.successMessage', 'คำสั่งซื้อของคุณถูกส่งเพื่อตรวจสอบแล้ว / Ihre Bestellung wurde zur Prüfung eingereicht.')
+          }
         </p>
         <div className="space-y-3">
           <Button

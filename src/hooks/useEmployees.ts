@@ -10,6 +10,7 @@ export interface Employee {
   email: string | null;
   notes: string | null;
   is_active: boolean;
+  auto_approve_orders: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -28,6 +29,7 @@ export interface UpdateEmployeeInput {
   email?: string | null;
   notes?: string | null;
   is_active?: boolean;
+  auto_approve_orders?: boolean;
 }
 
 export function useEmployees() {

@@ -96,6 +96,7 @@ export function EmployeesTab() {
     email: '',
     notes: '',
     language: 'th',
+    autoApprove: false,
   });
   
   // New structure: location -> suppliers mapping
@@ -211,7 +212,7 @@ export function EmployeesTab() {
 
   const openCreateDialog = () => {
     setEditingEmployee(null);
-    setFormData({ name: '', phone: '', email: '', notes: '', language: 'th' });
+    setFormData({ name: '', phone: '', email: '', notes: '', language: 'th', autoApprove: false });
     initializeLocationAssignments();
     setIsDialogOpen(true);
   };
@@ -226,6 +227,7 @@ export function EmployeesTab() {
       email: employee.email || '',
       notes: employee.notes || '',
       language: existingToken?.language || 'th',
+      autoApprove: employee.auto_approve_orders || false,
     });
     initializeLocationAssignments(employee.id);
     setIsDialogOpen(true);
@@ -285,6 +287,7 @@ export function EmployeesTab() {
         phone: formData.phone || null,
         email: formData.email || null,
         notes: formData.notes || null,
+        auto_approve_orders: formData.autoApprove,
       });
       // Update locations
       await updateEmployeeLocations.mutateAsync({
@@ -850,6 +853,23 @@ export function EmployeesTab() {
                   </p>
                 </div>
               )}
+
+              {/* Auto-Approve Toggle */}
+              <div className="flex items-center justify-between p-3 border rounded-lg bg-muted/30">
+                <div className="space-y-0.5">
+                  <Label htmlFor="auto-approve" className="text-sm font-medium">
+                    Bestellungen automatisch freigeben
+                  </Label>
+                  <p className="text-xs text-muted-foreground">
+                    EasyOrder-Bestellungen werden direkt an den Lieferanten gesendet
+                  </p>
+                </div>
+                <Switch
+                  id="auto-approve"
+                  checked={formData.autoApprove}
+                  onCheckedChange={(checked) => setFormData({ ...formData, autoApprove: checked })}
+                />
+              </div>
 
               <div>
                 <Label htmlFor="notes">Notizen</Label>

@@ -147,6 +147,10 @@ const SimpleOrder = () => {
   const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set());
   const [hasEmployee, setHasEmployee] = useState(false);
   
+  // Auto-approve response data
+  const [isAutoApproved, setIsAutoApproved] = useState(false);
+  const [orderNumber, setOrderNumber] = useState<string | null>(null);
+  
   // Order history states
   const [drafts, setDrafts] = useState<Draft[]>([]);
   const [completedOrders, setCompletedOrders] = useState<CompletedOrder[]>([]);
@@ -355,6 +359,15 @@ const SimpleOrder = () => {
         return;
       }
 
+      // Handle auto-approve response
+      if (data?.auto_approved) {
+        setIsAutoApproved(true);
+        setOrderNumber(data.order_number || null);
+      } else {
+        setIsAutoApproved(false);
+        setOrderNumber(null);
+      }
+
       setStatus('success');
       setQuantities({});
     } catch (err) {
@@ -510,12 +523,16 @@ const SimpleOrder = () => {
       <SuccessScreen 
         onNewOrder={() => {
           setStatus('ready');
+          setIsAutoApproved(false);
+          setOrderNumber(null);
           if (!isEmployeeNameLocked) {
             setEmployeeName('');
           }
         }}
         onViewOrders={hasEmployee ? handleViewOrders : undefined}
         hasEmployee={hasEmployee}
+        isAutoApproved={isAutoApproved}
+        orderNumber={orderNumber}
       />
     );
   }
