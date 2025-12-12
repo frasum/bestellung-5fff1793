@@ -3,14 +3,101 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { PortalColumnKey, PORTAL_COLUMN_OPTIONS, DEFAULT_VISIBLE_COLUMNS } from '@/hooks/useSupplierPortalSettings';
 import { GripVertical, Eye, EyeOff } from 'lucide-react';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 interface PortalColumnsConfigProps {
   visibleColumns: PortalColumnKey[];
   onChange: (columns: PortalColumnKey[]) => void;
 }
 
+interface SortableColumnItemProps {
+  column: { key: PortalColumnKey; label: string };
+  isChecked: boolean;
+  isRequired: boolean;
+  onToggle: () => void;
+}
+
+function SortableColumnItem({ column, isChecked, isRequired, onToggle }: SortableColumnItemProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: column.key });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`flex items-center gap-3 p-2 rounded-md border bg-card hover:bg-accent/50 transition-colors ${
+        isDragging ? 'opacity-50 shadow-lg z-50' : ''
+      }`}
+    >
+      <button
+        type="button"
+        className="cursor-grab active:cursor-grabbing touch-none"
+        {...attributes}
+        {...listeners}
+      >
+        <GripVertical className="h-4 w-4 text-muted-foreground/50" />
+      </button>
+      <Checkbox
+        id={`col-${column.key}`}
+        checked={isChecked}
+        onCheckedChange={onToggle}
+        disabled={isRequired}
+      />
+      <Label
+        htmlFor={`col-${column.key}`}
+        className="flex-1 cursor-pointer text-sm"
+      >
+        {column.label}
+      </Label>
+      {!isChecked && (
+        <EyeOff className="h-3.5 w-3.5 text-muted-foreground/50" />
+      )}
+    </div>
+  );
+}
+
 export function PortalColumnsConfig({ visibleColumns, onChange }: PortalColumnsConfigProps) {
   const { t } = useTranslation();
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  // Build ordered list: visible columns first (in their order), then hidden columns
+  const orderedColumns = [
+    ...visibleColumns.map(key => PORTAL_COLUMN_OPTIONS.find(opt => opt.key === key)!).filter(Boolean),
+    ...PORTAL_COLUMN_OPTIONS.filter(opt => !visibleColumns.includes(opt.key)),
+  ];
 
   const toggleColumn = (key: PortalColumnKey) => {
     if (visibleColumns.includes(key)) {
@@ -18,11 +105,26 @@ export function PortalColumnsConfig({ visibleColumns, onChange }: PortalColumnsC
       if (visibleColumns.length === 1 && key === 'price') return;
       onChange(visibleColumns.filter(c => c !== key));
     } else {
-      // Add column in the standard order
-      const orderedColumns = PORTAL_COLUMN_OPTIONS
-        .map(opt => opt.key)
-        .filter(k => visibleColumns.includes(k) || k === key);
-      onChange(orderedColumns);
+      // Add column at the end
+      onChange([...visibleColumns, key]);
+    }
+  };
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    
+    if (over && active.id !== over.id) {
+      const oldIndex = orderedColumns.findIndex(col => col.key === active.id);
+      const newIndex = orderedColumns.findIndex(col => col.key === over.id);
+      
+      const newOrder = arrayMove(orderedColumns, oldIndex, newIndex);
+      
+      // Update visible columns to match new order (only keep visible ones)
+      const newVisibleColumns = newOrder
+        .map(col => col.key)
+        .filter(key => visibleColumns.includes(key));
+      
+      onChange(newVisibleColumns);
     }
   };
 
@@ -60,39 +162,36 @@ export function PortalColumnsConfig({ visibleColumns, onChange }: PortalColumnsC
         </div>
       </div>
 
-      <div className="grid gap-3">
-        {PORTAL_COLUMN_OPTIONS.map((option) => {
-          const isChecked = visibleColumns.includes(option.key);
-          const isRequired = option.key === 'price' && visibleColumns.length === 1;
-          
-          return (
-            <div
-              key={option.key}
-              className="flex items-center gap-3 p-2 rounded-md border bg-card hover:bg-accent/50 transition-colors"
-            >
-              <GripVertical className="h-4 w-4 text-muted-foreground/50" />
-              <Checkbox
-                id={`col-${option.key}`}
-                checked={isChecked}
-                onCheckedChange={() => toggleColumn(option.key)}
-                disabled={isRequired}
-              />
-              <Label
-                htmlFor={`col-${option.key}`}
-                className="flex-1 cursor-pointer text-sm"
-              >
-                {option.label}
-              </Label>
-              {!isChecked && (
-                <EyeOff className="h-3.5 w-3.5 text-muted-foreground/50" />
-              )}
-            </div>
-          );
-        })}
-      </div>
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragEnd={handleDragEnd}
+      >
+        <SortableContext
+          items={orderedColumns.map(col => col.key)}
+          strategy={verticalListSortingStrategy}
+        >
+          <div className="grid gap-2">
+            {orderedColumns.map((column) => {
+              const isChecked = visibleColumns.includes(column.key);
+              const isRequired = column.key === 'price' && visibleColumns.length === 1;
+              
+              return (
+                <SortableColumnItem
+                  key={column.key}
+                  column={column}
+                  isChecked={isChecked}
+                  isRequired={isRequired}
+                  onToggle={() => toggleColumn(column.key)}
+                />
+              );
+            })}
+          </div>
+        </SortableContext>
+      </DndContext>
 
       <p className="text-xs text-muted-foreground">
-        {t('settings.visibleColumnsDesc', 'Wählen Sie aus, welche Artikelinformationen Lieferanten im Portal sehen und bearbeiten können.')}
+        {t('settings.visibleColumnsDesc', 'Wählen Sie aus, welche Artikelinformationen Lieferanten im Portal sehen und bearbeiten können. Ziehen Sie die Spalten, um die Reihenfolge zu ändern.')}
       </p>
     </div>
   );
