@@ -17,7 +17,7 @@ export const usePackagingUnits = () => {
     queryKey: ['packaging-units'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('packaging_units')
+        .from('order_units')
         .select('*')
         .order('name', { ascending: true });
 
@@ -44,7 +44,7 @@ export const useCreatePackagingUnit = () => {
       if (!profile?.organization_id) throw new Error('No organization found');
 
       const { data, error } = await supabase
-        .from('packaging_units')
+        .from('order_units')
         .insert({
           name,
           quantity,
@@ -76,7 +76,7 @@ export const useUpdatePackagingUnit = () => {
   return useMutation({
     mutationFn: async ({ id, name, quantity }: { id: string; name: string; quantity: number }) => {
       const { data, error } = await supabase
-        .from('packaging_units')
+        .from('order_units')
         .update({ name, quantity })
         .eq('id', id)
         .select()
@@ -101,7 +101,7 @@ export const useDeletePackagingUnit = () => {
   return useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase
-        .from('packaging_units')
+        .from('order_units')
         .delete()
         .eq('id', id);
 
