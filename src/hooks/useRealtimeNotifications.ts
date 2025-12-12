@@ -4,11 +4,13 @@ import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
+import { useDesktopNotifications } from '@/hooks/useDesktopNotifications';
 
 export const useRealtimeNotifications = () => {
   const queryClient = useQueryClient();
   const { t } = useTranslation();
   const { user } = useAuth();
+  const { showNotification, permission } = useDesktopNotifications();
 
   useEffect(() => {
     // Only subscribe when user is authenticated
@@ -30,11 +32,19 @@ export const useRealtimeNotifications = () => {
           });
           
           // Show toast notification for new EasyOrder
-          const newDraft = payload.new as { name?: string };
+          const newDraft = payload.new as { name?: string; id?: string };
           if (newDraft.name?.startsWith('EasyOrder:')) {
             toast.success(t('drafts.newEasyOrder'), {
               description: newDraft.name,
             });
+
+            // Show desktop notification if tab is not focused
+            if (document.hidden && permission === 'granted') {
+              showNotification(t('drafts.newEasyOrder'), {
+                body: newDraft.name,
+                tag: `easyorder-${newDraft.id}`,
+              });
+            }
           }
         }
       )
@@ -43,5 +53,5 @@ export const useRealtimeNotifications = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [queryClient, t, user]);
+  }, [queryClient, t, user, showNotification, permission]);
 };
