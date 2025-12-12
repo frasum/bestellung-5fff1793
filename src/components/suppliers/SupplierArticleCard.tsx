@@ -187,6 +187,7 @@ export function SupplierArticleCard({
           )}
         </div>
 
+        {/* Row 1: Einheit + Preis */}
         <div className="grid grid-cols-2 gap-3">
           <div>
             <label className="text-xs text-muted-foreground font-medium">Einheit</label>
@@ -202,24 +203,6 @@ export function SupplierArticleCard({
               />
             </div>
           </div>
-          <div>
-            <label className="text-xs text-muted-foreground font-medium">VPE</label>
-            <div className="mt-1">
-              <SupplierPackagingUnitSelect
-                value={packagingUnitInputs[article.id] !== undefined 
-                  ? packagingUnitInputs[article.id]
-                  : getPendingChangeForField('packaging_unit')?.new_value 
-                    ?? (article.packaging_unit !== null ? String(article.packaging_unit) : '')}
-                onChange={(value) => onPackagingUnitChange(article.id, value)}
-                hasPending={hasPendingChange('packaging_unit')}
-                pendingInfo={getPendingChangeForField('packaging_unit')}
-                className="h-11"
-              />
-            </div>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-3">
           <div>
             <label className="text-xs text-muted-foreground font-medium">Preis (€)</label>
             <Input
@@ -240,6 +223,25 @@ export function SupplierArticleCard({
                 </span>
               </p>
             )}
+          </div>
+        </div>
+
+        {/* Row 2: VPE + Bestellwert */}
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="text-xs text-muted-foreground font-medium">VPE</label>
+            <div className="mt-1">
+              <SupplierPackagingUnitSelect
+                value={packagingUnitInputs[article.id] !== undefined 
+                  ? packagingUnitInputs[article.id]
+                  : getPendingChangeForField('packaging_unit')?.new_value 
+                    ?? (article.packaging_unit !== null ? String(article.packaging_unit) : '')}
+                onChange={(value) => onPackagingUnitChange(article.id, value)}
+                hasPending={hasPendingChange('packaging_unit')}
+                pendingInfo={getPendingChangeForField('packaging_unit')}
+                className="h-11"
+              />
+            </div>
           </div>
           <div>
             <label className="text-xs text-muted-foreground font-medium">Bestellwert (365T)</label>
