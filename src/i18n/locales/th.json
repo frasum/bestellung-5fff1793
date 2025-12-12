@@ -871,6 +871,14 @@
     "totalAmount": "ยอดรวม",
     "backToArticles": "กลับไปที่สินค้า",
     "noDateSelected": "ยังไม่ได้เลือกวันที่",
-    "submitting": "กำลังส่ง..."
+    "submitting": "กำลังส่ง...",
+    "enterPin": "ใส่รหัส PIN",
+    "enterPinDescription": "กรุณาใส่รหัส PIN 4 หลัก",
+    "confirmPin": "ยืนยัน PIN",
+    "wrongPin": "รหัส PIN ไม่ถูกต้อง",
+    "tooManyAttempts": "พยายามมากเกินไป กรุณารอ",
+    "lockedFor": "ล็อคเป็นเวลา",
+    "pinIncomplete": "กรุณาใส่ตัวเลข 4 หลัก",
+    "pinVerifyError": "เกิดข้อผิดพลาดในการตรวจสอบ"
   }
 }

@@ -35,7 +35,7 @@ serve(async (req) => {
         *,
         supplier:suppliers(id, name, email, organization_id),
         location:locations(id, name),
-        employee:employees(id, name, auto_approve_orders, email)
+        employee:employees(id, name, auto_approve_orders, email, pin_code)
       `)
       .eq('token', token)
       .eq('is_active', true)
@@ -216,8 +216,12 @@ serve(async (req) => {
 
     console.log(`Token verified. Multi-supplier: ${isMultiSupplier}, Suppliers: ${suppliers.length}, Articles: ${articles.length}, Locations: ${locations?.length || 0}, Employee: ${tokenData.employee_name || 'not set'}`);
 
-    // Get auto_approve status from employee
+    // Get auto_approve status and PIN from employee
     const autoApproveOrders = (tokenData.employee as any)?.auto_approve_orders || false;
+    const hasPinCode = !!(tokenData.employee as any)?.pin_code;
+    
+    // Only require PIN if auto_approve is enabled AND a PIN is set
+    const requiresPin = autoApproveOrders && hasPinCode;
 
     return new Response(
       JSON.stringify({
@@ -233,6 +237,7 @@ serve(async (req) => {
           employee_name: (tokenData.employee as any)?.name || tokenData.employee_name || null,
           has_employee: !!employeeId,
           auto_approve_orders: autoApproveOrders,
+          requires_pin: requiresPin,
         },
         suppliers: suppliers,
         articles: articles,

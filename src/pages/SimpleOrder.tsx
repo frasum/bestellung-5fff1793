@@ -15,6 +15,7 @@ import { LoadingScreen, ErrorScreen, SuccessScreen } from '@/components/simple-o
 import { EmployeeOrderHistory } from '@/components/simple-order/EmployeeOrderHistory';
 import { EmployeeOrderEdit } from '@/components/simple-order/EmployeeOrderEdit';
 import { OrderConfirmationScreen } from '@/components/simple-order/OrderConfirmationScreen';
+import { PinEntryScreen } from '@/components/simple-order/PinEntryScreen';
 
 interface Article {
   id: string;
@@ -54,6 +55,7 @@ interface TokenData {
   employee_name: string | null;
   has_employee: boolean;
   auto_approve_orders: boolean;
+  requires_pin: boolean;
   supplier: {
     id: string;
     name: string;
@@ -128,7 +130,7 @@ interface CompletedOrder {
   items: CompletedOrderItem[];
 }
 
-type OrderStatus = 'loading' | 'ready' | 'confirming' | 'submitting' | 'success' | 'error' | 'viewing-history' | 'editing';
+type OrderStatus = 'loading' | 'pin-entry' | 'ready' | 'confirming' | 'submitting' | 'success' | 'error' | 'viewing-history' | 'editing';
 
 const SimpleOrder = () => {
   const { token } = useParams<{ token: string }>();
@@ -153,6 +155,8 @@ const SimpleOrder = () => {
   const [timeWindow, setTimeWindow] = useState<string>('flexible');
   const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set());
   const [hasEmployee, setHasEmployee] = useState(false);
+  const [requiresPin, setRequiresPin] = useState(false);
+  const [pinVerified, setPinVerified] = useState(false);
   
   // Auto-approve response data
   const [isAutoApproved, setIsAutoApproved] = useState(false);
@@ -226,7 +230,13 @@ const SimpleOrder = () => {
           setSelectedLocationId(data.locations[0].id);
         }
         
-        setStatus('ready');
+        // Check if PIN is required
+        if (data.tokenData?.requires_pin) {
+          setRequiresPin(true);
+          setStatus('pin-entry');
+        } else {
+          setStatus('ready');
+        }
       } catch (err) {
         console.error('Error verifying token:', err);
         setError('เกิดข้อผิดพลาด / Fehler aufgetreten');
@@ -552,9 +562,43 @@ const SimpleOrder = () => {
     return location?.short_code || location?.name || '';
   };
 
+  // PIN verification handler
+  const handlePinVerify = async (pin: string): Promise<boolean> => {
+    try {
+      const { data, error } = await supabase.functions.invoke('verify-employee-pin', {
+        body: { token, pin },
+      });
+      
+      if (error || data?.error) {
+        console.error('PIN verification error:', error || data?.error);
+        return false;
+      }
+      
+      return data?.valid === true;
+    } catch (err) {
+      console.error('Error verifying PIN:', err);
+      return false;
+    }
+  };
+
+  const handlePinSuccess = () => {
+    setPinVerified(true);
+    setStatus('ready');
+  };
+
   // Status screens
   if (status === 'loading') {
     return <LoadingScreen />;
+  }
+
+  if (status === 'pin-entry') {
+    return (
+      <PinEntryScreen
+        employeeName={employeeName}
+        onVerify={handlePinVerify}
+        onSuccess={handlePinSuccess}
+      />
+    );
   }
 
   if (status === 'error') {
