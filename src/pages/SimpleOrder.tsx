@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '@/integrations/supabase/client';
@@ -16,6 +16,7 @@ import { EmployeeOrderHistory } from '@/components/simple-order/EmployeeOrderHis
 import { EmployeeOrderEdit } from '@/components/simple-order/EmployeeOrderEdit';
 import { OrderConfirmationScreen } from '@/components/simple-order/OrderConfirmationScreen';
 import { PinEntryScreen } from '@/components/simple-order/PinEntryScreen';
+import { LocationDateStep } from '@/components/simple-order/LocationDateStep';
 
 interface Article {
   id: string;
@@ -130,7 +131,7 @@ interface CompletedOrder {
   items: CompletedOrderItem[];
 }
 
-type OrderStatus = 'loading' | 'pin-entry' | 'ready' | 'confirming' | 'submitting' | 'success' | 'error' | 'viewing-history' | 'editing';
+type OrderStatus = 'loading' | 'pin-entry' | 'location-date' | 'ready' | 'confirming' | 'submitting' | 'success' | 'error' | 'viewing-history' | 'editing';
 
 const SimpleOrder = () => {
   const { token } = useParams<{ token: string }>();
@@ -234,6 +235,9 @@ const SimpleOrder = () => {
         if (data.tokenData?.requires_pin) {
           setRequiresPin(true);
           setStatus('pin-entry');
+        } else if (data.tokenData?.is_multi_supplier) {
+          // Multi-supplier: Start with location/date step
+          setStatus('location-date');
         } else {
           setStatus('ready');
         }
@@ -256,15 +260,33 @@ const SimpleOrder = () => {
     }
   }, [selectedSupplierId, allArticles, tokenData?.is_multi_supplier]);
 
+  // Calculate cart count per supplier
+  const getCartCountBySupplier = useMemo(() => {
+    const counts: Record<string, number> = {};
+    Object.entries(quantities).forEach(([articleId, qty]) => {
+      if (qty > 0) {
+        const article = allArticles.find(a => a.id === articleId);
+        if (article) {
+          counts[article.supplier_id] = (counts[article.supplier_id] || 0) + qty;
+        }
+      }
+    });
+    return counts;
+  }, [quantities, allArticles]);
+
+  const getSupplierCartCount = (supplierId: string) => {
+    return getCartCountBySupplier[supplierId] || 0;
+  };
+
   const handleSupplierSelect = (supplierId: string) => {
     setSelectedSupplierId(supplierId);
-    setQuantities({});
+    // DO NOT clear quantities - persist across supplier switches
     setSearch('');
   };
 
   const handleBackToSuppliers = () => {
     setSelectedSupplierId(null);
-    setQuantities({});
+    // DO NOT clear quantities - persist across supplier switches
     setSearch('');
   };
 
@@ -356,48 +378,69 @@ const SimpleOrder = () => {
     }
   };
 
-  // Actually submit the order
+  // Submit orders for all suppliers with items in cart
   const handleSubmit = async () => {
     if (getTotalItems() === 0) return;
-    
     if (!validateForm()) return;
 
     setStatus('submitting');
 
-    const items = Object.entries(quantities)
+    // Group items by supplier
+    const itemsBySupplier: Record<string, { article_id: string; article_name: string; quantity: number }[]> = {};
+    Object.entries(quantities)
       .filter(([_, qty]) => qty > 0)
-      .map(([articleId, quantity]) => {
-        const article = articles.find(a => a.id === articleId);
-        return {
-          article_id: articleId,
-          article_name: article?.name || '',
-          quantity,
-        };
+      .forEach(([articleId, quantity]) => {
+        const article = allArticles.find(a => a.id === articleId);
+        if (article) {
+          if (!itemsBySupplier[article.supplier_id]) {
+            itemsBySupplier[article.supplier_id] = [];
+          }
+          itemsBySupplier[article.supplier_id].push({
+            article_id: articleId,
+            article_name: article.name,
+            quantity,
+          });
+        }
       });
 
+    const supplierIds = Object.keys(itemsBySupplier);
+    
     try {
-      const { data, error: submitError } = await supabase.functions.invoke('submit-simple-order', {
-        body: { 
-          token, 
-          items,
-          employee_name: employeeName.trim(),
-          location_id: selectedLocationId,
-          supplier_id: selectedSupplierId,
-          delivery_date: deliveryDate?.toISOString().split('T')[0] || null,
-          time_window: timeWindow || null,
-        },
-      });
+      // Submit orders for each supplier
+      const results = await Promise.all(
+        supplierIds.map(async (supplierId) => {
+          const items = itemsBySupplier[supplierId];
+          const { data, error: submitError } = await supabase.functions.invoke('submit-simple-order', {
+            body: { 
+              token, 
+              items,
+              employee_name: employeeName.trim(),
+              location_id: selectedLocationId,
+              supplier_id: supplierId,
+              delivery_date: deliveryDate?.toISOString().split('T')[0] || null,
+              time_window: timeWindow || null,
+            },
+          });
+          return { supplierId, data, error: submitError };
+        })
+      );
 
-      if (submitError || data?.error) {
-        setError(data?.error || submitError?.message);
+      // Check for errors
+      const errors = results.filter(r => r.error || r.data?.error);
+      if (errors.length > 0) {
+        console.error('Errors submitting orders:', errors);
+        setError(errors[0].data?.error || errors[0].error?.message);
         setStatus('error');
         return;
       }
 
-      // Handle auto-approve response
-      if (data?.auto_approved) {
+      // Handle auto-approve response (use first order's data)
+      const firstResult = results[0];
+      if (firstResult?.data?.auto_approved) {
         setIsAutoApproved(true);
-        setOrderNumber(data.order_number || null);
+        // Collect all order numbers
+        const orderNumbers = results.map(r => r.data?.order_number).filter(Boolean);
+        setOrderNumber(orderNumbers.join(', ') || null);
       } else {
         setIsAutoApproved(false);
         setOrderNumber(null);
@@ -586,6 +629,16 @@ const SimpleOrder = () => {
 
   const handlePinSuccess = () => {
     setPinVerified(true);
+    // Multi-supplier: go to location/date step after PIN
+    if (tokenData?.is_multi_supplier) {
+      setStatus('location-date');
+    } else {
+      setStatus('ready');
+    }
+  };
+
+  // Handle continue from location/date step
+  const handleLocationDateContinue = () => {
     setStatus('ready');
   };
 
@@ -606,6 +659,24 @@ const SimpleOrder = () => {
 
   if (status === 'error') {
     return <ErrorScreen error={error} />;
+  }
+
+  // Location and Date Step for multi-supplier tokens
+  if (status === 'location-date') {
+    return (
+      <LocationDateStep
+        locations={locations}
+        selectedLocationId={selectedLocationId}
+        onLocationSelect={setSelectedLocationId}
+        isLocationLocked={isLocationLocked}
+        deliveryDate={deliveryDate}
+        onDeliveryDateChange={setDeliveryDate}
+        timeWindow={timeWindow}
+        onTimeWindowChange={setTimeWindow}
+        onContinue={handleLocationDateContinue}
+        employeeName={isEmployeeNameLocked ? employeeName : undefined}
+      />
+    );
   }
 
   if (status === 'success') {
@@ -661,13 +732,15 @@ const SimpleOrder = () => {
     );
   }
 
-  // Confirmation screen for auto-approve employees
+  // Confirmation screen for auto-approve employees (multi-supplier support)
   if (status === 'confirming' || status === 'submitting') {
+    // For multi-supplier: show all articles with quantities
+    const orderedArticles = allArticles.filter(a => quantities[a.id] > 0);
     return (
       <OrderConfirmationScreen
-        articles={articles}
+        articles={orderedArticles}
         quantities={quantities}
-        supplierName={getCurrentSupplierName()}
+        supplierName={tokenData?.is_multi_supplier ? t('simpleOrder.multipleSuppliers', 'Mehrere Lieferanten') : getCurrentSupplierName()}
         deliveryDate={deliveryDate}
         timeWindow={timeWindow}
         onQuantityChange={handleConfirmationQuantityChange}
@@ -696,25 +769,14 @@ const SimpleOrder = () => {
 
       {/* Supplier Selection for Multi-Supplier Tokens */}
       {showSupplierSelection && (
-        <>
-          <EmployeeInfoSection
-            employeeName={employeeName}
-            setEmployeeName={setEmployeeName}
-            isEmployeeNameLocked={isEmployeeNameLocked}
-            selectedLocationId={selectedLocationId}
-            setSelectedLocationId={setSelectedLocationId}
-            isLocationLocked={isLocationLocked}
-            locations={locations}
-            validationErrors={validationErrors}
-            setValidationErrors={setValidationErrors}
-            variant="supplier-selection"
-          />
-          <SupplierSelection
-            suppliers={suppliers}
-            onSelect={handleSupplierSelect}
-            getArticleCount={getSupplierArticleCount}
-          />
-        </>
+        <SupplierSelection
+          suppliers={suppliers}
+          onSelect={handleSupplierSelect}
+          getArticleCount={getSupplierArticleCount}
+          getCartCount={getSupplierCartCount}
+          onViewCart={getTotalItems() > 0 ? handleSubmitClick : undefined}
+          totalCartItems={getTotalItems()}
+        />
       )}
 
       {/* Single Supplier or Supplier Selected */}
