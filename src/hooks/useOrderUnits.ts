@@ -34,7 +34,7 @@ export const useCreateOrderUnit = () => {
   const { user } = useAuth();
 
   return useMutation({
-    mutationFn: async ({ name, quantity }: { name: string; quantity: number }) => {
+    mutationFn: async ({ name, quantity }: { name: string; quantity: number }): Promise<OrderUnit> => {
       const { data: profile } = await supabase
         .from('profiles')
         .select('organization_id')
@@ -54,7 +54,7 @@ export const useCreateOrderUnit = () => {
         .single();
 
       if (error) throw error;
-      return data;
+      return data as OrderUnit;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['order-units'] });
