@@ -379,6 +379,12 @@ const SimpleOrder = () => {
     }
   };
 
+  // Navigate directly to cart overview without validation (for floating button)
+  const handleViewCartFromSupplierSelection = () => {
+    if (getTotalItems() === 0) return;
+    setStatus('confirming');
+  };
+
   // Submit orders for all suppliers with items in cart
   const handleSubmit = async () => {
     if (getTotalItems() === 0) return;
@@ -800,7 +806,7 @@ const SimpleOrder = () => {
           onSelect={handleSupplierSelect}
           getArticleCount={getSupplierArticleCount}
           getCartCount={getSupplierCartCount}
-          onViewCart={getTotalItems() > 0 ? handleSubmitClick : undefined}
+          onViewCart={getTotalItems() > 0 ? handleViewCartFromSupplierSelection : undefined}
           totalCartItems={getTotalItems()}
         />
       )}
