@@ -80,6 +80,11 @@ export const QuickCaptureWizard = ({
   const [voiceTranscript, setVoiceTranscript] = useState('');
   const [voiceArticles, setVoiceArticles] = useState<ExtractedArticle[]>([]);
   
+  // Voice batch processing queue
+  const [voiceArticleQueue, setVoiceArticleQueue] = useState<ExtractedArticle[]>([]);
+  const [currentQueueIndex, setCurrentQueueIndex] = useState(0);
+  const [createdArticlesCount, setCreatedArticlesCount] = useState(0);
+  
   // Supplier state
   const [supplierMode, setSupplierMode] = useState<'existing' | 'new'>('existing');
   const [selectedSupplierId, setSelectedSupplierId] = useState<string>('');
@@ -109,6 +114,19 @@ export const QuickCaptureWizard = ({
     setNewSupplierCustomerNumber('');
     setVoiceTranscript('');
     setVoiceArticles([]);
+    setVoiceArticleQueue([]);
+    setCurrentQueueIndex(0);
+    setCreatedArticlesCount(0);
+  };
+
+  // Load article from queue into form
+  const loadArticleFromQueue = (article: ExtractedArticle) => {
+    setArticleName(article.name);
+    setArticleCategory(article.category || '');
+    setArticleUnit(article.unit || 'Stk');
+    setArticleDescription(article.size ? `Gebindegröße: ${article.size}` : '');
+    setArticlePrice('');
+    setArticleSku('');
   };
 
   const handleVoiceResult = (transcript: string, articles: ExtractedArticle[]) => {
@@ -124,17 +142,16 @@ export const QuickCaptureWizard = ({
   const handleVoiceArticlesConfirm = (confirmedArticles: ExtractedArticle[]) => {
     if (confirmedArticles.length === 0) return;
     
-    // Take the first article for single-article flow
-    const firstArticle = confirmedArticles[0];
-    setArticleName(firstArticle.name);
-    setArticleCategory(firstArticle.category || '');
-    setArticleUnit(firstArticle.unit || 'Stk');
-    setArticleDescription(firstArticle.size ? `Gebindegröße: ${firstArticle.size}` : '');
+    // Store all articles in queue for batch processing
+    setVoiceArticleQueue(confirmedArticles);
+    setCurrentQueueIndex(0);
+    setCreatedArticlesCount(0);
     
-    // TODO: For batch mode, we'd handle all articles here
-    // For now, we process the first one and inform user about the rest
+    // Load first article into form
+    loadArticleFromQueue(confirmedArticles[0]);
+    
     if (confirmedArticles.length > 1) {
-      toast.info(t('voiceInventory.processingFirst', 'Verarbeite ersten Artikel. Weitere können danach erfasst werden.'));
+      toast.info(t('voiceInventory.processingBatch', '{{count}} Artikel erkannt - nacheinander verarbeiten', { count: confirmedArticles.length }));
     }
     
     setStep('article');
@@ -213,10 +230,10 @@ export const QuickCaptureWizard = ({
     e.target.value = '';
   };
 
-  const handleSave = async () => {
+  const handleSave = async (): Promise<boolean> => {
     if (!articleName.trim() || !articlePrice) {
       toast.error(t('quickCapture.fillRequired', 'Bitte alle Pflichtfelder ausfüllen'));
-      return;
+      return false;
     }
 
     setIsSaving(true);
@@ -229,7 +246,7 @@ export const QuickCaptureWizard = ({
         if (!newSupplierName.trim() || !newSupplierEmail.trim()) {
           toast.error(t('quickCapture.supplierRequired', 'Lieferanten-Name und E-Mail sind erforderlich'));
           setIsSaving(false);
-          return;
+          return false;
         }
 
         const newSupplier = await onCreateSupplier({
@@ -239,13 +256,16 @@ export const QuickCaptureWizard = ({
           customer_number: newSupplierCustomerNumber.trim() || undefined,
         });
         supplierId = newSupplier.id;
+        // Keep supplier selected for subsequent articles in queue
+        setSelectedSupplierId(supplierId);
+        setSupplierMode('existing');
         toast.success(t('quickCapture.supplierCreated', 'Lieferant "{{name}}" erstellt', { name: newSupplierName }));
       }
 
       if (!supplierId) {
         toast.error(t('quickCapture.selectSupplier', 'Bitte einen Lieferanten auswählen'));
         setIsSaving(false);
-        return;
+        return false;
       }
 
       // Create article
@@ -270,12 +290,39 @@ export const QuickCaptureWizard = ({
       }
 
       toast.success(t('quickCapture.articleCreated', 'Artikel "{{name}}" erfolgreich erstellt!', { name: articleName }));
-      setStep('confirm');
+      setCreatedArticlesCount(prev => prev + 1);
+      return true;
     } catch (err) {
       console.error('Save error:', err);
       toast.error(t('quickCapture.saveError', 'Fehler beim Speichern'));
+      return false;
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  // Handle save and continue to next article in queue
+  const handleSaveAndContinue = async () => {
+    const success = await handleSave();
+    if (!success) return;
+
+    const nextIndex = currentQueueIndex + 1;
+    if (nextIndex < voiceArticleQueue.length) {
+      // Load next article
+      setCurrentQueueIndex(nextIndex);
+      loadArticleFromQueue(voiceArticleQueue[nextIndex]);
+      setStep('article');
+    } else {
+      // All done
+      setStep('confirm');
+    }
+  };
+
+  // Handle final save (last article or single article)
+  const handleFinalSave = async () => {
+    const success = await handleSave();
+    if (success) {
+      setStep('confirm');
     }
   };
 
@@ -463,6 +510,21 @@ export const QuickCaptureWizard = ({
         {/* Step 2: Article Details */}
         {step === 'article' && (
           <div className="space-y-4">
+            {/* Voice batch progress indicator */}
+            {voiceArticleQueue.length > 1 && (
+              <div className="flex items-center justify-between p-2 bg-primary/10 rounded-lg">
+                <span className="text-sm font-medium text-primary">
+                  {t('quickCapture.articleProgress', 'Artikel {{current}} von {{total}}', {
+                    current: currentQueueIndex + 1,
+                    total: voiceArticleQueue.length
+                  })}
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  {createdArticlesCount > 0 && t('quickCapture.articlesCreated', '{{count}} erstellt', { count: createdArticlesCount })}
+                </span>
+              </div>
+            )}
+
             {/* Image preview mini */}
             {previewImage && (
               <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
@@ -707,19 +769,37 @@ export const QuickCaptureWizard = ({
                 <ChevronLeft className="h-4 w-4 mr-1" />
                 {t('common.back', 'Zurück')}
               </Button>
-              <Button onClick={handleSave} disabled={!canSave || isSaving}>
-                {isSaving ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    {t('common.saving', 'Speichern...')}
-                  </>
-                ) : (
-                  <>
-                    <Check className="h-4 w-4 mr-2" />
-                    {t('quickCapture.saveArticle', 'Artikel speichern')}
-                  </>
-                )}
-              </Button>
+              {/* Show different button based on queue position */}
+              {voiceArticleQueue.length > 1 && currentQueueIndex < voiceArticleQueue.length - 1 ? (
+                <Button onClick={handleSaveAndContinue} disabled={!canSave || isSaving}>
+                  {isSaving ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      {t('common.saving', 'Speichern...')}
+                    </>
+                  ) : (
+                    <>
+                      <Check className="h-4 w-4 mr-2" />
+                      {t('quickCapture.saveAndContinue', 'Speichern & Weiter')}
+                      <ChevronRight className="h-4 w-4 ml-1" />
+                    </>
+                  )}
+                </Button>
+              ) : (
+                <Button onClick={handleFinalSave} disabled={!canSave || isSaving}>
+                  {isSaving ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      {t('common.saving', 'Speichern...')}
+                    </>
+                  ) : (
+                    <>
+                      <Check className="h-4 w-4 mr-2" />
+                      {t('quickCapture.saveArticle', 'Artikel speichern')}
+                    </>
+                  )}
+                </Button>
+              )}
             </div>
           </div>
         )}
@@ -732,10 +812,23 @@ export const QuickCaptureWizard = ({
                 <Check className="h-8 w-8 text-green-600" />
               </div>
               <div>
-                <h3 className="text-lg font-semibold">{t('quickCapture.successTitle', 'Artikel erfolgreich erstellt!')}</h3>
-                <p className="text-sm text-muted-foreground mt-1">
-                  {t('quickCapture.successDescription', '"{{name}}" wurde zu deinem Katalog hinzugefügt.', { name: articleName })}
-                </p>
+                {createdArticlesCount > 1 ? (
+                  <>
+                    <h3 className="text-lg font-semibold">
+                      {t('quickCapture.successTitleBatch', '{{count}} Artikel erfolgreich erstellt!', { count: createdArticlesCount })}
+                    </h3>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      {t('quickCapture.successDescriptionBatch', 'Alle Artikel wurden zu deinem Katalog hinzugefügt.')}
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <h3 className="text-lg font-semibold">{t('quickCapture.successTitle', 'Artikel erfolgreich erstellt!')}</h3>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      {t('quickCapture.successDescription', '"{{name}}" wurde zu deinem Katalog hinzugefügt.', { name: articleName })}
+                    </p>
+                  </>
+                )}
               </div>
             </div>
 
