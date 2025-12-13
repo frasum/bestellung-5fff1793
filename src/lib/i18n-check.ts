@@ -53,14 +53,27 @@ function hasKey(obj: TranslationObject, keyPath: string): boolean {
   const parts = keyPath.split('.');
   let current: unknown = obj;
   
-  for (const part of parts) {
+  for (let i = 0; i < parts.length; i++) {
     if (current === null || typeof current !== 'object') {
       return false;
     }
-    current = (current as Record<string, unknown>)[part];
-    if (current === undefined) {
-      return false;
+    
+    const currentObj = current as Record<string, unknown>;
+    const part = parts[i];
+    
+    // Check if this part exists as a direct key
+    if (currentObj[part] !== undefined) {
+      current = currentObj[part];
+      continue;
     }
+    
+    // Check if remaining parts form a flat key with dots (e.g., "articles.view")
+    const remainingKey = parts.slice(i).join('.');
+    if (currentObj[remainingKey] !== undefined) {
+      return true;
+    }
+    
+    return false;
   }
   
   return true;
