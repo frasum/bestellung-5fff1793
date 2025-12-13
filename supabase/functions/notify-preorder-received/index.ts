@@ -4,7 +4,7 @@ import { Resend } from "https://esm.sh/resend@2.0.0";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-internal-secret',
 };
 
 interface OrderItem {
@@ -18,6 +18,43 @@ interface NotifyRequest {
   supplier_name: string;
   location_name: string;
   items: OrderItem[];
+  token?: string; // simple_order_token for validation
+}
+
+// Validate that the request comes from a valid simple_order_token
+async function validateTokenForOrganization(token: string, organizationId: string): Promise<boolean> {
+  const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+  const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+  const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+  const { data, error } = await supabase
+    .from('simple_order_tokens')
+    .select('id, organization_id, is_active, expires_at')
+    .eq('token', token)
+    .maybeSingle();
+
+  if (error || !data) {
+    console.log('[notify-preorder-received] Token not found');
+    return false;
+  }
+
+  if (!data.is_active) {
+    console.log('[notify-preorder-received] Token is inactive');
+    return false;
+  }
+
+  if (data.expires_at && new Date(data.expires_at) < new Date()) {
+    console.log('[notify-preorder-received] Token has expired');
+    return false;
+  }
+
+  // Ensure token belongs to the same organization
+  if (data.organization_id !== organizationId) {
+    console.log('[notify-preorder-received] Token organization mismatch');
+    return false;
+  }
+
+  return true;
 }
 
 serve(async (req) => {
@@ -26,7 +63,32 @@ serve(async (req) => {
   }
 
   try {
-    const { organization_id, employee_name, supplier_name, location_name, items }: NotifyRequest = await req.json();
+    const { organization_id, employee_name, supplier_name, location_name, items, token }: NotifyRequest = await req.json();
+
+    // Check for internal calls (from submit-simple-order Edge Function)
+    const internalSecret = req.headers.get('x-internal-secret');
+    const expectedSecret = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    const isInternalCall = internalSecret && internalSecret === expectedSecret;
+
+    // Validate token for external calls
+    if (!isInternalCall) {
+      if (!token) {
+        console.error('[notify-preorder-received] No token provided');
+        return new Response(
+          JSON.stringify({ error: 'Authentication required' }),
+          { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      const isValidToken = await validateTokenForOrganization(token, organization_id);
+      if (!isValidToken) {
+        console.error('[notify-preorder-received] Invalid token for organization');
+        return new Response(
+          JSON.stringify({ error: 'Invalid or expired token' }),
+          { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    }
 
     console.log('Sending preorder notification:', { organization_id, employee_name, supplier_name, location_name, itemCount: items.length });
 
