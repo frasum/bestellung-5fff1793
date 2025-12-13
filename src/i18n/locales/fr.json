@@ -841,5 +841,30 @@
     "deliveryDate": "Date de livraison souhaitée",
     "selectDate": "Choisir une date",
     "timeWindow": "Créneau horaire"
+  },
+  "voice": {
+    "title": "Commande vocale",
+    "prototype": "Prototype",
+    "tapToStart": "Appuyez pour parler",
+    "listening": "Écoute en cours...",
+    "processing": "Traitement...",
+    "tapToRetry": "Appuyez pour réessayer",
+    "instruction": "Dites votre commande clairement, ex. \"3 ananas et 2 boîtes de mangues\"",
+    "tapToStop": "Appuyez à nouveau pour terminer",
+    "pleaseWait": "Veuillez patienter...",
+    "backToList": "Retour à la liste des articles",
+    "noAudioCaptured": "Aucun audio capturé",
+    "resultsTitle": "Commande reconnue",
+    "transcript": "Transcription",
+    "recognizedItems": "Articles reconnus",
+    "notRecognized": "Non reconnu",
+    "noItemsRecognized": "Aucun article reconnu. Veuillez réessayer.",
+    "addToCart": "Ajouter au panier",
+    "retry": "Réessayer",
+    "confidence": {
+      "high": "Reconnu avec certitude",
+      "medium": "À vérifier",
+      "low": "Incertain"
+    }
   }
 }
