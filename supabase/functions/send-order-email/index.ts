@@ -106,7 +106,7 @@ const generateModernEmail = (data: OrderEmailRequest, template: EmailTemplate): 
       </head>
       <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #1f2937; max-width: 650px; margin: 0 auto; padding: 20px; background: #f3f4f6;">
         <div style="background: linear-gradient(135deg, #1e3a5f 0%, #2563eb 100%); padding: 32px; border-radius: 16px 16px 0 0;">
-          <h1 style="color: white; margin: 0; font-size: 26px; font-weight: 700;">📦 Neue Bestellung</h1>
+          <h1 style="color: white; margin: 0; font-size: 26px; font-weight: 700;">📦 Bestellung bei ${data.supplierName}</h1>
           <p style="color: rgba(255,255,255,0.9); margin: 12px 0 0 0; font-size: 16px;">${data.restaurantName}</p>
         </div>
         
@@ -234,7 +234,7 @@ const generateClassicEmail = (data: OrderEmailRequest, template: EmailTemplate):
         
         <!-- Header -->
         <div style="background: #1e3a5f; padding: 24px 32px; border-bottom: 4px solid #b45309;">
-          <h1 style="color: white; margin: 0; font-size: 22px; font-weight: 600; letter-spacing: 1px;">BESTELLUNG</h1>
+          <h1 style="color: white; margin: 0; font-size: 22px; font-weight: 600; letter-spacing: 1px;">BESTELLUNG BEI ${data.supplierName.toUpperCase()}</h1>
           <p style="color: rgba(255,255,255,0.85); margin: 8px 0 0 0; font-size: 14px;">${data.restaurantName}</p>
         </div>
         
@@ -328,7 +328,7 @@ const generateMinimalistEmail = (data: OrderEmailRequest, template: EmailTemplat
       </head>
       <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.8; color: #374151; max-width: 550px; margin: 0 auto; padding: 40px 20px; background: #ffffff;">
         
-        <h1 style="font-size: 18px; font-weight: 600; color: #111827; margin: 0 0 8px 0;">Bestellung</h1>
+        <h1 style="font-size: 18px; font-weight: 600; color: #111827; margin: 0 0 8px 0;">Bestellung bei ${data.supplierName}</h1>
         <p style="font-size: 13px; color: #6b7280; margin: 0 0 32px 0;">${data.restaurantName} · ${new Date().toLocaleDateString('de-DE')}</p>
         
         <p style="margin: 0 0 8px 0; font-size: 15px;">${template.greeting}</p>
