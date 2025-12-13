@@ -106,6 +106,7 @@ export function EmployeesTab() {
     autoApprove: false,
     pinCode: '',
     voiceInputEnabled: false,
+    canAddFreeItems: false,
   });
   
   // New structure: location -> suppliers mapping
@@ -221,7 +222,7 @@ export function EmployeesTab() {
 
   const openCreateDialog = () => {
     setEditingEmployee(null);
-    setFormData({ name: '', phone: '', email: '', notes: '', language: 'th', autoApprove: false, pinCode: '', voiceInputEnabled: false });
+    setFormData({ name: '', phone: '', email: '', notes: '', language: 'th', autoApprove: false, pinCode: '', voiceInputEnabled: false, canAddFreeItems: false });
     initializeLocationAssignments();
     setIsDialogOpen(true);
   };
@@ -241,6 +242,7 @@ export function EmployeesTab() {
       // User can enter a new PIN or leave empty to keep existing
       pinCode: '',
       voiceInputEnabled: employee.voice_input_enabled || false,
+      canAddFreeItems: employee.can_add_free_items || false,
     });
     initializeLocationAssignments(employee.id);
     setIsDialogOpen(true);
@@ -352,6 +354,7 @@ export function EmployeesTab() {
         notes: formData.notes || null,
         auto_approve_orders: formData.autoApprove,
         voice_input_enabled: formData.voiceInputEnabled,
+        can_add_free_items: formData.canAddFreeItems,
         // Don't update pin_code directly - use the secure hash function below
       });
       
@@ -1053,6 +1056,28 @@ export function EmployeesTab() {
                   id="voice-input"
                   checked={formData.voiceInputEnabled}
                   onCheckedChange={(checked) => setFormData({ ...formData, voiceInputEnabled: checked })}
+                />
+              </div>
+
+              {/* Free Items Toggle */}
+              <div className="flex items-center justify-between p-3 border rounded-lg bg-muted/30">
+                <div className="space-y-0.5">
+                  <div className="flex items-center gap-2">
+                    <Label htmlFor="free-items" className="text-sm font-medium">
+                      {t('settings.employees.canAddFreeItems', 'Freie Artikel erlauben')}
+                    </Label>
+                    <Badge variant="outline" className="text-xs bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
+                      Neu
+                    </Badge>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {t('settings.employees.canAddFreeItemsDescription', 'Mitarbeiter kann freie Artikel zur Bestellung hinzufügen')}
+                  </p>
+                </div>
+                <Switch
+                  id="free-items"
+                  checked={formData.canAddFreeItems}
+                  onCheckedChange={(checked) => setFormData({ ...formData, canAddFreeItems: checked })}
                 />
               </div>
                 </div>

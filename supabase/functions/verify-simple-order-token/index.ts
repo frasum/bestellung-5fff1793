@@ -35,7 +35,7 @@ serve(async (req) => {
         *,
         supplier:suppliers(id, name, email, organization_id),
         location:locations(id, name),
-        employee:employees(id, name, auto_approve_orders, email, pin_code, voice_input_enabled)
+        employee:employees(id, name, auto_approve_orders, email, pin_code, voice_input_enabled, can_add_free_items)
       `)
       .eq('token', token)
       .eq('is_active', true)
@@ -220,6 +220,7 @@ serve(async (req) => {
     // Get auto_approve status and PIN from employee
     const autoApproveOrders = (tokenData.employee as any)?.auto_approve_orders || false;
     const hasPinCode = !!(tokenData.employee as any)?.pin_code;
+    const canAddFreeItems = (tokenData.employee as any)?.can_add_free_items || false;
     
     // Only require PIN if auto_approve is enabled AND a PIN is set
     const requiresPin = autoApproveOrders && hasPinCode;
@@ -240,6 +241,7 @@ serve(async (req) => {
           auto_approve_orders: autoApproveOrders,
           requires_pin: requiresPin,
           voice_input_enabled: voiceInputEnabled,
+          can_add_free_items: canAddFreeItems,
         },
         suppliers: suppliers,
         articles: articles,
