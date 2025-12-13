@@ -29,9 +29,9 @@ interface LocationDateStepProps {
 }
 
 const TIME_WINDOWS = [
-  { value: '10:00-12:00', label: '10-12', icon: '🌅' },
-  { value: '12:00-15:00', label: '12-15', icon: '☀️' },
-  { value: 'flexible', label: 'Flex', icon: '🔄' },
+  { value: 'morning', label: '10-12' },
+  { value: 'afternoon', label: '12-15' },
+  { value: 'flexible', label: 'Flex' },
 ];
 
 const getDateLocale = (lang: string) => {
@@ -327,7 +327,6 @@ export const LocationDateStep = ({
                 )}
                 onClick={() => handleTimeWindowChange(tw.value)}
               >
-                <span className="mr-1">{tw.icon}</span>
                 {tw.label}
               </Button>
             ))}
