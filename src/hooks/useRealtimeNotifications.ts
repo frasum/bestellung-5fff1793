@@ -70,6 +70,52 @@ export const useRealtimeNotifications = () => {
           }
         }
       )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'orders'
+        },
+        (payload) => {
+          // Invalidate orders queries to refresh the list
+          queryClient.invalidateQueries({ 
+            predicate: (query) => query.queryKey[0] === 'orders'
+          });
+          
+          // Show toast notification when order status changes to confirmed
+          const updatedOrder = payload.new as { status?: string; order_number?: string };
+          const oldOrder = payload.old as { status?: string };
+          
+          if (updatedOrder.status !== oldOrder.status && updatedOrder.status === 'confirmed') {
+            toast.success(t('orders.orderConfirmed', 'Bestellung bestätigt'), {
+              description: updatedOrder.order_number,
+            });
+
+            // Show desktop notification if tab is not focused
+            if (document.hidden && permission === 'granted') {
+              showNotification(t('orders.orderConfirmed', 'Bestellung bestätigt'), {
+                body: updatedOrder.order_number || '',
+                tag: `order-confirmed-${updatedOrder.order_number}`,
+              });
+            }
+          }
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'orders'
+        },
+        (payload) => {
+          // Invalidate orders queries to refresh the list
+          queryClient.invalidateQueries({ 
+            predicate: (query) => query.queryKey[0] === 'orders'
+          });
+        }
+      )
       .subscribe();
 
     return () => {
