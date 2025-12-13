@@ -6,7 +6,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Lock, MapPin, Globe, Mail } from 'lucide-react';
+import { Lock, MapPin, Globe, Mail, Palette } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useUserProfile, useUpdateUserProfile, useUpdatePassword, useOrganization, useUpdateOrganization } from '@/hooks/useSettings';
 import { useLocations } from '@/hooks/useLocations';
 import { useAllUserDeliveryPreferences, useAllDeliveryAddresses, useUpsertUserDeliveryPreferenceForLocation } from '@/hooks/useUserDeliveryPreference';
@@ -42,8 +43,9 @@ const AdvancedSettingsSwitch = () => {
   );
 };
 
-const I18nCheckButton = () => {
+const AdvancedToolsSection = () => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [advancedMode, setAdvancedMode] = useState(() => 
     localStorage.getItem('advanced-settings-enabled') === 'true'
@@ -62,23 +64,44 @@ const I18nCheckButton = () => {
   if (!advancedMode) return null;
 
   return (
-    <div className="pt-4 border-t">
-      <div className="flex items-center justify-between">
-        <div>
-          <Label className="mb-1 block flex items-center gap-2">
-            <Globe className="h-4 w-4" />
-            i18n Check
-          </Label>
-          <p className="text-xs text-muted-foreground">
-            Überprüft Übersetzungen auf Vollständigkeit
-          </p>
+    <>
+      {/* Style Guide Link */}
+      <div className="pt-4 border-t">
+        <div className="flex items-center justify-between">
+          <div>
+            <Label className="mb-1 block flex items-center gap-2">
+              <Palette className="h-4 w-4" />
+              Style Guide
+            </Label>
+            <p className="text-xs text-muted-foreground">
+              Alle UI-Komponenten und Design-Tokens
+            </p>
+          </div>
+          <Button variant="outline" size="sm" onClick={() => navigate('/style-guide')}>
+            Öffnen
+          </Button>
         </div>
-        <Button variant="outline" size="sm" onClick={() => setDialogOpen(true)}>
-          Prüfen
-        </Button>
       </div>
-      <I18nCheckDialog open={dialogOpen} onOpenChange={setDialogOpen} />
-    </div>
+
+      {/* i18n Check */}
+      <div className="pt-4 border-t">
+        <div className="flex items-center justify-between">
+          <div>
+            <Label className="mb-1 block flex items-center gap-2">
+              <Globe className="h-4 w-4" />
+              i18n Check
+            </Label>
+            <p className="text-xs text-muted-foreground">
+              Überprüft Übersetzungen auf Vollständigkeit
+            </p>
+          </div>
+          <Button variant="outline" size="sm" onClick={() => setDialogOpen(true)}>
+            Prüfen
+          </Button>
+        </div>
+        <I18nCheckDialog open={dialogOpen} onOpenChange={setDialogOpen} />
+      </div>
+    </>
   );
 };
 
@@ -339,7 +362,7 @@ export const ProfileTab = () => {
           </Button>
 
           <AdvancedSettingsSwitch />
-          <I18nCheckButton />
+          <AdvancedToolsSection />
         </CardContent>
       </Card>
 
