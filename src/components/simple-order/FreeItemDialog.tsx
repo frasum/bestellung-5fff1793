@@ -47,6 +47,15 @@ export function FreeItemDialog({
   canCapturePhotos = false,
 }: FreeItemDialogProps) {
   const { t } = useTranslation();
+  
+  // DEBUG: Log canCapturePhotos prop value
+  console.log('[FreeItemDialog] Props received:', {
+    canCapturePhotos,
+    token: token ? 'present' : 'missing',
+    organizationId: organizationId ? 'present' : 'missing',
+    supplierId,
+    editingItem: !!editingItem,
+  });
   const [name, setName] = useState(editingItem?.name || '');
   const [quantity, setQuantity] = useState(editingItem?.quantity || 1);
   const [unit, setUnit] = useState(editingItem?.unit || 'Stk');
