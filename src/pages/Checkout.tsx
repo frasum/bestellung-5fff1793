@@ -156,11 +156,20 @@ const Checkout = () => {
     return acc;
   }, {} as Record<string, { supplierId: string; supplierName: string; supplierEmail: string; items: typeof items; freeItems: typeof freeItems; total: number }>);
 
-  // Add free items to their respective suppliers
+  // Add free items to their respective suppliers - CREATE supplier group if it doesn't exist
   freeItems.forEach(freeItem => {
-    if (itemsBySupplier[freeItem.supplier_id]) {
-      itemsBySupplier[freeItem.supplier_id].freeItems.push(freeItem);
+    if (!itemsBySupplier[freeItem.supplier_id]) {
+      // Create a new supplier group for free-items-only orders
+      itemsBySupplier[freeItem.supplier_id] = {
+        supplierId: freeItem.supplier_id,
+        supplierName: 'Lädt...', // Will be fetched in handlePreviewEmails
+        supplierEmail: '',
+        items: [],
+        freeItems: [],
+        total: 0,
+      };
     }
+    itemsBySupplier[freeItem.supplier_id].freeItems.push(freeItem);
   });
 
   const formatAddress = (address: typeof deliveryAddresses[0]) => {
