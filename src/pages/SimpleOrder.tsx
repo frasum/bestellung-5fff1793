@@ -19,6 +19,7 @@ import { PinEntryScreen } from '@/components/simple-order/PinEntryScreen';
 import { LocationDateStep } from '@/components/simple-order/LocationDateStep';
 import { MultiSupplierCartOverview } from '@/components/simple-order/MultiSupplierCartOverview';
 import { VoiceOrderMode } from '@/components/simple-order/VoiceOrderMode';
+import { FreeItem } from '@/components/simple-order/FreeItemDialog';
 
 interface Article {
   id: string;
@@ -167,6 +168,9 @@ const SimpleOrder = () => {
   const [isAutoApproved, setIsAutoApproved] = useState(false);
   const [orderNumber, setOrderNumber] = useState<string | null>(null);
   
+  // Free items state
+  const [freeItems, setFreeItems] = useState<FreeItem[]>([]);
+  
   // Order history states
   const [drafts, setDrafts] = useState<Draft[]>([]);
   const [completedOrders, setCompletedOrders] = useState<CompletedOrder[]>([]);
@@ -264,7 +268,7 @@ const SimpleOrder = () => {
     }
   }, [selectedSupplierId, allArticles, tokenData?.is_multi_supplier]);
 
-  // Calculate cart count per supplier
+  // Calculate cart count per supplier (including free items)
   const getCartCountBySupplier = useMemo(() => {
     const counts: Record<string, number> = {};
     Object.entries(quantities).forEach(([articleId, qty]) => {
@@ -275,8 +279,12 @@ const SimpleOrder = () => {
         }
       }
     });
+    // Add free items
+    freeItems.forEach(item => {
+      counts[item.supplier_id] = (counts[item.supplier_id] || 0) + item.quantity;
+    });
     return counts;
-  }, [quantities, allArticles]);
+  }, [quantities, allArticles, freeItems]);
 
   const getSupplierCartCount = (supplierId: string) => {
     return getCartCountBySupplier[supplierId] || 0;
@@ -348,7 +356,38 @@ const SimpleOrder = () => {
   };
 
   const getTotalItems = () => {
-    return Object.values(quantities).reduce((sum, qty) => sum + qty, 0);
+    const articleItems = Object.values(quantities).reduce((sum, qty) => sum + qty, 0);
+    const freeItemsCount = freeItems.reduce((sum, item) => sum + item.quantity, 0);
+    return articleItems + freeItemsCount;
+  };
+
+  // Free item handlers
+  const handleAddFreeItem = (item: Omit<FreeItem, 'id'>) => {
+    const newItem: FreeItem = {
+      ...item,
+      id: `free-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+    };
+    setFreeItems(prev => [...prev, newItem]);
+  };
+
+  const handleUpdateFreeItem = (updatedItem: FreeItem) => {
+    setFreeItems(prev => prev.map(item => 
+      item.id === updatedItem.id ? updatedItem : item
+    ));
+  };
+
+  const handleDeleteFreeItem = (itemId: string) => {
+    setFreeItems(prev => prev.filter(item => item.id !== itemId));
+  };
+
+  const handleFreeItemQuantityChange = (itemId: string, delta: number) => {
+    setFreeItems(prev => prev.map(item => {
+      if (item.id === itemId) {
+        const newQuantity = Math.max(1, item.quantity + delta);
+        return { ...item, quantity: newQuantity };
+      }
+      return item;
+    }));
   };
 
   const validateForm = (): boolean => {
@@ -413,17 +452,37 @@ const SimpleOrder = () => {
         }
       });
 
-    const supplierIds = Object.keys(itemsBySupplier);
+    // Group free items by supplier
+    const freeItemsBySupplier: Record<string, { name: string; quantity: number; unit: string }[]> = {};
+    freeItems.forEach(item => {
+      if (!freeItemsBySupplier[item.supplier_id]) {
+        freeItemsBySupplier[item.supplier_id] = [];
+      }
+      freeItemsBySupplier[item.supplier_id].push({
+        name: item.name,
+        quantity: item.quantity,
+        unit: item.unit,
+      });
+    });
+
+    // Get all supplier IDs that have items (regular or free)
+    const allSupplierIds = new Set([
+      ...Object.keys(itemsBySupplier),
+      ...Object.keys(freeItemsBySupplier),
+    ]);
+    const supplierIds = Array.from(allSupplierIds);
     
     try {
       // Submit orders for each supplier
       const results = await Promise.all(
         supplierIds.map(async (supplierId) => {
-          const items = itemsBySupplier[supplierId];
+          const items = itemsBySupplier[supplierId] || [];
+          const freeItemsForSupplier = freeItemsBySupplier[supplierId] || [];
           const { data, error: submitError } = await supabase.functions.invoke('submit-simple-order', {
             body: { 
               token, 
               items,
+              free_items: freeItemsForSupplier,
               employee_name: employeeName.trim(),
               location_id: selectedLocationId,
               supplier_id: supplierId,
@@ -475,6 +534,7 @@ const SimpleOrder = () => {
 
       setStatus('success');
       setQuantities({});
+      setFreeItems([]);
     } catch (err) {
       console.error('Error submitting order:', err);
       setError('เกิดข้อผิดพลาดในการส่ง / Fehler beim Senden');
@@ -809,6 +869,12 @@ const SimpleOrder = () => {
           onConfirm={handleSubmit}
           isSubmitting={status === 'submitting'}
           allArticles={allArticles}
+          freeItems={freeItems}
+          onAddFreeItem={handleAddFreeItem}
+          onUpdateFreeItem={handleUpdateFreeItem}
+          onDeleteFreeItem={handleDeleteFreeItem}
+          onFreeItemQuantityChange={handleFreeItemQuantityChange}
+          canAddFreeItems={tokenData?.can_add_free_items || false}
         />
       );
     }
@@ -895,6 +961,12 @@ const SimpleOrder = () => {
             onSupplierChange={handleSupplierSelect}
             favoriteIds={favoriteIds}
             onToggleFavorite={toggleFavorite}
+            canAddFreeItems={tokenData?.can_add_free_items || false}
+            freeItems={freeItems.filter(item => item.supplier_id === selectedSupplierId)}
+            onAddFreeItem={handleAddFreeItem}
+            onUpdateFreeItem={handleUpdateFreeItem}
+            onDeleteFreeItem={handleDeleteFreeItem}
+            onFreeItemQuantityChange={handleFreeItemQuantityChange}
           />
           <SubmitBar
             totalItems={getTotalItems()}
