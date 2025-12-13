@@ -737,13 +737,16 @@ const Orders = () => {
                                         </Badge>
                                       ) : null;
                                     })()}
-                                    {order.employees?.name && (
-                                      <span className="flex items-center gap-1">
-                                        <Smartphone className="w-3 h-3" />
-                                        <span className="truncate max-w-[80px]">
-                                          {order.employees.name}
-                                        </span>
-                                      </span>
+                                    {order.employees?.name ? (
+                                      <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-purple-500/20 text-purple-600 dark:text-purple-400 border-purple-300 dark:border-purple-700">
+                                        <Smartphone className="w-3 h-3 mr-0.5" />
+                                        <span className="truncate max-w-[60px]">{order.employees.name}</span>
+                                      </Badge>
+                                    ) : (
+                                      <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-primary/10 text-primary border-primary/30">
+                                        <User className="w-3 h-3 mr-0.5" />
+                                        Admin
+                                      </Badge>
                                     )}
                                   </div>
                                   <span className="font-bold text-foreground">€{Number(order.total_amount).toFixed(2)}</span>
@@ -773,11 +776,16 @@ const Orders = () => {
                                   <span className="text-xs text-muted-foreground">
                                     {order.order_items?.length || 0} {t('orders.items')}
                                   </span>
-                                  {order.employees?.name && (
-                                    <span className="text-xs text-muted-foreground flex items-center gap-1">
-                                      <Smartphone className="w-3 h-3" />
+                                  {order.employees?.name ? (
+                                    <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-purple-500/20 text-purple-600 dark:text-purple-400 border-purple-300 dark:border-purple-700">
+                                      <Smartphone className="w-3 h-3 mr-0.5" />
                                       {order.employees.name}
-                                    </span>
+                                    </Badge>
+                                  ) : (
+                                    <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-primary/10 text-primary border-primary/30">
+                                      <User className="w-3 h-3 mr-0.5" />
+                                      Admin
+                                    </Badge>
                                   )}
                                 </div>
                                 <div className="flex items-center gap-4">
