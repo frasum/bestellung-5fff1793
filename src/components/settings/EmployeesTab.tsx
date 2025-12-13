@@ -1028,7 +1028,10 @@ export function EmployeesTab() {
                     </p>
               )}
 
-              {/* Voice Input Toggle (Prototype) */}
+                </div>
+              )}
+
+              {/* Voice Input Toggle (Prototype) - visible for all employees */}
               <div className="flex items-center justify-between p-3 border rounded-lg bg-muted/30">
                 <div className="flex items-center gap-2">
                   <div className="space-y-0.5">
@@ -1052,7 +1055,7 @@ export function EmployeesTab() {
                 />
               </div>
 
-              {/* Free Items Toggle */}
+              {/* Free Items Toggle - visible for all employees */}
               <div className="flex items-center justify-between p-3 border rounded-lg bg-muted/30">
                 <div className="space-y-0.5">
                   <div className="flex items-center gap-2">
@@ -1073,8 +1076,6 @@ export function EmployeesTab() {
                   onCheckedChange={(checked) => setFormData({ ...formData, canAddFreeItems: checked })}
                 />
               </div>
-                </div>
-              )}
 
               <div>
                 <Label htmlFor="notes">Notizen</Label>
