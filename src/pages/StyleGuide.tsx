@@ -63,7 +63,18 @@ import {
   HoverCardContent,
   HoverCardTrigger,
 } from '@/components/ui/hover-card';
-import { AlertCircle, CheckCircle, Info, Palette, ArrowLeft, Sun, Moon, Sparkles, MoreHorizontal, ChevronDown, Settings, User, LogOut, HelpCircle, CalendarDays } from 'lucide-react';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible';
+import { AlertCircle, CheckCircle, Info, Palette, ArrowLeft, Sun, Moon, Sparkles, MoreHorizontal, ChevronDown, Settings, User, LogOut, HelpCircle, CalendarDays, ChevronsUpDown } from 'lucide-react';
 import { useTheme } from 'next-themes';
 
 // Color swatch component
@@ -686,7 +697,69 @@ const StyleGuide = () => {
           </CardContent>
         </Card>
 
-        {/* Inputs & Forms */}
+        {/* Accordion & Collapsible */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Accordion & Collapsible</CardTitle>
+            <CardDescription>Auf- und zuklappbare Inhalte</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* Accordion */}
+            <div>
+              <h4 className="text-sm font-medium mb-3">Accordion</h4>
+              <Accordion type="single" collapsible className="w-full">
+                <AccordionItem value="item-1">
+                  <AccordionTrigger>Was ist ein Accordion?</AccordionTrigger>
+                  <AccordionContent>
+                    Ein Accordion ist eine vertikale Liste von Elementen, die einzeln aufgeklappt werden können.
+                  </AccordionContent>
+                </AccordionItem>
+                <AccordionItem value="item-2">
+                  <AccordionTrigger>Wann verwendet man Accordions?</AccordionTrigger>
+                  <AccordionContent>
+                    Accordions eignen sich besonders für FAQs, Einstellungsbereiche oder wenn viele Informationen platzsparend dargestellt werden sollen.
+                  </AccordionContent>
+                </AccordionItem>
+                <AccordionItem value="item-3">
+                  <AccordionTrigger>Können mehrere Einträge offen sein?</AccordionTrigger>
+                  <AccordionContent>
+                    Mit <code className="bg-muted px-1 rounded">type="multiple"</code> können mehrere Einträge gleichzeitig geöffnet sein.
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
+            </div>
+
+            <Separator />
+
+            {/* Collapsible */}
+            <div>
+              <h4 className="text-sm font-medium mb-3">Collapsible</h4>
+              <Collapsible className="w-full space-y-2">
+                <div className="flex items-center justify-between space-x-4 px-4 py-2 border rounded-lg">
+                  <h4 className="text-sm font-semibold">Erweiterte Optionen</h4>
+                  <CollapsibleTrigger asChild>
+                    <Button variant="ghost" size="sm">
+                      <ChevronsUpDown className="h-4 w-4" />
+                      <span className="sr-only">Toggle</span>
+                    </Button>
+                  </CollapsibleTrigger>
+                </div>
+                <CollapsibleContent className="space-y-2">
+                  <div className="rounded-md border px-4 py-2 text-sm">
+                    Option A: Erste erweiterte Einstellung
+                  </div>
+                  <div className="rounded-md border px-4 py-2 text-sm">
+                    Option B: Zweite erweiterte Einstellung
+                  </div>
+                  <div className="rounded-md border px-4 py-2 text-sm">
+                    Option C: Dritte erweiterte Einstellung
+                  </div>
+                </CollapsibleContent>
+              </Collapsible>
+            </div>
+          </CardContent>
+        </Card>
+
         <Card>
           <CardHeader>
             <CardTitle>Inputs & Formulare</CardTitle>
