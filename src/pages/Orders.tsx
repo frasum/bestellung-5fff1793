@@ -49,6 +49,7 @@ import { OrderEmailViewDialog } from '@/components/orders/OrderEmailViewDialog';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 
 type DateFilter = 'all' | 'today' | 'week' | 'month' | '3months';
 
@@ -310,9 +311,21 @@ const Orders = () => {
   };
 
   const loadDraftToCart = (draft: CartDraft) => {
-    if (draft.items && loadFromDraft) {
+    // 1. Prüfen ob Artikel vorhanden sind
+    const validItems = draft.items?.filter(item => item.article) || [];
+    
+    if (validItems.length === 0) {
+      // Warnung anzeigen statt stillschweigend zu löschen
+      toast.error('Diese Vorbestellung enthält keine Artikel und kann nicht übernommen werden.');
+      setLoadDialogOpen(false);
+      setSelectedDraft(null);
+      return;
+    }
+    
+    // 2. Nur wenn Items vorhanden, in Warenkorb laden
+    if (loadFromDraft) {
       loadFromDraft(
-        draft.items.filter(item => item.article).map(item => ({
+        validItems.map(item => ({
           article: item.article!,
           quantity: item.quantity,
         })),
@@ -322,7 +335,7 @@ const Orders = () => {
         draft.employee_id
       );
       
-      // Vorbestellung nach dem Laden löschen
+      // 3. Erst NACH erfolgreichem Laden die Vorbestellung löschen
       deleteDraft.mutate(draft.id);
       
       navigate('/cart');
@@ -1082,10 +1095,17 @@ const Orders = () => {
                           )}
                         </div>
                         <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:text-sm text-muted-foreground">
-                          <span className="flex items-center gap-1">
-                            <Package className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                            {getDraftItemCount(draft)} {t('drafts.items')}
-                          </span>
+                          {getDraftItemCount(draft) === 0 ? (
+                            <Badge variant="outline" className="text-xs border-warning text-warning bg-warning/10">
+                              <AlertTriangle className="h-3 w-3 mr-1" />
+                              Keine Artikel
+                            </Badge>
+                          ) : (
+                            <span className="flex items-center gap-1">
+                              <Package className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                              {getDraftItemCount(draft)} {t('drafts.items')}
+                            </span>
+                          )}
                           <span className="flex items-center gap-1">
                             <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                             {format(new Date(draft.created_at), 'dd.MM.yy, HH:mm', { locale })}
