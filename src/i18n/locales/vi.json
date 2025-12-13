@@ -923,5 +923,16 @@
       "medium": "Vui lòng kiểm tra",
       "low": "Không chắc chắn"
     }
+  },
+  "subscription": {
+    "usageDashboard": "Sử dụng & Giới hạn",
+    "usageDescription": "Tổng quan về mức sử dụng hiện tại và hạn ngạch còn lại",
+    "ordersThisMonth": "Đơn hàng tháng này",
+    "activeSuppliers": "Nhà cung cấp đang hoạt động",
+    "teamMembers": "Thành viên nhóm",
+    "remaining": "Còn lại {{count}}",
+    "unlimited": "Không giới hạn",
+    "upgradePlan": "Nâng cấp gói",
+    "limitReached": "Đã đạt giới hạn"
   }
 }

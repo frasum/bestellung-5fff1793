@@ -923,5 +923,16 @@
       "medium": "กรุณาตรวจสอบ",
       "low": "ไม่แน่ใจ"
     }
+  },
+  "subscription": {
+    "usageDashboard": "การใช้งาน & ขีดจำกัด",
+    "usageDescription": "ภาพรวมการใช้งานปัจจุบันและโควต้าที่เหลือ",
+    "ordersThisMonth": "คำสั่งซื้อเดือนนี้",
+    "activeSuppliers": "ซัพพลายเออร์ที่ใช้งาน",
+    "teamMembers": "สมาชิกทีม",
+    "remaining": "เหลือ {{count}}",
+    "unlimited": "ไม่จำกัด",
+    "upgradePlan": "อัปเกรดแพลน",
+    "limitReached": "ถึงขีดจำกัดแล้ว"
   }
 }

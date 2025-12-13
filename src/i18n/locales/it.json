@@ -923,5 +923,16 @@
       "medium": "Da verificare",
       "low": "Incerto"
     }
+  },
+  "subscription": {
+    "usageDashboard": "Utilizzo & Limiti",
+    "usageDescription": "Panoramica dell'utilizzo attuale e quote rimanenti",
+    "ordersThisMonth": "Ordini questo mese",
+    "activeSuppliers": "Fornitori attivi",
+    "teamMembers": "Membri del team",
+    "remaining": "{{count}} rimanenti",
+    "unlimited": "Illimitato",
+    "upgradePlan": "Aggiorna Piano",
+    "limitReached": "Limite raggiunto"
   }
 }
