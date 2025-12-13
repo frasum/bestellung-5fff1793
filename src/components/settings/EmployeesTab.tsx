@@ -981,12 +981,13 @@ export function EmployeesTab() {
                 />
               </div>
 
-              {/* PIN Code - only visible when Auto-Approve is enabled */}
+              {/* PIN Code - required when Auto-Approve is enabled */}
               {formData.autoApprove && (
-                <div className="p-3 border rounded-lg bg-muted/30 space-y-3">
+                <div className={`p-3 border rounded-lg space-y-3 ${formData.pinCode.length !== 4 ? 'border-destructive/50 bg-destructive/5' : 'bg-muted/30'}`}>
                   <div className="space-y-0.5">
-                    <Label htmlFor="pin-code" className="text-sm font-medium">
-                      PIN-Code (optional)
+                    <Label htmlFor="pin-code" className="text-sm font-medium flex items-center gap-1">
+                      PIN-Code (erforderlich)
+                      <span className="text-destructive">*</span>
                     </Label>
                     <p className="text-xs text-muted-foreground">
                       4-stelliger Code, den der Mitarbeiter eingeben muss, bevor er bestellen kann
@@ -1005,7 +1006,7 @@ export function EmployeesTab() {
                         setFormData({ ...formData, pinCode: value });
                       }}
                       placeholder="z.B. 1234"
-                      className="w-32 font-mono text-center tracking-widest"
+                      className={`w-32 font-mono text-center tracking-widest ${formData.pinCode.length !== 4 ? 'border-destructive' : ''}`}
                     />
                     <Button
                       type="button"
@@ -1018,18 +1019,8 @@ export function EmployeesTab() {
                     >
                       Generieren
                     </Button>
-                    {formData.pinCode && (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setFormData({ ...formData, pinCode: '' })}
-                      >
-                        Entfernen
-                      </Button>
-                    )}
                   </div>
-                  {formData.pinCode && formData.pinCode.length !== 4 && (
+                  {formData.pinCode.length !== 4 && (
                     <p className="text-xs text-destructive">
                       PIN muss genau 4 Ziffern haben
                     </p>
@@ -1101,7 +1092,7 @@ export function EmployeesTab() {
             </Button>
             <Button
               onClick={handleSubmit}
-              disabled={!formData.name.trim() || createEmployee.isPending || updateEmployee.isPending}
+              disabled={!formData.name.trim() || (formData.autoApprove && formData.pinCode.length !== 4) || createEmployee.isPending || updateEmployee.isPending}
             >
               {editingEmployee ? 'Speichern' : 'Anlegen'}
             </Button>
