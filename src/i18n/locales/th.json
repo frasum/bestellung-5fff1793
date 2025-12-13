@@ -36,6 +36,9 @@
     "lastWeek": "7 วันที่ผ่านมา",
     "lastMonth": "เดือนที่ผ่านมา",
     "last3Months": "3 เดือนที่ผ่านมา",
+    "filterByLocation": "กรองตามสถานที่",
+    "allLocations": "ทุกสถานที่",
+    "currentLocation": "สถานที่ปัจจุบัน",
     "noResults": "ไม่พบคำสั่งซื้อ",
     "noResultsDescription": "ลองใช้เกณฑ์การค้นหาอื่น",
     "clearFilters": "ล้างตัวกรอง",
@@ -213,7 +216,9 @@
     "cannotCheckout": "ไม่สามารถชำระเงินได้จนกว่าจะถึงยอดสั่งซื้อขั้นต่ำทั้งหมด",
     "saveAsDraft": "บันทึกเป็นคำสั่งซื้อล่วงหน้า",
     "draftName": "ชื่อร่าง",
-    "draftSaved": "บันทึกร่างแล้ว"
+    "draftSaved": "บันทึกร่างแล้ว",
+    "addArticle": "สินค้า",
+    "inCart": "ในตะกร้า"
   },
   "checkout": {
     "title": "ชำระเงิน",
@@ -503,6 +508,8 @@
     },
     "manageLocations": "สถานที่",
     "manageLocationsDesc": "จัดการสถานที่ร้านอาหารของคุณ แต่ละสถานที่สามารถมีหมายเลขลูกค้าและที่อยู่จัดส่งของตัวเอง",
+    "locationsWithAddressesDesc": "จัดการสถานที่และกำหนดที่อยู่จัดส่งต่อสถานที่",
+    "address": "ที่อยู่",
     "addLocation": "เพิ่มสถานที่",
     "editLocation": "แก้ไขสถานที่",
     "createLocation": "สร้างสถานที่ใหม่",
@@ -678,7 +685,17 @@
     "searchArticles": "ค้นหาสินค้า...",
     "selectSession": "เลือกการตรวจนับ...",
     "viewingCompleted": "คุณกำลังดูการตรวจนับที่เสร็จสมบูรณ์ (อ่านอย่างเดียว)",
-    "inProgressLabel": "กำลังดำเนินการ"
+    "inProgressLabel": "กำลังดำเนินการ",
+    "progress": "ความคืบหน้า",
+    "compare": "เปรียบเทียบ",
+    "compareTitle": "เปรียบเทียบสินค้าคงคลัง",
+    "compareDescription": "เปรียบเทียบสองเซสชันเพื่อดูความแตกต่าง",
+    "oldSession": "สินค้าคงคลังเก่า",
+    "changedArticles": "การเปลี่ยนแปลง",
+    "increased": "เพิ่มขึ้น",
+    "decreased": "ลดลง",
+    "valueDiff": "ความแตกต่างของมูลค่า",
+    "noDifferences": "ไม่พบความแตกต่าง"
   },
   "scan": {
     "title": "สแกนรายการสั่งซื้อ",
