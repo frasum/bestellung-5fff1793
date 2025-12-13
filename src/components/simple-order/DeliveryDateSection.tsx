@@ -16,9 +16,9 @@ interface DeliveryDateSectionProps {
 }
 
 const TIME_WINDOWS = [
-  { value: '10:00-12:00', label: '10-12 Uhr', icon: '☀️' },
-  { value: '12:00-15:00', label: '12-15 Uhr', icon: '🍽️' },
-  { value: 'flexible', label: 'Flexibel', icon: '🔄' },
+  { value: 'morning', label: '10-12 Uhr' },
+  { value: 'afternoon', label: '12-15 Uhr' },
+  { value: 'flexible', label: 'Flexibel' },
 ];
 
 const getDateLocale = (lang: string) => {
@@ -99,12 +99,11 @@ export const DeliveryDateSection = ({
               type="button"
               variant={timeWindow === window.value ? "default" : "outline"}
               className={cn(
-                "h-14 flex flex-col items-center justify-center p-2 text-sm touch-manipulation",
+                "h-14 flex items-center justify-center p-2 text-sm touch-manipulation",
                 timeWindow === window.value && "ring-2 ring-primary ring-offset-2"
               )}
               onClick={() => onTimeWindowChange(window.value)}
             >
-              <span className="text-lg">{window.icon}</span>
               <span className="font-medium">{window.label}</span>
             </Button>
           ))}

@@ -110,8 +110,12 @@ export const OrderConfirmationScreen = ({
   };
 
   const getTimeWindowLabel = () => {
-    if (timeWindow === 'flexible') return t('checkout.flexible', 'Flexibel');
-    return timeWindow;
+    switch (timeWindow) {
+      case 'morning': return '10-12 Uhr';
+      case 'afternoon': return '12-15 Uhr';
+      case 'flexible': return t('checkout.flexible', 'Flexibel');
+      default: return timeWindow;
+    }
   };
 
   return (

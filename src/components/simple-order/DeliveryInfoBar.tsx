@@ -13,8 +13,8 @@ interface DeliveryInfoBarProps {
 }
 
 const TIME_WINDOW_LABELS: Record<string, string> = {
-  '10:00-12:00': '10-12 Uhr',
-  '12:00-15:00': '12-15 Uhr',
+  'morning': '10-12 Uhr',
+  'afternoon': '12-15 Uhr',
   'flexible': 'Flexibel',
 };
 
