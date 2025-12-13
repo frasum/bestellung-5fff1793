@@ -571,7 +571,11 @@
     "footerTextDesc": "Wird am Ende der Seite angezeigt. Markdown wird unterstützt.",
     "employees": {
       "voiceInput": "Spracheingabe",
-      "voiceInputDescription": "Bestellungen per Sprache aufgeben (Whisper + AI)"
+      "voiceInputDescription": "Bestellungen per Sprache aufgeben (Whisper + AI)",
+      "canAddFreeItems": "Freie Artikel erlauben",
+      "canAddFreeItemsDescription": "Mitarbeiter kann freie Artikel zur Bestellung hinzufügen",
+      "canCapturePhotos": "Foto-Erfassung",
+      "canCapturePhotosDescription": "Mitarbeiter kann Artikelfotos erfassen und zuweisen"
     }
   },
   "landing": {
@@ -945,6 +949,39 @@
       "medium": "Manuell prüfen",
       "low": "Unsicher"
     }
+  },
+  "photoCapture": {
+    "title": "Fotos erfassen",
+    "progress": "Fortschritt",
+    "of": "von",
+    "allDone": "Alle Artikel haben Fotos!",
+    "remaining": "{{count}} Artikel ohne Foto",
+    "search": "Artikel suchen...",
+    "noPending": "Keine Artikel ohne Foto",
+    "noResults": "Keine Treffer für die Suche",
+    "allComplete": "Alle Artikel haben bereits Fotos",
+    "capture": "Foto",
+    "invalidFile": "Bitte wähle eine Bilddatei",
+    "fileTooLarge": "Bild darf max. 10MB sein",
+    "matchFound": "Artikel erkannt!",
+    "analysisFailed": "Analyse fehlgeschlagen",
+    "uploaded": "Foto gespeichert!",
+    "uploadFailed": "Upload fehlgeschlagen",
+    "suggestionCreated": "Vorschlag gesendet!",
+    "suggestionFailed": "Vorschlag fehlgeschlagen",
+    "matchConfirmed": "Artikel erkannt",
+    "differentMatch": "KI erkennt: {{name}}",
+    "noMatch": "Kein passender Artikel gefunden",
+    "createSuggestion": "Als neuen Artikel vorschlagen",
+    "uploadAnyway": "Trotzdem hochladen",
+    "supplier": "Lieferant",
+    "category": "Kategorie",
+    "articleName": "Artikelname",
+    "unit": "Einheit",
+    "analyzing": "Analysiere...",
+    "uploadPhoto": "Foto hochladen",
+    "takePhoto": "Foto aufnehmen",
+    "close": "Schließen"
   },
   "subscription": {
     "usageDashboard": "Nutzung & Limits",

@@ -571,7 +571,11 @@
     "footerTextDesc": "Displayed at the bottom of the page. Markdown is supported.",
     "employees": {
       "voiceInput": "Voice Input",
-      "voiceInputDescription": "Place orders by voice (Whisper + AI)"
+      "voiceInputDescription": "Place orders by voice (Whisper + AI)",
+      "canAddFreeItems": "Allow Free Items",
+      "canAddFreeItemsDescription": "Employee can add free items to orders",
+      "canCapturePhotos": "Photo Capture",
+      "canCapturePhotosDescription": "Employee can capture and assign article photos"
     }
   },
   "landing": {
@@ -945,6 +949,39 @@
       "medium": "Please verify",
       "low": "Uncertain"
     }
+  },
+  "photoCapture": {
+    "title": "Capture Photos",
+    "progress": "Progress",
+    "of": "of",
+    "allDone": "All articles have photos!",
+    "remaining": "{{count}} articles without photo",
+    "search": "Search articles...",
+    "noPending": "No articles without photo",
+    "noResults": "No results for search",
+    "allComplete": "All articles already have photos",
+    "capture": "Photo",
+    "invalidFile": "Please select an image file",
+    "fileTooLarge": "Image must be max. 10MB",
+    "matchFound": "Article recognized!",
+    "analysisFailed": "Analysis failed",
+    "uploaded": "Photo saved!",
+    "uploadFailed": "Upload failed",
+    "suggestionCreated": "Suggestion sent!",
+    "suggestionFailed": "Suggestion failed",
+    "matchConfirmed": "Article recognized",
+    "differentMatch": "AI recognizes: {{name}}",
+    "noMatch": "No matching article found",
+    "createSuggestion": "Suggest as new article",
+    "uploadAnyway": "Upload anyway",
+    "supplier": "Supplier",
+    "category": "Category",
+    "articleName": "Article name",
+    "unit": "Unit",
+    "analyzing": "Analyzing...",
+    "uploadPhoto": "Upload photo",
+    "takePhoto": "Take photo",
+    "close": "Close"
   },
   "subscription": {
     "usageDashboard": "Usage & Limits",

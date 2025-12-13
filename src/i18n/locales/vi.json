@@ -570,7 +570,11 @@
     "footerTextDesc": "Hiển thị ở cuối trang. Markdown được hỗ trợ.",
     "employees": {
       "voiceInput": "Nhập bằng giọng nói",
-      "voiceInputDescription": "Đặt hàng bằng giọng nói (Whisper + AI)"
+      "voiceInputDescription": "Đặt hàng bằng giọng nói (Whisper + AI)",
+      "canAddFreeItems": "Cho phép sản phẩm tự do",
+      "canAddFreeItemsDescription": "Nhân viên có thể thêm sản phẩm tự do vào đơn hàng",
+      "canCapturePhotos": "Chụp ảnh sản phẩm",
+      "canCapturePhotosDescription": "Nhân viên có thể chụp và gán ảnh sản phẩm"
     }
   },
   "landing": {
@@ -943,6 +947,39 @@
       "medium": "Vui lòng kiểm tra",
       "low": "Không chắc chắn"
     }
+  },
+  "photoCapture": {
+    "title": "Chụp ảnh sản phẩm",
+    "progress": "Tiến độ",
+    "of": "trong",
+    "allDone": "Tất cả sản phẩm đã có ảnh!",
+    "remaining": "{{count}} sản phẩm chưa có ảnh",
+    "search": "Tìm sản phẩm...",
+    "noPending": "Không có sản phẩm chưa có ảnh",
+    "noResults": "Không có kết quả cho tìm kiếm",
+    "allComplete": "Tất cả sản phẩm đã có ảnh",
+    "capture": "Chụp",
+    "invalidFile": "Vui lòng chọn tệp hình ảnh",
+    "fileTooLarge": "Hình ảnh phải nhỏ hơn 10MB",
+    "matchFound": "Nhận diện sản phẩm!",
+    "analysisFailed": "Phân tích thất bại",
+    "uploaded": "Đã lưu ảnh!",
+    "uploadFailed": "Tải lên thất bại",
+    "suggestionCreated": "Đã gửi đề xuất!",
+    "suggestionFailed": "Đề xuất thất bại",
+    "matchConfirmed": "Nhận diện sản phẩm",
+    "differentMatch": "AI nhận diện: {{name}}",
+    "noMatch": "Không tìm thấy sản phẩm phù hợp",
+    "createSuggestion": "Đề xuất là sản phẩm mới",
+    "uploadAnyway": "Vẫn tải lên",
+    "supplier": "Nhà cung cấp",
+    "category": "Danh mục",
+    "articleName": "Tên sản phẩm",
+    "unit": "Đơn vị",
+    "analyzing": "Đang phân tích...",
+    "uploadPhoto": "Tải ảnh lên",
+    "takePhoto": "Chụp ảnh",
+    "close": "Đóng"
   },
   "subscription": {
     "usageDashboard": "Sử dụng & Giới hạn",

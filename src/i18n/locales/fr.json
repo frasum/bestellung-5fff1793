@@ -570,7 +570,11 @@
     "footerTextDesc": "Affiché en bas de la page. Markdown supporté.",
     "employees": {
       "voiceInput": "Saisie vocale",
-      "voiceInputDescription": "Passer des commandes par la voix (Whisper + AI)"
+      "voiceInputDescription": "Passer des commandes par la voix (Whisper + AI)",
+      "canAddFreeItems": "Autoriser les articles libres",
+      "canAddFreeItemsDescription": "L'employé peut ajouter des articles libres aux commandes",
+      "canCapturePhotos": "Capture de photos",
+      "canCapturePhotosDescription": "L'employé peut capturer et attribuer des photos d'articles"
     }
   },
   "landing": {
@@ -943,6 +947,39 @@
       "medium": "À vérifier",
       "low": "Incertain"
     }
+  },
+  "photoCapture": {
+    "title": "Capture de photos",
+    "progress": "Progression",
+    "of": "sur",
+    "allDone": "Tous les articles ont des photos !",
+    "remaining": "{{count}} articles sans photo",
+    "search": "Rechercher des articles...",
+    "noPending": "Aucun article sans photo",
+    "noResults": "Aucun résultat pour la recherche",
+    "allComplete": "Tous les articles ont déjà des photos",
+    "capture": "Photo",
+    "invalidFile": "Veuillez sélectionner un fichier image",
+    "fileTooLarge": "L'image doit faire max. 10 Mo",
+    "matchFound": "Article reconnu !",
+    "analysisFailed": "Analyse échouée",
+    "uploaded": "Photo enregistrée !",
+    "uploadFailed": "Échec du téléchargement",
+    "suggestionCreated": "Suggestion envoyée !",
+    "suggestionFailed": "Échec de la suggestion",
+    "matchConfirmed": "Article reconnu",
+    "differentMatch": "L'IA reconnaît : {{name}}",
+    "noMatch": "Aucun article correspondant trouvé",
+    "createSuggestion": "Proposer comme nouvel article",
+    "uploadAnyway": "Télécharger quand même",
+    "supplier": "Fournisseur",
+    "category": "Catégorie",
+    "articleName": "Nom de l'article",
+    "unit": "Unité",
+    "analyzing": "Analyse en cours...",
+    "uploadPhoto": "Télécharger photo",
+    "takePhoto": "Prendre photo",
+    "close": "Fermer"
   },
   "subscription": {
     "usageDashboard": "Utilisation & Limites",

@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Plus, Pencil, Trash2, Phone, Mail, User, UserCheck, UserX, MapPin, ChevronDown, ChevronRight, Package, Copy, MessageCircle, ExternalLink, QrCode, Zap, KeyRound, Shield, ShieldAlert, Mic, PlusCircle } from 'lucide-react';
+import { Plus, Pencil, Trash2, Phone, Mail, User, UserCheck, UserX, MapPin, ChevronDown, ChevronRight, Package, Copy, MessageCircle, ExternalLink, QrCode, Zap, KeyRound, Shield, ShieldAlert, Mic, PlusCircle, Camera } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -107,6 +107,7 @@ export function EmployeesTab() {
     pinCode: '',
     voiceInputEnabled: false,
     canAddFreeItems: false,
+    canCapturePhotos: false,
   });
   
   // New structure: location -> suppliers mapping
@@ -222,7 +223,7 @@ export function EmployeesTab() {
 
   const openCreateDialog = () => {
     setEditingEmployee(null);
-    setFormData({ name: '', phone: '', email: '', notes: '', language: 'th', autoApprove: false, pinCode: '', voiceInputEnabled: false, canAddFreeItems: false });
+    setFormData({ name: '', phone: '', email: '', notes: '', language: 'th', autoApprove: false, pinCode: '', voiceInputEnabled: false, canAddFreeItems: false, canCapturePhotos: false });
     initializeLocationAssignments();
     setIsDialogOpen(true);
   };
@@ -243,6 +244,7 @@ export function EmployeesTab() {
       pinCode: '',
       voiceInputEnabled: employee.voice_input_enabled || false,
       canAddFreeItems: employee.can_add_free_items || false,
+      canCapturePhotos: employee.can_capture_photos || false,
     });
     initializeLocationAssignments(employee.id);
     setIsDialogOpen(true);
@@ -355,6 +357,7 @@ export function EmployeesTab() {
         auto_approve_orders: formData.autoApprove,
         voice_input_enabled: formData.voiceInputEnabled,
         can_add_free_items: formData.canAddFreeItems,
+        can_capture_photos: formData.canCapturePhotos,
         // Don't update pin_code directly - use the secure hash function below
       });
       
@@ -1088,6 +1091,30 @@ export function EmployeesTab() {
                   id="free-items"
                   checked={formData.canAddFreeItems}
                   onCheckedChange={(checked) => setFormData({ ...formData, canAddFreeItems: checked })}
+                />
+              </div>
+
+              {/* Photo Capture Toggle - visible for all employees */}
+              <div className="flex items-center justify-between p-3 border rounded-lg bg-muted/30">
+                <div className="flex items-center gap-2">
+                  <div className="space-y-0.5">
+                    <div className="flex items-center gap-2">
+                      <Label htmlFor="photo-capture" className="text-sm font-medium">
+                        {t('settings.employees.canCapturePhotos', 'Foto-Erfassung')}
+                      </Label>
+                      <Badge variant="outline" className="text-xs bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400">
+                        Neu
+                      </Badge>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      {t('settings.employees.canCapturePhotosDescription', 'Mitarbeiter kann Artikelfotos erfassen und zuweisen')}
+                    </p>
+                  </div>
+                </div>
+                <Switch
+                  id="photo-capture"
+                  checked={formData.canCapturePhotos}
+                  onCheckedChange={(checked) => setFormData({ ...formData, canCapturePhotos: checked })}
                 />
               </div>
 
