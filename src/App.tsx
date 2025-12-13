@@ -62,6 +62,7 @@ const AppContent = () => {
         <Suspense fallback={<PageLoader />}>
           <Routes>
             <Route path="/" element={<Auth />} />
+            <Route path="/auth" element={<Auth />} />
             <Route path="/signup" element={<Auth />} />
             <Route path="/dashboard" element={<Navigate to="/reports" replace />} />
             <Route path="/suppliers" element={<Suppliers />} />
