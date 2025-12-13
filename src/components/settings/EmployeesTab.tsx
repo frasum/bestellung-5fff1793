@@ -1008,17 +1008,6 @@ export function EmployeesTab() {
                       placeholder="z.B. 1234"
                       className={`w-32 font-mono text-center tracking-widest ${formData.pinCode.length !== 4 ? 'border-destructive' : ''}`}
                     />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        const randomPin = String(Math.floor(1000 + Math.random() * 9000));
-                        setFormData({ ...formData, pinCode: randomPin });
-                      }}
-                    >
-                      Generieren
-                    </Button>
                   </div>
                   {formData.pinCode.length !== 4 && (
                     <p className="text-xs text-destructive">
