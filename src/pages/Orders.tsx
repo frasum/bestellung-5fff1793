@@ -703,50 +703,28 @@ const Orders = () => {
                             onOpenChange={() => toggleOrder(order.id)}
                           >
                             <div ref={isHighlighted ? highlightedOrderRef : undefined}>
-                            {/* Mobile Order Header */}
+                            {/* Mobile Order Header - Single Line */}
                             <CollapsibleTrigger className="w-full sm:hidden">
-                              <div className="flex flex-col gap-1.5 p-3 bg-card border border-border rounded-lg">
-                                {/* Zeile 1: Order-Nr, Status, Betrag */}
-                                <div className="flex items-center gap-2">
-                                  <ChevronRight className={cn(
-                                    "w-4 h-4 text-muted-foreground transition-transform duration-200 shrink-0",
-                                    isOrderOpen && "rotate-90"
-                                  )} />
-                                  <StatusIcon className="w-4 h-4 text-primary shrink-0" />
-                                  <span className="font-medium text-foreground text-sm truncate">{order.order_number}</span>
-                                  <Badge className={cn(statusColors[order.status], "text-xs shrink-0")}>
-                                    {t(`orders.status.${order.status}`)}
-                                  </Badge>
-                                  {order.is_test_order && (
-                                    <FlaskConical className="w-3.5 h-3.5 text-warning shrink-0" />
-                                  )}
-                                  <span className="font-bold text-foreground ml-auto">€{Number(order.total_amount).toFixed(2)}</span>
-                                </div>
-                                {/* Zeile 2: Datum, Standort, Ersteller */}
-                                <div className="flex items-center gap-2 pl-6 text-xs text-muted-foreground">
-                                  <span>{format(new Date(order.created_at), 'd. MMM, HH:mm', { locale })}</span>
-                                  {order.location_id && locations && (() => {
-                                    const loc = locations.find(l => l.id === order.location_id);
-                                    return loc ? (
-                                      <span className="flex items-center gap-0.5">
-                                        <MapPin className="w-3 h-3" />
-                                        {loc.short_code || loc.name}
-                                      </span>
-                                    ) : null;
-                                  })()}
-                                  <span>{order.order_items?.length || 0} {t('orders.items')}</span>
-                                  {order.employees?.name ? (
-                                    <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-purple-500/20 text-purple-600 dark:text-purple-400 border-purple-300 dark:border-purple-700">
-                                      <Smartphone className="w-3 h-3 mr-0.5" />
-                                      <span className="truncate max-w-[60px]">{order.employees.name}</span>
-                                    </Badge>
-                                  ) : (
-                                    <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-primary/10 text-primary border-primary/30">
-                                      <User className="w-3 h-3 mr-0.5" />
-                                      Admin
-                                    </Badge>
-                                  )}
-                                </div>
+                              <div className="flex items-center gap-2 p-3 bg-card border border-border rounded-lg">
+                                <ChevronRight className={cn(
+                                  "w-4 h-4 text-muted-foreground transition-transform duration-200 shrink-0",
+                                  isOrderOpen && "rotate-90"
+                                )} />
+                                <StatusIcon className="w-4 h-4 text-primary shrink-0" />
+                                <span className="font-medium text-foreground text-sm truncate max-w-[100px]">{order.order_number}</span>
+                                <Badge className={cn(statusColors[order.status], "text-xs shrink-0")}>
+                                  {t(`orders.status.${order.status}`)}
+                                </Badge>
+                                {order.is_test_order && (
+                                  <FlaskConical className="w-3.5 h-3.5 text-warning shrink-0" />
+                                )}
+                                <span className="text-xs text-muted-foreground shrink-0">
+                                  {format(new Date(order.created_at), 'd. MMM', { locale })}
+                                </span>
+                                <span className="text-xs text-muted-foreground shrink-0">
+                                  {order.order_items?.length || 0} Art.
+                                </span>
+                                <span className="font-bold text-foreground ml-auto shrink-0">€{Number(order.total_amount).toFixed(2)}</span>
                               </div>
                             </CollapsibleTrigger>
                             
