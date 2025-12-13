@@ -98,7 +98,8 @@ serve(async (req) => {
     // Hash PIN if provided, or set to null if empty/removed
     let hashedPin: string | null = null;
     if (pin && pin.length === 4) {
-      hashedPin = await bcrypt.hash(pin);
+      // Use hashSync instead of hash to avoid Worker dependency in Edge Functions
+      hashedPin = bcrypt.hashSync(pin);
       console.log('PIN hashed successfully');
     } else {
       console.log('PIN removed (empty or invalid)');
