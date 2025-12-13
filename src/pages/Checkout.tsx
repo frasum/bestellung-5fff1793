@@ -270,8 +270,11 @@ const Checkout = () => {
           order_unit: formatOrderUnit(item.article.order_unit_id) || undefined,
         }));
         
-        // Freie Artikel hinzufügen (ohne Preis)
-        const freeItemsForEmail = (supplier.freeItems || []).map(freeItem => ({
+        // Freie Artikel DIREKT aus dem Context filtern (nicht aus supplier.freeItems)
+        const supplierFreeItems = freeItems.filter(f => f.supplier_id === supplier.supplierId);
+        console.log(`📧 Direct freeItems filter for ${supplier.supplierName}:`, supplierFreeItems);
+        
+        const freeItemsForEmail = supplierFreeItems.map(freeItem => ({
           article_name: `${freeItem.name} [Frei]`,
           quantity: freeItem.quantity,
           unit: freeItem.unit,
@@ -281,6 +284,8 @@ const Checkout = () => {
           packaging_unit: undefined,
           order_unit: freeItem.unit,
         }));
+        
+        console.log(`📧 ${supplier.supplierName}: regularItems=${regularItems.length}, freeItemsForEmail=${freeItemsForEmail.length}`);
         
         return {
           supplierName: supplier.supplierName,
