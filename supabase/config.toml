@@ -3,6 +3,9 @@ project_id = "lclhwmxpbpmqtiwmgmgm"
 [functions.identify-article]
 verify_jwt = false
 
+[functions.create-articles-batch]
+verify_jwt = false
+
 [functions.send-order-email]
 verify_jwt = true
 

@@ -1,16 +1,20 @@
 import { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Camera, Upload, Loader2, X, Sparkles, Check, ChevronRight, ChevronLeft, Plus, Building2, AlertCircle } from 'lucide-react';
+import { Camera, Upload, Loader2, X, Sparkles, Check, ChevronRight, ChevronLeft, Plus, Building2, AlertCircle, Layers } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Switch } from '@/components/ui/switch';
+import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { BatchPhotoGallery, CapturedImage } from '@/components/suppliers/BatchPhotoGallery';
+import { ArticleCarousel, BatchArticleData } from '@/components/suppliers/ArticleCarousel';
 
 interface Supplier {
   id: string;
@@ -29,10 +33,10 @@ interface IdentificationResult {
   suggested_unit: string;
 }
 
-type WizardStep = 'loading' | 'error' | 'photo' | 'article' | 'supplier' | 'confirm';
+type WizardStep = 'loading' | 'error' | 'photo' | 'batch-photos' | 'batch-processing' | 'batch-review' | 'article' | 'supplier' | 'confirm';
 
 const PhotoCapture = () => {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const [searchParams] = useSearchParams();
   const token = searchParams.get('token');
   
@@ -45,23 +49,32 @@ const PhotoCapture = () => {
   const [categories, setCategories] = useState<string[]>([]);
   const [units, setUnits] = useState<string[]>([]);
   
+  // Mode toggle
+  const [batchMode, setBatchMode] = useState(false);
+  
   // Processing state
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   
-  // Photo state
+  // Single photo state
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [identificationResult, setIdentificationResult] = useState<IdentificationResult | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   
-  // Article form state
+  // Single article form state
   const [articleName, setArticleName] = useState('');
   const [articleDescription, setArticleDescription] = useState('');
   const [articleCategory, setArticleCategory] = useState('');
   const [articleUnit, setArticleUnit] = useState('');
   const [articlePrice, setArticlePrice] = useState('');
   const [articleSku, setArticleSku] = useState('');
+  
+  // Batch state
+  const [capturedImages, setCapturedImages] = useState<CapturedImage[]>([]);
+  const [batchArticles, setBatchArticles] = useState<BatchArticleData[]>([]);
+  const [currentBatchIndex, setCurrentBatchIndex] = useState(0);
+  const [batchProgress, setBatchProgress] = useState({ total: 0, completed: 0 });
   
   // Supplier state
   const [supplierMode, setSupplierMode] = useState<'existing' | 'new'>('existing');
@@ -71,6 +84,9 @@ const PhotoCapture = () => {
   const [newSupplierEmail, setNewSupplierEmail] = useState('');
   const [newSupplierPhone, setNewSupplierPhone] = useState('');
   const [newSupplierCustomerNumber, setNewSupplierCustomerNumber] = useState('');
+
+  // Batch result state
+  const [batchResult, setBatchResult] = useState<{ successCount: number; failCount: number } | null>(null);
 
   // Verify token on mount
   useEffect(() => {
@@ -117,6 +133,11 @@ const PhotoCapture = () => {
     setArticleUnit('');
     setArticlePrice('');
     setArticleSku('');
+    setCapturedImages([]);
+    setBatchArticles([]);
+    setCurrentBatchIndex(0);
+    setBatchProgress({ total: 0, completed: 0 });
+    setBatchResult(null);
     setSupplierMode('existing');
     setSelectedSupplierId('');
     setSupplierSearch('');
@@ -126,6 +147,7 @@ const PhotoCapture = () => {
     setNewSupplierCustomerNumber('');
   };
 
+  // Single image processing
   const processImage = async (file: File) => {
     if (!file.type.startsWith('image/')) {
       toast.error(t('quickCapture.invalidImage', 'Bitte ein Bild auswählen'));
@@ -150,10 +172,7 @@ const PhotoCapture = () => {
       setPreviewImage(base64);
 
       const { data, error } = await supabase.functions.invoke('identify-article', {
-        body: {
-          imageBase64: base64,
-          organizationId,
-        },
+        body: { imageBase64: base64, organizationId },
       });
 
       if (error) {
@@ -164,7 +183,6 @@ const PhotoCapture = () => {
 
       const result = data as IdentificationResult;
       setIdentificationResult(result);
-      
       setArticleName(result.suggested_name || '');
       setArticleDescription(result.suggested_description || '');
       setArticleCategory(result.suggested_category || '');
@@ -193,7 +211,85 @@ const PhotoCapture = () => {
     e.target.value = '';
   };
 
-  const handleSave = async () => {
+  // Batch processing
+  const handleAddBatchImage = (image: CapturedImage) => {
+    setCapturedImages(prev => [...prev, image]);
+  };
+
+  const handleRemoveBatchImage = (id: string) => {
+    setCapturedImages(prev => prev.filter(img => img.id !== id));
+  };
+
+  const processBatchImages = async () => {
+    if (capturedImages.length === 0) return;
+    
+    setStep('batch-processing');
+    setBatchProgress({ total: capturedImages.length, completed: 0 });
+
+    const results: BatchArticleData[] = [];
+
+    // Process all images in parallel
+    const processPromises = capturedImages.map(async (img, index) => {
+      try {
+        const { data, error } = await supabase.functions.invoke('identify-article', {
+          body: { imageBase64: img.base64, organizationId },
+        });
+
+        const result = error ? null : (data as IdentificationResult);
+        
+        return {
+          imageId: img.id,
+          imageBase64: img.base64,
+          name: result?.suggested_name || '',
+          description: result?.suggested_description || '',
+          category: result?.suggested_category || '',
+          unit: result?.suggested_unit || 'Stk',
+          price: '',
+          sku: '',
+          confidence: result?.confidence || 'low' as const,
+          skipped: false,
+        };
+      } catch (err) {
+        console.error('Batch processing error for image:', img.id, err);
+        return {
+          imageId: img.id,
+          imageBase64: img.base64,
+          name: '',
+          description: '',
+          category: '',
+          unit: 'Stk',
+          price: '',
+          sku: '',
+          confidence: 'low' as const,
+          skipped: false,
+        };
+      } finally {
+        setBatchProgress(prev => ({ ...prev, completed: prev.completed + 1 }));
+      }
+    });
+
+    const processedResults = await Promise.all(processPromises);
+    setBatchArticles(processedResults);
+    setCurrentBatchIndex(0);
+    setStep('batch-review');
+    
+    toast.success(t('batchCapture.processingComplete', '{{count}} Artikel analysiert', { count: processedResults.length }));
+  };
+
+  const handleBatchArticleChange = (index: number, data: Partial<BatchArticleData>) => {
+    setBatchArticles(prev => prev.map((article, i) => 
+      i === index ? { ...article, ...data } : article
+    ));
+  };
+
+  const handleSkipArticle = (index: number) => {
+    setBatchArticles(prev => prev.map((article, i) => 
+      i === index ? { ...article, skipped: true } : article
+    ));
+  };
+
+  // Single article save
+  const handleSaveSingle = async () => {
     if (!articleName.trim() || !articlePrice) {
       toast.error(t('quickCapture.fillRequired', 'Bitte alle Pflichtfelder ausfüllen'));
       return;
@@ -232,19 +328,13 @@ const PhotoCapture = () => {
       }
 
       const { data, error } = await supabase.functions.invoke('create-article-from-mobile', {
-        body: {
-          token,
-          article: articleData,
-          imageBase64: previewImage,
-          newSupplier: newSupplierData,
-        },
+        body: { token, article: articleData, imageBase64: previewImage, newSupplier: newSupplierData },
       });
 
       if (error || !data?.success) {
         throw new Error(data?.error || 'Failed to create article');
       }
 
-      // If new supplier was created, add it to the list
       if (newSupplierData && data.supplier_id) {
         setSuppliers(prev => [...prev, {
           id: data.supplier_id,
@@ -264,16 +354,97 @@ const PhotoCapture = () => {
     }
   };
 
+  // Batch save
+  const handleSaveBatch = async () => {
+    const articlesToSave = batchArticles.filter(a => !a.skipped && a.name.trim() && a.price);
+    
+    if (articlesToSave.length === 0) {
+      toast.error(t('batchCapture.noArticlesToSave', 'Keine Artikel zum Speichern'));
+      return;
+    }
+
+    if (supplierMode === 'new' && (!newSupplierName.trim() || !newSupplierEmail.trim())) {
+      toast.error(t('quickCapture.supplierRequired', 'Lieferanten-Name und E-Mail sind erforderlich'));
+      return;
+    }
+
+    if (supplierMode === 'existing' && !selectedSupplierId) {
+      toast.error(t('quickCapture.selectSupplier', 'Bitte einen Lieferanten auswählen'));
+      return;
+    }
+
+    setIsSaving(true);
+
+    try {
+      const newSupplierData = supplierMode === 'new' ? {
+        name: newSupplierName.trim(),
+        email: newSupplierEmail.trim(),
+        phone: newSupplierPhone.trim() || null,
+        customer_number: newSupplierCustomerNumber.trim() || null,
+      } : null;
+
+      const { data, error } = await supabase.functions.invoke('create-articles-batch', {
+        body: {
+          token,
+          articles: articlesToSave.map(a => ({
+            imageBase64: a.imageBase64,
+            name: a.name.trim(),
+            description: a.description.trim() || null,
+            category: a.category || null,
+            unit: a.unit || 'Stk',
+            price: a.price.replace(',', '.'),
+            sku: a.sku.trim() || null,
+          })),
+          supplierId: supplierMode === 'existing' ? selectedSupplierId : null,
+          newSupplier: newSupplierData,
+        },
+      });
+
+      if (error || !data?.success) {
+        throw new Error(data?.error || 'Failed to create articles');
+      }
+
+      if (newSupplierData && data.supplierId) {
+        setSuppliers(prev => [...prev, {
+          id: data.supplierId,
+          name: newSupplierData.name,
+          email: newSupplierData.email,
+          customer_number: newSupplierData.customer_number || undefined,
+        }]);
+      }
+
+      setBatchResult({ successCount: data.successCount, failCount: data.failCount });
+      setStep('confirm');
+      
+      toast.success(t('batchCapture.batchSaved', '{{count}} Artikel erfolgreich erstellt!', { count: data.successCount }));
+    } catch (err) {
+      console.error('Batch save error:', err);
+      toast.error(t('quickCapture.saveError', 'Fehler beim Speichern'));
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   const filteredSuppliers = suppliers.filter(s => 
     s.name.toLowerCase().includes(supplierSearch.toLowerCase()) ||
     s.email.toLowerCase().includes(supplierSearch.toLowerCase())
   );
 
-  const canProceedToSupplier = articleName.trim() && articlePrice;
+  const canProceedToSupplier = batchMode 
+    ? batchArticles.some(a => !a.skipped && a.name.trim() && a.price)
+    : (articleName.trim() && articlePrice);
+    
   const canSave = supplierMode === 'existing' ? selectedSupplierId : (newSupplierName.trim() && newSupplierEmail.trim());
 
-  const steps = ['photo', 'article', 'supplier', 'confirm'];
-  const currentStepIndex = steps.indexOf(step);
+  const getSteps = () => {
+    if (batchMode) {
+      return ['batch-photos', 'batch-review', 'supplier', 'confirm'];
+    }
+    return ['photo', 'article', 'supplier', 'confirm'];
+  };
+
+  const steps = getSteps();
+  const currentStepIndex = steps.indexOf(step as string);
 
   // Loading state
   if (step === 'loading') {
@@ -302,17 +473,37 @@ const PhotoCapture = () => {
     <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
       <header className="border-b bg-card p-4">
-        <div className="flex items-center gap-2">
-          <Camera className="h-6 w-6 text-primary" />
-          <div>
-            <h1 className="font-semibold">{t('quickCapture.title', 'Schnell-Erfassung')}</h1>
-            <p className="text-xs text-muted-foreground">{organizationName}</p>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Camera className="h-6 w-6 text-primary" />
+            <div>
+              <h1 className="font-semibold">{t('quickCapture.title', 'Schnell-Erfassung')}</h1>
+              <p className="text-xs text-muted-foreground">{organizationName}</p>
+            </div>
           </div>
+          
+          {/* Batch mode toggle - only show on photo step */}
+          {(step === 'photo' || step === 'batch-photos') && (
+            <div className="flex items-center gap-2">
+              <Layers className="h-4 w-4 text-muted-foreground" />
+              <Switch
+                checked={batchMode}
+                onCheckedChange={(checked) => {
+                  setBatchMode(checked);
+                  setStep(checked ? 'batch-photos' : 'photo');
+                  setCapturedImages([]);
+                  setPreviewImage(null);
+                }}
+              />
+              <span className="text-xs text-muted-foreground">Batch</span>
+            </div>
+          )}
         </div>
         
         {/* Progress Steps */}
-        <div className="flex items-center justify-between mt-4">
-          {steps.map((s, i) => (
+        {step !== 'batch-processing' && (
+          <div className="flex items-center justify-between mt-4">
+            {steps.map((s, i) => (
               <div key={s} className="flex items-center">
                 <div className={cn(
                   'w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors',
@@ -327,16 +518,17 @@ const PhotoCapture = () => {
                     'w-8 sm:w-12 h-0.5 mx-1',
                     i < currentStepIndex ? 'bg-primary' : 'bg-muted'
                   )} />
-              )}
-            </div>
-          ))}
-        </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
       </header>
 
       {/* Content */}
       <main className="flex-1 p-4 pb-safe overflow-y-auto">
-        {/* Step 1: Photo */}
-        {step === 'photo' && (
+        {/* Single Mode: Photo Step */}
+        {step === 'photo' && !batchMode && (
           <div className="space-y-4">
             <div className="p-6 rounded-lg border-2 border-dashed border-primary/30 bg-primary/5 min-h-[300px] flex flex-col items-center justify-center">
               {previewImage ? (
@@ -415,8 +607,70 @@ const PhotoCapture = () => {
           </div>
         )}
 
-        {/* Step 2: Article Details */}
-        {step === 'article' && (
+        {/* Batch Mode: Photo Collection */}
+        {step === 'batch-photos' && batchMode && (
+          <div className="space-y-4">
+            <div className="text-center mb-4">
+              <h2 className="text-lg font-semibold">{t('batchCapture.title', 'Mehrere Artikel erfassen')}</h2>
+              <p className="text-sm text-muted-foreground">
+                {t('batchCapture.hint', 'Mache Fotos von mehreren Produkten und verarbeite sie gemeinsam.')}
+              </p>
+            </div>
+            
+            <BatchPhotoGallery
+              images={capturedImages}
+              onAddImage={handleAddBatchImage}
+              onRemoveImage={handleRemoveBatchImage}
+              onProcessAll={processBatchImages}
+              isProcessing={false}
+            />
+          </div>
+        )}
+
+        {/* Batch Mode: Processing */}
+        {step === 'batch-processing' && (
+          <div className="flex flex-col items-center justify-center py-12 space-y-6">
+            <Loader2 className="h-16 w-16 animate-spin text-primary" />
+            <div className="text-center">
+              <h2 className="text-lg font-semibold mb-2">
+                {t('batchCapture.analyzing', 'Analysiere Bilder...')}
+              </h2>
+              <p className="text-muted-foreground">
+                {t('batchCapture.progress', '{{completed}} von {{total}}', batchProgress)}
+              </p>
+            </div>
+            <Progress value={(batchProgress.completed / batchProgress.total) * 100} className="w-64" />
+          </div>
+        )}
+
+        {/* Batch Mode: Article Review Carousel */}
+        {step === 'batch-review' && (
+          <div className="space-y-4">
+            <ArticleCarousel
+              articles={batchArticles}
+              currentIndex={currentBatchIndex}
+              onIndexChange={setCurrentBatchIndex}
+              onArticleChange={handleBatchArticleChange}
+              onSkipArticle={handleSkipArticle}
+              categories={categories}
+              units={units}
+            />
+            
+            <div className="flex justify-between pt-4 border-t">
+              <Button variant="ghost" size="lg" onClick={() => setStep('batch-photos')}>
+                <ChevronLeft className="h-4 w-4 mr-1" />
+                {t('common.back', 'Zurück')}
+              </Button>
+              <Button size="lg" onClick={() => setStep('supplier')} disabled={!canProceedToSupplier}>
+                {t('batchCapture.toSupplier', 'Lieferant wählen')}
+                <ChevronRight className="h-4 w-4 ml-1" />
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* Single Mode: Article Details */}
+        {step === 'article' && !batchMode && (
           <div className="space-y-4">
             {previewImage && (
               <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
@@ -535,9 +789,19 @@ const PhotoCapture = () => {
           </div>
         )}
 
-        {/* Step 3: Supplier */}
+        {/* Supplier Selection (shared between modes) */}
         {step === 'supplier' && (
           <div className="space-y-4">
+            {batchMode && (
+              <div className="p-3 bg-muted/50 rounded-lg">
+                <p className="text-sm text-muted-foreground">
+                  {t('batchCapture.supplierForAll', '{{count}} Artikel werden diesem Lieferanten zugeordnet', { 
+                    count: batchArticles.filter(a => !a.skipped && a.name.trim() && a.price).length 
+                  })}
+                </p>
+              </div>
+            )}
+            
             <p className="text-sm text-muted-foreground">
               {t('quickCapture.supplierQuestion', 'Von welchem Lieferanten beziehst du diesen Artikel?')}
             </p>
@@ -659,11 +923,15 @@ const PhotoCapture = () => {
             </RadioGroup>
 
             <div className="flex justify-between pt-2">
-              <Button variant="ghost" size="lg" onClick={() => setStep('article')}>
+              <Button variant="ghost" size="lg" onClick={() => setStep(batchMode ? 'batch-review' : 'article')}>
                 <ChevronLeft className="h-4 w-4 mr-1" />
                 {t('common.back', 'Zurück')}
               </Button>
-              <Button size="lg" onClick={handleSave} disabled={!canSave || isSaving}>
+              <Button 
+                size="lg" 
+                onClick={batchMode ? handleSaveBatch : handleSaveSingle} 
+                disabled={!canSave || isSaving}
+              >
                 {isSaving ? (
                   <>
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -672,7 +940,9 @@ const PhotoCapture = () => {
                 ) : (
                   <>
                     <Check className="h-4 w-4 mr-2" />
-                    {t('quickCapture.saveArticle', 'Artikel speichern')}
+                    {batchMode 
+                      ? t('batchCapture.saveAll', 'Alle speichern')
+                      : t('quickCapture.saveArticle', 'Artikel speichern')}
                   </>
                 )}
               </Button>
@@ -680,7 +950,7 @@ const PhotoCapture = () => {
           </div>
         )}
 
-        {/* Step 4: Confirmation */}
+        {/* Confirmation (shared between modes) */}
         {step === 'confirm' && (
           <div className="space-y-6 py-8">
             <div className="flex flex-col items-center text-center gap-4">
@@ -688,17 +958,34 @@ const PhotoCapture = () => {
                 <Check className="h-10 w-10 text-green-600" />
               </div>
               <div>
-                <h3 className="text-xl font-semibold">{t('quickCapture.successTitle', 'Artikel erfolgreich erstellt!')}</h3>
-                <p className="text-sm text-muted-foreground mt-1">
-                  {t('quickCapture.successDescription', '"{{name}}" wurde zu deinem Katalog hinzugefügt.', { name: articleName })}
-                </p>
+                {batchMode && batchResult ? (
+                  <>
+                    <h3 className="text-xl font-semibold">
+                      {t('batchCapture.successTitle', '{{count}} Artikel erstellt!', { count: batchResult.successCount })}
+                    </h3>
+                    {batchResult.failCount > 0 && (
+                      <p className="text-sm text-muted-foreground mt-1">
+                        {t('batchCapture.failedCount', '{{count}} Artikel konnten nicht erstellt werden.', { count: batchResult.failCount })}
+                      </p>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    <h3 className="text-xl font-semibold">{t('quickCapture.successTitle', 'Artikel erfolgreich erstellt!')}</h3>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      {t('quickCapture.successDescription', '"{{name}}" wurde zu deinem Katalog hinzugefügt.', { name: articleName })}
+                    </p>
+                  </>
+                )}
               </div>
             </div>
 
             <div className="flex flex-col gap-3">
-              <Button size="lg" className="h-14" onClick={() => { resetForm(); setStep('photo'); }}>
+              <Button size="lg" className="h-14" onClick={() => { resetForm(); setStep(batchMode ? 'batch-photos' : 'photo'); }}>
                 <Camera className="h-5 w-5 mr-2" />
-                {t('quickCapture.captureNext', 'Nächsten Artikel erfassen')}
+                {batchMode 
+                  ? t('batchCapture.captureMore', 'Weitere Artikel erfassen')
+                  : t('quickCapture.captureNext', 'Nächsten Artikel erfassen')}
               </Button>
               <Button variant="outline" size="lg" className="h-14" onClick={() => window.close()}>
                 {t('common.done', 'Fertig')}
