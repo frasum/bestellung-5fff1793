@@ -78,6 +78,10 @@ interface ArticleListProps {
   onUpdateFreeItem?: (item: FreeItem) => void;
   onDeleteFreeItem?: (itemId: string) => void;
   onFreeItemQuantityChange?: (itemId: string, delta: number) => void;
+  // Photo capture props for free items
+  token?: string;
+  organizationId?: string;
+  canCapturePhotos?: boolean;
 }
 
 export const ArticleList = ({
@@ -98,6 +102,9 @@ export const ArticleList = ({
   onUpdateFreeItem,
   onDeleteFreeItem,
   onFreeItemQuantityChange,
+  token,
+  organizationId,
+  canCapturePhotos = false,
 }: ArticleListProps) => {
   const { t } = useTranslation();
   const [freeItemDialogOpen, setFreeItemDialogOpen] = useState(false);
@@ -301,6 +308,9 @@ export const ArticleList = ({
           supplierId={selectedSupplierId}
           editingItem={editingFreeItem}
           onUpdate={onUpdateFreeItem}
+          token={token}
+          organizationId={organizationId}
+          canCapturePhotos={canCapturePhotos}
         />
       )}
     </>

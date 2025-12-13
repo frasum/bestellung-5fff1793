@@ -28,7 +28,7 @@ serve(async (req) => {
     // Verify token
     const { data: tokenData, error: tokenError } = await supabase
       .from('simple_order_tokens')
-      .select('id, organization_id, employee:employees(id, name, can_capture_photos)')
+      .select('id, organization_id, employee:employees(id, name, can_capture_photos, can_add_free_items)')
       .eq('token', token)
       .eq('is_active', true)
       .single();
@@ -40,12 +40,13 @@ serve(async (req) => {
       );
     }
 
-    // Check if employee has permission
+    // Check if employee has permission (can_capture_photos OR can_add_free_items)
     const employee = tokenData.employee as any;
     const canCapture = employee?.can_capture_photos;
-    if (!canCapture) {
+    const canAddFreeItems = employee?.can_add_free_items;
+    if (!canCapture && !canAddFreeItems) {
       return new Response(
-        JSON.stringify({ error: 'Not authorized to capture photos' }),
+        JSON.stringify({ error: 'Not authorized to capture photos or add free items' }),
         { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
