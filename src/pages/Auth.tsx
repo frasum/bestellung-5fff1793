@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Mail, Lock, User, Building2, ArrowRight, Loader2, Play, Users, FlaskConical } from 'lucide-react';
+import { Mail, Lock, User, Building2, ArrowRight, Loader2, Play, Users, FlaskConical, Mic } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -64,8 +64,10 @@ const Auth = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [showDemoDialog, setShowDemoDialog] = useState(false);
   const [showEmptyDemoDialog, setShowEmptyDemoDialog] = useState(false);
+  const [showVoiceOnboardingDialog, setShowVoiceOnboardingDialog] = useState(false);
   const [isDemoLoading, setIsDemoLoading] = useState(false);
   const [isEmptyDemoLoading, setIsEmptyDemoLoading] = useState(false);
+  const [isVoiceOnboardingLoading, setIsVoiceOnboardingLoading] = useState(false);
   const [isAcceptingInvitation, setIsAcceptingInvitation] = useState(false);
   const { user, signIn, signUp } = useAuth();
   const navigate = useNavigate();
@@ -267,6 +269,47 @@ const Auth = () => {
 
   const handleStartEmptyDemo = async (data: DemoFormData) => {
     await handleStartDemo(data, true);
+  };
+
+  const handleStartVoiceOnboarding = async (data: DemoFormData) => {
+    setIsVoiceOnboardingLoading(true);
+    
+    try {
+      const { data: result, error } = await supabase.functions.invoke('create-demo-account', {
+        body: { email: data.email, emptyAccount: true }
+      });
+
+      if (error) {
+        toast.error(error.message || 'Fehler beim Erstellen des Demo-Accounts');
+        setIsVoiceOnboardingLoading(false);
+        return;
+      }
+
+      if (result?.error) {
+        toast.error(result.error);
+        setIsVoiceOnboardingLoading(false);
+        return;
+      }
+
+      if (result?.session) {
+        await supabase.auth.setSession({
+          access_token: result.session.access_token,
+          refresh_token: result.session.refresh_token,
+        });
+        
+        toast.success('Demo-Account erstellt! Starte Sprach-Onboarding...');
+        setShowVoiceOnboardingDialog(false);
+        navigate('/onboarding');
+      } else if (result?.needsManualLogin) {
+        toast.success('Demo-Account erstellt! Bitte melden Sie sich an.');
+        setShowVoiceOnboardingDialog(false);
+      }
+    } catch (err) {
+      console.error('Voice onboarding error:', err);
+      toast.error('Ein unerwarteter Fehler ist aufgetreten');
+    }
+    
+    setIsVoiceOnboardingLoading(false);
   };
 
   // Show loading state while accepting invitation for logged-in user
@@ -583,6 +626,18 @@ const Auth = () => {
                 <FlaskConical className="w-4 h-4" />
                 Leere Demo (Onboarding testen)
               </Button>
+
+              <Button 
+                variant="outline" 
+                className="w-full gap-2 border-primary/50 text-primary hover:bg-primary/10"
+                onClick={() => setShowVoiceOnboardingDialog(true)}
+              >
+                <Mic className="w-4 h-4" />
+                Mit Sprach-Assistent starten
+              </Button>
+              <p className="text-xs text-muted-foreground text-center">
+                Richten Sie Ihren Katalog per Sprache ein
+              </p>
             </div>
           )}
 
@@ -656,6 +711,75 @@ const Auth = () => {
                   <>
                     <Play className="w-4 h-4 mr-2" />
                     Demo starten
+                  </>
+                )}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Voice Onboarding Dialog */}
+      <Dialog open={showVoiceOnboardingDialog} onOpenChange={setShowVoiceOnboardingDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Mic className="w-5 h-5 text-primary" />
+              Sprach-Onboarding starten
+            </DialogTitle>
+            <DialogDescription>
+              Unser KI-Assistent hilft Ihnen per Sprache, Ihre ersten Lieferanten 
+              und Artikel anzulegen. Einfach sprechen und fertig!
+            </DialogDescription>
+          </DialogHeader>
+          
+          <form onSubmit={demoForm.handleSubmit(handleStartVoiceOnboarding)} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="voice-demo-email">E-Mail-Adresse</Label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  id="voice-demo-email"
+                  type="email"
+                  placeholder="ihre@email.de"
+                  className="pl-10"
+                  {...demoForm.register('email')}
+                />
+              </div>
+              {demoForm.formState.errors.email && (
+                <p className="text-sm text-destructive">{demoForm.formState.errors.email.message}</p>
+              )}
+            </div>
+
+            <div className="bg-primary/5 border border-primary/20 rounded-lg p-3 text-sm">
+              <p className="font-medium mb-1 flex items-center gap-2">
+                <Mic className="w-4 h-4 text-primary" />
+                So funktioniert's
+              </p>
+              <ul className="text-muted-foreground space-y-1 text-xs">
+                <li>• Sprechen Sie mit unserem KI-Assistenten</li>
+                <li>• Nennen Sie Lieferanten und Artikel</li>
+                <li>• Der Assistent legt alles automatisch an</li>
+                <li>• Jederzeit pausieren oder stoppen</li>
+              </ul>
+            </div>
+
+            <div className="flex gap-3">
+              <Button 
+                type="button" 
+                variant="outline" 
+                className="flex-1"
+                onClick={() => setShowVoiceOnboardingDialog(false)}
+              >
+                Abbrechen
+              </Button>
+              <Button type="submit" className="flex-1" disabled={isVoiceOnboardingLoading}>
+                {isVoiceOnboardingLoading ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <>
+                    <Mic className="w-4 h-4 mr-2" />
+                    Jetzt starten
                   </>
                 )}
               </Button>
