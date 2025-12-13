@@ -918,6 +918,7 @@
     "filterBySource": "Quelle:",
     "sourceEmployee": "Mitarbeiter",
     "sourceSupplier": "Lieferant",
+    "sourcePhoto": "Foto-Erfassung",
     "noSuggestions": "Keine Vorschläge vorhanden",
     "noSuggestionsDesc": "Vorschläge von Mitarbeitern oder Lieferanten erscheinen hier",
     "approve": "Übernehmen",
