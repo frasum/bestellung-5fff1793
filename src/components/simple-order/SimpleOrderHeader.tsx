@@ -52,7 +52,7 @@ export const SimpleOrderHeader = ({
   const showOrderHistory = hasEmployee && onViewOrders;
 
   return (
-    <div className="sticky top-0 z-10 bg-primary text-primary-foreground shadow-lg">
+    <div className="sticky top-0 z-10 bg-primary text-primary-foreground border-b border-primary-foreground/10">
       <div className="max-w-2xl mx-auto px-3 py-2">
         <div className="flex items-center justify-between gap-2">
           {/* Center: Supplier name - clickable dropdown for multi-supplier */}

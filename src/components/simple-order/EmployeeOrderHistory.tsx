@@ -200,7 +200,7 @@ export const EmployeeOrderHistory = ({
                 </h2>
                 <div className="space-y-4">
                   {drafts.map((draft) => (
-                    <Card key={draft.id} className="p-4 border-orange-500/20">
+                    <Card key={draft.id} className="p-4 border-warning/30">
                       <div className="flex justify-between items-start mb-3">
                         <div className="flex-1">
                           <h3 className="font-semibold text-lg">
@@ -228,7 +228,7 @@ export const EmployeeOrderHistory = ({
                         </Badge>
                       </div>
 
-                      <div className="bg-muted/50 rounded-lg p-3 mb-3">
+                      <div className="bg-muted/30 rounded-md p-3 mb-3">
                         {draft.items.slice(0, 3).map((item) => (
                           <div key={item.id} className="flex justify-between text-sm py-1">
                             <span className="truncate flex-1 mr-2">{item.article?.name || 'Artikel'}</span>
@@ -313,7 +313,7 @@ export const EmployeeOrderHistory = ({
                         </div>
                       </div>
 
-                      <div className="bg-background rounded-lg p-3 mb-3">
+                      <div className="bg-muted/30 rounded-md p-3 mb-3">
                         {order.items.slice(0, 3).map((item) => (
                           <div key={item.id} className="flex justify-between text-sm py-1">
                             <span className="truncate flex-1 mr-2">{item.article_name}</span>

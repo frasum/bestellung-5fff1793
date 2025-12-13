@@ -212,7 +212,7 @@ export const MultiSupplierCartOverview = ({
 
       <div className="max-w-2xl mx-auto p-4 space-y-4">
         {/* Delivery Info */}
-        <Card className="p-4 bg-primary/5 border-primary/20">
+        <Card className="p-4 bg-muted/30">
           <div className="flex flex-wrap gap-4 text-sm">
             <div className="flex items-center gap-2">
               <Calendar className="h-4 w-4 text-primary" />
@@ -250,10 +250,10 @@ export const MultiSupplierCartOverview = ({
               <Card className="overflow-hidden">
                 {/* Supplier Header */}
                 <CollapsibleTrigger asChild>
-                  <div className="p-4 bg-muted/50 cursor-pointer hover:bg-muted/70 transition-colors touch-manipulation">
+                  <div className="p-4 bg-muted/30 cursor-pointer hover:bg-muted/50 transition-colors touch-manipulation">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center">
+                        <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
                           <Package className="h-5 w-5 text-primary" />
                         </div>
                         <div>
@@ -347,7 +347,7 @@ export const MultiSupplierCartOverview = ({
         })}
 
         {/* Grand Total */}
-        <Card className="p-4 bg-primary/5 border-primary/20">
+        <Card className="p-4 bg-muted/30">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">
@@ -365,7 +365,7 @@ export const MultiSupplierCartOverview = ({
       </div>
 
       {/* Bottom Action Bar */}
-      <div className="fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur-sm border-t p-4 pb-safe">
+      <div className="fixed bottom-0 left-0 right-0 bg-background border-t border-border p-4 pb-safe">
         <div className="max-w-2xl mx-auto flex gap-3">
           <Button
             variant="outline"

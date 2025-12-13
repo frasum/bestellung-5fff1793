@@ -4,6 +4,7 @@ import { ShieldCheck, AlertCircle, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
+import { cn } from '@/lib/utils';
 
 interface PinEntryScreenProps {
   employeeName: string;
@@ -185,9 +186,11 @@ export function PinEntryScreen({
               onKeyDown={(e) => handleKeyDown(index, e)}
               onPaste={index === 0 ? handlePaste : undefined}
               disabled={isLocked || isVerifying}
-              className={`w-14 h-14 text-center text-2xl font-bold ${
-                error ? 'border-destructive' : ''
-              } ${digit ? 'bg-primary/5' : ''}`}
+              className={cn(
+                "w-14 h-14 text-center text-2xl font-bold",
+                error && "border-destructive/50",
+                digit && "bg-primary/5"
+              )}
               autoComplete="off"
             />
           ))}
