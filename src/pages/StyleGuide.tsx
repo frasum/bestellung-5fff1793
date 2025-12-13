@@ -77,6 +77,7 @@ import {
 import { AlertCircle, CheckCircle, Info, Palette, ArrowLeft, Sun, Moon, Sparkles, MoreHorizontal, ChevronDown, Settings, User, LogOut, HelpCircle, CalendarDays, ChevronsUpDown, Download, FileJson, FileCode } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { toast } from 'sonner';
+import { ComponentPlayground } from '@/components/style-guide/ComponentPlayground';
 
 // Design tokens data for export
 const designTokens = {
@@ -341,6 +342,9 @@ const StyleGuide = () => {
             </Button>
           </div>
         </div>
+
+        {/* Component Playground */}
+        <ComponentPlayground />
 
         {/* Design Tokens Overview */}
         <Card>
