@@ -17,7 +17,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Trash2, Plus, Minus, ShoppingCart, ArrowRight, Loader2, AlertTriangle, Save, Camera, PlusCircle } from 'lucide-react';
+import { Trash2, Plus, Minus, ShoppingCart, ArrowRight, Loader2, AlertTriangle, Save, Camera, PlusCircle, CalendarIcon, Clock } from 'lucide-react';
+import { format } from 'date-fns';
+import { de, enUS, fr, it, th, vi } from 'date-fns/locale';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { ScanOrderListDialog } from '@/components/cart/ScanOrderListDialog';
 import { AddArticleSheet } from '@/components/cart/AddArticleSheet';
@@ -27,7 +29,7 @@ const Cart = () => {
   const { activeLocation } = useLocationContext();
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const { items, removeItem, updateQuantity, getTotal, clearCart } = useCart();
+  const { items, removeItem, updateQuantity, getTotal, clearCart, draftDeliveryDate, draftTimeWindow } = useCart();
   const createDraft = useCreateCartDraft();
   const { data: supplierLocations } = useSupplierLocations();
   
@@ -39,6 +41,29 @@ const Cart = () => {
     supplierId: '',
     supplierName: '',
   });
+
+  // Helper to get locale for date formatting
+  const getDateLocale = () => {
+    const lang = localStorage.getItem('i18nextLng') || 'de';
+    switch (lang) {
+      case 'en': return enUS;
+      case 'fr': return fr;
+      case 'it': return it;
+      case 'th': return th;
+      case 'vi': return vi;
+      default: return de;
+    }
+  };
+
+  // Helper to format time window
+  const formatTimeWindow = (value: string) => {
+    switch (value) {
+      case 'morning': return '10:00 - 12:00';
+      case 'afternoon': return '12:00 - 15:00';
+      case 'flexible': return t('checkout.flexible');
+      default: return value;
+    }
+  };
 
   // Helper to get location-specific minimum order value with fallback to supplier default
   const getMinimumOrderValue = useCallback((supplierId: string, supplierDefault: number | null): number => {
@@ -139,6 +164,27 @@ const Cart = () => {
             )}
           </div>
         </div>
+
+        {/* Draft delivery info from EasyOrder */}
+        {(draftDeliveryDate || draftTimeWindow) && (
+          <Alert className="bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-800">
+            <CalendarIcon className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+            <AlertDescription className="flex flex-wrap gap-x-4 gap-y-1 text-blue-700 dark:text-blue-300">
+              {draftDeliveryDate && (
+                <span className="flex items-center gap-1.5">
+                  <CalendarIcon className="w-3.5 h-3.5" />
+                  {format(draftDeliveryDate, 'EEEE, dd. MMMM yyyy', { locale: getDateLocale() })}
+                </span>
+              )}
+              {draftTimeWindow && (
+                <span className="flex items-center gap-1.5">
+                  <Clock className="w-3.5 h-3.5" />
+                  {formatTimeWindow(draftTimeWindow)}
+                </span>
+              )}
+            </AlertDescription>
+          </Alert>
+        )}
 
         {items.length === 0 ? (
           <div className="text-center py-12 sm:py-16 bg-card border border-border rounded-md">
