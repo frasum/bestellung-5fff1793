@@ -19,6 +19,8 @@ import { useDeliveryAddresses } from '@/hooks/useSettings';
 import { useUserDeliveryPreference } from '@/hooks/useUserDeliveryPreference';
 import { useOrderUnits } from '@/hooks/useOrderUnits';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useSubscriptionLimits } from '@/hooks/useSubscriptionLimits';
+import { UpgradeDialog } from '@/components/subscription/UpgradeDialog';
 import { ArrowLeft, CalendarIcon, CheckCircle2, Clock, Eye, Loader2, Mail, MapPin, Minus, Package, Plus, PlusCircle, Send, Settings, Store, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { z } from 'zod';
@@ -58,8 +60,10 @@ const Checkout = () => {
   const { data: userDeliveryPreference } = useUserDeliveryPreference();
   const { data: orderUnits } = useOrderUnits();
   const isMobileDevice = useIsMobile();
+  const subscriptionLimits = useSubscriptionLimits();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [completedOrders, setCompletedOrders] = useState<{orderNumber: string; supplierName: string}[]>([]);
+  const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
   
   // Helper to format order unit display
   const formatOrderUnit = (orderUnitId: string | null | undefined) => {
@@ -256,6 +260,18 @@ const Checkout = () => {
 
   const handleConfirmOrders = async () => {
     if (!pendingOrderData) return;
+
+    // Check subscription limits before creating orders
+    const ordersToCreate = Object.keys(itemsBySupplier).length;
+    if (!subscriptionLimits.canCreateOrder) {
+      setShowUpgradeDialog(true);
+      return;
+    }
+    if (subscriptionLimits.ordersRemaining !== 'unlimited' && ordersToCreate > subscriptionLimits.ordersRemaining) {
+      toast.error(`Sie können nur noch ${subscriptionLimits.ordersRemaining} Bestellung(en) in diesem Monat erstellen.`);
+      setShowUpgradeDialog(true);
+      return;
+    }
     
     setIsSubmitting(true);
     const supplierOrders = Object.values(itemsBySupplier);
@@ -805,6 +821,15 @@ const Checkout = () => {
         onOpenChange={(open) => setAddArticleSheet(prev => ({ ...prev, open }))}
         supplierId={addArticleSheet.supplierId}
         supplierName={addArticleSheet.supplierName}
+      />
+
+      <UpgradeDialog
+        open={showUpgradeDialog}
+        onOpenChange={setShowUpgradeDialog}
+        limitType="orders"
+        currentTier={subscriptionLimits.tier}
+        currentUsage={subscriptionLimits.usage.ordersThisMonth}
+        limit={subscriptionLimits.limits.ordersPerMonth}
       />
     </DashboardLayout>
   );

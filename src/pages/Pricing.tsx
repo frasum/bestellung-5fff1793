@@ -289,9 +289,9 @@ const Pricing = () => {
               </span>
             </div>
             <div className="flex gap-6 text-sm text-muted-foreground">
-              <a href="#" className="hover:text-foreground transition-colors">Impressum</a>
-              <a href="#" className="hover:text-foreground transition-colors">Datenschutz</a>
-              <a href="#" className="hover:text-foreground transition-colors">AGB</a>
+              <a href="/impressum" className="hover:text-foreground transition-colors">Impressum</a>
+              <a href="/datenschutz" className="hover:text-foreground transition-colors">Datenschutz</a>
+              <a href="/agb" className="hover:text-foreground transition-colors">AGB</a>
             </div>
           </div>
         </div>

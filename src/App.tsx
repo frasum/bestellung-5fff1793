@@ -29,6 +29,9 @@ const OrderConfirmed = lazy(() => import("./pages/OrderConfirmed"));
 const SimpleOrder = lazy(() => import("./pages/SimpleOrder"));
 const StyleGuide = lazy(() => import("./pages/StyleGuide"));
 const Pricing = lazy(() => import("./pages/Pricing"));
+const Impressum = lazy(() => import("./pages/Impressum"));
+const Datenschutz = lazy(() => import("./pages/Datenschutz"));
+const AGB = lazy(() => import("./pages/AGB"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient();
@@ -77,6 +80,9 @@ const AppContent = () => {
             <Route path="/simple-order/:token" element={<SimpleOrder />} />
             <Route path="/style-guide" element={<StyleGuide />} />
             <Route path="/pricing" element={<Pricing />} />
+            <Route path="/impressum" element={<Impressum />} />
+            <Route path="/datenschutz" element={<Datenschutz />} />
+            <Route path="/agb" element={<AGB />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
