@@ -182,9 +182,9 @@ const StyleGuide = () => {
                 <h4 className="text-sm font-medium mb-3">Status-Farben</h4>
                 <div className="flex flex-wrap gap-4">
                   <ColorSwatch name="Destructive" cssVar="--destructive" className="bg-destructive" />
-                  <ColorSwatch name="Success" cssVar="--success" className="bg-green-500" />
-                  <ColorSwatch name="Warning" cssVar="--warning" className="bg-amber-500" />
-                  <ColorSwatch name="Info" cssVar="--info" className="bg-blue-500" />
+                  <ColorSwatch name="Success" cssVar="--success" className="bg-success" />
+                  <ColorSwatch name="Warning" cssVar="--warning" className="bg-warning" />
+                  <ColorSwatch name="Info" cssVar="--info" className="bg-info" />
                 </div>
               </div>
 
@@ -221,6 +221,9 @@ const StyleGuide = () => {
                 <Button variant="ghost">Ghost</Button>
                 <Button variant="link">Link</Button>
                 <Button variant="hero">Hero</Button>
+                <Button variant="success">Success</Button>
+                <Button variant="warning">Warning</Button>
+                <Button variant="info">Info</Button>
               </div>
             </div>
 
