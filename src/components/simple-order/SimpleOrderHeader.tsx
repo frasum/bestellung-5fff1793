@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
-import { ChevronDown, ClipboardList } from 'lucide-react';
+import { ChevronDown, ClipboardList, Mic } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,15 +15,15 @@ interface Supplier {
 
 interface SimpleOrderHeaderProps {
   supplierName: string;
-  // Props for quick supplier switch
   isMultiSupplier?: boolean;
   selectedSupplierId?: string | null;
   suppliers?: Supplier[];
   onSupplierChange?: (supplierId: string) => void;
   getArticleCount?: (supplierId: string) => number;
-  // Order history access
   hasEmployee?: boolean;
   onViewOrders?: () => void;
+  voiceInputEnabled?: boolean;
+  onVoiceMode?: () => void;
 }
 
 const languages = [
@@ -44,18 +44,21 @@ export const SimpleOrderHeader = ({
   getArticleCount,
   hasEmployee = false,
   onViewOrders,
+  voiceInputEnabled = false,
+  onVoiceMode,
 }: SimpleOrderHeaderProps) => {
   const { i18n, t } = useTranslation();
   const currentLanguage = languages.find(l => l.code === i18n.language) || languages[1];
 
   const showSupplierDropdown = isMultiSupplier && selectedSupplierId && suppliers.length > 1 && onSupplierChange;
   const showOrderHistory = hasEmployee && onViewOrders;
+  const showVoiceButton = voiceInputEnabled && onVoiceMode;
 
   return (
     <div className="sticky top-0 z-10 bg-primary text-primary-foreground border-b border-primary-foreground/10">
       <div className="max-w-2xl mx-auto px-3 py-2">
         <div className="flex items-center justify-between gap-2">
-          {/* Center: Supplier name - clickable dropdown for multi-supplier */}
+          {/* Center: Supplier name */}
           <div className="flex-1 text-center min-w-0">
             {showSupplierDropdown ? (
               <DropdownMenu>
@@ -92,8 +95,19 @@ export const SimpleOrderHeader = ({
             )}
           </div>
 
-          {/* Right: Order history + Location badge + Language dropdown */}
+          {/* Right: Voice + Order history + Language */}
           <div className="flex items-center gap-1 flex-shrink-0">
+            {showVoiceButton && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={onVoiceMode}
+                className="h-11 w-11 text-primary-foreground hover:bg-primary-foreground/20 touch-manipulation"
+                title={t('voice.title', 'Spracheingabe')}
+              >
+                <Mic className="h-5 w-5" />
+              </Button>
+            )}
             {showOrderHistory && (
               <Button
                 variant="ghost"

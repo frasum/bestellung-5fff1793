@@ -35,7 +35,7 @@ serve(async (req) => {
         *,
         supplier:suppliers(id, name, email, organization_id),
         location:locations(id, name),
-        employee:employees(id, name, auto_approve_orders, email, pin_code)
+        employee:employees(id, name, auto_approve_orders, email, pin_code, voice_input_enabled)
       `)
       .eq('token', token)
       .eq('is_active', true)

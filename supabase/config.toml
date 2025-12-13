@@ -68,3 +68,6 @@ verify_jwt = false
 
 [functions.hash-employee-pin]
 verify_jwt = true
+
+[functions.transcribe-order]
+verify_jwt = false
