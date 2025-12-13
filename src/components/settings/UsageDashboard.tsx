@@ -1,11 +1,13 @@
+import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Package, Users, Truck, Crown, TrendingUp, AlertTriangle } from 'lucide-react';
-import { useSubscriptionLimits, formatLimit } from '@/hooks/useSubscriptionLimits';
+import { useSubscriptionLimits, useUpdateSubscriptionTier, formatLimit, SubscriptionTier } from '@/hooks/useSubscriptionLimits';
 import { Skeleton } from '@/components/ui/skeleton';
 
 const tierColors: Record<string, string> = {
@@ -22,9 +24,14 @@ const tierNames: Record<string, string> = {
   enterprise: 'Enterprise',
 };
 
+const allTiers: SubscriptionTier[] = ['free', 'basic', 'pro', 'enterprise'];
+
 export const UsageDashboard = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const [advancedMode, setAdvancedMode] = useState(() => 
+    localStorage.getItem('advanced-settings-enabled') === 'true'
+  );
   const {
     tier,
     limits,
@@ -34,6 +41,15 @@ export const UsageDashboard = () => {
     usersRemaining,
     isLoading,
   } = useSubscriptionLimits();
+  const updateTier = useUpdateSubscriptionTier();
+
+  useEffect(() => {
+    const handleStorage = () => {
+      setAdvancedMode(localStorage.getItem('advanced-settings-enabled') === 'true');
+    };
+    window.addEventListener('storage', handleStorage);
+    return () => window.removeEventListener('storage', handleStorage);
+  }, []);
 
   if (isLoading) {
     return (
@@ -105,10 +121,28 @@ export const UsageDashboard = () => {
             {t('subscription.usageDescription', 'Übersicht Ihrer aktuellen Nutzung und verbleibenden Kontingente')}
           </CardDescription>
         </div>
-        <Badge className={`${tierColors[tier]} font-medium`}>
-          <Crown className="h-3 w-3 mr-1" />
-          {tierNames[tier]}
-        </Badge>
+        {advancedMode ? (
+          <Select value={tier} onValueChange={(value) => updateTier.mutate(value as SubscriptionTier)}>
+            <SelectTrigger className="w-[140px]">
+              <div className="flex items-center gap-1">
+                <Crown className="h-3 w-3" />
+                <SelectValue />
+              </div>
+            </SelectTrigger>
+            <SelectContent>
+              {allTiers.map((t) => (
+                <SelectItem key={t} value={t}>
+                  {tierNames[t]}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        ) : (
+          <Badge className={`${tierColors[tier]} font-medium`}>
+            <Crown className="h-3 w-3 mr-1" />
+            {tierNames[tier]}
+          </Badge>
+        )}
       </CardHeader>
       <CardContent className="space-y-6">
         {usageItems.map((item) => {
