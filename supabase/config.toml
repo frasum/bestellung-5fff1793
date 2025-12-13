@@ -92,3 +92,6 @@ verify_jwt = false
 
 [functions.create-article-from-mobile]
 verify_jwt = false
+
+[functions.transcribe-inventory]
+verify_jwt = true
