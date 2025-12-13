@@ -374,40 +374,46 @@ export const MultiSupplierCartOverview = ({
         </Card>
       </div>
 
-      {/* Bottom Action Bar */}
-      <div className="fixed bottom-0 left-0 right-0 bg-background border-t border-border p-4 pb-safe">
-        <div className="max-w-2xl mx-auto flex gap-3">
-          <Button
-            variant="outline"
-            className="h-14 w-14 sm:w-auto sm:flex-1 touch-manipulation"
-            onClick={onBack}
-            disabled={isSubmitting}
-          >
-            <ArrowLeft className="h-6 w-6 sm:mr-2" />
-            <span className="hidden sm:inline">
-              {t('simpleOrder.backToSuppliers', 'Zurück')}
+      {/* Floating Action Bar - Option D */}
+      <div className="fixed bottom-0 left-0 right-0 bg-background border-t border-border pb-safe">
+        <div className="max-w-2xl mx-auto">
+          {/* Info Row */}
+          <div className="flex items-center justify-between px-4 py-2 border-b border-border/50">
+            <button
+              onClick={onBack}
+              disabled={isSubmitting}
+              className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors touch-manipulation disabled:opacity-50"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              <span>{t('simpleOrder.changeSuppliers', 'Lieferanten ändern')}</span>
+            </button>
+            <span className="text-sm text-muted-foreground">
+              {suppliersWithOrders.length} {suppliersWithOrders.length === 1 ? t('simpleOrder.supplier', 'Lieferant') : t('simpleOrder.suppliers', 'Lieferanten')} • {totalItems} {t('simpleOrder.items', 'Artikel')}
             </span>
-          </Button>
-          <Button
-            className="flex-1 h-14 text-lg font-semibold touch-manipulation"
-            onClick={handleConfirm}
-            disabled={isSubmitting || orderedArticles.length === 0}
-          >
-            {isSubmitting ? (
-              <>
-                <Loader2 className="mr-2 h-6 w-6 animate-spin" />
-                {t('simpleOrder.sending', 'Wird gesendet...')}
-              </>
-            ) : (
-              <>
-                <Check className="mr-2 h-6 w-6" />
-                {t('simpleOrder.confirmAll', 'Alle bestellen')}
-                <Badge variant="secondary" className="ml-2">
-                  {suppliersWithOrders.length}
-                </Badge>
-              </>
-            )}
-          </Button>
+          </div>
+          {/* Main Action Button */}
+          <div className="p-4">
+            <Button
+              className="w-full h-14 text-lg font-semibold touch-manipulation"
+              onClick={handleConfirm}
+              disabled={isSubmitting || orderedArticles.length === 0}
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-6 w-6 animate-spin" />
+                  {t('simpleOrder.sending', 'Wird gesendet...')}
+                </>
+              ) : (
+                <>
+                  <Check className="mr-2 h-6 w-6" />
+                  {t('simpleOrder.submitOrder', 'Bestellung absenden')}
+                  <Badge variant="secondary" className="ml-2">
+                    {totalItems}
+                  </Badge>
+                </>
+              )}
+            </Button>
+          </div>
         </div>
       </div>
 
