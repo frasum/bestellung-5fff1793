@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Plus, Pencil, Trash2, Phone, Mail, User, UserCheck, UserX, MapPin, ChevronDown, ChevronRight, Package, Copy, MessageCircle, ExternalLink, QrCode, Zap, KeyRound, Shield, ShieldAlert } from 'lucide-react';
+import { Plus, Pencil, Trash2, Phone, Mail, User, UserCheck, UserX, MapPin, ChevronDown, ChevronRight, Package, Copy, MessageCircle, ExternalLink, QrCode, Zap, KeyRound, Shield, ShieldAlert, Mic } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -105,6 +105,7 @@ export function EmployeesTab() {
     language: 'th',
     autoApprove: false,
     pinCode: '',
+    voiceInputEnabled: false,
   });
   
   // New structure: location -> suppliers mapping
@@ -220,7 +221,7 @@ export function EmployeesTab() {
 
   const openCreateDialog = () => {
     setEditingEmployee(null);
-    setFormData({ name: '', phone: '', email: '', notes: '', language: 'th', autoApprove: false, pinCode: '' });
+    setFormData({ name: '', phone: '', email: '', notes: '', language: 'th', autoApprove: false, pinCode: '', voiceInputEnabled: false });
     initializeLocationAssignments();
     setIsDialogOpen(true);
   };
@@ -239,6 +240,7 @@ export function EmployeesTab() {
       // Don't pre-populate PIN - it's now hashed and not readable
       // User can enter a new PIN or leave empty to keep existing
       pinCode: '',
+      voiceInputEnabled: employee.voice_input_enabled || false,
     });
     initializeLocationAssignments(employee.id);
     setIsDialogOpen(true);
@@ -349,6 +351,7 @@ export function EmployeesTab() {
         email: formData.email || null,
         notes: formData.notes || null,
         auto_approve_orders: formData.autoApprove,
+        voice_input_enabled: formData.voiceInputEnabled,
         // Don't update pin_code directly - use the secure hash function below
       });
       
@@ -406,6 +409,7 @@ export function EmployeesTab() {
         phone: formData.phone || null,
         email: formData.email || null,
         notes: formData.notes || null,
+        voice_input_enabled: formData.voiceInputEnabled,
       });
       // Assign locations to new employee
       if (newEmployee?.id) {
@@ -1026,7 +1030,31 @@ export function EmployeesTab() {
                     <p className="text-xs text-destructive">
                       PIN muss genau 4 Ziffern haben
                     </p>
-                  )}
+              )}
+
+              {/* Voice Input Toggle (Prototype) */}
+              <div className="flex items-center justify-between p-3 border rounded-lg bg-muted/30">
+                <div className="flex items-center gap-2">
+                  <div className="space-y-0.5">
+                    <div className="flex items-center gap-2">
+                      <Label htmlFor="voice-input" className="text-sm font-medium">
+                        Spracheingabe
+                      </Label>
+                      <Badge variant="outline" className="text-xs bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400">
+                        Prototyp
+                      </Badge>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Bestellungen per Sprache aufgeben (Whisper + AI)
+                    </p>
+                  </div>
+                </div>
+                <Switch
+                  id="voice-input"
+                  checked={formData.voiceInputEnabled}
+                  onCheckedChange={(checked) => setFormData({ ...formData, voiceInputEnabled: checked })}
+                />
+              </div>
                 </div>
               )}
 

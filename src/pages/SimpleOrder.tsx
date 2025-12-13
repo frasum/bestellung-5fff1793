@@ -18,6 +18,7 @@ import { OrderConfirmationScreen } from '@/components/simple-order/OrderConfirma
 import { PinEntryScreen } from '@/components/simple-order/PinEntryScreen';
 import { LocationDateStep } from '@/components/simple-order/LocationDateStep';
 import { MultiSupplierCartOverview } from '@/components/simple-order/MultiSupplierCartOverview';
+import { VoiceOrderMode } from '@/components/simple-order/VoiceOrderMode';
 
 interface Article {
   id: string;
@@ -58,6 +59,7 @@ interface TokenData {
   has_employee: boolean;
   auto_approve_orders: boolean;
   requires_pin: boolean;
+  voice_input_enabled: boolean;
   supplier: {
     id: string;
     name: string;
@@ -132,7 +134,7 @@ interface CompletedOrder {
   items: CompletedOrderItem[];
 }
 
-type OrderStatus = 'loading' | 'pin-entry' | 'location-date' | 'ready' | 'confirming' | 'submitting' | 'success' | 'error' | 'viewing-history' | 'editing';
+type OrderStatus = 'loading' | 'pin-entry' | 'location-date' | 'ready' | 'confirming' | 'submitting' | 'success' | 'error' | 'viewing-history' | 'editing' | 'voice-mode';
 
 const SimpleOrder = () => {
   const { token } = useParams<{ token: string }>();
@@ -756,6 +758,34 @@ const SimpleOrder = () => {
     );
   }
 
+  // Voice Order Mode
+  if (status === 'voice-mode') {
+    const currentArticles = selectedSupplierId 
+      ? allArticles.filter(a => a.supplier_id === selectedSupplierId)
+      : allArticles;
+    
+    return (
+      <VoiceOrderMode
+        articles={currentArticles.map(a => ({
+          id: a.id,
+          name: a.name,
+          unit: a.unit,
+          order_unit_name: a.order_unit?.name,
+        }))}
+        language={tokenData?.language || i18n.language}
+        onBack={() => setStatus('ready')}
+        onAddToCart={(items) => {
+          items.forEach(({ articleId, quantity }) => {
+            setQuantities(prev => ({
+              ...prev,
+              [articleId]: (prev[articleId] || 0) + quantity,
+            }));
+          });
+        }}
+      />
+    );
+  }
+
   // Confirmation screen for auto-approve employees (multi-supplier support)
   if (status === 'confirming' || status === 'submitting') {
     // For multi-supplier: show MultiSupplierCartOverview
@@ -815,6 +845,8 @@ const SimpleOrder = () => {
           fetchDrafts();
           setStatus('viewing-history');
         }}
+        voiceInputEnabled={tokenData?.voice_input_enabled || false}
+        onVoiceMode={() => setStatus('voice-mode')}
       />
 
       {/* Supplier Selection for Multi-Supplier Tokens */}

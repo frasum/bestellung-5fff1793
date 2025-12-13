@@ -551,6 +551,7 @@ export type Database = {
           phone: string | null
           pin_code: string | null
           updated_at: string
+          voice_input_enabled: boolean
         }
         Insert: {
           auto_approve_orders?: boolean
@@ -564,6 +565,7 @@ export type Database = {
           phone?: string | null
           pin_code?: string | null
           updated_at?: string
+          voice_input_enabled?: boolean
         }
         Update: {
           auto_approve_orders?: boolean
@@ -577,6 +579,7 @@ export type Database = {
           phone?: string | null
           pin_code?: string | null
           updated_at?: string
+          voice_input_enabled?: boolean
         }
         Relationships: [
           {

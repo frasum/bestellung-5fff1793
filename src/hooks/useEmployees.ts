@@ -12,6 +12,7 @@ export interface Employee {
   is_active: boolean;
   auto_approve_orders: boolean;
   pin_code: string | null;
+  voice_input_enabled: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -22,6 +23,7 @@ export interface CreateEmployeeInput {
   email?: string | null;
   notes?: string | null;
   pin_code?: string | null;
+  voice_input_enabled?: boolean;
 }
 
 export interface UpdateEmployeeInput {
@@ -33,6 +35,7 @@ export interface UpdateEmployeeInput {
   is_active?: boolean;
   auto_approve_orders?: boolean;
   pin_code?: string | null;
+  voice_input_enabled?: boolean;
 }
 
 export function useEmployees() {
