@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Plus, Pencil, Trash2, Phone, Mail, User, UserCheck, UserX, MapPin, ChevronDown, ChevronRight, Package, Copy, MessageCircle, ExternalLink, QrCode, Zap, KeyRound, Shield, ShieldAlert, Mic } from 'lucide-react';
+import { Plus, Pencil, Trash2, Phone, Mail, User, UserCheck, UserX, MapPin, ChevronDown, ChevronRight, Package, Copy, MessageCircle, ExternalLink, QrCode, Zap, KeyRound, Shield, ShieldAlert, Mic, PlusCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -638,6 +638,20 @@ export function EmployeesTab() {
                                 Kein PIN
                               </Badge>
                             )
+                          )}
+                          {/* Voice Input Badge */}
+                          {employee.voice_input_enabled && (
+                            <Badge variant="outline" className="text-xs border-amber-500 text-amber-600 bg-amber-50 dark:bg-amber-900/20">
+                              <Mic className="h-3 w-3 mr-1" />
+                              Spracheingabe
+                            </Badge>
+                          )}
+                          {/* Free Items Badge */}
+                          {employee.can_add_free_items && (
+                            <Badge variant="outline" className="text-xs border-blue-500 text-blue-600 bg-blue-50 dark:bg-blue-900/20">
+                              <PlusCircle className="h-3 w-3 mr-1" />
+                              Freie Artikel
+                            </Badge>
                           )}
                           {!employee.is_active && (
                             <Badge variant="secondary">Inaktiv</Badge>
