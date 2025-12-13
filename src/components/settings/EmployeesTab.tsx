@@ -41,6 +41,7 @@ import {
   useDeleteEmployee,
   Employee,
 } from '@/hooks/useEmployees';
+import { useHashEmployeePin } from '@/hooks/useHashEmployeePin';
 import { useSimpleOrderTokens, useCreateSimpleOrderToken, useUpdateSimpleOrderToken, useDeleteSimpleOrderToken } from '@/hooks/useSimpleOrderTokens';
 import { useLocations } from '@/hooks/useLocations';
 import { useSuppliers } from '@/hooks/useSuppliers';
@@ -77,6 +78,7 @@ export function EmployeesTab() {
   const createEmployee = useCreateEmployee();
   const updateEmployee = useUpdateEmployee();
   const deleteEmployee = useDeleteEmployee();
+  const hashEmployeePin = useHashEmployeePin();
   const updateEmployeeLocations = useUpdateEmployeeLocations();
   const updateEmployeeLocationSuppliers = useUpdateEmployeeLocationSuppliers();
   const createToken = useCreateSimpleOrderToken();
@@ -234,7 +236,9 @@ export function EmployeesTab() {
       notes: employee.notes || '',
       language: existingToken?.language || 'th',
       autoApprove: employee.auto_approve_orders || false,
-      pinCode: employee.pin_code || '',
+      // Don't pre-populate PIN - it's now hashed and not readable
+      // User can enter a new PIN or leave empty to keep existing
+      pinCode: '',
     });
     initializeLocationAssignments(employee.id);
     setIsDialogOpen(true);
@@ -273,7 +277,8 @@ export function EmployeesTab() {
   // PIN Quick-Edit handlers
   const openPinDialog = (employee: Employee) => {
     setPinDialogEmployee(employee);
-    setPinValue(employee.pin_code || '');
+    // Don't pre-populate - PIN is now hashed and not readable
+    setPinValue('');
   };
 
   const closePinDialog = () => {
@@ -286,9 +291,10 @@ export function EmployeesTab() {
     
     setIsSavingPin(true);
     try {
-      await updateEmployee.mutateAsync({
-        id: pinDialogEmployee.id,
-        pin_code: pinValue.length === 4 ? pinValue : null,
+      // Use the secure hash function to store PIN
+      await hashEmployeePin.mutateAsync({
+        employeeId: pinDialogEmployee.id,
+        pin: pinValue.length === 4 ? pinValue : null,
       });
       toast({
         title: pinValue.length === 4 ? 'PIN gespeichert' : 'PIN entfernt',
@@ -331,6 +337,11 @@ export function EmployeesTab() {
     const allSupplierIds = [...new Set(supplierAssignments.flatMap(a => a.supplierIds))];
 
     if (editingEmployee) {
+      // Check if PIN changed (comparing raw input to check if user entered a new PIN)
+      const hasNewPin = formData.autoApprove && formData.pinCode && formData.pinCode.length === 4;
+      const hadPin = !!editingEmployee.pin_code;
+      const pinChanged = hasNewPin || (!formData.autoApprove && hadPin) || (!formData.pinCode && hadPin);
+      
       await updateEmployee.mutateAsync({
         id: editingEmployee.id,
         name: formData.name,
@@ -338,8 +349,17 @@ export function EmployeesTab() {
         email: formData.email || null,
         notes: formData.notes || null,
         auto_approve_orders: formData.autoApprove,
-        pin_code: formData.autoApprove && formData.pinCode ? formData.pinCode : null,
+        // Don't update pin_code directly - use the secure hash function below
       });
+      
+      // Use secure hash function for PIN updates
+      if (pinChanged) {
+        await hashEmployeePin.mutateAsync({
+          employeeId: editingEmployee.id,
+          pin: hasNewPin ? formData.pinCode : null,
+        });
+      }
+      
       // Update locations
       await updateEmployeeLocations.mutateAsync({
         employeeId: editingEmployee.id,
