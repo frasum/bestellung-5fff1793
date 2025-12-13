@@ -499,6 +499,7 @@ export const QuickCaptureWizard = ({
                 />
               </div>
 
+              {/* v2: Input fields with datalist for manual entry + autocomplete */}
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2">
                   <Label htmlFor="articleCategory">{t('quickCapture.category', 'Kategorie')}</Label>
@@ -508,6 +509,7 @@ export const QuickCaptureWizard = ({
                     onChange={(e) => setArticleCategory(e.target.value)}
                     placeholder={t('quickCapture.categoryPlaceholder', 'z.B. Getränke')}
                     list="categories-list"
+                    autoComplete="off"
                   />
                   <datalist id="categories-list">
                     {categories.map(cat => (
