@@ -564,6 +564,7 @@ export type Database = {
         Row: {
           auto_approve_orders: boolean
           can_add_free_items: boolean | null
+          can_capture_photos: boolean | null
           created_at: string
           email: string | null
           id: string
@@ -579,6 +580,7 @@ export type Database = {
         Insert: {
           auto_approve_orders?: boolean
           can_add_free_items?: boolean | null
+          can_capture_photos?: boolean | null
           created_at?: string
           email?: string | null
           id?: string
@@ -594,6 +596,7 @@ export type Database = {
         Update: {
           auto_approve_orders?: boolean
           can_add_free_items?: boolean | null
+          can_capture_photos?: boolean | null
           created_at?: string
           email?: string | null
           id?: string
@@ -1263,6 +1266,7 @@ export type Database = {
           description: string | null
           employee_id: string | null
           id: string
+          image_url: string | null
           location_id: string | null
           name: string
           order_id: string | null
@@ -1283,6 +1287,7 @@ export type Database = {
           description?: string | null
           employee_id?: string | null
           id?: string
+          image_url?: string | null
           location_id?: string | null
           name: string
           order_id?: string | null
@@ -1303,6 +1308,7 @@ export type Database = {
           description?: string | null
           employee_id?: string | null
           id?: string
+          image_url?: string | null
           location_id?: string | null
           name?: string
           order_id?: string | null

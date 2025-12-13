@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
-import { ChevronDown, ClipboardList, Mic } from 'lucide-react';
+import { ChevronDown, ClipboardList, Mic, Camera } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,6 +25,9 @@ interface SimpleOrderHeaderProps {
   onViewOrders?: () => void;
   voiceInputEnabled?: boolean;
   onVoiceMode?: () => void;
+  canCapturePhotos?: boolean;
+  onPhotoCapture?: () => void;
+  photoCaptureCount?: number;
 }
 
 const languages = [
@@ -46,6 +50,9 @@ export const SimpleOrderHeader = ({
   onViewOrders,
   voiceInputEnabled = false,
   onVoiceMode,
+  canCapturePhotos = false,
+  onPhotoCapture,
+  photoCaptureCount = 0,
 }: SimpleOrderHeaderProps) => {
   const { i18n, t } = useTranslation();
   const currentLanguage = languages.find(l => l.code === i18n.language) || languages[1];
@@ -53,6 +60,7 @@ export const SimpleOrderHeader = ({
   const showSupplierDropdown = isMultiSupplier && selectedSupplierId && suppliers.length > 1 && onSupplierChange;
   const showOrderHistory = hasEmployee && onViewOrders;
   const showVoiceButton = voiceInputEnabled && onVoiceMode;
+  const showPhotoButton = canCapturePhotos && onPhotoCapture && photoCaptureCount > 0;
 
   return (
     <div className="sticky top-0 z-10 bg-primary text-primary-foreground border-b border-primary-foreground/10">
@@ -95,8 +103,25 @@ export const SimpleOrderHeader = ({
             )}
           </div>
 
-          {/* Right: Voice + Order history + Language */}
+          {/* Right: Photo + Voice + Order history + Language */}
           <div className="flex items-center gap-1 flex-shrink-0">
+            {showPhotoButton && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={onPhotoCapture}
+                className="h-11 w-11 text-primary-foreground hover:bg-primary-foreground/20 touch-manipulation relative"
+                title={t('photoCapture.title', 'Fotos erfassen')}
+              >
+                <Camera className="h-5 w-5" />
+                <Badge 
+                  variant="destructive" 
+                  className="absolute -top-1 -right-1 h-5 min-w-[20px] px-1 text-xs"
+                >
+                  {photoCaptureCount}
+                </Badge>
+              </Button>
+            )}
             {showVoiceButton && (
               <Button
                 variant="ghost"

@@ -14,6 +14,7 @@ export interface Employee {
   pin_code: string | null;
   voice_input_enabled: boolean;
   can_add_free_items: boolean;
+  can_capture_photos: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -38,6 +39,7 @@ export interface UpdateEmployeeInput {
   pin_code?: string | null;
   voice_input_enabled?: boolean;
   can_add_free_items?: boolean;
+  can_capture_photos?: boolean;
 }
 
 export function useEmployees() {

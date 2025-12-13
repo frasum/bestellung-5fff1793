@@ -20,6 +20,7 @@ import { LocationDateStep } from '@/components/simple-order/LocationDateStep';
 import { MultiSupplierCartOverview } from '@/components/simple-order/MultiSupplierCartOverview';
 import { VoiceOrderMode } from '@/components/simple-order/VoiceOrderMode';
 import { FreeItem } from '@/components/simple-order/FreeItemDialog';
+import { PhotoCaptureTab } from '@/components/simple-order/PhotoCaptureTab';
 
 interface Article {
   id: string;
@@ -62,6 +63,7 @@ interface TokenData {
   requires_pin: boolean;
   voice_input_enabled: boolean;
   can_add_free_items: boolean;
+  can_capture_photos: boolean;
   supplier: {
     id: string;
     name: string;
@@ -71,6 +73,11 @@ interface TokenData {
     name: string;
   } | null;
   organization_id: string;
+}
+
+interface Category {
+  id: string;
+  name: string;
 }
 
 interface DraftItem {
@@ -136,7 +143,7 @@ interface CompletedOrder {
   items: CompletedOrderItem[];
 }
 
-type OrderStatus = 'loading' | 'pin-entry' | 'location-date' | 'ready' | 'confirming' | 'submitting' | 'success' | 'error' | 'viewing-history' | 'editing' | 'voice-mode';
+type OrderStatus = 'loading' | 'pin-entry' | 'location-date' | 'ready' | 'confirming' | 'submitting' | 'success' | 'error' | 'viewing-history' | 'editing' | 'voice-mode' | 'photo-capture';
 
 const SimpleOrder = () => {
   const { token } = useParams<{ token: string }>();
@@ -178,6 +185,10 @@ const SimpleOrder = () => {
   const [isDeletingDraft, setIsDeletingDraft] = useState<string | null>(null);
   const [editingDraft, setEditingDraft] = useState<Draft | null>(null);
   const [isSavingDraft, setIsSavingDraft] = useState(false);
+  
+  // Photo capture state
+  const [articlesWithoutPhotos, setArticlesWithoutPhotos] = useState<Article[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
 
   // Verify token and load articles
   useEffect(() => {
@@ -203,6 +214,14 @@ const SimpleOrder = () => {
         setAllArticles(data.articles || []);
         setLocations(data.locations || []);
         setHasEmployee(data.tokenData?.has_employee || false);
+        
+        // Load photo capture data
+        if (data.articles_without_photos) {
+          setArticlesWithoutPhotos(data.articles_without_photos);
+        }
+        if (data.categories) {
+          setCategories(data.categories);
+        }
         
         // Load favorites from response
         if (data.favorite_article_ids?.length > 0) {
@@ -832,6 +851,24 @@ const SimpleOrder = () => {
     );
   }
 
+  // Photo Capture Mode
+  if (status === 'photo-capture') {
+    return (
+      <PhotoCaptureTab
+        articlesWithoutPhotos={articlesWithoutPhotos}
+        suppliers={suppliers}
+        categories={categories}
+        organizationId={tokenData?.organization_id || ''}
+        token={token || ''}
+        onPhotoAssigned={(articleId) => {
+          // Remove from local list
+          setArticlesWithoutPhotos(prev => prev.filter(a => a.id !== articleId));
+        }}
+        onBack={() => setStatus('ready')}
+      />
+    );
+  }
+
   // Voice Order Mode
   if (status === 'voice-mode') {
     const currentArticles = selectedSupplierId 
@@ -928,6 +965,9 @@ const SimpleOrder = () => {
         }}
         voiceInputEnabled={tokenData?.voice_input_enabled || false}
         onVoiceMode={() => setStatus('voice-mode')}
+        canCapturePhotos={tokenData?.can_capture_photos || false}
+        onPhotoCapture={() => setStatus('photo-capture')}
+        photoCaptureCount={articlesWithoutPhotos.length}
       />
 
       {/* Supplier Selection for Multi-Supplier Tokens */}
