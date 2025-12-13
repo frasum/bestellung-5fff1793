@@ -14,6 +14,8 @@ import { Article } from '@/hooks/useArticles';
 import { Supplier } from '@/hooks/useSuppliers';
 import { articleSchema, ArticleFormData } from './schemas';
 import { useOrderUnits, useCreateOrderUnit } from '@/hooks/useOrderUnits';
+import { ArticlePhotoCapture } from './ArticlePhotoCapture';
+import { supabase } from '@/integrations/supabase/client';
 
 interface ArticleFormDialogProps {
   open: boolean;
@@ -22,7 +24,7 @@ interface ArticleFormDialogProps {
   suppliers: Supplier[];
   categories: string[];
   units: string[];
-  onSubmit: (data: ArticleFormData) => Promise<void>;
+  onSubmit: (data: ArticleFormData, capturedImage?: string) => Promise<void>;
   isPending: boolean;
 }
 
@@ -41,9 +43,45 @@ export const ArticleFormDialog = ({
   const [orderUnitPopoverOpen, setOrderUnitPopoverOpen] = useState(false);
   const [customOrderQuantity, setCustomOrderQuantity] = useState('');
   const [customOrderName, setCustomOrderName] = useState('');
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [capturedImage, setCapturedImage] = useState<string | null>(null);
+  const [advancedSettingsEnabled, setAdvancedSettingsEnabled] = useState(false);
+  const [organizationId, setOrganizationId] = useState<string | null>(null);
   
   const { data: orderUnits = [] } = useOrderUnits();
   const createOrderUnit = useCreateOrderUnit();
+
+  // Fetch organization ID
+  useEffect(() => {
+    const fetchOrgId = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('organization_id')
+          .eq('id', user.id)
+          .single();
+        if (profile) {
+          setOrganizationId(profile.organization_id);
+        }
+      }
+    };
+    fetchOrgId();
+  }, []);
+
+  // Check for advanced settings
+  useEffect(() => {
+    const stored = localStorage.getItem('advanced-settings-enabled');
+    setAdvancedSettingsEnabled(stored === 'true');
+    
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'advanced-settings-enabled') {
+        setAdvancedSettingsEnabled(e.newValue === 'true');
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
 
   const form = useForm<ArticleFormData>({
     resolver: zodResolver(articleSchema),
@@ -65,14 +103,48 @@ export const ArticleFormDialog = ({
         reference_price: editingArticle.reference_price ? String(editingArticle.reference_price).replace('.', ',') : '',
         reference_unit: editingArticle.reference_unit || '',
       });
+      setCapturedImage((editingArticle as any).image_url || null);
     } else {
       form.reset({ supplier_id: '', name: '', description: '', sku: '', unit: 'pcs', price: '', category: '', packaging_unit: '', order_unit_id: '', reference_price: '', reference_unit: '' });
+      setCapturedImage(null);
     }
   }, [editingArticle, form]);
 
   const handleSubmit = async (data: ArticleFormData) => {
-    await onSubmit(data);
+    await onSubmit(data, capturedImage || undefined);
     form.reset();
+    setCapturedImage(null);
+  };
+
+  const handleImageCaptured = (base64Image: string, result: {
+    matched_article_id: string | null;
+    matched_article_name: string | null;
+    confidence: 'high' | 'medium' | 'low';
+    suggested_name: string;
+    suggested_description: string;
+    suggested_category: string;
+    suggested_unit: string;
+  }) => {
+    setCapturedImage(base64Image);
+    
+    // Auto-fill form fields with AI suggestions (only for new articles or if fields are empty)
+    if (!editingArticle) {
+      if (result.suggested_name && !form.getValues('name')) {
+        form.setValue('name', result.suggested_name);
+      }
+      if (result.suggested_description && !form.getValues('description')) {
+        form.setValue('description', result.suggested_description);
+      }
+      if (result.suggested_category && !form.getValues('category')) {
+        // Check if category exists in the list
+        if (categories.includes(result.suggested_category)) {
+          form.setValue('category', result.suggested_category);
+        }
+      }
+      if (result.suggested_unit && !form.getValues('unit')) {
+        form.setValue('unit', result.suggested_unit);
+      }
+    }
   };
 
   return (
@@ -82,6 +154,18 @@ export const ArticleFormDialog = ({
           <DialogTitle>{editingArticle ? 'Artikel bearbeiten' : 'Neuer Artikel'}</DialogTitle>
         </DialogHeader>
         <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-3 sm:space-y-4">
+          {/* AI Photo Capture - only in advanced mode */}
+          {advancedSettingsEnabled && (
+            <ArticlePhotoCapture
+              supplierId={form.watch('supplier_id') || null}
+              organizationId={organizationId}
+              existingImageUrl={(editingArticle as any)?.image_url}
+              onImageCaptured={handleImageCaptured}
+              onImageCleared={() => setCapturedImage(null)}
+              isAnalyzing={isAnalyzing}
+              setIsAnalyzing={setIsAnalyzing}
+            />
+          )}
           <div className="space-y-2">
             <Label>Lieferant *</Label>
             <Controller

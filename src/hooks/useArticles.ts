@@ -17,6 +17,7 @@ export interface Article {
   order_unit_id?: string | null;
   reference_price?: number | null;
   reference_unit?: string | null;
+  image_url?: string | null;
   is_active: boolean;
   created_at: string;
   updated_at: string;
@@ -39,6 +40,7 @@ export interface ArticleInput {
   order_unit_id?: string | null;
   reference_price?: number;
   reference_unit?: string;
+  image_url?: string | null;
   is_active?: boolean;
 }
 

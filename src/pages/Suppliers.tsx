@@ -9,6 +9,7 @@ import { useSubscriptionLimits } from '@/hooks/useSubscriptionLimits';
 import { UpgradeDialog } from '@/components/subscription/UpgradeDialog';
 import { useArticles, useCreateArticle, useUpdateArticle, useDeleteArticle, useBulkUpdateArticles, Article, ArticleInput } from '@/hooks/useArticles';
 import { Plus, Loader2, Upload, Package } from 'lucide-react';
+import { useArticleImageUpload } from '@/hooks/useArticleImageUpload';
 import { useSendSupplierInvitation } from '@/hooks/useSupplierPortal';
 import { generateOrderListPdf, generateCombinedOrderListPdf } from '@/lib/orderListPdf';
 import { CsvImportDialog } from '@/components/CsvImportDialog';
@@ -353,8 +354,11 @@ const Suppliers = () => {
     }
   };
 
+  // Article image upload
+  const { uploadImage } = useArticleImageUpload();
+
   // Article submit handler
-  const handleArticleSubmit = async (data: ArticleFormData) => {
+  const handleArticleSubmit = async (data: ArticleFormData, capturedImage?: string) => {
     const input: ArticleInput = {
       supplier_id: data.supplier_id,
       name: data.name,
@@ -368,10 +372,25 @@ const Suppliers = () => {
       reference_price: data.reference_price ? Number(data.reference_price.replace(',', '.')) : undefined,
       reference_unit: data.reference_unit || undefined,
     };
+    
     if (editingArticle) {
+      // Upload image if captured
+      if (capturedImage && capturedImage.startsWith('data:')) {
+        const imageUrl = await uploadImage(capturedImage, editingArticle.organization_id, editingArticle.id);
+        if (imageUrl) {
+          input.image_url = imageUrl;
+        }
+      }
       await updateArticle.mutateAsync({ id: editingArticle.id, ...input });
     } else {
-      await createArticle.mutateAsync(input);
+      // Create article first, then upload image
+      const newArticle = await createArticle.mutateAsync(input);
+      if (capturedImage && capturedImage.startsWith('data:') && newArticle) {
+        const imageUrl = await uploadImage(capturedImage, newArticle.organization_id, newArticle.id);
+        if (imageUrl) {
+          await updateArticle.mutateAsync({ id: newArticle.id, image_url: imageUrl });
+        }
+      }
     }
     setIsArticleDialogOpen(false);
     setEditingArticle(null);
