@@ -48,6 +48,18 @@ export const AddArticleSheetSimple = ({
     [articles, supplierId]
   );
 
+  // Debug logging
+  console.log('AddArticleSheetSimple Debug:', {
+    open,
+    supplierId,
+    supplierName,
+    articlesReceived: articles.length,
+    supplierArticlesFound: supplierArticles.length,
+    sampleArticle: articles[0],
+    sampleSupplierIdMatch: articles[0]?.supplier_id === supplierId,
+    allSupplierIds: [...new Set(articles.map(a => a.supplier_id))],
+  });
+
   // Filter and sort articles - items in cart first
   const filteredArticles = useMemo(() => {
     const query = searchQuery.toLowerCase();
