@@ -501,31 +501,35 @@ export const QuickCaptureWizard = ({
 
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2">
-                  <Label>{t('quickCapture.category', 'Kategorie')}</Label>
-                  <Select value={articleCategory} onValueChange={setArticleCategory}>
-                    <SelectTrigger>
-                      <SelectValue placeholder={t('quickCapture.selectCategory', 'Wählen...')} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {categories.map(cat => (
-                        <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Label htmlFor="articleCategory">{t('quickCapture.category', 'Kategorie')}</Label>
+                  <Input
+                    id="articleCategory"
+                    value={articleCategory}
+                    onChange={(e) => setArticleCategory(e.target.value)}
+                    placeholder={t('quickCapture.categoryPlaceholder', 'z.B. Getränke')}
+                    list="categories-list"
+                  />
+                  <datalist id="categories-list">
+                    {categories.map(cat => (
+                      <option key={cat} value={cat} />
+                    ))}
+                  </datalist>
                 </div>
 
                 <div className="space-y-2">
-                  <Label>{t('quickCapture.unit', 'Einheit')}</Label>
-                  <Select value={articleUnit} onValueChange={setArticleUnit}>
-                    <SelectTrigger>
-                      <SelectValue placeholder={t('quickCapture.selectUnit', 'Wählen...')} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {units.map(unit => (
-                        <SelectItem key={unit} value={unit}>{unit}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Label htmlFor="articleUnit">{t('quickCapture.unit', 'Einheit')}</Label>
+                  <Input
+                    id="articleUnit"
+                    value={articleUnit}
+                    onChange={(e) => setArticleUnit(e.target.value)}
+                    placeholder={t('quickCapture.unitPlaceholder', 'z.B. Stk, kg, L')}
+                    list="units-list"
+                  />
+                  <datalist id="units-list">
+                    {units.map(unit => (
+                      <option key={unit} value={unit} />
+                    ))}
+                  </datalist>
                 </div>
               </div>
 
