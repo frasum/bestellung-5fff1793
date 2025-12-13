@@ -35,7 +35,7 @@ serve(async (req) => {
         *,
         supplier:suppliers(id, name, email, organization_id),
         location:locations(id, name),
-        employee:employees(id, name, auto_approve_orders, email, pin_code, voice_input_enabled, can_add_free_items)
+        employee:employees(id, name, auto_approve_orders, email, pin_code, voice_input_enabled, can_add_free_items, can_capture_photos)
       `)
       .eq('token', token)
       .eq('is_active', true)
@@ -221,9 +221,42 @@ serve(async (req) => {
     const autoApproveOrders = (tokenData.employee as any)?.auto_approve_orders || false;
     const hasPinCode = !!(tokenData.employee as any)?.pin_code;
     const canAddFreeItems = (tokenData.employee as any)?.can_add_free_items || false;
+    const canCapturePhotos = (tokenData.employee as any)?.can_capture_photos || false;
     
     // Only require PIN if auto_approve is enabled AND a PIN is set
     const requiresPin = autoApproveOrders && hasPinCode;
+
+    // Get articles without photos for photo capture feature
+    let articlesWithoutPhotos: any[] = [];
+    let categories: any[] = [];
+    
+    if (canCapturePhotos) {
+      // Get supplier IDs the employee can access
+      const accessibleSupplierIds = isMultiSupplier 
+        ? suppliers.map(s => s.id) 
+        : (tokenData.supplier_id ? [tokenData.supplier_id] : []);
+      
+      if (accessibleSupplierIds.length > 0) {
+        const { data: noPhotoArticles } = await supabase
+          .from('articles')
+          .select('id, name, description, unit, category, supplier_id')
+          .in('supplier_id', accessibleSupplierIds)
+          .eq('is_active', true)
+          .is('image_url', null)
+          .order('name', { ascending: true });
+        
+        articlesWithoutPhotos = noPhotoArticles || [];
+      }
+      
+      // Get organization categories
+      const { data: orgCategories } = await supabase
+        .from('categories')
+        .select('id, name')
+        .eq('organization_id', tokenData.organization_id)
+        .order('name', { ascending: true });
+      
+      categories = orgCategories || [];
+    }
 
     return new Response(
       JSON.stringify({
@@ -242,11 +275,14 @@ serve(async (req) => {
           requires_pin: requiresPin,
           voice_input_enabled: voiceInputEnabled,
           can_add_free_items: canAddFreeItems,
+          can_capture_photos: canCapturePhotos,
         },
         suppliers: suppliers,
         articles: articles,
         locations: locations || [],
         favorite_article_ids: favoriteArticleIds,
+        articles_without_photos: articlesWithoutPhotos,
+        categories: categories,
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );

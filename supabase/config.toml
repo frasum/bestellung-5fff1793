@@ -77,3 +77,9 @@ verify_jwt = false
 
 [functions.send-trial-reminders]
 verify_jwt = false
+
+[functions.update-article-image]
+verify_jwt = false
+
+[functions.create-photo-suggestion]
+verify_jwt = false
