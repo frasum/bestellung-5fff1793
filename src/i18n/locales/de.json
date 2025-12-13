@@ -925,5 +925,16 @@
       "medium": "Manuell prüfen",
       "low": "Unsicher"
     }
+  },
+  "subscription": {
+    "usageDashboard": "Nutzung & Limits",
+    "usageDescription": "Übersicht Ihrer aktuellen Nutzung und verbleibenden Kontingente",
+    "ordersThisMonth": "Bestellungen diesen Monat",
+    "activeSuppliers": "Aktive Lieferanten",
+    "teamMembers": "Team-Mitglieder",
+    "remaining": "{{count}} verbleibend",
+    "unlimited": "Unbegrenzt",
+    "upgradePlan": "Plan upgraden",
+    "limitReached": "Limit erreicht"
   }
 }

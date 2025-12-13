@@ -12,6 +12,7 @@ import { useUserProfile, useUpdateUserProfile, useUpdatePassword, useOrganizatio
 import { useLocations } from '@/hooks/useLocations';
 import { useAllUserDeliveryPreferences, useAllDeliveryAddresses, useUpsertUserDeliveryPreferenceForLocation } from '@/hooks/useUserDeliveryPreference';
 import { I18nCheckDialog } from './I18nCheckDialog';
+import { UsageDashboard } from './UsageDashboard';
 
 const AdvancedSettingsSwitch = () => {
   const { t } = useTranslation();
@@ -329,6 +330,9 @@ export const ProfileTab = () => {
 
   return (
     <div className="space-y-4 sm:space-y-6">
+      {/* Usage Dashboard */}
+      <UsageDashboard />
+
       <Card>
         <CardHeader>
           <CardTitle>{t('settings.profileInfo')}</CardTitle>
