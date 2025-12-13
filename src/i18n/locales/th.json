@@ -560,7 +560,11 @@
     "infoTextDesc": "แสดงเป็นกล่องข้อมูลเหนือรายการสินค้า รองรับ Markdown",
     "footerTextLabel": "ข้อความส่วนท้าย (ไม่บังคับ)",
     "footerTextPlaceholder": "เช่น © 2024 ร้านอาหารของฉัน - ติดต่อ: suppliers@restaurant.com",
-    "footerTextDesc": "แสดงที่ด้านล่างของหน้า รองรับ Markdown"
+    "footerTextDesc": "แสดงที่ด้านล่างของหน้า รองรับ Markdown",
+    "employees": {
+      "voiceInput": "สั่งด้วยเสียง",
+      "voiceInputDescription": "สั่งซื้อด้วยเสียง (Whisper + AI)"
+    }
   },
   "landing": {
     "heroTitle": "การจัดซื้ออัจฉริยะสำหรับร้านอาหาร",

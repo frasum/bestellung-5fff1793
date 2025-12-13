@@ -560,7 +560,11 @@
     "infoTextDesc": "Affiché comme boîte d'information au-dessus de la liste d'articles. Markdown supporté.",
     "footerTextLabel": "Texte de pied de page (optionnel)",
     "footerTextPlaceholder": "ex. © 2024 Mon Restaurant - Contact : fournisseurs@restaurant.fr",
-    "footerTextDesc": "Affiché en bas de la page. Markdown supporté."
+    "footerTextDesc": "Affiché en bas de la page. Markdown supporté.",
+    "employees": {
+      "voiceInput": "Saisie vocale",
+      "voiceInputDescription": "Passer des commandes par la voix (Whisper + AI)"
+    }
   },
   "landing": {
     "heroTitle": "Approvisionnement intelligent pour restaurants",
