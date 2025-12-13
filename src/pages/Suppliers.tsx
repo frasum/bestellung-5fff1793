@@ -5,6 +5,8 @@ import { useCart } from '@/contexts/CartContext';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { useSuppliers, useCreateSupplier, useUpdateSupplier, useDeleteSupplier, Supplier, SupplierInput } from '@/hooks/useSuppliers';
+import { useSubscriptionLimits } from '@/hooks/useSubscriptionLimits';
+import { UpgradeDialog } from '@/components/subscription/UpgradeDialog';
 import { useArticles, useCreateArticle, useUpdateArticle, useDeleteArticle, useBulkUpdateArticles, Article, ArticleInput } from '@/hooks/useArticles';
 import { Plus, Loader2, Upload, Package } from 'lucide-react';
 import { useSendSupplierInvitation } from '@/hooks/useSupplierPortal';
@@ -103,6 +105,9 @@ const Suppliers = () => {
   const { data: recentlyActiveSuppliers } = useRecentlyActiveSuppliers();
   const { data: lastOrderMap } = useLastOrderByArticle();
 
+  // Subscription limits
+  const subscriptionLimits = useSubscriptionLimits();
+  const [showSupplierUpgradeDialog, setShowSupplierUpgradeDialog] = useState(false);
   // Local state for multi-select toggles
   const [supplierMultiSelectEnabled, setSupplierMultiSelectEnabled] = useState(() => {
     const saved = localStorage.getItem('suppliers-multi-select');
@@ -312,15 +317,30 @@ const Suppliers = () => {
   }, [user, authLoading, navigate]);
 
 
-  // Supplier submit handler
+  // Supplier submit handler with limit check
   const handleSupplierSubmit = async (input: SupplierInput) => {
     if (editingSupplier) {
       await updateSupplier.mutateAsync({ id: editingSupplier.id, ...input });
     } else {
+      // Check subscription limit before creating
+      if (!subscriptionLimits.canAddSupplier) {
+        setShowSupplierUpgradeDialog(true);
+        return;
+      }
       await createSupplier.mutateAsync(input);
     }
     setIsSupplierDialogOpen(false);
     setEditingSupplier(null);
+  };
+
+  // Handler for opening supplier dialog with limit check
+  const handleOpenSupplierDialog = () => {
+    if (!subscriptionLimits.canAddSupplier) {
+      setShowSupplierUpgradeDialog(true);
+      return;
+    }
+    setEditingSupplier(null);
+    setIsSupplierDialogOpen(true);
   };
 
   const handleSupplierDelete = async () => {
@@ -497,7 +517,7 @@ const Suppliers = () => {
                     <span className="hidden sm:inline">Importieren</span>
                   </Button>
                 )}
-                <Button className="h-10 sm:h-9" onClick={() => { setEditingSupplier(null); setIsSupplierDialogOpen(true); }}>
+                <Button className="h-10 sm:h-9" onClick={handleOpenSupplierDialog}>
                   <Plus className="w-4 h-4 sm:mr-2" />
                   <span className="hidden sm:inline">Lieferant hinzufügen</span>
                 </Button>
@@ -785,6 +805,16 @@ const Suppliers = () => {
           supplier={locationsDialogSupplier}
         />
       )}
+
+      {/* Upgrade Dialog for Suppliers */}
+      <UpgradeDialog
+        open={showSupplierUpgradeDialog}
+        onOpenChange={setShowSupplierUpgradeDialog}
+        limitType="suppliers"
+        currentTier={subscriptionLimits.tier}
+        currentUsage={subscriptionLimits.usage.suppliersCount}
+        limit={subscriptionLimits.limits.suppliers}
+      />
     </DashboardLayout>
   );
 };
