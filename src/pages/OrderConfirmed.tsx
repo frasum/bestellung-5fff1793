@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { CheckCircle, XCircle, AlertCircle, Loader2, MapPin, Package } from "lucide-react";
+import { CheckCircle, XCircle, AlertCircle, Loader2, MapPin } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -206,35 +206,16 @@ const OrderConfirmed = () => {
                   {/* Order Items */}
                   {orderDetails.items && orderDetails.items.length > 0 && (
                     <div className="rounded-lg p-4 bg-muted/50 border">
-                      <div className="flex items-center gap-2 mb-3">
-                        <Package className="h-4 w-4 text-muted-foreground" />
-                        <p className="text-sm font-medium text-muted-foreground">Bestellte Artikel</p>
-                      </div>
+                      <p className="text-sm font-medium text-muted-foreground mb-3">Bestellte Artikel</p>
                       <div className="space-y-2">
                         {orderDetails.items.map((item, index) => (
-                          <div key={index} className="flex justify-between items-start py-2 border-b last:border-0">
-                            <div>
-                              <p className="font-medium text-foreground">{item.article_name}</p>
-                              <p className="text-sm text-muted-foreground">
-                                {item.quantity} {item.unit} × €{item.unit_price.toFixed(2)}
-                                {item.reference_price && item.reference_unit && (
-                                  <span className="text-muted-foreground/70"> (€{item.reference_price.toFixed(2)}/{item.reference_unit})</span>
-                                )}
-                              </p>
-                              {item.order_unit && (
-                                <p className="text-xs text-primary font-medium mt-0.5">
-                                  <Package className="h-3 w-3 inline mr-1" />
-                                  {item.order_unit}
-                                </p>
-                              )}
-                            </div>
-                            <p className="font-semibold text-foreground">€{item.total_price.toFixed(2)}</p>
+                          <div key={index} className="flex justify-between items-center py-2 border-b last:border-0">
+                            <p className="font-medium text-foreground">{item.article_name}</p>
+                            <p className="text-muted-foreground">
+                              {item.quantity}× {item.order_unit || item.unit}
+                            </p>
                           </div>
                         ))}
-                      </div>
-                      <div className="flex justify-between items-center pt-3 mt-3 border-t-2">
-                        <p className="font-bold text-foreground">Gesamtbetrag</p>
-                        <p className="text-xl font-bold text-green-600">€{orderDetails.totalAmount.toFixed(2)}</p>
                       </div>
                     </div>
                   )}
