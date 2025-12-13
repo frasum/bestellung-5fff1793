@@ -95,3 +95,6 @@ verify_jwt = false
 
 [functions.transcribe-inventory]
 verify_jwt = true
+
+[functions.elevenlabs-conversation-token]
+verify_jwt = true
