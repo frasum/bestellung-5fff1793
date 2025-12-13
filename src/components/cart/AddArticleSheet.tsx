@@ -43,27 +43,18 @@ export const AddArticleSheet = ({
     return quantities;
   }, [items]);
 
-  // Filter and sort articles - items in cart first
+  // Filter articles - keep original order (no sorting)
   const filteredArticles = useMemo(() => {
     if (!articles) return [];
     
     const query = searchQuery.toLowerCase();
-    const filtered = articles.filter(article => 
+    return articles.filter(article => 
       article.name.toLowerCase().includes(query) ||
       article.sku?.toLowerCase().includes(query) ||
       article.category?.toLowerCase().includes(query) ||
       article.description?.toLowerCase().includes(query)
     );
-
-    // Sort: items in cart first, then alphabetically
-    return filtered.sort((a, b) => {
-      const aInCart = cartQuantities[a.id] > 0;
-      const bInCart = cartQuantities[b.id] > 0;
-      if (aInCart && !bInCart) return -1;
-      if (!aInCart && bInCart) return 1;
-      return a.name.localeCompare(b.name);
-    });
-  }, [articles, searchQuery, cartQuantities]);
+  }, [articles, searchQuery]);
 
   const handleQuantityChange = (article: any, delta: number) => {
     lightTap();
