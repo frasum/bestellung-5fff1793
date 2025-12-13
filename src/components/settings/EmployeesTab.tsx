@@ -341,10 +341,10 @@ export function EmployeesTab() {
     const allSupplierIds = [...new Set(supplierAssignments.flatMap(a => a.supplierIds))];
 
     if (editingEmployee) {
-      // Check if PIN changed (comparing raw input to check if user entered a new PIN)
-      const hasNewPin = formData.autoApprove && formData.pinCode && formData.pinCode.length === 4;
-      const hadPin = !!editingEmployee.pin_code;
-      const pinChanged = hasNewPin || (!formData.autoApprove && hadPin) || (!formData.pinCode && hadPin);
+      // PIN nur ändern wenn explizit ein neuer 4-stelliger PIN eingegeben wurde
+      // Leeres Feld = bestehender PIN bleibt erhalten
+      const hasNewPin = formData.pinCode && formData.pinCode.length === 4;
+      const pinChanged = hasNewPin;
       
       await updateEmployee.mutateAsync({
         id: editingEmployee.id,
@@ -981,18 +981,26 @@ export function EmployeesTab() {
                 />
               </div>
 
-              {/* PIN Code - required when Auto-Approve is enabled */}
+              {/* PIN Code - optional when editing, required for new employees with auto-approve */}
               {formData.autoApprove && (
-                <div className={`p-3 border rounded-lg space-y-3 ${formData.pinCode.length !== 4 ? 'border-destructive/50 bg-destructive/5' : 'bg-muted/30'}`}>
+                <div className={`p-3 border rounded-lg space-y-3 ${!editingEmployee && formData.pinCode.length !== 4 ? 'border-destructive/50 bg-destructive/5' : 'bg-muted/30'}`}>
                   <div className="space-y-0.5">
                     <Label htmlFor="pin-code" className="text-sm font-medium flex items-center gap-1">
-                      PIN-Code (erforderlich)
-                      <span className="text-destructive">*</span>
+                      PIN-Code {!editingEmployee && <span className="text-destructive">*</span>}
                     </Label>
                     <p className="text-xs text-muted-foreground">
-                      4-stelliger Code, den der Mitarbeiter eingeben muss, bevor er bestellen kann
+                      {editingEmployee?.pin_code 
+                        ? 'Leer lassen um bestehenden PIN zu behalten, oder neuen 4-stelligen Code eingeben'
+                        : '4-stelliger Code, den der Mitarbeiter eingeben muss'}
                     </p>
                   </div>
+                  {/* Show existing PIN indicator */}
+                  {editingEmployee?.pin_code && !formData.pinCode && (
+                    <div className="flex items-center gap-2 text-sm text-green-600 dark:text-green-400">
+                      <Shield className="w-4 h-4" />
+                      <span>PIN bereits gesetzt (••••)</span>
+                    </div>
+                  )}
                   <div className="flex gap-2 items-center">
                     <Input
                       id="pin-code"
@@ -1005,12 +1013,17 @@ export function EmployeesTab() {
                         const value = e.target.value.replace(/\D/g, '').slice(0, 4);
                         setFormData({ ...formData, pinCode: value });
                       }}
-                      placeholder="z.B. 1234"
-                      className={`w-32 font-mono text-center tracking-widest ${formData.pinCode.length !== 4 ? 'border-destructive' : ''}`}
+                      placeholder={editingEmployee?.pin_code ? 'Neuer PIN...' : 'z.B. 1234'}
+                      className={`w-32 font-mono text-center tracking-widest ${!editingEmployee && formData.pinCode.length !== 4 ? 'border-destructive' : ''}`}
                     />
                   </div>
-                  {formData.pinCode.length !== 4 && (
+                  {!editingEmployee && formData.pinCode.length !== 4 && (
                     <p className="text-xs text-destructive">
+                      PIN muss genau 4 Ziffern haben
+                    </p>
+                  )}
+                  {formData.pinCode.length > 0 && formData.pinCode.length !== 4 && (
+                    <p className="text-xs text-amber-600">
                       PIN muss genau 4 Ziffern haben
                     </p>
               )}
