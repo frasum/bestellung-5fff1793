@@ -897,7 +897,27 @@
     "lockedFor": "Bloccato per",
     "pinIncomplete": "Inserisci tutte e 4 le cifre",
     "pinVerifyError": "Errore di verifica",
-    "changeSupplier": "Cambia"
+    "changeSupplier": "Cambia",
+    "addFreeItem": "Aggiungi articolo libero",
+    "freeItems": "Articoli liberi",
+    "freeItem": "Libero",
+    "editFreeItem": "Modifica articolo libero",
+    "freeItemName": "Nome articolo",
+    "freeItemNamePlaceholder": "es. Articolo speciale...",
+    "quantity": "Quantità",
+    "unit": "Unità"
+  },
+  "suggestions": {
+    "title": "Suggerimenti",
+    "filterBySource": "Fonte:",
+    "sourceEmployee": "Dipendente",
+    "sourceSupplier": "Fornitore",
+    "noSuggestions": "Nessun suggerimento disponibile",
+    "noSuggestionsDesc": "I suggerimenti di dipendenti o fornitori appariranno qui",
+    "approve": "Approva",
+    "reject": "Rifiuta",
+    "approveAll": "Approva tutti",
+    "rejectAll": "Rifiuta tutti"
   },
   "voice": {
     "title": "Ordine vocale",

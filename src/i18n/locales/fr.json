@@ -897,7 +897,27 @@
     "lockedFor": "Verrouillé pour",
     "pinIncomplete": "Veuillez entrer les 4 chiffres",
     "pinVerifyError": "Erreur de vérification",
-    "changeSupplier": "Changer"
+    "changeSupplier": "Changer",
+    "addFreeItem": "Ajouter un article libre",
+    "freeItems": "Articles libres",
+    "freeItem": "Libre",
+    "editFreeItem": "Modifier l'article libre",
+    "freeItemName": "Nom de l'article",
+    "freeItemNamePlaceholder": "ex. Article spécial...",
+    "quantity": "Quantité",
+    "unit": "Unité"
+  },
+  "suggestions": {
+    "title": "Suggestions",
+    "filterBySource": "Source :",
+    "sourceEmployee": "Employé",
+    "sourceSupplier": "Fournisseur",
+    "noSuggestions": "Aucune suggestion disponible",
+    "noSuggestionsDesc": "Les suggestions des employés ou fournisseurs apparaîtront ici",
+    "approve": "Approuver",
+    "reject": "Rejeter",
+    "approveAll": "Tout approuver",
+    "rejectAll": "Tout rejeter"
   },
   "voice": {
     "title": "Commande vocale",
