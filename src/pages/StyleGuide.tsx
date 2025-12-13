@@ -74,8 +74,174 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
-import { AlertCircle, CheckCircle, Info, Palette, ArrowLeft, Sun, Moon, Sparkles, MoreHorizontal, ChevronDown, Settings, User, LogOut, HelpCircle, CalendarDays, ChevronsUpDown } from 'lucide-react';
+import { AlertCircle, CheckCircle, Info, Palette, ArrowLeft, Sun, Moon, Sparkles, MoreHorizontal, ChevronDown, Settings, User, LogOut, HelpCircle, CalendarDays, ChevronsUpDown, Download, FileJson, FileCode } from 'lucide-react';
 import { useTheme } from 'next-themes';
+import { toast } from 'sonner';
+
+// Design tokens data for export
+const designTokens = {
+  colors: {
+    light: {
+      background: "210 20% 98%",
+      foreground: "222 47% 11%",
+      card: "0 0% 100%",
+      cardForeground: "222 47% 11%",
+      popover: "0 0% 100%",
+      popoverForeground: "222 47% 11%",
+      primary: "217 91% 50%",
+      primaryForeground: "210 40% 98%",
+      secondary: "210 20% 96%",
+      secondaryForeground: "222 47% 11%",
+      muted: "210 20% 96%",
+      mutedForeground: "215 16% 47%",
+      accent: "210 20% 96%",
+      accentForeground: "222 47% 11%",
+      destructive: "0 84% 60%",
+      destructiveForeground: "210 40% 98%",
+      warning: "45 93% 47%",
+      warningForeground: "26 83% 14%",
+      success: "142 76% 36%",
+      successForeground: "355 100% 97%",
+      border: "220 13% 91%",
+      input: "220 13% 91%",
+      ring: "217 91% 50%",
+    },
+    dark: {
+      background: "224 71% 4%",
+      foreground: "213 31% 91%",
+      card: "224 71% 4%",
+      cardForeground: "213 31% 91%",
+      popover: "224 71% 4%",
+      popoverForeground: "213 31% 91%",
+      primary: "210 100% 52%",
+      primaryForeground: "222 47% 11%",
+      secondary: "223 47% 14%",
+      secondaryForeground: "213 31% 91%",
+      muted: "223 47% 14%",
+      mutedForeground: "215 16% 65%",
+      accent: "223 47% 14%",
+      accentForeground: "213 31% 91%",
+      destructive: "0 63% 45%",
+      destructiveForeground: "210 40% 98%",
+      warning: "45 93% 47%",
+      warningForeground: "26 83% 14%",
+      success: "142 70% 45%",
+      successForeground: "144 61% 20%",
+      border: "222 47% 18%",
+      input: "222 47% 18%",
+      ring: "212 100% 48%",
+    }
+  },
+  spacing: {
+    "1": "0.25rem",
+    "2": "0.5rem",
+    "3": "0.75rem",
+    "4": "1rem",
+    "5": "1.25rem",
+    "6": "1.5rem",
+    "8": "2rem",
+    "10": "2.5rem",
+    "12": "3rem",
+    "16": "4rem",
+  },
+  borderRadius: {
+    none: "0",
+    sm: "0.125rem",
+    md: "0.375rem",
+    lg: "0.5rem",
+    xl: "0.75rem",
+    "2xl": "1rem",
+    full: "9999px",
+  },
+  typography: {
+    fontFamily: {
+      sans: "Inter, system-ui, sans-serif",
+    },
+    fontSize: {
+      xs: "0.75rem",
+      sm: "0.875rem",
+      base: "1rem",
+      lg: "1.125rem",
+      xl: "1.25rem",
+      "2xl": "1.5rem",
+      "3xl": "1.875rem",
+    }
+  },
+  shadows: {
+    note: "Ultraminimalistisches Design verwendet keine Schatten. Nutze border-border stattdessen."
+  }
+};
+
+// Export functions
+const exportAsJSON = () => {
+  const dataStr = JSON.stringify(designTokens, null, 2);
+  const blob = new Blob([dataStr], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = 'design-tokens.json';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+  toast.success('Design-Tokens als JSON exportiert');
+};
+
+const exportAsCSS = () => {
+  const generateCSSVariables = (colors: Record<string, string>, prefix: string = '') => {
+    return Object.entries(colors)
+      .map(([key, value]) => {
+        const cssKey = key.replace(/([A-Z])/g, '-$1').toLowerCase();
+        return `  --${cssKey}: ${value};`;
+      })
+      .join('\n');
+  };
+
+  const css = `/* Bestellung.pro Design Tokens */
+/* Generated: ${new Date().toISOString()} */
+
+:root {
+  /* Light Theme Colors */
+${generateCSSVariables(designTokens.colors.light)}
+
+  /* Border Radius */
+  --radius: 0.375rem;
+
+  /* Spacing Scale */
+${Object.entries(designTokens.spacing).map(([key, value]) => `  --spacing-${key}: ${value};`).join('\n')}
+}
+
+.dark {
+  /* Dark Theme Colors */
+${generateCSSVariables(designTokens.colors.dark)}
+}
+
+/* Typography */
+body {
+  font-family: ${designTokens.typography.fontFamily.sans};
+}
+
+/* Design Principles */
+/*
+ * 1. Keine Schatten - nutze border-border für Tiefe
+ * 2. Konsistente Radii - nur rounded-md (6px)
+ * 3. 1 Primary Button pro Screen
+ * 4. Dezente Backgrounds - bg-muted/30
+ * 5. Touch-optimiert - min h-11 für Mobile-Buttons
+ */
+`;
+
+  const blob = new Blob([css], { type: 'text/css' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = 'design-tokens.css';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+  toast.success('Design-Tokens als CSS exportiert');
+};
 
 // Color swatch component
 const ColorSwatch = ({ name, cssVar, className }: { name: string; cssVar: string; className: string }) => (
@@ -142,6 +308,26 @@ const StyleGuide = () => {
             </p>
           </div>
           <div className="flex items-center gap-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm">
+                  <Download className="h-4 w-4 mr-2" />
+                  Export
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuLabel>Design-Tokens exportieren</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={exportAsJSON}>
+                  <FileJson className="h-4 w-4 mr-2" />
+                  Als JSON
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={exportAsCSS}>
+                  <FileCode className="h-4 w-4 mr-2" />
+                  Als CSS
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
             <Button
               variant="outline"
               size="icon"
