@@ -12,6 +12,8 @@ import { Switch } from '@/components/ui/switch';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Separator } from '@/components/ui/separator';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { 
   Dialog, 
   DialogContent, 
@@ -281,6 +283,114 @@ const StyleGuide = () => {
                 <p className="text-primary">text-primary - Akzent/Link-Farbe</p>
                 <p className="text-destructive">text-destructive - Fehler/Warnung</p>
               </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Tables & Lists */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Tabellen & Listen</CardTitle>
+            <CardDescription>Daten-Darstellung in tabellarischer Form und Listen</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* Table */}
+            <div>
+              <h4 className="text-sm font-medium mb-3">Tabelle</h4>
+              <div className="border rounded-lg overflow-hidden">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-[100px]">ID</TableHead>
+                      <TableHead>Name</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead className="text-right">Betrag</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    <TableRow>
+                      <TableCell className="font-medium">INV001</TableCell>
+                      <TableCell>Max Mustermann</TableCell>
+                      <TableCell><Badge variant="default">Aktiv</Badge></TableCell>
+                      <TableCell className="text-right">€250.00</TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell className="font-medium">INV002</TableCell>
+                      <TableCell>Anna Schmidt</TableCell>
+                      <TableCell><Badge variant="secondary">Ausstehend</Badge></TableCell>
+                      <TableCell className="text-right">€150.00</TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell className="font-medium">INV003</TableCell>
+                      <TableCell>Peter Müller</TableCell>
+                      <TableCell><Badge variant="destructive">Storniert</Badge></TableCell>
+                      <TableCell className="text-right">€350.00</TableCell>
+                    </TableRow>
+                  </TableBody>
+                </Table>
+              </div>
+            </div>
+
+            <Separator />
+
+            {/* Lists */}
+            <div className="grid gap-6 sm:grid-cols-2">
+              <div>
+                <h4 className="text-sm font-medium mb-3">Ungeordnete Liste</h4>
+                <ul className="list-disc list-inside space-y-1 text-sm">
+                  <li>Erstes Listenelement</li>
+                  <li>Zweites Listenelement</li>
+                  <li>Drittes Listenelement mit längerem Text der umbricht</li>
+                  <li>Viertes Listenelement</li>
+                </ul>
+              </div>
+              <div>
+                <h4 className="text-sm font-medium mb-3">Geordnete Liste</h4>
+                <ol className="list-decimal list-inside space-y-1 text-sm">
+                  <li>Schritt eins</li>
+                  <li>Schritt zwei</li>
+                  <li>Schritt drei</li>
+                  <li>Schritt vier</li>
+                </ol>
+              </div>
+            </div>
+
+            <Separator />
+
+            {/* Scroll Area with List */}
+            <div>
+              <h4 className="text-sm font-medium mb-3">Scrollbare Liste (max. 200px)</h4>
+              <ScrollArea className="h-[200px] w-full rounded-md border p-4">
+                <div className="space-y-2">
+                  {Array.from({ length: 15 }).map((_, i) => (
+                    <div key={i} className="flex items-center justify-between py-2 border-b last:border-0">
+                      <span className="text-sm">Listeneintrag {i + 1}</span>
+                      <Badge variant="outline">{i + 1}</Badge>
+                    </div>
+                  ))}
+                </div>
+              </ScrollArea>
+            </div>
+
+            <Separator />
+
+            {/* Description List */}
+            <div>
+              <h4 className="text-sm font-medium mb-3">Beschreibungsliste</h4>
+              <dl className="space-y-2 text-sm">
+                <div className="flex gap-2">
+                  <dt className="font-medium w-24 shrink-0">Produkt:</dt>
+                  <dd className="text-muted-foreground">Premium Paket</dd>
+                </div>
+                <div className="flex gap-2">
+                  <dt className="font-medium w-24 shrink-0">Preis:</dt>
+                  <dd className="text-muted-foreground">€99.00 / Monat</dd>
+                </div>
+                <div className="flex gap-2">
+                  <dt className="font-medium w-24 shrink-0">Status:</dt>
+                  <dd className="text-muted-foreground">Aktiv seit 01.01.2024</dd>
+                </div>
+              </dl>
             </div>
           </CardContent>
         </Card>
