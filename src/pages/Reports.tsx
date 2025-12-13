@@ -89,9 +89,9 @@ const RecentOrdersCard = () => {
 
   return (
     <Card>
-      <CardHeader className="pb-2">
+      <CardHeader className="pb-2 border-b border-border">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-base font-semibold">{t('dashboard.recentOrders')}</CardTitle>
+          <CardTitle className="text-sm font-semibold">{t('dashboard.recentOrders')}</CardTitle>
           <Button variant="ghost" size="sm" onClick={() => navigate('/orders')} className="text-xs">
             {t('common.viewAll', 'Alle anzeigen')}
           </Button>
@@ -119,7 +119,7 @@ const RecentOrdersCard = () => {
                   }}
                 >
                   <CollapsibleTrigger asChild>
-                    <button className="w-full flex items-center justify-between p-2.5 bg-muted/50 hover:bg-muted rounded-lg transition-colors text-left">
+                    <button className="w-full flex items-center justify-between p-2.5 bg-muted/30 hover:bg-muted/50 rounded-md transition-colors text-left">
                       <div className="flex items-center gap-2 min-w-0 flex-1">
                         <ChevronRight className={cn("w-4 h-4 shrink-0 transition-transform text-muted-foreground", isExpanded && "rotate-90")} />
                         <div className="min-w-0 flex-1">
@@ -154,7 +154,7 @@ const RecentOrdersCard = () => {
                     </button>
                   </CollapsibleTrigger>
                   <CollapsibleContent>
-                    <div className="mt-1 ml-6 p-3 bg-muted/30 rounded-lg space-y-1.5">
+                    <div className="mt-1 ml-6 p-3 bg-muted/20 rounded-md space-y-1.5">
                       {order.order_items && order.order_items.length > 0 ? (
                         order.order_items.map((item) => (
                           <div key={item.id} className="flex justify-between text-sm gap-2">
@@ -255,7 +255,7 @@ const QuickOverviewKPIs = () => {
 
   return (
     <div className="space-y-3">
-      <h3 className="text-lg font-semibold">{t('reports.quickOverview', 'Schnellübersicht')}</h3>
+      <h3 className="text-base font-semibold">{t('reports.quickOverview', 'Schnellübersicht')}</h3>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {kpiCards.map((kpi) => (
           <Card 
@@ -266,11 +266,11 @@ const QuickOverviewKPIs = () => {
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div className="space-y-1">
-                  <p className="text-sm text-muted-foreground">{kpi.label}</p>
+                  <p className="text-xs text-muted-foreground">{kpi.label}</p>
                   {isLoading ? (
                     <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
                   ) : (
-                    <p className="text-2xl font-bold">
+                    <p className="text-xl font-semibold">
                       {kpi.format === 'currency' 
                         ? `€${kpi.value.toLocaleString('de-DE', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`
                         : kpi.value.toLocaleString('de-DE')
@@ -278,7 +278,7 @@ const QuickOverviewKPIs = () => {
                     </p>
                   )}
                 </div>
-                <kpi.icon className="h-8 w-8 text-muted-foreground/30" />
+                <kpi.icon className="h-8 w-8 text-muted-foreground/20" />
               </div>
               {kpi.label === t('reports.inventoryValue', 'Inventurwert') && lastCompletedSession && (
                 <p className="text-xs text-muted-foreground mt-2">
@@ -453,26 +453,26 @@ const Reports = () => {
     <DashboardLayout>
       <div className="space-y-2 md:space-y-5 xl:space-y-6">
         {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 md:gap-4">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 md:gap-4 pb-4 border-b border-border">
           <div>
-            <h1 className="text-2xl md:text-3xl font-bold text-foreground">{t('reports.title')}</h1>
-            <p className="text-sm md:text-base text-muted-foreground mt-0.5 md:mt-1">{t('reports.description')}</p>
+            <h1 className="text-xl font-semibold text-foreground">{t('reports.title')}</h1>
+            <p className="text-sm text-muted-foreground mt-0.5">{t('reports.description')}</p>
           </div>
         </div>
 
         {/* Main Tabs */}
         <Tabs value={activeTab} onValueChange={handleTabChange}>
-          <TabsList className="w-full h-12 sm:h-10 sm:w-auto p-1 bg-muted/50">
+          <TabsList className="w-full h-10 sm:h-9 sm:w-auto p-1 bg-muted/50 border border-border rounded-md">
             <TabsTrigger 
               value="overview" 
-              className="flex-1 sm:flex-initial h-10 sm:h-8 min-h-[44px] sm:min-h-0 gap-2 px-4 text-sm font-medium data-[state=active]:bg-background data-[state=active]:shadow-sm"
+              className="flex-1 sm:flex-initial h-8 gap-2 px-4 text-sm font-medium data-[state=active]:bg-background"
             >
               <BarChart3 className="w-4 h-4" />
               <span>{t('reports.overview')}</span>
             </TabsTrigger>
             <TabsTrigger 
               value="inventur" 
-              className="flex-1 sm:flex-initial h-10 sm:h-8 min-h-[44px] sm:min-h-0 gap-2 px-4 text-sm font-medium data-[state=active]:bg-background data-[state=active]:shadow-sm"
+              className="flex-1 sm:flex-initial h-8 gap-2 px-4 text-sm font-medium data-[state=active]:bg-background"
             >
               <ClipboardList className="w-4 h-4" />
               <span>{t('reports.inventoryTab')}</span>
@@ -490,7 +490,7 @@ const Reports = () => {
             {/* Time Range & Export */}
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 sm:justify-end">
               <Select value={timeRange} onValueChange={setTimeRange}>
-                <SelectTrigger className="w-full sm:w-40 h-11 sm:h-10 bg-card">
+                <SelectTrigger className="w-full sm:w-40 h-9 bg-background border-border">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="bg-card border border-border z-50">
@@ -499,7 +499,7 @@ const Reports = () => {
                   <SelectItem value="12">{t('reports.months', { count: 12 })}</SelectItem>
                 </SelectContent>
               </Select>
-              <Button onClick={exportToCSV} disabled={!stats?.filteredOrders?.length} className="h-11 sm:h-10 w-full sm:w-auto">
+              <Button variant="ghost" onClick={exportToCSV} disabled={!stats?.filteredOrders?.length} className="h-9 w-full sm:w-auto">
                 <Download className="w-4 h-4 mr-2" />
                 {t('export.csv')}
               </Button>
@@ -510,10 +510,10 @@ const Reports = () => {
                 <Loader2 className="w-8 h-8 animate-spin text-primary" />
               </div>
             ) : !stats || stats.totalOrders === 0 ? (
-              <div className="text-center py-16 bg-card border border-border rounded-xl">
-                <TrendingUp className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
-                <h2 className="text-xl font-semibold text-foreground mb-2">{t('common.noData')}</h2>
-                <p className="text-muted-foreground mb-6">
+              <div className="text-center py-16 bg-card border border-border rounded-md">
+                <TrendingUp className="w-16 h-16 mx-auto text-muted-foreground/50 mb-4" />
+                <h2 className="text-lg font-semibold text-foreground mb-2">{t('common.noData')}</h2>
+                <p className="text-sm text-muted-foreground mb-6">
                   {t('orders.noOrdersDescription')}
                 </p>
                 <Button onClick={() => navigate('/articles')}>{t('orders.browseArticles')}</Button>
@@ -521,61 +521,56 @@ const Reports = () => {
             ) : (
               <>
                 {/* KPI Cards - 2x2 on mobile, 4 cols on desktop */}
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
-                  <Card>
-                    <CardContent className="p-3 sm:p-4 lg:p-6">
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                  <Card className="hover:bg-muted/50 transition-colors">
+                    <CardContent className="p-4">
                       <div className="flex items-center justify-between">
-                        <Euro className="w-5 h-5 sm:w-6 sm:h-6 lg:w-8 lg:h-8 text-primary" />
+                        <Euro className="w-5 h-5 text-muted-foreground/50" />
                         {stats.spendingChange !== 0 && (
-                          <div className={`flex items-center gap-0.5 text-xs sm:text-sm ${stats.spendingChange > 0 ? 'text-destructive' : 'text-success'}`}>
-                            {stats.spendingChange > 0 ? <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4" /> : <TrendingDown className="w-3 h-3 sm:w-4 sm:h-4" />}
-                            <span className="hidden sm:inline">{Math.abs(stats.spendingChange).toFixed(1)}%</span>
-                            <span className="sm:hidden">{Math.abs(stats.spendingChange).toFixed(0)}%</span>
+                          <div className={`flex items-center gap-0.5 text-xs ${stats.spendingChange > 0 ? 'text-destructive' : 'text-success'}`}>
+                            {stats.spendingChange > 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+                            <span>{Math.abs(stats.spendingChange).toFixed(0)}%</span>
                           </div>
                         )}
                       </div>
-                      <p className="text-lg sm:text-xl lg:text-2xl font-bold text-foreground mt-2 sm:mt-4">
-                        <span className="sm:hidden">€{(stats.totalSpent / 1000).toFixed(1)}k</span>
-                        <span className="hidden sm:inline">€{stats.totalSpent.toLocaleString('de-DE', { minimumFractionDigits: 2 })}</span>
+                      <p className="text-xl font-semibold text-foreground mt-2">
+                        €{stats.totalSpent.toLocaleString('de-DE', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                       </p>
-                      <p className="text-xs sm:text-sm text-muted-foreground">{t('reports.totalSpent')}</p>
+                      <p className="text-xs text-muted-foreground">{t('reports.totalSpent')}</p>
                     </CardContent>
                   </Card>
-                  <Card>
-                    <CardContent className="p-3 sm:p-4 lg:p-6">
-                      <ShoppingCart className="w-5 h-5 sm:w-6 sm:h-6 lg:w-8 lg:h-8 text-accent" />
-                      <p className="text-lg sm:text-xl lg:text-2xl font-bold text-foreground mt-2 sm:mt-4">{stats.totalOrders}</p>
-                      <p className="text-xs sm:text-sm text-muted-foreground">{t('reports.orderCount')}</p>
+                  <Card className="hover:bg-muted/50 transition-colors">
+                    <CardContent className="p-4">
+                      <ShoppingCart className="w-5 h-5 text-muted-foreground/50" />
+                      <p className="text-xl font-semibold text-foreground mt-2">{stats.totalOrders}</p>
+                      <p className="text-xs text-muted-foreground">{t('reports.orderCount')}</p>
                     </CardContent>
                   </Card>
-                  <Card>
-                    <CardContent className="p-3 sm:p-4 lg:p-6">
-                      <Euro className="w-5 h-5 sm:w-6 sm:h-6 lg:w-8 lg:h-8 text-success" />
-                      <p className="text-lg sm:text-xl lg:text-2xl font-bold text-foreground mt-2 sm:mt-4">
-                        <span className="sm:hidden">€{stats.avgOrderValue.toFixed(0)}</span>
-                        <span className="hidden sm:inline">€{stats.avgOrderValue.toFixed(2)}</span>
-                      </p>
-                      <p className="text-xs sm:text-sm text-muted-foreground">{t('reports.avgOrderValue')}</p>
+                  <Card className="hover:bg-muted/50 transition-colors">
+                    <CardContent className="p-4">
+                      <Euro className="w-5 h-5 text-muted-foreground/50" />
+                      <p className="text-xl font-semibold text-foreground mt-2">€{stats.avgOrderValue.toFixed(0)}</p>
+                      <p className="text-xs text-muted-foreground">{t('reports.avgOrderValue')}</p>
                     </CardContent>
                   </Card>
-                  <Card>
-                    <CardContent className="p-3 sm:p-4 lg:p-6">
-                      <Users className="w-5 h-5 sm:w-6 sm:h-6 lg:w-8 lg:h-8 text-warning" />
-                      <p className="text-lg sm:text-xl lg:text-2xl font-bold text-foreground mt-2 sm:mt-4">{stats.supplierBreakdown.length}</p>
-                      <p className="text-xs sm:text-sm text-muted-foreground">{t('reports.activeSuppliers')}</p>
+                  <Card className="hover:bg-muted/50 transition-colors">
+                    <CardContent className="p-4">
+                      <Users className="w-5 h-5 text-muted-foreground/50" />
+                      <p className="text-xl font-semibold text-foreground mt-2">{stats.supplierBreakdown.length}</p>
+                      <p className="text-xs text-muted-foreground">{t('reports.activeSuppliers')}</p>
                     </CardContent>
                   </Card>
                 </div>
 
                 {/* Charts Row */}
-                <div className="grid grid-cols-1 gap-4 lg:gap-6">
+                <div className="grid grid-cols-1 gap-6">
                   {/* Monthly Spending Chart */}
                   <Card>
-                    <CardHeader className="pb-2 sm:pb-4">
-                      <CardTitle className="text-base sm:text-lg">{t('reports.monthlySpending')}</CardTitle>
+                    <CardHeader className="pb-2 border-b border-border">
+                      <CardTitle className="text-sm font-semibold">{t('reports.monthlySpending')}</CardTitle>
                     </CardHeader>
-                    <CardContent className="px-2 sm:px-6 pb-4">
-                      <div className="h-56 sm:h-72">
+                    <CardContent className="p-6">
+                      <div className="h-56">
                         <ResponsiveContainer width="100%" height="100%">
                           <BarChart data={stats.monthlySpending} margin={{ top: 5, right: 5, left: -15, bottom: 5 }}>
                             <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
@@ -594,7 +589,7 @@ const Reports = () => {
                               contentStyle={{
                                 backgroundColor: 'hsl(var(--card))',
                                 border: '1px solid hsl(var(--border))',
-                                borderRadius: '8px',
+                                borderRadius: '6px',
                                 fontSize: '12px',
                               }}
                               formatter={(value: number) => [`€${value.toFixed(2)}`, 'Ausgaben']}
@@ -608,13 +603,13 @@ const Reports = () => {
 
                   {/* Supplier Breakdown */}
                   <Card>
-                    <CardHeader className="pb-2 sm:pb-4">
-                      <CardTitle className="text-base sm:text-lg">{t('reports.supplierSpending')}</CardTitle>
+                    <CardHeader className="pb-2 border-b border-border">
+                      <CardTitle className="text-sm font-semibold">{t('reports.supplierSpending')}</CardTitle>
                     </CardHeader>
-                    <CardContent className="px-2 sm:px-6 pb-4">
+                    <CardContent className="p-6">
                       {/* Mobile: Stacked layout, Desktop: Side by side */}
                       <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-                        <div className="h-48 sm:h-56 w-full sm:w-1/2">
+                        <div className="h-48 w-full sm:w-1/2">
                           <ResponsiveContainer width="100%" height="100%">
                             <PieChart>
                               <Pie
@@ -634,7 +629,7 @@ const Reports = () => {
                                 contentStyle={{
                                   backgroundColor: 'hsl(var(--card))',
                                   border: '1px solid hsl(var(--border))',
-                                  borderRadius: '8px',
+                                  borderRadius: '6px',
                                   fontSize: '12px',
                                 }}
                                 formatter={(value: number) => `€${value.toFixed(2)}`}

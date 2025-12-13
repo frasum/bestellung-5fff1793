@@ -378,10 +378,10 @@ const Orders = () => {
       <div className="space-y-2 md:space-y-5 xl:space-y-6">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 md:gap-4">
           <div>
-            <h1 className="text-2xl md:text-3xl font-bold text-foreground">{t('orders.title')}</h1>
-            <p className="text-sm md:text-base text-muted-foreground mt-0.5 md:mt-1">{t('orders.subtitle')}</p>
+            <h1 className="text-xl font-semibold text-foreground">{t('orders.title')}</h1>
+            <p className="text-sm text-muted-foreground mt-0.5">{t('orders.subtitle')}</p>
           </div>
-          <Button onClick={() => navigate('/suppliers?tab=articles')} className="h-10 sm:h-9">
+          <Button onClick={() => navigate('/suppliers?tab=articles')} className="h-9">
             <Package className="w-4 h-4 sm:mr-2" />
             <span className="hidden sm:inline">{t('orders.newOrder')}</span>
           </Button>
@@ -404,15 +404,15 @@ const Orders = () => {
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-          <TabsList className="grid w-full max-w-2xl grid-cols-3">
-            <TabsTrigger value="orders" className="flex items-center gap-2">
+          <TabsList className="grid w-full max-w-2xl grid-cols-3 bg-muted/50 border border-border rounded-md h-9">
+            <TabsTrigger value="orders" className="flex items-center gap-2 text-sm h-8">
               <ShoppingCart className="w-4 h-4" />
               <span className="hidden sm:inline">{t('orders.title')}</span>
               {orders && orders.length > 0 && (
                 <Badge variant="secondary" className="ml-1 text-xs">{orders.length}</Badge>
               )}
             </TabsTrigger>
-            <TabsTrigger value="drafts" className="flex items-center gap-2">
+            <TabsTrigger value="drafts" className="flex items-center gap-2 text-sm h-8">
               <FileText className="w-4 h-4" />
               <span className="hidden sm:inline">{t('nav.drafts')}</span>
               {drafts && drafts.length > 0 && (
@@ -424,7 +424,7 @@ const Orders = () => {
                 </div>
               )}
             </TabsTrigger>
-            <TabsTrigger value="simple-order" className="flex items-center gap-2">
+            <TabsTrigger value="simple-order" className="flex items-center gap-2 text-sm h-8">
               <Smartphone className="w-4 h-4" />
               <span className="hidden sm:inline">EasyOrder</span>
             </TabsTrigger>

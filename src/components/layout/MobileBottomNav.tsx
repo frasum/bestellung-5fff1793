@@ -47,7 +47,7 @@ export const MobileBottomNav = () => {
   };
 
   return (
-    <nav className="xl:hidden fixed bottom-0 left-0 right-0 z-50 bg-card border-t border-border safe-area-bottom">
+    <nav className="xl:hidden fixed bottom-0 left-0 right-0 z-50 bg-background border-t border-border safe-area-bottom">
       <div className="flex items-center justify-around h-16 md:h-20 px-2">
         {mainNavItems.map((item) => {
           const isActive = location.pathname === item.href;
@@ -96,7 +96,7 @@ export const MobileBottomNav = () => {
               <span className="text-[10px] md:text-xs mt-1 font-medium">Mehr</span>
             </button>
           </SheetTrigger>
-          <SheetContent side="bottom" className="h-auto max-h-[70vh] rounded-t-xl">
+          <SheetContent side="bottom" className="h-auto max-h-[70vh] rounded-t-md border-t border-border">
             <SheetHeader className="pb-4">
               <SheetTitle>Navigation</SheetTitle>
             </SheetHeader>
@@ -110,10 +110,10 @@ export const MobileBottomNav = () => {
                     to={item.href}
                     onClick={handleNavClick}
                     className={cn(
-                      'flex items-center gap-3 p-4 md:p-5 min-h-[52px] md:min-h-[60px] rounded-xl transition-colors relative',
+                      'flex items-center gap-3 p-4 md:p-5 min-h-[52px] md:min-h-[60px] rounded-md transition-colors relative',
                       isActive 
                         ? 'bg-primary text-primary-foreground' 
-                        : 'bg-muted hover:bg-muted/80'
+                        : 'bg-muted hover:bg-muted/50'
                     )}
                   >
                     <Icon className="w-5 h-5 md:w-6 md:h-6" />

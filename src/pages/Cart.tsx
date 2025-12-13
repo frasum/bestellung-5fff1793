@@ -119,20 +119,20 @@ const Cart = () => {
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 md:gap-4">
           <div>
-            <h1 className="text-2xl md:text-3xl font-bold text-foreground">{t('cart.title')}</h1>
-            <p className="text-sm md:text-base text-muted-foreground mt-0.5 md:mt-1">
+            <h1 className="text-xl font-semibold text-foreground">{t('cart.title')}</h1>
+            <p className="text-sm text-muted-foreground mt-0.5">
               {items.length === 0 
                 ? t('cart.empty')
                 : t('cart.itemCount', { count: items.length })}
             </p>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={() => setScanDialogOpen(true)} className="h-10 sm:h-9">
+            <Button variant="ghost" onClick={() => setScanDialogOpen(true)} className="h-9">
               <Camera className="w-4 h-4 sm:mr-2" />
               <span className="hidden sm:inline">{t('scan.title')}</span>
             </Button>
             {items.length > 0 && (
-              <Button variant="outline" onClick={clearCart} className="h-10 sm:h-9">
+              <Button variant="ghost" onClick={clearCart} className="h-9">
                 <span className="hidden sm:inline">{t('common.delete')}</span>
                 <Trash2 className="w-4 h-4 sm:hidden" />
               </Button>
@@ -141,10 +141,10 @@ const Cart = () => {
         </div>
 
         {items.length === 0 ? (
-          <div className="text-center py-12 sm:py-16 bg-card border border-border rounded-xl">
-            <ShoppingCart className="w-12 h-12 sm:w-16 sm:h-16 mx-auto text-muted-foreground mb-4" />
-            <h2 className="text-lg sm:text-xl font-semibold text-foreground mb-2">{t('cart.empty')}</h2>
-            <p className="text-sm sm:text-base text-muted-foreground mb-6 px-4">{t('cart.emptyDescription')}</p>
+          <div className="text-center py-12 sm:py-16 bg-card border border-border rounded-md">
+            <ShoppingCart className="w-12 h-12 sm:w-16 sm:h-16 mx-auto text-muted-foreground/50 mb-4" />
+            <h2 className="text-lg font-semibold text-foreground mb-2">{t('cart.empty')}</h2>
+            <p className="text-sm text-muted-foreground mb-6 px-4">{t('cart.emptyDescription')}</p>
             <Button onClick={() => navigate('/suppliers?tab=articles')}>
               {t('cart.browseArticles')}
             </Button>
@@ -190,8 +190,8 @@ const Cart = () => {
               {/* Cart Items */}
               <div className="xl:col-span-2 space-y-4 md:space-y-5 xl:space-y-6">
                 {supplierTotals.map(({ name, items: supplierItems, total, minimumOrderValue }) => (
-                  <div key={name} className="bg-card border border-border rounded-xl overflow-hidden">
-                    <div className="bg-muted/50 px-4 md:px-5 xl:px-6 py-3 md:py-4 border-b border-border flex items-center justify-between gap-2">
+                  <div key={name} className="bg-card border border-border rounded-md overflow-hidden">
+                    <div className="bg-muted/30 px-4 md:px-5 xl:px-6 py-3 md:py-4 border-b border-border flex items-center justify-between gap-2">
                       <div className="flex items-center gap-2 flex-1 min-w-0">
                         <h3 className="font-semibold text-foreground text-sm md:text-base truncate">{name}</h3>
                         <span className="text-xs md:text-sm text-muted-foreground shrink-0">
@@ -334,7 +334,7 @@ const Cart = () => {
 
               {/* Order Summary - Desktop only */}
               <div className="hidden xl:block xl:col-span-1">
-                <div className="bg-card border border-border rounded-xl p-6 sticky top-6">
+                <div className="bg-card border border-border rounded-md p-6 sticky top-6">
                   <h3 className="text-lg font-semibold text-foreground mb-4">{t('checkout.orderSummary')}</h3>
                   <div className="space-y-3 mb-6">
                     {supplierTotals.map(({ name, total }) => (
