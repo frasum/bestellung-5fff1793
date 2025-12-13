@@ -29,6 +29,9 @@ export interface SimpleOrderToken {
     name: string;
     phone: string | null;
     email: string | null;
+    auto_approve_orders: boolean;
+    pin_code: string | null;
+    can_capture_photos: boolean | null;
   } | null;
   token_suppliers?: {
     supplier_id: string;
@@ -71,8 +74,8 @@ export function useSimpleOrderTokens() {
         .select(`
           *,
           supplier:suppliers(id, name),
-          location:locations(id, name),
-          employee:employees(id, name, phone, email)
+          location:locations(id, name, short_code),
+          employee:employees(id, name, phone, email, auto_approve_orders, pin_code, can_capture_photos)
         `)
         .eq('organization_id', profile.organization_id)
         .order('created_at', { ascending: false });

@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { User, ChevronDown, ChevronRight, Copy, QrCode, Pencil, Trash2, ExternalLink, Printer, Package, Link2, Phone, Mail, MessageCircle, KeyRound, Shield, ShieldAlert } from 'lucide-react';
+import { User, ChevronDown, ChevronRight, Copy, QrCode, Pencil, Trash2, ExternalLink, Printer, Package, Link2, Phone, Mail, MessageCircle, KeyRound, Shield, ShieldAlert, Camera } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface EmployeeTokensOverviewProps {
@@ -323,6 +323,13 @@ export function EmployeeTokensOverview({ tokens, onEdit, onToggleActive, onDelet
                                       Kein PIN
                                     </Badge>
                                   )
+                                )}
+                                {/* Camera Badge for employees with photo capture permission */}
+                                {token.employee?.can_capture_photos && (
+                                  <Badge variant="outline" className="text-xs border-purple-500 text-purple-600">
+                                    <Camera className="h-3 w-3 mr-1" />
+                                    Fotos
+                                  </Badge>
                                 )}
                               </div>
                               {(token.employee?.phone || token.employee?.email) && (
