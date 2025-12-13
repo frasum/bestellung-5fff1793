@@ -160,21 +160,11 @@ export const MultiSupplierCartOverview = ({
   };
 
   // Calculate totals
-  const getSupplierTotal = (supplierId: string) => {
-    return (articlesBySupplier[supplierId] || []).reduce((sum, article) => {
-      return sum + (article.price * (quantities[article.id] || 0));
-    }, 0);
-  };
-
   const getSupplierItemCount = (supplierId: string) => {
     return (articlesBySupplier[supplierId] || []).reduce((sum, article) => {
       return sum + (quantities[article.id] || 0);
     }, 0);
   };
-
-  const grandTotal = suppliersWithOrders.reduce((sum, supplier) => {
-    return sum + getSupplierTotal(supplier.id);
-  }, 0);
 
   const totalItems = Object.values(quantities).reduce((sum, qty) => sum + qty, 0);
 
@@ -238,7 +228,6 @@ export const MultiSupplierCartOverview = ({
         {suppliersWithOrders.map((supplier) => {
           const isExpanded = expandedSuppliers.has(supplier.id);
           const supplierArticles = articlesBySupplier[supplier.id] || [];
-          const supplierTotal = getSupplierTotal(supplier.id);
           const itemCount = getSupplierItemCount(supplier.id);
 
           return (
@@ -259,7 +248,7 @@ export const MultiSupplierCartOverview = ({
                         <div>
                           <h3 className="font-semibold text-lg">{supplier.name}</h3>
                           <p className="text-sm text-muted-foreground">
-                            {itemCount} {t('simpleOrder.items', 'Artikel')} · {supplierTotal.toFixed(2)} €
+                            {itemCount} {t('simpleOrder.items', 'Artikel')}
                           </p>
                         </div>
                       </div>
@@ -277,21 +266,17 @@ export const MultiSupplierCartOverview = ({
                   <div className="divide-y">
                     {supplierArticles.map((article) => {
                       const quantity = quantities[article.id] || 0;
-                      const itemTotal = article.price * quantity;
 
                       return (
                         <div key={article.id} className="p-4 flex items-center gap-3">
                           {/* Article Info */}
                           <div className="flex-1 min-w-0">
                             <p className="font-medium truncate">{article.name}</p>
-                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                              <span>{article.price.toFixed(2)} €/{article.unit}</span>
-                              {article.order_unit && (
-                                <Badge variant="outline" className="text-xs">
-                                  {article.order_unit.name}
-                                </Badge>
-                              )}
-                            </div>
+                            {article.order_unit && (
+                              <Badge variant="outline" className="text-xs">
+                                {article.order_unit.name}
+                              </Badge>
+                            )}
                           </div>
 
                           {/* Quantity Controls */}
@@ -346,20 +331,19 @@ export const MultiSupplierCartOverview = ({
           );
         })}
 
-        {/* Grand Total */}
+        {/* Summary */}
         <Card className="p-4 bg-muted/30">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-muted-foreground">
-                {suppliersWithOrders.length} {t('simpleOrder.suppliers', 'Lieferanten')}
-              </p>
               <p className="text-lg font-semibold">
-                {t('simpleOrder.grandTotal', 'Gesamtsumme')}
+                {suppliersWithOrders.length} {suppliersWithOrders.length === 1 
+                  ? t('simpleOrder.supplier', 'Lieferant') 
+                  : t('simpleOrder.suppliers', 'Lieferanten')}
+              </p>
+              <p className="text-sm text-muted-foreground">
+                {totalItems} {t('simpleOrder.items', 'Artikel')}
               </p>
             </div>
-            <p className="text-2xl font-bold text-primary">
-              {grandTotal.toFixed(2)} €
-            </p>
           </div>
         </Card>
       </div>
