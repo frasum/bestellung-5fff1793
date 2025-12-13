@@ -15,7 +15,8 @@ import {
   Clock,
   ChevronDown,
   ChevronUp,
-  Package
+  Package,
+  PlusCircle
 } from 'lucide-react';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { format } from 'date-fns';
@@ -26,6 +27,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
+import { AddArticleSheetSimple } from './AddArticleSheetSimple';
 
 interface Article {
   id: string;
@@ -89,6 +91,11 @@ export const MultiSupplierCartOverview = ({
   
   const [expandedSuppliers, setExpandedSuppliers] = useState<Set<string>>(new Set());
   const [animatingIds, setAnimatingIds] = useState<Set<string>>(new Set());
+  const [addArticleSheet, setAddArticleSheet] = useState<{
+    open: boolean;
+    supplierId: string | null;
+    supplierName: string;
+  }>({ open: false, supplierId: null, supplierName: '' });
   const prevQuantitiesRef = useRef<Record<string, number>>({});
 
   // Get ordered articles
@@ -238,28 +245,45 @@ export const MultiSupplierCartOverview = ({
             >
               <Card className="overflow-hidden">
                 {/* Supplier Header */}
-                <CollapsibleTrigger asChild>
-                  <div className="p-4 bg-muted/30 cursor-pointer hover:bg-muted/50 transition-colors touch-manipulation">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
+                {/* Supplier Header */}
+                <div className="p-4 bg-muted/30">
+                  <div className="flex items-center justify-between">
+                    <CollapsibleTrigger asChild>
+                      <div className="flex items-center gap-3 flex-1 cursor-pointer touch-manipulation">
                         <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
                           <Package className="h-5 w-5 text-primary" />
                         </div>
-                        <div>
+                        <div className="flex-1">
                           <h3 className="font-semibold text-lg">{supplier.name}</h3>
                           <p className="text-sm text-muted-foreground">
                             {itemCount} {t('simpleOrder.items', 'Artikel')}
                           </p>
                         </div>
+                        {isExpanded ? (
+                          <ChevronUp className="h-5 w-5 text-muted-foreground" />
+                        ) : (
+                          <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                        )}
                       </div>
-                      {isExpanded ? (
-                        <ChevronUp className="h-5 w-5 text-muted-foreground" />
-                      ) : (
-                        <ChevronDown className="h-5 w-5 text-muted-foreground" />
-                      )}
-                    </div>
+                    </CollapsibleTrigger>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-9 px-3 ml-2 text-primary hover:text-primary"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setAddArticleSheet({
+                          open: true,
+                          supplierId: supplier.id,
+                          supplierName: supplier.name
+                        });
+                      }}
+                    >
+                      <PlusCircle className="h-4 w-4 mr-1" />
+                      {t('cart.addArticle', 'Artikel')}
+                    </Button>
                   </div>
-                </CollapsibleTrigger>
+                </div>
 
                 {/* Articles */}
                 <CollapsibleContent>
@@ -384,6 +408,16 @@ export const MultiSupplierCartOverview = ({
           </Button>
         </div>
       </div>
+
+      {/* Add Article Sheet */}
+      <AddArticleSheetSimple
+        open={addArticleSheet.open}
+        onOpenChange={(open) => setAddArticleSheet(prev => ({ ...prev, open }))}
+        supplierId={addArticleSheet.supplierId}
+        supplierName={addArticleSheet.supplierName}
+        quantities={quantities}
+        onQuantityChange={onQuantityChange}
+      />
     </div>
   );
 };
