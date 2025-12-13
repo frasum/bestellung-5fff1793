@@ -305,10 +305,9 @@ const ArticleCard = ({
           </h3>
           {article.description && (
             <p className={cn(
-              "text-muted-foreground/80",
               selectedSupplierId === KAO_SUPPLIER_ID && containsThai(article.description)
-                ? "text-base leading-relaxed"
-                : "text-xs"
+                ? "text-lg leading-relaxed text-foreground"
+                : "text-xs text-muted-foreground/80"
             )}>
               {article.description}
             </p>
