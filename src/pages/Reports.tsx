@@ -49,7 +49,7 @@ import {
   Line,
 } from 'recharts';
 import { format, subMonths, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns';
-import { Download, TrendingUp, TrendingDown, Euro, ShoppingCart, Users, Loader2, Package, BarChart3, ClipboardList, ChevronRight, MapPin } from 'lucide-react';
+import { Download, TrendingUp, TrendingDown, Euro, ShoppingCart, Users, Loader2, Package, BarChart3, ClipboardList, ChevronRight, MapPin, Smartphone, User } from 'lucide-react';
 import { InventoryTab } from '@/components/reports/InventoryTab';
 import { cn } from '@/lib/utils';
 
@@ -133,6 +133,17 @@ const RecentOrdersCard = () => {
                             >
                               {t(`orders.status.${order.status}`)}
                             </Badge>
+                            {order.employees?.name ? (
+                              <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-purple-500/20 text-purple-600 dark:text-purple-400 border-purple-300 dark:border-purple-700">
+                                <Smartphone className="w-3 h-3 mr-0.5" />
+                                {order.employees.name}
+                              </Badge>
+                            ) : (
+                              <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-primary/10 text-primary border-primary/30">
+                                <User className="w-3 h-3 mr-0.5" />
+                                Admin
+                              </Badge>
+                            )}
                             {order.location_id && locations && (() => {
                               const loc = locations.find(l => l.id === order.location_id);
                               return loc ? (
