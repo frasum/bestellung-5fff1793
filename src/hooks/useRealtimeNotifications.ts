@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -12,28 +12,42 @@ export const useRealtimeNotifications = () => {
   const { user } = useAuth();
   const { showNotification, permission } = useDesktopNotifications();
 
+  // Keep latest desktop notification handlers in refs so the
+  // realtime subscription doesn't need to re-subscribe on change
+  const showNotificationRef = useRef(showNotification);
+  const permissionRef = useRef(permission);
+
+  useEffect(() => {
+    showNotificationRef.current = showNotification;
+    permissionRef.current = permission;
+  }, [showNotification, permission]);
+
   useEffect(() => {
     // Only subscribe when user is authenticated
     if (!user) return;
 
     console.log('🔔 Setting up realtime notifications channel...');
-    
+
+    const channelName = `global-notifications-${user.id}`;
+    let isActive = true;
+
     const channel = supabase
-      .channel('global-notifications')
+      .channel(channelName)
       .on(
         'postgres_changes',
         {
           event: 'INSERT',
           schema: 'public',
-          table: 'cart_drafts'
+          table: 'cart_drafts',
         },
         (payload) => {
+          if (!isActive) return;
           console.log('🔔 Realtime INSERT received:', payload);
           // Invalidate all cart-drafts queries regardless of locationId
-          queryClient.invalidateQueries({ 
-            predicate: (query) => query.queryKey[0] === 'cart-drafts'
+          queryClient.invalidateQueries({
+            predicate: (query) => query.queryKey[0] === 'cart-drafts',
           });
-          
+
           // Show toast notification for new EasyOrder
           const newDraft = payload.new as { name?: string; id?: string };
           if (newDraft.name?.startsWith('EasyOrder:')) {
@@ -42,8 +56,8 @@ export const useRealtimeNotifications = () => {
             });
 
             // Show desktop notification if tab is not focused
-            if (document.hidden && permission === 'granted') {
-              showNotification(t('drafts.newEasyOrder'), {
+            if (document.hidden && permissionRef.current === 'granted') {
+              showNotificationRef.current?.(t('drafts.newEasyOrder'), {
                 body: newDraft.name,
                 tag: `easyorder-${newDraft.id}`,
               });
@@ -56,14 +70,15 @@ export const useRealtimeNotifications = () => {
         {
           event: 'UPDATE',
           schema: 'public',
-          table: 'cart_drafts'
+          table: 'cart_drafts',
         },
         (payload) => {
+          if (!isActive) return;
           // Invalidate all cart-drafts queries to refresh the list
-          queryClient.invalidateQueries({ 
-            predicate: (query) => query.queryKey[0] === 'cart-drafts'
+          queryClient.invalidateQueries({
+            predicate: (query) => query.queryKey[0] === 'cart-drafts',
           });
-          
+
           // Show toast notification for updated EasyOrder
           const updatedDraft = payload.new as { name?: string; id?: string };
           if (updatedDraft.name?.startsWith('EasyOrder:')) {
@@ -78,29 +93,42 @@ export const useRealtimeNotifications = () => {
         {
           event: 'UPDATE',
           schema: 'public',
-          table: 'orders'
+          table: 'orders',
         },
         (payload) => {
+          if (!isActive) return;
           // Invalidate orders queries to refresh the list
-          queryClient.invalidateQueries({ 
-            predicate: (query) => query.queryKey[0] === 'orders'
+          queryClient.invalidateQueries({
+            predicate: (query) => query.queryKey[0] === 'orders',
           });
-          
+
           // Show toast notification when order status changes to confirmed
-          const updatedOrder = payload.new as { status?: string; order_number?: string };
+          const updatedOrder = payload.new as {
+            status?: string;
+            order_number?: string;
+          };
           const oldOrder = payload.old as { status?: string };
-          
-          if (updatedOrder.status !== oldOrder.status && updatedOrder.status === 'confirmed') {
-            toast.success(t('orders.orderConfirmed', 'Bestellung bestätigt'), {
-              description: updatedOrder.order_number,
-            });
+
+          if (
+            updatedOrder.status !== oldOrder.status &&
+            updatedOrder.status === 'confirmed'
+          ) {
+            toast.success(
+              t('orders.orderConfirmed', 'Bestellung bestätigt'),
+              {
+                description: updatedOrder.order_number,
+              }
+            );
 
             // Show desktop notification if tab is not focused
-            if (document.hidden && permission === 'granted') {
-              showNotification(t('orders.orderConfirmed', 'Bestellung bestätigt'), {
-                body: updatedOrder.order_number || '',
-                tag: `order-confirmed-${updatedOrder.order_number}`,
-              });
+            if (document.hidden && permissionRef.current === 'granted') {
+              showNotificationRef.current?.(
+                t('orders.orderConfirmed', 'Bestellung bestätigt'),
+                {
+                  body: updatedOrder.order_number || '',
+                  tag: `order-confirmed-${updatedOrder.order_number}`,
+                }
+              );
             }
           }
         }
@@ -110,12 +138,13 @@ export const useRealtimeNotifications = () => {
         {
           event: 'INSERT',
           schema: 'public',
-          table: 'orders'
+          table: 'orders',
         },
         (payload) => {
+          if (!isActive) return;
           // Invalidate orders queries to refresh the list
-          queryClient.invalidateQueries({ 
-            predicate: (query) => query.queryKey[0] === 'orders'
+          queryClient.invalidateQueries({
+            predicate: (query) => query.queryKey[0] === 'orders',
           });
         }
       )
@@ -124,10 +153,34 @@ export const useRealtimeNotifications = () => {
         if (err) {
           console.error('🔔 Realtime subscription error:', err);
         }
+
+        if (
+          isActive &&
+          (status === 'TIMED_OUT' ||
+            status === 'CHANNEL_ERROR' ||
+            status === 'CLOSED')
+        ) {
+          console.warn(
+            '🔔 Realtime channel not active, attempting resubscribe...',
+            status
+          );
+          setTimeout(() => {
+            if (!isActive) return;
+            try {
+              channel.subscribe();
+            } catch (subscribeError) {
+              console.error(
+                '🔔 Error while resubscribing channel:',
+                subscribeError
+              );
+            }
+          }, 2000);
+        }
       });
 
     return () => {
+      isActive = false;
       supabase.removeChannel(channel);
     };
-  }, [queryClient, t, user, showNotification, permission]);
+  }, [queryClient, t, user]);
 };
