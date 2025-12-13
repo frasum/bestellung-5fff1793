@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Mail, Lock, User, Building2, ArrowRight, Loader2, Play, Users } from 'lucide-react';
+import { Mail, Lock, User, Building2, ArrowRight, Loader2, Play, Users, FlaskConical } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -63,7 +63,9 @@ const Auth = () => {
   const [isLogin, setIsLogin] = useState(!inviteToken); // Default to signup if invite token present
   const [isLoading, setIsLoading] = useState(false);
   const [showDemoDialog, setShowDemoDialog] = useState(false);
+  const [showEmptyDemoDialog, setShowEmptyDemoDialog] = useState(false);
   const [isDemoLoading, setIsDemoLoading] = useState(false);
+  const [isEmptyDemoLoading, setIsEmptyDemoLoading] = useState(false);
   const [isAcceptingInvitation, setIsAcceptingInvitation] = useState(false);
   const { user, signIn, signUp } = useAuth();
   const navigate = useNavigate();
@@ -215,23 +217,24 @@ const Auth = () => {
     }
   };
 
-  const handleStartDemo = async (data: DemoFormData) => {
-    setIsDemoLoading(true);
+  const handleStartDemo = async (data: DemoFormData, emptyAccount = false) => {
+    const setLoading = emptyAccount ? setIsEmptyDemoLoading : setIsDemoLoading;
+    setLoading(true);
     
     try {
       const { data: result, error } = await supabase.functions.invoke('create-demo-account', {
-        body: { email: data.email }
+        body: { email: data.email, emptyAccount }
       });
 
       if (error) {
         toast.error(error.message || 'Fehler beim Erstellen des Demo-Accounts');
-        setIsDemoLoading(false);
+        setLoading(false);
         return;
       }
 
       if (result?.error) {
         toast.error(result.error);
-        setIsDemoLoading(false);
+        setLoading(false);
         return;
       }
 
@@ -242,19 +245,28 @@ const Auth = () => {
           refresh_token: result.session.refresh_token,
         });
         
-        toast.success('Demo-Account erstellt! Willkommen bei Bestellung.pro');
+        toast.success(emptyAccount 
+          ? 'Leerer Demo-Account erstellt! Testen Sie das Onboarding.' 
+          : 'Demo-Account erstellt! Willkommen bei Bestellung.pro'
+        );
         setShowDemoDialog(false);
+        setShowEmptyDemoDialog(false);
         navigate('/reports');
       } else if (result?.needsManualLogin) {
         toast.success('Demo-Account erstellt! Bitte melden Sie sich mit der E-Mail an.');
         setShowDemoDialog(false);
+        setShowEmptyDemoDialog(false);
       }
     } catch (err) {
       console.error('Demo error:', err);
       toast.error('Ein unerwarteter Fehler ist aufgetreten');
     }
     
-    setIsDemoLoading(false);
+    setLoading(false);
+  };
+
+  const handleStartEmptyDemo = async (data: DemoFormData) => {
+    await handleStartDemo(data, true);
   };
 
   // Show loading state while accepting invitation for logged-in user
@@ -548,9 +560,9 @@ const Auth = () => {
             </form>
           )}
 
-          {/* Demo Button - only show when no invite token */}
+          {/* Demo Buttons - only show when no invite token */}
           {!inviteToken && (
-            <div className="mt-6 pt-6 border-t border-border">
+            <div className="mt-6 pt-6 border-t border-border space-y-3">
               <Button 
                 variant="outline" 
                 className="w-full gap-2"
@@ -559,9 +571,18 @@ const Auth = () => {
                 <Play className="w-4 h-4" />
                 Demo starten
               </Button>
-              <p className="text-xs text-muted-foreground text-center mt-2">
+              <p className="text-xs text-muted-foreground text-center">
                 7 Tage kostenlos testen mit Beispieldaten
               </p>
+              
+              <Button 
+                variant="ghost" 
+                className="w-full gap-2 text-muted-foreground"
+                onClick={() => setShowEmptyDemoDialog(true)}
+              >
+                <FlaskConical className="w-4 h-4" />
+                Leere Demo (Onboarding testen)
+              </Button>
             </div>
           )}
 
@@ -588,7 +609,7 @@ const Auth = () => {
             </DialogDescription>
           </DialogHeader>
           
-          <form onSubmit={demoForm.handleSubmit(handleStartDemo)} className="space-y-4">
+          <form onSubmit={demoForm.handleSubmit((data) => handleStartDemo(data, false))} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="demo-email">E-Mail-Adresse</Label>
               <div className="relative">
@@ -635,6 +656,72 @@ const Auth = () => {
                   <>
                     <Play className="w-4 h-4 mr-2" />
                     Demo starten
+                  </>
+                )}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Empty Demo Dialog */}
+      <Dialog open={showEmptyDemoDialog} onOpenChange={setShowEmptyDemoDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FlaskConical className="w-5 h-5 text-primary" />
+              Leere Demo starten
+            </DialogTitle>
+            <DialogDescription>
+              Erstellen Sie einen Demo-Account ohne Beispieldaten, um das Onboarding 
+              mit Photo-Capture und Voice-Capture zu testen.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <form onSubmit={demoForm.handleSubmit(handleStartEmptyDemo)} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="empty-demo-email">E-Mail-Adresse</Label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  id="empty-demo-email"
+                  type="email"
+                  placeholder="test@example.com"
+                  className="pl-10"
+                  {...demoForm.register('email')}
+                />
+              </div>
+              {demoForm.formState.errors.email && (
+                <p className="text-sm text-destructive">{demoForm.formState.errors.email.message}</p>
+              )}
+            </div>
+
+            <div className="bg-muted/50 rounded-lg p-3 text-sm">
+              <p className="font-medium mb-1">Was ist enthalten?</p>
+              <ul className="text-muted-foreground space-y-1 text-xs">
+                <li>• Leerer Katalog (keine Lieferanten/Artikel)</li>
+                <li>• 1 Standort + 1 Lieferadresse</li>
+                <li>• Testmodus aktiv – E-Mails gehen an Sie</li>
+                <li>• Onboarding-CTAs sichtbar</li>
+              </ul>
+            </div>
+
+            <div className="flex gap-3">
+              <Button 
+                type="button" 
+                variant="outline" 
+                className="flex-1"
+                onClick={() => setShowEmptyDemoDialog(false)}
+              >
+                Abbrechen
+              </Button>
+              <Button type="submit" className="flex-1" disabled={isEmptyDemoLoading}>
+                {isEmptyDemoLoading ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <>
+                    <FlaskConical className="w-4 h-4 mr-2" />
+                    Leere Demo starten
                   </>
                 )}
               </Button>
