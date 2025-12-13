@@ -45,13 +45,13 @@ const Settings = () => {
     <DashboardLayout>
       <div className="space-y-2 md:space-y-5 xl:space-y-6">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-foreground">{t('settings.title')}</h1>
-          <p className="text-sm md:text-base text-muted-foreground mt-0.5 md:mt-1">{t('settings.description')}</p>
+          <h1 className="text-xl font-semibold text-foreground">{t('settings.title')}</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">{t('settings.description')}</p>
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
-            <TabsList className="inline-flex w-max sm:w-auto sm:flex-wrap gap-1">
+            <TabsList className="inline-flex w-max sm:w-auto sm:flex-wrap gap-1 bg-muted/50 border border-border rounded-md">
               <TabsTrigger value="profile" className="gap-1.5 text-xs sm:text-sm whitespace-nowrap">
                 <User className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                 <span>{t('settings.profile')}</span>

@@ -484,15 +484,15 @@ export const InventoryTab = () => {
   const activeFilterCount = (supplierFilter !== 'all' ? 1 : 0) + (categoryFilter !== 'all' ? 1 : 0);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       {/* Session Dropdown + Actions */}
-      <div className="flex flex-wrap items-center gap-2 justify-between">
+      <div className="flex flex-wrap items-center gap-2 justify-between pb-4 border-b border-border">
         <div className="flex items-center gap-2 flex-1 min-w-0">
           <Select 
             value={activeSessionId || ''} 
             onValueChange={(value) => setActiveSessionId(value || null)}
           >
-            <SelectTrigger className="w-full max-w-xs h-9 lg:h-10">
+            <SelectTrigger className="w-full max-w-xs h-9 bg-background border-border">
               <SelectValue placeholder={t('inventory.selectSession', 'Inventur auswählen...')} />
             </SelectTrigger>
             <SelectContent>
@@ -522,15 +522,15 @@ export const InventoryTab = () => {
           </Select>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={() => setShowComparisonDialog(true)} className="h-9 lg:h-10">
+          <Button variant="ghost" size="sm" onClick={() => setShowComparisonDialog(true)} className="h-9">
             <GitCompareArrows className="w-4 h-4 lg:mr-2" />
             <span className="hidden lg:inline">{t('inventory.compare', 'Vergleichen')}</span>
           </Button>
-          <Button variant="outline" size="sm" onClick={() => setShowHistoryDialog(true)} className="h-9 lg:h-10">
+          <Button variant="ghost" size="sm" onClick={() => setShowHistoryDialog(true)} className="h-9">
             <History className="w-4 h-4 lg:mr-2" />
             <span className="hidden lg:inline">{t('inventory.history')}</span>
           </Button>
-          <Button size="sm" onClick={() => setShowNewSessionDialog(true)} className="h-9 lg:h-10">
+          <Button size="sm" onClick={() => setShowNewSessionDialog(true)} className="h-9">
             <Plus className="w-4 h-4 lg:mr-2" />
             <span className="hidden lg:inline">{t('inventory.newSession')}</span>
             <span className="lg:hidden">{t('inventory.new')}</span>
@@ -540,12 +540,12 @@ export const InventoryTab = () => {
 
       {/* Inner Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="w-full sm:w-auto">
-          <TabsTrigger value="inventory" className="gap-2 flex-1 sm:flex-initial">
+        <TabsList className="w-full sm:w-auto bg-muted/50 border border-border rounded-md h-9">
+          <TabsTrigger value="inventory" className="gap-2 flex-1 sm:flex-initial h-8 text-sm">
             <ClipboardList className="w-4 h-4" />
             <span className="hidden sm:inline">{t('inventory.title')}</span>
           </TabsTrigger>
-          <TabsTrigger value="prices" className="gap-2 flex-1 sm:flex-initial">
+          <TabsTrigger value="prices" className="gap-2 flex-1 sm:flex-initial h-8 text-sm">
             <Euro className="w-4 h-4" />
             <span className="hidden sm:inline">{t('inventory.articlePrices')}</span>
             <span className="sm:hidden">{t('inventory.articlePrices')}</span>
@@ -553,18 +553,18 @@ export const InventoryTab = () => {
         </TabsList>
 
         {/* Filters - Desktop */}
-        <div className="hidden sm:flex flex-col sm:flex-row gap-4 mt-4">
+        <div className="hidden sm:flex flex-col sm:flex-row gap-4 mt-4 pb-4 border-b border-border">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
               placeholder={t('inventory.searchArticles')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9"
+              className="pl-9 h-9 bg-background border-border"
             />
           </div>
           <Select value={supplierFilter} onValueChange={setSupplierFilter}>
-            <SelectTrigger className="w-full sm:w-48">
+            <SelectTrigger className="w-full sm:w-48 h-9 bg-background border-border">
               <SelectValue placeholder={t('inventory.filterBySupplier')} />
             </SelectTrigger>
             <SelectContent>
@@ -577,7 +577,7 @@ export const InventoryTab = () => {
             </SelectContent>
           </Select>
           <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-            <SelectTrigger className="w-full sm:w-48">
+            <SelectTrigger className="w-full sm:w-48 h-9 bg-background border-border">
               <SelectValue placeholder={t('inventory.filterByCategory')} />
             </SelectTrigger>
             <SelectContent>

@@ -300,15 +300,15 @@ const Checkout = () => {
     return (
       <DashboardLayout>
         <div className="max-w-lg mx-auto text-center py-16">
-          <div className="w-20 h-20 rounded-full bg-success/20 flex items-center justify-center mx-auto mb-6">
-            <CheckCircle2 className="w-10 h-10 text-success" />
+          <div className="w-16 h-16 rounded-full bg-success/20 flex items-center justify-center mx-auto mb-6">
+            <CheckCircle2 className="w-8 h-8 text-success" />
           </div>
-          <h1 className="text-3xl font-bold text-foreground mb-4">{t('checkout.confirmSend')}</h1>
-          <p className="text-muted-foreground mb-6">
+          <h1 className="text-2xl font-semibold text-foreground mb-4">{t('checkout.confirmSend')}</h1>
+          <p className="text-sm text-muted-foreground mb-6">
             {t('orders.emailSent')}
           </p>
-          <div className="bg-card border border-border rounded-xl p-6 mb-8">
-            <h2 className="font-semibold text-foreground mb-4">{t('orders.orderDetails')}</h2>
+          <div className="bg-card border border-border rounded-md p-6 mb-8">
+            <h2 className="text-sm font-semibold text-foreground mb-4">{t('orders.orderDetails')}</h2>
             <div className="space-y-2">
               {completedOrders.map((order) => {
                 const displayNumber = order.orderNumber.replace(/^ORD/, order.supplierName);
@@ -322,10 +322,10 @@ const Checkout = () => {
             </div>
           </div>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <Button variant="outline" onClick={() => navigate('/orders')} className="h-11 sm:h-10 w-full sm:w-auto">
+            <Button variant="ghost" onClick={() => navigate('/orders')} className="h-9 w-full sm:w-auto">
               {t('nav.orders')}
             </Button>
-            <Button onClick={() => navigate('/articles')} className="h-11 sm:h-10 w-full sm:w-auto">
+            <Button onClick={() => navigate('/articles')} className="h-9 w-full sm:w-auto">
               {t('orders.browseArticles')}
             </Button>
           </div>
