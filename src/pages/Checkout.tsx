@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
@@ -137,40 +137,45 @@ const Checkout = () => {
     }
   }, [items, freeItems, completedOrders, navigate]);
 
-  // Group items by supplier
-  const itemsBySupplier = items.reduce((acc, item) => {
-    const supplierId = item.article.supplier_id;
-    const supplierName = item.article.suppliers?.name || 'Unknown';
-    if (!acc[supplierId]) {
-      acc[supplierId] = {
-        supplierId,
-        supplierName,
-        supplierEmail: '', // Will be fetched
-        items: [],
-        freeItems: [],
-        total: 0,
-      };
-    }
-    acc[supplierId].items.push(item);
-    acc[supplierId].total += Number(item.article.price) * item.quantity;
-    return acc;
-  }, {} as Record<string, { supplierId: string; supplierName: string; supplierEmail: string; items: typeof items; freeItems: typeof freeItems; total: number }>);
+  // Group items by supplier (with useMemo to ensure stable reference including freeItems)
+  const itemsBySupplier = useMemo(() => {
+    // First group regular items
+    const result = items.reduce((acc, item) => {
+      const supplierId = item.article.supplier_id;
+      const supplierName = item.article.suppliers?.name || 'Unknown';
+      if (!acc[supplierId]) {
+        acc[supplierId] = {
+          supplierId,
+          supplierName,
+          supplierEmail: '', // Will be fetched
+          items: [],
+          freeItems: [] as typeof freeItems,
+          total: 0,
+        };
+      }
+      acc[supplierId].items.push(item);
+      acc[supplierId].total += Number(item.article.price) * item.quantity;
+      return acc;
+    }, {} as Record<string, { supplierId: string; supplierName: string; supplierEmail: string; items: typeof items; freeItems: typeof freeItems; total: number }>);
 
-  // Add free items to their respective suppliers - CREATE supplier group if it doesn't exist
-  freeItems.forEach(freeItem => {
-    if (!itemsBySupplier[freeItem.supplier_id]) {
-      // Create a new supplier group for free-items-only orders
-      itemsBySupplier[freeItem.supplier_id] = {
-        supplierId: freeItem.supplier_id,
-        supplierName: 'Lädt...', // Will be fetched in handlePreviewEmails
-        supplierEmail: '',
-        items: [],
-        freeItems: [],
-        total: 0,
-      };
-    }
-    itemsBySupplier[freeItem.supplier_id].freeItems.push(freeItem);
-  });
+    // Add free items to their respective suppliers
+    freeItems.forEach(freeItem => {
+      if (!result[freeItem.supplier_id]) {
+        // Create a new supplier group for free-items-only orders
+        result[freeItem.supplier_id] = {
+          supplierId: freeItem.supplier_id,
+          supplierName: 'Lädt...', // Will be fetched in handlePreviewEmails
+          supplierEmail: '',
+          items: [],
+          freeItems: [],
+          total: 0,
+        };
+      }
+      result[freeItem.supplier_id].freeItems.push(freeItem);
+    });
+
+    return result;
+  }, [items, freeItems]);
 
   const formatAddress = (address: typeof deliveryAddresses[0]) => {
     const parts = [address.address_line1];
