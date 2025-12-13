@@ -911,7 +911,14 @@
     "freeItemName": "Artikelname",
     "freeItemNamePlaceholder": "z.B. Sonderartikel...",
     "quantity": "Menge",
-    "unit": "Einheit"
+    "unit": "Einheit",
+    "articlePhoto": "Artikelfoto",
+    "takePhoto": "Foto aufnehmen",
+    "analyzing": "Analysiere...",
+    "aiRecognized": "KI erkannt",
+    "aiAnalysisFailed": "KI-Analyse fehlgeschlagen",
+    "aiAnalysisSuccess": "Artikel erkannt!",
+    "suggestedCategory": "Vorgeschlagene Kategorie"
   },
   "suggestions": {
     "title": "Vorschläge",

@@ -909,7 +909,14 @@
     "freeItemName": "Nom de l'article",
     "freeItemNamePlaceholder": "ex. Article spécial...",
     "quantity": "Quantité",
-    "unit": "Unité"
+    "unit": "Unité",
+    "articlePhoto": "Photo de l'article",
+    "takePhoto": "Prendre une photo",
+    "analyzing": "Analyse en cours...",
+    "aiRecognized": "IA reconnu",
+    "aiAnalysisFailed": "Analyse IA échouée",
+    "aiAnalysisSuccess": "Article reconnu !",
+    "suggestedCategory": "Catégorie suggérée"
   },
   "suggestions": {
     "title": "Suggestions",

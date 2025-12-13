@@ -909,7 +909,14 @@
     "freeItemName": "ชื่อสินค้า",
     "freeItemNamePlaceholder": "เช่น สินค้าพิเศษ...",
     "quantity": "จำนวน",
-    "unit": "หน่วย"
+    "unit": "หน่วย",
+    "articlePhoto": "รูปสินค้า",
+    "takePhoto": "ถ่ายรูป",
+    "analyzing": "กำลังวิเคราะห์...",
+    "aiRecognized": "AI รู้จัก",
+    "aiAnalysisFailed": "วิเคราะห์ AI ล้มเหลว",
+    "aiAnalysisSuccess": "รู้จักสินค้าแล้ว!",
+    "suggestedCategory": "หมวดหมู่ที่แนะนำ"
   },
   "suggestions": {
     "title": "ข้อเสนอแนะ",

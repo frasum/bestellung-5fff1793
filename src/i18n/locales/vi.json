@@ -909,7 +909,14 @@
     "freeItemName": "Tên sản phẩm",
     "freeItemNamePlaceholder": "VD: Sản phẩm đặc biệt...",
     "quantity": "Số lượng",
-    "unit": "Đơn vị"
+    "unit": "Đơn vị",
+    "articlePhoto": "Ảnh sản phẩm",
+    "takePhoto": "Chụp ảnh",
+    "analyzing": "Đang phân tích...",
+    "aiRecognized": "AI nhận dạng",
+    "aiAnalysisFailed": "Phân tích AI thất bại",
+    "aiAnalysisSuccess": "Đã nhận dạng sản phẩm!",
+    "suggestedCategory": "Danh mục đề xuất"
   },
   "suggestions": {
     "title": "Đề xuất",

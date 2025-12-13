@@ -1020,6 +1020,9 @@ const SimpleOrder = () => {
             onUpdateFreeItem={handleUpdateFreeItem}
             onDeleteFreeItem={handleDeleteFreeItem}
             onFreeItemQuantityChange={handleFreeItemQuantityChange}
+            token={token}
+            organizationId={tokenData?.organization_id}
+            canCapturePhotos={tokenData?.can_capture_photos || false}
           />
           <SubmitBar
             totalItems={getTotalItems()}
