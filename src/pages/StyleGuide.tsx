@@ -202,6 +202,89 @@ const StyleGuide = () => {
           </CardContent>
         </Card>
 
+        {/* Typography */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Typografie</CardTitle>
+            <CardDescription>Schriftgrößen und Heading-Hierarchie</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* Headings */}
+            <div>
+              <h4 className="text-sm font-medium mb-4">Headings</h4>
+              <div className="space-y-3">
+                <div className="flex items-baseline gap-4">
+                  <span className="text-xs text-muted-foreground w-20">text-4xl</span>
+                  <h1 className="text-4xl font-bold">Heading 1</h1>
+                </div>
+                <div className="flex items-baseline gap-4">
+                  <span className="text-xs text-muted-foreground w-20">text-3xl</span>
+                  <h2 className="text-3xl font-bold">Heading 2</h2>
+                </div>
+                <div className="flex items-baseline gap-4">
+                  <span className="text-xs text-muted-foreground w-20">text-2xl</span>
+                  <h3 className="text-2xl font-semibold">Heading 3</h3>
+                </div>
+                <div className="flex items-baseline gap-4">
+                  <span className="text-xs text-muted-foreground w-20">text-xl</span>
+                  <h4 className="text-xl font-semibold">Heading 4</h4>
+                </div>
+                <div className="flex items-baseline gap-4">
+                  <span className="text-xs text-muted-foreground w-20">text-lg</span>
+                  <h5 className="text-lg font-medium">Heading 5</h5>
+                </div>
+              </div>
+            </div>
+
+            <Separator />
+
+            {/* Body Text */}
+            <div>
+              <h4 className="text-sm font-medium mb-4">Body Text</h4>
+              <div className="space-y-3">
+                <div className="flex items-baseline gap-4">
+                  <span className="text-xs text-muted-foreground w-20">text-base</span>
+                  <p className="text-base">Standard body text (16px)</p>
+                </div>
+                <div className="flex items-baseline gap-4">
+                  <span className="text-xs text-muted-foreground w-20">text-sm</span>
+                  <p className="text-sm">Small text für Labels und Beschreibungen (14px)</p>
+                </div>
+                <div className="flex items-baseline gap-4">
+                  <span className="text-xs text-muted-foreground w-20">text-xs</span>
+                  <p className="text-xs">Extra small für Hinweise und Meta-Info (12px)</p>
+                </div>
+              </div>
+            </div>
+
+            <Separator />
+
+            {/* Font Weights */}
+            <div>
+              <h4 className="text-sm font-medium mb-4">Schriftgewichte</h4>
+              <div className="space-y-2">
+                <p className="font-normal">font-normal (400) - Normaler Text</p>
+                <p className="font-medium">font-medium (500) - Labels und betonte Texte</p>
+                <p className="font-semibold">font-semibold (600) - Subheadings</p>
+                <p className="font-bold">font-bold (700) - Headings und wichtige Elemente</p>
+              </div>
+            </div>
+
+            <Separator />
+
+            {/* Text Colors */}
+            <div>
+              <h4 className="text-sm font-medium mb-4">Textfarben</h4>
+              <div className="space-y-2">
+                <p className="text-foreground">text-foreground - Primärer Text</p>
+                <p className="text-muted-foreground">text-muted-foreground - Sekundärer Text</p>
+                <p className="text-primary">text-primary - Akzent/Link-Farbe</p>
+                <p className="text-destructive">text-destructive - Fehler/Warnung</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Badges */}
         <Card>
           <CardHeader>
