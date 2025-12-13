@@ -918,6 +918,7 @@
     "filterBySource": "Source:",
     "sourceEmployee": "Employee",
     "sourceSupplier": "Supplier",
+    "sourcePhoto": "Photo Capture",
     "noSuggestions": "No suggestions available",
     "noSuggestionsDesc": "Suggestions from employees or suppliers will appear here",
     "approve": "Approve",

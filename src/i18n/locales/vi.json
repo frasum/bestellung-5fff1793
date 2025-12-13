@@ -916,6 +916,7 @@
     "filterBySource": "Nguồn:",
     "sourceEmployee": "Nhân viên",
     "sourceSupplier": "Nhà cung cấp",
+    "sourcePhoto": "Chụp ảnh",
     "noSuggestions": "Không có đề xuất nào",
     "noSuggestionsDesc": "Đề xuất từ nhân viên hoặc nhà cung cấp sẽ xuất hiện ở đây",
     "approve": "Phê duyệt",

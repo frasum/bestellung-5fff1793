@@ -14,16 +14,17 @@ export interface SuggestedArticle {
   category: string | null;
   supplier_comment: string | null;
   status: string;
-  source: string;
+  source: string | null;
   employee_id: string | null;
   order_id: string | null;
   location_id: string | null;
+  image_url: string | null;
   created_at: string;
   reviewed_at: string | null;
   reviewed_by: string | null;
 }
 
-export const useSuggestedArticles = (sourceFilter?: 'all' | 'supplier' | 'employee') => {
+export const useSuggestedArticles = (sourceFilter?: 'all' | 'supplier' | 'employee' | 'employee_photo') => {
   return useQuery({
     queryKey: ['suggested-articles', sourceFilter],
     queryFn: async () => {
@@ -104,6 +105,7 @@ export const useApproveSuggestedArticle = () => {
           unit: suggestion.unit,
           price: suggestion.price,
           category: suggestion.category,
+          image_url: suggestion.image_url, // Include image if available
           is_active: true,
         })
         .select()
@@ -182,6 +184,7 @@ export const useApproveAllSuggestedArticles = () => {
             unit: suggestion.unit,
             price: suggestion.price,
             category: suggestion.category,
+            image_url: suggestion.image_url, // Include image if available
             is_active: true,
           });
 
