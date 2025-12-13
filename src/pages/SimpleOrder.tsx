@@ -370,11 +370,11 @@ const SimpleOrder = () => {
     if (getTotalItems() === 0) return;
     if (!validateForm()) return;
 
-    // If auto-approve employee, show confirmation screen first
-    if (tokenData?.auto_approve_orders) {
+    // Multi-supplier tokens OR auto-approve employees: show confirmation screen first
+    if (tokenData?.is_multi_supplier || tokenData?.auto_approve_orders) {
       setStatus('confirming');
     } else {
-      // Regular employee - submit directly as pre-order
+      // Single-supplier without auto-approve: submit directly as pre-order
       handleSubmit();
     }
   };
