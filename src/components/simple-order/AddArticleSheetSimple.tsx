@@ -48,34 +48,13 @@ export const AddArticleSheetSimple = ({
     [articles, supplierId]
   );
 
-  // Debug logging
-  console.log('AddArticleSheetSimple Debug:', {
-    open,
-    supplierId,
-    supplierName,
-    articlesReceived: articles.length,
-    supplierArticlesFound: supplierArticles.length,
-    sampleArticle: articles[0],
-    sampleSupplierIdMatch: articles[0]?.supplier_id === supplierId,
-    allSupplierIds: [...new Set(articles.map(a => a.supplier_id))],
-  });
-
-  // Filter and sort articles - items in cart first
+  // Filter articles by search query only - no sorting to preserve original order
   const filteredArticles = useMemo(() => {
     const query = searchQuery.toLowerCase();
-    const filtered = supplierArticles.filter(article => 
+    return supplierArticles.filter(article => 
       article.name.toLowerCase().includes(query)
     );
-
-    // Sort: items in cart first, then alphabetically
-    return filtered.sort((a, b) => {
-      const aInCart = (quantities[a.id] || 0) > 0;
-      const bInCart = (quantities[b.id] || 0) > 0;
-      if (aInCart && !bInCart) return -1;
-      if (!aInCart && bInCart) return 1;
-      return a.name.localeCompare(b.name);
-    });
-  }, [supplierArticles, searchQuery, quantities]);
+  }, [supplierArticles, searchQuery]);
 
   const handleQuantityChange = (articleId: string, delta: number) => {
     lightTap();
