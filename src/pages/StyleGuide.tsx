@@ -14,6 +14,27 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Separator } from '@/components/ui/separator';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 import { 
   Dialog, 
   DialogContent, 
@@ -31,7 +52,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from '@/components/ui/sheet';
-import { AlertCircle, CheckCircle, Info, Palette, ArrowLeft, Sun, Moon, Sparkles } from 'lucide-react';
+import { AlertCircle, CheckCircle, Info, Palette, ArrowLeft, Sun, Moon, Sparkles, MoreHorizontal, ChevronDown, Settings, User, LogOut } from 'lucide-react';
 import { useTheme } from 'next-themes';
 
 // Color swatch component
@@ -391,6 +412,153 @@ const StyleGuide = () => {
                   <dd className="text-muted-foreground">Aktiv seit 01.01.2024</dd>
                 </div>
               </dl>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Selects, Radios, Dropdowns & Popovers */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Selects, Radios, Dropdowns & Popovers</CardTitle>
+            <CardDescription>Auswahl-Komponenten und Overlay-Elemente</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* Select */}
+            <div>
+              <h4 className="text-sm font-medium mb-3">Select</h4>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label>Standard Select</Label>
+                  <Select>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Option wählen..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="option1">Option 1</SelectItem>
+                      <SelectItem value="option2">Option 2</SelectItem>
+                      <SelectItem value="option3">Option 3</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Disabled Select</Label>
+                  <Select disabled>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Deaktiviert..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="option1">Option 1</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+
+            <Separator />
+
+            {/* Radio Group */}
+            <div>
+              <h4 className="text-sm font-medium mb-3">Radio Group</h4>
+              <RadioGroup defaultValue="option1" className="space-y-2">
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="option1" id="radio-option1" />
+                  <Label htmlFor="radio-option1">Option 1</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="option2" id="radio-option2" />
+                  <Label htmlFor="radio-option2">Option 2</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="option3" id="radio-option3" />
+                  <Label htmlFor="radio-option3">Option 3 (mit längerem Text)</Label>
+                </div>
+              </RadioGroup>
+            </div>
+
+            <Separator />
+
+            {/* Dropdown Menu */}
+            <div>
+              <h4 className="text-sm font-medium mb-3">Dropdown Menu</h4>
+              <div className="flex flex-wrap gap-3">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline">
+                      Dropdown öffnen
+                      <ChevronDown className="h-4 w-4 ml-2" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent>
+                    <DropdownMenuLabel>Mein Account</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem>
+                      <User className="h-4 w-4 mr-2" />
+                      Profil
+                    </DropdownMenuItem>
+                    <DropdownMenuItem>
+                      <Settings className="h-4 w-4 mr-2" />
+                      Einstellungen
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem className="text-destructive">
+                      <LogOut className="h-4 w-4 mr-2" />
+                      Abmelden
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon">
+                      <MoreHorizontal className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem>Bearbeiten</DropdownMenuItem>
+                    <DropdownMenuItem>Duplizieren</DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem className="text-destructive">Löschen</DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            </div>
+
+            <Separator />
+
+            {/* Popover */}
+            <div>
+              <h4 className="text-sm font-medium mb-3">Popover</h4>
+              <div className="flex flex-wrap gap-3">
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline">Info Popover</Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-80">
+                    <div className="space-y-2">
+                      <h4 className="font-medium">Popover Titel</h4>
+                      <p className="text-sm text-muted-foreground">
+                        Ein Popover kann beliebige Inhalte enthalten und wird bei Klick angezeigt.
+                      </p>
+                    </div>
+                  </PopoverContent>
+                </Popover>
+
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline">Formular Popover</Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-80">
+                    <div className="space-y-4">
+                      <h4 className="font-medium">Schnelleinstellung</h4>
+                      <div className="space-y-2">
+                        <Label htmlFor="popover-input">Name</Label>
+                        <Input id="popover-input" placeholder="Name eingeben..." />
+                      </div>
+                      <Button size="sm" className="w-full">Speichern</Button>
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              </div>
             </div>
           </CardContent>
         </Card>
