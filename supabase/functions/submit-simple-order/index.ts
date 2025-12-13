@@ -170,16 +170,28 @@ serve(async (req) => {
     const supplierId = requestSupplierId || tokenData.supplier_id;
 
     // Fetch supplier details
-    let supplierData: { id: string; name: string; email: string; customer_number: string | null } | null = null;
+    let supplierData: { id: string; name: string; email: string } | null = null;
     if (supplierId) {
       const { data: supplier } = await supabase
         .from('suppliers')
-        .select('id, name, email, customer_number')
+        .select('id, name, email')
         .eq('id', supplierId)
         .single();
       supplierData = supplier;
     }
     const supplierName = supplierData?.name || tokenData.supplier?.name || 'Unbekannt';
+
+    // Fetch location-specific customer number from supplier_locations
+    let customerNumber: string | null = null;
+    if (supplierId && location_id) {
+      const { data: supplierLocation } = await supabase
+        .from('supplier_locations')
+        .select('customer_number')
+        .eq('supplier_id', supplierId)
+        .eq('location_id', location_id)
+        .maybeSingle();
+      customerNumber = supplierLocation?.customer_number || null;
+    }
 
     // Check if employee has auto_approve_orders enabled and get email
     let autoApprove = false;
@@ -282,17 +294,40 @@ serve(async (req) => {
         };
       });
 
-      // Get delivery address
-      const { data: deliveryAddress } = await supabase
+      // Get delivery address - try default first, then any address for the location
+      let deliveryAddress = null;
+      const { data: defaultAddress } = await supabase
         .from('delivery_addresses')
         .select('*')
         .eq('location_id', location_id)
         .eq('is_default', true)
-        .single();
+        .maybeSingle();
+      
+      deliveryAddress = defaultAddress;
+      
+      // If no default address, try to get any address for the location
+      if (!deliveryAddress) {
+        const { data: anyAddress } = await supabase
+          .from('delivery_addresses')
+          .select('*')
+          .eq('location_id', location_id)
+          .limit(1)
+          .maybeSingle();
+        deliveryAddress = anyAddress;
+      }
 
-      const deliveryAddressText = deliveryAddress
-        ? `${deliveryAddress.address_line1}, ${deliveryAddress.postal_code} ${deliveryAddress.city}`
-        : locationName;
+      // Format full delivery address including label/name and address_line2
+      let deliveryAddressText = locationName;
+      if (deliveryAddress) {
+        const parts = [deliveryAddress.label];
+        if (deliveryAddress.address_line1) parts.push(deliveryAddress.address_line1);
+        if (deliveryAddress.address_line2) parts.push(deliveryAddress.address_line2);
+        parts.push(`${deliveryAddress.postal_code} ${deliveryAddress.city}`);
+        if (deliveryAddress.country && deliveryAddress.country !== 'Germany') {
+          parts.push(deliveryAddress.country);
+        }
+        deliveryAddressText = parts.join('\n');
+      }
 
       // Fetch organization data (including test_mode_enabled) before creating order
       const { data: orgData } = await supabase
@@ -377,7 +412,7 @@ serve(async (req) => {
             })),
             totalAmount: totalAmount,
             notes: notesText,
-            customerNumber: supplierData.customer_number || null,
+            customerNumber: customerNumber,
           },
         });
         
