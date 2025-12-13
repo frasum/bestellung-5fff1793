@@ -1,7 +1,8 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { startOfMonth, endOfMonth } from "date-fns";
+import { toast } from "sonner";
 
 export type SubscriptionTier = 'free' | 'basic' | 'pro' | 'enterprise';
 
@@ -145,4 +146,40 @@ export function useSubscriptionLimits(): SubscriptionStatus {
 
 export function formatLimit(value: number | 'unlimited'): string {
   return value === 'unlimited' ? 'Unbegrenzt' : String(value);
+}
+
+export function useUpdateSubscriptionTier() {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (newTier: SubscriptionTier) => {
+      if (!user) throw new Error('Not authenticated');
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('organization_id')
+        .eq('id', user.id)
+        .single();
+
+      if (!profile?.organization_id) throw new Error('No organization');
+
+      const { error } = await supabase
+        .from('organizations')
+        .update({ subscription_tier: newTier })
+        .eq('id', profile.organization_id);
+
+      if (error) throw error;
+      return newTier;
+    },
+    onSuccess: (newTier) => {
+      queryClient.invalidateQueries({ queryKey: ['organization-subscription'] });
+      queryClient.invalidateQueries({ queryKey: ['subscription-usage'] });
+      toast.success(`Plan geändert zu ${newTier.charAt(0).toUpperCase() + newTier.slice(1)}`);
+    },
+    onError: (error) => {
+      toast.error('Fehler beim Ändern des Plans');
+      console.error(error);
+    },
+  });
 }
