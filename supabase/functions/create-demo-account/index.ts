@@ -8,6 +8,7 @@ const corsHeaders = {
 
 interface DemoRequest {
   email: string;
+  emptyAccount?: boolean;
 }
 
 // Seed data for demo account
@@ -136,7 +137,7 @@ serve(async (req) => {
       );
     }
 
-    const { email }: DemoRequest = await req.json();
+    const { email, emptyAccount }: DemoRequest = await req.json();
 
     if (!email || !email.includes('@')) {
       return new Response(
@@ -262,126 +263,128 @@ serve(async (req) => {
         });
     }
 
-    // Create suppliers and articles
-    for (const supplierData of DEMO_SUPPLIERS) {
-      const { articles, ...supplierInfo } = supplierData;
-      
-      const { data: supplier, error: supplierError } = await supabase
-        .from('suppliers')
-        .insert({
-          ...supplierInfo,
-          organization_id: organizationId,
-          is_active: true
-        })
-        .select()
-        .single();
-
-      if (supplierError) {
-        console.error(`Supplier error for ${supplierInfo.name}:`, supplierError);
-        continue;
-      }
-
-      // Insert articles for this supplier
-      const articlesToInsert = articles.map(article => ({
-        ...article,
-        organization_id: organizationId,
-        supplier_id: supplier.id,
-        is_active: true
-      }));
-
-      const { error: articlesError } = await supabase
-        .from('articles')
-        .insert(articlesToInsert);
-
-      if (articlesError) {
-        console.error(`Articles error for ${supplierInfo.name}:`, articlesError);
-      }
-    }
-
-    // Create some sample orders
-    const { data: suppliers } = await supabase
-      .from('suppliers')
-      .select('id, name')
-      .eq('organization_id', organizationId);
-
-    if (suppliers && suppliers.length > 0 && location) {
-      const orderStatuses = ['pending', 'confirmed', 'delivered'];
-      
-      for (let i = 0; i < 3; i++) {
-        const supplier = suppliers[i % suppliers.length];
-        const orderDate = new Date();
-        orderDate.setDate(orderDate.getDate() - (i * 2));
+    // Create suppliers and articles (skip if emptyAccount)
+    if (!emptyAccount) {
+      for (const supplierData of DEMO_SUPPLIERS) {
+        const { articles, ...supplierInfo } = supplierData;
         
-        const orderNumber = `${supplier.name.split(' ')[0]}-${orderDate.getFullYear()}-${String(orderDate.getMonth() + 1).padStart(2, '0')}-${String(i + 1).padStart(4, '0')}`;
-        
-        const { data: order, error: orderError } = await supabase
-          .from('orders')
+        const { data: supplier, error: supplierError } = await supabase
+          .from('suppliers')
           .insert({
+            ...supplierInfo,
             organization_id: organizationId,
-            supplier_id: supplier.id,
-            user_id: userId,
-            location_id: location.id,
-            order_number: orderNumber,
-            status: orderStatuses[i],
-            total_amount: 150 + (i * 50),
-            delivery_address: 'Musterstraße 123, 80331 München',
-            is_test_order: true,
-            created_at: orderDate.toISOString()
+            is_active: true
           })
           .select()
           .single();
 
-        if (orderError) {
-          console.error('Order error:', orderError);
+        if (supplierError) {
+          console.error(`Supplier error for ${supplierInfo.name}:`, supplierError);
           continue;
         }
 
-        // Get articles for this supplier
-        const { data: articles } = await supabase
+        // Insert articles for this supplier
+        const articlesToInsert = articles.map(article => ({
+          ...article,
+          organization_id: organizationId,
+          supplier_id: supplier.id,
+          is_active: true
+        }));
+
+        const { error: articlesError } = await supabase
           .from('articles')
-          .select('*')
-          .eq('supplier_id', supplier.id)
-          .limit(3);
+          .insert(articlesToInsert);
 
-        if (articles && order) {
-          const orderItems = articles.map((article, idx) => ({
-            order_id: order.id,
-            article_id: article.id,
-            article_name: article.name,
-            quantity: idx + 1,
-            unit: article.unit,
-            unit_price: article.price,
-            total_price: article.price * (idx + 1)
-          }));
-
-          await supabase.from('order_items').insert(orderItems);
+        if (articlesError) {
+          console.error(`Articles error for ${supplierInfo.name}:`, articlesError);
         }
+      }
+
+      // Create some sample orders
+      const { data: suppliers } = await supabase
+        .from('suppliers')
+        .select('id, name')
+        .eq('organization_id', organizationId);
+
+      if (suppliers && suppliers.length > 0 && location) {
+        const orderStatuses = ['pending', 'confirmed', 'delivered'];
+        
+        for (let i = 0; i < 3; i++) {
+          const supplier = suppliers[i % suppliers.length];
+          const orderDate = new Date();
+          orderDate.setDate(orderDate.getDate() - (i * 2));
+          
+          const orderNumber = `${supplier.name.split(' ')[0]}-${orderDate.getFullYear()}-${String(orderDate.getMonth() + 1).padStart(2, '0')}-${String(i + 1).padStart(4, '0')}`;
+          
+          const { data: order, error: orderError } = await supabase
+            .from('orders')
+            .insert({
+              organization_id: organizationId,
+              supplier_id: supplier.id,
+              user_id: userId,
+              location_id: location.id,
+              order_number: orderNumber,
+              status: orderStatuses[i],
+              total_amount: 150 + (i * 50),
+              delivery_address: 'Musterstraße 123, 80331 München',
+              is_test_order: true,
+              created_at: orderDate.toISOString()
+            })
+            .select()
+            .single();
+
+          if (orderError) {
+            console.error('Order error:', orderError);
+            continue;
+          }
+
+          // Get articles for this supplier
+          const { data: articles } = await supabase
+            .from('articles')
+            .select('*')
+            .eq('supplier_id', supplier.id)
+            .limit(3);
+
+          if (articles && order) {
+            const orderItems = articles.map((article, idx) => ({
+              order_id: order.id,
+              article_id: article.id,
+              article_name: article.name,
+              quantity: idx + 1,
+              unit: article.unit,
+              unit_price: article.price,
+              total_price: article.price * (idx + 1)
+            }));
+
+            await supabase.from('order_items').insert(orderItems);
+          }
+        }
+      }
+
+      // Create some categories
+      const categories = ['Obst', 'Gemüse', 'Fleisch', 'Getränke', 'Reinigung', 'Hygiene'];
+      for (const categoryName of categories) {
+        await supabase
+          .from('categories')
+          .insert({
+            organization_id: organizationId,
+            name: categoryName
+          });
+      }
+
+      // Create some units
+      const units = ['kg', 'Stk', 'Liter', 'Kiste', 'Karton', 'Pkg', 'Flasche', 'Rolle'];
+      for (const unitName of units) {
+        await supabase
+          .from('units')
+          .insert({
+            organization_id: organizationId,
+            name: unitName
+          });
       }
     }
 
-    // Create some categories
-    const categories = ['Obst', 'Gemüse', 'Fleisch', 'Getränke', 'Reinigung', 'Hygiene'];
-    for (const categoryName of categories) {
-      await supabase
-        .from('categories')
-        .insert({
-          organization_id: organizationId,
-          name: categoryName
-        });
-    }
-
-    // Create some units
-    const units = ['kg', 'Stk', 'Liter', 'Kiste', 'Karton', 'Pkg', 'Flasche', 'Rolle'];
-    for (const unitName of units) {
-      await supabase
-        .from('units')
-        .insert({
-          organization_id: organizationId,
-          name: unitName
-        });
-    }
-
-    console.log('Demo account setup complete');
+    console.log(`Demo account setup complete (${emptyAccount ? 'empty' : 'with seed data'})`);
 
     // Sign in the user and return the session
     const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
