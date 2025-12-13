@@ -762,10 +762,17 @@ const Orders = () => {
                                   {order.order_items?.length || 0} {t('orders.items')}
                                 </span>
                                 {order.employees?.name ? (
-                                  <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-purple-500/20 text-purple-600 dark:text-purple-400 border-purple-300 dark:border-purple-700">
-                                    <Smartphone className="w-3 h-3 mr-0.5" />
-                                    {order.employees.name}
-                                  </Badge>
+                                  <>
+                                    <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-purple-500/20 text-purple-600 dark:text-purple-400 border-purple-300 dark:border-purple-700">
+                                      <Smartphone className="w-3 h-3 mr-0.5" />
+                                      {order.employees.name}
+                                    </Badge>
+                                    <span className="text-muted-foreground text-[10px]">→</span>
+                                    <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-primary/10 text-primary border-primary/30">
+                                      <User className="w-3 h-3 mr-0.5" />
+                                      Admin
+                                    </Badge>
+                                  </>
                                 ) : (
                                   <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-primary/10 text-primary border-primary/30">
                                     <User className="w-3 h-3 mr-0.5" />
