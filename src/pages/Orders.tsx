@@ -756,53 +756,49 @@ const Orders = () => {
                             
                             {/* Desktop Order Header */}
                             <CollapsibleTrigger className="w-full hidden sm:block">
-                              <div className="flex items-center justify-between p-3 bg-card border border-border rounded-lg">
-                                <div className="flex items-center gap-3">
-                                  <ChevronRight className={cn(
-                                    "w-4 h-4 text-muted-foreground transition-transform duration-200",
-                                    isOrderOpen && "rotate-90"
-                                  )} />
-                                  <StatusIcon className="w-4 h-4 text-primary" />
-                                  <span className="font-medium text-foreground">{order.order_number}</span>
-                                  {order.is_test_order && (
-                                    <Badge className="bg-warning/20 text-warning text-xs">
-                                      <FlaskConical className="w-3 h-3 mr-1" />
-                                      {t('orders.testMode.badge')}
-                                    </Badge>
-                                  )}
-                                  <Badge className={cn(statusColors[order.status], "text-xs")}>
-                                    {t(`orders.status.${order.status}`)}
+                              <div className="flex items-center gap-3 p-3 bg-card border border-border rounded-lg">
+                                <ChevronRight className={cn(
+                                  "w-4 h-4 text-muted-foreground transition-transform duration-200 flex-shrink-0",
+                                  isOrderOpen && "rotate-90"
+                                )} />
+                                <StatusIcon className="w-4 h-4 text-primary flex-shrink-0" />
+                                <span className="font-medium text-foreground">{order.order_number}</span>
+                                <Badge className={cn(statusColors[order.status], "text-xs")}>
+                                  {t(`orders.status.${order.status}`)}
+                                </Badge>
+                                {order.is_test_order && (
+                                  <Badge className="bg-warning/20 text-warning text-xs">
+                                    <FlaskConical className="w-3 h-3 mr-1" />
+                                    {t('orders.testMode.badge')}
                                   </Badge>
-                                  <span className="text-xs text-muted-foreground">
-                                    {order.order_items?.length || 0} {t('orders.items')}
-                                  </span>
-                                  {order.employees?.name ? (
-                                    <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-purple-500/20 text-purple-600 dark:text-purple-400 border-purple-300 dark:border-purple-700">
-                                      <Smartphone className="w-3 h-3 mr-0.5" />
-                                      {order.employees.name}
-                                    </Badge>
-                                  ) : (
-                                    <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-primary/10 text-primary border-primary/30">
-                                      <User className="w-3 h-3 mr-0.5" />
-                                      Admin
-                                    </Badge>
-                                  )}
-                                </div>
-                                <div className="flex items-center gap-4">
-                                  <span className="text-sm text-muted-foreground">
-                                    {format(new Date(order.created_at), 'EEEE d. MMM yyyy, HH:mm', { locale })} Uhr
-                                  </span>
-                                  {order.location_id && locations && (() => {
-                                    const loc = locations.find(l => l.id === order.location_id);
-                                    return loc ? (
-                                      <Badge variant="outline" className="text-xs">
-                                        <MapPin className="w-3 h-3 mr-1" />
-                                        {loc.short_code || loc.name}
-                                      </Badge>
-                                    ) : null;
-                                  })()}
-                                  <span className="font-bold text-foreground">€{Number(order.total_amount).toFixed(2)}</span>
-                                </div>
+                                )}
+                                <span className="text-sm text-muted-foreground">
+                                  {format(new Date(order.created_at), 'EEE d. MMM, HH:mm', { locale })}
+                                </span>
+                                {order.location_id && locations && (() => {
+                                  const loc = locations.find(l => l.id === order.location_id);
+                                  return loc ? (
+                                    <span className="flex items-center gap-1 text-sm text-muted-foreground">
+                                      <MapPin className="w-3.5 h-3.5" />
+                                      {loc.short_code || loc.name}
+                                    </span>
+                                  ) : null;
+                                })()}
+                                <span className="text-sm text-muted-foreground">
+                                  {order.order_items?.length || 0} {t('orders.items')}
+                                </span>
+                                {order.employees?.name ? (
+                                  <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-purple-500/20 text-purple-600 dark:text-purple-400 border-purple-300 dark:border-purple-700">
+                                    <Smartphone className="w-3 h-3 mr-0.5" />
+                                    {order.employees.name}
+                                  </Badge>
+                                ) : (
+                                  <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-primary/10 text-primary border-primary/30">
+                                    <User className="w-3 h-3 mr-0.5" />
+                                    Admin
+                                  </Badge>
+                                )}
+                                <span className="font-bold text-foreground ml-auto">€{Number(order.total_amount).toFixed(2)}</span>
                               </div>
                             </CollapsibleTrigger>
                             
