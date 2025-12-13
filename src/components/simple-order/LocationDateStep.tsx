@@ -106,12 +106,12 @@ const StepSection = ({ status, children, isExpanded = true }: StepSectionProps) 
   return (
     <div
       className={cn(
-        "rounded-xl p-4 border overflow-hidden",
+        "rounded-md p-4 border overflow-hidden",
         // Smooth transitions for all properties
         "transition-all duration-500 ease-out",
         // Status-based styles
         status === 'completed' && "bg-green-50/50 dark:bg-green-900/10 border-green-200 dark:border-green-800",
-        status === 'active' && "bg-card border-primary/30 ring-2 ring-primary/20 shadow-lg shadow-primary/10",
+        status === 'active' && "bg-card border-primary/30 ring-2 ring-primary/10",
         status === 'pending' && "bg-muted/30 border-muted opacity-40 pointer-events-none blur-[0.5px]",
         // Expansion animation
         isExpanded ? "max-h-[500px]" : "max-h-[80px]"
@@ -323,7 +323,7 @@ export const LocationDateStep = ({
                 variant={timeWindow === tw.value ? "default" : "outline"}
                 className={cn(
                   "h-14 text-lg font-medium touch-manipulation",
-                  timeWindow === tw.value && "ring-2 ring-primary ring-offset-2"
+                  timeWindow === tw.value && "border-primary bg-primary/5"
                 )}
                 onClick={() => handleTimeWindowChange(tw.value)}
               >
@@ -338,16 +338,14 @@ export const LocationDateStep = ({
         <div className="pt-4">
           <Button
             className={cn(
-              "w-full h-16 text-xl font-semibold touch-manipulation transition-all duration-300",
-              canContinue 
-                ? "bg-primary hover:bg-primary/90 animate-pulse" 
-                : "bg-muted text-muted-foreground"
+              "w-full h-14 text-lg font-semibold touch-manipulation transition-colors",
+              !canContinue && "bg-muted text-muted-foreground"
             )}
             disabled={!canContinue}
             onClick={handleContinue}
           >
             {t('simpleOrder.continueToSuppliers', 'Weiter zu Lieferanten')}
-            <ChevronRight className="ml-2 h-6 w-6" />
+            <ChevronRight className="ml-2 h-5 w-5" />
           </Button>
         </div>
       </div>

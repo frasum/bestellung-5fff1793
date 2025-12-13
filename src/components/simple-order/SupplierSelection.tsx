@@ -69,17 +69,17 @@ export const SupplierSelection = ({
             <Card
               key={supplier.id}
               className={cn(
-                "p-5 min-h-[72px] cursor-pointer transition-all active:scale-[0.98] touch-manipulation",
+                "p-5 min-h-[72px] cursor-pointer transition-colors active:scale-[0.98] touch-manipulation",
                 hasItems 
-                  ? "border-primary/50 bg-primary/5 hover:bg-primary/10" 
-                  : "hover:shadow-md"
+                  ? "border-primary bg-primary/5 hover:bg-primary/10" 
+                  : "hover:bg-muted/50"
               )}
               onClick={() => handleSelect(supplier.id)}
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   {hasItems && (
-                    <div className="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center">
+                    <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
                       <Check className="h-5 w-5 text-primary" />
                     </div>
                   )}
@@ -106,15 +106,15 @@ export const SupplierSelection = ({
 
       {/* Floating Cart Button */}
       {totalCartItems > 0 && onViewCart && (
-        <div className="fixed bottom-0 left-0 right-0 p-4 pb-safe bg-background/95 backdrop-blur-sm border-t">
+        <div className="fixed bottom-0 left-0 right-0 p-4 pb-safe bg-background border-t border-border">
           <div className="max-w-2xl mx-auto">
             <Button
-              className="w-full h-16 text-lg font-semibold touch-manipulation"
+              className="w-full h-14 text-lg font-semibold touch-manipulation"
               onClick={handleViewCart}
             >
-              <ShoppingCart className="mr-2 h-6 w-6" />
+              <ShoppingCart className="mr-2 h-5 w-5" />
               {t('simpleOrder.viewCart', 'Warenkorb anzeigen')}
-              <Badge variant="secondary" className="ml-2 text-lg px-3 py-1">
+              <Badge variant="secondary" className="ml-2 text-base px-2.5 py-0.5">
                 {totalCartItems}
               </Badge>
             </Button>

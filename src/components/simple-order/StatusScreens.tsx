@@ -36,12 +36,12 @@ export const ErrorScreen = ({ error }: ErrorScreenProps) => {
   
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <Card className="p-8 text-center max-w-md">
+      <Card className="p-8 text-center max-w-md border-destructive/30">
         <div className="text-6xl mb-4">❌</div>
-        <h1 className="text-2xl font-bold text-destructive mb-2">
+        <h1 className="text-xl font-semibold text-destructive mb-2">
           {t('simpleOrder.error', 'ข้อผิดพลาด / Fehler')}
         </h1>
-        <p className="text-muted-foreground text-lg">{error}</p>
+        <p className="text-muted-foreground">{error}</p>
       </Card>
     </div>
   );
@@ -83,18 +83,18 @@ export const SuccessScreen = ({
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <Card className="p-8 text-center max-w-md w-full">
         <div className="text-6xl mb-4">✅</div>
-        <h1 className="text-2xl font-bold text-primary mb-2">
+        <h1 className="text-xl font-semibold text-primary mb-2">
           {isAutoApproved 
             ? t('simpleOrder.orderSent', 'Bestellung gesendet!')
             : t('simpleOrder.success', 'ส่งสำเร็จ! / Erfolgreich gesendet!')
           }
         </h1>
         {isAutoApproved && orderNumber && (
-          <p className="text-lg font-medium text-muted-foreground mb-2">
+          <p className="text-base font-medium text-muted-foreground mb-2">
             {t('simpleOrder.orderNumber', 'Bestellnummer')}: {orderNumber}
           </p>
         )}
-        <p className="text-muted-foreground text-lg mb-6">
+        <p className="text-muted-foreground mb-6">
           {isAutoApproved
             ? t('simpleOrder.orderSentMessage', 'Ihre Bestellung wurde direkt an den Lieferanten gesendet.')
             : t('simpleOrder.successMessage', 'คำสั่งซื้อของคุณถูกส่งเพื่อตรวจสอบแล้ว / Ihre Bestellung wurde zur Prüfung eingereicht.')
@@ -103,7 +103,7 @@ export const SuccessScreen = ({
         <div className="space-y-3">
           <Button
             size="lg"
-            className="w-full h-16 text-xl font-bold touch-manipulation"
+            className="w-full h-14 text-lg font-semibold touch-manipulation"
             onClick={handleNewOrder}
           >
             {t('simpleOrder.newOrder', 'สั่งซื้อใหม่ / Neue Bestellung')}
@@ -112,10 +112,10 @@ export const SuccessScreen = ({
             <Button
               size="lg"
               variant="outline"
-              className="w-full h-14 text-lg font-medium touch-manipulation"
+              className="w-full h-12 text-base font-medium touch-manipulation"
               onClick={handleViewOrders}
             >
-              <ClipboardList className="h-5 w-5 mr-2" />
+              <ClipboardList className="h-4 w-4 mr-2" />
               {t('simpleOrder.viewMyOrders', 'Meine Bestellungen ansehen')}
             </Button>
           )}

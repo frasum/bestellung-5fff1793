@@ -143,7 +143,7 @@ export const OrderConfirmationScreen = ({
         {/* Delivery Info */}
         <Card className={cn(
           "transition-colors",
-          !deliveryDate && "border-orange-400 dark:border-orange-500"
+          !deliveryDate ? "border-warning/50" : "bg-muted/30"
         )}>
           <CardContent className="p-4">
             <div className="flex flex-col gap-3">
@@ -239,7 +239,7 @@ export const OrderConfirmationScreen = ({
         </Card>
 
         {/* Total */}
-        <Card className="bg-primary/5 border-primary/20">
+        <Card className="bg-muted/30">
           <CardContent className="p-5">
             <div className="flex items-center justify-between">
               <span className="text-lg font-semibold">{t('simpleOrder.totalAmount', 'Gesamtsumme')}</span>
@@ -250,7 +250,7 @@ export const OrderConfirmationScreen = ({
       </div>
 
       {/* Fixed Bottom Bar */}
-      <div className="fixed bottom-0 left-0 right-0 bg-background border-t p-4 pb-[max(1rem,env(safe-area-inset-bottom))] shadow-lg">
+      <div className="fixed bottom-0 left-0 right-0 bg-background border-t border-border p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
         <div className="max-w-2xl mx-auto flex gap-3">
           <Button
             variant="outline"

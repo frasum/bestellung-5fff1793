@@ -280,12 +280,12 @@ export const EmployeeOrderEdit = ({
       </div>
 
       {/* Bottom Action Bar */}
-      <div className="fixed bottom-0 left-0 right-0 p-4 bg-background border-t safe-area-bottom">
+      <div className="fixed bottom-0 left-0 right-0 p-4 bg-background border-t border-border safe-area-bottom">
         <Button
           size="lg"
           onClick={handleSave}
           disabled={isSaving || getTotalItems() === 0}
-          className="w-full h-16 text-xl font-bold touch-manipulation"
+          className="w-full h-14 text-lg font-semibold touch-manipulation"
         >
           {isSaving ? (
             <>

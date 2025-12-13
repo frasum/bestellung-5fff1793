@@ -4,6 +4,7 @@ import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Minus, Plus, Search, Star } from 'lucide-react';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
+import { cn } from '@/lib/utils';
 interface Article {
   id: string;
   name: string;
@@ -259,11 +260,12 @@ const ArticleCard = ({
   
   return (
     <Card
-      className={`p-3 transition-all ${
-        isSelected 
-          ? 'ring-2 ring-primary bg-primary/5' 
-          : 'hover:shadow-md'
-      } ${isOtherSupplier ? 'cursor-pointer' : ''}`}
+      className={cn(
+        "p-3 transition-colors",
+        isSelected && "border-primary bg-primary/5",
+        !isSelected && !isOtherSupplier && "hover:bg-muted/50",
+        isOtherSupplier && "cursor-pointer"
+      )}
       onClick={isOtherSupplier ? () => onQuantityChange(article.id, 0) : undefined}
     >
       <div className="flex items-center gap-3">
