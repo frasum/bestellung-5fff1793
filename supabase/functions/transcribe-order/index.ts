@@ -1,10 +1,48 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+// Validate simple_order_token
+async function validateToken(token: string): Promise<boolean> {
+  const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+  const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+  const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+  const { data, error } = await supabase
+    .from('simple_order_tokens')
+    .select('id, is_active, expires_at, employees!simple_order_tokens_employee_id_fkey(voice_input_enabled)')
+    .eq('token', token)
+    .maybeSingle();
+
+  if (error || !data) {
+    console.log('[transcribe-order] Token not found');
+    return false;
+  }
+
+  if (!data.is_active) {
+    console.log('[transcribe-order] Token is inactive');
+    return false;
+  }
+
+  if (data.expires_at && new Date(data.expires_at) < new Date()) {
+    console.log('[transcribe-order] Token has expired');
+    return false;
+  }
+
+  // Check if employee has voice input enabled
+  const employees = data.employees as Array<{ voice_input_enabled: boolean }> | null;
+  if (employees && employees.length > 0 && !employees[0].voice_input_enabled) {
+    console.log('[transcribe-order] Voice input not enabled for employee');
+    return false;
+  }
+
+  return true;
+}
 
 // Process base64 in chunks to prevent memory issues
 function processBase64Chunks(base64String: string, chunkSize = 32768): Uint8Array {
@@ -57,7 +95,25 @@ serve(async (req) => {
   }
 
   try {
-    const { audioBase64, articles, language = 'de' } = await req.json();
+    const { audioBase64, articles, language = 'de', token } = await req.json();
+
+    // Validate token first to prevent unauthorized API usage
+    if (!token) {
+      console.error('[transcribe-order] No token provided');
+      return new Response(
+        JSON.stringify({ error: 'Authentication required' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const isValidToken = await validateToken(token);
+    if (!isValidToken) {
+      console.error('[transcribe-order] Invalid or expired token');
+      return new Response(
+        JSON.stringify({ error: 'Invalid or expired token' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
     if (!audioBase64) {
       throw new Error('No audio data provided');

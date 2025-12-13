@@ -17,6 +17,7 @@ interface Article {
 interface VoiceOrderModeProps {
   articles: Article[];
   language: string;
+  token: string;
   onBack: () => void;
   onAddToCart: (items: { articleId: string; quantity: number }[]) => void;
 }
@@ -26,6 +27,7 @@ type VoiceStatus = 'idle' | 'recording' | 'processing' | 'results' | 'error';
 export function VoiceOrderMode({ 
   articles, 
   language, 
+  token,
   onBack, 
   onAddToCart 
 }: VoiceOrderModeProps) {
@@ -90,6 +92,7 @@ export function VoiceOrderMode({
                 order_unit_name: a.order_unit_name,
               })),
               language: language.substring(0, 2), // Use first 2 chars (e.g., 'th' from 'th-TH')
+              token, // Include token for authentication
             }),
           }
         );

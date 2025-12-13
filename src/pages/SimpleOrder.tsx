@@ -773,6 +773,7 @@ const SimpleOrder = () => {
           order_unit_name: a.order_unit?.name,
         }))}
         language={tokenData?.language || i18n.language}
+        token={token || ''}
         onBack={() => setStatus('ready')}
         onAddToCart={(items) => {
           items.forEach(({ articleId, quantity }) => {

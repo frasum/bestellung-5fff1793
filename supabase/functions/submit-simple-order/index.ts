@@ -551,9 +551,15 @@ serve(async (req) => {
 
       console.log(`EasyOrder submitted as cart draft. Draft ID: ${draft.id}, Items: ${items.length}`);
 
-      // Send notification to admins/managers (fire and forget)
-      supabase.functions.invoke('notify-preorder-received', {
-        body: {
+      // Send notification to admins/managers (internal call with service role header)
+      fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/notify-preorder-received`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${Deno.env.get('SUPABASE_ANON_KEY')}`,
+          'x-internal-secret': Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+        },
+        body: JSON.stringify({
           organization_id: tokenData.organization_id,
           employee_name,
           supplier_name: supplierName,
@@ -562,7 +568,7 @@ serve(async (req) => {
             article_name: item.article_name,
             quantity: item.quantity,
           })),
-        },
+        }),
       }).catch(err => console.error('Failed to send preorder notification:', err));
 
       return new Response(
