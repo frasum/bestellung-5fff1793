@@ -21,21 +21,6 @@ export function PerformanceMonitor({
   onClose
 }: PerformanceMonitorProps) {
   const [isExpanded, setIsExpanded] = useState(true);
-  const [isVisible, setIsVisible] = useState(false);
-
-  // Check if advanced settings is enabled
-  useEffect(() => {
-    const checkAdvancedSettings = () => {
-      const enabled = localStorage.getItem('advanced-settings-enabled') === 'true';
-      setIsVisible(enabled);
-    };
-    
-    checkAdvancedSettings();
-    window.addEventListener('storage', checkAdvancedSettings);
-    return () => window.removeEventListener('storage', checkAdvancedSettings);
-  }, []);
-
-  if (!isVisible) return null;
 
   const getStatusColor = (avgDuration: number) => {
     if (avgDuration > 32) return 'text-destructive'; // Very slow

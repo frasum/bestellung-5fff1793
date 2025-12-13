@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useState, useEffect } from 'react';
 
 export interface RenderMetric {
   id: string;
@@ -20,8 +20,21 @@ export interface AggregatedMetric {
 export function usePerformanceMonitor() {
   const [metrics, setMetrics] = useState<RenderMetric[]>([]);
   const [isEnabled, setIsEnabled] = useState(() => {
-    return localStorage.getItem('performance-monitor-enabled') === 'true';
+    // Show by default when advanced settings are enabled
+    return localStorage.getItem('advanced-settings-enabled') === 'true' &&
+           localStorage.getItem('performance-monitor-hidden') !== 'true';
   });
+
+  // Listen for advanced settings changes
+  useEffect(() => {
+    const handleStorage = () => {
+      const advancedEnabled = localStorage.getItem('advanced-settings-enabled') === 'true';
+      const monitorHidden = localStorage.getItem('performance-monitor-hidden') === 'true';
+      setIsEnabled(advancedEnabled && !monitorHidden);
+    };
+    window.addEventListener('storage', handleStorage);
+    return () => window.removeEventListener('storage', handleStorage);
+  }, []);
 
   const onRenderCallback = useCallback((
     id: string,
@@ -46,7 +59,12 @@ export function usePerformanceMonitor() {
   const toggleEnabled = useCallback(() => {
     setIsEnabled(prev => {
       const newValue = !prev;
-      localStorage.setItem('performance-monitor-enabled', String(newValue));
+      // When closing, mark as hidden so it doesn't reappear
+      if (!newValue) {
+        localStorage.setItem('performance-monitor-hidden', 'true');
+      } else {
+        localStorage.removeItem('performance-monitor-hidden');
+      }
       return newValue;
     });
   }, []);
