@@ -585,8 +585,10 @@ serve(async (req) => {
         is_free_text_item: false,
       }));
 
-      // Add free text items
-      const freeItemsForSupplier = freeItems.filter(f => f.supplier_id === supplierId);
+      // Add free text items - with fallback to requestSupplierId if supplier_id is missing
+      const freeItemsForSupplier = freeItems.filter(f => 
+        f.supplier_id === supplierId || (!f.supplier_id && requestSupplierId === supplierId)
+      );
       console.log(`📦 Free items for supplier ${supplierId}:`, freeItemsForSupplier.length, JSON.stringify(freeItemsForSupplier));
       
       for (const freeItem of freeItemsForSupplier) {
