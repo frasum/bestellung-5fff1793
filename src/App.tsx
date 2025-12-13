@@ -28,6 +28,7 @@ const SupplierPortal = lazy(() => import("./pages/SupplierPortal"));
 const OrderConfirmed = lazy(() => import("./pages/OrderConfirmed"));
 const SimpleOrder = lazy(() => import("./pages/SimpleOrder"));
 const StyleGuide = lazy(() => import("./pages/StyleGuide"));
+const Pricing = lazy(() => import("./pages/Pricing"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient();
@@ -75,6 +76,7 @@ const AppContent = () => {
             <Route path="/order-confirmed" element={<OrderConfirmed />} />
             <Route path="/simple-order/:token" element={<SimpleOrder />} />
             <Route path="/style-guide" element={<StyleGuide />} />
+            <Route path="/pricing" element={<Pricing />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
