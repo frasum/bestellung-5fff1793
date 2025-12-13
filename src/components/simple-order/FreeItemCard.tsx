@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Minus, Plus, Pencil, Trash2, PenLine } from 'lucide-react';
+import { Minus, Plus, Trash2 } from 'lucide-react';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { cn } from '@/lib/utils';
 import { FreeItem } from './FreeItemDialog';
@@ -23,7 +23,8 @@ export function FreeItemCard({
   const { t } = useTranslation();
   const { lightTap, mediumTap } = useHapticFeedback();
 
-  const handleQuantityChange = (delta: number) => {
+  const handleQuantityChange = (delta: number, e: React.MouseEvent) => {
+    e.stopPropagation();
     lightTap();
     onQuantityChange(item.id, delta);
   };
@@ -33,38 +34,30 @@ export function FreeItemCard({
     onEdit(item);
   };
 
-  const handleDelete = () => {
+  const handleDelete = (e: React.MouseEvent) => {
+    e.stopPropagation();
     mediumTap();
     onDelete(item.id);
   };
 
   return (
-    <Card className={cn(
-      "p-3 transition-colors border-dashed border-2",
-      "border-amber-500/50 bg-amber-50/50 dark:bg-amber-950/20"
-    )}>
+    <Card 
+      onClick={handleEdit}
+      className={cn(
+        "p-3 transition-colors cursor-pointer",
+        "border-l-4 border-l-amber-500 hover:bg-muted/50"
+      )}
+    >
       <div className="flex items-center gap-3">
-        {/* Edit button */}
-        <button
-          onClick={handleEdit}
-          className="flex-shrink-0 min-h-11 min-w-11 p-2 -ml-1 rounded-full hover:bg-muted transition-colors touch-manipulation"
-        >
-          <Pencil className="h-5 w-5 text-amber-600 dark:text-amber-400" />
-        </button>
-
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
             <h3 className="font-semibold text-base leading-tight">
               {item.name}
             </h3>
             <Badge variant="outline" className="text-xs border-amber-500/50 text-amber-700 dark:text-amber-400">
-              <PenLine className="h-3 w-3 mr-1" />
               {t('simpleOrder.freeItem', 'Frei')}
             </Badge>
           </div>
-          <p className="text-sm text-muted-foreground">
-            {item.unit}
-          </p>
         </div>
 
         <div className="flex items-center gap-2">
@@ -72,7 +65,7 @@ export function FreeItemCard({
             variant="default"
             size="icon"
             className="h-12 w-12 rounded-full touch-manipulation"
-            onClick={() => handleQuantityChange(-1)}
+            onClick={(e) => handleQuantityChange(-1, e)}
             disabled={item.quantity <= 1}
           >
             <Minus className="h-6 w-6" />
@@ -80,13 +73,16 @@ export function FreeItemCard({
           
           <div className="min-w-12 text-center">
             <span className="text-xl font-bold">{item.quantity}</span>
+            <span className="block text-xs text-muted-foreground leading-tight">
+              {item.unit}
+            </span>
           </div>
           
           <Button
             variant="default"
             size="icon"
             className="h-12 w-12 rounded-full touch-manipulation"
-            onClick={() => handleQuantityChange(1)}
+            onClick={(e) => handleQuantityChange(1, e)}
           >
             <Plus className="h-6 w-6" />
           </Button>
