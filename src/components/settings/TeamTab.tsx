@@ -20,6 +20,8 @@ import {
   TeamMember,
 } from '@/hooks/useTeam';
 import { PermissionsOverview } from './PermissionsOverview';
+import { useSubscriptionLimits } from '@/hooks/useSubscriptionLimits';
+import { UpgradeDialog } from '@/components/subscription/UpgradeDialog';
 
 export const TeamTab = () => {
   const { t } = useTranslation();
@@ -34,6 +36,10 @@ export const TeamTab = () => {
   const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteRole, setInviteRole] = useState<TeamMember['role']>('viewer');
+  const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
+
+  // Subscription limits
+  const subscriptionLimits = useSubscriptionLimits();
 
   const isAdmin = currentUserRole === 'admin';
   const isLoading = membersLoading || invitationsLoading;
@@ -76,7 +82,15 @@ export const TeamTab = () => {
           {isAdmin && (
             <Dialog open={inviteDialogOpen} onOpenChange={setInviteDialogOpen}>
               <DialogTrigger asChild>
-                <Button className="gap-2 w-full sm:w-auto">
+                <Button 
+                  className="gap-2 w-full sm:w-auto"
+                  onClick={(e) => {
+                    if (!subscriptionLimits.canInviteUser) {
+                      e.preventDefault();
+                      setShowUpgradeDialog(true);
+                    }
+                  }}
+                >
                   <Plus className="h-4 w-4" />
                   {t('settings.inviteMember')}
                 </Button>
@@ -216,6 +230,16 @@ export const TeamTab = () => {
       )}
 
       <PermissionsOverview />
+
+      {/* Upgrade Dialog */}
+      <UpgradeDialog
+        open={showUpgradeDialog}
+        onOpenChange={setShowUpgradeDialog}
+        limitType="users"
+        currentTier={subscriptionLimits.tier}
+        currentUsage={subscriptionLimits.usage.usersCount}
+        limit={subscriptionLimits.limits.users}
+      />
     </div>
   );
 };
