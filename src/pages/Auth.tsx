@@ -69,9 +69,23 @@ const Auth = () => {
   const [isEmptyDemoLoading, setIsEmptyDemoLoading] = useState(false);
   const [isVoiceOnboardingLoading, setIsVoiceOnboardingLoading] = useState(false);
   const [isAcceptingInvitation, setIsAcceptingInvitation] = useState(false);
+  const [advancedSettingsEnabled, setAdvancedSettingsEnabled] = useState(() => {
+    return localStorage.getItem('advanced-settings-enabled') === 'true';
+  });
   const { user, signIn, signUp } = useAuth();
   const navigate = useNavigate();
   const { t } = useTranslation();
+
+  // Listen for advanced settings changes
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'advanced-settings-enabled') {
+        setAdvancedSettingsEnabled(e.newValue === 'true');
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
 
   // Handle invitation acceptance after login/signup
   const acceptInvitation = async () => {
@@ -618,26 +632,30 @@ const Auth = () => {
                 7 Tage kostenlos testen mit Beispieldaten
               </p>
               
-              <Button 
-                variant="secondary" 
-                className="w-full gap-2"
-                onClick={() => setShowEmptyDemoDialog(true)}
-              >
-                <FlaskConical className="w-4 h-4" />
-                Leere Demo (Onboarding testen)
-              </Button>
+              {advancedSettingsEnabled && (
+                <>
+                  <Button 
+                    variant="secondary" 
+                    className="w-full gap-2"
+                    onClick={() => setShowEmptyDemoDialog(true)}
+                  >
+                    <FlaskConical className="w-4 h-4" />
+                    Leere Demo (Onboarding testen)
+                  </Button>
 
-              <Button 
-                variant="outline" 
-                className="w-full gap-2 border-primary/50 text-primary hover:bg-primary/10"
-                onClick={() => setShowVoiceOnboardingDialog(true)}
-              >
-                <Mic className="w-4 h-4" />
-                Mit Sprach-Assistent starten
-              </Button>
-              <p className="text-xs text-muted-foreground text-center">
-                Richten Sie Ihren Katalog per Sprache ein
-              </p>
+                  <Button 
+                    variant="outline" 
+                    className="w-full gap-2 border-primary/50 text-primary hover:bg-primary/10"
+                    onClick={() => setShowVoiceOnboardingDialog(true)}
+                  >
+                    <Mic className="w-4 h-4" />
+                    Mit Sprach-Assistent starten
+                  </Button>
+                  <p className="text-xs text-muted-foreground text-center">
+                    Richten Sie Ihren Katalog per Sprache ein
+                  </p>
+                </>
+              )}
             </div>
           )}
 
