@@ -66,8 +66,9 @@ serve(async (req) => {
     let articles: any[] = [];
     let favoriteArticleIds: string[] = [];
 
-    // Get employee_id for favorites lookup
+    // Get employee_id and voice_input_enabled for favorites lookup
     const employeeId = tokenData.employee_id || (tokenData.employee as any)?.id;
+    const voiceInputEnabled = (tokenData.employee as any)?.voice_input_enabled ?? false;
     
     // Load favorites if employee is assigned
     if (employeeId) {
@@ -238,6 +239,7 @@ serve(async (req) => {
           has_employee: !!employeeId,
           auto_approve_orders: autoApproveOrders,
           requires_pin: requiresPin,
+          voice_input_enabled: voiceInputEnabled,
         },
         suppliers: suppliers,
         articles: articles,

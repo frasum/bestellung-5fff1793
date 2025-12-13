@@ -896,5 +896,30 @@
     "lockedFor": "Locked for",
     "pinIncomplete": "Please enter all 4 digits",
     "pinVerifyError": "Verification error"
+  },
+  "voice": {
+    "title": "Voice Order",
+    "prototype": "Prototype",
+    "tapToStart": "Tap to start speaking",
+    "listening": "Listening...",
+    "processing": "Processing...",
+    "tapToRetry": "Tap to try again",
+    "instruction": "Say your order clearly, e.g. \"3 pineapples and 2 boxes of mangos\"",
+    "tapToStop": "Tap again when finished",
+    "pleaseWait": "Please wait...",
+    "backToList": "Back to article list",
+    "noAudioCaptured": "No audio captured",
+    "resultsTitle": "Recognized Order",
+    "transcript": "Transcript",
+    "recognizedItems": "Recognized Items",
+    "notRecognized": "Not recognized",
+    "noItemsRecognized": "No items recognized. Please try again.",
+    "addToCart": "Add to Cart",
+    "retry": "Try Again",
+    "confidence": {
+      "high": "Confidently matched",
+      "medium": "Please verify",
+      "low": "Uncertain"
+    }
   }
 }

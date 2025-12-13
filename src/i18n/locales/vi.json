@@ -841,5 +841,30 @@
     "deliveryDate": "Ngày giao hàng mong muốn",
     "selectDate": "Chọn ngày",
     "timeWindow": "Khung giờ"
+  },
+  "voice": {
+    "title": "Đặt hàng bằng giọng nói",
+    "prototype": "Nguyên mẫu",
+    "tapToStart": "Nhấn để bắt đầu nói",
+    "listening": "Đang lắng nghe...",
+    "processing": "Đang xử lý...",
+    "tapToRetry": "Nhấn để thử lại",
+    "instruction": "Nói rõ đơn hàng của bạn, ví dụ \"3 quả dứa và 2 hộp xoài\"",
+    "tapToStop": "Nhấn lại khi hoàn tất",
+    "pleaseWait": "Vui lòng đợi...",
+    "backToList": "Quay lại danh sách",
+    "noAudioCaptured": "Không thu được âm thanh",
+    "resultsTitle": "Đơn hàng nhận diện được",
+    "transcript": "Bản ghi",
+    "recognizedItems": "Sản phẩm nhận diện được",
+    "notRecognized": "Không nhận diện được",
+    "noItemsRecognized": "Không nhận diện được sản phẩm. Vui lòng thử lại.",
+    "addToCart": "Thêm vào giỏ hàng",
+    "retry": "Thử lại",
+    "confidence": {
+      "high": "Nhận diện chắc chắn",
+      "medium": "Vui lòng kiểm tra",
+      "low": "Không chắc chắn"
+    }
   }
 }

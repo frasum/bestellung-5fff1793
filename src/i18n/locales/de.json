@@ -896,5 +896,30 @@
     "lockedFor": "Gesperrt für",
     "pinIncomplete": "Bitte alle 4 Ziffern eingeben",
     "pinVerifyError": "Fehler bei der Überprüfung"
+  },
+  "voice": {
+    "title": "Sprachbestellung",
+    "prototype": "Prototyp",
+    "tapToStart": "Tippen zum Sprechen",
+    "listening": "Aufnahme läuft...",
+    "processing": "Verarbeite...",
+    "tapToRetry": "Tippen zum erneuten Versuch",
+    "instruction": "Sag deine Bestellung deutlich, z.B. \"3 Ananas und 2 Kisten Mangos\"",
+    "tapToStop": "Tippen zum Beenden",
+    "pleaseWait": "Bitte warten...",
+    "backToList": "Zurück zur Artikelliste",
+    "noAudioCaptured": "Keine Aufnahme erkannt",
+    "resultsTitle": "Erkannte Bestellung",
+    "transcript": "Transkript",
+    "recognizedItems": "Erkannte Artikel",
+    "notRecognized": "Nicht erkannt",
+    "noItemsRecognized": "Keine Artikel erkannt. Bitte erneut versuchen.",
+    "addToCart": "Zum Warenkorb hinzufügen",
+    "retry": "Erneut versuchen",
+    "confidence": {
+      "high": "Sicher erkannt",
+      "medium": "Manuell prüfen",
+      "low": "Unsicher"
+    }
   }
 }
