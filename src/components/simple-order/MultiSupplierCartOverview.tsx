@@ -274,6 +274,13 @@ export const MultiSupplierCartOverview = ({
                       className="h-9 px-3 ml-2 text-primary hover:text-primary"
                       onClick={(e) => {
                         e.stopPropagation();
+                        console.log('Opening AddArticleSheet for:', {
+                          supplierId: supplier.id,
+                          supplierName: supplier.name,
+                          allArticlesCount: allArticles.length,
+                          articlesForThisSupplier: allArticles.filter(a => a.supplier_id === supplier.id).length,
+                          allSupplierIdsInArticles: [...new Set(allArticles.map(a => a.supplier_id))],
+                        });
                         setAddArticleSheet({
                           open: true,
                           supplierId: supplier.id,
