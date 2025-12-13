@@ -114,6 +114,9 @@ serve(async (req) => {
     const { token, items, free_items, employee_name, location_id, supplier_id: requestSupplierId, delivery_date, time_window } = await req.json();
 
     const freeItems = (free_items || []) as FreeTextItem[];
+    
+    console.log('📥 Received free_items:', JSON.stringify(free_items));
+    console.log('📥 Parsed freeItems:', JSON.stringify(freeItems));
 
     if (!token || (!items?.length && !freeItems.length)) {
       return new Response(
@@ -584,6 +587,8 @@ serve(async (req) => {
 
       // Add free text items
       const freeItemsForSupplier = freeItems.filter(f => f.supplier_id === supplierId);
+      console.log(`📦 Free items for supplier ${supplierId}:`, freeItemsForSupplier.length, JSON.stringify(freeItemsForSupplier));
+      
       for (const freeItem of freeItemsForSupplier) {
         draftItems.push({
           draft_id: draft.id,

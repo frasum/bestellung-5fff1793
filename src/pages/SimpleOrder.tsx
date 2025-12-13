@@ -466,12 +466,17 @@ const SimpleOrder = () => {
       });
     });
 
+    // Debug logging for free items
+    console.log('🟡 Free items state:', freeItems);
+    console.log('🟡 Free items by supplier:', freeItemsBySupplier);
+
     // Get all supplier IDs that have items (regular or free)
     const allSupplierIds = new Set([
       ...Object.keys(itemsBySupplier),
       ...Object.keys(freeItemsBySupplier),
     ]);
     const supplierIds = Array.from(allSupplierIds);
+    console.log('🟡 Supplier IDs to submit:', supplierIds);
     
     try {
       // Submit orders for each supplier
@@ -479,6 +484,13 @@ const SimpleOrder = () => {
         supplierIds.map(async (supplierId) => {
           const items = itemsBySupplier[supplierId] || [];
           const freeItemsForSupplier = freeItemsBySupplier[supplierId] || [];
+          
+          console.log(`📦 Sending to supplier ${supplierId}:`, {
+            regularItems: items.length,
+            freeItems: freeItemsForSupplier.length,
+            freeItemsData: freeItemsForSupplier
+          });
+          
           const { data, error: submitError } = await supabase.functions.invoke('submit-simple-order', {
             body: { 
               token, 
