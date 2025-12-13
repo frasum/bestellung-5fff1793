@@ -583,7 +583,7 @@ const Checkout = () => {
         <div className="grid xl:grid-cols-3 gap-4 md:gap-5 xl:gap-6">
           {/* Order Summary */}
           <div className="xl:col-span-2 space-y-4 md:space-y-5 xl:space-y-6">
-            {Object.values(itemsBySupplier).map(({ supplierId, supplierName, items: supplierItems, total }) => (
+            {Object.values(itemsBySupplier).map(({ supplierId, supplierName, items: supplierItems, freeItems: supplierFreeItems, total }) => (
               <div key={supplierId} className="bg-card border border-border rounded-xl overflow-hidden">
                 {/* Header */}
                 <div className="bg-muted/50 px-4 md:px-5 xl:px-6 py-3 xl:py-4 border-b border-border flex items-center justify-between min-h-[52px]">
@@ -604,7 +604,7 @@ const Checkout = () => {
                       <span className="sm:hidden">+</span>
                     </Button>
                     <span className="text-xs xl:text-sm text-muted-foreground">
-                      {t('cart.itemCount', { count: supplierItems.length })}
+                      {t('cart.itemCount', { count: supplierItems.length + (supplierFreeItems?.length || 0) })}
                     </span>
                     <span className="font-bold text-foreground text-sm xl:text-base xl:hidden">
                       €{total.toFixed(2)}
@@ -683,6 +683,28 @@ const Checkout = () => {
                       </div>
                     ))}
                   </div>
+                  
+                  {/* Free Items - Mobile/Tablet */}
+                  {supplierFreeItems && supplierFreeItems.length > 0 && (
+                    <div className="border-t border-dashed border-amber-500/30">
+                      {supplierFreeItems.map((freeItem) => (
+                        <div key={freeItem.id} className="p-4 border-b border-border last:border-b-0 bg-amber-50/50 dark:bg-amber-950/20">
+                          <div className="flex items-start gap-3">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2">
+                                <p className="font-medium text-foreground">{freeItem.name}</p>
+                                <span className="text-xs bg-amber-500/20 text-amber-700 dark:text-amber-400 px-1.5 py-0.5 rounded">Frei</span>
+                              </div>
+                              <p className="text-sm text-muted-foreground">{freeItem.unit}</p>
+                            </div>
+                          </div>
+                          <div className="mt-2 text-sm text-muted-foreground">
+                            Menge: {freeItem.quantity} {freeItem.unit}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
                 
                 {/* Desktop: Original inline layout */}
@@ -754,6 +776,26 @@ const Checkout = () => {
                       </div>
                     </div>
                   ))}
+                  
+                  {/* Free Items - Desktop */}
+                  {supplierFreeItems && supplierFreeItems.length > 0 && (
+                    <div className="border-t border-dashed border-amber-500/30">
+                      {supplierFreeItems.map((freeItem) => (
+                        <div key={freeItem.id} className="p-4 flex items-center justify-between gap-4 bg-amber-50/50 dark:bg-amber-950/20">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <p className="font-medium text-foreground truncate">{freeItem.name}</p>
+                              <span className="text-xs bg-amber-500/20 text-amber-700 dark:text-amber-400 px-1.5 py-0.5 rounded">Frei</span>
+                            </div>
+                            <p className="text-sm text-muted-foreground">{freeItem.unit}</p>
+                          </div>
+                          <p className="text-sm text-muted-foreground">
+                            Menge: {freeItem.quantity} {freeItem.unit}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
                 
                 <div className="bg-muted/30 px-4 xl:px-6 py-3 hidden xl:flex justify-between">
