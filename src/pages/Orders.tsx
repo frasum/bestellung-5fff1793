@@ -311,9 +311,25 @@ const Orders = () => {
   };
 
   const loadDraftToCart = (draft: CartDraft) => {
+    // DEBUG: Log all draft items to understand structure
+    console.log('📦 Draft items raw:', draft.items);
+    console.log('📦 Draft items with is_free_text_item:', draft.items?.map(item => ({
+      id: item.id,
+      is_free_text_item: item.is_free_text_item,
+      free_text_name: item.free_text_name,
+      free_text_unit: item.free_text_unit,
+      supplier_id: item.supplier_id,
+      article: item.article ? 'present' : 'null',
+      quantity: item.quantity
+    })));
+    
     // 1. Reguläre Artikel (mit article) und freie Artikel (is_free_text_item) trennen
     const regularItems = draft.items?.filter(item => item.article && !item.is_free_text_item) || [];
     const freeTextItems = draft.items?.filter(item => item.is_free_text_item && item.free_text_name) || [];
+    
+    console.log('📦 Regular items count:', regularItems.length);
+    console.log('📦 Free text items count:', freeTextItems.length);
+    console.log('📦 Free text items:', freeTextItems);
     
     if (regularItems.length === 0 && freeTextItems.length === 0) {
       toast.error('Diese Vorbestellung enthält keine Artikel und kann nicht übernommen werden.');
@@ -321,6 +337,15 @@ const Orders = () => {
       setSelectedDraft(null);
       return;
     }
+    
+    const mappedFreeItems = freeTextItems.map(item => ({
+      id: item.id,
+      name: item.free_text_name!,
+      unit: item.free_text_unit || 'Stk',
+      quantity: item.quantity,
+      supplier_id: item.supplier_id || '',
+    }));
+    console.log('📦 Mapped free items for cart:', mappedFreeItems);
     
     // 2. Beide Typen in Warenkorb laden
     if (loadFromDraft) {
@@ -334,13 +359,7 @@ const Orders = () => {
         draft.location_id,
         draft.employee_id,
         // Freie Artikel als FreeCartItem[]
-        freeTextItems.map(item => ({
-          id: item.id,
-          name: item.free_text_name!,
-          unit: item.free_text_unit || 'Stk',
-          quantity: item.quantity,
-          supplier_id: item.supplier_id || '',
-        }))
+        mappedFreeItems
       );
       
       // 3. Erst NACH erfolgreichem Laden die Vorbestellung löschen
