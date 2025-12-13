@@ -161,8 +161,8 @@ export const DashboardLayout = ({
               return (
               <Link 
                   key={item.href} 
-                  to={item.href} 
-                  onClick={() => setSidebarOpen(false)} 
+                  to={showDraftsBadge ? '/orders?tab=drafts' : item.href} 
+                  onClick={() => setSidebarOpen(false)}
                   className={cn(
                     'flex items-center gap-3 px-3 py-2.5 rounded-md transition-colors',
                     isActive ? 'bg-muted text-foreground font-medium' : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'

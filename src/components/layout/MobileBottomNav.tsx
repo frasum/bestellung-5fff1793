@@ -121,7 +121,7 @@ export const MobileBottomNav = () => {
                 return (
                   <Link
                     key={item.href}
-                    to={item.href}
+                    to={showDraftsBadge ? '/orders?tab=drafts' : item.href}
                     onClick={handleNavClick}
                     className={cn(
                       'flex items-center gap-3 p-4 md:p-5 min-h-[52px] md:min-h-[60px] rounded-md transition-colors relative',
