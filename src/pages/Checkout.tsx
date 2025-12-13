@@ -245,21 +245,37 @@ const Checkout = () => {
       // Build email previews
       const previews: EmailPreviewData[] = supplierOrders.map(supplier => {
         const data = supplierData.get(supplier.supplierId);
+        
+        // Reguläre Artikel
+        const regularItems = supplier.items.map(item => ({
+          article_name: item.article.name,
+          quantity: item.quantity,
+          unit: item.article.unit,
+          unit_price: Number(item.article.price),
+          total_price: Number(item.article.price) * item.quantity,
+          sku: item.article.sku || undefined,
+          packaging_unit: item.article.packaging_unit || undefined,
+          order_unit: formatOrderUnit(item.article.order_unit_id) || undefined,
+        }));
+        
+        // Freie Artikel hinzufügen (ohne Preis)
+        const freeItemsForEmail = (supplier.freeItems || []).map(freeItem => ({
+          article_name: `${freeItem.name} [Frei]`,
+          quantity: freeItem.quantity,
+          unit: freeItem.unit,
+          unit_price: 0,
+          total_price: 0,
+          sku: undefined,
+          packaging_unit: undefined,
+          order_unit: freeItem.unit,
+        }));
+        
         return {
           supplierName: supplier.supplierName,
           supplierEmail: data?.email || '',
           restaurantName,
           deliveryAddress: formattedAddress,
-          items: supplier.items.map(item => ({
-            article_name: item.article.name,
-            quantity: item.quantity,
-            unit: item.article.unit,
-            unit_price: Number(item.article.price),
-            total_price: Number(item.article.price) * item.quantity,
-            sku: item.article.sku || undefined,
-            packaging_unit: item.article.packaging_unit || undefined,
-            order_unit: formatOrderUnit(item.article.order_unit_id) || undefined,
-          })),
+          items: [...regularItems, ...freeItemsForEmail],
           totalAmount: supplier.total,
           notes: fullNotes,
           customerNumber: data?.customerNumber || undefined,
