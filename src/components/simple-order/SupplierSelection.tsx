@@ -45,6 +45,11 @@ export const SupplierSelection = ({
   const { mediumTap, heavyTap } = useHapticFeedback();
   const sortedSuppliers = sortSuppliers(suppliers);
 
+  // Count how many suppliers have items in cart
+  const suppliersWithItems = sortedSuppliers.filter(
+    (supplier) => (getCartCount?.(supplier.id) || 0) > 0
+  ).length;
+
   const handleSelect = (supplierId: string) => {
     mediumTap();
     onSelect(supplierId);
@@ -57,9 +62,18 @@ export const SupplierSelection = ({
 
   return (
     <div className="max-w-2xl mx-auto p-4">
-      <h2 className="text-xl font-semibold mb-4">
-        {t('simpleOrder.selectSupplier', 'Lieferant wählen')}
-      </h2>
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-xl font-semibold">
+          {t('simpleOrder.selectSupplier', 'Lieferant wählen')}
+        </h2>
+        {suppliersWithItems > 0 && (
+          <Badge variant="default" className="text-sm px-3 py-1">
+            {suppliersWithItems} {suppliersWithItems === 1 
+              ? t('simpleOrder.supplierActive', 'Lieferant') 
+              : t('simpleOrder.suppliersActive', 'Lieferanten')}
+          </Badge>
+        )}
+      </div>
       <div className="space-y-3">
         {sortedSuppliers.map((supplier) => {
           const cartCount = getCartCount?.(supplier.id) || 0;
