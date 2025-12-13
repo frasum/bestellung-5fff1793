@@ -152,25 +152,37 @@ export type Database = {
       }
       cart_draft_items: {
         Row: {
-          article_id: string
+          article_id: string | null
           created_at: string
           draft_id: string
+          free_text_name: string | null
+          free_text_unit: string | null
           id: string
+          is_free_text_item: boolean | null
           quantity: number
+          supplier_id: string | null
         }
         Insert: {
-          article_id: string
+          article_id?: string | null
           created_at?: string
           draft_id: string
+          free_text_name?: string | null
+          free_text_unit?: string | null
           id?: string
+          is_free_text_item?: boolean | null
           quantity?: number
+          supplier_id?: string | null
         }
         Update: {
-          article_id?: string
+          article_id?: string | null
           created_at?: string
           draft_id?: string
+          free_text_name?: string | null
+          free_text_unit?: string | null
           id?: string
+          is_free_text_item?: boolean | null
           quantity?: number
+          supplier_id?: string | null
         }
         Relationships: [
           {
@@ -185,6 +197,13 @@ export type Database = {
             columns: ["draft_id"]
             isOneToOne: false
             referencedRelation: "cart_drafts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cart_draft_items_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
             referencedColumns: ["id"]
           },
         ]
@@ -541,6 +560,7 @@ export type Database = {
       employees: {
         Row: {
           auto_approve_orders: boolean
+          can_add_free_items: boolean | null
           created_at: string
           email: string | null
           id: string
@@ -555,6 +575,7 @@ export type Database = {
         }
         Insert: {
           auto_approve_orders?: boolean
+          can_add_free_items?: boolean | null
           created_at?: string
           email?: string | null
           id?: string
@@ -569,6 +590,7 @@ export type Database = {
         }
         Update: {
           auto_approve_orders?: boolean
+          can_add_free_items?: boolean | null
           created_at?: string
           email?: string | null
           id?: string
@@ -820,10 +842,12 @@ export type Database = {
       }
       order_items: {
         Row: {
-          article_id: string
+          article_id: string | null
           article_name: string
           created_at: string
+          free_text_description: string | null
           id: string
+          is_free_text_item: boolean | null
           order_id: string
           quantity: number
           total_price: number
@@ -831,10 +855,12 @@ export type Database = {
           unit_price: number
         }
         Insert: {
-          article_id: string
+          article_id?: string | null
           article_name: string
           created_at?: string
+          free_text_description?: string | null
           id?: string
+          is_free_text_item?: boolean | null
           order_id: string
           quantity: number
           total_price: number
@@ -842,10 +868,12 @@ export type Database = {
           unit_price: number
         }
         Update: {
-          article_id?: string
+          article_id?: string | null
           article_name?: string
           created_at?: string
+          free_text_description?: string | null
           id?: string
+          is_free_text_item?: boolean | null
           order_id?: string
           quantity?: number
           total_price?: number
@@ -1230,13 +1258,17 @@ export type Database = {
           category: string | null
           created_at: string
           description: string | null
+          employee_id: string | null
           id: string
+          location_id: string | null
           name: string
+          order_id: string | null
           organization_id: string
           price: number
           reviewed_at: string | null
           reviewed_by: string | null
           sku: string | null
+          source: string | null
           status: string
           supplier_comment: string | null
           supplier_id: string
@@ -1246,13 +1278,17 @@ export type Database = {
           category?: string | null
           created_at?: string
           description?: string | null
+          employee_id?: string | null
           id?: string
+          location_id?: string | null
           name: string
+          order_id?: string | null
           organization_id: string
           price?: number
           reviewed_at?: string | null
           reviewed_by?: string | null
           sku?: string | null
+          source?: string | null
           status?: string
           supplier_comment?: string | null
           supplier_id: string
@@ -1262,19 +1298,37 @@ export type Database = {
           category?: string | null
           created_at?: string
           description?: string | null
+          employee_id?: string | null
           id?: string
+          location_id?: string | null
           name?: string
+          order_id?: string | null
           organization_id?: string
           price?: number
           reviewed_at?: string | null
           reviewed_by?: string | null
           sku?: string | null
+          source?: string | null
           status?: string
           supplier_comment?: string | null
           supplier_id?: string
           unit?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "suggested_articles_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "suggested_articles_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "suggested_articles_organization_id_fkey"
             columns: ["organization_id"]

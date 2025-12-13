@@ -60,6 +60,7 @@ interface TokenData {
   auto_approve_orders: boolean;
   requires_pin: boolean;
   voice_input_enabled: boolean;
+  can_add_free_items: boolean;
   supplier: {
     id: string;
     name: string;

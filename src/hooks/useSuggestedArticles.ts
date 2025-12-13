@@ -14,26 +14,40 @@ export interface SuggestedArticle {
   category: string | null;
   supplier_comment: string | null;
   status: string;
+  source: string;
+  employee_id: string | null;
+  order_id: string | null;
+  location_id: string | null;
   created_at: string;
   reviewed_at: string | null;
   reviewed_by: string | null;
 }
 
-export const useSuggestedArticles = () => {
+export const useSuggestedArticles = (sourceFilter?: 'all' | 'supplier' | 'employee') => {
   return useQuery({
-    queryKey: ['suggested-articles'],
+    queryKey: ['suggested-articles', sourceFilter],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from('suggested_articles')
         .select(`
           *,
-          suppliers:supplier_id (name)
+          suppliers:supplier_id (name),
+          employees:employee_id (name)
         `)
         .eq('status', 'pending')
         .order('created_at', { ascending: false });
 
+      if (sourceFilter && sourceFilter !== 'all') {
+        query = query.eq('source', sourceFilter);
+      }
+
+      const { data, error } = await query;
+
       if (error) throw error;
-      return data as (SuggestedArticle & { suppliers: { name: string } | null })[];
+      return data as (SuggestedArticle & { 
+        suppliers: { name: string } | null;
+        employees: { name: string } | null;
+      })[];
     },
   });
 };

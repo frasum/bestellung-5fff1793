@@ -8,11 +8,20 @@ const corsHeaders = {
 };
 
 interface OrderItem {
-  article_id: string;
+  article_id: string | null;
   article_name: string;
   quantity: number;
   unit_price?: number;
   unit?: string;
+  is_free_text_item?: boolean;
+  free_text_description?: string;
+}
+
+interface FreeTextItem {
+  name: string;
+  quantity: number;
+  unit: string;
+  supplier_id: string;
 }
 
 // Email translations for employee confirmation
@@ -102,9 +111,11 @@ serve(async (req) => {
   }
 
   try {
-    const { token, items, employee_name, location_id, supplier_id: requestSupplierId, delivery_date, time_window } = await req.json();
+    const { token, items, free_items, employee_name, location_id, supplier_id: requestSupplierId, delivery_date, time_window } = await req.json();
 
-    if (!token || !items || items.length === 0) {
+    const freeItems = (free_items || []) as FreeTextItem[];
+
+    if (!token || (!items?.length && !freeItems.length)) {
       return new Response(
         JSON.stringify({ error: 'Token and items are required' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -267,23 +278,28 @@ serve(async (req) => {
 
       // Calculate total and prepare order items
       interface PreparedOrderItem {
-        article_id: string;
+        article_id: string | null;
         article_name: string;
         quantity: number;
         unit_price: number;
         unit: string;
         total_price: number;
         order_unit?: string;
+        is_free_text_item?: boolean;
+        free_text_description?: string;
       }
       
       let totalAmount = 0;
-      const orderItems: PreparedOrderItem[] = items.map((item: OrderItem) => {
+      const orderItems: PreparedOrderItem[] = [];
+      
+      // Process regular items
+      for (const item of (items || [])) {
         const article = articleMap.get(item.article_id);
         const unitPrice = article?.price || item.unit_price || 0;
         const totalPrice = unitPrice * item.quantity;
         totalAmount += totalPrice;
         
-        return {
+        orderItems.push({
           article_id: item.article_id,
           article_name: article?.name || item.article_name,
           quantity: item.quantity,
@@ -291,8 +307,36 @@ serve(async (req) => {
           unit: article?.unit || item.unit || 'Stk',
           total_price: totalPrice,
           order_unit: formatOrderUnit(article?.order_unit_id),
-        };
-      });
+          is_free_text_item: false,
+        });
+      }
+      
+      // Process free text items
+      for (const freeItem of freeItems.filter(f => f.supplier_id === supplierId)) {
+        orderItems.push({
+          article_id: null,
+          article_name: freeItem.name,
+          quantity: freeItem.quantity,
+          unit_price: 0,
+          unit: freeItem.unit,
+          total_price: 0,
+          is_free_text_item: true,
+          free_text_description: freeItem.name,
+        });
+        
+        // Create suggestion entry for tracking
+        await supabase.from('suggested_articles').insert({
+          organization_id: tokenData.organization_id,
+          supplier_id: supplierId,
+          name: freeItem.name,
+          unit: freeItem.unit,
+          price: 0,
+          status: 'pending',
+          source: 'employee',
+          employee_id: tokenData.employee_id || null,
+          location_id: location_id,
+        });
+      }
 
       // Get delivery address - try default first, then any address for the location
       let deliveryAddress = null;
@@ -372,6 +416,8 @@ serve(async (req) => {
         unit_price: item.unit_price,
         unit: item.unit,
         total_price: item.total_price,
+        is_free_text_item: item.is_free_text_item || false,
+        free_text_description: item.free_text_description || null,
       }));
 
       const { error: itemsError } = await supabase
@@ -528,12 +574,40 @@ serve(async (req) => {
         );
       }
 
-      // Create cart draft items
-      const draftItems = items.map((item: OrderItem) => ({
+      // Create cart draft items - regular items
+      const draftItems = (items || []).map((item: OrderItem) => ({
         draft_id: draft.id,
         article_id: item.article_id,
         quantity: item.quantity,
+        is_free_text_item: false,
       }));
+
+      // Add free text items
+      const freeItemsForSupplier = freeItems.filter(f => f.supplier_id === supplierId);
+      for (const freeItem of freeItemsForSupplier) {
+        draftItems.push({
+          draft_id: draft.id,
+          article_id: null,
+          quantity: freeItem.quantity,
+          is_free_text_item: true,
+          free_text_name: freeItem.name,
+          free_text_unit: freeItem.unit,
+          supplier_id: freeItem.supplier_id,
+        });
+        
+        // Create suggestion entry for tracking
+        await supabase.from('suggested_articles').insert({
+          organization_id: tokenData.organization_id,
+          supplier_id: supplierId,
+          name: freeItem.name,
+          unit: freeItem.unit,
+          price: 0,
+          status: 'pending',
+          source: 'employee',
+          employee_id: tokenData.employee_id || null,
+          location_id: location_id,
+        });
+      }
 
       const { error: itemsError } = await supabase
         .from('cart_draft_items')
@@ -549,9 +623,21 @@ serve(async (req) => {
         );
       }
 
-      console.log(`EasyOrder submitted as cart draft. Draft ID: ${draft.id}, Items: ${items.length}`);
+      const totalItems = (items?.length || 0) + freeItemsForSupplier.length;
+      console.log(`EasyOrder submitted as cart draft. Draft ID: ${draft.id}, Items: ${totalItems}`);
 
       // Send notification to admins/managers (internal call with service role header)
+      const allNotificationItems = [
+        ...(items || []).map((item: OrderItem) => ({
+          article_name: item.article_name,
+          quantity: item.quantity,
+        })),
+        ...freeItemsForSupplier.map(item => ({
+          article_name: `${item.name} (Freier Artikel)`,
+          quantity: item.quantity,
+        })),
+      ];
+      
       fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/notify-preorder-received`, {
         method: 'POST',
         headers: {
@@ -564,10 +650,7 @@ serve(async (req) => {
           employee_name,
           supplier_name: supplierName,
           location_name: locationName,
-          items: items.map((item: OrderItem) => ({
-            article_name: item.article_name,
-            quantity: item.quantity,
-          })),
+          items: allNotificationItems,
         }),
       }).catch(err => console.error('Failed to send preorder notification:', err));
 
