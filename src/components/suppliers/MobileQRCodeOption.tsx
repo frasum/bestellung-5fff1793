@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { QrCode, Smartphone, Loader2, Copy, Check, RefreshCw } from 'lucide-react';
+import { Smartphone, Loader2, Copy, Check, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
 import { usePhotoCaptureToken } from '@/hooks/usePhotoCaptureToken';
 import { toast } from 'sonner';
+import QRCode from 'qrcode';
 
 interface MobileQRCodeOptionProps {
   onBack: () => void;
@@ -15,6 +15,7 @@ export const MobileQRCodeOption = ({ onBack }: MobileQRCodeOptionProps) => {
   const { createToken, getQrCodeUrl, isCreating } = usePhotoCaptureToken();
   const [token, setToken] = useState<string | null>(null);
   const [qrUrl, setQrUrl] = useState<string | null>(null);
+  const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
   // Generate token on mount
@@ -22,7 +23,27 @@ export const MobileQRCodeOption = ({ onBack }: MobileQRCodeOptionProps) => {
     generateToken();
   }, []);
 
+  // Generate QR code locally when URL changes
+  useEffect(() => {
+    if (qrUrl) {
+      QRCode.toDataURL(qrUrl, { 
+        width: 200,
+        margin: 2,
+        color: {
+          dark: '#000000',
+          light: '#ffffff'
+        }
+      })
+        .then(setQrCodeDataUrl)
+        .catch((err) => {
+          console.error('QR code generation failed:', err);
+          toast.error(t('quickCapture.qrError', 'QR-Code konnte nicht generiert werden'));
+        });
+    }
+  }, [qrUrl, t]);
+
   const generateToken = async () => {
+    setQrCodeDataUrl(null);
     const newToken = await createToken();
     if (newToken) {
       setToken(newToken);
@@ -44,12 +65,7 @@ export const MobileQRCodeOption = ({ onBack }: MobileQRCodeOptionProps) => {
     }
   };
 
-  // Generate QR code using Google Charts API (simple, no dependency)
-  const qrCodeImageUrl = qrUrl 
-    ? `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(qrUrl)}`
-    : null;
-
-  if (isCreating || !qrCodeImageUrl) {
+  if (isCreating || !qrCodeDataUrl) {
     return (
       <div className="flex flex-col items-center justify-center py-12 gap-4">
         <Loader2 className="h-10 w-10 animate-spin text-primary" />
@@ -72,7 +88,7 @@ export const MobileQRCodeOption = ({ onBack }: MobileQRCodeOptionProps) => {
       <div className="flex flex-col items-center gap-4">
         <div className="p-4 bg-white rounded-xl shadow-sm border">
           <img 
-            src={qrCodeImageUrl} 
+            src={qrCodeDataUrl} 
             alt="QR Code"
             className="w-48 h-48"
           />
