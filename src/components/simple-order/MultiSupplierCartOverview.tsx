@@ -16,7 +16,8 @@ import {
   ChevronDown,
   ChevronUp,
   Package,
-  PlusCircle
+  PlusCircle,
+  PenLine
 } from 'lucide-react';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { format } from 'date-fns';
@@ -28,6 +29,8 @@ import {
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
 import { AddArticleSheetSimple } from './AddArticleSheetSimple';
+import { FreeItemDialog, FreeItem } from './FreeItemDialog';
+import { FreeItemCard } from './FreeItemCard';
 
 interface Article {
   id: string;
@@ -60,6 +63,13 @@ interface MultiSupplierCartOverviewProps {
   onConfirm: () => void;
   isSubmitting: boolean;
   allArticles: Article[];
+  // Free items props
+  freeItems?: FreeItem[];
+  onAddFreeItem?: (item: Omit<FreeItem, 'id'>) => void;
+  onUpdateFreeItem?: (item: FreeItem) => void;
+  onDeleteFreeItem?: (itemId: string) => void;
+  onFreeItemQuantityChange?: (itemId: string, delta: number) => void;
+  canAddFreeItems?: boolean;
 }
 
 const getLocale = (lang: string) => {
@@ -86,6 +96,12 @@ export const MultiSupplierCartOverview = ({
   onConfirm,
   isSubmitting,
   allArticles,
+  freeItems = [],
+  onAddFreeItem,
+  onUpdateFreeItem,
+  onDeleteFreeItem,
+  onFreeItemQuantityChange,
+  canAddFreeItems = false,
 }: MultiSupplierCartOverviewProps) => {
   const { t, i18n } = useTranslation();
   const { lightTap, heavyTap } = useHapticFeedback();
@@ -98,6 +114,11 @@ export const MultiSupplierCartOverview = ({
     supplierId: string | null;
     supplierName: string;
   }>({ open: false, supplierId: null, supplierName: '' });
+  const [freeItemDialog, setFreeItemDialog] = useState<{
+    open: boolean;
+    supplierId: string | null;
+    editingItem: FreeItem | null;
+  }>({ open: false, supplierId: null, editingItem: null });
   const prevQuantitiesRef = useRef<Record<string, number>>({});
 
   // Get ordered articles
@@ -112,8 +133,23 @@ export const MultiSupplierCartOverview = ({
     return acc;
   }, {} as Record<string, Article[]>);
 
+  // Group free items by supplier
+  const freeItemsBySupplier = freeItems.reduce((acc, item) => {
+    if (!acc[item.supplier_id]) {
+      acc[item.supplier_id] = [];
+    }
+    acc[item.supplier_id].push(item);
+    return acc;
+  }, {} as Record<string, FreeItem[]>);
+
+  // Get all supplier IDs with orders (regular or free items)
+  const supplierIdsWithOrders = new Set([
+    ...Object.keys(articlesBySupplier),
+    ...Object.keys(freeItemsBySupplier),
+  ]);
+
   // Get suppliers with orders
-  const suppliersWithOrders = suppliers.filter(s => articlesBySupplier[s.id]?.length > 0);
+  const suppliersWithOrders = suppliers.filter(s => supplierIdsWithOrders.has(s.id));
 
   // Initialize all suppliers as expanded
   useEffect(() => {
@@ -168,16 +204,23 @@ export const MultiSupplierCartOverview = ({
     onConfirm();
   };
 
-  // Calculate totals
+  // Calculate totals (including free items)
   const getSupplierItemCount = (supplierId: string) => {
-    return (articlesBySupplier[supplierId] || []).reduce((sum, article) => {
+    const articleCount = (articlesBySupplier[supplierId] || []).reduce((sum, article) => {
       return sum + (quantities[article.id] || 0);
     }, 0);
+    const freeItemCount = (freeItemsBySupplier[supplierId] || []).reduce((sum, item) => {
+      return sum + item.quantity;
+    }, 0);
+    return articleCount + freeItemCount;
   };
 
-  const totalItems = Object.values(quantities).reduce((sum, qty) => sum + qty, 0);
+  const totalItems = Object.values(quantities).reduce((sum, qty) => sum + qty, 0) +
+    freeItems.reduce((sum, item) => sum + item.quantity, 0);
 
-  if (orderedArticles.length === 0) {
+  const hasAnyItems = orderedArticles.length > 0 || freeItems.length > 0;
+
+  if (!hasAnyItems) {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
         <ShoppingCart className="h-16 w-16 text-muted-foreground mb-4" />
@@ -239,6 +282,8 @@ export const MultiSupplierCartOverview = ({
           const supplierArticles = articlesBySupplier[supplier.id] || [];
           const itemCount = getSupplierItemCount(supplier.id);
 
+          const supplierFreeItems = freeItemsBySupplier[supplier.id] || [];
+
           return (
             <Collapsible
               key={supplier.id}
@@ -246,7 +291,6 @@ export const MultiSupplierCartOverview = ({
               onOpenChange={() => toggleSupplier(supplier.id)}
             >
               <Card className="overflow-hidden">
-                {/* Supplier Header */}
                 {/* Supplier Header */}
                 <div className="p-4 bg-muted/30">
                   <div className="flex items-center justify-between">
@@ -268,28 +312,65 @@ export const MultiSupplierCartOverview = ({
                         )}
                       </div>
                     </CollapsibleTrigger>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-9 px-3 ml-2 text-primary hover:text-primary"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setAddArticleSheet({
-                          open: true,
-                          supplierId: supplier.id,
-                          supplierName: supplier.name
-                        });
-                      }}
-                    >
-                      <PlusCircle className="h-4 w-4 mr-1" />
-                      {t('cart.addArticle', 'Artikel')}
-                    </Button>
+                    <div className="flex items-center gap-1 ml-2">
+                      {canAddFreeItems && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-9 px-3 text-amber-600 hover:text-amber-700 hover:bg-amber-50 dark:text-amber-400 dark:hover:bg-amber-950/20"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setFreeItemDialog({
+                              open: true,
+                              supplierId: supplier.id,
+                              editingItem: null
+                            });
+                          }}
+                        >
+                          <PenLine className="h-4 w-4 mr-1" />
+                          {t('simpleOrder.freeItem', 'Frei')}
+                        </Button>
+                      )}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-9 px-3 text-primary hover:text-primary"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setAddArticleSheet({
+                            open: true,
+                            supplierId: supplier.id,
+                            supplierName: supplier.name
+                          });
+                        }}
+                      >
+                        <PlusCircle className="h-4 w-4 mr-1" />
+                        {t('cart.addArticle', 'Artikel')}
+                      </Button>
+                    </div>
                   </div>
                 </div>
 
                 {/* Articles */}
                 <CollapsibleContent>
                   <div className="divide-y">
+                    {/* Free Items */}
+                    {supplierFreeItems.map((item) => (
+                      <div key={item.id} className="p-3 bg-amber-50/50 dark:bg-amber-950/20 border-l-4 border-amber-500/50">
+                        <FreeItemCard
+                          item={item}
+                          onQuantityChange={onFreeItemQuantityChange || (() => {})}
+                          onEdit={(editItem) => setFreeItemDialog({
+                            open: true,
+                            supplierId: supplier.id,
+                            editingItem: editItem
+                          })}
+                          onDelete={onDeleteFreeItem || (() => {})}
+                        />
+                      </div>
+                    ))}
+
+                    {/* Regular Articles */}
                     {supplierArticles.map((article) => {
                       const quantity = quantities[article.id] || 0;
 
@@ -396,7 +477,7 @@ export const MultiSupplierCartOverview = ({
             <Button
               className="w-full h-14 text-lg font-semibold touch-manipulation"
               onClick={handleConfirm}
-              disabled={isSubmitting || orderedArticles.length === 0}
+              disabled={isSubmitting || !hasAnyItems}
             >
               {isSubmitting ? (
                 <>
@@ -427,6 +508,18 @@ export const MultiSupplierCartOverview = ({
         onQuantityChange={onQuantityChange}
         articles={allArticles}
       />
+
+      {/* Free Item Dialog */}
+      {freeItemDialog.supplierId && (
+        <FreeItemDialog
+          open={freeItemDialog.open}
+          onOpenChange={(open) => setFreeItemDialog(prev => ({ ...prev, open, editingItem: open ? prev.editingItem : null }))}
+          onAdd={onAddFreeItem || (() => {})}
+          supplierId={freeItemDialog.supplierId}
+          editingItem={freeItemDialog.editingItem}
+          onUpdate={onUpdateFreeItem}
+        />
+      )}
     </div>
   );
 };

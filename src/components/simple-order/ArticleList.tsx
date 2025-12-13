@@ -1,10 +1,13 @@
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Minus, Plus, Search, Star } from 'lucide-react';
+import { Minus, Plus, Search, Star, PenLine } from 'lucide-react';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { cn } from '@/lib/utils';
+import { FreeItemDialog, FreeItem } from './FreeItemDialog';
+import { FreeItemCard } from './FreeItemCard';
 
 // KAO supplier ID for Thai text display enhancement
 const KAO_SUPPLIER_ID = '7426cdfc-9f66-4e8b-9fa7-8c9a01157e32';
@@ -68,6 +71,13 @@ interface ArticleListProps {
   // Favorites
   favoriteIds?: Set<string>;
   onToggleFavorite?: (articleId: string) => void;
+  // Free items
+  canAddFreeItems?: boolean;
+  freeItems?: FreeItem[];
+  onAddFreeItem?: (item: Omit<FreeItem, 'id'>) => void;
+  onUpdateFreeItem?: (item: FreeItem) => void;
+  onDeleteFreeItem?: (itemId: string) => void;
+  onFreeItemQuantityChange?: (itemId: string, delta: number) => void;
 }
 
 export const ArticleList = ({
@@ -82,9 +92,16 @@ export const ArticleList = ({
   onSupplierChange,
   favoriteIds = new Set(),
   onToggleFavorite,
+  canAddFreeItems = false,
+  freeItems = [],
+  onAddFreeItem,
+  onUpdateFreeItem,
+  onDeleteFreeItem,
+  onFreeItemQuantityChange,
 }: ArticleListProps) => {
   const { t } = useTranslation();
-
+  const [freeItemDialogOpen, setFreeItemDialogOpen] = useState(false);
+  const [editingFreeItem, setEditingFreeItem] = useState<FreeItem | null>(null);
   const isGlobalSearch = search.trim().length > 0 && allArticles.length > 0 && suppliers.length > 1;
 
   // Filter articles by search - global or local
@@ -121,24 +138,71 @@ export const ArticleList = ({
     return acc;
   }, {} as Record<string, Article[]>);
 
+  const handleEditFreeItem = (item: FreeItem) => {
+    setEditingFreeItem(item);
+    setFreeItemDialogOpen(true);
+  };
+
+  const handleFreeItemDialogClose = () => {
+    setFreeItemDialogOpen(false);
+    setEditingFreeItem(null);
+  };
+
   return (
     <>
       {/* Search */}
       <div className="sticky top-[52px] z-10 bg-background border-b p-3">
-        <div className="max-w-2xl mx-auto relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-          <Input
-            type="text"
-            placeholder={t('simpleOrder.search', 'ค้นหา... / Suchen...')}
-            value={search}
-            onChange={(e) => onSearchChange(e.target.value)}
-            className="pl-10 h-12 text-lg"
-          />
+        <div className="max-w-2xl mx-auto space-y-3">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+            <Input
+              type="text"
+              placeholder={t('simpleOrder.search', 'ค้นหา... / Suchen...')}
+              value={search}
+              onChange={(e) => onSearchChange(e.target.value)}
+              className="pl-10 h-12 text-lg"
+            />
+          </div>
+          
+          {/* Add Free Item Button */}
+          {canAddFreeItems && selectedSupplierId && (
+            <Button
+              variant="outline"
+              className="w-full h-11 border-dashed border-2 border-amber-500/50 text-amber-700 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/20"
+              onClick={() => setFreeItemDialogOpen(true)}
+            >
+              <PenLine className="h-4 w-4 mr-2" />
+              {t('simpleOrder.addFreeItem', 'Freien Artikel hinzufügen')}
+            </Button>
+          )}
         </div>
       </div>
 
       {/* Articles */}
       <div className="max-w-2xl mx-auto p-4">
+        {/* Free Items Section */}
+        {freeItems.length > 0 && (
+          <div className="mb-4">
+            <div className="flex items-center gap-2 mb-2 px-1">
+              <PenLine className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+              <span className="text-sm font-medium text-muted-foreground">
+                {t('simpleOrder.freeItems', 'Freie Artikel')}
+              </span>
+            </div>
+            <div className="grid grid-cols-1 gap-2">
+              {freeItems.map((item) => (
+                <FreeItemCard
+                  key={item.id}
+                  item={item}
+                  onQuantityChange={onFreeItemQuantityChange || (() => {})}
+                  onEdit={handleEditFreeItem}
+                  onDelete={onDeleteFreeItem || (() => {})}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Favorites Section */}
         {favoriteArticles.length > 0 && (
           <div className="mb-4">
@@ -219,7 +283,7 @@ export const ArticleList = ({
           );
         })}
 
-        {filteredCurrentArticles.length === 0 && Object.keys(groupedOtherArticles).length === 0 && (
+        {filteredCurrentArticles.length === 0 && Object.keys(groupedOtherArticles).length === 0 && freeItems.length === 0 && (
           <div className="text-center py-12">
             <p className="text-xl text-muted-foreground">
               {t('simpleOrder.noArticles', 'ไม่พบสินค้า / Keine Artikel gefunden')}
@@ -227,6 +291,18 @@ export const ArticleList = ({
           </div>
         )}
       </div>
+
+      {/* Free Item Dialog */}
+      {selectedSupplierId && (
+        <FreeItemDialog
+          open={freeItemDialogOpen}
+          onOpenChange={handleFreeItemDialogClose}
+          onAdd={onAddFreeItem || (() => {})}
+          supplierId={selectedSupplierId}
+          editingItem={editingFreeItem}
+          onUpdate={onUpdateFreeItem}
+        />
+      )}
     </>
   );
 };
