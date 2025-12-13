@@ -99,8 +99,8 @@ serve(async (req) => {
     const storedPin = employee.pin_code;
     
     if (storedPin.startsWith('$2')) {
-      // Hashed PIN - use bcrypt comparison
-      isValid = await bcrypt.compare(pin, storedPin);
+      // Hashed PIN - use bcrypt comparison (sync version for Deno compatibility)
+      isValid = bcrypt.compareSync(pin, storedPin);
       console.log('PIN verification (bcrypt):', isValid ? 'valid' : 'invalid');
     } else {
       // Legacy plaintext PIN - direct comparison (for backward compatibility)
