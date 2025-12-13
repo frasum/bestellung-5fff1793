@@ -656,6 +656,13 @@ export function EmployeesTab() {
                               Freie Artikel
                             </Badge>
                           )}
+                          {/* Photo Capture Badge */}
+                          {employee.can_capture_photos && (
+                            <Badge variant="outline" className="text-xs border-purple-500 text-purple-600 bg-purple-50 dark:bg-purple-900/20">
+                              <Camera className="h-3 w-3 mr-1" />
+                              Fotoerfassung
+                            </Badge>
+                          )}
                           {!employee.is_active && (
                             <Badge variant="secondary">Inaktiv</Badge>
                           )}
