@@ -133,12 +133,12 @@ const StyleGuide = () => {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold flex items-center gap-2">
-              <Palette className="h-6 w-6" />
+            <h1 className="text-xl font-semibold flex items-center gap-2">
+              <Palette className="h-5 w-5" />
               Style Guide
             </h1>
-            <p className="text-muted-foreground mt-1">
-              Alle UI-Komponenten und Design-Tokens auf einen Blick
+            <p className="text-sm text-muted-foreground mt-1">
+              Design-System Dokumentation für Bestellung.pro
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -155,6 +155,207 @@ const StyleGuide = () => {
             </Button>
           </div>
         </div>
+
+        {/* Design Tokens Overview */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Design Tokens</CardTitle>
+            <CardDescription>Grundlegende CSS-Variablen des ultraminimalistischen B2B SaaS Design-Systems</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* CSS Variables Table */}
+            <div>
+              <h4 className="text-sm font-medium mb-3">Core CSS Variables</h4>
+              <div className="border rounded-md overflow-hidden">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-muted/30">
+                      <TableHead className="w-[180px]">Variable</TableHead>
+                      <TableHead>HSL Value (Light)</TableHead>
+                      <TableHead>HSL Value (Dark)</TableHead>
+                      <TableHead className="w-[100px]">Preview</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    <TableRow>
+                      <TableCell className="font-mono text-xs">--background</TableCell>
+                      <TableCell className="font-mono text-xs text-muted-foreground">210 20% 98%</TableCell>
+                      <TableCell className="font-mono text-xs text-muted-foreground">224 71% 4%</TableCell>
+                      <TableCell><div className="w-8 h-8 rounded-md bg-background border" /></TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell className="font-mono text-xs">--foreground</TableCell>
+                      <TableCell className="font-mono text-xs text-muted-foreground">222 47% 11%</TableCell>
+                      <TableCell className="font-mono text-xs text-muted-foreground">213 31% 91%</TableCell>
+                      <TableCell><div className="w-8 h-8 rounded-md bg-foreground" /></TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell className="font-mono text-xs">--primary</TableCell>
+                      <TableCell className="font-mono text-xs text-muted-foreground">217 91% 50%</TableCell>
+                      <TableCell className="font-mono text-xs text-muted-foreground">210 100% 52%</TableCell>
+                      <TableCell><div className="w-8 h-8 rounded-md bg-primary" /></TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell className="font-mono text-xs">--muted</TableCell>
+                      <TableCell className="font-mono text-xs text-muted-foreground">210 20% 96%</TableCell>
+                      <TableCell className="font-mono text-xs text-muted-foreground">223 47% 14%</TableCell>
+                      <TableCell><div className="w-8 h-8 rounded-md bg-muted border" /></TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell className="font-mono text-xs">--border</TableCell>
+                      <TableCell className="font-mono text-xs text-muted-foreground">220 13% 91%</TableCell>
+                      <TableCell className="font-mono text-xs text-muted-foreground">222 47% 18%</TableCell>
+                      <TableCell><div className="w-8 h-8 rounded-md bg-border" /></TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell className="font-mono text-xs">--destructive</TableCell>
+                      <TableCell className="font-mono text-xs text-muted-foreground">0 84% 60%</TableCell>
+                      <TableCell className="font-mono text-xs text-muted-foreground">0 63% 45%</TableCell>
+                      <TableCell><div className="w-8 h-8 rounded-md bg-destructive" /></TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell className="font-mono text-xs">--warning</TableCell>
+                      <TableCell className="font-mono text-xs text-muted-foreground">45 93% 47%</TableCell>
+                      <TableCell className="font-mono text-xs text-muted-foreground">45 93% 47%</TableCell>
+                      <TableCell><div className="w-8 h-8 rounded-md bg-warning" /></TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell className="font-mono text-xs">--success</TableCell>
+                      <TableCell className="font-mono text-xs text-muted-foreground">142 76% 36%</TableCell>
+                      <TableCell className="font-mono text-xs text-muted-foreground">142 70% 45%</TableCell>
+                      <TableCell><div className="w-8 h-8 rounded-md bg-success" /></TableCell>
+                    </TableRow>
+                  </TableBody>
+                </Table>
+              </div>
+            </div>
+
+            <Separator />
+
+            {/* Spacing Scale */}
+            <div>
+              <h4 className="text-sm font-medium mb-3">Spacing Scale</h4>
+              <div className="flex flex-wrap gap-4">
+                {[
+                  { name: 'p-1', size: '4px' },
+                  { name: 'p-2', size: '8px' },
+                  { name: 'p-3', size: '12px' },
+                  { name: 'p-4', size: '16px' },
+                  { name: 'p-6', size: '24px' },
+                  { name: 'p-8', size: '32px' },
+                ].map((s) => (
+                  <div key={s.name} className="flex flex-col items-center gap-1">
+                    <div className={`bg-primary/20 border border-primary/30 ${s.name}`}>
+                      <div className="w-8 h-8 bg-primary/50 rounded-sm" />
+                    </div>
+                    <span className="text-xs font-mono">{s.name}</span>
+                    <span className="text-xs text-muted-foreground">{s.size}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <Separator />
+
+            {/* Border Radius */}
+            <div>
+              <h4 className="text-sm font-medium mb-3">Border Radius</h4>
+              <p className="text-xs text-muted-foreground mb-4">Standard: <code className="bg-muted px-1 py-0.5 rounded">--radius: 0.375rem (6px)</code> - Ultraminimalistisch</p>
+              <div className="flex flex-wrap gap-6">
+                <div className="flex flex-col items-center gap-2">
+                  <div className="w-16 h-16 bg-muted border border-border rounded-none" />
+                  <span className="text-xs font-mono">rounded-none</span>
+                </div>
+                <div className="flex flex-col items-center gap-2">
+                  <div className="w-16 h-16 bg-muted border border-border rounded-sm" />
+                  <span className="text-xs font-mono">rounded-sm</span>
+                </div>
+                <div className="flex flex-col items-center gap-2">
+                  <div className="w-16 h-16 bg-primary/10 border-2 border-primary rounded-md" />
+                  <span className="text-xs font-mono font-semibold text-primary">rounded-md ✓</span>
+                </div>
+                <div className="flex flex-col items-center gap-2">
+                  <div className="w-16 h-16 bg-muted border border-border rounded-lg opacity-50" />
+                  <span className="text-xs font-mono text-muted-foreground">rounded-lg</span>
+                </div>
+                <div className="flex flex-col items-center gap-2">
+                  <div className="w-16 h-16 bg-muted border border-border rounded-xl opacity-50" />
+                  <span className="text-xs font-mono text-muted-foreground line-through">rounded-xl</span>
+                </div>
+              </div>
+            </div>
+
+            <Separator />
+
+            {/* Shadows */}
+            <div>
+              <h4 className="text-sm font-medium mb-3">Shadows</h4>
+              <p className="text-xs text-muted-foreground mb-4">Ultraminimalistisches Design: Keine Schatten, nur Borders</p>
+              <div className="flex flex-wrap gap-6">
+                <div className="flex flex-col items-center gap-2">
+                  <div className="w-20 h-20 bg-card border border-border rounded-md flex items-center justify-center">
+                    <span className="text-xs text-muted-foreground">border</span>
+                  </div>
+                  <span className="text-xs font-mono text-primary">Empfohlen ✓</span>
+                </div>
+                <div className="flex flex-col items-center gap-2">
+                  <div className="w-20 h-20 bg-card shadow-sm rounded-md flex items-center justify-center opacity-50">
+                    <span className="text-xs text-muted-foreground">shadow-sm</span>
+                  </div>
+                  <span className="text-xs font-mono text-muted-foreground">Vermeiden</span>
+                </div>
+                <div className="flex flex-col items-center gap-2">
+                  <div className="w-20 h-20 bg-card shadow-md rounded-md flex items-center justify-center opacity-50">
+                    <span className="text-xs text-muted-foreground">shadow-md</span>
+                  </div>
+                  <span className="text-xs font-mono text-muted-foreground">Vermeiden</span>
+                </div>
+                <div className="flex flex-col items-center gap-2">
+                  <div className="w-20 h-20 bg-card shadow-lg rounded-md flex items-center justify-center opacity-50">
+                    <span className="text-xs text-muted-foreground">shadow-lg</span>
+                  </div>
+                  <span className="text-xs font-mono text-muted-foreground line-through">Nicht verwenden</span>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Design Principles */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Design-Prinzipien</CardTitle>
+            <CardDescription>Ultraminimalistisches B2B SaaS Design-System</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="p-4 bg-muted/30 rounded-md border border-border">
+                <h4 className="font-medium mb-2">Keine Schatten</h4>
+                <p className="text-sm text-muted-foreground">Tiefe durch <code className="bg-muted px-1 rounded">border-border</code> statt shadow-* Klassen.</p>
+              </div>
+              <div className="p-4 bg-muted/30 rounded-md border border-border">
+                <h4 className="font-medium mb-2">Konsistente Radii</h4>
+                <p className="text-sm text-muted-foreground">Nur <code className="bg-muted px-1 rounded">rounded-md</code> (6px). Keine rounded-xl/2xl.</p>
+              </div>
+              <div className="p-4 bg-muted/30 rounded-md border border-border">
+                <h4 className="font-medium mb-2">1 Primary Button</h4>
+                <p className="text-sm text-muted-foreground">Maximal ein Primary-Button pro Screen. Rest: ghost/outline.</p>
+              </div>
+              <div className="p-4 bg-muted/30 rounded-md border border-border">
+                <h4 className="font-medium mb-2">Dezente Backgrounds</h4>
+                <p className="text-sm text-muted-foreground">Nutze <code className="bg-muted px-1 rounded">bg-muted/30</code> statt bg-primary/5.</p>
+              </div>
+              <div className="p-4 bg-muted/30 rounded-md border border-border">
+                <h4 className="font-medium mb-2">Hover on Desktop</h4>
+                <p className="text-sm text-muted-foreground">Actions bei Hover, immer sichtbar auf Mobile.</p>
+              </div>
+              <div className="p-4 bg-muted/30 rounded-md border border-border">
+                <h4 className="font-medium mb-2">Touch-optimiert</h4>
+                <p className="text-sm text-muted-foreground">Min. <code className="bg-muted px-1 rounded">h-11</code> für Mobile-Buttons.</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Color Palette */}
         <Card>
