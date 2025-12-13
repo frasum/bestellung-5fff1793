@@ -576,8 +576,8 @@ const Auth = () => {
               </p>
               
               <Button 
-                variant="ghost" 
-                className="w-full gap-2 text-muted-foreground"
+                variant="secondary" 
+                className="w-full gap-2"
                 onClick={() => setShowEmptyDemoDialog(true)}
               >
                 <FlaskConical className="w-4 h-4" />
