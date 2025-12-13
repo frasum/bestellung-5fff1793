@@ -747,7 +747,10 @@ const SimpleOrder = () => {
           locationName={getSelectedLocationName()}
           onQuantityChange={handleConfirmationQuantityChange}
           onRemoveItem={handleRemoveItem}
-          onBack={() => setStatus('ready')}
+          onBack={() => {
+            setSelectedSupplierId(null);
+            setStatus('ready');
+          }}
           onConfirm={handleSubmit}
           isSubmitting={status === 'submitting'}
         />
