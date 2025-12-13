@@ -388,6 +388,13 @@ serve(async (req) => {
         );
       }
 
+      // Create confirmation token for supplier email button
+      const { data: tokenConfirmData } = await supabase
+        .from('order_confirmation_tokens')
+        .insert({ order_id: order.id })
+        .select('token')
+        .single();
+
       // orgData already fetched above with name and test_mode_enabled
 
       // Send email to supplier
@@ -413,6 +420,7 @@ serve(async (req) => {
             totalAmount: totalAmount,
             notes: notesText,
             customerNumber: customerNumber,
+            confirmationToken: tokenConfirmData?.token || null,
           },
         });
         
