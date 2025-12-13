@@ -1038,14 +1038,14 @@ export function EmployeesTab() {
                   <div className="space-y-0.5">
                     <div className="flex items-center gap-2">
                       <Label htmlFor="voice-input" className="text-sm font-medium">
-                        Spracheingabe
+                        {t('settings.employees.voiceInput', 'Voice Input')}
                       </Label>
                       <Badge variant="outline" className="text-xs bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400">
-                        Prototyp
+                        {t('voice.prototype', 'Prototype')}
                       </Badge>
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      Bestellungen per Sprache aufgeben (Whisper + AI)
+                      {t('settings.employees.voiceInputDescription', 'Place orders by voice (Whisper + AI)')}
                     </p>
                   </div>
                 </div>

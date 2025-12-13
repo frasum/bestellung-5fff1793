@@ -568,7 +568,11 @@
     "infoTextDesc": "Displayed as info box above the article list. Markdown is supported.",
     "footerTextLabel": "Footer Text (optional)",
     "footerTextPlaceholder": "e.g. © 2024 My Restaurant - Contact: suppliers@restaurant.com",
-    "footerTextDesc": "Displayed at the bottom of the page. Markdown is supported."
+    "footerTextDesc": "Displayed at the bottom of the page. Markdown is supported.",
+    "employees": {
+      "voiceInput": "Voice Input",
+      "voiceInputDescription": "Place orders by voice (Whisper + AI)"
+    }
   },
   "landing": {
     "heroTitle": "Smart Procurement for Restaurants",

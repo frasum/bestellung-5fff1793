@@ -560,7 +560,11 @@
     "infoTextDesc": "Visualizzato come casella informativa sopra la lista articoli. Markdown supportato.",
     "footerTextLabel": "Testo piè di pagina (opzionale)",
     "footerTextPlaceholder": "es. © 2024 Il mio ristorante - Contatto: fornitori@ristorante.it",
-    "footerTextDesc": "Visualizzato in fondo alla pagina. Markdown supportato."
+    "footerTextDesc": "Visualizzato in fondo alla pagina. Markdown supportato.",
+    "employees": {
+      "voiceInput": "Input vocale",
+      "voiceInputDescription": "Effettuare ordini tramite voce (Whisper + AI)"
+    }
   },
   "landing": {
     "heroTitle": "Approvvigionamento intelligente per ristoranti",

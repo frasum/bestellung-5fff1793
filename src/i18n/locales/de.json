@@ -568,7 +568,11 @@
     "infoTextDesc": "Wird als Hinweisbox über der Artikelliste angezeigt. Markdown wird unterstützt.",
     "footerTextLabel": "Footer-Text (optional)",
     "footerTextPlaceholder": "z.B. © 2024 Mein Restaurant - Kontakt: lieferanten@restaurant.de",
-    "footerTextDesc": "Wird am Ende der Seite angezeigt. Markdown wird unterstützt."
+    "footerTextDesc": "Wird am Ende der Seite angezeigt. Markdown wird unterstützt.",
+    "employees": {
+      "voiceInput": "Spracheingabe",
+      "voiceInputDescription": "Bestellungen per Sprache aufgeben (Whisper + AI)"
+    }
   },
   "landing": {
     "heroTitle": "Intelligente Beschaffung für Restaurants",

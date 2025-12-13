@@ -560,7 +560,11 @@
     "infoTextDesc": "Hiển thị như hộp thông tin trên danh sách sản phẩm. Markdown được hỗ trợ.",
     "footerTextLabel": "Văn bản chân trang (tùy chọn)",
     "footerTextPlaceholder": "ví dụ: © 2024 Nhà hàng của tôi - Liên hệ: suppliers@restaurant.com",
-    "footerTextDesc": "Hiển thị ở cuối trang. Markdown được hỗ trợ."
+    "footerTextDesc": "Hiển thị ở cuối trang. Markdown được hỗ trợ.",
+    "employees": {
+      "voiceInput": "Nhập bằng giọng nói",
+      "voiceInputDescription": "Đặt hàng bằng giọng nói (Whisper + AI)"
+    }
   },
   "landing": {
     "heroTitle": "Mua sắm thông minh cho nhà hàng",
