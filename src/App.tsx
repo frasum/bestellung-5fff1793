@@ -27,6 +27,7 @@ const SupplierAuth = lazy(() => import("./pages/SupplierAuth"));
 const SupplierPortal = lazy(() => import("./pages/SupplierPortal"));
 const OrderConfirmed = lazy(() => import("./pages/OrderConfirmed"));
 const SimpleOrder = lazy(() => import("./pages/SimpleOrder"));
+const PhotoCapture = lazy(() => import("./pages/PhotoCapture"));
 const StyleGuide = lazy(() => import("./pages/StyleGuide"));
 const Pricing = lazy(() => import("./pages/Pricing"));
 const Impressum = lazy(() => import("./pages/Impressum"));
@@ -78,6 +79,7 @@ const AppContent = () => {
           <Route path="/supplier-portal" element={<SupplierPortal />} />
           <Route path="/order-confirmed" element={<OrderConfirmed />} />
           <Route path="/simple-order/:token" element={<SimpleOrder />} />
+          <Route path="/photo-capture" element={<PhotoCapture />} />
           <Route path="/style-guide" element={<StyleGuide />} />
           <Route path="/pricing" element={<Pricing />} />
           <Route path="/impressum" element={<Impressum />} />
