@@ -58,37 +58,35 @@ const AppContent = () => {
   
   return (
     <>
-      <Profiler id="App" onRender={onRenderCallback}>
-        <Suspense fallback={<PageLoader />}>
-          <Routes>
-            <Route path="/" element={<Auth />} />
-            <Route path="/auth" element={<Auth />} />
-            <Route path="/signup" element={<Auth />} />
-            <Route path="/dashboard" element={<Navigate to="/reports" replace />} />
-            <Route path="/suppliers" element={<Suppliers />} />
-            <Route path="/articles" element={<Navigate to="/suppliers?tab=articles" replace />} />
-            <Route path="/cart" element={<Cart />} />
-            <Route path="/checkout" element={<Checkout />} />
-            <Route path="/orders" element={<Orders />} />
-            <Route path="/drafts" element={<Navigate to="/orders?tab=drafts" replace />} />
-            <Route path="/reports" element={<Reports />} />
-            <Route path="/inventory" element={<Navigate to="/reports?tab=inventur" replace />} />
-            <Route path="/settings" element={<Settings />} />
-            <Route path="/supplier-login" element={<SupplierLogin />} />
-            <Route path="/supplier-auth" element={<SupplierAuth />} />
-            <Route path="/supplier-portal" element={<SupplierPortal />} />
-            <Route path="/order-confirmed" element={<OrderConfirmed />} />
-            <Route path="/simple-order/:token" element={<SimpleOrder />} />
-            <Route path="/style-guide" element={<StyleGuide />} />
-            <Route path="/pricing" element={<Pricing />} />
-            <Route path="/impressum" element={<Impressum />} />
-            <Route path="/datenschutz" element={<Datenschutz />} />
-            <Route path="/agb" element={<AGB />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </Suspense>
-      </Profiler>
+      <Suspense fallback={<PageLoader />}>
+        <Routes>
+          <Route path="/" element={<Auth />} />
+          <Route path="/auth" element={<Auth />} />
+          <Route path="/signup" element={<Auth />} />
+          <Route path="/dashboard" element={<Navigate to="/reports" replace />} />
+          <Route path="/suppliers" element={<Suppliers />} />
+          <Route path="/articles" element={<Navigate to="/suppliers?tab=articles" replace />} />
+          <Route path="/cart" element={<Cart />} />
+          <Route path="/checkout" element={<Checkout />} />
+          <Route path="/orders" element={<Orders />} />
+          <Route path="/drafts" element={<Navigate to="/orders?tab=drafts" replace />} />
+          <Route path="/reports" element={<Reports />} />
+          <Route path="/inventory" element={<Navigate to="/reports?tab=inventur" replace />} />
+          <Route path="/settings" element={<Settings />} />
+          <Route path="/supplier-login" element={<SupplierLogin />} />
+          <Route path="/supplier-auth" element={<SupplierAuth />} />
+          <Route path="/supplier-portal" element={<SupplierPortal />} />
+          <Route path="/order-confirmed" element={<OrderConfirmed />} />
+          <Route path="/simple-order/:token" element={<SimpleOrder />} />
+          <Route path="/style-guide" element={<StyleGuide />} />
+          <Route path="/pricing" element={<Pricing />} />
+          <Route path="/impressum" element={<Impressum />} />
+          <Route path="/datenschutz" element={<Datenschutz />} />
+          <Route path="/agb" element={<AGB />} />
+          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </Suspense>
       
       {isEnabled && (
         <PerformanceMonitor
