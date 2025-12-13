@@ -19,7 +19,7 @@ import { useDeliveryAddresses } from '@/hooks/useSettings';
 import { useUserDeliveryPreference } from '@/hooks/useUserDeliveryPreference';
 import { useOrderUnits } from '@/hooks/useOrderUnits';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { ArrowLeft, CalendarIcon, CheckCircle2, Clock, Eye, Loader2, Mail, MapPin, Minus, Package, Plus, Send, Settings, Store, Trash2 } from 'lucide-react';
+import { ArrowLeft, CalendarIcon, CheckCircle2, Clock, Eye, Loader2, Mail, MapPin, Minus, Package, Plus, PlusCircle, Send, Settings, Store, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { z } from 'zod';
 import { useForm, Controller } from 'react-hook-form';
@@ -29,6 +29,7 @@ import { de } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { EmailPreviewDialog, EmailPreviewData } from '@/components/checkout/EmailPreviewDialog';
+import { AddArticleSheet } from '@/components/cart/AddArticleSheet';
 
 const Checkout = () => {
   const { t } = useTranslation();
@@ -72,6 +73,11 @@ const Checkout = () => {
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [showMobileForm, setShowMobileForm] = useState(false);
   const [showMobileCalendar, setShowMobileCalendar] = useState(false);
+  const [addArticleSheet, setAddArticleSheet] = useState<{
+    open: boolean;
+    supplierId: string;
+    supplierName: string;
+  }>({ open: false, supplierId: '', supplierName: '' });
 
   const defaultAddress = deliveryAddresses?.find(a => a.is_default);
 
@@ -552,6 +558,17 @@ const Checkout = () => {
                     <h3 className="font-semibold text-foreground text-sm xl:text-base truncate">{supplierName}</h3>
                   </div>
                   <div className="flex items-center gap-2 xl:gap-3 flex-shrink-0">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="h-8 text-xs"
+                      onClick={() => setAddArticleSheet({ open: true, supplierId, supplierName })}
+                    >
+                      <PlusCircle className="w-3.5 h-3.5 mr-1" />
+                      <span className="hidden sm:inline">{t('cart.addArticle')}</span>
+                      <span className="sm:hidden">+</span>
+                    </Button>
                     <span className="text-xs xl:text-sm text-muted-foreground">
                       {t('cart.itemCount', { count: supplierItems.length })}
                     </span>
@@ -781,6 +798,13 @@ const Checkout = () => {
         onEmailPreviewsChange={setEmailPreviews}
         onConfirm={handleConfirmOrders}
         isSubmitting={isSubmitting}
+      />
+
+      <AddArticleSheet
+        open={addArticleSheet.open}
+        onOpenChange={(open) => setAddArticleSheet(prev => ({ ...prev, open }))}
+        supplierId={addArticleSheet.supplierId}
+        supplierName={addArticleSheet.supplierName}
       />
     </DashboardLayout>
   );
