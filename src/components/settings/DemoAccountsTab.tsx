@@ -35,7 +35,8 @@ import {
   RefreshCw,
   UserCheck,
   Trash2,
-  Loader2
+  Loader2,
+  Eraser
 } from 'lucide-react';
 import { format, formatDistanceToNow } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -45,6 +46,7 @@ import {
   useExtendDemo,
   useConvertDemo,
   useDeleteDemoAccount,
+  useClearCatalog,
   DemoAccount,
 } from '@/hooks/useDemoAccounts';
 
@@ -54,9 +56,11 @@ export function DemoAccountsTab() {
   const extendDemo = useExtendDemo();
   const convertDemo = useConvertDemo();
   const deleteDemo = useDeleteDemoAccount();
+  const clearCatalog = useClearCatalog();
 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [convertDialogOpen, setConvertDialogOpen] = useState(false);
+  const [clearCatalogDialogOpen, setClearCatalogDialogOpen] = useState(false);
   const [selectedAccount, setSelectedAccount] = useState<DemoAccount | null>(null);
 
   const handleExtend = (account: DemoAccount, days: number) => {
@@ -73,6 +77,11 @@ export function DemoAccountsTab() {
     setDeleteDialogOpen(true);
   };
 
+  const handleClearCatalog = (account: DemoAccount) => {
+    setSelectedAccount(account);
+    setClearCatalogDialogOpen(true);
+  };
+
   const confirmConvert = () => {
     if (selectedAccount) {
       convertDemo.mutate(selectedAccount.id);
@@ -86,6 +95,14 @@ export function DemoAccountsTab() {
       deleteDemo.mutate(selectedAccount.id);
     }
     setDeleteDialogOpen(false);
+    setSelectedAccount(null);
+  };
+
+  const confirmClearCatalog = () => {
+    if (selectedAccount) {
+      clearCatalog.mutate(selectedAccount.id);
+    }
+    setClearCatalogDialogOpen(false);
     setSelectedAccount(null);
   };
 
@@ -217,6 +234,10 @@ export function DemoAccountsTab() {
                               <UserCheck className="h-4 w-4 mr-2" />
                               Zu echtem Account konvertieren
                             </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleClearCatalog(account)}>
+                              <Eraser className="h-4 w-4 mr-2" />
+                              Katalog leeren
+                            </DropdownMenuItem>
                             <DropdownMenuItem 
                               onClick={() => handleDelete(account)}
                               className="text-destructive focus:text-destructive"
@@ -277,6 +298,26 @@ export function DemoAccountsTab() {
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               Endgültig löschen
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Clear Catalog Dialog */}
+      <AlertDialog open={clearCatalogDialogOpen} onOpenChange={setClearCatalogDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Katalog leeren</AlertDialogTitle>
+            <AlertDialogDescription>
+              Möchten Sie den Katalog von "{selectedAccount?.name}" leeren? 
+              Alle Lieferanten und Artikel werden gelöscht. Der Account selbst bleibt bestehen – 
+              ideal für Onboarding-Tests.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmClearCatalog}>
+              Katalog leeren
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

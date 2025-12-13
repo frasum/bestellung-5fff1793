@@ -188,3 +188,38 @@ export function useDeleteDemoAccount() {
     },
   });
 }
+
+export function useClearCatalog() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (organizationId: string) => {
+      // Delete articles first (due to foreign key constraints)
+      const { error: articlesError } = await supabase
+        .from('articles')
+        .delete()
+        .eq('organization_id', organizationId);
+
+      if (articlesError) throw articlesError;
+
+      // Then delete suppliers
+      const { error: suppliersError } = await supabase
+        .from('suppliers')
+        .delete()
+        .eq('organization_id', organizationId);
+
+      if (suppliersError) throw suppliersError;
+
+      // Delete categories
+      await supabase.from('categories').delete().eq('organization_id', organizationId);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['demo-accounts'] });
+      toast.success('Katalog geleert – Account ist jetzt leer für Onboarding-Tests');
+    },
+    onError: (error) => {
+      console.error('Clear catalog error:', error);
+      toast.error('Fehler beim Leeren des Katalogs');
+    },
+  });
+}
