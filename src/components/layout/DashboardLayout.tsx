@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { LayoutDashboard, Users, Package, ShoppingCart, BarChart3, Settings, LogOut, Menu, X, FlaskConical, Search, Sparkles } from 'lucide-react';
+import { LayoutDashboard, Users, Package, ShoppingCart, BarChart3, Settings, LogOut, Menu, X, FlaskConical, Search, Sparkles, Bell } from 'lucide-react';
 import { GlobalSearch } from '@/components/GlobalSearch';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import { LocationSwitcher } from '@/components/LocationSwitcher';
@@ -15,6 +15,7 @@ import { Badge } from '@/components/ui/badge';
 import { MobileBottomNav } from '@/components/layout/MobileBottomNav';
 import { FloatingCartButton } from '@/components/FloatingCartButton';
 import { TooltipProvider } from '@/components/ui/tooltip';
+import { useCartDrafts } from '@/hooks/useCartDrafts';
 import logoImage from '@/assets/logo.png';
 
 
@@ -41,6 +42,8 @@ export const DashboardLayout = ({
   
   
   const { data: organization } = useOrganization();
+  const { data: drafts } = useCartDrafts(undefined, true);
+  const openDraftsCount = drafts?.length || 0;
   
   // Calculate demo days remaining
   const getDemoDaysRemaining = () => {
@@ -154,6 +157,7 @@ export const DashboardLayout = ({
             
             {navItems.map(item => {
               const isActive = location.pathname === item.href;
+              const showDraftsBadge = item.href === '/orders' && openDraftsCount > 0;
               return (
               <Link 
                   key={item.href} 
@@ -166,6 +170,14 @@ export const DashboardLayout = ({
                 >
                   <item.icon className="w-4 h-4" />
                   <span className="flex-1">{item.label}</span>
+                  {showDraftsBadge && (
+                    <div className="flex items-center gap-1">
+                      <Bell className="w-4 h-4 text-destructive animate-pulse" />
+                      <Badge variant="destructive" className="h-5 min-w-5 text-xs px-1.5">
+                        {openDraftsCount}
+                      </Badge>
+                    </div>
+                  )}
                 </Link>
               );
             })}

@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Users, ShoppingCart, MoreHorizontal, BarChart3, Settings, LogOut } from 'lucide-react';
+import { LayoutDashboard, Users, ShoppingCart, MoreHorizontal, BarChart3, Settings, LogOut, Bell } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useCart } from '@/contexts/CartContext';
 import { Badge } from '@/components/ui/badge';
@@ -14,6 +14,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useTranslation } from 'react-i18next';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { useCartDrafts } from '@/hooks/useCartDrafts';
 
 const mainNavItems = [
   { href: '/suppliers', label: 'Katalog', icon: Users },
@@ -31,6 +32,8 @@ export const MobileBottomNav = () => {
   const { t } = useTranslation();
   const [sheetOpen, setSheetOpen] = useState(false);
   const itemCount = getItemCount();
+  const { data: drafts } = useCartDrafts(undefined, true);
+  const openDraftsCount = drafts?.length || 0;
 
   const moreNavItems = [
     { href: '/orders', label: t('nav.orders'), icon: ShoppingCart },
@@ -88,11 +91,21 @@ export const MobileBottomNav = () => {
           <SheetTrigger asChild>
             <button
               className={cn(
-                'flex flex-col items-center justify-center flex-1 h-full py-2',
+                'flex flex-col items-center justify-center flex-1 h-full py-2 relative',
                 'text-muted-foreground active:text-primary transition-colors touch-manipulation'
               )}
             >
-              <MoreHorizontal className="w-5 h-5 md:w-6 md:h-6" />
+              <div className="relative">
+                <MoreHorizontal className="w-5 h-5 md:w-6 md:h-6" />
+                {openDraftsCount > 0 && (
+                  <Badge 
+                    variant="destructive" 
+                    className="absolute -top-2 -right-3 h-4 min-w-4 md:h-5 md:min-w-5 flex items-center justify-center rounded-full text-[10px] md:text-xs font-bold px-1"
+                  >
+                    {openDraftsCount > 99 ? '99+' : openDraftsCount}
+                  </Badge>
+                )}
+              </div>
               <span className="text-[10px] md:text-xs mt-1 font-medium">Mehr</span>
             </button>
           </SheetTrigger>
@@ -101,9 +114,10 @@ export const MobileBottomNav = () => {
               <SheetTitle>Navigation</SheetTitle>
             </SheetHeader>
             <div className="grid grid-cols-2 gap-3 md:gap-4 pb-6">
-              {moreNavItems.map((item) => {
+            {moreNavItems.map((item) => {
                 const isActive = location.pathname === item.href;
                 const Icon = item.icon;
+                const showDraftsBadge = item.href === '/orders' && openDraftsCount > 0;
                 return (
                   <Link
                     key={item.href}
@@ -118,6 +132,14 @@ export const MobileBottomNav = () => {
                   >
                     <Icon className="w-5 h-5 md:w-6 md:h-6" />
                     <span className="font-medium flex-1">{item.label}</span>
+                    {showDraftsBadge && (
+                      <div className="flex items-center gap-1">
+                        <Bell className={cn("w-4 h-4 animate-pulse", isActive ? "text-primary-foreground" : "text-destructive")} />
+                        <Badge variant={isActive ? "secondary" : "destructive"} className="h-5 min-w-5 text-xs px-1.5">
+                          {openDraftsCount}
+                        </Badge>
+                      </div>
+                    )}
                   </Link>
                 );
               })}
