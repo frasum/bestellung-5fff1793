@@ -72,7 +72,7 @@ export const SupplierTable = ({
     <div className="bg-card border border-border rounded-xl overflow-hidden overflow-x-auto">
       <Table>
         <TableHeader>
-          <TableRow className="hover:bg-transparent">
+          <TableRow className="hover:bg-transparent border-b border-border">
             {multiSelectEnabled && (
               <TableHead className="w-10">
                 <Checkbox 
@@ -94,7 +94,7 @@ export const SupplierTable = ({
             const hasArticles = supplierArticles.length > 0;
             return (
               <Fragment key={supplier.id}>
-                <TableRow className="group">
+                <TableRow className="group h-14 hover:bg-muted/50">
                   {multiSelectEnabled && (
                     <TableCell className="py-2">
                       {hasArticles && <Checkbox checked={selectedSuppliers.has(supplier.id)} onCheckedChange={() => onToggleSelect(supplier.id)} />}
@@ -154,22 +154,22 @@ export const SupplierTable = ({
                     <Badge variant="secondary">{supplierArticles.length} Artikel</Badge>
                   </TableCell>
                   <TableCell className="text-right py-2">
-                    <div className="flex justify-end gap-0.5 sm:gap-1 md:gap-1.5">
-                      <Button variant="ghost" size="icon" className="h-9 w-9 md:h-9 md:w-9 text-muted-foreground hover:text-primary" onClick={() => onShowLocations(supplier)} title="Standort-Zuordnungen">
+                    <div className="flex justify-end gap-0.5 sm:gap-1 md:gap-1.5 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                      <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground hover:text-foreground" onClick={() => onShowLocations(supplier)} title="Standort-Zuordnungen">
                         <Store className="w-4 h-4" />
                       </Button>
-                      <Button variant="ghost" size="icon" className="h-9 w-9 md:h-9 md:w-9 text-muted-foreground hover:text-primary" onClick={() => onSendInvitation(supplier)} disabled={invitingSupplierId === supplier.id || sendingInvitation} title="Einladung zum Lieferantenportal senden">
+                      <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground hover:text-foreground" onClick={() => onSendInvitation(supplier)} disabled={invitingSupplierId === supplier.id || sendingInvitation} title="Einladung zum Lieferantenportal senden">
                         {invitingSupplierId === supplier.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
                       </Button>
                       {supplierArticles.length > 0 && (
-                        <Button variant="ghost" size="icon" className="h-9 w-9 md:h-9 md:w-9 text-muted-foreground hover:text-primary" onClick={() => onPrintOrderList(supplier, supplierArticles)} title="Bestellliste drucken">
+                        <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground hover:text-foreground" onClick={() => onPrintOrderList(supplier, supplierArticles)} title="Bestellliste drucken">
                           <FileText className="w-4 h-4" />
                         </Button>
                       )}
-                      <Button variant="ghost" size="icon" className="h-9 w-9 md:h-9 md:w-9" onClick={() => onEdit(supplier)}>
+                      <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground hover:text-foreground" onClick={() => onEdit(supplier)}>
                         <Pencil className="w-4 h-4" />
                       </Button>
-                      <Button variant="ghost" size="icon" className="h-9 w-9 md:h-9 md:w-9 text-destructive hover:text-destructive" onClick={() => onDelete(supplier)}>
+                      <Button variant="ghost" size="icon" className="h-9 w-9 text-destructive hover:text-destructive" onClick={() => onDelete(supplier)}>
                         <Trash2 className="w-4 h-4" />
                       </Button>
                     </div>
