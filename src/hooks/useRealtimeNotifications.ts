@@ -16,6 +16,8 @@ export const useRealtimeNotifications = () => {
     // Only subscribe when user is authenticated
     if (!user) return;
 
+    console.log('🔔 Setting up realtime notifications channel...');
+    
     const channel = supabase
       .channel('global-notifications')
       .on(
@@ -26,6 +28,7 @@ export const useRealtimeNotifications = () => {
           table: 'cart_drafts'
         },
         (payload) => {
+          console.log('🔔 Realtime INSERT received:', payload);
           // Invalidate all cart-drafts queries regardless of locationId
           queryClient.invalidateQueries({ 
             predicate: (query) => query.queryKey[0] === 'cart-drafts'
@@ -116,7 +119,12 @@ export const useRealtimeNotifications = () => {
           });
         }
       )
-      .subscribe();
+      .subscribe((status, err) => {
+        console.log('🔔 Realtime subscription status:', status);
+        if (err) {
+          console.error('🔔 Realtime subscription error:', err);
+        }
+      });
 
     return () => {
       supabase.removeChannel(channel);
