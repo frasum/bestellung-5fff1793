@@ -992,5 +992,20 @@
     "unlimited": "ไม่จำกัด",
     "upgradePlan": "อัปเกรดแพลน",
     "limitReached": "ถึงขีดจำกัดแล้ว"
+  },
+  "quickCapture": {
+    "title": "บันทึกด่วน",
+    "stepPhoto": "ภาพถ่าย",
+    "stepArticle": "สินค้า",
+    "stepSupplier": "ซัพพลายเออร์",
+    "stepConfirm": "เสร็จสิ้น",
+    "takePhoto": "ถ่ายภาพ",
+    "uploadFile": "อัปโหลด",
+    "photoHint": "ถ่ายภาพสินค้าและ AI จะจดจำชื่อ หมวดหมู่ และหน่วยโดยอัตโนมัติ",
+    "aiRecognition": "การจดจำด้วย AI",
+    "articleName": "ชื่อสินค้า",
+    "saveArticle": "บันทึกสินค้า",
+    "captureNext": "บันทึกสินค้าถัดไป",
+    "successTitle": "สร้างสินค้าสำเร็จ!"
   }
 }

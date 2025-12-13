@@ -992,5 +992,20 @@
     "unlimited": "Illimitato",
     "upgradePlan": "Aggiorna Piano",
     "limitReached": "Limite raggiunto"
+  },
+  "quickCapture": {
+    "title": "Acquisizione Rapida",
+    "stepPhoto": "Foto",
+    "stepArticle": "Articolo",
+    "stepSupplier": "Fornitore",
+    "stepConfirm": "Fatto",
+    "takePhoto": "Scatta Foto",
+    "uploadFile": "Carica",
+    "photoHint": "Fotografa un prodotto e l'IA riconoscerà automaticamente nome, categoria e unità.",
+    "aiRecognition": "Riconoscimento IA",
+    "articleName": "Nome articolo",
+    "saveArticle": "Salva articolo",
+    "captureNext": "Cattura prossimo articolo",
+    "successTitle": "Articolo creato con successo!"
   }
 }

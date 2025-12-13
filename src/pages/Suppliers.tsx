@@ -39,6 +39,7 @@ import { BulkCategoryToolbar } from '@/components/suppliers/BulkCategoryToolbar'
 import { DeleteConfirmationDialogs } from '@/components/suppliers/DeleteConfirmationDialogs';
 import { SuggestionsTab } from '@/components/suppliers/SuggestionsTab';
 import { useSuggestedArticlesCount } from '@/hooks/useSuggestedArticles';
+import { QuickCaptureWizard } from '@/components/suppliers/QuickCaptureWizard';
 
 const Suppliers = () => {
   const { user, loading: authLoading } = useAuth();
@@ -112,6 +113,8 @@ const Suppliers = () => {
   // Subscription limits
   const subscriptionLimits = useSubscriptionLimits();
   const [showSupplierUpgradeDialog, setShowSupplierUpgradeDialog] = useState(false);
+  const [isQuickCaptureOpen, setIsQuickCaptureOpen] = useState(false);
+  const [organizationId, setOrganizationId] = useState<string | null>(null);
   // Local state for multi-select toggles
   const [supplierMultiSelectEnabled, setSupplierMultiSelectEnabled] = useState(() => {
     const saved = localStorage.getItem('suppliers-multi-select');
@@ -161,9 +164,9 @@ const Suppliers = () => {
 
   // pendingChangesBySupplier now comes from useCombinedPendingBySupplier hook
 
-  // Fetch organization name for invitation emails
+  // Fetch organization name and ID for invitation emails and quick capture
   useEffect(() => {
-    const fetchOrgName = async () => {
+    const fetchOrgData = async () => {
       if (!user) return;
       const { data: profile } = await supabase
         .from('profiles')
@@ -172,6 +175,7 @@ const Suppliers = () => {
         .single();
       
       if (profile?.organization_id) {
+        setOrganizationId(profile.organization_id);
         const { data: org } = await supabase
           .from('organizations')
           .select('name')
@@ -180,7 +184,7 @@ const Suppliers = () => {
         if (org) setOrganizationName(org.name);
       }
     };
-    fetchOrgName();
+    fetchOrgData();
   }, [user]);
 
   const handleSendInvitation = async (supplier: Supplier) => {
@@ -532,6 +536,10 @@ const Suppliers = () => {
                 showMultiSelectToggle={advancedSettingsEnabled}
               />
               <div className="flex flex-wrap gap-2 shrink-0">
+                <Button variant="outline" className="h-10 sm:h-9 bg-primary/5 border-primary/30 text-primary hover:bg-primary/10" onClick={() => setIsQuickCaptureOpen(true)}>
+                  <Package className="w-4 h-4 sm:mr-2" />
+                  <span className="hidden sm:inline">Schnell-Erfassung</span>
+                </Button>
                 {advancedSettingsEnabled && (
                   <ExportMenu 
                     filename="suppliers" 
@@ -598,6 +606,28 @@ const Suppliers = () => {
             {suppliersLoading ? (
               <div className="flex items-center justify-center py-12">
                 <Loader2 className="w-8 h-8 animate-spin text-primary" />
+              </div>
+            ) : filteredSuppliers?.length === 0 && !searchQuery && topCategoryFilter === 'all' && categoryFilter === 'all' && (!allArticles || allArticles.length === 0) ? (
+              // Empty catalog onboarding CTA
+              <div className="text-center py-16 bg-gradient-to-b from-primary/5 to-background border border-primary/20 rounded-xl">
+                <div className="flex flex-col items-center gap-6 max-w-md mx-auto px-4">
+                  <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center">
+                    <Package className="w-10 h-10 text-primary" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-semibold mb-2">Starte mit einem Foto!</h3>
+                    <p className="text-muted-foreground">
+                      Fotografiere ein Produkt und die KI erkennt automatisch Name, Kategorie und Einheit. So baust du deinen Katalog in Sekunden auf.
+                    </p>
+                  </div>
+                  <Button size="lg" className="h-14 px-8 text-base" onClick={() => setIsQuickCaptureOpen(true)}>
+                    <Package className="w-5 h-5 mr-2" />
+                    Schnell-Erfassung starten
+                  </Button>
+                  <p className="text-xs text-muted-foreground">
+                    Oder <button className="underline hover:text-foreground" onClick={handleOpenSupplierDialog}>füge manuell einen Lieferanten hinzu</button>
+                  </p>
+                </div>
               </div>
             ) : filteredSuppliers?.length === 0 ? (
               <div className="text-center py-12 bg-card border border-border rounded-xl">
@@ -849,6 +879,31 @@ const Suppliers = () => {
         currentTier={subscriptionLimits.tier}
         currentUsage={subscriptionLimits.usage.suppliersCount}
         limit={subscriptionLimits.limits.suppliers}
+      />
+
+      {/* Quick Capture Wizard */}
+      <QuickCaptureWizard
+        open={isQuickCaptureOpen}
+        onOpenChange={setIsQuickCaptureOpen}
+        suppliers={suppliers || []}
+        categories={allArticleCategories}
+        units={existingUnits}
+        onCreateSupplier={async (input) => {
+          const result = await createSupplier.mutateAsync(input);
+          return result;
+        }}
+        onCreateArticle={async (input) => {
+          const result = await createArticle.mutateAsync(input);
+          return result;
+        }}
+        onUploadImage={async (base64, orgId, articleId) => {
+          const imageUrl = await uploadImage(base64, orgId, articleId);
+          if (imageUrl) {
+            await updateArticle.mutateAsync({ id: articleId, image_url: imageUrl });
+          }
+          return imageUrl;
+        }}
+        organizationId={organizationId}
       />
     </DashboardLayout>
   );

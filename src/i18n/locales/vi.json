@@ -992,5 +992,20 @@
     "unlimited": "Không giới hạn",
     "upgradePlan": "Nâng cấp gói",
     "limitReached": "Đã đạt giới hạn"
+  },
+  "quickCapture": {
+    "title": "Ghi Nhanh",
+    "stepPhoto": "Ảnh",
+    "stepArticle": "Sản phẩm",
+    "stepSupplier": "Nhà cung cấp",
+    "stepConfirm": "Hoàn tất",
+    "takePhoto": "Chụp Ảnh",
+    "uploadFile": "Tải Lên",
+    "photoHint": "Chụp ảnh sản phẩm và AI sẽ tự động nhận diện tên, danh mục và đơn vị.",
+    "aiRecognition": "Nhận diện AI",
+    "articleName": "Tên sản phẩm",
+    "saveArticle": "Lưu sản phẩm",
+    "captureNext": "Ghi sản phẩm tiếp theo",
+    "successTitle": "Tạo sản phẩm thành công!"
   }
 }
