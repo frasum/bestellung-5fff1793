@@ -5,6 +5,13 @@ import { Input } from '@/components/ui/input';
 import { Minus, Plus, Search, Star } from 'lucide-react';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { cn } from '@/lib/utils';
+
+// KAO supplier ID for Thai text display enhancement
+const KAO_SUPPLIER_ID = '7426cdfc-9f66-4e8b-9fa7-8c9a01157e32';
+
+// Check if text contains Thai characters (Unicode range U+0E00–U+0E7F)
+const containsThai = (text: string): boolean => /[\u0E00-\u0E7F]/.test(text);
+
 interface Article {
   id: string;
   name: string;
@@ -150,6 +157,7 @@ export const ArticleList = ({
                   onQuantityChange={onQuantityChange}
                   isFavorite={true}
                   onToggleFavorite={onToggleFavorite}
+                  selectedSupplierId={selectedSupplierId}
                 />
               ))}
             </div>
@@ -167,6 +175,7 @@ export const ArticleList = ({
                 onQuantityChange={onQuantityChange}
                 isFavorite={false}
                 onToggleFavorite={onToggleFavorite}
+                selectedSupplierId={selectedSupplierId}
               />
             ))}
           </div>
@@ -230,6 +239,7 @@ interface ArticleCardProps {
   isOtherSupplier?: boolean;
   isFavorite?: boolean;
   onToggleFavorite?: (articleId: string) => void;
+  selectedSupplierId?: string | null;
 }
 
 const ArticleCard = ({ 
@@ -239,6 +249,7 @@ const ArticleCard = ({
   isOtherSupplier,
   isFavorite = false,
   onToggleFavorite,
+  selectedSupplierId,
 }: ArticleCardProps) => {
   const { lightTap, mediumTap } = useHapticFeedback();
   const isSelected = quantity > 0;
@@ -293,7 +304,14 @@ const ArticleCard = ({
             {article.name}
           </h3>
           {article.description && (
-            <p className="text-xs text-muted-foreground/80">{article.description}</p>
+            <p className={cn(
+              "text-muted-foreground/80",
+              selectedSupplierId === KAO_SUPPLIER_ID && containsThai(article.description)
+                ? "text-base leading-relaxed"
+                : "text-xs"
+            )}>
+              {article.description}
+            </p>
           )}
         </div>
 
