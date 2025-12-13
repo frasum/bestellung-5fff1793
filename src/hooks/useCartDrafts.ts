@@ -22,9 +22,13 @@ export interface CartDraft {
 export interface CartDraftItem {
   id: string;
   draft_id: string;
-  article_id: string;
+  article_id: string | null;
   quantity: number;
   created_at: string;
+  is_free_text_item?: boolean;
+  free_text_name?: string | null;
+  free_text_unit?: string | null;
+  supplier_id?: string | null;
   article?: {
     id: string;
     organization_id: string;

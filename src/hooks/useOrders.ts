@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { CartItem } from '@/contexts/CartContext';
+import { CartItem, FreeCartItem } from '@/contexts/CartContext';
 
 export interface Order {
   id: string;
@@ -48,6 +48,8 @@ export interface OrderItem {
   unit_price: number;
   total_price: number;
   created_at: string;
+  is_free_text_item?: boolean;
+  free_text_description?: string | null;
 }
 
 interface CreateOrderInput {
@@ -55,6 +57,7 @@ interface CreateOrderInput {
   supplierName: string;
   supplierEmail: string;
   items: CartItem[];
+  freeItems?: FreeCartItem[];
   deliveryAddress: string;
   notes?: string;
   restaurantName: string;
@@ -152,7 +155,7 @@ export const useCreateOrder = () => {
         console.error('Failed to create confirmation token:', tokenError);
       }
 
-      // Create order items
+      // Create order items (regular articles)
       const orderItems = input.items.map((item) => ({
         order_id: order.id,
         article_id: item.article.id,
@@ -161,11 +164,27 @@ export const useCreateOrder = () => {
         unit: item.article.unit,
         unit_price: Number(item.article.price),
         total_price: Number(item.article.price) * item.quantity,
+        is_free_text_item: false,
       }));
+
+      // Add free text items
+      const freeOrderItems = (input.freeItems || []).map((item) => ({
+        order_id: order.id,
+        article_id: null,
+        article_name: item.name,
+        quantity: item.quantity,
+        unit: item.unit,
+        unit_price: 0,
+        total_price: 0,
+        is_free_text_item: true,
+        free_text_description: item.name,
+      }));
+
+      const allOrderItems = [...orderItems, ...freeOrderItems];
 
       const { error: itemsError } = await supabase
         .from('order_items')
-        .insert(orderItems);
+        .insert(allOrderItems);
 
       if (itemsError) throw itemsError;
 

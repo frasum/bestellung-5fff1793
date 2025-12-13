@@ -311,28 +311,36 @@ const Orders = () => {
   };
 
   const loadDraftToCart = (draft: CartDraft) => {
-    // 1. Prüfen ob Artikel vorhanden sind
-    const validItems = draft.items?.filter(item => item.article) || [];
+    // 1. Reguläre Artikel (mit article) und freie Artikel (is_free_text_item) trennen
+    const regularItems = draft.items?.filter(item => item.article && !item.is_free_text_item) || [];
+    const freeTextItems = draft.items?.filter(item => item.is_free_text_item && item.free_text_name) || [];
     
-    if (validItems.length === 0) {
-      // Warnung anzeigen statt stillschweigend zu löschen
+    if (regularItems.length === 0 && freeTextItems.length === 0) {
       toast.error('Diese Vorbestellung enthält keine Artikel und kann nicht übernommen werden.');
       setLoadDialogOpen(false);
       setSelectedDraft(null);
       return;
     }
     
-    // 2. Nur wenn Items vorhanden, in Warenkorb laden
+    // 2. Beide Typen in Warenkorb laden
     if (loadFromDraft) {
       loadFromDraft(
-        validItems.map(item => ({
+        regularItems.map(item => ({
           article: item.article!,
           quantity: item.quantity,
         })),
         draft.desired_delivery_date,
         draft.desired_time_window,
         draft.location_id,
-        draft.employee_id
+        draft.employee_id,
+        // Freie Artikel als FreeCartItem[]
+        freeTextItems.map(item => ({
+          id: item.id,
+          name: item.free_text_name!,
+          unit: item.free_text_unit || 'Stk',
+          quantity: item.quantity,
+          supplier_id: item.supplier_id || '',
+        }))
       );
       
       // 3. Erst NACH erfolgreichem Laden die Vorbestellung löschen
