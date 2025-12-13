@@ -1,7 +1,7 @@
 project_id = "lclhwmxpbpmqtiwmgmgm"
 
 [functions.identify-article]
-verify_jwt = true
+verify_jwt = false
 
 [functions.send-order-email]
 verify_jwt = true
@@ -82,4 +82,10 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.create-photo-suggestion]
+verify_jwt = false
+
+[functions.verify-photo-capture-token]
+verify_jwt = false
+
+[functions.create-article-from-mobile]
 verify_jwt = false
