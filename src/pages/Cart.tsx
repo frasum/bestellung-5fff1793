@@ -29,7 +29,7 @@ const Cart = () => {
   const { activeLocation } = useLocationContext();
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const { items, removeItem, updateQuantity, getTotal, clearCart, draftDeliveryDate, draftTimeWindow } = useCart();
+  const { items, freeItems, removeItem, updateQuantity, removeFreeItem, updateFreeItemQuantity, getTotal, clearCart, draftDeliveryDate, draftTimeWindow } = useCart();
   const createDraft = useCreateCartDraft();
   const { data: supplierLocations } = useSupplierLocations();
   
@@ -96,20 +96,38 @@ const Cart = () => {
   // Group items by supplier
   const itemsBySupplier = items.reduce((acc, item) => {
     const supplierName = item.article.suppliers?.name || 'Unbekannter Lieferant';
-    if (!acc[supplierName]) {
-      acc[supplierName] = [];
+    const supplierId = item.article.supplier_id;
+    if (!acc[supplierId]) {
+      acc[supplierId] = { name: supplierName, items: [] };
     }
-    acc[supplierName].push(item);
+    acc[supplierId].items.push(item);
     return acc;
-  }, {} as Record<string, typeof items>);
+  }, {} as Record<string, { name: string; items: typeof items }>);
 
-  const supplierTotals = Object.entries(itemsBySupplier).map(([name, supplierItems]) => {
+  // Group free items by supplier
+  const freeItemsBySupplier = freeItems.reduce((acc, item) => {
+    if (!acc[item.supplier_id]) {
+      acc[item.supplier_id] = [];
+    }
+    acc[item.supplier_id].push(item);
+    return acc;
+  }, {} as Record<string, typeof freeItems>);
+
+  // Combine supplier IDs from both regular and free items
+  const allSupplierIds = [...new Set([...Object.keys(itemsBySupplier), ...Object.keys(freeItemsBySupplier)])];
+
+  const supplierTotals = allSupplierIds.map((supplierId) => {
+    const regularData = itemsBySupplier[supplierId];
+    const freeItemsForSupplier = freeItemsBySupplier[supplierId] || [];
+    const supplierItems = regularData?.items || [];
     const supplier = supplierItems[0]?.article.suppliers;
-    const supplierId = supplierItems[0]?.article.supplier_id;
+    const name = regularData?.name || 'Unbekannter Lieferant';
     return {
+      supplierId,
       name,
       total: supplierItems.reduce((sum, item) => sum + Number(item.article.price) * item.quantity, 0),
       items: supplierItems,
+      freeItems: freeItemsForSupplier,
       minimumOrderValue: getMinimumOrderValue(supplierId, supplier?.minimum_order_value || null),
     };
   });
@@ -146,9 +164,9 @@ const Cart = () => {
           <div>
             <h1 className="text-xl font-semibold text-foreground">{t('cart.title')}</h1>
             <p className="text-sm text-muted-foreground mt-0.5">
-              {items.length === 0 
+              {(items.length + freeItems.length) === 0 
                 ? t('cart.empty')
-                : t('cart.itemCount', { count: items.length })}
+                : t('cart.itemCount', { count: items.length + freeItems.length })}
             </p>
           </div>
           <div className="flex gap-2">
@@ -186,7 +204,7 @@ const Cart = () => {
           </Alert>
         )}
 
-        {items.length === 0 ? (
+        {(items.length + freeItems.length) === 0 ? (
           <div className="text-center py-12 sm:py-16 bg-card border border-border rounded-md">
             <ShoppingCart className="w-12 h-12 sm:w-16 sm:h-16 mx-auto text-muted-foreground/50 mb-4" />
             <h2 className="text-lg font-semibold text-foreground mb-2">{t('cart.empty')}</h2>
@@ -201,7 +219,7 @@ const Cart = () => {
             <div className="xl:hidden sticky top-0 z-10 -mx-4 px-4 py-3 bg-background/95 backdrop-blur-sm border-b border-border">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">{t('cart.itemCount', { count: items.length })}</p>
+                  <p className="text-sm text-muted-foreground">{t('cart.itemCount', { count: items.length + freeItems.length })}</p>
                   <p className="text-xl font-bold text-foreground">€{getTotal().toFixed(2)}</p>
                 </div>
                 <div className="flex gap-2">
@@ -235,8 +253,8 @@ const Cart = () => {
             <div className="grid xl:grid-cols-3 gap-4 md:gap-5 xl:gap-6">
               {/* Cart Items */}
               <div className="xl:col-span-2 space-y-4 md:space-y-5 xl:space-y-6">
-                {supplierTotals.map(({ name, items: supplierItems, total, minimumOrderValue }) => (
-                  <div key={name} className="bg-card border border-border rounded-md overflow-hidden">
+                {supplierTotals.map(({ supplierId, name, items: supplierItems, freeItems: supplierFreeItems, total, minimumOrderValue }) => (
+                  <div key={supplierId} className="bg-card border border-border rounded-md overflow-hidden">
                     <div className="bg-muted/30 px-4 md:px-5 xl:px-6 py-3 md:py-4 border-b border-border flex items-center justify-between gap-2">
                       <div className="flex items-center gap-2 flex-1 min-w-0">
                         <h3 className="font-semibold text-foreground text-sm md:text-base truncate">{name}</h3>
@@ -250,7 +268,7 @@ const Cart = () => {
                         className="h-9 md:h-8 shrink-0"
                         onClick={() => setAddArticleSheet({
                           open: true,
-                          supplierId: supplierItems[0]?.article.supplier_id,
+                          supplierId: supplierId,
                           supplierName: name,
                         })}
                       >
@@ -265,6 +283,63 @@ const Cart = () => {
                           {t('cart.minimumOrderMessage', { supplier: name, amount: `€${minimumOrderValue.toFixed(2)}`, remaining: `€${(minimumOrderValue - total).toFixed(2)}` })}
                         </AlertDescription>
                       </Alert>
+                    )}
+                    
+                    {/* Free Items Section */}
+                    {supplierFreeItems.length > 0 && (
+                      <div className="border-b border-dashed border-border">
+                        {supplierFreeItems.map((freeItem) => (
+                          <div key={freeItem.id} className="p-3 md:p-4 border-b border-border last:border-b-0 bg-amber-50/50 dark:bg-amber-950/20">
+                            <div className="flex items-start gap-3">
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2">
+                                  <h4 className="font-medium text-foreground text-sm md:text-base">{freeItem.name}</h4>
+                                  <span className="text-xs bg-amber-500/20 text-amber-700 dark:text-amber-400 px-1.5 py-0.5 rounded">Frei</span>
+                                </div>
+                                <p className="text-xs md:text-sm text-muted-foreground mt-0.5">
+                                  {freeItem.unit}
+                                </p>
+                              </div>
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                className="h-8 w-8 md:h-10 md:w-10 text-destructive hover:text-destructive shrink-0"
+                                onClick={() => removeFreeItem(freeItem.id)}
+                              >
+                                <Trash2 className="w-4 h-4 md:w-5 md:h-5" />
+                              </Button>
+                            </div>
+                            <div className="flex items-center justify-between mt-3">
+                              <div className="flex items-center gap-2">
+                                <Button
+                                  size="icon"
+                                  variant="outline"
+                                  className="h-9 w-9 md:h-11 md:w-11"
+                                  onClick={() => updateFreeItemQuantity(freeItem.id, freeItem.quantity - 1)}
+                                >
+                                  <Minus className="w-4 h-4" />
+                                </Button>
+                                <Input
+                                  type="number"
+                                  min="1"
+                                  value={freeItem.quantity}
+                                  onChange={(e) => updateFreeItemQuantity(freeItem.id, parseInt(e.target.value) || 1)}
+                                  className="w-14 md:w-16 text-center h-9 md:h-11"
+                                />
+                                <Button
+                                  size="icon"
+                                  variant="outline"
+                                  className="h-9 w-9 md:h-11 md:w-11"
+                                  onClick={() => updateFreeItemQuantity(freeItem.id, freeItem.quantity + 1)}
+                                >
+                                  <Plus className="w-4 h-4" />
+                                </Button>
+                              </div>
+                              <p className="text-xs text-muted-foreground italic">kein Preis</p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
                     )}
                     
                     {/* Mobile/Tablet Card Layout */}
@@ -383,8 +458,8 @@ const Cart = () => {
                 <div className="bg-card border border-border rounded-md p-6 sticky top-6">
                   <h3 className="text-lg font-semibold text-foreground mb-4">{t('checkout.orderSummary')}</h3>
                   <div className="space-y-3 mb-6">
-                    {supplierTotals.map(({ name, total }) => (
-                      <div key={name} className="flex justify-between text-sm">
+                    {supplierTotals.map(({ supplierId, name, total }) => (
+                      <div key={supplierId} className="flex justify-between text-sm">
                         <span className="text-muted-foreground">{name}</span>
                         <span className="text-foreground">€{total.toFixed(2)}</span>
                       </div>

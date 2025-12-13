@@ -53,7 +53,7 @@ const Checkout = () => {
 
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
-  const { items, getTotal, clearCart, updateQuantity, removeItem, draftDeliveryDate, draftTimeWindow, draftLocationId, draftEmployeeId } = useCart();
+  const { items, freeItems, getTotal, clearCart, updateQuantity, removeItem, draftDeliveryDate, draftTimeWindow, draftLocationId, draftEmployeeId } = useCart();
   const { activeLocation } = useLocationContext();
   const createOrder = useCreateOrder();
   const { data: deliveryAddresses, isLoading: addressesLoading } = useDeliveryAddresses(activeLocation?.id);
@@ -132,10 +132,10 @@ const Checkout = () => {
   }, [user, authLoading, navigate]);
 
   useEffect(() => {
-    if (items.length === 0 && completedOrders.length === 0) {
+    if (items.length === 0 && freeItems.length === 0 && completedOrders.length === 0) {
       navigate('/cart');
     }
-  }, [items, completedOrders, navigate]);
+  }, [items, freeItems, completedOrders, navigate]);
 
   // Group items by supplier
   const itemsBySupplier = items.reduce((acc, item) => {
@@ -147,13 +147,21 @@ const Checkout = () => {
         supplierName,
         supplierEmail: '', // Will be fetched
         items: [],
+        freeItems: [],
         total: 0,
       };
     }
     acc[supplierId].items.push(item);
     acc[supplierId].total += Number(item.article.price) * item.quantity;
     return acc;
-  }, {} as Record<string, { supplierId: string; supplierName: string; supplierEmail: string; items: typeof items; total: number }>);
+  }, {} as Record<string, { supplierId: string; supplierName: string; supplierEmail: string; items: typeof items; freeItems: typeof freeItems; total: number }>);
+
+  // Add free items to their respective suppliers
+  freeItems.forEach(freeItem => {
+    if (itemsBySupplier[freeItem.supplier_id]) {
+      itemsBySupplier[freeItem.supplier_id].freeItems.push(freeItem);
+    }
+  });
 
   const formatAddress = (address: typeof deliveryAddresses[0]) => {
     const parts = [address.address_line1];
@@ -288,6 +296,7 @@ const Checkout = () => {
           supplierName: preview.supplierName,
           supplierEmail: preview.supplierEmail,
           items: supplier.items,
+          freeItems: supplier.freeItems,
           deliveryAddress: preview.deliveryAddress,
           notes: preview.notes,
           restaurantName: preview.restaurantName,
