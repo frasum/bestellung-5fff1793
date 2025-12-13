@@ -262,141 +262,143 @@ export const ArticleOrganizationTab = () => {
         </CardContent>
       </Card>
 
-      {/* Filters and Bulk Actions */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-lg">{t('settings.articleOrganization.title')}</CardTitle>
-          <CardDescription>{t('settings.articleOrganization.description')}</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {/* Sticky Filters and Bulk Actions */}
-          <div className="sticky top-0 z-10 bg-background pb-4 -mx-6 px-6 pt-2 -mt-2 space-y-4">
-            {/* Filters */}
-            <div className="flex flex-wrap gap-2">
-              <div className="relative flex-1 min-w-[200px]">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder={t('common.search')}
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9"
-                />
-              </div>
-              <Select value={filterTopCategory} onValueChange={setFilterTopCategory}>
-                <SelectTrigger className="w-[140px]">
-                  <span className="truncate">
-                    {filterTopCategory === 'all' 
-                      ? t('settings.articleOrganization.topCategory')
-                      : filterTopCategory
-                    }
-                  </span>
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">{t('common.all')}</SelectItem>
-                  {TOP_CATEGORIES.map(cat => (
-                    <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Select value={filterMainCategory} onValueChange={setFilterMainCategory}>
-                <SelectTrigger className="w-[140px]">
-                  <span className="truncate">
-                    {filterMainCategory === 'all' 
-                      ? t('settings.articleOrganization.mainCategory')
-                      : filterMainCategory
-                    }
-                  </span>
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">{t('common.all')}</SelectItem>
-                  {categories.map(cat => (
-                    <SelectItem key={cat.id} value={cat.name}>{cat.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <SupplierOrderUnitSelect
-                value={filterOrderUnit === 'all' ? null : filterOrderUnit}
-                onChange={(v) => setFilterOrderUnit(v || 'all')}
-                isFilter={true}
-                filterLabel={t('settings.orderUnitsShort')}
-                className="w-[160px]"
-              />
-              <Select value={filterSupplier} onValueChange={setFilterSupplier}>
-                <SelectTrigger className="w-[140px]">
-                  <span className="truncate">
-                    {filterSupplier === 'all' 
-                      ? t('articles.supplier')
-                      : suppliers.find(s => s.id === filterSupplier)?.name || filterSupplier
-                    }
-                  </span>
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">{t('common.all')}</SelectItem>
-                  {suppliers.map(s => (
-                    <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Button
-                variant={filterUnassigned ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setFilterUnassigned(!filterUnassigned)}
-              >
-                {t('settings.articleOrganization.onlyUnassigned')}
-              </Button>
-              <Button
-                variant={filterNoOrderUnit ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setFilterNoOrderUnit(!filterNoOrderUnit)}
-              >
-                {t('settings.articleOrganization.onlyNoOrderUnit')}
-              </Button>
-            </div>
-
-            {/* Bulk Actions Toolbar */}
-            {selectedIds.size > 0 && (
-              <div className="flex flex-wrap items-center gap-2 p-3 bg-muted/50 rounded-lg border">
-                <Badge variant="secondary" className="font-normal">
-                  {t('settings.articleOrganization.selectedCount', { count: selectedIds.size })}
-                </Badge>
-                <Select onValueChange={(v) => handleBulkAssignTopCategory(v as TopCategory)}>
-                  <SelectTrigger className="w-[160px] h-8">
-                    <SelectValue placeholder={t('settings.articleOrganization.assignTopCategory')} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {TOP_CATEGORIES.map(cat => (
-                      <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Select onValueChange={handleBulkAssignMainCategory}>
-                  <SelectTrigger className="w-[160px] h-8">
-                    <SelectValue placeholder={t('settings.articleOrganization.assignMainCategory')} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {categories.map(cat => (
-                      <SelectItem key={cat.id} value={cat.name}>{cat.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Select onValueChange={handleBulkAssignOrderUnit}>
-                  <SelectTrigger className="w-[160px] h-8">
-                    <SelectValue placeholder={t('settings.articleOrganization.assignOrderUnit')} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {orderUnits.map(unit => (
-                      <SelectItem key={unit.id} value={unit.id}>
-                        {unit.quantity}× {unit.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Button variant="ghost" size="sm" onClick={deselectAll}>
-                  {t('common.cancel')}
-                </Button>
-              </div>
-            )}
+      {/* Sticky Filters and Bulk Actions - Outside Card for proper sticky behavior */}
+      <div className="sticky top-14 xl:top-0 z-20 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 pb-4 pt-2 space-y-4 -mx-4 px-4 md:-mx-6 md:px-6">
+        <div>
+          <h3 className="text-lg font-semibold">{t('settings.articleOrganization.title')}</h3>
+          <p className="text-sm text-muted-foreground">{t('settings.articleOrganization.description')}</p>
+        </div>
+        
+        {/* Filters */}
+        <div className="flex flex-wrap gap-2">
+          <div className="relative flex-1 min-w-[200px]">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder={t('common.search')}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9"
+            />
           </div>
+          <Select value={filterTopCategory} onValueChange={setFilterTopCategory}>
+            <SelectTrigger className="w-[140px]">
+              <span className="truncate">
+                {filterTopCategory === 'all' 
+                  ? t('settings.articleOrganization.topCategory')
+                  : filterTopCategory
+                }
+              </span>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{t('common.all')}</SelectItem>
+              {TOP_CATEGORIES.map(cat => (
+                <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={filterMainCategory} onValueChange={setFilterMainCategory}>
+            <SelectTrigger className="w-[140px]">
+              <span className="truncate">
+                {filterMainCategory === 'all' 
+                  ? t('settings.articleOrganization.mainCategory')
+                  : filterMainCategory
+                }
+              </span>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{t('common.all')}</SelectItem>
+              {categories.map(cat => (
+                <SelectItem key={cat.id} value={cat.name}>{cat.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <SupplierOrderUnitSelect
+            value={filterOrderUnit === 'all' ? null : filterOrderUnit}
+            onChange={(v) => setFilterOrderUnit(v || 'all')}
+            isFilter={true}
+            filterLabel={t('settings.orderUnitsShort')}
+            className="w-[160px]"
+          />
+          <Select value={filterSupplier} onValueChange={setFilterSupplier}>
+            <SelectTrigger className="w-[140px]">
+              <span className="truncate">
+                {filterSupplier === 'all' 
+                  ? t('articles.supplier')
+                  : suppliers.find(s => s.id === filterSupplier)?.name || filterSupplier
+                }
+              </span>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{t('common.all')}</SelectItem>
+              {suppliers.map(s => (
+                <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Button
+            variant={filterUnassigned ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setFilterUnassigned(!filterUnassigned)}
+          >
+            {t('settings.articleOrganization.onlyUnassigned')}
+          </Button>
+          <Button
+            variant={filterNoOrderUnit ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setFilterNoOrderUnit(!filterNoOrderUnit)}
+          >
+            {t('settings.articleOrganization.onlyNoOrderUnit')}
+          </Button>
+        </div>
+
+        {/* Bulk Actions Toolbar */}
+        {selectedIds.size > 0 && (
+          <div className="flex flex-wrap items-center gap-2 p-3 bg-muted/50 rounded-lg border">
+            <Badge variant="secondary" className="font-normal">
+              {t('settings.articleOrganization.selectedCount', { count: selectedIds.size })}
+            </Badge>
+            <Select onValueChange={(v) => handleBulkAssignTopCategory(v as TopCategory)}>
+              <SelectTrigger className="w-[160px] h-8">
+                <SelectValue placeholder={t('settings.articleOrganization.assignTopCategory')} />
+              </SelectTrigger>
+              <SelectContent>
+                {TOP_CATEGORIES.map(cat => (
+                  <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select onValueChange={handleBulkAssignMainCategory}>
+              <SelectTrigger className="w-[160px] h-8">
+                <SelectValue placeholder={t('settings.articleOrganization.assignMainCategory')} />
+              </SelectTrigger>
+              <SelectContent>
+                {categories.map(cat => (
+                  <SelectItem key={cat.id} value={cat.name}>{cat.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select onValueChange={handleBulkAssignOrderUnit}>
+              <SelectTrigger className="w-[160px] h-8">
+                <SelectValue placeholder={t('settings.articleOrganization.assignOrderUnit')} />
+              </SelectTrigger>
+              <SelectContent>
+                {orderUnits.map(unit => (
+                  <SelectItem key={unit.id} value={unit.id}>
+                    {unit.quantity}× {unit.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button variant="ghost" size="sm" onClick={deselectAll}>
+              {t('common.cancel')}
+            </Button>
+          </div>
+        )}
+      </div>
+
+      {/* Articles Table - Now in separate Card */}
+      <Card>
+        <CardContent className="pt-4">
 
           {/* Articles Table */}
           <div className="border rounded-lg overflow-hidden">
