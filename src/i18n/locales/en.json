@@ -899,7 +899,27 @@
     "tooManyAttempts": "Too many attempts. Please wait.",
     "lockedFor": "Locked for",
     "pinIncomplete": "Please enter all 4 digits",
-    "pinVerifyError": "Verification error"
+    "pinVerifyError": "Verification error",
+    "addFreeItem": "Add free item",
+    "freeItems": "Free items",
+    "freeItem": "Free",
+    "editFreeItem": "Edit free item",
+    "freeItemName": "Item name",
+    "freeItemNamePlaceholder": "e.g. Special item...",
+    "quantity": "Quantity",
+    "unit": "Unit"
+  },
+  "suggestions": {
+    "title": "Suggestions",
+    "filterBySource": "Source:",
+    "sourceEmployee": "Employee",
+    "sourceSupplier": "Supplier",
+    "noSuggestions": "No suggestions available",
+    "noSuggestionsDesc": "Suggestions from employees or suppliers will appear here",
+    "approve": "Approve",
+    "reject": "Reject",
+    "approveAll": "Approve all",
+    "rejectAll": "Reject all"
   },
   "voice": {
     "title": "Voice Order",

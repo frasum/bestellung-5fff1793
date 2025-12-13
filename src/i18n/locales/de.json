@@ -899,7 +899,27 @@
     "tooManyAttempts": "Zu viele Fehlversuche. Bitte warten.",
     "lockedFor": "Gesperrt für",
     "pinIncomplete": "Bitte alle 4 Ziffern eingeben",
-    "pinVerifyError": "Fehler bei der Überprüfung"
+    "pinVerifyError": "Fehler bei der Überprüfung",
+    "addFreeItem": "Freien Artikel hinzufügen",
+    "freeItems": "Freie Artikel",
+    "freeItem": "Frei",
+    "editFreeItem": "Freien Artikel bearbeiten",
+    "freeItemName": "Artikelname",
+    "freeItemNamePlaceholder": "z.B. Sonderartikel...",
+    "quantity": "Menge",
+    "unit": "Einheit"
+  },
+  "suggestions": {
+    "title": "Vorschläge",
+    "filterBySource": "Quelle:",
+    "sourceEmployee": "Mitarbeiter",
+    "sourceSupplier": "Lieferant",
+    "noSuggestions": "Keine Vorschläge vorhanden",
+    "noSuggestionsDesc": "Vorschläge von Mitarbeitern oder Lieferanten erscheinen hier",
+    "approve": "Übernehmen",
+    "reject": "Ablehnen",
+    "approveAll": "Alle übernehmen",
+    "rejectAll": "Alle ablehnen"
   },
   "voice": {
     "title": "Sprachbestellung",

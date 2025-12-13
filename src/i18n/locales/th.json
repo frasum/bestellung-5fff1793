@@ -897,7 +897,27 @@
     "tooManyAttempts": "พยายามมากเกินไป กรุณารอ",
     "lockedFor": "ล็อคเป็นเวลา",
     "pinIncomplete": "กรุณาใส่ตัวเลข 4 หลัก",
-    "pinVerifyError": "เกิดข้อผิดพลาดในการตรวจสอบ"
+    "pinVerifyError": "เกิดข้อผิดพลาดในการตรวจสอบ",
+    "addFreeItem": "เพิ่มสินค้าอิสระ",
+    "freeItems": "สินค้าอิสระ",
+    "freeItem": "อิสระ",
+    "editFreeItem": "แก้ไขสินค้าอิสระ",
+    "freeItemName": "ชื่อสินค้า",
+    "freeItemNamePlaceholder": "เช่น สินค้าพิเศษ...",
+    "quantity": "จำนวน",
+    "unit": "หน่วย"
+  },
+  "suggestions": {
+    "title": "ข้อเสนอแนะ",
+    "filterBySource": "แหล่งที่มา:",
+    "sourceEmployee": "พนักงาน",
+    "sourceSupplier": "ซัพพลายเออร์",
+    "noSuggestions": "ไม่มีข้อเสนอแนะ",
+    "noSuggestionsDesc": "ข้อเสนอแนะจากพนักงานหรือซัพพลายเออร์จะแสดงที่นี่",
+    "approve": "อนุมัติ",
+    "reject": "ปฏิเสธ",
+    "approveAll": "อนุมัติทั้งหมด",
+    "rejectAll": "ปฏิเสธทั้งหมด"
   },
   "voice": {
     "title": "สั่งด้วยเสียง",

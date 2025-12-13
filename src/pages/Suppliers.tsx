@@ -36,6 +36,8 @@ import { SupplierTable } from '@/components/suppliers/SupplierTable';
 import { ArticleTable } from '@/components/suppliers/ArticleTable';
 import { BulkCategoryToolbar } from '@/components/suppliers/BulkCategoryToolbar';
 import { DeleteConfirmationDialogs } from '@/components/suppliers/DeleteConfirmationDialogs';
+import { SuggestionsTab } from '@/components/suppliers/SuggestionsTab';
+import { useSuggestedArticlesCount } from '@/hooks/useSuggestedArticles';
 
 const Suppliers = () => {
   const { user, loading: authLoading } = useAuth();
@@ -104,6 +106,7 @@ const Suppliers = () => {
   const { data: pendingArticleIds } = usePendingArticleIds();
   const { data: recentlyActiveSuppliers } = useRecentlyActiveSuppliers();
   const { data: lastOrderMap } = useLastOrderByArticle();
+  const { data: suggestionsCount } = useSuggestedArticlesCount();
 
   // Subscription limits
   const subscriptionLimits = useSubscriptionLimits();
@@ -478,9 +481,17 @@ const Suppliers = () => {
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-2 max-w-sm md:max-w-md">
+          <TabsList className="grid w-full grid-cols-3 max-w-md md:max-w-lg">
             <TabsTrigger value="suppliers">Lieferanten</TabsTrigger>
             <TabsTrigger value="articles">Alle Artikel</TabsTrigger>
+            <TabsTrigger value="suggestions" className="relative">
+              Vorschläge
+              {(suggestionsCount ?? 0) > 0 && (
+                <span className="absolute -top-1 -right-1 bg-amber-500 text-white text-xs font-bold rounded-full h-5 min-w-5 px-1 flex items-center justify-center">
+                  {suggestionsCount}
+                </span>
+              )}
+            </TabsTrigger>
           </TabsList>
 
           {/* Suppliers Tab */}
@@ -751,6 +762,11 @@ const Suppliers = () => {
                 }}
               />
             )}
+          </TabsContent>
+
+          {/* Suggestions Tab */}
+          <TabsContent value="suggestions" className="space-y-4">
+            <SuggestionsTab suppliers={suppliers || []} />
           </TabsContent>
         </Tabs>
       </div>
