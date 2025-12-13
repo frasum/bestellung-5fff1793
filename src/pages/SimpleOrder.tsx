@@ -432,11 +432,28 @@ const SimpleOrder = () => {
         })
       );
 
-      // Check for errors
-      const errors = results.filter(r => r.error || r.data?.error);
+      // Log results for debugging
+      console.log('Submit results:', results.map(r => ({
+        supplierId: r.supplierId,
+        success: r.data?.success,
+        error: r.error?.message,
+        dataError: r.data?.error,
+      })));
+
+      // Check for errors - only fail if there's a real error, not just missing success flag
+      const errors = results.filter(r => {
+        // Network/SDK error from supabase.functions.invoke
+        if (r.error) return true;
+        // Response has explicit error property
+        if (r.data?.error) return true;
+        // Response explicitly indicates failure
+        if (r.data && r.data.success === false) return true;
+        return false;
+      });
+      
       if (errors.length > 0) {
         console.error('Errors submitting orders:', errors);
-        setError(errors[0].data?.error || errors[0].error?.message);
+        setError(errors[0].data?.error || errors[0].error?.message || 'Unbekannter Fehler');
         setStatus('error');
         return;
       }
