@@ -1,7 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Search, Plus, Minus, Check } from 'lucide-react';
-import { useArticlesBySupplier } from '@/hooks/useArticles';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import {
   Sheet,
@@ -14,6 +13,12 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 
+interface Article {
+  id: string;
+  name: string;
+  supplier_id: string;
+}
+
 interface AddArticleSheetSimpleProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -21,6 +26,7 @@ interface AddArticleSheetSimpleProps {
   supplierName: string;
   quantities: Record<string, number>;
   onQuantityChange: (articleId: string, delta: number) => void;
+  articles: Article[];
 }
 
 export const AddArticleSheetSimple = ({
@@ -30,22 +36,23 @@ export const AddArticleSheetSimple = ({
   supplierName,
   quantities,
   onQuantityChange,
+  articles,
 }: AddArticleSheetSimpleProps) => {
   const { t } = useTranslation();
   const { lightTap } = useHapticFeedback();
-  const { data: articles, isLoading } = useArticlesBySupplier(open ? supplierId : null);
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Filter articles by supplier
+  const supplierArticles = useMemo(() => 
+    articles.filter(a => a.supplier_id === supplierId),
+    [articles, supplierId]
+  );
 
   // Filter and sort articles - items in cart first
   const filteredArticles = useMemo(() => {
-    if (!articles) return [];
-    
     const query = searchQuery.toLowerCase();
-    const filtered = articles.filter(article => 
-      article.name.toLowerCase().includes(query) ||
-      article.sku?.toLowerCase().includes(query) ||
-      article.category?.toLowerCase().includes(query) ||
-      article.description?.toLowerCase().includes(query)
+    const filtered = supplierArticles.filter(article => 
+      article.name.toLowerCase().includes(query)
     );
 
     // Sort: items in cart first, then alphabetically
@@ -56,7 +63,7 @@ export const AddArticleSheetSimple = ({
       if (!aInCart && bInCart) return 1;
       return a.name.localeCompare(b.name);
     });
-  }, [articles, searchQuery, quantities]);
+  }, [supplierArticles, searchQuery, quantities]);
 
   const handleQuantityChange = (articleId: string, delta: number) => {
     lightTap();
@@ -91,11 +98,7 @@ export const AddArticleSheetSimple = ({
         </SheetHeader>
 
         <ScrollArea className="flex-1">
-          {isLoading ? (
-            <div className="p-4 text-center text-muted-foreground">
-              {t('common.loading')}
-            </div>
-          ) : filteredArticles.length === 0 ? (
+          {filteredArticles.length === 0 ? (
             <div className="p-4 text-center text-muted-foreground">
               {searchQuery ? t('common.noResults') : t('articles.noArticles')}
             </div>
