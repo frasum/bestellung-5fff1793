@@ -759,6 +759,7 @@ const SimpleOrder = () => {
           }}
           onConfirm={handleSubmit}
           isSubmitting={status === 'submitting'}
+          allArticles={allArticles}
         />
       );
     }

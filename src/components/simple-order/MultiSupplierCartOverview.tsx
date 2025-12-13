@@ -59,6 +59,7 @@ interface MultiSupplierCartOverviewProps {
   onBack: () => void;
   onConfirm: () => void;
   isSubmitting: boolean;
+  allArticles: Article[];
 }
 
 const getLocale = (lang: string) => {
@@ -84,6 +85,7 @@ export const MultiSupplierCartOverview = ({
   onBack,
   onConfirm,
   isSubmitting,
+  allArticles,
 }: MultiSupplierCartOverviewProps) => {
   const { t, i18n } = useTranslation();
   const { lightTap, heavyTap } = useHapticFeedback();
@@ -417,6 +419,7 @@ export const MultiSupplierCartOverview = ({
         supplierName={addArticleSheet.supplierName}
         quantities={quantities}
         onQuantityChange={onQuantityChange}
+        articles={allArticles}
       />
     </div>
   );
