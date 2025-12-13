@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import * as bcrypt from "https://deno.land/x/bcrypt@v0.4.1/mod.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -92,10 +93,20 @@ serve(async (req) => {
       );
     }
 
-    // Compare PIN (simple string comparison)
-    const isValid = employee.pin_code === pin;
+    // Compare PIN using bcrypt
+    // Support both hashed (starts with $2) and legacy plaintext PINs
+    let isValid = false;
+    const storedPin = employee.pin_code;
     
-    console.log('PIN verification result:', isValid ? 'valid' : 'invalid');
+    if (storedPin.startsWith('$2')) {
+      // Hashed PIN - use bcrypt comparison
+      isValid = await bcrypt.compare(pin, storedPin);
+      console.log('PIN verification (bcrypt):', isValid ? 'valid' : 'invalid');
+    } else {
+      // Legacy plaintext PIN - direct comparison (for backward compatibility)
+      isValid = storedPin === pin;
+      console.log('PIN verification (legacy plaintext):', isValid ? 'valid' : 'invalid');
+    }
 
     // Record this attempt for rate limiting (only for failed attempts)
     if (!isValid) {

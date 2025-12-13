@@ -17,7 +17,7 @@ interface EmployeeTokensOverviewProps {
   onEdit: (token: any) => void;
   onToggleActive: (id: string, isActive: boolean) => void;
   onDelete: (id: string) => void;
-  onUpdateEmployeePin?: (employeeId: string, pinCode: string | null) => Promise<void>;
+  onUpdateEmployeePin?: (employeeId: string, pin: string | null) => Promise<void>;
 }
 
 const LANGUAGES = [
@@ -40,7 +40,8 @@ export function EmployeeTokensOverview({ tokens, onEdit, onToggleActive, onDelet
 
   const openPinDialog = (token: any) => {
     setPinDialogToken(token);
-    setPinValue(token.employee?.pin_code || '');
+    // Don't pre-populate - PIN is now hashed and not readable
+    setPinValue('');
   };
 
   const closePinDialog = () => {

@@ -65,3 +65,6 @@ verify_jwt = false
 
 [functions.verify-employee-pin]
 verify_jwt = false
+
+[functions.hash-employee-pin]
+verify_jwt = true
