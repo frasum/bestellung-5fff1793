@@ -570,7 +570,11 @@
     "footerTextDesc": "Visualizzato in fondo alla pagina. Markdown supportato.",
     "employees": {
       "voiceInput": "Input vocale",
-      "voiceInputDescription": "Effettuare ordini tramite voce (Whisper + AI)"
+      "voiceInputDescription": "Effettuare ordini tramite voce (Whisper + AI)",
+      "canAddFreeItems": "Consenti articoli liberi",
+      "canAddFreeItemsDescription": "Il dipendente può aggiungere articoli liberi agli ordini",
+      "canCapturePhotos": "Cattura foto",
+      "canCapturePhotosDescription": "Il dipendente può catturare e assegnare foto degli articoli"
     }
   },
   "landing": {
@@ -943,6 +947,39 @@
       "medium": "Da verificare",
       "low": "Incerto"
     }
+  },
+  "photoCapture": {
+    "title": "Cattura foto",
+    "progress": "Progresso",
+    "of": "di",
+    "allDone": "Tutti gli articoli hanno foto!",
+    "remaining": "{{count}} articoli senza foto",
+    "search": "Cerca articoli...",
+    "noPending": "Nessun articolo senza foto",
+    "noResults": "Nessun risultato per la ricerca",
+    "allComplete": "Tutti gli articoli hanno già foto",
+    "capture": "Foto",
+    "invalidFile": "Seleziona un file immagine",
+    "fileTooLarge": "L'immagine deve essere max. 10MB",
+    "matchFound": "Articolo riconosciuto!",
+    "analysisFailed": "Analisi fallita",
+    "uploaded": "Foto salvata!",
+    "uploadFailed": "Caricamento fallito",
+    "suggestionCreated": "Suggerimento inviato!",
+    "suggestionFailed": "Suggerimento fallito",
+    "matchConfirmed": "Articolo riconosciuto",
+    "differentMatch": "L'IA riconosce: {{name}}",
+    "noMatch": "Nessun articolo corrispondente trovato",
+    "createSuggestion": "Proponi come nuovo articolo",
+    "uploadAnyway": "Carica comunque",
+    "supplier": "Fornitore",
+    "category": "Categoria",
+    "articleName": "Nome articolo",
+    "unit": "Unità",
+    "analyzing": "Analisi in corso...",
+    "uploadPhoto": "Carica foto",
+    "takePhoto": "Scatta foto",
+    "close": "Chiudi"
   },
   "subscription": {
     "usageDashboard": "Utilizzo & Limiti",

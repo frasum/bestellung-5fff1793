@@ -570,7 +570,11 @@
     "footerTextDesc": "แสดงที่ด้านล่างของหน้า รองรับ Markdown",
     "employees": {
       "voiceInput": "สั่งด้วยเสียง",
-      "voiceInputDescription": "สั่งซื้อด้วยเสียง (Whisper + AI)"
+      "voiceInputDescription": "สั่งซื้อด้วยเสียง (Whisper + AI)",
+      "canAddFreeItems": "อนุญาตให้เพิ่มสินค้าอิสระ",
+      "canAddFreeItemsDescription": "พนักงานสามารถเพิ่มสินค้าอิสระในคำสั่งซื้อ",
+      "canCapturePhotos": "ถ่ายภาพสินค้า",
+      "canCapturePhotosDescription": "พนักงานสามารถถ่ายและกำหนดภาพสินค้า"
     }
   },
   "landing": {
@@ -943,6 +947,39 @@
       "medium": "กรุณาตรวจสอบ",
       "low": "ไม่แน่ใจ"
     }
+  },
+  "photoCapture": {
+    "title": "ถ่ายภาพสินค้า",
+    "progress": "ความคืบหน้า",
+    "of": "จาก",
+    "allDone": "สินค้าทั้งหมดมีรูปภาพแล้ว!",
+    "remaining": "{{count}} สินค้าไม่มีรูปภาพ",
+    "search": "ค้นหาสินค้า...",
+    "noPending": "ไม่มีสินค้าที่ไม่มีรูปภาพ",
+    "noResults": "ไม่พบผลลัพธ์สำหรับการค้นหา",
+    "allComplete": "สินค้าทั้งหมดมีรูปภาพแล้ว",
+    "capture": "ถ่ายภาพ",
+    "invalidFile": "กรุณาเลือกไฟล์รูปภาพ",
+    "fileTooLarge": "รูปภาพต้องไม่เกิน 10MB",
+    "matchFound": "รู้จักสินค้า!",
+    "analysisFailed": "วิเคราะห์ล้มเหลว",
+    "uploaded": "บันทึกรูปภาพแล้ว!",
+    "uploadFailed": "อัปโหลดล้มเหลว",
+    "suggestionCreated": "ส่งข้อเสนอแนะแล้ว!",
+    "suggestionFailed": "ข้อเสนอแนะล้มเหลว",
+    "matchConfirmed": "รู้จักสินค้า",
+    "differentMatch": "AI รู้จัก: {{name}}",
+    "noMatch": "ไม่พบสินค้าที่ตรงกัน",
+    "createSuggestion": "เสนอเป็นสินค้าใหม่",
+    "uploadAnyway": "อัปโหลดต่อไป",
+    "supplier": "ซัพพลายเออร์",
+    "category": "หมวดหมู่",
+    "articleName": "ชื่อสินค้า",
+    "unit": "หน่วย",
+    "analyzing": "กำลังวิเคราะห์...",
+    "uploadPhoto": "อัปโหลดรูปภาพ",
+    "takePhoto": "ถ่ายรูป",
+    "close": "ปิด"
   },
   "subscription": {
     "usageDashboard": "การใช้งาน & ขีดจำกัด",
