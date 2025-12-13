@@ -453,7 +453,7 @@ const SimpleOrder = () => {
       });
 
     // Group free items by supplier
-    const freeItemsBySupplier: Record<string, { name: string; quantity: number; unit: string }[]> = {};
+    const freeItemsBySupplier: Record<string, { name: string; quantity: number; unit: string; supplier_id: string }[]> = {};
     freeItems.forEach(item => {
       if (!freeItemsBySupplier[item.supplier_id]) {
         freeItemsBySupplier[item.supplier_id] = [];
@@ -462,6 +462,7 @@ const SimpleOrder = () => {
         name: item.name,
         quantity: item.quantity,
         unit: item.unit,
+        supplier_id: item.supplier_id,
       });
     });
 
