@@ -52,7 +52,18 @@ import {
   SheetTitle,
   SheetTrigger,
 } from '@/components/ui/sheet';
-import { AlertCircle, CheckCircle, Info, Palette, ArrowLeft, Sun, Moon, Sparkles, MoreHorizontal, ChevronDown, Settings, User, LogOut } from 'lucide-react';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from '@/components/ui/hover-card';
+import { AlertCircle, CheckCircle, Info, Palette, ArrowLeft, Sun, Moon, Sparkles, MoreHorizontal, ChevronDown, Settings, User, LogOut, HelpCircle, CalendarDays } from 'lucide-react';
 import { useTheme } from 'next-themes';
 
 // Color swatch component
@@ -563,7 +574,103 @@ const StyleGuide = () => {
           </CardContent>
         </Card>
 
-        {/* Badges */}
+        {/* Tooltips & Hover-Cards */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Tooltips & Hover-Cards</CardTitle>
+            <CardDescription>Kontextuelle Hinweise bei Hover und Fokus</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* Tooltips */}
+            <div>
+              <h4 className="text-sm font-medium mb-3">Tooltips</h4>
+              <div className="flex flex-wrap gap-4">
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button variant="outline" size="icon">
+                        <HelpCircle className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Hilfe-Tooltip</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button variant="secondary">Hover für Info</Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom">
+                      <p>Tooltip unten positioniert</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button variant="ghost">Mit Beschreibung</Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="right" className="max-w-[200px]">
+                      <p>Längerer Tooltip-Text mit mehr Details zur Funktion</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
+            </div>
+
+            <Separator />
+
+            {/* Hover Cards */}
+            <div>
+              <h4 className="text-sm font-medium mb-3">Hover-Cards</h4>
+              <div className="flex flex-wrap gap-4">
+                <HoverCard>
+                  <HoverCardTrigger asChild>
+                    <Button variant="link" className="p-0 h-auto">@benutzer</Button>
+                  </HoverCardTrigger>
+                  <HoverCardContent className="w-80">
+                    <div className="flex justify-between space-x-4">
+                      <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                        <User className="h-5 w-5 text-primary" />
+                      </div>
+                      <div className="space-y-1 flex-1">
+                        <h4 className="text-sm font-semibold">@benutzer</h4>
+                        <p className="text-sm text-muted-foreground">
+                          Ein Beispielbenutzer für die Demo.
+                        </p>
+                        <div className="flex items-center pt-2">
+                          <CalendarDays className="mr-2 h-4 w-4 opacity-70" />
+                          <span className="text-xs text-muted-foreground">
+                            Beigetreten am 01.01.2024
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </HoverCardContent>
+                </HoverCard>
+
+                <HoverCard>
+                  <HoverCardTrigger asChild>
+                    <Badge variant="outline" className="cursor-pointer">Info Badge</Badge>
+                  </HoverCardTrigger>
+                  <HoverCardContent className="w-64">
+                    <div className="space-y-2">
+                      <h4 className="text-sm font-medium">Zusätzliche Details</h4>
+                      <p className="text-sm text-muted-foreground">
+                        Hover-Cards eignen sich für reichhaltigere Inhalte als Tooltips.
+                      </p>
+                    </div>
+                  </HoverCardContent>
+                </HoverCard>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
         <Card>
           <CardHeader>
             <CardTitle>Badges</CardTitle>
