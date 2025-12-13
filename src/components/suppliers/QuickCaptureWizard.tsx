@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Camera, Upload, Loader2, X, Sparkles, Check, ChevronRight, ChevronLeft, Plus, Building2, Smartphone } from 'lucide-react';
+import { Camera, Upload, Loader2, X, Sparkles, Check, ChevronRight, ChevronLeft, Plus, Building2, Smartphone, Mic } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,12 +8,15 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Supplier, SupplierInput } from '@/hooks/useSuppliers';
 import { ArticleInput } from '@/hooks/useArticles';
 import { MobileQRCodeOption } from './MobileQRCodeOption';
+import { VoiceInventoryCapture, ExtractedArticle } from './VoiceInventoryCapture';
+import { VoiceInventoryResults } from './VoiceInventoryResults';
 
 interface IdentificationResult {
   matched_article_id: string | null;
@@ -37,7 +40,8 @@ interface QuickCaptureWizardProps {
   organizationId: string | null;
 }
 
-type WizardStep = 'photo' | 'qr' | 'article' | 'supplier' | 'confirm';
+type WizardStep = 'capture' | 'qr' | 'voice-results' | 'article' | 'supplier' | 'confirm';
+type CaptureMode = 'photo' | 'voice' | 'mobile';
 
 export const QuickCaptureWizard = ({
   open,
@@ -53,7 +57,8 @@ export const QuickCaptureWizard = ({
   const { t } = useTranslation();
   
   // Wizard state
-  const [step, setStep] = useState<WizardStep>('photo');
+  const [step, setStep] = useState<WizardStep>('capture');
+  const [captureMode, setCaptureMode] = useState<CaptureMode>('photo');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   
@@ -71,6 +76,10 @@ export const QuickCaptureWizard = ({
   const [articlePrice, setArticlePrice] = useState('');
   const [articleSku, setArticleSku] = useState('');
   
+  // Voice inventory state
+  const [voiceTranscript, setVoiceTranscript] = useState('');
+  const [voiceArticles, setVoiceArticles] = useState<ExtractedArticle[]>([]);
+  
   // Supplier state
   const [supplierMode, setSupplierMode] = useState<'existing' | 'new'>('existing');
   const [selectedSupplierId, setSelectedSupplierId] = useState<string>('');
@@ -81,7 +90,8 @@ export const QuickCaptureWizard = ({
   const [newSupplierCustomerNumber, setNewSupplierCustomerNumber] = useState('');
 
   const resetWizard = () => {
-    setStep('photo');
+    setStep('capture');
+    setCaptureMode('photo');
     setPreviewImage(null);
     setIdentificationResult(null);
     setArticleName('');
@@ -97,6 +107,37 @@ export const QuickCaptureWizard = ({
     setNewSupplierEmail('');
     setNewSupplierPhone('');
     setNewSupplierCustomerNumber('');
+    setVoiceTranscript('');
+    setVoiceArticles([]);
+  };
+
+  const handleVoiceResult = (transcript: string, articles: ExtractedArticle[]) => {
+    setVoiceTranscript(transcript);
+    setVoiceArticles(articles);
+    if (articles.length > 0) {
+      setStep('voice-results');
+    } else {
+      toast.info(t('voiceInventory.noArticlesFound', 'Keine Artikel erkannt'));
+    }
+  };
+
+  const handleVoiceArticlesConfirm = (confirmedArticles: ExtractedArticle[]) => {
+    if (confirmedArticles.length === 0) return;
+    
+    // Take the first article for single-article flow
+    const firstArticle = confirmedArticles[0];
+    setArticleName(firstArticle.name);
+    setArticleCategory(firstArticle.category || '');
+    setArticleUnit(firstArticle.unit || 'Stk');
+    setArticleDescription(firstArticle.size ? `Gebindegröße: ${firstArticle.size}` : '');
+    
+    // TODO: For batch mode, we'd handle all articles here
+    // For now, we process the first one and inform user about the rest
+    if (confirmedArticles.length > 1) {
+      toast.info(t('voiceInventory.processingFirst', 'Verarbeite ersten Artikel. Weitere können danach erfasst werden.'));
+    }
+    
+    setStep('article');
   };
 
   const handleClose = () => {
@@ -244,13 +285,13 @@ export const QuickCaptureWizard = ({
   );
 
   const steps: { key: WizardStep; label: string }[] = [
-    { key: 'photo', label: t('quickCapture.stepPhoto', 'Foto') },
+    { key: 'capture', label: t('quickCapture.stepCapture', 'Erfassung') },
     { key: 'article', label: t('quickCapture.stepArticle', 'Artikel') },
     { key: 'supplier', label: t('quickCapture.stepSupplier', 'Lieferant') },
     { key: 'confirm', label: t('quickCapture.stepConfirm', 'Fertig') },
   ];
 
-  const currentStepIndex = steps.findIndex(s => s.key === step);
+  const currentStepIndex = step === 'voice-results' ? 0 : steps.findIndex(s => s.key === step);
 
   const canProceedToSupplier = articleName.trim() && articlePrice;
   const canSave = supplierMode === 'existing' ? selectedSupplierId : (newSupplierName.trim() && newSupplierEmail.trim());
@@ -287,101 +328,136 @@ export const QuickCaptureWizard = ({
           ))}
         </div>
 
-        {/* Step 1: Photo */}
-        {step === 'photo' && (
+        {/* Step 1: Capture (Photo, Voice, or Mobile) */}
+        {step === 'capture' && (
           <div className="space-y-4">
-            <div className="p-6 rounded-lg border-2 border-dashed border-primary/30 bg-primary/5">
-              {previewImage ? (
-                <div className="relative">
-                  <img src={previewImage} alt="Preview" className="w-full h-48 object-cover rounded-md" />
-                  {isAnalyzing && (
-                    <div className="absolute inset-0 bg-background/80 flex items-center justify-center rounded-md">
-                      <div className="flex flex-col items-center gap-2">
-                        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                        <span className="text-sm text-muted-foreground">{t('quickCapture.analyzing', 'Wird analysiert...')}</span>
+            <Tabs value={captureMode} onValueChange={(v) => setCaptureMode(v as CaptureMode)}>
+              <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="photo" className="gap-1.5">
+                  <Camera className="h-4 w-4" />
+                  <span className="hidden sm:inline">{t('quickCapture.tabPhoto', 'Foto')}</span>
+                </TabsTrigger>
+                <TabsTrigger value="voice" className="gap-1.5">
+                  <Mic className="h-4 w-4" />
+                  <span className="hidden sm:inline">{t('quickCapture.tabVoice', 'Sprache')}</span>
+                </TabsTrigger>
+                <TabsTrigger value="mobile" className="gap-1.5">
+                  <Smartphone className="h-4 w-4" />
+                  <span className="hidden sm:inline">{t('quickCapture.tabMobile', 'Handy')}</span>
+                </TabsTrigger>
+              </TabsList>
+
+              {/* Photo Tab */}
+              <TabsContent value="photo" className="mt-4">
+                <div className="p-6 rounded-lg border-2 border-dashed border-primary/30 bg-primary/5">
+                  {previewImage ? (
+                    <div className="relative">
+                      <img src={previewImage} alt="Preview" className="w-full h-48 object-cover rounded-md" />
+                      {isAnalyzing && (
+                        <div className="absolute inset-0 bg-background/80 flex items-center justify-center rounded-md">
+                          <div className="flex flex-col items-center gap-2">
+                            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                            <span className="text-sm text-muted-foreground">{t('quickCapture.analyzing', 'Wird analysiert...')}</span>
+                          </div>
+                        </div>
+                      )}
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="absolute top-2 right-2 h-8 w-8 bg-background/80 hover:bg-background"
+                        onClick={() => { setPreviewImage(null); setIdentificationResult(null); }}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center gap-6 py-8">
+                      <div className="flex items-center gap-2 text-primary">
+                        <Sparkles className="h-6 w-6" />
+                        <span className="font-medium">{t('quickCapture.aiRecognition', 'KI-Artikelerkennung')}</span>
                       </div>
+                      
+                      <div className="flex gap-3">
+                        <input
+                          ref={cameraInputRef}
+                          type="file"
+                          accept="image/*"
+                          capture="environment"
+                          className="hidden"
+                          onChange={handleFileSelect}
+                        />
+                        <input
+                          ref={fileInputRef}
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={handleFileSelect}
+                        />
+                        
+                        <Button
+                          variant="default"
+                          size="lg"
+                          className="h-14 px-6"
+                          onClick={() => cameraInputRef.current?.click()}
+                          disabled={isAnalyzing}
+                        >
+                          <Camera className="h-5 w-5 mr-2" />
+                          {t('quickCapture.takePhoto', 'Foto aufnehmen')}
+                        </Button>
+                        
+                        <Button
+                          variant="outline"
+                          size="lg"
+                          className="h-14 px-6"
+                          onClick={() => fileInputRef.current?.click()}
+                          disabled={isAnalyzing}
+                        >
+                          <Upload className="h-5 w-5 mr-2" />
+                          {t('quickCapture.uploadFile', 'Hochladen')}
+                        </Button>
+                      </div>
+                      
+                      <p className="text-sm text-muted-foreground text-center max-w-xs">
+                        {t('quickCapture.photoHint', 'Fotografiere ein Produkt und die KI erkennt automatisch Name, Kategorie und Einheit.')}
+                      </p>
                     </div>
                   )}
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="absolute top-2 right-2 h-8 w-8 bg-background/80 hover:bg-background"
-                    onClick={() => { setPreviewImage(null); setIdentificationResult(null); }}
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
                 </div>
-              ) : (
-                <div className="flex flex-col items-center gap-6 py-8">
-                  <div className="flex items-center gap-2 text-primary">
-                    <Sparkles className="h-6 w-6" />
-                    <span className="font-medium">{t('quickCapture.aiRecognition', 'KI-Artikelerkennung')}</span>
-                  </div>
-                  
-                  <div className="flex gap-3">
-                    <input
-                      ref={cameraInputRef}
-                      type="file"
-                      accept="image/*"
-                      capture="environment"
-                      className="hidden"
-                      onChange={handleFileSelect}
-                    />
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={handleFileSelect}
-                    />
-                    
-                    <Button
-                      variant="default"
-                      size="lg"
-                      className="h-14 px-6"
-                      onClick={() => cameraInputRef.current?.click()}
-                      disabled={isAnalyzing}
-                    >
-                      <Camera className="h-5 w-5 mr-2" />
-                      {t('quickCapture.takePhoto', 'Foto aufnehmen')}
-                    </Button>
-                    
-                    <Button
-                      variant="outline"
-                      size="lg"
-                      className="h-14 px-6"
-                      onClick={() => fileInputRef.current?.click()}
-                      disabled={isAnalyzing}
-                    >
-                      <Upload className="h-5 w-5 mr-2" />
-                      {t('quickCapture.uploadFile', 'Hochladen')}
-                    </Button>
-                  </div>
+              </TabsContent>
 
-                  {/* Mobile QR option */}
-                  <div className="w-full pt-4 border-t">
-                    <Button
-                      variant="ghost"
-                      className="w-full"
-                      onClick={() => setStep('qr')}
-                    >
-                      <Smartphone className="h-5 w-5 mr-2" />
-                      {t('quickCapture.usePhone', 'Mit Handy fotografieren')}
-                    </Button>
-                  </div>
-                  
-                  <p className="text-sm text-muted-foreground text-center max-w-xs">
-                    {t('quickCapture.photoHint', 'Fotografiere ein Produkt und die KI erkennt automatisch Name, Kategorie und Einheit.')}
-                  </p>
+              {/* Voice Tab */}
+              <TabsContent value="voice" className="mt-4">
+                <div className="p-4 rounded-lg border-2 border-dashed border-primary/30 bg-primary/5">
+                  <VoiceInventoryCapture
+                    language={t('locale', 'de')}
+                    onResult={handleVoiceResult}
+                  />
                 </div>
-              )}
-            </div>
+              </TabsContent>
+
+              {/* Mobile Tab */}
+              <TabsContent value="mobile" className="mt-4">
+                <MobileQRCodeOption onBack={() => setCaptureMode('photo')} />
+              </TabsContent>
+            </Tabs>
           </div>
         )}
 
-        {/* QR Code Step */}
+        {/* Voice Results Step */}
+        {step === 'voice-results' && (
+          <VoiceInventoryResults
+            transcript={voiceTranscript}
+            articles={voiceArticles}
+            categories={categories}
+            units={units}
+            onConfirm={handleVoiceArticlesConfirm}
+            onRetry={() => setStep('capture')}
+          />
+        )}
+
+        {/* QR Code Step (legacy, redirects to mobile tab) */}
         {step === 'qr' && (
-          <MobileQRCodeOption onBack={() => setStep('photo')} />
+          <MobileQRCodeOption onBack={() => setStep('capture')} />
         )}
 
         {/* Step 2: Article Details */}
@@ -490,7 +566,7 @@ export const QuickCaptureWizard = ({
             </div>
 
             <div className="flex justify-between pt-2">
-              <Button variant="ghost" onClick={() => setStep('photo')}>
+              <Button variant="ghost" onClick={() => setStep('capture')}>
                 <ChevronLeft className="h-4 w-4 mr-1" />
                 {t('common.back', 'Zurück')}
               </Button>
@@ -658,7 +734,7 @@ export const QuickCaptureWizard = ({
             </div>
 
             <div className="flex flex-col gap-2">
-              <Button onClick={() => { resetWizard(); setStep('photo'); }} className="w-full">
+              <Button onClick={() => { resetWizard(); setStep('capture'); }} className="w-full">
                 <Camera className="h-4 w-4 mr-2" />
                 {t('quickCapture.captureNext', 'Nächsten Artikel erfassen')}
               </Button>
