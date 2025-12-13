@@ -111,6 +111,15 @@ export const ArticleList = ({
   const [editingFreeItem, setEditingFreeItem] = useState<FreeItem | null>(null);
   const isGlobalSearch = search.trim().length > 0 && allArticles.length > 0 && suppliers.length > 1;
 
+  // DEBUG: Log canCapturePhotos prop value in ArticleList
+  console.log('[ArticleList] Props received:', {
+    canCapturePhotos,
+    canAddFreeItems,
+    token: token ? 'present' : 'missing',
+    organizationId: organizationId ? 'present' : 'missing',
+    selectedSupplierId,
+  });
+
   // Filter articles by search - global or local
   const searchLower = search.toLowerCase();
   

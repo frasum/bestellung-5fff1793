@@ -210,6 +210,15 @@ const SimpleOrder = () => {
           return;
         }
 
+        // DEBUG: Log full token response
+        console.log('[SimpleOrder] Token verification response:', {
+          can_capture_photos: data.tokenData?.can_capture_photos,
+          can_add_free_items: data.tokenData?.can_add_free_items,
+          has_employee: data.tokenData?.has_employee,
+          employee_name: data.tokenData?.employee_name,
+          full_tokenData: data.tokenData,
+        });
+        
         setTokenData(data.tokenData);
         setAllArticles(data.articles || []);
         setLocations(data.locations || []);
