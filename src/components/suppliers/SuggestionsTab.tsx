@@ -264,6 +264,13 @@ export function SuggestionsTab({ suppliers }: SuggestionsTabProps) {
                           </span>
                         </div>
 
+                        {/* Description */}
+                        {suggestion.description && (
+                          <p className="text-sm text-muted-foreground mt-2 bg-muted/50 rounded-md px-2 py-1.5">
+                            {suggestion.description}
+                          </p>
+                        )}
+
                         {suggestion.supplier_comment && (
                           <p className="text-sm text-muted-foreground mt-2 italic">
                             "{suggestion.supplier_comment}"

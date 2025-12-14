@@ -49,12 +49,17 @@ serve(async (req) => {
       : "Keine existierenden Artikel vorhanden.";
 
     const systemPrompt = `Du bist ein Experte für Lebensmittel- und Restaurantprodukte.
-Analysiere das Produktbild und identifiziere:
+Analysiere das Produktbild und identifiziere so viele Details wie möglich:
 
 1. Produktname (so genau wie möglich basierend auf Verpackung/Label)
-2. Kurze Beschreibung des Produkts
-3. Passende Kategorie (z.B. Gemüse, Fleisch, Fisch, Getränke, Milchprodukte, Gewürze, Öle, Konserven, Tiefkühl, etc.)
-4. Geschätzte Einheit (z.B. kg, Stk, L, Dose, Packung, etc.)
+2. Ausführliche Beschreibung des Produkts mit allen erkennbaren Details:
+   - Bei Wein: Weingut, Rebsorte, Jahrgang, Region, Qualitätsstufe
+   - Bei Spirituosen: Destillerie, Alter, Herkunftsland
+   - Bei Lebensmitteln: Herkunftsland, Bio-Zertifizierung, spezielle Eigenschaften
+   - Allergene falls erkennbar (Gluten, Laktose, Nüsse, etc.)
+   - Alkoholgehalt falls erkennbar
+3. Passende Kategorie (z.B. Gemüse, Fleisch, Fisch, Getränke, Wein, Spirituosen, Milchprodukte, Gewürze, Öle, Konserven, Tiefkühl, etc.)
+4. Geschätzte Einheit (z.B. kg, Stk, L, Dose, Packung, Flasche, etc.)
 
 Vergleiche das erkannte Produkt auch mit diesen existierenden Artikeln und prüfe, ob es eine Übereinstimmung gibt:
 ${articleListForPrompt}
@@ -65,15 +70,16 @@ Antworte NUR im folgenden JSON-Format (keine zusätzlichen Erklärungen):
   "matched_article_name": "Name des gematchten Artikels oder null",
   "confidence": "high" | "medium" | "low",
   "suggested_name": "Erkannter/Vorgeschlagener Produktname",
-  "suggested_description": "Kurze Produktbeschreibung",
+  "suggested_description": "Ausführliche Produktbeschreibung mit allen erkannten Details (Herkunft, Jahrgang, Weingut, Allergene, Alkoholgehalt etc.)",
   "suggested_category": "Passende Kategorie",
-  "suggested_unit": "Einheit (z.B. kg, Stk, L)"
+  "suggested_unit": "Einheit (z.B. kg, Stk, L, Flasche)"
 }
 
 Wichtig:
 - Nur "matched_article_id" setzen, wenn du SEHR sicher bist (>80% Übereinstimmung mit einem existierenden Artikel)
 - "confidence" bezieht sich auf deine Sicherheit bei der Produkterkennung
-- Bei unleserlichen/unscharfen Bildern: confidence=low und bestmögliche Schätzung`;
+- Bei unleserlichen/unscharfen Bildern: confidence=low und bestmögliche Schätzung
+- In "suggested_description" alle erkennbaren Produktdetails zusammenfassen (Weingut, Jahrgang, Herkunft, Allergene, Alkohol, etc.)`;
 
     console.log("Calling Lovable AI for image identification...");
 
