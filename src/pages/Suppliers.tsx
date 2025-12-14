@@ -372,6 +372,7 @@ const Suppliers = () => {
       unit: data.unit,
       price: Number(data.price),
       category: data.category || undefined,
+      origin_country: data.origin_country || undefined,
       packaging_unit: data.packaging_unit ? Number(data.packaging_unit) : undefined,
       order_unit_id: data.order_unit_id || undefined,
       reference_price: data.reference_price ? Number(data.reference_price.replace(',', '.')) : undefined,
