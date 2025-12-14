@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { User, ChevronDown, ChevronRight, Copy, QrCode, Pencil, Trash2, ExternalLink, Printer, Package, Link2, Phone, Mail, MessageCircle, KeyRound, Shield, ShieldAlert, Camera } from 'lucide-react';
+import { User, ChevronDown, ChevronRight, Copy, QrCode, Pencil, Trash2, ExternalLink, Printer, Package, Link2, Phone, Mail, MessageCircle, KeyRound, Shield, ShieldAlert, Camera, Wine } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface EmployeeTokensOverviewProps {
@@ -87,7 +87,14 @@ export function EmployeeTokensOverview({ tokens, onEdit, onToggleActive, onDelet
     
     tokens.forEach(token => {
       let key: string;
-      if (token.is_multi_supplier) {
+      
+      // Check if this is a wine-only token (has wine access but no suppliers)
+      const hasWineAccess = token.employee?.wine_catalog_access && token.employee?.wine_catalog_access !== 'none';
+      const hasNoSuppliers = !token.is_multi_supplier && !token.supplier_id && (!token.token_suppliers || token.token_suppliers.length === 0);
+      
+      if (hasWineAccess && hasNoSuppliers) {
+        key = '__wine_only__';
+      } else if (token.is_multi_supplier) {
         key = '__multi__';
       } else if (token.supplier?.name) {
         key = token.supplier.name;
@@ -101,8 +108,10 @@ export function EmployeeTokensOverview({ tokens, onEdit, onToggleActive, onDelet
       groups[key].push(token);
     });
 
-    // Sort: suppliers alphabetically, multi and unassigned at the end
+    // Sort: suppliers alphabetically, special groups at the end
     const sortedKeys = Object.keys(groups).sort((a, b) => {
+      if (a === '__wine_only__') return 1;
+      if (b === '__wine_only__') return -1;
       if (a === '__multi__') return 1;
       if (b === '__multi__') return -1;
       if (a === '__unassigned__') return 1;
@@ -112,9 +121,10 @@ export function EmployeeTokensOverview({ tokens, onEdit, onToggleActive, onDelet
 
     return sortedKeys.map(key => ({
       supplierKey: key,
-      supplierName: key === '__multi__' ? 'Multi-Lieferanten' : (key === '__unassigned__' ? 'Ohne Zuordnung' : key),
+      supplierName: key === '__wine_only__' ? 'Nur Weinkarte' : (key === '__multi__' ? 'Multi-Lieferanten' : (key === '__unassigned__' ? 'Ohne Zuordnung' : key)),
       isMulti: key === '__multi__',
       isUnassigned: key === '__unassigned__',
+      isWineOnly: key === '__wine_only__',
       tokens: groups[key],
       activeCount: groups[key].filter(t => t.is_active).length,
       inactiveCount: groups[key].filter(t => !t.is_active).length,
@@ -246,7 +256,12 @@ export function EmployeeTokensOverview({ tokens, onEdit, onToggleActive, onDelet
                       ) : (
                         <ChevronRight className="h-4 w-4 text-muted-foreground" />
                       )}
-                      {group.isMulti ? (
+                      {group.isWineOnly ? (
+                        <div className="flex items-center gap-2">
+                          <Wine className="h-5 w-5 text-rose-600" />
+                          <span className="font-semibold">{group.supplierName}</span>
+                        </div>
+                      ) : group.isMulti ? (
                         <div className="flex items-center gap-2">
                           <Link2 className="h-5 w-5 text-orange-500" />
                           <span className="font-semibold">{group.supplierName}</span>
@@ -329,6 +344,13 @@ export function EmployeeTokensOverview({ tokens, onEdit, onToggleActive, onDelet
                                   <Badge variant="outline" className="text-xs border-purple-500 text-purple-600">
                                     <Camera className="h-3 w-3 mr-1" />
                                     Fotos
+                                  </Badge>
+                                )}
+                                {/* Wine Badge for employees with wine catalog access */}
+                                {token.employee?.wine_catalog_access && token.employee?.wine_catalog_access !== 'none' && (
+                                  <Badge variant="outline" className="text-xs border-rose-500 text-rose-600">
+                                    <Wine className="h-3 w-3 mr-1" />
+                                    {token.employee.wine_catalog_access === 'edit' ? 'Weinkarte (bearbeiten)' : 'Weinkarte'}
                                   </Badge>
                                 )}
                               </div>
