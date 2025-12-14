@@ -144,7 +144,7 @@ export const LocationDateStep = ({
   employeeName,
 }: LocationDateStepProps) => {
   const { t, i18n } = useTranslation();
-  const { mediumTap, lightTap } = useHapticFeedback();
+  const { heavyTap } = useHapticFeedback();
   const dateLocale = getDateLocale(i18n.language);
 
   // Step completion logic
@@ -184,18 +184,18 @@ export const LocationDateStep = ({
   const selectedTimeWindowLabel = TIME_WINDOWS.find(tw => tw.value === timeWindow)?.label || '';
 
   const handleLocationSelect = (locationId: string) => {
-    mediumTap();
+    heavyTap();
     onLocationSelect(locationId);
   };
 
   const handleTimeWindowChange = (value: string) => {
-    lightTap();
+    heavyTap();
     onTimeWindowChange(value);
   };
 
   const handleContinue = () => {
     if (canContinue) {
-      mediumTap();
+      heavyTap();
       onContinue();
     }
   };

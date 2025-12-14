@@ -70,7 +70,7 @@ export const EmployeeOrderEdit = ({
   isDeleting,
 }: EmployeeOrderEditProps) => {
   const { t } = useTranslation();
-  const { lightTap, mediumTap, heavyTap } = useHapticFeedback();
+  const { heavyTap } = useHapticFeedback();
   
   const [quantities, setQuantities] = useState<Record<string, number>>({});
   const [search, setSearch] = useState('');
@@ -91,7 +91,7 @@ export const EmployeeOrderEdit = ({
   }, [draft.items]);
 
   const handleQuantityChange = (articleId: string, delta: number) => {
-    lightTap();
+    heavyTap();
     setQuantities((prev) => {
       const current = prev[articleId] || 0;
       const newValue = Math.max(0, current + delta);
@@ -115,17 +115,17 @@ export const EmployeeOrderEdit = ({
   };
 
   const handleCancel = () => {
-    mediumTap();
+    heavyTap();
     onCancel();
   };
 
   const handleDelete = () => {
-    mediumTap();
+    heavyTap();
     onDelete();
   };
 
   const handleToggleFavorite = (articleId: string) => {
-    mediumTap();
+    heavyTap();
     onToggleFavorite(articleId);
   };
 

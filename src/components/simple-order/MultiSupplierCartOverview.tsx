@@ -104,7 +104,7 @@ export const MultiSupplierCartOverview = ({
   canAddFreeItems = false,
 }: MultiSupplierCartOverviewProps) => {
   const { t, i18n } = useTranslation();
-  const { lightTap, heavyTap } = useHapticFeedback();
+  const { heavyTap } = useHapticFeedback();
   const locale = getLocale(i18n.language);
   
   const [expandedSuppliers, setExpandedSuppliers] = useState<Set<string>>(new Set());
@@ -176,7 +176,7 @@ export const MultiSupplierCartOverview = ({
   }, [quantities]);
 
   const toggleSupplier = (supplierId: string) => {
-    lightTap();
+    heavyTap();
     setExpandedSuppliers(prev => {
       const next = new Set(prev);
       if (next.has(supplierId)) {
@@ -189,7 +189,7 @@ export const MultiSupplierCartOverview = ({
   };
 
   const handleQuantityChange = (articleId: string, delta: number) => {
-    lightTap();
+    heavyTap();
     prevQuantitiesRef.current = { ...quantities };
     onQuantityChange(articleId, delta);
   };

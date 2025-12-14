@@ -63,19 +63,19 @@ export const SuccessScreen = ({
   isAutoApproved = false 
 }: SuccessScreenProps) => {
   const { t } = useTranslation();
-  const { success, mediumTap } = useHapticFeedback();
+  const { success, heavyTap } = useHapticFeedback();
 
   useEffect(() => {
     success();
   }, []);
 
   const handleNewOrder = () => {
-    mediumTap();
+    heavyTap();
     onNewOrder();
   };
 
   const handleViewOrders = () => {
-    mediumTap();
+    heavyTap();
     onViewOrders?.();
   };
   

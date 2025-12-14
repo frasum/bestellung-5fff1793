@@ -346,16 +346,16 @@ const ArticleCard = ({
   onToggleFavorite,
   selectedSupplierId,
 }: ArticleCardProps) => {
-  const { lightTap, mediumTap } = useHapticFeedback();
+  const { heavyTap } = useHapticFeedback();
   const isSelected = quantity > 0;
 
   const handleQuantityChange = (delta: number) => {
-    lightTap();
+    heavyTap();
     onQuantityChange(article.id, delta);
   };
 
   const handleFavoriteToggle = () => {
-    mediumTap();
+    heavyTap();
     onToggleFavorite?.(article.id);
   };
   

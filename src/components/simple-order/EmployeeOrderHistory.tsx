@@ -91,7 +91,7 @@ export const EmployeeOrderHistory = ({
   isDeleting,
 }: EmployeeOrderHistoryProps) => {
   const { t, i18n } = useTranslation();
-  const { mediumTap, lightTap } = useHapticFeedback();
+  const { heavyTap } = useHapticFeedback();
 
   const getLocale = () => {
     switch (i18n.language) {
@@ -125,17 +125,17 @@ export const EmployeeOrderHistory = ({
   };
 
   const handleEdit = (draftId: string) => {
-    mediumTap();
+    heavyTap();
     onEdit(draftId);
   };
 
   const handleDelete = (draftId: string) => {
-    mediumTap();
+    heavyTap();
     onDelete(draftId);
   };
 
   const handleBack = () => {
-    lightTap();
+    heavyTap();
     onBack();
   };
 

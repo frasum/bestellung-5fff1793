@@ -22,7 +22,7 @@ export function PinEntryScreen({
   lockoutMinutes = 5,
 }: PinEntryScreenProps) {
   const { t } = useTranslation();
-  const { lightTap, heavyTap, error: errorVibrate } = useHapticFeedback();
+  const { heavyTap, error: errorVibrate } = useHapticFeedback();
   
   const [pin, setPin] = useState(['', '', '', '']);
   const [isVerifying, setIsVerifying] = useState(false);
@@ -80,7 +80,7 @@ export function PinEntryScreen({
     // Only allow digits
     if (value && !/^\d$/.test(value)) return;
     
-    lightTap();
+    heavyTap();
     
     const newPin = [...pin];
     newPin[index] = value;

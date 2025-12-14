@@ -24,28 +24,28 @@ export function FreeItemCard({
   onConvertToCatalog,
 }: FreeItemCardProps) {
   const { t } = useTranslation();
-  const { lightTap, mediumTap } = useHapticFeedback();
+  const { heavyTap } = useHapticFeedback();
 
   const handleQuantityChange = (delta: number, e: React.MouseEvent) => {
     e.stopPropagation();
-    lightTap();
+    heavyTap();
     onQuantityChange(item.id, delta);
   };
 
   const handleEdit = () => {
-    mediumTap();
+    heavyTap();
     onEdit(item);
   };
 
   const handleDelete = (e: React.MouseEvent) => {
     e.stopPropagation();
-    mediumTap();
+    heavyTap();
     onDelete(item.id);
   };
 
   const handleConvertToCatalog = (e: React.MouseEvent) => {
     e.stopPropagation();
-    mediumTap();
+    heavyTap();
     onConvertToCatalog?.(item);
   };
 
