@@ -327,7 +327,7 @@ serve(async (req) => {
           id: tokenData.id,
           label: tokenData.label,
           language: tokenData.language,
-          supplier: isMultiSupplier ? null : tokenData.supplier,
+          supplier: isMultiSupplier ? null : (tokenData.supplier?.id ? tokenData.supplier : null),
           location: tokenData.location,
           organization_id: tokenData.organization_id,
           is_multi_supplier: isMultiSupplier,
