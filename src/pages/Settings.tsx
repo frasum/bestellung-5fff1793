@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Building2, User, FlaskConical, MessageSquare, Wine } from 'lucide-react';
+import { Building2, User, FlaskConical, MessageSquare } from 'lucide-react';
 import { useUserRole } from '@/hooks/useTeam';
 import { DemoAccountsTab } from '@/components/settings/DemoAccountsTab';
 import { CommunicationTab } from '@/components/settings/CommunicationTab';
@@ -11,7 +11,6 @@ import { OrganizationTab } from '@/components/settings/OrganizationTab';
 import { NotificationsTab } from '@/components/settings/NotificationsTab';
 import { EmailTemplateTab } from '@/components/settings/EmailTemplateTab';
 import { SupplierPortalTab } from '@/components/settings/SupplierPortalTab';
-import { WineTokensTab } from '@/components/settings/WineTokensTab';
 
 const Settings = () => {
   const { t } = useTranslation();
@@ -66,13 +65,6 @@ const Settings = () => {
                 <span className="hidden sm:inline">{t('settings.communication')}</span>
                 <span className="sm:hidden">{t('settings.communicationShort')}</span>
               </TabsTrigger>
-              {isAdmin && (
-                <TabsTrigger value="wine-tokens" className="gap-1.5 text-xs sm:text-sm whitespace-nowrap">
-                  <Wine className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                  <span className="hidden sm:inline">{t('settings.wineTokens')}</span>
-                  <span className="sm:hidden">{t('settings.wineTokensShort')}</span>
-                </TabsTrigger>
-              )}
               {isAdmin && advancedMode && (
                 <TabsTrigger value="demo-accounts" className="gap-1.5 text-xs sm:text-sm whitespace-nowrap">
                   <FlaskConical className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
@@ -104,12 +96,6 @@ const Settings = () => {
               SupplierPortalContent={SupplierPortalTab}
             />
           </TabsContent>
-
-          {isAdmin && (
-            <TabsContent value="wine-tokens" className="animate-in fade-in-50 slide-in-from-right-2 duration-200">
-              <WineTokensTab />
-            </TabsContent>
-          )}
 
           {isAdmin && advancedMode && (
             <TabsContent value="demo-accounts" className="animate-in fade-in-50 slide-in-from-right-2 duration-200">
