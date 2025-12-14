@@ -85,7 +85,7 @@ export const ArticleFormDialog = ({
 
   const form = useForm<ArticleFormData>({
     resolver: zodResolver(articleSchema),
-    defaultValues: { supplier_id: '', name: '', description: '', sku: '', unit: 'pcs', price: '', category: '', origin_country: '', packaging_unit: '', order_unit_id: '', reference_price: '', reference_unit: '' },
+    defaultValues: { supplier_id: '', name: '', description: '', sku: '', unit: 'pcs', price: '', category: '', origin_country: '', packaging_unit: '', order_unit_id: '', reference_price: '', reference_unit: '', selling_price: '' },
   });
 
   // Watch category to conditionally show origin_country field
@@ -106,10 +106,11 @@ export const ArticleFormDialog = ({
         order_unit_id: editingArticle.order_unit_id || '',
         reference_price: editingArticle.reference_price ? String(editingArticle.reference_price).replace('.', ',') : '',
         reference_unit: editingArticle.reference_unit || '',
+        selling_price: (editingArticle as any).selling_price ? String((editingArticle as any).selling_price) : '',
       });
       setCapturedImage((editingArticle as any).image_url || null);
     } else {
-      form.reset({ supplier_id: '', name: '', description: '', sku: '', unit: 'pcs', price: '', category: '', origin_country: '', packaging_unit: '', order_unit_id: '', reference_price: '', reference_unit: '' });
+      form.reset({ supplier_id: '', name: '', description: '', sku: '', unit: 'pcs', price: '', category: '', origin_country: '', packaging_unit: '', order_unit_id: '', reference_price: '', reference_unit: '', selling_price: '' });
       setCapturedImage(null);
     }
   }, [editingArticle, form]);
@@ -410,6 +411,23 @@ export const ArticleFormDialog = ({
                 {...form.register('origin_country')} 
                 placeholder="z.B. Italien, Frankreich, Deutschland..." 
               />
+            </div>
+          )}
+
+          {/* Selling Price - only visible for wine categories */}
+          {watchedCategory && watchedCategory.toLowerCase().includes('wein') && (
+            <div className="space-y-2">
+              <Label htmlFor="article-selling-price">Verkaufspreis (€) 🍷</Label>
+              <Input 
+                id="article-selling-price" 
+                type="number"
+                step="0.01"
+                {...form.register('selling_price')} 
+                placeholder="z.B. 42.00" 
+              />
+              <p className="text-xs text-muted-foreground">
+                Verkaufspreis im Restaurant (für Mitarbeiter sichtbar)
+              </p>
             </div>
           )}
           <div className="grid grid-cols-2 gap-4">

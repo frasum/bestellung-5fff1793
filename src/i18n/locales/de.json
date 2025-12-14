@@ -204,6 +204,15 @@
     "referenceUnit": "Referenzeinheit",
     "referencePriceHint": "Für Preisvergleiche (z.B. €/kg)"
   },
+  "wines": {
+    "tab": "Unsere Weine",
+    "noWines": "Keine Weine im Katalog",
+    "noWinesDescription": "Fügen Sie Artikel mit der Kategorie \"Wein\" hinzu, um sie hier anzuzeigen.",
+    "totalWines": "{{count}} Weine von {{suppliers}} Lieferanten",
+    "winesCount": "Weine",
+    "sellingPrice": "Verkaufspreis",
+    "noSellingPrice": "Kein Verkaufspreis hinterlegt"
+  },
 "cart": {
     "title": "Warenkorb",
     "empty": "Ihr Warenkorb ist leer",
