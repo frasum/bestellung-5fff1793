@@ -34,9 +34,10 @@ interface WineCatalogViewProps {
   organizationId: string;
   permission: 'view' | 'edit';
   onBack: () => void;
+  token: string;
 }
 
-export const WineCatalogView = ({ organizationId, permission, onBack }: WineCatalogViewProps) => {
+export const WineCatalogView = ({ organizationId, permission, onBack, token }: WineCatalogViewProps) => {
   const { t } = useTranslation();
   const [wines, setWines] = useState<WineArticle[]>([]);
   const [organizationName, setOrganizationName] = useState<string>('');
@@ -50,36 +51,24 @@ export const WineCatalogView = ({ organizationId, permission, onBack }: WineCata
 
   useEffect(() => {
     loadData();
-  }, [organizationId]);
+  }, [token]);
 
   const loadData = async () => {
     setIsLoading(true);
     try {
-      // Load organization name and wines in parallel
-      const [orgResult, winesResult] = await Promise.all([
-        supabase
-          .from('organizations')
-          .select('name')
-          .eq('id', organizationId)
-          .maybeSingle(),
-        supabase
-          .from('articles')
-          .select(`
-            id, name, description, selling_price, origin_country,
-            grape_variety, flavor_profile, food_pairings, image_url, category, supplier_id,
-            supplier:suppliers(id, name)
-          `)
-          .eq('organization_id', organizationId)
-          .eq('is_active', true)
-          .ilike('category', '%wein%')
-          .order('name'),
-      ]);
+      // Load wines via Edge Function (bypasses RLS)
+      const { data, error } = await supabase.functions.invoke('verify-simple-order-token', {
+        body: { token, action: 'get-wines' },
+      });
 
-      if (orgResult.data) {
-        setOrganizationName(orgResult.data.name);
+      if (error || data?.error) {
+        console.error('Error loading wines:', error || data?.error);
+        toast.error(t('common.error', 'Fehler beim Laden'));
+        return;
       }
-      if (winesResult.error) throw winesResult.error;
-      setWines(winesResult.data || []);
+
+      setWines(data.wines || []);
+      setOrganizationName(data.organization_name || '');
     } catch (err) {
       console.error('Error loading data:', err);
       toast.error(t('common.error', 'Fehler beim Laden'));

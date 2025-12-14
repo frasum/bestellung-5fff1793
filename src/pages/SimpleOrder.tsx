@@ -910,12 +910,13 @@ const SimpleOrder = () => {
   }
 
   // Wine catalog view
-  if (status === 'wine-catalog' && tokenData) {
+  if (status === 'wine-catalog' && tokenData && token) {
     return (
       <WineCatalogView
         organizationId={tokenData.organization_id}
         permission={tokenData.wine_catalog_access === 'edit' ? 'edit' : 'view'}
         onBack={() => setStatus('ready')}
+        token={token}
       />
     );
   }
