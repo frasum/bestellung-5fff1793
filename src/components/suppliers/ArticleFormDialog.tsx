@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -71,6 +71,12 @@ export const ArticleFormDialog = ({
     fetchOrgId();
   }, []);
 
+  // Refs for auto-growing textareas
+  const descriptionRef = useRef<HTMLTextAreaElement>(null);
+  const grapeVarietyRef = useRef<HTMLTextAreaElement>(null);
+  const flavorProfileRef = useRef<HTMLTextAreaElement>(null);
+  const foodPairingsRef = useRef<HTMLTextAreaElement>(null);
+
   // Check for advanced settings
   useEffect(() => {
     const stored = localStorage.getItem('advanced-settings-enabled');
@@ -84,6 +90,26 @@ export const ArticleFormDialog = ({
     window.addEventListener('storage', handleStorageChange);
     return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
+
+  // Auto-resize textareas when form data changes (initial load)
+  useEffect(() => {
+    const adjustHeight = (textarea: HTMLTextAreaElement | null, minHeight: number) => {
+      if (textarea) {
+        textarea.style.height = 'auto';
+        textarea.style.height = `${Math.max(minHeight, textarea.scrollHeight)}px`;
+      }
+    };
+    
+    // Small delay to ensure form values are populated
+    const timeoutId = setTimeout(() => {
+      adjustHeight(descriptionRef.current, 80);
+      adjustHeight(grapeVarietyRef.current, 60);
+      adjustHeight(flavorProfileRef.current, 60);
+      adjustHeight(foodPairingsRef.current, 60);
+    }, 50);
+    
+    return () => clearTimeout(timeoutId);
+  }, [open, editingArticle]);
 
   const form = useForm<ArticleFormData>({
     resolver: zodResolver(articleSchema),
@@ -472,15 +498,11 @@ export const ArticleFormDialog = ({
               <div className="space-y-2">
                 <Label htmlFor="article-description">Beschreibung</Label>
                 <Textarea 
+                  ref={descriptionRef}
                   id="article-description" 
                   {...form.register('description')} 
                   placeholder="Weingut, Jahrgang, Qualitätsstufe, besondere Merkmale..."
                   className="min-h-[80px] resize-none"
-                  style={{ 
-                    height: 'auto',
-                    minHeight: '80px',
-                    overflow: 'hidden'
-                  }}
                   onInput={(e) => {
                     const target = e.target as HTMLTextAreaElement;
                     target.style.height = 'auto';
@@ -493,15 +515,11 @@ export const ArticleFormDialog = ({
               <div className="space-y-2">
                 <Label htmlFor="article-grape-variety">Traubensorte 🍇</Label>
                 <Textarea 
+                  ref={grapeVarietyRef}
                   id="article-grape-variety" 
                   {...form.register('grape_variety')} 
                   placeholder="z.B. Riesling, Spätburgunder, Cuvée aus Merlot und Cabernet..."
                   className="min-h-[60px] resize-none"
-                  style={{ 
-                    height: 'auto',
-                    minHeight: '60px',
-                    overflow: 'hidden'
-                  }}
                   onInput={(e) => {
                     const target = e.target as HTMLTextAreaElement;
                     target.style.height = 'auto';
@@ -514,15 +532,11 @@ export const ArticleFormDialog = ({
               <div className="space-y-2">
                 <Label htmlFor="article-flavor-profile">Geschmacksprofil 🍷</Label>
                 <Textarea 
+                  ref={flavorProfileRef}
                   id="article-flavor-profile" 
                   {...form.register('flavor_profile')} 
                   placeholder="z.B. fruchtig mit Noten von Kirsche und Vanille, samtige Tannine..."
                   className="min-h-[60px] resize-none"
-                  style={{ 
-                    height: 'auto',
-                    minHeight: '60px',
-                    overflow: 'hidden'
-                  }}
                   onInput={(e) => {
                     const target = e.target as HTMLTextAreaElement;
                     target.style.height = 'auto';
@@ -535,15 +549,11 @@ export const ArticleFormDialog = ({
               <div className="space-y-2">
                 <Label htmlFor="article-food-pairings">Speiseempfehlungen 🍽️</Label>
                 <Textarea 
+                  ref={foodPairingsRef}
                   id="article-food-pairings" 
                   {...form.register('food_pairings')} 
                   placeholder="z.B. Passt hervorragend zu Lamm, gegrilltem Gemüse, reifem Käse..."
                   className="min-h-[60px] resize-none"
-                  style={{ 
-                    height: 'auto',
-                    minHeight: '60px',
-                    overflow: 'hidden'
-                  }}
                   onInput={(e) => {
                     const target = e.target as HTMLTextAreaElement;
                     target.style.height = 'auto';
