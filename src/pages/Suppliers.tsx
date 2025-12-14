@@ -378,6 +378,9 @@ const Suppliers = () => {
       reference_price: data.reference_price ? Number(data.reference_price.replace(',', '.')) : undefined,
       reference_unit: data.reference_unit || undefined,
       selling_price: data.selling_price ? Number(data.selling_price) : undefined,
+      grape_variety: data.grape_variety || undefined,
+      flavor_profile: data.flavor_profile || undefined,
+      food_pairings: data.food_pairings || undefined,
     };
     
     if (editingArticle) {
