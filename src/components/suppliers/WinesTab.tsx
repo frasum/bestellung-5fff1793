@@ -1,5 +1,5 @@
 import { useMemo, useState, useCallback } from 'react';
-import { Wine, MapPin, Euro, ChevronRight, ChevronDown, Pencil, Search, Loader2, ExternalLink, Grape, Utensils, Info, Sparkles, AlertCircle, Camera, ImageIcon } from 'lucide-react';
+import { Wine, MapPin, Euro, ChevronRight, ChevronDown, Pencil, Search, Loader2, ExternalLink, Grape, Utensils, Info, Sparkles, AlertCircle, Camera, ImageIcon, FileDown } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -14,6 +14,7 @@ import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { generateWineCatalogPdf } from '@/lib/wineCatalogPdf';
 
 interface WineResearchResult {
   description: string;
@@ -39,6 +40,7 @@ export const WinesTab = ({ articles, suppliers, onEditArticle }: WinesTabProps) 
   const { t } = useTranslation();
   const [openSuppliers, setOpenSuppliers] = useState<Record<string, boolean>>({});
   const [batchProgress, setBatchProgress] = useState<{ current: number; total: number; wineName: string } | null>(null);
+  const [pdfProgress, setPdfProgress] = useState<{ current: number; total: number } | null>(null);
   const [filterMode, setFilterMode] = useState<FilterMode>('all');
   const updateArticle = useUpdateArticle();
 
@@ -49,6 +51,28 @@ export const WinesTab = ({ articles, suppliers, onEditArticle }: WinesTabProps) 
       article.top_category?.toLowerCase().includes('wein')
     );
   }, [articles]);
+
+  // PDF generation handler
+  const handleGeneratePdf = useCallback(async () => {
+    if (wineArticles.length === 0) return;
+    
+    setPdfProgress({ current: 0, total: wineArticles.length });
+    
+    try {
+      await generateWineCatalogPdf(
+        wineArticles as any,
+        suppliers,
+        undefined,
+        (current, total) => setPdfProgress({ current, total })
+      );
+      toast.success(t('wines.pdfGenerated', 'Weinkatalog PDF erstellt'));
+    } catch (error) {
+      console.error('Error generating wine catalog PDF:', error);
+      toast.error(t('wines.pdfError', 'Fehler beim Erstellen des PDFs'));
+    } finally {
+      setPdfProgress(null);
+    }
+  }, [wineArticles, suppliers, t]);
 
   // Count incomplete wines (missing description, grape variety, origin country, or image)
   const incompleteCount = useMemo(() => {
@@ -179,7 +203,7 @@ export const WinesTab = ({ articles, suppliers, onEditArticle }: WinesTabProps) 
 
   return (
     <div className="space-y-6">
-      {/* Header with stats and batch research */}
+      {/* Header with stats and actions */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-2 text-muted-foreground">
           <Wine className="h-5 w-5" />
@@ -191,26 +215,60 @@ export const WinesTab = ({ articles, suppliers, onEditArticle }: WinesTabProps) 
           </span>
         </div>
 
-        {winesWithoutDescription.length > 0 && (
+        <div className="flex items-center gap-2">
+          {/* PDF Export Button */}
           <Button
             variant="outline"
             size="sm"
-            onClick={handleBatchResearch}
-            disabled={batchProgress !== null}
+            onClick={handleGeneratePdf}
+            disabled={pdfProgress !== null || wineArticles.length === 0}
             className="gap-2"
           >
-            {batchProgress ? (
+            {pdfProgress ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
-              <Sparkles className="h-4 w-4" />
+              <FileDown className="h-4 w-4" />
             )}
-            {t('wines.batchResearch', 'Alle recherchieren')}
-            <Badge variant="secondary" className="ml-1">
-              {winesWithoutDescription.length}
-            </Badge>
+            {t('wines.exportPdf', 'Weinkarte PDF')}
           </Button>
-        )}
+
+          {/* Batch Research Button */}
+          {winesWithoutDescription.length > 0 && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleBatchResearch}
+              disabled={batchProgress !== null}
+              className="gap-2"
+            >
+              {batchProgress ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Sparkles className="h-4 w-4" />
+              )}
+              {t('wines.batchResearch', 'Alle recherchieren')}
+              <Badge variant="secondary" className="ml-1">
+                {winesWithoutDescription.length}
+              </Badge>
+            </Button>
+          )}
+        </div>
       </div>
+
+      {/* PDF Progress */}
+      {pdfProgress && (
+        <div className="bg-muted/50 rounded-lg p-4 space-y-2">
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-muted-foreground">
+              {t('wines.generatingPdf', 'Erstelle PDF...')}
+            </span>
+            <span className="text-muted-foreground">
+              {pdfProgress.current} / {pdfProgress.total}
+            </span>
+          </div>
+          <Progress value={(pdfProgress.current / pdfProgress.total) * 100} className="h-2" />
+        </div>
+      )}
 
       {/* Filter Toggle */}
       <ToggleGroup 
