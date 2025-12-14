@@ -37,7 +37,8 @@ export const useArticleImageUpload = () => {
         .from('article-images')
         .getPublicUrl(fileName);
 
-      return publicUrl;
+      // Add cache-busting parameter to force browser reload after image replacement
+      return `${publicUrl}?t=${Date.now()}`;
     } catch (error) {
       console.error('Failed to upload article image:', error);
       return null;
