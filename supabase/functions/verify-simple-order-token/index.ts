@@ -13,7 +13,7 @@ serve(async (req) => {
   }
 
   try {
-    const { token } = await req.json();
+    const { token, action } = await req.json();
 
     if (!token) {
       return new Response(
@@ -257,6 +257,62 @@ serve(async (req) => {
         .order('name', { ascending: true });
       
       categories = orgCategories || [];
+    }
+
+    // Handle get-wines action for wine catalog
+    if (action === 'get-wines') {
+      if (wineCatalogAccess === 'none') {
+        return new Response(
+          JSON.stringify({ error: 'No wine catalog access' }),
+          { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      console.log('Fetching wines for organization:', tokenData.organization_id);
+
+      // Get organization name
+      const { data: orgData, error: orgError } = await supabase
+        .from('organizations')
+        .select('name')
+        .eq('id', tokenData.organization_id)
+        .single();
+
+      if (orgError) {
+        console.error('Error fetching organization:', orgError);
+      }
+
+      // Get all wines for the organization
+      const { data: winesData, error: winesError } = await supabase
+        .from('articles')
+        .select(`
+          id, name, description, selling_price, origin_country,
+          grape_variety, flavor_profile, food_pairings, image_url, category, supplier_id,
+          supplier:suppliers(id, name)
+        `)
+        .eq('organization_id', tokenData.organization_id)
+        .eq('is_active', true)
+        .ilike('category', '%wein%')
+        .order('name');
+
+      if (winesError) {
+        console.error('Error fetching wines:', winesError);
+        return new Response(
+          JSON.stringify({ error: 'Failed to fetch wines' }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      console.log(`Found ${winesData?.length || 0} wines for organization`);
+
+      return new Response(
+        JSON.stringify({
+          success: true,
+          wines: winesData || [],
+          organization_name: orgData?.name || '',
+          wine_catalog_access: wineCatalogAccess,
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     return new Response(
