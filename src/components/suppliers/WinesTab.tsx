@@ -50,9 +50,14 @@ export const WinesTab = ({ articles, suppliers, onEditArticle }: WinesTabProps) 
     );
   }, [articles]);
 
-  // Count incomplete wines
+  // Count incomplete wines (missing description, grape variety, origin country, or image)
   const incompleteCount = useMemo(() => {
-    return wineArticles.filter(w => !w.description?.trim() || !w.grape_variety?.trim()).length;
+    return wineArticles.filter(w => 
+      !w.description?.trim() || 
+      !w.grape_variety?.trim() ||
+      !w.origin_country?.trim() ||
+      !w.image_url
+    ).length;
   }, [wineArticles]);
 
   // Filter wines based on filterMode
@@ -63,7 +68,12 @@ export const WinesTab = ({ articles, suppliers, onEditArticle }: WinesTabProps) 
       case 'missing-grape':
         return wineArticles.filter(w => !w.grape_variety?.trim());
       case 'incomplete':
-        return wineArticles.filter(w => !w.description?.trim() || !w.grape_variety?.trim());
+        return wineArticles.filter(w => 
+          !w.description?.trim() || 
+          !w.grape_variety?.trim() ||
+          !w.origin_country?.trim() ||
+          !w.image_url
+        );
       default:
         return wineArticles;
     }
@@ -318,9 +328,11 @@ const WineCard = ({ wine, onEdit }: WineCardProps) => {
   const hasSellingPrice = sellingPrice != null && sellingPrice > 0;
   
   // Check if wine data is incomplete
-  const isIncomplete = !wine.description?.trim() || !wine.grape_variety?.trim();
   const missingDescription = !wine.description?.trim();
   const missingGrape = !wine.grape_variety?.trim();
+  const missingOriginCountry = !wine.origin_country?.trim();
+  const missingImage = !wine.image_url;
+  const isIncomplete = missingDescription || missingGrape || missingOriginCountry || missingImage;
 
   const handleResearch = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -439,6 +451,22 @@ const WineCard = ({ wine, onEdit }: WineCardProps) => {
               <p className="text-sm text-orange-500 italic flex items-center gap-1">
                 <Grape className="h-3 w-3" />
                 {t('wines.missingGrapeVariety', 'Keine Rebsorte')}
+              </p>
+            )}
+
+            {/* Missing Origin Country Warning */}
+            {missingOriginCountry && (
+              <p className="text-sm text-orange-500 italic flex items-center gap-1">
+                <MapPin className="h-3 w-3" />
+                {t('wines.missingOriginCountry', 'Kein Herkunftsland')}
+              </p>
+            )}
+
+            {/* Missing Image Warning */}
+            {missingImage && (
+              <p className="text-sm text-orange-500 italic flex items-center gap-1">
+                <ImageIcon className="h-3 w-3" />
+                {t('wines.missingImage', 'Kein Foto')}
               </p>
             )}
 
