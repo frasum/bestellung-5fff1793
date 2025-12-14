@@ -7,6 +7,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Progress } from '@/components/ui/progress';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ArrowLeft, Search, Wine, Grape, MapPin, Utensils, Euro, X, Check, Loader2, FileDown } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
@@ -353,11 +354,24 @@ export const WineCatalogView = ({ organizationId, permission, onBack, token }: W
                               </div>
                               <div>
                                 <label className="text-sm text-muted-foreground">{t('wines.originCountry', 'Herkunft')}</label>
-                                <Input
+                                <Select
                                   value={editForm.origin_country || ''}
-                                  onChange={(e) => setEditForm({ ...editForm, origin_country: e.target.value })}
-                                  onClick={(e) => e.stopPropagation()}
-                                />
+                                  onValueChange={(value) => setEditForm({ ...editForm, origin_country: value })}
+                                >
+                                  <SelectTrigger onClick={(e) => e.stopPropagation()}>
+                                    <SelectValue placeholder={t('wines.selectOriginCountry', 'Land wählen')} />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="Österreich">Österreich</SelectItem>
+                                    <SelectItem value="Deutschland">Deutschland</SelectItem>
+                                    <SelectItem value="Italien">Italien</SelectItem>
+                                    <SelectItem value="Frankreich">Frankreich</SelectItem>
+                                    <SelectItem value="Spanien">Spanien</SelectItem>
+                                    <SelectItem value="Portugal">Portugal</SelectItem>
+                                    <SelectItem value="RSA">RSA (Südafrika)</SelectItem>
+                                    <SelectItem value="Neue Welt">Neue Welt</SelectItem>
+                                  </SelectContent>
+                                </Select>
                               </div>
                             </div>
 
