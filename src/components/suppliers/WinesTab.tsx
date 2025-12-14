@@ -170,27 +170,16 @@ const WineCard = ({ wine, onEdit }: WineCardProps) => {
   const handleApplyResearch = async () => {
     if (!researchResult) return;
 
-    // Build comprehensive description
-    const parts: string[] = [];
-    if (researchResult.description && researchResult.description !== 'Keine Informationen gefunden') {
-      parts.push(researchResult.description);
-    }
-    if (researchResult.grape_variety && researchResult.grape_variety !== 'Keine Informationen gefunden') {
-      parts.push(`Rebsorte: ${researchResult.grape_variety}`);
-    }
-    if (researchResult.flavor_profile && researchResult.flavor_profile !== 'Keine Informationen gefunden') {
-      parts.push(`Geschmack: ${researchResult.flavor_profile}`);
-    }
-    if (researchResult.food_pairings && researchResult.food_pairings !== 'Keine Informationen gefunden') {
-      parts.push(`Passt zu: ${researchResult.food_pairings}`);
-    }
+    const notFound = 'Keine Informationen gefunden';
     
-    const newDescription = parts.join('\n\n');
-
     try {
       await updateArticle.mutateAsync({
         id: wine.id,
-        description: newDescription,
+        // Only update fields that have actual content
+        ...(researchResult.description !== notFound && { description: researchResult.description }),
+        ...(researchResult.grape_variety !== notFound && { grape_variety: researchResult.grape_variety }),
+        ...(researchResult.flavor_profile !== notFound && { flavor_profile: researchResult.flavor_profile }),
+        ...(researchResult.food_pairings !== notFound && { food_pairings: researchResult.food_pairings }),
       });
       toast.success(t('wines.researchApplied', 'Recherche-Ergebnisse übernommen'));
       setShowResearchDialog(false);
@@ -243,11 +232,35 @@ const WineCard = ({ wine, onEdit }: WineCardProps) => {
               </p>
             )}
 
+            {/* Grape Variety */}
+            {wine.grape_variety && (
+              <div className="flex items-center gap-1.5 text-sm">
+                <Grape className="h-3.5 w-3.5 text-purple-500 shrink-0" />
+                <span className="text-muted-foreground">{wine.grape_variety}</span>
+              </div>
+            )}
+
+            {/* Flavor Profile */}
+            {wine.flavor_profile && (
+              <div className="flex items-start gap-1.5 text-sm">
+                <Wine className="h-3.5 w-3.5 text-rose-500 mt-0.5 shrink-0" />
+                <span className="text-muted-foreground line-clamp-2">{wine.flavor_profile}</span>
+              </div>
+            )}
+
+            {/* Food Pairings */}
+            {wine.food_pairings && (
+              <div className="flex items-start gap-1.5 text-sm">
+                <Utensils className="h-3.5 w-3.5 text-amber-500 mt-0.5 shrink-0" />
+                <span className="text-muted-foreground line-clamp-2">{wine.food_pairings}</span>
+              </div>
+            )}
+
             <div className="flex flex-wrap items-center gap-2 pt-2">
-              {(wine as any).origin_country && (
+              {wine.origin_country && (
                 <Badge variant="outline" className="text-xs gap-1">
                   <MapPin className="h-3 w-3" />
-                  {(wine as any).origin_country}
+                  {wine.origin_country}
                 </Badge>
               )}
               {wine.category && (
