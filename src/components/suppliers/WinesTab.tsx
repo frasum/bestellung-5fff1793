@@ -1,4 +1,4 @@
-import { useMemo, useState, useCallback } from 'react';
+import { useMemo, useState, useCallback, useEffect } from 'react';
 import { Wine, MapPin, Euro, ChevronRight, ChevronDown, Pencil, Search, Loader2, ExternalLink, Grape, Utensils, Info, Sparkles, AlertCircle, Camera, ImageIcon, FileDown } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -42,7 +42,16 @@ export const WinesTab = ({ articles, suppliers, onEditArticle }: WinesTabProps) 
   const [batchProgress, setBatchProgress] = useState<{ current: number; total: number; wineName: string } | null>(null);
   const [pdfProgress, setPdfProgress] = useState<{ current: number; total: number } | null>(null);
   const [filterMode, setFilterMode] = useState<FilterMode>('all');
+  const [advancedMode, setAdvancedMode] = useState(() => localStorage.getItem('advanced-settings-enabled') === 'true');
   const updateArticle = useUpdateArticle();
+
+  useEffect(() => {
+    const handleStorageChange = () => {
+      setAdvancedMode(localStorage.getItem('advanced-settings-enabled') === 'true');
+    };
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
 
   // Filter articles that have "wein" in category (case-insensitive)
   const wineArticles = useMemo(() => {
@@ -216,21 +225,23 @@ export const WinesTab = ({ articles, suppliers, onEditArticle }: WinesTabProps) 
         </div>
 
         <div className="flex items-center gap-2">
-          {/* PDF Export Button */}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleGeneratePdf}
-            disabled={pdfProgress !== null || wineArticles.length === 0}
-            className="gap-2"
-          >
-            {pdfProgress ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <FileDown className="h-4 w-4" />
-            )}
-            {t('wines.exportPdf', 'Weinkarte PDF')}
-          </Button>
+          {/* PDF Export Button - only in advanced mode */}
+          {advancedMode && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleGeneratePdf}
+              disabled={pdfProgress !== null || wineArticles.length === 0}
+              className="gap-2"
+            >
+              {pdfProgress ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <FileDown className="h-4 w-4" />
+              )}
+              {t('wines.exportPdf', 'Weinkarte PDF')}
+            </Button>
+          )}
 
           {/* Batch Research Button */}
           {winesWithoutDescription.length > 0 && (
