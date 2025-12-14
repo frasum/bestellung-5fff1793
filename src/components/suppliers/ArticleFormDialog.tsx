@@ -159,13 +159,19 @@ export const ArticleFormDialog = ({
     }
   };
 
+  // Check if it's a wine category for dynamic dialog width
+  const isWineCategory = watchedCategory?.toLowerCase().includes('wein');
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-md max-h-[90vh] overflow-y-auto">
+      <DialogContent className={cn(
+        "max-w-[calc(100vw-2rem)] max-h-[90vh] overflow-y-auto",
+        isWineCategory ? "sm:max-w-2xl" : "sm:max-w-md"
+      )}>
         <DialogHeader>
           <DialogTitle>{editingArticle ? 'Artikel bearbeiten' : 'Neuer Artikel'}</DialogTitle>
         </DialogHeader>
-        <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-3 sm:space-y-4">
+        <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
           {/* AI Photo Capture - only in advanced mode */}
           {advancedSettingsEnabled && (
             <ArticlePhotoCapture
@@ -181,6 +187,8 @@ export const ArticleFormDialog = ({
               setIsAnalyzing={setIsAnalyzing}
             />
           )}
+          
+          {/* === BASISDATEN === */}
           <div className="space-y-2">
             <Label>Lieferant *</Label>
             <Controller
@@ -209,15 +217,6 @@ export const ArticleFormDialog = ({
             {form.formState.errors.name && (
               <p className="text-sm text-destructive">{form.formState.errors.name.message}</p>
             )}
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="article-description">Beschreibung</Label>
-            <Textarea 
-              id="article-description" 
-              {...form.register('description')} 
-              placeholder="Produktbeschreibung..."
-              className="min-h-[100px] resize-y"
-            />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
@@ -397,105 +396,173 @@ export const ArticleFormDialog = ({
               />
             </div>
           </div>
-          <div className="space-y-2">
-            <Label>Kategorie</Label>
-            <Controller
-              name="category"
-              control={form.control}
-              render={({ field }) => (
-                <Select onValueChange={field.onChange} value={field.value || ''}>
-                  <SelectTrigger className="bg-card">
-                    <SelectValue placeholder="Auswählen" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-card border border-border z-50">
-                    {categories.map((cat) => (
-                      <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-            />
-          </div>
-          
-          {/* Origin Country - only visible for wine categories */}
-          {watchedCategory && watchedCategory.toLowerCase().includes('wein') && (
+          {/* === KATEGORISIERUNG === */}
+          <div className={cn("grid gap-4", isWineCategory ? "grid-cols-2" : "grid-cols-1")}>
             <div className="space-y-2">
-              <Label>Herkunftsland 🌍</Label>
+              <Label>Kategorie</Label>
               <Controller
-                name="origin_country"
+                name="category"
                 control={form.control}
                 render={({ field }) => (
                   <Select onValueChange={field.onChange} value={field.value || ''}>
                     <SelectTrigger className="bg-card">
-                      <SelectValue placeholder="Herkunftsland auswählen" />
+                      <SelectValue placeholder="Auswählen" />
                     </SelectTrigger>
                     <SelectContent className="bg-card border border-border z-50">
-                      <SelectItem value="Deutschland">Deutschland</SelectItem>
-                      <SelectItem value="Österreich">Österreich</SelectItem>
-                      <SelectItem value="Italien">Italien</SelectItem>
-                      <SelectItem value="Frankreich">Frankreich</SelectItem>
-                      <SelectItem value="Spanien">Spanien</SelectItem>
-                      <SelectItem value="RSA">RSA (Südafrika)</SelectItem>
-                      <SelectItem value="Neue Welt">Neue Welt</SelectItem>
+                      {categories.map((cat) => (
+                        <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 )}
               />
             </div>
-          )}
+            
+            {/* Origin Country - only visible for wine categories */}
+            {isWineCategory && (
+              <div className="space-y-2">
+                <Label>Herkunftsland 🌍</Label>
+                <Controller
+                  name="origin_country"
+                  control={form.control}
+                  render={({ field }) => (
+                    <Select onValueChange={field.onChange} value={field.value || ''}>
+                      <SelectTrigger className="bg-card">
+                        <SelectValue placeholder="Herkunftsland auswählen" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-card border border-border z-50">
+                        <SelectItem value="Deutschland">Deutschland</SelectItem>
+                        <SelectItem value="Österreich">Österreich</SelectItem>
+                        <SelectItem value="Italien">Italien</SelectItem>
+                        <SelectItem value="Frankreich">Frankreich</SelectItem>
+                        <SelectItem value="Spanien">Spanien</SelectItem>
+                        <SelectItem value="RSA">RSA (Südafrika)</SelectItem>
+                        <SelectItem value="Neue Welt">Neue Welt</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
+              </div>
+            )}
+          </div>
 
-          {/* Selling Price - only visible for wine categories */}
-          {watchedCategory && watchedCategory.toLowerCase().includes('wein') && (
-            <div className="space-y-2">
-              <Label htmlFor="article-selling-price">Verkaufspreis (€) 🍷</Label>
-              <Input 
-                id="article-selling-price" 
-                type="number"
-                step="0.01"
-                {...form.register('selling_price')} 
-                placeholder="z.B. 42.00" 
-              />
-              <p className="text-xs text-muted-foreground">
-                Verkaufspreis im Restaurant (für Mitarbeiter sichtbar)
-              </p>
+          {/* === WEIN-DETAILS SEKTION === */}
+          {isWineCategory && (
+            <div className="space-y-4 rounded-lg border border-border bg-muted/30 p-4">
+              <h3 className="text-sm font-medium text-foreground flex items-center gap-2">
+                🍷 Wein-Details
+              </h3>
+              
+              {/* Selling Price for Wines */}
+              <div className="space-y-2">
+                <Label htmlFor="article-selling-price">Verkaufspreis (€)</Label>
+                <Input 
+                  id="article-selling-price" 
+                  type="number"
+                  step="0.01"
+                  {...form.register('selling_price')} 
+                  placeholder="z.B. 42.00" 
+                />
+                <p className="text-xs text-muted-foreground">
+                  Verkaufspreis im Restaurant (für Mitarbeiter sichtbar)
+                </p>
+              </div>
+              
+              {/* Description - full width auto-grow */}
+              <div className="space-y-2">
+                <Label htmlFor="article-description">Beschreibung</Label>
+                <Textarea 
+                  id="article-description" 
+                  {...form.register('description')} 
+                  placeholder="Weingut, Jahrgang, Qualitätsstufe, besondere Merkmale..."
+                  className="min-h-[80px] resize-none"
+                  style={{ 
+                    height: 'auto',
+                    minHeight: '80px',
+                    overflow: 'hidden'
+                  }}
+                  onInput={(e) => {
+                    const target = e.target as HTMLTextAreaElement;
+                    target.style.height = 'auto';
+                    target.style.height = `${Math.max(80, target.scrollHeight)}px`;
+                  }}
+                />
+              </div>
+
+              {/* Grape Variety - auto-grow */}
+              <div className="space-y-2">
+                <Label htmlFor="article-grape-variety">Traubensorte 🍇</Label>
+                <Textarea 
+                  id="article-grape-variety" 
+                  {...form.register('grape_variety')} 
+                  placeholder="z.B. Riesling, Spätburgunder, Cuvée aus Merlot und Cabernet..."
+                  className="min-h-[60px] resize-none"
+                  style={{ 
+                    height: 'auto',
+                    minHeight: '60px',
+                    overflow: 'hidden'
+                  }}
+                  onInput={(e) => {
+                    const target = e.target as HTMLTextAreaElement;
+                    target.style.height = 'auto';
+                    target.style.height = `${Math.max(60, target.scrollHeight)}px`;
+                  }}
+                />
+              </div>
+
+              {/* Flavor Profile - auto-grow */}
+              <div className="space-y-2">
+                <Label htmlFor="article-flavor-profile">Geschmacksprofil 🍷</Label>
+                <Textarea 
+                  id="article-flavor-profile" 
+                  {...form.register('flavor_profile')} 
+                  placeholder="z.B. fruchtig mit Noten von Kirsche und Vanille, samtige Tannine..."
+                  className="min-h-[60px] resize-none"
+                  style={{ 
+                    height: 'auto',
+                    minHeight: '60px',
+                    overflow: 'hidden'
+                  }}
+                  onInput={(e) => {
+                    const target = e.target as HTMLTextAreaElement;
+                    target.style.height = 'auto';
+                    target.style.height = `${Math.max(60, target.scrollHeight)}px`;
+                  }}
+                />
+              </div>
+
+              {/* Food Pairings - auto-grow */}
+              <div className="space-y-2">
+                <Label htmlFor="article-food-pairings">Speiseempfehlungen 🍽️</Label>
+                <Textarea 
+                  id="article-food-pairings" 
+                  {...form.register('food_pairings')} 
+                  placeholder="z.B. Passt hervorragend zu Lamm, gegrilltem Gemüse, reifem Käse..."
+                  className="min-h-[60px] resize-none"
+                  style={{ 
+                    height: 'auto',
+                    minHeight: '60px',
+                    overflow: 'hidden'
+                  }}
+                  onInput={(e) => {
+                    const target = e.target as HTMLTextAreaElement;
+                    target.style.height = 'auto';
+                    target.style.height = `${Math.max(60, target.scrollHeight)}px`;
+                  }}
+                />
+              </div>
             </div>
           )}
 
-          {/* Grape Variety - only visible for wine categories */}
-          {watchedCategory && watchedCategory.toLowerCase().includes('wein') && (
+          {/* Description for non-wine articles */}
+          {!isWineCategory && (
             <div className="space-y-2">
-              <Label htmlFor="article-grape-variety">Traubensorte 🍇</Label>
+              <Label htmlFor="article-description">Beschreibung</Label>
               <Textarea 
-                id="article-grape-variety" 
-                {...form.register('grape_variety')} 
-                placeholder="z.B. Riesling, Spätburgunder, Cuvée aus Merlot und Cabernet..."
-                className="min-h-[60px] resize-y"
-              />
-            </div>
-          )}
-
-          {/* Flavor Profile - only visible for wine categories */}
-          {watchedCategory && watchedCategory.toLowerCase().includes('wein') && (
-            <div className="space-y-2">
-              <Label htmlFor="article-flavor-profile">Geschmacksprofil 🍷</Label>
-              <Textarea 
-                id="article-flavor-profile" 
-                {...form.register('flavor_profile')} 
-                placeholder="z.B. fruchtig mit Noten von Kirsche und Vanille, samtige Tannine..."
+                id="article-description" 
+                {...form.register('description')} 
+                placeholder="Produktbeschreibung..."
                 className="min-h-[80px] resize-y"
-              />
-            </div>
-          )}
-
-          {/* Food Pairings - only visible for wine categories */}
-          {watchedCategory && watchedCategory.toLowerCase().includes('wein') && (
-            <div className="space-y-2">
-              <Label htmlFor="article-food-pairings">Speiseempfehlungen 🍽️</Label>
-              <Textarea 
-                id="article-food-pairings" 
-                {...form.register('food_pairings')} 
-                placeholder="z.B. Passt hervorragend zu Lamm, gegrilltem Gemüse, reifem Käse..."
-                className="min-h-[60px] resize-y"
               />
             </div>
           )}
