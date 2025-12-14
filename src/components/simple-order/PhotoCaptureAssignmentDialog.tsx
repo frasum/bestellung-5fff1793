@@ -85,6 +85,7 @@ export const PhotoCaptureAssignmentDialog = ({
   const [showSuggestionForm, setShowSuggestionForm] = useState(false);
   const [suggestionData, setSuggestionData] = useState({
     name: '',
+    description: '',
     category: '',
     unit: 'Stk',
     supplier_id: article.supplier_id,
@@ -151,6 +152,7 @@ export const PhotoCaptureAssignmentDialog = ({
         setShowSuggestionForm(true);
         setSuggestionData({
           name: result.suggestedName || article.name,
+          description: result.suggestedDescription || '',
           category: result.suggestedCategory || '',
           unit: result.suggestedUnit || 'Stk',
           supplier_id: article.supplier_id,
@@ -239,6 +241,7 @@ export const PhotoCaptureAssignmentDialog = ({
         body: {
           token,
           name: suggestionData.name.trim(),
+          description: suggestionData.description.trim() || null,
           category: suggestionData.category || null,
           unit: suggestionData.unit,
           supplier_id: suggestionData.supplier_id,
@@ -399,6 +402,15 @@ export const PhotoCaptureAssignmentDialog = ({
                       value={suggestionData.name}
                       onChange={(e) => setSuggestionData(prev => ({ ...prev, name: e.target.value }))}
                       placeholder={t('photoCapture.articleName', 'Artikelname')}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>{t('common.description', 'Beschreibung')}</Label>
+                    <Input
+                      value={suggestionData.description}
+                      onChange={(e) => setSuggestionData(prev => ({ ...prev, description: e.target.value }))}
+                      placeholder={t('photoCapture.descriptionPlaceholder', 'z.B. Weingut, Jahrgang, Herkunft...')}
                     />
                   </div>
 
