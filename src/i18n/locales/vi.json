@@ -203,6 +203,23 @@
     "referenceUnit": "Đơn vị tham chiếu",
     "referencePriceHint": "Để so sánh giá (ví dụ: ₫/kg)"
   },
+  "wines": {
+    "tab": "Rượu Vang Của Chúng Tôi",
+    "ourWines": "Rượu Vang Của Chúng Tôi",
+    "noWines": "Không có rượu vang trong danh mục",
+    "noWinesDescription": "Thêm sản phẩm với danh mục \"Rượu Vang\" để hiển thị ở đây.",
+    "totalWines": "{{count}} loại rượu từ {{suppliers}} nhà cung cấp",
+    "winesCount": "Rượu vang",
+    "sellingPrice": "Giá bán",
+    "noSellingPrice": "Chưa đặt giá bán",
+    "originCountry": "Xuất xứ",
+    "grapeVariety": "Giống nho",
+    "flavorProfile": "Hương vị",
+    "foodPairings": "Kết hợp với",
+    "exportPdf": "Xuất PDF",
+    "pdfExported": "Đã xuất danh sách rượu vang ra PDF",
+    "exportingProgress": "Đang xuất {{current}} trên {{total}} loại rượu..."
+  },
   "cart": {
     "title": "Giỏ hàng",
     "empty": "Giỏ hàng trống",

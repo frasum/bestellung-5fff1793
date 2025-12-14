@@ -203,6 +203,23 @@
     "referenceUnit": "Reference Unit",
     "referencePriceHint": "For price comparison (e.g., €/kg)"
   },
+  "wines": {
+    "tab": "Our Wines",
+    "ourWines": "Our Wines",
+    "noWines": "No wines in catalog",
+    "noWinesDescription": "Add articles with the category \"Wine\" to display them here.",
+    "totalWines": "{{count}} wines from {{suppliers}} suppliers",
+    "winesCount": "Wines",
+    "sellingPrice": "Selling Price",
+    "noSellingPrice": "No selling price set",
+    "originCountry": "Origin",
+    "grapeVariety": "Grape Variety",
+    "flavorProfile": "Flavor",
+    "foodPairings": "Pairs with",
+    "exportPdf": "Export as PDF",
+    "pdfExported": "Wine catalog exported as PDF",
+    "exportingProgress": "Exporting {{current}} of {{total}} wines..."
+  },
   "cart": {
     "title": "Cart",
     "empty": "Your cart is empty",

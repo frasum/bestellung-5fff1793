@@ -203,6 +203,23 @@
     "referenceUnit": "Unità di riferimento",
     "referencePriceHint": "Per il confronto dei prezzi (es. €/kg)"
   },
+  "wines": {
+    "tab": "I Nostri Vini",
+    "ourWines": "I Nostri Vini",
+    "noWines": "Nessun vino nel catalogo",
+    "noWinesDescription": "Aggiungi articoli con la categoria \"Vino\" per visualizzarli qui.",
+    "totalWines": "{{count}} vini da {{suppliers}} fornitori",
+    "winesCount": "Vini",
+    "sellingPrice": "Prezzo di vendita",
+    "noSellingPrice": "Nessun prezzo di vendita impostato",
+    "originCountry": "Origine",
+    "grapeVariety": "Vitigno",
+    "flavorProfile": "Gusto",
+    "foodPairings": "Si abbina con",
+    "exportPdf": "Esporta come PDF",
+    "pdfExported": "Carta dei vini esportata come PDF",
+    "exportingProgress": "Esportazione di {{current}} di {{total}} vini..."
+  },
   "cart": {
     "title": "Carrello",
     "empty": "Il tuo carrello è vuoto",

@@ -203,6 +203,23 @@
     "referenceUnit": "หน่วยอ้างอิง",
     "referencePriceHint": "สำหรับเปรียบเทียบราคา (เช่น ฿/กก.)"
   },
+  "wines": {
+    "tab": "ไวน์ของเรา",
+    "ourWines": "ไวน์ของเรา",
+    "noWines": "ไม่มีไวน์ในแคตตาล็อก",
+    "noWinesDescription": "เพิ่มสินค้าที่มีหมวดหมู่ \"ไวน์\" เพื่อแสดงที่นี่",
+    "totalWines": "{{count}} ไวน์จาก {{suppliers}} ซัพพลายเออร์",
+    "winesCount": "ไวน์",
+    "sellingPrice": "ราคาขาย",
+    "noSellingPrice": "ไม่ได้ตั้งราคาขาย",
+    "originCountry": "แหล่งที่มา",
+    "grapeVariety": "พันธุ์องุ่น",
+    "flavorProfile": "รสชาติ",
+    "foodPairings": "เข้ากับ",
+    "exportPdf": "ส่งออกเป็น PDF",
+    "pdfExported": "ส่งออกรายการไวน์เป็น PDF แล้ว",
+    "exportingProgress": "กำลังส่งออก {{current}} จาก {{total}} ไวน์..."
+  },
   "cart": {
     "title": "ตะกร้าสินค้า",
     "empty": "ตะกร้าของคุณว่างเปล่า",
