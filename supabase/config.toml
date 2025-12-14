@@ -98,3 +98,6 @@ verify_jwt = true
 
 [functions.elevenlabs-conversation-token]
 verify_jwt = true
+
+[functions.research-wine]
+verify_jwt = true
