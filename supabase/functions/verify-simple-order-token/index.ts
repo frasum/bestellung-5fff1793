@@ -35,7 +35,7 @@ serve(async (req) => {
         *,
         supplier:suppliers(id, name, email, organization_id),
         location:locations(id, name),
-        employee:employees(id, name, auto_approve_orders, email, pin_code, voice_input_enabled, can_add_free_items, can_capture_photos)
+        employee:employees(id, name, auto_approve_orders, email, pin_code, voice_input_enabled, can_add_free_items, can_capture_photos, wine_catalog_access)
       `)
       .eq('token', token)
       .eq('is_active', true)
@@ -222,6 +222,7 @@ serve(async (req) => {
     const hasPinCode = !!(tokenData.employee as any)?.pin_code;
     const canAddFreeItems = (tokenData.employee as any)?.can_add_free_items || false;
     const canCapturePhotos = (tokenData.employee as any)?.can_capture_photos || false;
+    const wineCatalogAccess = (tokenData.employee as any)?.wine_catalog_access || 'none';
     
     // Only require PIN if auto_approve is enabled AND a PIN is set
     const requiresPin = autoApproveOrders && hasPinCode;
@@ -276,6 +277,7 @@ serve(async (req) => {
           voice_input_enabled: voiceInputEnabled,
           can_add_free_items: canAddFreeItems,
           can_capture_photos: canCapturePhotos,
+          wine_catalog_access: wineCatalogAccess,
         },
         suppliers: suppliers,
         articles: articles,

@@ -591,7 +591,12 @@
       "canAddFreeItems": "อนุญาตให้เพิ่มสินค้าอิสระ",
       "canAddFreeItemsDescription": "พนักงานสามารถเพิ่มสินค้าอิสระในคำสั่งซื้อ",
       "canCapturePhotos": "ถ่ายภาพสินค้า",
-      "canCapturePhotosDescription": "พนักงานสามารถถ่ายและกำหนดภาพสินค้า"
+      "canCapturePhotosDescription": "พนักงานสามารถถ่ายและกำหนดภาพสินค้า",
+      "wineCatalogAccess": "การเข้าถึงรายการไวน์",
+      "wineCatalogAccessDescription": "ดูหรือแก้ไขรายการไวน์ผ่าน Easy Order",
+      "wineCatalogNone": "ไม่มีสิทธิ์เข้าถึง",
+      "wineCatalogView": "ดูอย่างเดียว",
+      "wineCatalogEdit": "ดูและแก้ไข"
     }
   },
   "landing": {

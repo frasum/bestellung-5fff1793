@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Plus, Pencil, Trash2, Phone, Mail, User, UserCheck, UserX, MapPin, ChevronDown, ChevronRight, Package, Copy, MessageCircle, ExternalLink, QrCode, Zap, KeyRound, Shield, ShieldAlert, Mic, PlusCircle, Camera } from 'lucide-react';
+import { Plus, Pencil, Trash2, Phone, Mail, User, UserCheck, UserX, MapPin, ChevronDown, ChevronRight, Package, Copy, MessageCircle, ExternalLink, QrCode, Zap, KeyRound, Shield, ShieldAlert, Mic, PlusCircle, Camera, Wine } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -108,6 +108,7 @@ export function EmployeesTab() {
     voiceInputEnabled: false,
     canAddFreeItems: false,
     canCapturePhotos: false,
+    wineCatalogAccess: 'none' as 'none' | 'view' | 'edit',
   });
   
   // New structure: location -> suppliers mapping
@@ -223,7 +224,7 @@ export function EmployeesTab() {
 
   const openCreateDialog = () => {
     setEditingEmployee(null);
-    setFormData({ name: '', phone: '', email: '', notes: '', language: 'th', autoApprove: false, pinCode: '', voiceInputEnabled: false, canAddFreeItems: false, canCapturePhotos: false });
+    setFormData({ name: '', phone: '', email: '', notes: '', language: 'th', autoApprove: false, pinCode: '', voiceInputEnabled: false, canAddFreeItems: false, canCapturePhotos: false, wineCatalogAccess: 'none' });
     initializeLocationAssignments();
     setIsDialogOpen(true);
   };
@@ -245,6 +246,7 @@ export function EmployeesTab() {
       voiceInputEnabled: employee.voice_input_enabled || false,
       canAddFreeItems: employee.can_add_free_items || false,
       canCapturePhotos: employee.can_capture_photos || false,
+      wineCatalogAccess: (employee.wine_catalog_access as 'none' | 'view' | 'edit') || 'none',
     });
     initializeLocationAssignments(employee.id);
     setIsDialogOpen(true);
@@ -358,6 +360,7 @@ export function EmployeesTab() {
         voice_input_enabled: formData.voiceInputEnabled,
         can_add_free_items: formData.canAddFreeItems,
         can_capture_photos: formData.canCapturePhotos,
+        wine_catalog_access: formData.wineCatalogAccess,
         // Don't update pin_code directly - use the secure hash function below
       });
       
@@ -661,6 +664,13 @@ export function EmployeesTab() {
                             <Badge variant="outline" className="text-xs border-purple-500 text-purple-600 bg-purple-50 dark:bg-purple-900/20">
                               <Camera className="h-3 w-3 mr-1" />
                               Fotoerfassung
+                            </Badge>
+                          )}
+                          {/* Wine Catalog Badge */}
+                          {employee.wine_catalog_access && employee.wine_catalog_access !== 'none' && (
+                            <Badge variant="outline" className="text-xs border-rose-500 text-rose-600 bg-rose-50 dark:bg-rose-900/20">
+                              <Wine className="h-3 w-3 mr-1" />
+                              {employee.wine_catalog_access === 'edit' ? 'Wein-Editor' : 'Weinkarte'}
                             </Badge>
                           )}
                           {!employee.is_active && (
@@ -1123,6 +1133,37 @@ export function EmployeesTab() {
                   checked={formData.canCapturePhotos}
                   onCheckedChange={(checked) => setFormData({ ...formData, canCapturePhotos: checked })}
                 />
+              </div>
+
+              {/* Wine Catalog Access */}
+              <div className="p-3 border rounded-lg bg-muted/30">
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Label htmlFor="wine-access" className="text-sm font-medium">
+                      {t('settings.employees.wineCatalogAccess', 'Weinkarten-Zugang')}
+                    </Label>
+                    <Badge variant="outline" className="text-xs bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-400">
+                      <Wine className="h-3 w-3 mr-1" />
+                      Wein
+                    </Badge>
+                  </div>
+                  <p className="text-xs text-muted-foreground mb-2">
+                    {t('settings.employees.wineCatalogAccessDescription', 'Weinkarte über Easy Order anzeigen oder bearbeiten')}
+                  </p>
+                  <Select
+                    value={formData.wineCatalogAccess}
+                    onValueChange={(value: 'none' | 'view' | 'edit') => setFormData({ ...formData, wineCatalogAccess: value })}
+                  >
+                    <SelectTrigger id="wine-access" className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">{t('settings.employees.wineCatalogNone', 'Kein Zugang')}</SelectItem>
+                      <SelectItem value="view">{t('settings.employees.wineCatalogView', 'Nur ansehen')}</SelectItem>
+                      <SelectItem value="edit">{t('settings.employees.wineCatalogEdit', 'Ansehen & bearbeiten')}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
 
               <div>

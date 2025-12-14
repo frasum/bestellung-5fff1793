@@ -64,6 +64,7 @@ interface TokenData {
   voice_input_enabled: boolean;
   can_add_free_items: boolean;
   can_capture_photos: boolean;
+  wine_catalog_access: 'none' | 'view' | 'edit';
   supplier: {
     id: string;
     name: string;
