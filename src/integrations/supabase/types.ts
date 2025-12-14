@@ -1850,6 +1850,78 @@ export type Database = {
         }
         Relationships: []
       }
+      wine_catalog_tokens: {
+        Row: {
+          created_at: string
+          employee_id: string | null
+          expires_at: string | null
+          id: string
+          is_active: boolean
+          label: string
+          organization_id: string
+          permission: string
+          pin_code: string | null
+          token: string
+        }
+        Insert: {
+          created_at?: string
+          employee_id?: string | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          label: string
+          organization_id: string
+          permission?: string
+          pin_code?: string | null
+          token?: string
+        }
+        Update: {
+          created_at?: string
+          employee_id?: string | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          label?: string
+          organization_id?: string
+          permission?: string
+          pin_code?: string | null
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wine_catalog_tokens_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wine_catalog_tokens_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wine_token_rate_limits: {
+        Row: {
+          created_at: string
+          id: string
+          token: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          token: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          token?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -1859,6 +1931,7 @@ export type Database = {
       cleanup_old_rate_limits: { Args: never; Returns: undefined }
       cleanup_pin_verification_rate_limits: { Args: never; Returns: undefined }
       cleanup_simple_order_rate_limits: { Args: never; Returns: undefined }
+      cleanup_wine_token_rate_limits: { Args: never; Returns: undefined }
       generate_order_number: { Args: never; Returns: string }
       get_user_organization_id: { Args: { user_id: string }; Returns: string }
       has_role: {
