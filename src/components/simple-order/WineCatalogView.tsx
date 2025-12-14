@@ -50,10 +50,12 @@ export const WineCatalogView = ({ organizationId, permission, onBack, token }: W
   const [pdfProgress, setPdfProgress] = useState({ current: 0, total: 0 });
 
   useEffect(() => {
+    console.log('[WineCatalogView] useEffect triggered', { token });
     loadData();
   }, [token]);
-
+ 
   const loadData = async () => {
+    console.log('[WineCatalogView] loadData start');
     setIsLoading(true);
     try {
       // Load wines via Edge Function (bypasses RLS)
@@ -61,18 +63,21 @@ export const WineCatalogView = ({ organizationId, permission, onBack, token }: W
         body: { token, action: 'get-wines' },
       });
 
+      console.log('[WineCatalogView] loadData response', { data, error });
+ 
       if (error || data?.error) {
         console.error('Error loading wines:', error || data?.error);
         toast.error(t('common.error', 'Fehler beim Laden'));
         return;
       }
-
+ 
       setWines(data.wines || []);
       setOrganizationName(data.organization_name || '');
     } catch (err) {
       console.error('Error loading data:', err);
       toast.error(t('common.error', 'Fehler beim Laden'));
     } finally {
+      console.log('[WineCatalogView] loadData finished');
       setIsLoading(false);
     }
   };
