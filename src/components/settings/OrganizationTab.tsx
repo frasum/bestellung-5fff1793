@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { Building2, Users, Store, Ruler, Tag, FolderTree, Package } from 'lucide-react';
+import { Building2, Users, Store, Ruler, Tag, FolderTree, Package, FileText, Download, Loader2 } from 'lucide-react';
 import { useOrganization, useUpdateOrganization } from '@/hooks/useSettings';
 import { TeamTab } from './TeamTab';
 import { LocationsWithAddressesTab } from './LocationsWithAddressesTab';
@@ -14,6 +14,8 @@ import { UnitsTab } from './UnitsTab';
 import { CategoriesTab } from './CategoriesTab';
 import { OrderUnitsTab } from './OrderUnitsTab';
 import { ArticleOrganizationTab } from './ArticleOrganizationTab';
+import { generateSystemOverviewPdf } from '@/lib/systemOverviewPdf';
+import { toast } from 'sonner';
 
 interface OrganizationTabProps {
   activeSubTab: string;
@@ -25,10 +27,53 @@ const OrganizationGeneralContent = () => {
   const { data: organization, isLoading } = useOrganization();
   const updateOrganization = useUpdateOrganization();
   const [name, setName] = useState('');
+  const [contactEmail, setContactEmail] = useState('');
+  const [contactPhone, setContactPhone] = useState('');
+  const [website, setWebsite] = useState('');
+  const [address, setAddress] = useState('');
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+
+  useEffect(() => {
+    if (organization) {
+      setName(organization.name || '');
+      setContactEmail(organization.contact_email || '');
+      setContactPhone(organization.contact_phone || '');
+      setWebsite(organization.website || '');
+      setAddress(organization.address || '');
+    }
+  }, [organization]);
 
   const handleSave = () => {
-    if (organization && name.trim()) {
-      updateOrganization.mutate({ id: organization.id, name: name.trim() });
+    if (organization) {
+      updateOrganization.mutate({ 
+        id: organization.id, 
+        name: name.trim() || organization.name,
+        contact_email: contactEmail.trim() || null,
+        contact_phone: contactPhone.trim() || null,
+        website: website.trim() || null,
+        address: address.trim() || null,
+      });
+    }
+  };
+
+  const handleDownloadPdf = async () => {
+    if (!organization) return;
+    
+    setIsGeneratingPdf(true);
+    try {
+      await generateSystemOverviewPdf({
+        companyName: organization.name,
+        email: organization.contact_email || undefined,
+        phone: organization.contact_phone || undefined,
+        website: organization.website || undefined,
+        address: organization.address || undefined,
+      });
+      toast.success(t('settings.pdfDownloaded'));
+    } catch (error) {
+      console.error('PDF generation error:', error);
+      toast.error(t('settings.pdfError'));
+    } finally {
+      setIsGeneratingPdf(false);
     }
   };
 
@@ -37,41 +82,118 @@ const OrganizationGeneralContent = () => {
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{t('settings.orgProfile')}</CardTitle>
-        <CardDescription>{t('settings.orgDetails')}</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        <div className="space-y-2">
-          <Label htmlFor="org-name">{t('settings.orgName')}</Label>
-          <Input
-            id="org-name"
-            defaultValue={organization?.name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder={t('settings.orgNamePlaceholder')}
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label>{t('settings.subscription')}</Label>
-          <div className="flex items-center gap-2">
-            <Badge variant="secondary" className="capitalize">
-              {organization?.subscription_tier || 'free'}
-            </Badge>
-            {organization?.trial_ends_at && (
-              <span className="text-sm text-muted-foreground">
-                {t('settings.trialEnds')}: {new Date(organization.trial_ends_at).toLocaleDateString()}
-              </span>
-            )}
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>{t('settings.orgProfile')}</CardTitle>
+          <CardDescription>{t('settings.orgDetails')}</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="space-y-2">
+            <Label htmlFor="org-name">{t('settings.orgName')}</Label>
+            <Input
+              id="org-name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder={t('settings.orgNamePlaceholder')}
+            />
           </div>
-        </div>
 
-        <Button onClick={handleSave} disabled={updateOrganization.isPending}>
-          {updateOrganization.isPending ? t('settings.savingProfile') : t('settings.saveChanges')}
-        </Button>
-      </CardContent>
-    </Card>
+          <div className="space-y-2">
+            <Label>{t('settings.subscription')}</Label>
+            <div className="flex items-center gap-2">
+              <Badge variant="secondary" className="capitalize">
+                {organization?.subscription_tier || 'free'}
+              </Badge>
+              {organization?.trial_ends_at && (
+                <span className="text-sm text-muted-foreground">
+                  {t('settings.trialEnds')}: {new Date(organization.trial_ends_at).toLocaleDateString()}
+                </span>
+              )}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>{t('settings.contactInfo')}</CardTitle>
+          <CardDescription>{t('settings.contactInfoDesc')}</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="contact-email">{t('settings.contactEmail')}</Label>
+              <Input
+                id="contact-email"
+                type="email"
+                value={contactEmail}
+                onChange={(e) => setContactEmail(e.target.value)}
+                placeholder="info@example.com"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="contact-phone">{t('settings.contactPhone')}</Label>
+              <Input
+                id="contact-phone"
+                type="tel"
+                value={contactPhone}
+                onChange={(e) => setContactPhone(e.target.value)}
+                placeholder="+49 89 123 456 789"
+              />
+            </div>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="website">{t('settings.website')}</Label>
+            <Input
+              id="website"
+              type="url"
+              value={website}
+              onChange={(e) => setWebsite(e.target.value)}
+              placeholder="https://example.com"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="address">{t('settings.address')}</Label>
+            <Input
+              id="address"
+              value={address}
+              onChange={(e) => setAddress(e.target.value)}
+              placeholder={t('settings.addressPlaceholder')}
+            />
+          </div>
+
+          <Button onClick={handleSave} disabled={updateOrganization.isPending}>
+            {updateOrganization.isPending ? t('settings.savingProfile') : t('settings.saveChanges')}
+          </Button>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <FileText className="h-5 w-5" />
+            {t('settings.systemOverviewPdf')}
+          </CardTitle>
+          <CardDescription>{t('settings.systemOverviewPdfDesc')}</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Button onClick={handleDownloadPdf} disabled={isGeneratingPdf}>
+            {isGeneratingPdf ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                {t('common.loading')}
+              </>
+            ) : (
+              <>
+                <Download className="h-4 w-4 mr-2" />
+                {t('settings.downloadPdf')}
+              </>
+            )}
+          </Button>
+        </CardContent>
+      </Card>
+    </div>
   );
 };
 
