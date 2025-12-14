@@ -206,12 +206,20 @@
   },
   "wines": {
     "tab": "Unsere Weine",
+    "ourWines": "Unsere Weine",
     "noWines": "Keine Weine im Katalog",
     "noWinesDescription": "Fügen Sie Artikel mit der Kategorie \"Wein\" hinzu, um sie hier anzuzeigen.",
     "totalWines": "{{count}} Weine von {{suppliers}} Lieferanten",
     "winesCount": "Weine",
-    "sellingPrice": "Verkaufspreis",
-    "noSellingPrice": "Kein Verkaufspreis hinterlegt"
+    "sellingPrice": "VK-Preis",
+    "noSellingPrice": "Kein Verkaufspreis hinterlegt",
+    "originCountry": "Herkunft",
+    "grapeVariety": "Rebsorte",
+    "flavorProfile": "Geschmack",
+    "foodPairings": "Passt zu",
+    "exportPdf": "Als PDF exportieren",
+    "pdfExported": "Weinkarte als PDF exportiert",
+    "exportingProgress": "Exportiere {{current}} von {{total}} Weinen..."
   },
 "cart": {
     "title": "Warenkorb",

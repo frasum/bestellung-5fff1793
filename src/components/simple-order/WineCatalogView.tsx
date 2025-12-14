@@ -6,9 +6,11 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ArrowLeft, Search, Wine, Grape, MapPin, Utensils, Euro, X, Check, Loader2 } from 'lucide-react';
+import { Progress } from '@/components/ui/progress';
+import { ArrowLeft, Search, Wine, Grape, MapPin, Utensils, Euro, X, Check, Loader2, FileDown } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
+import { generateWineCatalogPdf } from '@/lib/wineCatalogPdf';
 
 interface WineArticle {
   id: string;
@@ -21,6 +23,7 @@ interface WineArticle {
   food_pairings: string | null;
   image_url: string | null;
   category: string | null;
+  supplier_id: string;
   supplier: {
     id: string;
     name: string;
@@ -41,6 +44,8 @@ export const WineCatalogView = ({ organizationId, permission, onBack }: WineCata
   const [editingWine, setEditingWine] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<Partial<WineArticle>>({});
   const [isSaving, setIsSaving] = useState(false);
+  const [isExportingPdf, setIsExportingPdf] = useState(false);
+  const [pdfProgress, setPdfProgress] = useState({ current: 0, total: 0 });
 
   useEffect(() => {
     loadWines();
@@ -53,7 +58,7 @@ export const WineCatalogView = ({ organizationId, permission, onBack }: WineCata
         .from('articles')
         .select(`
           id, name, description, selling_price, origin_country,
-          grape_variety, flavor_profile, food_pairings, image_url, category,
+          grape_variety, flavor_profile, food_pairings, image_url, category, supplier_id,
           supplier:suppliers(id, name)
         `)
         .eq('organization_id', organizationId)
@@ -143,6 +148,42 @@ export const WineCatalogView = ({ organizationId, permission, onBack }: WineCata
     return `€${price.toFixed(2)}`;
   };
 
+  const handleExportPdf = async () => {
+    if (wines.length === 0) {
+      toast.error(t('wines.noWines', 'Keine Weine im Katalog'));
+      return;
+    }
+
+    setIsExportingPdf(true);
+    setPdfProgress({ current: 0, total: wines.length });
+
+    try {
+      // Extract unique suppliers from wines
+      const supplierMap = new Map<string, { id: string; name: string }>();
+      wines.forEach(wine => {
+        if (wine.supplier && !supplierMap.has(wine.supplier.id)) {
+          supplierMap.set(wine.supplier.id, wine.supplier);
+        }
+      });
+      const suppliers = Array.from(supplierMap.values());
+
+      await generateWineCatalogPdf(
+        wines,
+        suppliers,
+        undefined, // restaurantName - not available in this context
+        (current, total) => setPdfProgress({ current, total })
+      );
+      
+      toast.success(t('wines.pdfExported', 'Weinkarte als PDF exportiert'));
+    } catch (err) {
+      console.error('Error exporting PDF:', err);
+      toast.error(t('common.error', 'Fehler beim Export'));
+    } finally {
+      setIsExportingPdf(false);
+      setPdfProgress({ current: 0, total: 0 });
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -161,12 +202,37 @@ export const WineCatalogView = ({ organizationId, permission, onBack }: WineCata
               <Wine className="h-5 w-5" />
               <h1 className="text-lg font-bold">{t('wines.ourWines', 'Unsere Weine')}</h1>
             </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleExportPdf}
+              disabled={isExportingPdf || wines.length === 0}
+              className="h-11 w-11 text-primary-foreground hover:bg-primary-foreground/20"
+              title={t('wines.exportPdf', 'Als PDF exportieren')}
+            >
+              {isExportingPdf ? (
+                <Loader2 className="h-5 w-5 animate-spin" />
+              ) : (
+                <FileDown className="h-5 w-5" />
+              )}
+            </Button>
             {permission === 'edit' && (
               <Badge variant="secondary" className="bg-primary-foreground/20 text-primary-foreground">
                 {t('employees.wineCatalogEdit', 'Bearbeiten')}
               </Badge>
             )}
           </div>
+          {isExportingPdf && pdfProgress.total > 0 && (
+            <div className="mt-2">
+              <Progress value={(pdfProgress.current / pdfProgress.total) * 100} className="h-1" />
+              <p className="text-xs text-primary-foreground/70 mt-1 text-center">
+                {t('wines.exportingProgress', 'Exportiere {{current}} von {{total}} Weinen...', {
+                  current: pdfProgress.current,
+                  total: pdfProgress.total,
+                })}
+              </p>
+            </div>
+          )}
         </div>
       </div>
 

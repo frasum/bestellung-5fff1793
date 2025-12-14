@@ -203,6 +203,23 @@
     "referenceUnit": "Unité de référence",
     "referencePriceHint": "Pour la comparaison des prix (ex. €/kg)"
   },
+  "wines": {
+    "tab": "Nos Vins",
+    "ourWines": "Nos Vins",
+    "noWines": "Aucun vin dans le catalogue",
+    "noWinesDescription": "Ajoutez des articles avec la catégorie \"Vin\" pour les afficher ici.",
+    "totalWines": "{{count}} vins de {{suppliers}} fournisseurs",
+    "winesCount": "Vins",
+    "sellingPrice": "Prix de vente",
+    "noSellingPrice": "Aucun prix de vente défini",
+    "originCountry": "Origine",
+    "grapeVariety": "Cépage",
+    "flavorProfile": "Saveur",
+    "foodPairings": "Accompagne",
+    "exportPdf": "Exporter en PDF",
+    "pdfExported": "Carte des vins exportée en PDF",
+    "exportingProgress": "Export de {{current}} sur {{total}} vins..."
+  },
   "cart": {
     "title": "Panier",
     "empty": "Votre panier est vide",
