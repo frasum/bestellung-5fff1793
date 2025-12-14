@@ -1,11 +1,12 @@
-import { useMemo, useState } from 'react';
-import { Wine, MapPin, Euro, ChevronRight, ChevronDown, Pencil, Search, Loader2, ExternalLink, Grape, Utensils, Info } from 'lucide-react';
+import { useMemo, useState, useCallback } from 'react';
+import { Wine, MapPin, Euro, ChevronRight, ChevronDown, Pencil, Search, Loader2, ExternalLink, Grape, Utensils, Info, Sparkles } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Progress } from '@/components/ui/progress';
 import { Article, useUpdateArticle } from '@/hooks/useArticles';
 import { Supplier } from '@/hooks/useSuppliers';
 import { useTranslation } from 'react-i18next';
@@ -32,6 +33,8 @@ interface WinesTabProps {
 export const WinesTab = ({ articles, suppliers, onEditArticle }: WinesTabProps) => {
   const { t } = useTranslation();
   const [openSuppliers, setOpenSuppliers] = useState<Record<string, boolean>>({});
+  const [batchProgress, setBatchProgress] = useState<{ current: number; total: number; wineName: string } | null>(null);
+  const updateArticle = useUpdateArticle();
 
   // Filter articles that have "wein" in category (case-insensitive)
   const wineArticles = useMemo(() => {
@@ -40,6 +43,11 @@ export const WinesTab = ({ articles, suppliers, onEditArticle }: WinesTabProps) 
       article.top_category?.toLowerCase().includes('wein')
     );
   }, [articles]);
+
+  // Wines without description (candidates for batch research)
+  const winesWithoutDescription = useMemo(() => {
+    return wineArticles.filter(wine => !wine.description?.trim());
+  }, [wineArticles]);
 
   // Group wines by supplier
   const winesBySupplier = useMemo(() => {
@@ -64,6 +72,60 @@ export const WinesTab = ({ articles, suppliers, onEditArticle }: WinesTabProps) 
       .sort((a, b) => a.name.localeCompare(b.name));
   }, [suppliers, winesBySupplier]);
 
+  // Batch research function
+  const handleBatchResearch = useCallback(async () => {
+    if (winesWithoutDescription.length === 0) {
+      toast.info(t('wines.allWinesHaveDescriptions', 'Alle Weine haben bereits Beschreibungen'));
+      return;
+    }
+
+    const notFound = 'Keine Informationen gefunden';
+    let successCount = 0;
+    let errorCount = 0;
+
+    for (let i = 0; i < winesWithoutDescription.length; i++) {
+      const wine = winesWithoutDescription[i];
+      setBatchProgress({ current: i + 1, total: winesWithoutDescription.length, wineName: wine.name });
+
+      try {
+        const { data, error } = await supabase.functions.invoke('research-wine', {
+          body: {
+            wineName: wine.name,
+            origin_country: wine.origin_country,
+          },
+        });
+
+        if (error) throw error;
+
+        const result = data as WineResearchResult;
+        
+        await updateArticle.mutateAsync({
+          id: wine.id,
+          ...(result.description !== notFound && { description: result.description }),
+          ...(result.grape_variety !== notFound && { grape_variety: result.grape_variety }),
+          ...(result.flavor_profile !== notFound && { flavor_profile: result.flavor_profile }),
+          ...(result.food_pairings !== notFound && { food_pairings: result.food_pairings }),
+        });
+
+        successCount++;
+      } catch (error) {
+        console.error(`Error researching wine ${wine.name}:`, error);
+        errorCount++;
+      }
+
+      // Small delay to avoid rate limiting
+      await new Promise(resolve => setTimeout(resolve, 500));
+    }
+
+    setBatchProgress(null);
+    
+    if (errorCount === 0) {
+      toast.success(t('wines.batchResearchComplete', '{{count}} Weine erfolgreich recherchiert', { count: successCount }));
+    } else {
+      toast.warning(t('wines.batchResearchPartial', '{{success}} erfolgreich, {{errors}} Fehler', { success: successCount, errors: errorCount }));
+    }
+  }, [winesWithoutDescription, updateArticle, t]);
+
   if (wineArticles.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-16 text-center">
@@ -80,15 +142,52 @@ export const WinesTab = ({ articles, suppliers, onEditArticle }: WinesTabProps) 
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-2 text-muted-foreground">
-        <Wine className="h-5 w-5" />
-        <span className="text-sm">
-          {t('wines.totalWines', '{{count}} Weine von {{suppliers}} Lieferanten', {
-            count: wineArticles.length,
-            suppliers: suppliersWithWines.length
-          })}
-        </span>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2 text-muted-foreground">
+          <Wine className="h-5 w-5" />
+          <span className="text-sm">
+            {t('wines.totalWines', '{{count}} Weine von {{suppliers}} Lieferanten', {
+              count: wineArticles.length,
+              suppliers: suppliersWithWines.length
+            })}
+          </span>
+        </div>
+
+        {winesWithoutDescription.length > 0 && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleBatchResearch}
+            disabled={batchProgress !== null}
+            className="gap-2"
+          >
+            {batchProgress ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Sparkles className="h-4 w-4" />
+            )}
+            {t('wines.batchResearch', 'Alle recherchieren')}
+            <Badge variant="secondary" className="ml-1">
+              {winesWithoutDescription.length}
+            </Badge>
+          </Button>
+        )}
       </div>
+
+      {/* Batch Progress */}
+      {batchProgress && (
+        <div className="bg-muted/50 rounded-lg p-4 space-y-2">
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-muted-foreground">
+              {t('wines.researching', 'Recherchiere')}: <span className="font-medium text-foreground">{batchProgress.wineName}</span>
+            </span>
+            <span className="text-muted-foreground">
+              {batchProgress.current} / {batchProgress.total}
+            </span>
+          </div>
+          <Progress value={(batchProgress.current / batchProgress.total) * 100} className="h-2" />
+        </div>
+      )}
 
       {suppliersWithWines.map(supplier => {
         const isOpen = openSuppliers[supplier.id] !== false; // default open
