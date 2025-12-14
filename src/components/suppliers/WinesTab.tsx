@@ -398,11 +398,11 @@ const WineCard = ({ wine, onEdit }: WineCardProps) => {
           </div>
         </div>
         {wine.image_url && (
-          <div className="aspect-[4/3] overflow-hidden bg-muted">
+          <div className="aspect-[4/3] overflow-hidden bg-gradient-to-b from-muted/50 to-muted">
             <img
               src={wine.image_url}
               alt={wine.name}
-              className="w-full h-full object-cover"
+              className="w-full h-full object-contain"
             />
           </div>
         )}
