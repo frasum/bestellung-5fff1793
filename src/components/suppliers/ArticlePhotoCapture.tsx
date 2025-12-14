@@ -1,5 +1,5 @@
-import { useState, useRef } from 'react';
-import { Camera, Upload, Loader2, X, Sparkles, Check, AlertCircle } from 'lucide-react';
+import { useState, useRef, useEffect } from 'react';
+import { Camera, Upload, Loader2, X, Sparkles, Check, AlertCircle, ClipboardPaste } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
@@ -112,6 +112,52 @@ export const ArticlePhotoCapture = ({
     setLastResult(null);
     onImageCleared();
   };
+
+  const handlePasteFromClipboard = async () => {
+    try {
+      const clipboardItems = await navigator.clipboard.read();
+      
+      for (const item of clipboardItems) {
+        const imageType = item.types.find(type => type.startsWith('image/'));
+        
+        if (imageType) {
+          const blob = await item.getType(imageType);
+          const file = new File([blob], 'clipboard-image.png', { type: imageType });
+          await processImage(file);
+          return;
+        }
+      }
+      
+      toast.error('Kein Bild in der Zwischenablage gefunden');
+    } catch (err) {
+      console.error('Clipboard error:', err);
+      toast.error('Zugriff auf Zwischenablage nicht möglich');
+    }
+  };
+
+  // Global paste event listener
+  useEffect(() => {
+    const handlePaste = (e: ClipboardEvent) => {
+      if (previewImage || isAnalyzing) return;
+      
+      const items = e.clipboardData?.items;
+      if (!items) return;
+      
+      for (const item of Array.from(items)) {
+        if (item.type.startsWith('image/')) {
+          const file = item.getAsFile();
+          if (file) {
+            e.preventDefault();
+            processImage(file);
+            return;
+          }
+        }
+      }
+    };
+    
+    document.addEventListener('paste', handlePaste);
+    return () => document.removeEventListener('paste', handlePaste);
+  }, [previewImage, isAnalyzing]);
 
   const getConfidenceBadge = () => {
     if (!lastResult) return null;
@@ -229,11 +275,23 @@ export const ArticlePhotoCapture = ({
             <Upload className="h-4 w-4 mr-2" />
             Datei
           </Button>
+
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="flex-1 h-9"
+            onClick={handlePasteFromClipboard}
+            disabled={isAnalyzing}
+          >
+            <ClipboardPaste className="h-4 w-4 mr-2" />
+            Einfügen
+          </Button>
         </div>
       )}
 
       <p className="text-xs text-muted-foreground">
-        Foto hochladen um Artikel automatisch zu identifizieren
+        Foto hochladen oder aus Zwischenablage einfügen (Strg+V)
       </p>
     </div>
   );
