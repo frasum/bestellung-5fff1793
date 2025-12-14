@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Save, Loader2, Clock, Camera, Trash2, Upload } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { SupplierUnitSelect } from './SupplierUnitSelect';
+import { compressImage } from '@/lib/imageCompression';
 
 import { SupplierOrderUnitSelect } from './SupplierOrderUnitSelect';
 
@@ -117,8 +118,11 @@ export function SupplierArticleCard({
       setLocalImagePreview(base64);
       
       try {
-        await onImageUpload(article.id, base64);
+        // Compress image before upload (max 1200px, 80% quality)
+        const compressedImage = await compressImage(base64, 1200, 1200, 0.8);
+        await onImageUpload(article.id, compressedImage);
       } catch (error) {
+        console.error('Image compression/upload failed:', error);
         // Reset preview on error
         setLocalImagePreview(null);
       }
