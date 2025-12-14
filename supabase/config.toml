@@ -101,3 +101,6 @@ verify_jwt = true
 
 [functions.research-wine]
 verify_jwt = true
+
+[functions.search-wine-image]
+verify_jwt = true
