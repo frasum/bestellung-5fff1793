@@ -68,9 +68,17 @@ export type Database = {
           category: string | null
           created_at: string
           description: string | null
+          description_en: string | null
+          description_th: string | null
           flavor_profile: string | null
+          flavor_profile_en: string | null
+          flavor_profile_th: string | null
           food_pairings: string | null
+          food_pairings_en: string | null
+          food_pairings_th: string | null
           grape_variety: string | null
+          grape_variety_en: string | null
+          grape_variety_th: string | null
           id: string
           image_url: string | null
           is_active: boolean
@@ -78,6 +86,8 @@ export type Database = {
           order_unit_id: string | null
           organization_id: string
           origin_country: string | null
+          origin_country_en: string | null
+          origin_country_th: string | null
           packaging_unit: number | null
           price: number
           reference_price: number | null
@@ -95,9 +105,17 @@ export type Database = {
           category?: string | null
           created_at?: string
           description?: string | null
+          description_en?: string | null
+          description_th?: string | null
           flavor_profile?: string | null
+          flavor_profile_en?: string | null
+          flavor_profile_th?: string | null
           food_pairings?: string | null
+          food_pairings_en?: string | null
+          food_pairings_th?: string | null
           grape_variety?: string | null
+          grape_variety_en?: string | null
+          grape_variety_th?: string | null
           id?: string
           image_url?: string | null
           is_active?: boolean
@@ -105,6 +123,8 @@ export type Database = {
           order_unit_id?: string | null
           organization_id: string
           origin_country?: string | null
+          origin_country_en?: string | null
+          origin_country_th?: string | null
           packaging_unit?: number | null
           price: number
           reference_price?: number | null
@@ -122,9 +142,17 @@ export type Database = {
           category?: string | null
           created_at?: string
           description?: string | null
+          description_en?: string | null
+          description_th?: string | null
           flavor_profile?: string | null
+          flavor_profile_en?: string | null
+          flavor_profile_th?: string | null
           food_pairings?: string | null
+          food_pairings_en?: string | null
+          food_pairings_th?: string | null
           grape_variety?: string | null
+          grape_variety_en?: string | null
+          grape_variety_th?: string | null
           id?: string
           image_url?: string | null
           is_active?: boolean
@@ -132,6 +160,8 @@ export type Database = {
           order_unit_id?: string | null
           organization_id?: string
           origin_country?: string | null
+          origin_country_en?: string | null
+          origin_country_th?: string | null
           packaging_unit?: number | null
           price?: number
           reference_price?: number | null

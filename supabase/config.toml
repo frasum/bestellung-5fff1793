@@ -104,3 +104,6 @@ verify_jwt = true
 
 [functions.search-wine-image]
 verify_jwt = true
+
+[functions.translate-wine-content]
+verify_jwt = true

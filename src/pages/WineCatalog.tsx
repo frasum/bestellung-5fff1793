@@ -12,12 +12,22 @@ interface WineArticle {
   id: string;
   name: string;
   description: string | null;
+  description_en: string | null;
+  description_th: string | null;
   category: string | null;
   selling_price: number | null;
   origin_country: string | null;
+  origin_country_en: string | null;
+  origin_country_th: string | null;
   grape_variety: string | null;
+  grape_variety_en: string | null;
+  grape_variety_th: string | null;
   flavor_profile: string | null;
+  flavor_profile_en: string | null;
+  flavor_profile_th: string | null;
   food_pairings: string | null;
+  food_pairings_en: string | null;
+  food_pairings_th: string | null;
   image_url: string | null;
   supplier: { id: string; name: string } | null;
 }
@@ -113,6 +123,20 @@ export default function WineCatalog() {
     acc[supplierName].push(wine);
     return acc;
   }, {} as Record<string, WineArticle[]>);
+
+  // Get language-specific content with fallback to German
+  const { i18n } = useTranslation();
+  const lang = i18n.language;
+  
+  const getLocalizedField = (wine: WineArticle, field: 'description' | 'grape_variety' | 'flavor_profile' | 'food_pairings' | 'origin_country') => {
+    if (lang === 'en') {
+      return wine[`${field}_en`] || wine[field];
+    }
+    if (lang === 'th') {
+      return wine[`${field}_th`] || wine[field];
+    }
+    return wine[field];
+  };
 
   if (loading) {
     return (
@@ -249,38 +273,38 @@ export default function WineCatalog() {
                           </p>
                         )}
 
-                        {wine.description && (
+                        {getLocalizedField(wine, 'description') && (
                           <p className="text-sm text-muted-foreground mb-3 line-clamp-3">
-                            {wine.description}
+                            {getLocalizedField(wine, 'description')}
                           </p>
                         )}
 
                         <div className="flex flex-wrap gap-2 text-xs">
-                          {wine.origin_country && (
+                          {getLocalizedField(wine, 'origin_country') && (
                             <Badge variant="secondary" className="gap-1">
                               <MapPin className="h-3 w-3" />
-                              {wine.origin_country}
+                              {getLocalizedField(wine, 'origin_country')}
                             </Badge>
                           )}
-                          {wine.grape_variety && (
+                          {getLocalizedField(wine, 'grape_variety') && (
                             <Badge variant="secondary" className="gap-1">
                               <Grape className="h-3 w-3" />
-                              {wine.grape_variety}
+                              {getLocalizedField(wine, 'grape_variety')}
                             </Badge>
                           )}
                         </div>
 
-                        {wine.flavor_profile && (
+                        {getLocalizedField(wine, 'flavor_profile') && (
                           <p className="text-xs text-muted-foreground mt-3">
                             <span className="font-medium">🍷 </span>
-                            {wine.flavor_profile}
+                            {getLocalizedField(wine, 'flavor_profile')}
                           </p>
                         )}
 
-                        {wine.food_pairings && (
+                        {getLocalizedField(wine, 'food_pairings') && (
                           <p className="text-xs text-muted-foreground mt-2">
                             <span className="font-medium">🍽️ </span>
-                            {wine.food_pairings}
+                            {getLocalizedField(wine, 'food_pairings')}
                           </p>
                         )}
                       </CardContent>

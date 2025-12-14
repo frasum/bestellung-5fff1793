@@ -36,6 +36,18 @@ export const articleSchema = z.object({
   grape_variety: z.string().optional(),
   flavor_profile: z.string().optional(),
   food_pairings: z.string().optional(),
+  // Translation fields - English
+  description_en: z.string().optional(),
+  grape_variety_en: z.string().optional(),
+  flavor_profile_en: z.string().optional(),
+  food_pairings_en: z.string().optional(),
+  origin_country_en: z.string().optional(),
+  // Translation fields - Thai
+  description_th: z.string().optional(),
+  grape_variety_th: z.string().optional(),
+  flavor_profile_th: z.string().optional(),
+  food_pairings_th: z.string().optional(),
+  origin_country_th: z.string().optional(),
 });
 
 export type SupplierFormData = z.infer<typeof supplierSchema>;

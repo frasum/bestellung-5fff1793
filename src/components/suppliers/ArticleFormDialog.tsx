@@ -9,7 +9,9 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
-import { Check, ChevronsUpDown, Loader2, Plus, Package, Save } from 'lucide-react';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Badge } from '@/components/ui/badge';
+import { Check, ChevronsUpDown, Loader2, Plus, Package, Save, Globe, ChevronDown, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Article } from '@/hooks/useArticles';
 import { Supplier } from '@/hooks/useSuppliers';
@@ -17,6 +19,7 @@ import { articleSchema, ArticleFormData } from './schemas';
 import { useOrderUnits, useCreateOrderUnit } from '@/hooks/useOrderUnits';
 import { ArticlePhotoCapture } from './ArticlePhotoCapture';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 interface ArticleFormDialogProps {
   open: boolean;
@@ -49,6 +52,9 @@ export const ArticleFormDialog = ({
   const [imageCleared, setImageCleared] = useState(false);
   const [advancedSettingsEnabled, setAdvancedSettingsEnabled] = useState(false);
   const [organizationId, setOrganizationId] = useState<string | null>(null);
+  const [translationsOpen, setTranslationsOpen] = useState(false);
+  const [isTranslatingEn, setIsTranslatingEn] = useState(false);
+  const [isTranslatingTh, setIsTranslatingTh] = useState(false);
   
   const { data: orderUnits = [] } = useOrderUnits();
   const createOrderUnit = useCreateOrderUnit();
@@ -113,7 +119,13 @@ export const ArticleFormDialog = ({
 
   const form = useForm<ArticleFormData>({
     resolver: zodResolver(articleSchema),
-    defaultValues: { supplier_id: '', name: '', description: '', sku: '', unit: 'pcs', price: '', category: '', origin_country: '', packaging_unit: '', order_unit_id: '', reference_price: '', reference_unit: '', selling_price: '', grape_variety: '', flavor_profile: '', food_pairings: '' },
+    defaultValues: { 
+      supplier_id: '', name: '', description: '', sku: '', unit: 'pcs', price: '', category: '', 
+      origin_country: '', packaging_unit: '', order_unit_id: '', reference_price: '', reference_unit: '', 
+      selling_price: '', grape_variety: '', flavor_profile: '', food_pairings: '',
+      description_en: '', grape_variety_en: '', flavor_profile_en: '', food_pairings_en: '', origin_country_en: '',
+      description_th: '', grape_variety_th: '', flavor_profile_th: '', food_pairings_th: '', origin_country_th: '',
+    },
   });
 
   // Watch category to conditionally show origin_country field
@@ -138,13 +150,31 @@ export const ArticleFormDialog = ({
         grape_variety: (editingArticle as any).grape_variety || '',
         flavor_profile: (editingArticle as any).flavor_profile || '',
         food_pairings: (editingArticle as any).food_pairings || '',
+        // Translation fields
+        description_en: (editingArticle as any).description_en || '',
+        grape_variety_en: (editingArticle as any).grape_variety_en || '',
+        flavor_profile_en: (editingArticle as any).flavor_profile_en || '',
+        food_pairings_en: (editingArticle as any).food_pairings_en || '',
+        origin_country_en: (editingArticle as any).origin_country_en || '',
+        description_th: (editingArticle as any).description_th || '',
+        grape_variety_th: (editingArticle as any).grape_variety_th || '',
+        flavor_profile_th: (editingArticle as any).flavor_profile_th || '',
+        food_pairings_th: (editingArticle as any).food_pairings_th || '',
+        origin_country_th: (editingArticle as any).origin_country_th || '',
       });
       setCapturedImage((editingArticle as any).image_url || null);
     } else {
-      form.reset({ supplier_id: '', name: '', description: '', sku: '', unit: 'pcs', price: '', category: '', origin_country: '', packaging_unit: '', order_unit_id: '', reference_price: '', reference_unit: '', selling_price: '', grape_variety: '', flavor_profile: '', food_pairings: '' });
+      form.reset({ 
+        supplier_id: '', name: '', description: '', sku: '', unit: 'pcs', price: '', category: '', 
+        origin_country: '', packaging_unit: '', order_unit_id: '', reference_price: '', reference_unit: '', 
+        selling_price: '', grape_variety: '', flavor_profile: '', food_pairings: '',
+        description_en: '', grape_variety_en: '', flavor_profile_en: '', food_pairings_en: '', origin_country_en: '',
+        description_th: '', grape_variety_th: '', flavor_profile_th: '', food_pairings_th: '', origin_country_th: '',
+      });
       setCapturedImage(null);
     }
     setImageCleared(false);
+    setTranslationsOpen(false);
   }, [editingArticle, form]);
 
   const handleSubmit = async (data: ArticleFormData) => {
@@ -187,6 +217,62 @@ export const ArticleFormDialog = ({
 
   // Check if it's a wine category for dynamic dialog width
   const isWineCategory = watchedCategory?.toLowerCase().includes('wein');
+
+  // Check if translations exist
+  const hasEnglishTranslations = !!(form.watch('description_en') || form.watch('grape_variety_en') || 
+    form.watch('flavor_profile_en') || form.watch('food_pairings_en'));
+  const hasThaiTranslations = !!(form.watch('description_th') || form.watch('grape_variety_th') || 
+    form.watch('flavor_profile_th') || form.watch('food_pairings_th'));
+  const hasAnyTranslations = hasEnglishTranslations || hasThaiTranslations;
+
+  // Auto-translate function
+  const handleAutoTranslate = async (targetLanguage: 'en' | 'th') => {
+    if (!editingArticle?.id) {
+      toast.error('Bitte speichern Sie den Artikel zuerst, bevor Sie übersetzen');
+      return;
+    }
+
+    const setIsTranslating = targetLanguage === 'en' ? setIsTranslatingEn : setIsTranslatingTh;
+    setIsTranslating(true);
+
+    try {
+      const { data, error } = await supabase.functions.invoke('translate-wine-content', {
+        body: { articleId: editingArticle.id, targetLanguage },
+      });
+
+      if (error) throw error;
+
+      if (data.error) {
+        toast.error(data.error);
+        return;
+      }
+
+      if (data.translations) {
+        const translations = data.translations;
+        
+        if (targetLanguage === 'en') {
+          if (translations.description) form.setValue('description_en', translations.description);
+          if (translations.grape_variety) form.setValue('grape_variety_en', translations.grape_variety);
+          if (translations.flavor_profile) form.setValue('flavor_profile_en', translations.flavor_profile);
+          if (translations.food_pairings) form.setValue('food_pairings_en', translations.food_pairings);
+          if (translations.origin_country) form.setValue('origin_country_en', translations.origin_country);
+        } else {
+          if (translations.description) form.setValue('description_th', translations.description);
+          if (translations.grape_variety) form.setValue('grape_variety_th', translations.grape_variety);
+          if (translations.flavor_profile) form.setValue('flavor_profile_th', translations.flavor_profile);
+          if (translations.food_pairings) form.setValue('food_pairings_th', translations.food_pairings);
+          if (translations.origin_country) form.setValue('origin_country_th', translations.origin_country);
+        }
+        
+        toast.success(targetLanguage === 'en' ? 'Englische Übersetzung erstellt' : 'Thailändische Übersetzung erstellt');
+      }
+    } catch (error) {
+      console.error('Translation error:', error);
+      toast.error('Fehler bei der Übersetzung');
+    } finally {
+      setIsTranslating(false);
+    }
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -578,6 +664,117 @@ export const ArticleFormDialog = ({
                   }}
                 />
               </div>
+
+              {/* === TRANSLATIONS SECTION === */}
+              <Collapsible open={translationsOpen} onOpenChange={setTranslationsOpen}>
+                <CollapsibleTrigger className="flex items-center gap-2 w-full py-2 hover:bg-muted/50 rounded-md px-2 -mx-2 transition-colors">
+                  <Globe className="h-4 w-4 text-muted-foreground" />
+                  <span className="font-medium text-sm">Übersetzungen (EN/TH)</span>
+                  <Badge variant={hasAnyTranslations ? "default" : "secondary"} className="ml-auto text-xs">
+                    {hasAnyTranslations ? (
+                      <>{hasEnglishTranslations && '🇬🇧'}{hasThaiTranslations && '🇹🇭'}</>
+                    ) : 'leer'}
+                  </Badge>
+                  <ChevronDown className={cn("h-4 w-4 text-muted-foreground transition-transform", translationsOpen && "rotate-180")} />
+                </CollapsibleTrigger>
+                <CollapsibleContent className="space-y-4 pt-3">
+                  
+                  {/* English Section */}
+                  <div className="border-l-2 border-blue-400 pl-3 space-y-3">
+                    <div className="flex items-center gap-2 justify-between">
+                      <span className="text-sm font-medium">🇬🇧 English</span>
+                      <Button 
+                        type="button" 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => handleAutoTranslate('en')}
+                        disabled={isTranslatingEn || !editingArticle}
+                        className="h-7 text-xs"
+                      >
+                        {isTranslatingEn ? (
+                          <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                        ) : (
+                          <Sparkles className="h-3 w-3 mr-1" />
+                        )}
+                        Auto-übersetzen
+                      </Button>
+                    </div>
+                    <Textarea 
+                      {...form.register('description_en')} 
+                      placeholder="Description..."
+                      className="min-h-[50px] resize-none text-sm"
+                    />
+                    <Textarea 
+                      {...form.register('grape_variety_en')} 
+                      placeholder="Grape variety..."
+                      className="min-h-[40px] resize-none text-sm"
+                    />
+                    <Textarea 
+                      {...form.register('flavor_profile_en')} 
+                      placeholder="Flavor profile..."
+                      className="min-h-[40px] resize-none text-sm"
+                    />
+                    <Textarea 
+                      {...form.register('food_pairings_en')} 
+                      placeholder="Food pairings..."
+                      className="min-h-[40px] resize-none text-sm"
+                    />
+                    <Input 
+                      {...form.register('origin_country_en')} 
+                      placeholder="Origin country..."
+                      className="text-sm"
+                    />
+                  </div>
+                  
+                  {/* Thai Section */}
+                  <div className="border-l-2 border-green-400 pl-3 space-y-3">
+                    <div className="flex items-center gap-2 justify-between">
+                      <span className="text-sm font-medium">🇹🇭 ไทย</span>
+                      <Button 
+                        type="button" 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => handleAutoTranslate('th')}
+                        disabled={isTranslatingTh || !editingArticle}
+                        className="h-7 text-xs"
+                      >
+                        {isTranslatingTh ? (
+                          <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                        ) : (
+                          <Sparkles className="h-3 w-3 mr-1" />
+                        )}
+                        Auto-übersetzen
+                      </Button>
+                    </div>
+                    <Textarea 
+                      {...form.register('description_th')} 
+                      placeholder="คำอธิบาย..."
+                      className="min-h-[50px] resize-none text-sm"
+                    />
+                    <Textarea 
+                      {...form.register('grape_variety_th')} 
+                      placeholder="พันธุ์องุ่น..."
+                      className="min-h-[40px] resize-none text-sm"
+                    />
+                    <Textarea 
+                      {...form.register('flavor_profile_th')} 
+                      placeholder="รสชาติ..."
+                      className="min-h-[40px] resize-none text-sm"
+                    />
+                    <Textarea 
+                      {...form.register('food_pairings_th')} 
+                      placeholder="อาหารที่เข้ากัน..."
+                      className="min-h-[40px] resize-none text-sm"
+                    />
+                    <Input 
+                      {...form.register('origin_country_th')} 
+                      placeholder="ประเทศต้นกำเนิด..."
+                      className="text-sm"
+                    />
+                  </div>
+                  
+                </CollapsibleContent>
+              </Collapsible>
             </div>
           )}
 
