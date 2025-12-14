@@ -918,7 +918,8 @@
     "aiRecognized": "AI recognized",
     "aiAnalysisFailed": "AI analysis failed",
     "aiAnalysisSuccess": "Article recognized!",
-    "suggestedCategory": "Suggested category"
+    "suggestedCategory": "Suggested category",
+    "changeSuppliers": "Switch supplier"
   },
   "suggestions": {
     "title": "Suggestions",

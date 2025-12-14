@@ -460,14 +460,16 @@ export const MultiSupplierCartOverview = ({
         <div className="max-w-2xl mx-auto">
           {/* Info Row */}
           <div className="flex items-center justify-between px-4 py-2 border-b border-border/50">
-            <button
+            <Button
+              variant="outline"
+              size="sm"
               onClick={onBack}
               disabled={isSubmitting}
-              className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors touch-manipulation disabled:opacity-50"
+              className="touch-manipulation"
             >
-              <ArrowLeft className="h-4 w-4" />
-              <span>{t('simpleOrder.changeSuppliers', 'Lieferanten ändern')}</span>
-            </button>
+              <ArrowLeft className="h-4 w-4 mr-1.5" />
+              {t('simpleOrder.changeSuppliers', 'Lieferant wechseln')}
+            </Button>
             <span className="text-sm text-muted-foreground">
               {suppliersWithOrders.length} {suppliersWithOrders.length === 1 ? t('simpleOrder.supplier', 'Lieferant') : t('simpleOrder.suppliers', 'Lieferanten')} • {totalItems} {t('simpleOrder.items', 'Artikel')}
             </span>

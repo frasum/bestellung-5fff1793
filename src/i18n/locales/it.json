@@ -916,7 +916,8 @@
     "aiRecognized": "IA riconosciuto",
     "aiAnalysisFailed": "Analisi IA fallita",
     "aiAnalysisSuccess": "Articolo riconosciuto!",
-    "suggestedCategory": "Categoria suggerita"
+    "suggestedCategory": "Categoria suggerita",
+    "changeSuppliers": "Cambia fornitore"
   },
   "suggestions": {
     "title": "Suggerimenti",
