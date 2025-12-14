@@ -405,11 +405,26 @@ export const ArticleFormDialog = ({
           {/* Origin Country - only visible for wine categories */}
           {watchedCategory && watchedCategory.toLowerCase().includes('wein') && (
             <div className="space-y-2">
-              <Label htmlFor="article-origin-country">Herkunftsland 🌍</Label>
-              <Input 
-                id="article-origin-country" 
-                {...form.register('origin_country')} 
-                placeholder="z.B. Italien, Frankreich, Deutschland..." 
+              <Label>Herkunftsland 🌍</Label>
+              <Controller
+                name="origin_country"
+                control={form.control}
+                render={({ field }) => (
+                  <Select onValueChange={field.onChange} value={field.value || ''}>
+                    <SelectTrigger className="bg-card">
+                      <SelectValue placeholder="Herkunftsland auswählen" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-card border border-border z-50">
+                      <SelectItem value="Deutschland">Deutschland</SelectItem>
+                      <SelectItem value="Österreich">Österreich</SelectItem>
+                      <SelectItem value="Italien">Italien</SelectItem>
+                      <SelectItem value="Frankreich">Frankreich</SelectItem>
+                      <SelectItem value="Spanien">Spanien</SelectItem>
+                      <SelectItem value="RSA">RSA (Südafrika)</SelectItem>
+                      <SelectItem value="Neue Welt">Neue Welt</SelectItem>
+                    </SelectContent>
+                  </Select>
+                )}
               />
             </div>
           )}
