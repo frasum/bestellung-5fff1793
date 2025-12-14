@@ -23,13 +23,13 @@ interface Supplier {
 
 // Wine-themed colors
 const COLORS = {
-  wineRed: [114, 47, 55] as [number, number, number],      // #722F37
-  darkWine: [74, 28, 38] as [number, number, number],       // #4A1C26
-  gold: [184, 134, 11] as [number, number, number],         // #B8860B
-  lightGold: [218, 165, 32] as [number, number, number],    // #DAA520
-  textDark: [33, 33, 33] as [number, number, number],       // #212121
-  textMuted: [117, 117, 117] as [number, number, number],   // #757575
-  bgLight: [250, 248, 245] as [number, number, number],     // #FAF8F5
+  wineRed: [114, 47, 55] as [number, number, number],
+  darkWine: [74, 28, 38] as [number, number, number],
+  gold: [184, 134, 11] as [number, number, number],
+  lightGold: [218, 165, 32] as [number, number, number],
+  textDark: [33, 33, 33] as [number, number, number],
+  textMuted: [117, 117, 117] as [number, number, number],
+  bgLight: [250, 248, 245] as [number, number, number],
   white: [255, 255, 255] as [number, number, number],
   border: [224, 224, 224] as [number, number, number],
 };
@@ -102,22 +102,44 @@ export const generateWineCatalogPdf = async (
   const supplierIds = Object.keys(winesBySupplier);
   const supplierMap = new Map(suppliers.map((s) => [s.id, s]));
 
+  // Calculate ToC structure and page numbers
+  // Page 1: Cover, Page 2+: ToC, then wine pages (1 wine per page)
+  const tocEntries: { supplierName: string; wines: { name: string; pageNum: number }[] }[] = [];
+  
+  // Calculate how many ToC pages we need (estimate ~25 entries per page)
+  const totalTocEntries = supplierIds.length + wines.length;
+  const entriesPerTocPage = 25;
+  const tocPages = Math.ceil(totalTocEntries / entriesPerTocPage);
+  
+  let winePageNum = 1 + tocPages + 1; // After cover + ToC pages
+  
+  for (const supplierId of supplierIds) {
+    const supplierWines = winesBySupplier[supplierId];
+    const supplier = supplierMap.get(supplierId);
+    const supplierName = supplier?.name || 'Unbekannter Lieferant';
+    
+    const wineEntries = supplierWines.map((wine) => {
+      const entry = { name: wine.name, pageNum: winePageNum };
+      winePageNum++;
+      return entry;
+    });
+    
+    tocEntries.push({ supplierName, wines: wineEntries });
+  }
+
   // ============ COVER PAGE ============
-  // Background gradient effect (simulated with rectangles)
   doc.setFillColor(...COLORS.darkWine);
   doc.rect(0, 0, pageWidth, pageHeight, 'F');
   
-  // Decorative elements
+  // Decorative border
   doc.setDrawColor(...COLORS.gold);
   doc.setLineWidth(0.5);
   doc.rect(margin - 5, margin - 5, contentWidth + 10, pageHeight - margin * 2 + 10);
   
-  // Wine glass icon area (decorative circle)
+  // Wine glass icon
   const centerX = pageWidth / 2;
   doc.setFillColor(...COLORS.gold);
   doc.circle(centerX, 60, 15, 'F');
-  
-  // Wine glass text symbol
   doc.setTextColor(...COLORS.darkWine);
   doc.setFontSize(24);
   doc.text('🍷', centerX, 64, { align: 'center' });
@@ -146,12 +168,12 @@ export const generateWineCatalogPdf = async (
     month: 'long',
     year: 'numeric',
   });
-  doc.setFontSize(12);
+  doc.setFontSize(14);
   doc.setTextColor(...COLORS.white);
   doc.text(`Stand: ${dateStr}`, centerX, 150, { align: 'center' });
   
   // Stats
-  doc.setFontSize(14);
+  doc.setFontSize(16);
   doc.text(
     `${wines.length} Weine · ${supplierIds.length} Lieferanten`,
     centerX,
@@ -164,146 +186,214 @@ export const generateWineCatalogPdf = async (
   doc.setTextColor(...COLORS.textMuted);
   doc.text('Erstellt mit Bestellung.pro', centerX, pageHeight - margin, { align: 'center' });
 
-  // ============ WINE PAGES ============
-  let currentY = margin;
+  // ============ TABLE OF CONTENTS ============
+  let tocCurrentY = margin;
+  let tocPageCount = 0;
+  
+  const addTocPage = () => {
+    doc.addPage();
+    tocPageCount++;
+    tocCurrentY = margin;
+    
+    // ToC header
+    doc.setFillColor(...COLORS.wineRed);
+    doc.rect(0, 0, pageWidth, 35, 'F');
+    doc.setTextColor(...COLORS.white);
+    doc.setFontSize(24);
+    doc.text('INHALTSVERZEICHNIS', centerX, 25, { align: 'center' });
+    tocCurrentY = 50;
+  };
+  
+  addTocPage();
+  
+  for (const entry of tocEntries) {
+    // Check if we need a new ToC page
+    if (tocCurrentY + 15 + entry.wines.length * 8 > pageHeight - margin) {
+      addTocPage();
+    }
+    
+    // Supplier name in ToC
+    doc.setTextColor(...COLORS.darkWine);
+    doc.setFontSize(14);
+    doc.text(`🍷 ${entry.supplierName}`, margin, tocCurrentY);
+    
+    // Page number dots
+    const firstWinePage = entry.wines[0]?.pageNum || 0;
+    const dotsWidth = pageWidth - margin * 2 - doc.getTextWidth(`🍷 ${entry.supplierName}`) - 20;
+    doc.setTextColor(...COLORS.textMuted);
+    doc.setFontSize(12);
+    doc.text(String(firstWinePage), pageWidth - margin, tocCurrentY, { align: 'right' });
+    
+    tocCurrentY += 10;
+    
+    // Wine entries under each supplier
+    for (const wine of entry.wines) {
+      if (tocCurrentY > pageHeight - margin - 10) {
+        addTocPage();
+      }
+      
+      doc.setTextColor(...COLORS.textMuted);
+      doc.setFontSize(11);
+      const truncatedName = wine.name.length > 50 ? wine.name.substring(0, 47) + '...' : wine.name;
+      doc.text(`    • ${truncatedName}`, margin + 5, tocCurrentY);
+      doc.text(String(wine.pageNum), pageWidth - margin, tocCurrentY, { align: 'right' });
+      tocCurrentY += 8;
+    }
+    
+    tocCurrentY += 5; // Space between suppliers
+  }
+
+  // ============ WINE PAGES (1 WINE PER PAGE) ============
   let wineIndex = 0;
   const totalWines = wines.length;
-  const wineHeight = 90; // Height per wine card
 
   for (const supplierId of supplierIds) {
     const supplierWines = winesBySupplier[supplierId];
     const supplier = supplierMap.get(supplierId);
     const supplierName = supplier?.name || 'Unbekannter Lieferant';
 
-    // Start new page for each supplier
-    doc.addPage();
-    currentY = margin;
-
-    // Supplier header
-    doc.setFillColor(...COLORS.wineRed);
-    doc.rect(margin, currentY, contentWidth, 12, 'F');
-    doc.setTextColor(...COLORS.white);
-    doc.setFontSize(14);
-    doc.text(`🍷 ${supplierName.toUpperCase()}`, margin + 5, currentY + 8);
-    
-    doc.setFontSize(10);
-    doc.text(
-      `${supplierWines.length} ${supplierWines.length === 1 ? 'Wein' : 'Weine'}`,
-      pageWidth - margin - 5,
-      currentY + 8,
-      { align: 'right' }
-    );
-    
-    currentY += 20;
-
-    // Render wines for this supplier
     for (const wine of supplierWines) {
       wineIndex++;
       onProgress?.(wineIndex, totalWines);
 
-      // Check if we need a new page
-      if (currentY + wineHeight > pageHeight - margin - 15) {
-        doc.addPage();
-        currentY = margin;
-        
-        // Repeat supplier header on new page
-        doc.setFillColor(...COLORS.wineRed);
-        doc.rect(margin, currentY, contentWidth, 10, 'F');
-        doc.setTextColor(...COLORS.white);
-        doc.setFontSize(12);
-        doc.text(`🍷 ${supplierName} (Fortsetzung)`, margin + 5, currentY + 7);
-        currentY += 18;
-      }
+      // New page for each wine
+      doc.addPage();
+      
+      // Supplier header bar
+      doc.setFillColor(...COLORS.wineRed);
+      doc.rect(0, 0, pageWidth, 18, 'F');
+      doc.setTextColor(...COLORS.white);
+      doc.setFontSize(12);
+      doc.text(`🍷 ${supplierName.toUpperCase()}`, margin, 12);
 
-      // Wine card background
-      doc.setFillColor(...COLORS.bgLight);
-      doc.setDrawColor(...COLORS.border);
-      doc.setLineWidth(0.3);
-      doc.roundedRect(margin, currentY, contentWidth, wineHeight - 5, 3, 3, 'FD');
+      let currentY = 30;
+      
+      // Layout: Image on left, info on right
+      const imageWidth = 70;
+      const imageHeight = 100;
+      const textStartX = margin + imageWidth + 15;
+      const textWidth = contentWidth - imageWidth - 20;
 
-      const imageWidth = 35;
-      const textStartX = margin + imageWidth + 8;
-      const textWidth = contentWidth - imageWidth - 15;
-
-      // Try to load and embed wine image
+      // Wine image
       if (wine.image_url) {
         try {
           const imgData = await loadImageAsBase64(wine.image_url);
           if (imgData) {
-            doc.addImage(imgData, 'JPEG', margin + 3, currentY + 3, imageWidth - 6, wineHeight - 11);
+            doc.addImage(imgData, 'JPEG', margin, currentY, imageWidth, imageHeight);
           } else {
-            // Placeholder for missing image
-            doc.setFillColor(...COLORS.border);
-            doc.rect(margin + 3, currentY + 3, imageWidth - 6, wineHeight - 11, 'F');
-            doc.setTextColor(...COLORS.textMuted);
-            doc.setFontSize(8);
-            doc.text('Kein Bild', margin + imageWidth / 2, currentY + wineHeight / 2, { align: 'center' });
+            drawImagePlaceholder(doc, margin, currentY, imageWidth, imageHeight);
           }
         } catch {
-          // Placeholder on error
-          doc.setFillColor(...COLORS.border);
-          doc.rect(margin + 3, currentY + 3, imageWidth - 6, wineHeight - 11, 'F');
+          drawImagePlaceholder(doc, margin, currentY, imageWidth, imageHeight);
         }
       } else {
-        // Placeholder for no image
-        doc.setFillColor(...COLORS.border);
-        doc.rect(margin + 3, currentY + 3, imageWidth - 6, wineHeight - 11, 'F');
-        doc.setTextColor(...COLORS.textMuted);
-        doc.setFontSize(8);
-        doc.text('Kein Bild', margin + imageWidth / 2, currentY + wineHeight / 2, { align: 'center' });
+        drawImagePlaceholder(doc, margin, currentY, imageWidth, imageHeight);
       }
 
-      // Wine name
+      // Wine name (large)
       doc.setTextColor(...COLORS.darkWine);
-      doc.setFontSize(12);
+      doc.setFontSize(22);
       const nameLines = doc.splitTextToSize(wine.name, textWidth);
       doc.text(nameLines.slice(0, 2), textStartX, currentY + 8);
       
-      let infoY = currentY + 8 + (Math.min(nameLines.length, 2) * 5);
-
-      // Info row: grape, origin, price
-      doc.setFontSize(9);
-      doc.setTextColor(...COLORS.textMuted);
+      let infoY = currentY + 8 + (Math.min(nameLines.length, 2) * 9);
       
-      const infoParts: string[] = [];
-      if (wine.grape_variety) infoParts.push(`🍇 ${wine.grape_variety}`);
-      if (wine.origin_country) infoParts.push(`📍 ${wine.origin_country}`);
-      if (wine.selling_price) infoParts.push(`💰 ${formatPrice(wine.selling_price)}`);
-      
-      if (infoParts.length > 0) {
-        doc.text(infoParts.join('  ·  '), textStartX, infoY + 4);
-        infoY += 7;
-      }
+      // Decorative line under name
+      doc.setDrawColor(...COLORS.gold);
+      doc.setLineWidth(0.8);
+      doc.line(textStartX, infoY - 2, textStartX + textWidth, infoY - 2);
+      infoY += 8;
 
-      // Description
-      if (wine.description) {
+      // Grape variety
+      if (wine.grape_variety) {
         doc.setTextColor(...COLORS.textDark);
-        doc.setFontSize(8);
-        const descLines = doc.splitTextToSize(wine.description, textWidth);
-        doc.text(descLines.slice(0, 3), textStartX, infoY + 4);
-        infoY += Math.min(descLines.length, 3) * 3.5 + 2;
-      }
-
-      // Flavor profile
-      if (wine.flavor_profile) {
-        doc.setTextColor(...COLORS.wineRed);
-        doc.setFontSize(7);
-        const flavorText = `🍷 ${wine.flavor_profile}`;
-        const flavorLines = doc.splitTextToSize(flavorText, textWidth);
-        doc.text(flavorLines.slice(0, 2), textStartX, infoY + 3);
-        infoY += Math.min(flavorLines.length, 2) * 3 + 1;
-      }
-
-      // Food pairings
-      if (wine.food_pairings) {
+        doc.setFontSize(13);
+        doc.text('🍇 Rebsorte:', textStartX, infoY);
+        doc.setFontSize(13);
         doc.setTextColor(...COLORS.textMuted);
-        doc.setFontSize(7);
-        const pairingText = `🍽️ ${wine.food_pairings}`;
-        const pairingLines = doc.splitTextToSize(pairingText, textWidth);
-        doc.text(pairingLines.slice(0, 2), textStartX, infoY + 3);
+        const grapeLines = doc.splitTextToSize(wine.grape_variety, textWidth);
+        doc.text(grapeLines.slice(0, 2), textStartX + 28, infoY);
+        infoY += Math.min(grapeLines.length, 2) * 6 + 6;
       }
 
-      currentY += wineHeight;
+      // Origin country
+      if (wine.origin_country) {
+        doc.setTextColor(...COLORS.textDark);
+        doc.setFontSize(13);
+        doc.text('🌍 Herkunft:', textStartX, infoY);
+        doc.setTextColor(...COLORS.textMuted);
+        doc.text(wine.origin_country, textStartX + 28, infoY);
+        infoY += 10;
+      }
+
+      // Selling price (prominent)
+      if (wine.selling_price) {
+        doc.setTextColor(...COLORS.wineRed);
+        doc.setFontSize(16);
+        doc.text(`💰 ${formatPrice(wine.selling_price)}`, textStartX, infoY);
+        infoY += 12;
+      }
+
+      // ===== Full-width sections below image =====
+      const fullTextY = currentY + imageHeight + 15;
+      const fullTextWidth = contentWidth;
+      let sectionY = fullTextY;
+
+      // Description section
+      if (wine.description) {
+        doc.setDrawColor(...COLORS.border);
+        doc.setLineWidth(0.3);
+        doc.line(margin, sectionY, pageWidth - margin, sectionY);
+        sectionY += 8;
+        
+        doc.setTextColor(...COLORS.darkWine);
+        doc.setFontSize(14);
+        doc.text('📝 Beschreibung', margin, sectionY);
+        sectionY += 8;
+        
+        doc.setTextColor(...COLORS.textDark);
+        doc.setFontSize(12);
+        const descLines = doc.splitTextToSize(wine.description, fullTextWidth);
+        doc.text(descLines.slice(0, 6), margin, sectionY);
+        sectionY += Math.min(descLines.length, 6) * 5.5 + 8;
+      }
+
+      // Flavor profile section
+      if (wine.flavor_profile) {
+        doc.setDrawColor(...COLORS.border);
+        doc.setLineWidth(0.3);
+        doc.line(margin, sectionY, pageWidth - margin, sectionY);
+        sectionY += 8;
+        
+        doc.setTextColor(...COLORS.wineRed);
+        doc.setFontSize(14);
+        doc.text('🍷 Geschmacksprofil', margin, sectionY);
+        sectionY += 8;
+        
+        doc.setTextColor(...COLORS.textDark);
+        doc.setFontSize(12);
+        const flavorLines = doc.splitTextToSize(wine.flavor_profile, fullTextWidth);
+        doc.text(flavorLines.slice(0, 5), margin, sectionY);
+        sectionY += Math.min(flavorLines.length, 5) * 5.5 + 8;
+      }
+
+      // Food pairings section
+      if (wine.food_pairings) {
+        doc.setDrawColor(...COLORS.border);
+        doc.setLineWidth(0.3);
+        doc.line(margin, sectionY, pageWidth - margin, sectionY);
+        sectionY += 8;
+        
+        doc.setTextColor(...COLORS.gold);
+        doc.setFontSize(14);
+        doc.text('🍽️ Passt zu', margin, sectionY);
+        sectionY += 8;
+        
+        doc.setTextColor(...COLORS.textDark);
+        doc.setFontSize(12);
+        const pairingLines = doc.splitTextToSize(wine.food_pairings, fullTextWidth);
+        doc.text(pairingLines.slice(0, 4), margin, sectionY);
+      }
     }
   }
 
@@ -311,10 +401,10 @@ export const generateWineCatalogPdf = async (
   const totalPages = doc.getNumberOfPages();
   for (let i = 2; i <= totalPages; i++) {
     doc.setPage(i);
-    doc.setFontSize(9);
+    doc.setFontSize(10);
     doc.setTextColor(...COLORS.textMuted);
     doc.text(
-      `Seite ${i - 1} von ${totalPages - 1}`,
+      `Seite ${i} von ${totalPages}`,
       pageWidth / 2,
       pageHeight - 10,
       { align: 'center' }
@@ -325,3 +415,22 @@ export const generateWineCatalogPdf = async (
   const fileName = `Weinkatalog_${restaurantName?.replace(/[^a-zA-Z0-9]/g, '_') || 'Restaurant'}_${today.toISOString().split('T')[0]}.pdf`;
   doc.save(fileName);
 };
+
+// Helper function to draw image placeholder
+function drawImagePlaceholder(
+  doc: jsPDF,
+  x: number,
+  y: number,
+  width: number,
+  height: number
+) {
+  doc.setFillColor(...COLORS.bgLight);
+  doc.setDrawColor(...COLORS.border);
+  doc.setLineWidth(0.3);
+  doc.roundedRect(x, y, width, height, 3, 3, 'FD');
+  doc.setTextColor(...COLORS.textMuted);
+  doc.setFontSize(12);
+  doc.text('🍷', x + width / 2, y + height / 2 - 5, { align: 'center' });
+  doc.setFontSize(10);
+  doc.text('Kein Bild', x + width / 2, y + height / 2 + 5, { align: 'center' });
+}
