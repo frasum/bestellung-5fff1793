@@ -33,6 +33,7 @@ export function ConvertToCatalogDialog({
   const [price, setPrice] = useState('');
   const [category, setCategory] = useState('');
   const [description, setDescription] = useState('');
+  const [originCountry, setOriginCountry] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,6 +54,7 @@ export function ConvertToCatalogDialog({
         supplier_id: freeItem.supplier_id,
         category: category || undefined,
         description: description || undefined,
+        origin_country: originCountry || undefined,
       });
 
       toast.success(`"${freeItem.name}" wurde in den Katalog aufgenommen`);
@@ -63,6 +65,7 @@ export function ConvertToCatalogDialog({
       setPrice('');
       setCategory('');
       setDescription('');
+      setOriginCountry('');
     } catch (error) {
       console.error('Error creating article:', error);
       toast.error('Fehler beim Erstellen des Artikels');
@@ -74,6 +77,7 @@ export function ConvertToCatalogDialog({
       setPrice('');
       setCategory('');
       setDescription('');
+      setOriginCountry('');
     }
     onOpenChange(open);
   };
@@ -138,6 +142,19 @@ export function ConvertToCatalogDialog({
               onChange={(e) => setDescription(e.target.value)}
             />
           </div>
+
+          {category.toLowerCase().includes('wein') && (
+            <div className="space-y-2">
+              <Label htmlFor="convert-origin-country">Herkunftsland</Label>
+              <Input
+                id="convert-origin-country"
+                type="text"
+                placeholder="z.B. Italien, Frankreich, Spanien"
+                value={originCountry}
+                onChange={(e) => setOriginCountry(e.target.value)}
+              />
+            </div>
+          )}
 
           <DialogFooter className="gap-2 sm:gap-0">
             <Button
