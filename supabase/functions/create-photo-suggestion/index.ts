@@ -12,7 +12,7 @@ serve(async (req) => {
   }
 
   try {
-    const { token, name, description, category, unit, supplier_id, image_url, original_article_id } = await req.json();
+    const { token, name, description, category, unit, supplier_id, image_url, original_article_id, origin_country } = await req.json();
 
     if (!token || !name || !supplier_id) {
       return new Response(
@@ -80,6 +80,7 @@ serve(async (req) => {
         employee_id: employee.id,
         image_url: image_url || null,
         description: description || null,
+        origin_country: origin_country || null,
         status: 'pending',
       })
       .select()

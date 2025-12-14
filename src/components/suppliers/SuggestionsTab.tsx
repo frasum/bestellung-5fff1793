@@ -243,6 +243,14 @@ export function SuggestionsTab({ suppliers }: SuggestionsTabProps) {
                               <span>{suggestion.category}</span>
                             </>
                           )}
+                          {suggestion.origin_country && (
+                            <>
+                              <span>•</span>
+                              <span className="flex items-center gap-1">
+                                🌍 {suggestion.origin_country}
+                              </span>
+                            </>
+                          )}
                           {suggestion.price > 0 && (
                             <>
                               <span>•</span>

@@ -74,6 +74,7 @@ export type Database = {
           name: string
           order_unit_id: string | null
           organization_id: string
+          origin_country: string | null
           packaging_unit: number | null
           price: number
           reference_price: number | null
@@ -96,6 +97,7 @@ export type Database = {
           name: string
           order_unit_id?: string | null
           organization_id: string
+          origin_country?: string | null
           packaging_unit?: number | null
           price: number
           reference_price?: number | null
@@ -118,6 +120,7 @@ export type Database = {
           name?: string
           order_unit_id?: string | null
           organization_id?: string
+          origin_country?: string | null
           packaging_unit?: number | null
           price?: number
           reference_price?: number | null
@@ -1309,6 +1312,7 @@ export type Database = {
           name: string
           order_id: string | null
           organization_id: string
+          origin_country: string | null
           price: number
           reviewed_at: string | null
           reviewed_by: string | null
@@ -1330,6 +1334,7 @@ export type Database = {
           name: string
           order_id?: string | null
           organization_id: string
+          origin_country?: string | null
           price?: number
           reviewed_at?: string | null
           reviewed_by?: string | null
@@ -1351,6 +1356,7 @@ export type Database = {
           name?: string
           order_id?: string | null
           organization_id?: string
+          origin_country?: string | null
           price?: number
           reviewed_at?: string | null
           reviewed_by?: string | null
