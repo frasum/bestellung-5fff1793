@@ -269,16 +269,21 @@ export const generateWineCatalogPdf = async (
       let currentY = 30;
       
       // Layout: Image on left, info on right
-      const imageWidth = 70;
-      const imageHeight = 100;
+      // Wine bottles have ~1:3 aspect ratio - use proportional sizing
+      const maxImageWidth = 45;
+      const maxImageHeight = 120;
+      const bottleAspectRatio = 0.35; // width/height for typical wine bottle
+      const imageWidth = maxImageHeight * bottleAspectRatio;
+      const imageHeight = maxImageHeight;
       const textStartX = margin + imageWidth + 15;
       const textWidth = contentWidth - imageWidth - 20;
 
-      // Wine image
+      // Wine image with preserved proportions
       if (wine.image_url) {
         try {
           const imgData = await loadImageAsBase64(wine.image_url);
           if (imgData) {
+            // Use object-fit contain behavior: fit within box preserving aspect ratio
             doc.addImage(imgData, 'JPEG', margin, currentY, imageWidth, imageHeight);
           } else {
             drawImagePlaceholder(doc, margin, currentY, imageWidth, imageHeight);
@@ -309,11 +314,12 @@ export const generateWineCatalogPdf = async (
         doc.setTextColor(...COLORS.textDark);
         doc.setFontSize(13);
         doc.text('🍇 Rebsorte:', textStartX, infoY);
-        doc.setFontSize(13);
         doc.setTextColor(...COLORS.textMuted);
-        const grapeLines = doc.splitTextToSize(wine.grape_variety, textWidth);
+        // Reduce width by label offset to prevent overflow
+        const grapeTextWidth = textWidth - 30;
+        const grapeLines = doc.splitTextToSize(wine.grape_variety, grapeTextWidth);
         doc.text(grapeLines.slice(0, 2), textStartX + 28, infoY);
-        infoY += Math.min(grapeLines.length, 2) * 6 + 6;
+        infoY += Math.min(grapeLines.length, 2) * 7 + 6;
       }
 
       // Origin country
@@ -322,7 +328,10 @@ export const generateWineCatalogPdf = async (
         doc.setFontSize(13);
         doc.text('🌍 Herkunft:', textStartX, infoY);
         doc.setTextColor(...COLORS.textMuted);
-        doc.text(wine.origin_country, textStartX + 28, infoY);
+        // Add text wrapping for long origin names
+        const originTextWidth = textWidth - 30;
+        const originLines = doc.splitTextToSize(wine.origin_country, originTextWidth);
+        doc.text(originLines.slice(0, 1), textStartX + 28, infoY);
         infoY += 10;
       }
 
@@ -355,7 +364,7 @@ export const generateWineCatalogPdf = async (
         doc.setFontSize(12);
         const descLines = doc.splitTextToSize(wine.description, fullTextWidth);
         doc.text(descLines.slice(0, 6), margin, sectionY);
-        sectionY += Math.min(descLines.length, 6) * 5.5 + 8;
+        sectionY += Math.min(descLines.length, 6) * 6.5 + 8;
       }
 
       // Flavor profile section
@@ -374,7 +383,7 @@ export const generateWineCatalogPdf = async (
         doc.setFontSize(12);
         const flavorLines = doc.splitTextToSize(wine.flavor_profile, fullTextWidth);
         doc.text(flavorLines.slice(0, 5), margin, sectionY);
-        sectionY += Math.min(flavorLines.length, 5) * 5.5 + 8;
+        sectionY += Math.min(flavorLines.length, 5) * 6.5 + 8;
       }
 
       // Food pairings section
@@ -393,6 +402,7 @@ export const generateWineCatalogPdf = async (
         doc.setFontSize(12);
         const pairingLines = doc.splitTextToSize(wine.food_pairings, fullTextWidth);
         doc.text(pairingLines.slice(0, 4), margin, sectionY);
+        sectionY += Math.min(pairingLines.length, 4) * 6.5 + 8;
       }
     }
   }
