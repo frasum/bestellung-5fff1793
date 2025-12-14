@@ -1,5 +1,5 @@
 import { useMemo, useState, useCallback, useEffect } from 'react';
-import { Wine, MapPin, Euro, ChevronRight, ChevronDown, Pencil, Search, Loader2, ExternalLink, Grape, Utensils, Info, Sparkles, AlertCircle, Camera, ImageIcon, FileDown } from 'lucide-react';
+import { Wine, MapPin, Euro, ChevronRight, ChevronDown, Pencil, Search, Loader2, ExternalLink, Grape, Utensils, Info, Sparkles, AlertCircle, Camera, ImageIcon, FileDown, Languages } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -40,6 +40,7 @@ export const WinesTab = ({ articles, suppliers, onEditArticle }: WinesTabProps) 
   const { t } = useTranslation();
   const [openSuppliers, setOpenSuppliers] = useState<Record<string, boolean>>({});
   const [batchProgress, setBatchProgress] = useState<{ current: number; total: number; wineName: string } | null>(null);
+  const [translateProgress, setTranslateProgress] = useState<{ current: number; total: number; wineName: string } | null>(null);
   const [pdfProgress, setPdfProgress] = useState<{ current: number; total: number } | null>(null);
   const [filterMode, setFilterMode] = useState<FilterMode>('all');
   const [advancedMode, setAdvancedMode] = useState(() => localStorage.getItem('advanced-settings-enabled') === 'true');
@@ -247,7 +248,7 @@ export const WinesTab = ({ articles, suppliers, onEditArticle }: WinesTabProps) 
               variant="outline"
               size="sm"
               onClick={handleBatchResearch}
-              disabled={batchProgress !== null}
+              disabled={batchProgress !== null || translateProgress !== null}
               className="gap-2"
             >
               {batchProgress ? (
@@ -259,6 +260,53 @@ export const WinesTab = ({ articles, suppliers, onEditArticle }: WinesTabProps) 
               <Badge variant="secondary" className="ml-1">
                 {winesWithoutDescription.length}
               </Badge>
+            </Button>
+          )}
+
+          {/* Batch Translate Button - only in advanced mode */}
+          {advancedMode && wineArticles.length > 0 && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={async () => {
+                setTranslateProgress({ current: 0, total: wineArticles.length * 2, wineName: '' });
+                let successCount = 0;
+                
+                for (let i = 0; i < wineArticles.length; i++) {
+                  const wine = wineArticles[i];
+                  setTranslateProgress({ current: i * 2 + 1, total: wineArticles.length * 2, wineName: `${wine.name} (EN)` });
+                  
+                  try {
+                    await supabase.functions.invoke('translate-wine-content', {
+                      body: { articleId: wine.id, targetLanguage: 'en' },
+                    });
+                    
+                    setTranslateProgress({ current: i * 2 + 2, total: wineArticles.length * 2, wineName: `${wine.name} (TH)` });
+                    
+                    await supabase.functions.invoke('translate-wine-content', {
+                      body: { articleId: wine.id, targetLanguage: 'th' },
+                    });
+                    
+                    successCount++;
+                  } catch (error) {
+                    console.error(`Error translating ${wine.name}:`, error);
+                  }
+                  
+                  await new Promise(resolve => setTimeout(resolve, 300));
+                }
+                
+                setTranslateProgress(null);
+                toast.success(t('wines.batchTranslateComplete', '{{count}} Weine übersetzt', { count: successCount }));
+              }}
+              disabled={batchProgress !== null || translateProgress !== null}
+              className="gap-2"
+            >
+              {translateProgress ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Languages className="h-4 w-4" />
+              )}
+              {t('wines.batchTranslate', 'Alle übersetzen')}
             </Button>
           )}
         </div>
@@ -347,6 +395,21 @@ export const WinesTab = ({ articles, suppliers, onEditArticle }: WinesTabProps) 
             </span>
           </div>
           <Progress value={(batchProgress.current / batchProgress.total) * 100} className="h-2" />
+        </div>
+      )}
+
+      {/* Translation Progress */}
+      {translateProgress && (
+        <div className="bg-muted/50 rounded-lg p-4 space-y-2">
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-muted-foreground">
+              {t('wines.translating', 'Übersetze')}: <span className="font-medium text-foreground">{translateProgress.wineName}</span>
+            </span>
+            <span className="text-muted-foreground">
+              {translateProgress.current} / {translateProgress.total}
+            </span>
+          </div>
+          <Progress value={(translateProgress.current / translateProgress.total) * 100} className="h-2" />
         </div>
       )}
 
