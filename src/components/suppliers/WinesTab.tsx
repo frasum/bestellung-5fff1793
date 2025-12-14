@@ -279,8 +279,8 @@ export const WinesTab = ({ articles, suppliers, onEditArticle }: WinesTabProps) 
             </Button>
           )}
 
-          {/* Batch Translate Button - only in advanced mode */}
-          {advancedMode && wineArticles.length > 0 && (
+          {/* Batch Translate Button - always visible */}
+          {wineArticles.length > 0 && (
             <Button
               variant="outline"
               size="sm"
