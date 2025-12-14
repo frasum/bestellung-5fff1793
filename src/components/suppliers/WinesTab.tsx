@@ -11,10 +11,26 @@ import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { Article, useUpdateArticle } from '@/hooks/useArticles';
 import { Supplier } from '@/hooks/useSuppliers';
 import { useTranslation } from 'react-i18next';
+import i18n from '@/i18n';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { generateWineCatalogPdf } from '@/lib/wineCatalogPdf';
+
+// Helper function to get localized wine field
+const getLocalizedField = (wine: Article, field: string): string => {
+  const lang = i18n.language;
+  // Only check for localized versions for EN, TH, FR
+  if (lang === 'en' || lang === 'th' || lang === 'fr') {
+    const localizedKey = `${field}_${lang}` as keyof Article;
+    const localizedValue = wine[localizedKey];
+    if (localizedValue && typeof localizedValue === 'string') {
+      return localizedValue;
+    }
+  }
+  // Fallback to German original
+  return (wine[field as keyof Article] as string) || '';
+};
 
 interface WineResearchResult {
   description: string;
@@ -569,9 +585,9 @@ const WineCard = ({ wine, onEdit }: WineCardProps) => {
             
             <h4 className="font-medium text-foreground line-clamp-2">{wine.name}</h4>
             
-            {wine.description ? (
+            {getLocalizedField(wine, 'description') ? (
               <p className="text-sm text-muted-foreground line-clamp-3">
-                {wine.description}
+                {getLocalizedField(wine, 'description')}
               </p>
             ) : (
               <p className="text-sm text-orange-500 italic flex items-center gap-1">
@@ -581,10 +597,10 @@ const WineCard = ({ wine, onEdit }: WineCardProps) => {
             )}
 
             {/* Grape Variety */}
-            {wine.grape_variety ? (
+            {getLocalizedField(wine, 'grape_variety') ? (
               <div className="flex items-center gap-1.5 text-sm">
                 <Grape className="h-3.5 w-3.5 text-purple-500 shrink-0" />
-                <span className="text-muted-foreground">{wine.grape_variety}</span>
+                <span className="text-muted-foreground">{getLocalizedField(wine, 'grape_variety')}</span>
               </div>
             ) : (
               <p className="text-sm text-orange-500 italic flex items-center gap-1">
@@ -610,26 +626,26 @@ const WineCard = ({ wine, onEdit }: WineCardProps) => {
             )}
 
             {/* Flavor Profile */}
-            {wine.flavor_profile && (
+            {getLocalizedField(wine, 'flavor_profile') && (
               <div className="flex items-start gap-1.5 text-sm">
                 <Wine className="h-3.5 w-3.5 text-rose-500 mt-0.5 shrink-0" />
-                <span className="text-muted-foreground line-clamp-2">{wine.flavor_profile}</span>
+                <span className="text-muted-foreground line-clamp-2">{getLocalizedField(wine, 'flavor_profile')}</span>
               </div>
             )}
 
             {/* Food Pairings */}
-            {wine.food_pairings && (
+            {getLocalizedField(wine, 'food_pairings') && (
               <div className="flex items-start gap-1.5 text-sm">
                 <Utensils className="h-3.5 w-3.5 text-amber-500 mt-0.5 shrink-0" />
-                <span className="text-muted-foreground line-clamp-2">{wine.food_pairings}</span>
+                <span className="text-muted-foreground line-clamp-2">{getLocalizedField(wine, 'food_pairings')}</span>
               </div>
             )}
 
             <div className="flex flex-wrap items-center gap-2 pt-2">
-              {wine.origin_country && (
+              {getLocalizedField(wine, 'origin_country') && (
                 <Badge variant="outline" className="text-xs gap-1">
                   <MapPin className="h-3 w-3" />
-                  {wine.origin_country}
+                  {getLocalizedField(wine, 'origin_country')}
                 </Badge>
               )}
               {wine.category && (
