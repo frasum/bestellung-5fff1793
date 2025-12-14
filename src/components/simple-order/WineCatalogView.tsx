@@ -253,21 +253,9 @@ export const WineCatalogView = ({ organizationId, permission, onBack, token }: W
       {/* Content */}
       <div className="max-w-2xl mx-auto px-3 pb-6">
         {isLoading ? (
-          <div className="space-y-4">
-            {[1, 2, 3].map(i => (
-              <Card key={i}>
-                <CardContent className="p-4">
-                  <div className="flex gap-4">
-                    <Skeleton className="h-24 w-20 rounded" />
-                    <div className="flex-1 space-y-2">
-                      <Skeleton className="h-5 w-3/4" />
-                      <Skeleton className="h-4 w-1/2" />
-                      <Skeleton className="h-4 w-full" />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+          <div className="flex flex-col items-center justify-center py-20 gap-4">
+            <Loader2 className="h-10 w-10 animate-spin text-primary" />
+            <p className="text-muted-foreground">{t('common.loading', 'Lädt...')}</p>
           </div>
         ) : wines.length === 0 ? (
           <div className="text-center py-12 text-muted-foreground">
