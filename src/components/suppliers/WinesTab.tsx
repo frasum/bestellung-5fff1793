@@ -225,26 +225,24 @@ export const WinesTab = ({ articles, suppliers, onEditArticle }: WinesTabProps) 
         </div>
 
         <div className="flex items-center gap-2">
-          {/* PDF Export Button - only in advanced mode */}
-          {advancedMode && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleGeneratePdf}
-              disabled={pdfProgress !== null || wineArticles.length === 0}
-              className="gap-2"
-            >
-              {pdfProgress ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <FileDown className="h-4 w-4" />
-              )}
-              {t('wines.exportPdf', 'Weinkarte PDF')}
-            </Button>
-          )}
+          {/* PDF Export Button - always visible */}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleGeneratePdf}
+            disabled={pdfProgress !== null || wineArticles.length === 0}
+            className="gap-2"
+          >
+            {pdfProgress ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <FileDown className="h-4 w-4" />
+            )}
+            {t('wines.exportPdf', 'Weinkarte PDF')}
+          </Button>
 
-          {/* Batch Research Button */}
-          {winesWithoutDescription.length > 0 && (
+          {/* Batch Research Button - only in advanced mode */}
+          {advancedMode && winesWithoutDescription.length > 0 && (
             <Button
               variant="outline"
               size="sm"
