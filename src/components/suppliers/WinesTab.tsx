@@ -375,16 +375,6 @@ const WineCard = ({ wine, onEdit }: WineCardProps) => {
         )}
         onClick={onEdit}
       >
-        {/* Incomplete indicator badge */}
-        {isIncomplete && (
-          <div className="absolute top-2 left-2 z-10">
-            <Badge variant="outline" className="bg-orange-500/10 text-orange-600 border-orange-400 gap-1">
-              <AlertCircle className="h-3 w-3" />
-              {t('wines.incomplete', 'Unvollständig')}
-            </Badge>
-          </div>
-        )}
-        
         <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
           <Button
             size="icon"
@@ -414,6 +404,14 @@ const WineCard = ({ wine, onEdit }: WineCardProps) => {
         )}
         <CardContent className={cn("p-4", !wine.image_url && "pt-4")}>
           <div className="space-y-2">
+            {/* Incomplete indicator badge - inline */}
+            {isIncomplete && (
+              <Badge variant="outline" className="bg-orange-50 text-orange-600 border-orange-300 gap-1 text-xs mb-1">
+                <AlertCircle className="h-3 w-3" />
+                {t('wines.incomplete', 'Unvollständig')}
+              </Badge>
+            )}
+            
             <h4 className="font-medium text-foreground line-clamp-2">{wine.name}</h4>
             
             {wine.description ? (
