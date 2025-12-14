@@ -1,5 +1,5 @@
 import { useMemo, useState, useCallback } from 'react';
-import { Wine, MapPin, Euro, ChevronRight, ChevronDown, Pencil, Search, Loader2, ExternalLink, Grape, Utensils, Info, Sparkles } from 'lucide-react';
+import { Wine, MapPin, Euro, ChevronRight, ChevronDown, Pencil, Search, Loader2, ExternalLink, Grape, Utensils, Info, Sparkles, AlertCircle } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -7,6 +7,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Progress } from '@/components/ui/progress';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { Article, useUpdateArticle } from '@/hooks/useArticles';
 import { Supplier } from '@/hooks/useSuppliers';
 import { useTranslation } from 'react-i18next';
@@ -30,10 +31,13 @@ interface WinesTabProps {
   onEditArticle: (article: Article) => void;
 }
 
+type FilterMode = 'all' | 'incomplete' | 'missing-description' | 'missing-grape';
+
 export const WinesTab = ({ articles, suppliers, onEditArticle }: WinesTabProps) => {
   const { t } = useTranslation();
   const [openSuppliers, setOpenSuppliers] = useState<Record<string, boolean>>({});
   const [batchProgress, setBatchProgress] = useState<{ current: number; total: number; wineName: string } | null>(null);
+  const [filterMode, setFilterMode] = useState<FilterMode>('all');
   const updateArticle = useUpdateArticle();
 
   // Filter articles that have "wein" in category (case-insensitive)
@@ -44,6 +48,25 @@ export const WinesTab = ({ articles, suppliers, onEditArticle }: WinesTabProps) 
     );
   }, [articles]);
 
+  // Count incomplete wines
+  const incompleteCount = useMemo(() => {
+    return wineArticles.filter(w => !w.description?.trim() || !w.grape_variety?.trim()).length;
+  }, [wineArticles]);
+
+  // Filter wines based on filterMode
+  const filteredWines = useMemo(() => {
+    switch (filterMode) {
+      case 'missing-description':
+        return wineArticles.filter(w => !w.description?.trim());
+      case 'missing-grape':
+        return wineArticles.filter(w => !w.grape_variety?.trim());
+      case 'incomplete':
+        return wineArticles.filter(w => !w.description?.trim() || !w.grape_variety?.trim());
+      default:
+        return wineArticles;
+    }
+  }, [wineArticles, filterMode]);
+
   // Wines without description (candidates for batch research)
   const winesWithoutDescription = useMemo(() => {
     return wineArticles.filter(wine => !wine.description?.trim());
@@ -52,7 +75,7 @@ export const WinesTab = ({ articles, suppliers, onEditArticle }: WinesTabProps) 
   // Group wines by supplier
   const winesBySupplier = useMemo(() => {
     const grouped: Record<string, Article[]> = {};
-    wineArticles.forEach(article => {
+    filteredWines.forEach(article => {
       if (!grouped[article.supplier_id]) {
         grouped[article.supplier_id] = [];
       }
@@ -63,7 +86,7 @@ export const WinesTab = ({ articles, suppliers, onEditArticle }: WinesTabProps) 
       grouped[supplierId].sort((a, b) => a.name.localeCompare(b.name));
     });
     return grouped;
-  }, [wineArticles]);
+  }, [filteredWines]);
 
   // Get suppliers that have wines
   const suppliersWithWines = useMemo(() => {
@@ -142,13 +165,14 @@ export const WinesTab = ({ articles, suppliers, onEditArticle }: WinesTabProps) 
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      {/* Header with stats and batch research */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-2 text-muted-foreground">
           <Wine className="h-5 w-5" />
           <span className="text-sm">
             {t('wines.totalWines', '{{count}} Weine von {{suppliers}} Lieferanten', {
               count: wineArticles.length,
-              suppliers: suppliersWithWines.length
+              suppliers: suppliers.filter(s => wineArticles.some(w => w.supplier_id === s.id)).length
             })}
           </span>
         </div>
@@ -173,6 +197,55 @@ export const WinesTab = ({ articles, suppliers, onEditArticle }: WinesTabProps) 
           </Button>
         )}
       </div>
+
+      {/* Filter Toggle */}
+      <ToggleGroup 
+        type="single" 
+        value={filterMode} 
+        onValueChange={(value) => value && setFilterMode(value as FilterMode)}
+        className="justify-start"
+      >
+        <ToggleGroupItem value="all" className="gap-1.5">
+          {t('wines.filterAll', 'Alle')}
+          <Badge variant="secondary" className="text-xs">
+            {wineArticles.length}
+          </Badge>
+        </ToggleGroupItem>
+        <ToggleGroupItem value="incomplete" className="gap-1.5">
+          <AlertCircle className="h-3.5 w-3.5" />
+          {t('wines.filterIncomplete', 'Unvollständig')}
+          {incompleteCount > 0 && (
+            <Badge variant="destructive" className="text-xs">
+              {incompleteCount}
+            </Badge>
+          )}
+        </ToggleGroupItem>
+        <ToggleGroupItem value="missing-description" className="gap-1.5 hidden sm:flex">
+          {t('wines.filterMissingDescription', 'Ohne Beschreibung')}
+          <Badge variant="secondary" className="text-xs">
+            {winesWithoutDescription.length}
+          </Badge>
+        </ToggleGroupItem>
+        <ToggleGroupItem value="missing-grape" className="gap-1.5 hidden sm:flex">
+          <Grape className="h-3.5 w-3.5" />
+          {t('wines.filterMissingGrape', 'Ohne Rebsorte')}
+          <Badge variant="secondary" className="text-xs">
+            {wineArticles.filter(w => !w.grape_variety?.trim()).length}
+          </Badge>
+        </ToggleGroupItem>
+      </ToggleGroup>
+
+      {/* Empty state for filter */}
+      {filteredWines.length === 0 && filterMode !== 'all' && (
+        <div className="flex flex-col items-center justify-center py-8 text-center">
+          <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center mb-3">
+            <Wine className="h-6 w-6 text-primary" />
+          </div>
+          <p className="text-muted-foreground">
+            {t('wines.noIncompleteWines', 'Alle Weine sind vollständig!')}
+          </p>
+        </div>
+      )}
 
       {/* Batch Progress */}
       {batchProgress && (
