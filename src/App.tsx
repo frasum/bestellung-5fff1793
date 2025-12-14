@@ -31,6 +31,7 @@ const PhotoCapture = lazy(() => import("./pages/PhotoCapture"));
 const Onboarding = lazy(() => import("./pages/Onboarding"));
 const StyleGuide = lazy(() => import("./pages/StyleGuide"));
 const Pricing = lazy(() => import("./pages/Pricing"));
+const Presentation = lazy(() => import("./pages/Presentation"));
 const Impressum = lazy(() => import("./pages/Impressum"));
 const Datenschutz = lazy(() => import("./pages/Datenschutz"));
 const AGB = lazy(() => import("./pages/AGB"));
@@ -84,6 +85,7 @@ const AppContent = () => {
           <Route path="/onboarding" element={<Onboarding />} />
           <Route path="/style-guide" element={<StyleGuide />} />
           <Route path="/pricing" element={<Pricing />} />
+          <Route path="/presentation" element={<Presentation />} />
           <Route path="/impressum" element={<Impressum />} />
           <Route path="/datenschutz" element={<Datenschutz />} />
           <Route path="/agb" element={<AGB />} />

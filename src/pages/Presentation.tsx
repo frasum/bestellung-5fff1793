@@ -13,22 +13,8 @@ import { ContactSection } from '@/components/presentation/ContactSection';
 
 const Presentation = () => {
   return (
-    <>
-      <Helmet>
-        <title>Bestellung.pro - Digitale Beschaffung für Gastronomie</title>
-        <meta
-          name="description"
-          content="Die komplette Lösung für Ihre Restaurant-Beschaffung. Bestellen Sie schneller, sparen Sie Zeit und behalten Sie die Kontrolle."
-        />
-        <meta property="og:title" content="Bestellung.pro - Systemübersicht" />
-        <meta
-          property="og:description"
-          content="Die komplette Lösung für Ihre Restaurant-Beschaffung. Bestellen Sie schneller, sparen Sie Zeit und behalten Sie die Kontrolle."
-        />
-      </Helmet>
-
-      <div className="min-h-screen bg-background">
-        <PresentationNav />
+    <div className="min-h-screen bg-background">
+      <PresentationNav />
         <HeroSection />
         <BenefitsSection />
         <ModulesSection />
@@ -38,9 +24,8 @@ const Presentation = () => {
         <PricingSection />
         <TestimonialsSection />
         <CtaSection />
-        <ContactSection />
-      </div>
-    </>
+      <ContactSection />
+    </div>
   );
 };
 
