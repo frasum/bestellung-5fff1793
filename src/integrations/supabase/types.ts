@@ -1041,7 +1041,10 @@ export type Database = {
       }
       organizations: {
         Row: {
+          address: string | null
           advanced_view_enabled: boolean
+          contact_email: string | null
+          contact_phone: string | null
           created_at: string
           demo_expires_at: string | null
           id: string
@@ -1052,9 +1055,13 @@ export type Database = {
           test_mode_enabled: boolean
           trial_ends_at: string | null
           updated_at: string
+          website: string | null
         }
         Insert: {
+          address?: string | null
           advanced_view_enabled?: boolean
+          contact_email?: string | null
+          contact_phone?: string | null
           created_at?: string
           demo_expires_at?: string | null
           id?: string
@@ -1065,9 +1072,13 @@ export type Database = {
           test_mode_enabled?: boolean
           trial_ends_at?: string | null
           updated_at?: string
+          website?: string | null
         }
         Update: {
+          address?: string | null
           advanced_view_enabled?: boolean
+          contact_email?: string | null
+          contact_phone?: string | null
           created_at?: string
           demo_expires_at?: string | null
           id?: string
@@ -1078,6 +1089,7 @@ export type Database = {
           test_mode_enabled?: boolean
           trial_ends_at?: string | null
           updated_at?: string
+          website?: string | null
         }
         Relationships: []
       }
