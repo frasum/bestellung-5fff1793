@@ -22,7 +22,7 @@ serve(async (req) => {
       );
     }
 
-    console.log('Verifying simple order token:', token.substring(0, 8) + '...');
+    console.log('Verifying simple order token:', token.substring(0, 8) + '...', 'Action:', action || 'none');
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;

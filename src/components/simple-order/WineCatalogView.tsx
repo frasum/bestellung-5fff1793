@@ -54,27 +54,42 @@ export const WineCatalogView = ({ organizationId, permission, onBack, token }: W
     loadData();
   }, [token]);
  
+  const [loadError, setLoadError] = useState<string | null>(null);
+
   const loadData = async () => {
     console.log('[WineCatalogView] loadData start');
     setIsLoading(true);
+    setLoadError(null);
     try {
       // Load wines via Edge Function (bypasses RLS)
+      console.log('[WineCatalogView] Calling Edge Function with token:', token.substring(0, 8) + '...');
       const { data, error } = await supabase.functions.invoke('verify-simple-order-token', {
         body: { token, action: 'get-wines' },
       });
 
-      console.log('[WineCatalogView] loadData response', { data, error });
+      console.log('[WineCatalogView] Edge Function response:', { data, error });
  
-      if (error || data?.error) {
-        console.error('Error loading wines:', error || data?.error);
-        toast.error(t('common.error', 'Fehler beim Laden'));
+      if (error) {
+        console.error('[WineCatalogView] Network/invoke error:', error);
+        setLoadError(error.message || 'Netzwerkfehler');
+        toast.error(t('common.error', 'Fehler beim Laden der Weinkarte'));
+        return;
+      }
+
+      if (data?.error) {
+        console.error('[WineCatalogView] API error:', data.error);
+        setLoadError(data.error);
+        toast.error(data.error);
         return;
       }
  
+      console.log('[WineCatalogView] Loaded wines:', data.wines?.length || 0);
       setWines(data.wines || []);
       setOrganizationName(data.organization_name || '');
     } catch (err) {
-      console.error('Error loading data:', err);
+      console.error('[WineCatalogView] Unexpected error:', err);
+      const errorMsg = err instanceof Error ? err.message : 'Unbekannter Fehler';
+      setLoadError(errorMsg);
       toast.error(t('common.error', 'Fehler beim Laden'));
     } finally {
       console.log('[WineCatalogView] loadData finished');
@@ -261,6 +276,18 @@ export const WineCatalogView = ({ organizationId, permission, onBack, token }: W
           <div className="flex flex-col items-center justify-center py-20 gap-4">
             <Loader2 className="h-10 w-10 animate-spin text-primary" />
             <p className="text-muted-foreground">{t('common.loading', 'Lädt...')}</p>
+          </div>
+        ) : loadError ? (
+          <div className="flex flex-col items-center justify-center py-20 gap-4 text-center">
+            <Wine className="h-12 w-12 text-destructive opacity-50" />
+            <div>
+              <p className="font-medium text-destructive">{t('common.error', 'Fehler beim Laden')}</p>
+              <p className="text-sm text-muted-foreground mt-1">{loadError}</p>
+            </div>
+            <Button onClick={loadData} variant="outline" className="mt-2">
+              <Loader2 className="h-4 w-4 mr-2" />
+              {t('common.retry', 'Erneut versuchen')}
+            </Button>
           </div>
         ) : wines.length === 0 ? (
           <div className="text-center py-12 text-muted-foreground">
