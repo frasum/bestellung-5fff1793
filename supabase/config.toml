@@ -104,3 +104,6 @@ verify_jwt = true
 
 [functions.search-wine-image]
 verify_jwt = true
+
+[functions.verify-wine-catalog-token]
+verify_jwt = false
