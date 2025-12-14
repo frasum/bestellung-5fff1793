@@ -85,8 +85,11 @@ export const ArticleFormDialog = ({
 
   const form = useForm<ArticleFormData>({
     resolver: zodResolver(articleSchema),
-    defaultValues: { supplier_id: '', name: '', description: '', sku: '', unit: 'pcs', price: '', category: '', packaging_unit: '', order_unit_id: '', reference_price: '', reference_unit: '' },
+    defaultValues: { supplier_id: '', name: '', description: '', sku: '', unit: 'pcs', price: '', category: '', origin_country: '', packaging_unit: '', order_unit_id: '', reference_price: '', reference_unit: '' },
   });
+
+  // Watch category to conditionally show origin_country field
+  const watchedCategory = form.watch('category');
 
   useEffect(() => {
     if (editingArticle) {
@@ -98,6 +101,7 @@ export const ArticleFormDialog = ({
         unit: editingArticle.unit,
         price: String(editingArticle.price),
         category: editingArticle.category || '',
+        origin_country: (editingArticle as any).origin_country || '',
         packaging_unit: editingArticle.packaging_unit ? String(editingArticle.packaging_unit) : '',
         order_unit_id: editingArticle.order_unit_id || '',
         reference_price: editingArticle.reference_price ? String(editingArticle.reference_price).replace('.', ',') : '',
@@ -105,7 +109,7 @@ export const ArticleFormDialog = ({
       });
       setCapturedImage((editingArticle as any).image_url || null);
     } else {
-      form.reset({ supplier_id: '', name: '', description: '', sku: '', unit: 'pcs', price: '', category: '', packaging_unit: '', order_unit_id: '', reference_price: '', reference_unit: '' });
+      form.reset({ supplier_id: '', name: '', description: '', sku: '', unit: 'pcs', price: '', category: '', origin_country: '', packaging_unit: '', order_unit_id: '', reference_price: '', reference_unit: '' });
       setCapturedImage(null);
     }
   }, [editingArticle, form]);
@@ -396,6 +400,18 @@ export const ArticleFormDialog = ({
               )}
             />
           </div>
+          
+          {/* Origin Country - only visible for wine categories */}
+          {watchedCategory && watchedCategory.toLowerCase().includes('wein') && (
+            <div className="space-y-2">
+              <Label htmlFor="article-origin-country">Herkunftsland 🌍</Label>
+              <Input 
+                id="article-origin-country" 
+                {...form.register('origin_country')} 
+                placeholder="z.B. Italien, Frankreich, Deutschland..." 
+              />
+            </div>
+          )}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="article-reference-price">Referenzpreis (€)</Label>
