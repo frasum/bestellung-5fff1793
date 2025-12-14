@@ -35,7 +35,7 @@ serve(async (req) => {
         *,
         supplier:suppliers(id, name, email, organization_id),
         location:locations(id, name),
-        employee:employees(id, name, auto_approve_orders, email, pin_code, voice_input_enabled, can_add_free_items, can_capture_photos, wine_catalog_access)
+        employee:employees(id, name, auto_approve_orders, email, pin_code, voice_input_enabled, can_add_free_items, can_capture_photos, wine_catalog_access, language)
       `)
       .eq('token', token)
       .eq('is_active', true)
@@ -320,13 +320,16 @@ serve(async (req) => {
       categories = orgCategories || [];
     }
 
+    // Use employee language if assigned, otherwise fall back to token language
+    const effectiveLanguage = (tokenData.employee as any)?.language || tokenData.language;
+
     return new Response(
       JSON.stringify({
         success: true,
         tokenData: {
           id: tokenData.id,
           label: tokenData.label,
-          language: tokenData.language,
+          language: effectiveLanguage,
           supplier: isMultiSupplier ? null : (tokenData.supplier?.id ? tokenData.supplier : null),
           location: tokenData.location,
           organization_id: tokenData.organization_id,

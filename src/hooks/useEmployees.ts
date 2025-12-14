@@ -16,6 +16,7 @@ export interface Employee {
   can_add_free_items: boolean;
   can_capture_photos: boolean;
   wine_catalog_access: 'none' | 'view' | 'edit' | null;
+  language: string;
   created_at: string;
   updated_at: string;
 }
@@ -27,6 +28,7 @@ export interface CreateEmployeeInput {
   notes?: string | null;
   pin_code?: string | null;
   voice_input_enabled?: boolean;
+  language?: string;
 }
 
 export interface UpdateEmployeeInput {
@@ -42,6 +44,7 @@ export interface UpdateEmployeeInput {
   can_add_free_items?: boolean;
   can_capture_photos?: boolean;
   wine_catalog_access?: 'none' | 'view' | 'edit' | null;
+  language?: string;
 }
 
 export function useEmployees() {

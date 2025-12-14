@@ -629,6 +629,7 @@ export type Database = {
           email: string | null
           id: string
           is_active: boolean
+          language: string | null
           name: string
           notes: string | null
           organization_id: string
@@ -646,6 +647,7 @@ export type Database = {
           email?: string | null
           id?: string
           is_active?: boolean
+          language?: string | null
           name: string
           notes?: string | null
           organization_id: string
@@ -663,6 +665,7 @@ export type Database = {
           email?: string | null
           id?: string
           is_active?: boolean
+          language?: string | null
           name?: string
           notes?: string | null
           organization_id?: string

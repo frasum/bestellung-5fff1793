@@ -231,14 +231,12 @@ export function EmployeesTab() {
 
   const openEditDialog = (employee: Employee) => {
     setEditingEmployee(employee);
-    // Get existing token language if available
-    const existingToken = getTokenForEmployee(employee.id);
     setFormData({
       name: employee.name,
       phone: employee.phone || '',
       email: employee.email || '',
       notes: employee.notes || '',
-      language: existingToken?.language || 'th',
+      language: employee.language || 'de',
       autoApprove: employee.auto_approve_orders || false,
       // Don't pre-populate PIN - it's now hashed and not readable
       // User can enter a new PIN or leave empty to keep existing
@@ -361,6 +359,7 @@ export function EmployeesTab() {
         can_add_free_items: formData.canAddFreeItems,
         can_capture_photos: formData.canCapturePhotos,
         wine_catalog_access: formData.wineCatalogAccess,
+        language: formData.language,
         // Don't update pin_code directly - use the secure hash function below
       });
       
@@ -419,6 +418,7 @@ export function EmployeesTab() {
         email: formData.email || null,
         notes: formData.notes || null,
         voice_input_enabled: formData.voiceInputEnabled,
+        language: formData.language,
       });
       // Assign locations to new employee
       if (newEmployee?.id) {
