@@ -14,20 +14,25 @@ interface WineArticle {
   description: string | null;
   description_en: string | null;
   description_th: string | null;
+  description_fr: string | null;
   category: string | null;
   selling_price: number | null;
   origin_country: string | null;
   origin_country_en: string | null;
   origin_country_th: string | null;
+  origin_country_fr: string | null;
   grape_variety: string | null;
   grape_variety_en: string | null;
   grape_variety_th: string | null;
+  grape_variety_fr: string | null;
   flavor_profile: string | null;
   flavor_profile_en: string | null;
   flavor_profile_th: string | null;
+  flavor_profile_fr: string | null;
   food_pairings: string | null;
   food_pairings_en: string | null;
   food_pairings_th: string | null;
+  food_pairings_fr: string | null;
   image_url: string | null;
   supplier: { id: string; name: string } | null;
 }

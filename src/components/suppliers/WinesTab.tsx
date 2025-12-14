@@ -269,30 +269,30 @@ export const WinesTab = ({ articles, suppliers, onEditArticle }: WinesTabProps) 
               variant="outline"
               size="sm"
               onClick={async () => {
-                setTranslateProgress({ current: 0, total: wineArticles.length * 2, wineName: '' });
+                setTranslateProgress({ current: 0, total: wineArticles.length * 3, wineName: '' });
                 let successCount = 0;
                 
                 for (let i = 0; i < wineArticles.length; i++) {
                   const wine = wineArticles[i];
-                  setTranslateProgress({ current: i * 2 + 1, total: wineArticles.length * 2, wineName: `${wine.name} (EN)` });
+                  const langs = ['en', 'th', 'fr'] as const;
+                  const langLabels = { en: 'EN', th: 'TH', fr: 'FR' };
                   
-                  try {
-                    await supabase.functions.invoke('translate-wine-content', {
-                      body: { articleId: wine.id, targetLanguage: 'en' },
-                    });
+                  for (let j = 0; j < langs.length; j++) {
+                    const lang = langs[j];
+                    setTranslateProgress({ current: i * 3 + j + 1, total: wineArticles.length * 3, wineName: `${wine.name} (${langLabels[lang]})` });
                     
-                    setTranslateProgress({ current: i * 2 + 2, total: wineArticles.length * 2, wineName: `${wine.name} (TH)` });
+                    try {
+                      await supabase.functions.invoke('translate-wine-content', {
+                        body: { articleId: wine.id, targetLanguage: lang },
+                      });
+                    } catch (error) {
+                      console.error(`Error translating ${wine.name} to ${lang}:`, error);
+                    }
                     
-                    await supabase.functions.invoke('translate-wine-content', {
-                      body: { articleId: wine.id, targetLanguage: 'th' },
-                    });
-                    
-                    successCount++;
-                  } catch (error) {
-                    console.error(`Error translating ${wine.name}:`, error);
+                    await new Promise(resolve => setTimeout(resolve, 300));
                   }
                   
-                  await new Promise(resolve => setTimeout(resolve, 300));
+                  successCount++;
                 }
                 
                 setTranslateProgress(null);

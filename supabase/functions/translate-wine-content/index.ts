@@ -8,7 +8,7 @@ const corsHeaders = {
 
 interface TranslateRequest {
   articleId: string;
-  targetLanguage: 'en' | 'th';
+  targetLanguage: 'en' | 'th' | 'fr';
 }
 
 interface WineContent {
@@ -42,9 +42,9 @@ serve(async (req) => {
       );
     }
 
-    if (!['en', 'th'].includes(targetLanguage)) {
+    if (!['en', 'th', 'fr'].includes(targetLanguage)) {
       return new Response(
-        JSON.stringify({ error: 'targetLanguage must be "en" or "th"' }),
+        JSON.stringify({ error: 'targetLanguage must be "en", "th", or "fr"' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -84,9 +84,11 @@ serve(async (req) => {
       );
     }
 
-    const languageName = targetLanguage === 'en' ? 'English' : 'Thai';
+    const languageName = targetLanguage === 'en' ? 'English' : targetLanguage === 'th' ? 'Thai' : 'French';
     const languageInstructions = targetLanguage === 'th' 
       ? 'Translate into natural Thai language. Keep wine grape names in their original form but add Thai phonetic transcription in parentheses if helpful.'
+      : targetLanguage === 'fr'
+      ? 'Translate into natural French. Use proper French wine terminology. Keep grape variety names in their French forms where applicable (e.g., Pinot Noir, Chardonnay).'
       : 'Translate into natural English. Keep technical wine terms and grape variety names.';
 
     const prompt = `You are a professional wine translator. Translate the following German wine information into ${languageName}.
