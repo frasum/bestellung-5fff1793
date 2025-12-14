@@ -1,5 +1,5 @@
-import { useMemo } from 'react';
-import { Wine, MapPin, Euro } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { Wine, MapPin, Euro, ChevronRight, ChevronDown, Pencil } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
@@ -11,10 +11,12 @@ import { cn } from '@/lib/utils';
 interface WinesTabProps {
   articles: Article[];
   suppliers: Supplier[];
+  onEditArticle: (article: Article) => void;
 }
 
-export const WinesTab = ({ articles, suppliers }: WinesTabProps) => {
+export const WinesTab = ({ articles, suppliers, onEditArticle }: WinesTabProps) => {
   const { t } = useTranslation();
+  const [openSuppliers, setOpenSuppliers] = useState<Record<string, boolean>>({});
 
   // Filter articles that have "wein" in category (case-insensitive)
   const wineArticles = useMemo(() => {
@@ -73,43 +75,64 @@ export const WinesTab = ({ articles, suppliers }: WinesTabProps) => {
         </span>
       </div>
 
-      {suppliersWithWines.map(supplier => (
-        <Collapsible key={supplier.id} defaultOpen>
-          <CollapsibleTrigger className="w-full">
-            <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg hover:bg-muted transition-colors">
-              <div className="flex items-center gap-3">
-                <Wine className="h-5 w-5 text-primary" />
-                <span className="font-medium">{supplier.name}</span>
-                <Badge variant="secondary" className="text-xs">
-                  {winesBySupplier[supplier.id].length} {t('wines.winesCount', 'Weine')}
-                </Badge>
+      {suppliersWithWines.map(supplier => {
+        const isOpen = openSuppliers[supplier.id] !== false; // default open
+        return (
+          <Collapsible 
+            key={supplier.id} 
+            open={isOpen}
+            onOpenChange={(open) => setOpenSuppliers(prev => ({ ...prev, [supplier.id]: open }))}
+          >
+            <CollapsibleTrigger className="w-full">
+              <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg hover:bg-muted transition-colors">
+                <div className="flex items-center gap-3">
+                  {isOpen ? (
+                    <ChevronDown className="h-5 w-5 text-muted-foreground transition-transform" />
+                  ) : (
+                    <ChevronRight className="h-5 w-5 text-muted-foreground transition-transform" />
+                  )}
+                  <Wine className="h-5 w-5 text-primary" />
+                  <span className="font-medium">{supplier.name}</span>
+                  <Badge variant="secondary" className="text-xs">
+                    {winesBySupplier[supplier.id].length} {t('wines.winesCount', 'Weine')}
+                  </Badge>
+                </div>
               </div>
-            </div>
-          </CollapsibleTrigger>
-          <CollapsibleContent>
-            <div className="grid gap-4 mt-4 sm:grid-cols-2 lg:grid-cols-3">
-              {winesBySupplier[supplier.id].map(wine => (
-                <WineCard key={wine.id} wine={wine} />
-              ))}
-            </div>
-          </CollapsibleContent>
-        </Collapsible>
-      ))}
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <div className="grid gap-4 mt-4 sm:grid-cols-2 lg:grid-cols-3">
+                {winesBySupplier[supplier.id].map(wine => (
+                  <WineCard key={wine.id} wine={wine} onEdit={() => onEditArticle(wine)} />
+                ))}
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
+        );
+      })}
     </div>
   );
 };
 
 interface WineCardProps {
   wine: Article;
+  onEdit: () => void;
 }
 
-const WineCard = ({ wine }: WineCardProps) => {
+const WineCard = ({ wine, onEdit }: WineCardProps) => {
   const { t } = useTranslation();
   const sellingPrice = (wine as any).selling_price;
   const hasSellingPrice = sellingPrice != null && sellingPrice > 0;
 
   return (
-    <Card className="overflow-hidden hover:shadow-md transition-shadow">
+    <Card 
+      className="overflow-hidden hover:shadow-md transition-shadow cursor-pointer group relative"
+      onClick={onEdit}
+    >
+      <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+        <div className="bg-primary text-primary-foreground rounded-full p-1.5">
+          <Pencil className="h-3.5 w-3.5" />
+        </div>
+      </div>
       {wine.image_url && (
         <div className="aspect-[4/3] overflow-hidden bg-muted">
           <img

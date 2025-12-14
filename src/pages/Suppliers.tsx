@@ -820,7 +820,14 @@ const Suppliers = () => {
 
           {/* Wines Tab */}
           <TabsContent value="wines" className="space-y-4">
-            <WinesTab articles={allArticles || []} suppliers={suppliers || []} />
+            <WinesTab 
+              articles={allArticles || []} 
+              suppliers={suppliers || []} 
+              onEditArticle={(article) => {
+                setEditingArticle(article);
+                setIsArticleDialogOpen(true);
+              }}
+            />
           </TabsContent>
 
           {/* Suggestions Tab */}
