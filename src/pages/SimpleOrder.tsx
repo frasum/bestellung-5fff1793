@@ -273,6 +273,9 @@ const SimpleOrder = () => {
         if (data.tokenData?.requires_pin) {
           setRequiresPin(true);
           setStatus('pin-entry');
+        } else if (data.tokenData?.wine_catalog_access && data.tokenData?.wine_catalog_access !== 'none' && (!data.suppliers || data.suppliers.length === 0) && !data.tokenData?.supplier) {
+          // Wine catalog only mode: no suppliers but has wine access
+          setStatus('wine-catalog');
         } else if (data.tokenData?.is_multi_supplier) {
           // Multi-supplier: Start with location/date step
           setStatus('location-date');
