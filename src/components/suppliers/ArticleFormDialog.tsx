@@ -488,7 +488,11 @@ export const ArticleFormDialog = ({
                   type="number"
                   step="0.01"
                   {...form.register('selling_price')} 
-                  placeholder="z.B. 42.00" 
+                  placeholder="z.B. 42.00"
+                  className={cn(
+                    editingArticle && !form.watch('selling_price') && 
+                    'border-orange-400 bg-orange-50/50 dark:bg-orange-950/20'
+                  )}
                 />
                 <p className="text-xs text-muted-foreground">
                   Verkaufspreis im Restaurant (für Mitarbeiter sichtbar)
@@ -520,7 +524,11 @@ export const ArticleFormDialog = ({
                   id="article-grape-variety" 
                   {...form.register('grape_variety')} 
                   placeholder="z.B. Riesling, Spätburgunder, Cuvée aus Merlot und Cabernet..."
-                  className="min-h-[60px] resize-none"
+                  className={cn(
+                    "min-h-[60px] resize-none",
+                    editingArticle && !form.watch('grape_variety')?.trim() && 
+                    'border-orange-400 bg-orange-50/50 dark:bg-orange-950/20'
+                  )}
                   onInput={(e) => {
                     const target = e.target as HTMLTextAreaElement;
                     target.style.height = 'auto';
@@ -537,7 +545,11 @@ export const ArticleFormDialog = ({
                   id="article-flavor-profile" 
                   {...form.register('flavor_profile')} 
                   placeholder="z.B. fruchtig mit Noten von Kirsche und Vanille, samtige Tannine..."
-                  className="min-h-[60px] resize-none"
+                  className={cn(
+                    "min-h-[60px] resize-none",
+                    editingArticle && !form.watch('flavor_profile')?.trim() && 
+                    'border-orange-400 bg-orange-50/50 dark:bg-orange-950/20'
+                  )}
                   onInput={(e) => {
                     const target = e.target as HTMLTextAreaElement;
                     target.style.height = 'auto';
@@ -554,7 +566,11 @@ export const ArticleFormDialog = ({
                   id="article-food-pairings" 
                   {...form.register('food_pairings')} 
                   placeholder="z.B. Passt hervorragend zu Lamm, gegrilltem Gemüse, reifem Käse..."
-                  className="min-h-[60px] resize-none"
+                  className={cn(
+                    "min-h-[60px] resize-none",
+                    editingArticle && !form.watch('food_pairings')?.trim() && 
+                    'border-orange-400 bg-orange-50/50 dark:bg-orange-950/20'
+                  )}
                   onInput={(e) => {
                     const target = e.target as HTMLTextAreaElement;
                     target.style.height = 'auto';
