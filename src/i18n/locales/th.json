@@ -916,7 +916,8 @@
     "aiRecognized": "AI รู้จัก",
     "aiAnalysisFailed": "วิเคราะห์ AI ล้มเหลว",
     "aiAnalysisSuccess": "รู้จักสินค้าแล้ว!",
-    "suggestedCategory": "หมวดหมู่ที่แนะนำ"
+    "suggestedCategory": "หมวดหมู่ที่แนะนำ",
+    "changeSuppliers": "เปลี่ยนซัพพลายเออร์"
   },
   "suggestions": {
     "title": "ข้อเสนอแนะ",

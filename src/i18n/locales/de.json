@@ -918,7 +918,8 @@
     "aiRecognized": "KI erkannt",
     "aiAnalysisFailed": "KI-Analyse fehlgeschlagen",
     "aiAnalysisSuccess": "Artikel erkannt!",
-    "suggestedCategory": "Vorgeschlagene Kategorie"
+    "suggestedCategory": "Vorgeschlagene Kategorie",
+    "changeSuppliers": "Lieferant wechseln"
   },
   "suggestions": {
     "title": "Vorschläge",

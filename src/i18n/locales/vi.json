@@ -916,7 +916,8 @@
     "aiRecognized": "AI nhận dạng",
     "aiAnalysisFailed": "Phân tích AI thất bại",
     "aiAnalysisSuccess": "Đã nhận dạng sản phẩm!",
-    "suggestedCategory": "Danh mục đề xuất"
+    "suggestedCategory": "Danh mục đề xuất",
+    "changeSuppliers": "Đổi nhà cung cấp"
   },
   "suggestions": {
     "title": "Đề xuất",
