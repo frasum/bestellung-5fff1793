@@ -462,6 +462,7 @@ export const ArticleFormDialog = ({
                         <SelectItem value="Italien">Italien</SelectItem>
                         <SelectItem value="Frankreich">Frankreich</SelectItem>
                         <SelectItem value="Spanien">Spanien</SelectItem>
+                        <SelectItem value="Portugal">Portugal</SelectItem>
                         <SelectItem value="RSA">RSA (Südafrika)</SelectItem>
                         <SelectItem value="Neue Welt">Neue Welt</SelectItem>
                       </SelectContent>
