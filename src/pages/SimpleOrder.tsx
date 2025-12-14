@@ -269,28 +269,54 @@ const SimpleOrder = () => {
           setSelectedLocationId(data.locations[0].id);
         }
         
-        // Check if PIN is required
-        if (data.tokenData?.requires_pin) {
+        // Decide initial status based on token data
+        const requiresPinFlag = !!data.tokenData?.requires_pin;
+        const wineAccess = data.tokenData?.wine_catalog_access;
+        const suppliersLength = data.suppliers?.length ?? 0;
+        const supplierObj = data.tokenData?.supplier;
+        const isMultiSupplier = !!data.tokenData?.is_multi_supplier;
+
+        // DEBUG: Log status decision inputs
+        console.log('[SimpleOrder] Status decision:', {
+          requires_pin: requiresPinFlag,
+          wine_catalog_access: wineAccess,
+          suppliers_length: suppliersLength,
+          supplier: supplierObj,
+          supplier_id: supplierObj?.id,
+          is_multi_supplier: isMultiSupplier,
+        });
+
+        if (requiresPinFlag) {
           setRequiresPin(true);
           setStatus('pin-entry');
         } else if (
-          data.tokenData?.wine_catalog_access && 
-          data.tokenData?.wine_catalog_access !== 'none' && 
-          (!data.suppliers || data.suppliers.length === 0) && 
-          (!data.tokenData?.supplier || !data.tokenData?.supplier?.id)
+          wineAccess &&
+          wineAccess !== 'none' &&
+          suppliersLength === 0 &&
+          (!supplierObj || !supplierObj.id)
         ) {
           // Wine catalog only mode: no suppliers but has wine access
           console.log('[SimpleOrder] Wine catalog only mode detected:', {
-            wine_catalog_access: data.tokenData?.wine_catalog_access,
-            suppliers_length: data.suppliers?.length,
-            tokenData_supplier: data.tokenData?.supplier,
-            tokenData_supplier_id: data.tokenData?.supplier?.id,
+            wine_catalog_access: wineAccess,
+            suppliers_length: suppliersLength,
+            supplier: supplierObj,
+            supplier_id: supplierObj?.id,
           });
           setStatus('wine-catalog');
-        } else if (data.tokenData?.is_multi_supplier) {
+        } else if (isMultiSupplier) {
           // Multi-supplier: Start with location/date step
           setStatus('location-date');
         } else {
+          // DEBUG: We have wine access but did not match wine-catalog-only condition
+          if (wineAccess && wineAccess !== 'none') {
+            console.warn('[SimpleOrder] Expected wine-catalog but condition failed:', {
+              wine_catalog_access: wineAccess,
+              suppliers_length: suppliersLength,
+              supplier: supplierObj,
+              supplier_id: supplierObj?.id,
+              is_multi_supplier: isMultiSupplier,
+            });
+          }
           setStatus('ready');
         }
       } catch (err) {
