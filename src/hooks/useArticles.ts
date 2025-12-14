@@ -13,6 +13,7 @@ export interface Article {
   price: number;
   category: string | null;
   top_category: string | null;
+  origin_country?: string | null;
   packaging_unit?: number | null;
   order_unit_id?: string | null;
   reference_price?: number | null;
@@ -36,6 +37,7 @@ export interface ArticleInput {
   unit: string;
   price: number;
   category?: string;
+  origin_country?: string;
   packaging_unit?: number;
   order_unit_id?: string | null;
   reference_price?: number;
@@ -129,6 +131,7 @@ export const useCreateArticle = () => {
         price: input.price,
         category: input.category || null,
         top_category: null,
+        origin_country: input.origin_country || null,
         packaging_unit: input.packaging_unit || null,
         is_active: input.is_active ?? true,
         created_at: new Date().toISOString(),
