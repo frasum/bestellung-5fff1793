@@ -591,7 +591,12 @@
       "canAddFreeItems": "Cho phép sản phẩm tự do",
       "canAddFreeItemsDescription": "Nhân viên có thể thêm sản phẩm tự do vào đơn hàng",
       "canCapturePhotos": "Chụp ảnh sản phẩm",
-      "canCapturePhotosDescription": "Nhân viên có thể chụp và gán ảnh sản phẩm"
+      "canCapturePhotosDescription": "Nhân viên có thể chụp và gán ảnh sản phẩm",
+      "wineCatalogAccess": "Truy cập danh mục rượu vang",
+      "wineCatalogAccessDescription": "Xem hoặc chỉnh sửa danh mục rượu vang qua Easy Order",
+      "wineCatalogNone": "Không có quyền",
+      "wineCatalogView": "Chỉ xem",
+      "wineCatalogEdit": "Xem và chỉnh sửa"
     }
   },
   "landing": {

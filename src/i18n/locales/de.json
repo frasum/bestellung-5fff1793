@@ -601,7 +601,12 @@
       "canAddFreeItems": "Freie Artikel erlauben",
       "canAddFreeItemsDescription": "Mitarbeiter kann freie Artikel zur Bestellung hinzufügen",
       "canCapturePhotos": "Foto-Erfassung",
-      "canCapturePhotosDescription": "Mitarbeiter kann Artikelfotos erfassen und zuweisen"
+      "canCapturePhotosDescription": "Mitarbeiter kann Artikelfotos erfassen und zuweisen",
+      "wineCatalogAccess": "Weinkarten-Zugang",
+      "wineCatalogAccessDescription": "Weinkarte über Easy Order anzeigen oder bearbeiten",
+      "wineCatalogNone": "Kein Zugang",
+      "wineCatalogView": "Nur ansehen",
+      "wineCatalogEdit": "Ansehen & bearbeiten"
     }
   },
   "landing": {

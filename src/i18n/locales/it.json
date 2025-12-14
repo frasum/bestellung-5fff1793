@@ -591,7 +591,12 @@
       "canAddFreeItems": "Consenti articoli liberi",
       "canAddFreeItemsDescription": "Il dipendente può aggiungere articoli liberi agli ordini",
       "canCapturePhotos": "Cattura foto",
-      "canCapturePhotosDescription": "Il dipendente può catturare e assegnare foto degli articoli"
+      "canCapturePhotosDescription": "Il dipendente può catturare e assegnare foto degli articoli",
+      "wineCatalogAccess": "Accesso catalogo vini",
+      "wineCatalogAccessDescription": "Visualizza o modifica il catalogo vini tramite Easy Order",
+      "wineCatalogNone": "Nessun accesso",
+      "wineCatalogView": "Solo visualizzazione",
+      "wineCatalogEdit": "Visualizza e modifica"
     }
   },
   "landing": {

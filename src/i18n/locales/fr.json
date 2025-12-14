@@ -591,7 +591,12 @@
       "canAddFreeItems": "Autoriser les articles libres",
       "canAddFreeItemsDescription": "L'employé peut ajouter des articles libres aux commandes",
       "canCapturePhotos": "Capture de photos",
-      "canCapturePhotosDescription": "L'employé peut capturer et attribuer des photos d'articles"
+      "canCapturePhotosDescription": "L'employé peut capturer et attribuer des photos d'articles",
+      "wineCatalogAccess": "Accès carte des vins",
+      "wineCatalogAccessDescription": "Voir ou modifier la carte des vins via Easy Order",
+      "wineCatalogNone": "Pas d'accès",
+      "wineCatalogView": "Lecture seule",
+      "wineCatalogEdit": "Voir et modifier"
     }
   },
   "landing": {

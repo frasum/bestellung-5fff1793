@@ -591,6 +591,7 @@ export type Database = {
           pin_code: string | null
           updated_at: string
           voice_input_enabled: boolean
+          wine_catalog_access: string | null
         }
         Insert: {
           auto_approve_orders?: boolean
@@ -607,6 +608,7 @@ export type Database = {
           pin_code?: string | null
           updated_at?: string
           voice_input_enabled?: boolean
+          wine_catalog_access?: string | null
         }
         Update: {
           auto_approve_orders?: boolean
@@ -623,6 +625,7 @@ export type Database = {
           pin_code?: string | null
           updated_at?: string
           voice_input_enabled?: boolean
+          wine_catalog_access?: string | null
         }
         Relationships: [
           {

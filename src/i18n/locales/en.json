@@ -591,7 +591,12 @@
       "canAddFreeItems": "Allow Free Items",
       "canAddFreeItemsDescription": "Employee can add free items to orders",
       "canCapturePhotos": "Photo Capture",
-      "canCapturePhotosDescription": "Employee can capture and assign article photos"
+      "canCapturePhotosDescription": "Employee can capture and assign article photos",
+      "wineCatalogAccess": "Wine Catalog Access",
+      "wineCatalogAccessDescription": "View or edit wine catalog via Easy Order",
+      "wineCatalogNone": "No Access",
+      "wineCatalogView": "View Only",
+      "wineCatalogEdit": "View & Edit"
     }
   },
   "landing": {
