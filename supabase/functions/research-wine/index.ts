@@ -13,6 +13,91 @@ interface WineResearchResult {
   food_pairings: string;
   producer_info: string;
   citations: string[];
+  image_url?: string;
+  image_source?: string;
+}
+
+async function searchWineImage(wineName: string, winery?: string, origin_country?: string): Promise<{ image_url: string | null; image_source?: string }> {
+  const FIRECRAWL_API_KEY = Deno.env.get('FIRECRAWL_API_KEY');
+  if (!FIRECRAWL_API_KEY) {
+    console.log('FIRECRAWL_API_KEY not configured, skipping image search');
+    return { image_url: null };
+  }
+
+  // Build search query for wine product photos
+  let searchQuery = `${wineName} Weinflasche Produktfoto`;
+  if (winery) searchQuery = `${winery} ${searchQuery}`;
+  if (origin_country) searchQuery += ` ${origin_country}`;
+
+  console.log('Searching wine image:', searchQuery);
+
+  try {
+    const searchResponse = await fetch('https://api.firecrawl.dev/v1/search', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${FIRECRAWL_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        query: searchQuery,
+        limit: 5,
+      }),
+    });
+
+    if (!searchResponse.ok) {
+      console.error('Firecrawl search failed:', searchResponse.status);
+      return { image_url: null };
+    }
+
+    const searchData = await searchResponse.json();
+    const results = searchData.data || [];
+
+    if (results.length === 0) {
+      console.log('No search results for image');
+      return { image_url: null };
+    }
+
+    // Try to scrape top results for screenshot
+    for (const result of results.slice(0, 2)) {
+      const pageUrl = result.url;
+      if (!pageUrl) continue;
+
+      console.log('Scraping for wine image:', pageUrl);
+
+      try {
+        const scrapeResponse = await fetch('https://api.firecrawl.dev/v1/scrape', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${FIRECRAWL_API_KEY}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            url: pageUrl,
+            formats: ['screenshot'],
+            waitFor: 2000,
+          }),
+        });
+
+        if (!scrapeResponse.ok) continue;
+
+        const scrapeData = await scrapeResponse.json();
+        const screenshot = scrapeData.data?.screenshot || scrapeData.screenshot;
+
+        if (screenshot) {
+          console.log('Found wine image from:', pageUrl);
+          return { image_url: screenshot, image_source: pageUrl };
+        }
+      } catch (e) {
+        console.error('Scrape error:', e);
+        continue;
+      }
+    }
+
+    return { image_url: null };
+  } catch (error) {
+    console.error('Image search error:', error);
+    return { image_url: null };
+  }
 }
 
 serve(async (req) => {
@@ -46,6 +131,9 @@ serve(async (req) => {
     if (origin_country) searchQuery += ` aus ${origin_country}`;
     
     console.log('Researching wine:', searchQuery);
+
+    // Start image search in parallel with Perplexity research
+    const imageSearchPromise = searchWineImage(wineName, winery, origin_country);
 
     const response = await fetch('https://api.perplexity.ai/chat/completions', {
       method: 'POST',
@@ -97,6 +185,10 @@ Falls keine Informationen gefunden werden, setze den Wert auf "Keine Information
     const content = data.choices?.[0]?.message?.content || '';
     const citations = data.citations || [];
 
+    // Wait for image search result
+    const imageResult = await imageSearchPromise;
+    console.log('Image search result:', imageResult.image_url ? 'Found' : 'Not found');
+
     // Parse the JSON response from the model
     let wineInfo: WineResearchResult;
     try {
@@ -117,6 +209,8 @@ Falls keine Informationen gefunden werden, setze den Wert auf "Keine Information
         food_pairings: parsed.food_pairings || 'Keine Informationen gefunden',
         producer_info: parsed.producer_info || 'Keine Informationen gefunden',
         citations: citations,
+        image_url: imageResult.image_url || undefined,
+        image_source: imageResult.image_source,
       };
     } catch (parseError) {
       console.error('Error parsing wine info:', parseError);
@@ -130,6 +224,8 @@ Falls keine Informationen gefunden werden, setze den Wert auf "Keine Information
         food_pairings: 'Keine Informationen gefunden',
         producer_info: 'Keine Informationen gefunden',
         citations: citations,
+        image_url: imageResult.image_url || undefined,
+        image_source: imageResult.image_source,
       };
     }
 

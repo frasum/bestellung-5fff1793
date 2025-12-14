@@ -1,5 +1,5 @@
 import { useMemo, useState, useCallback } from 'react';
-import { Wine, MapPin, Euro, ChevronRight, ChevronDown, Pencil, Search, Loader2, ExternalLink, Grape, Utensils, Info, Sparkles, AlertCircle } from 'lucide-react';
+import { Wine, MapPin, Euro, ChevronRight, ChevronDown, Pencil, Search, Loader2, ExternalLink, Grape, Utensils, Info, Sparkles, AlertCircle, Camera, ImageIcon } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -23,6 +23,8 @@ interface WineResearchResult {
   food_pairings: string;
   producer_info: string;
   citations: string[];
+  image_url?: string;
+  image_source?: string;
 }
 
 interface WinesTabProps {
@@ -357,6 +359,8 @@ const WineCard = ({ wine, onEdit }: WineCardProps) => {
         ...(researchResult.grape_variety !== notFound && { grape_variety: researchResult.grape_variety }),
         ...(researchResult.flavor_profile !== notFound && { flavor_profile: researchResult.flavor_profile }),
         ...(researchResult.food_pairings !== notFound && { food_pairings: researchResult.food_pairings }),
+        // Also save image if found
+        ...(researchResult.image_url && { image_url: researchResult.image_url }),
       });
       toast.success(t('wines.researchApplied', 'Recherche-Ergebnisse übernommen'));
       setShowResearchDialog(false);
@@ -511,6 +515,41 @@ const WineCard = ({ wine, onEdit }: WineCardProps) => {
           {researchResult && (
             <ScrollArea className="max-h-[60vh] pr-4">
               <div className="space-y-6">
+                {/* Found Product Image */}
+                {researchResult.image_url && (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+                      <Camera className="h-4 w-4" />
+                      {t('wines.foundProductImage', 'Gefundenes Produktfoto')}
+                    </div>
+                    <div className="relative aspect-video max-w-xs rounded-lg overflow-hidden bg-muted border">
+                      <img 
+                        src={researchResult.image_url} 
+                        alt={wine.name}
+                        className="w-full h-full object-contain"
+                      />
+                    </div>
+                    {researchResult.image_source && (
+                      <a 
+                        href={researchResult.image_source} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-xs text-muted-foreground hover:text-primary flex items-center gap-1"
+                      >
+                        <ExternalLink className="h-3 w-3" />
+                        {t('wines.imageSource', 'Bildquelle')}
+                      </a>
+                    )}
+                  </div>
+                )}
+
+                {!researchResult.image_url && (
+                  <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-lg text-sm text-muted-foreground">
+                    <ImageIcon className="h-4 w-4" />
+                    {t('wines.noImageFound', 'Kein Produktfoto gefunden')}
+                  </div>
+                )}
+
                 {/* Description */}
                 <div className="space-y-2">
                   <div className="flex items-center gap-2 text-sm font-medium text-foreground">
