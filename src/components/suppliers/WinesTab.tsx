@@ -33,7 +33,7 @@ interface WinesTabProps {
   onEditArticle: (article: Article) => void;
 }
 
-type FilterMode = 'all' | 'incomplete' | 'missing-description' | 'missing-grape';
+type FilterMode = 'all' | 'incomplete' | 'missing-description' | 'missing-grape' | 'missing-origin';
 
 export const WinesTab = ({ articles, suppliers, onEditArticle }: WinesTabProps) => {
   const { t } = useTranslation();
@@ -67,6 +67,8 @@ export const WinesTab = ({ articles, suppliers, onEditArticle }: WinesTabProps) 
         return wineArticles.filter(w => !w.description?.trim());
       case 'missing-grape':
         return wineArticles.filter(w => !w.grape_variety?.trim());
+      case 'missing-origin':
+        return wineArticles.filter(w => !w.origin_country?.trim());
       case 'incomplete':
         return wineArticles.filter(w => 
           !w.description?.trim() || 
@@ -243,6 +245,13 @@ export const WinesTab = ({ articles, suppliers, onEditArticle }: WinesTabProps) 
           {t('wines.filterMissingGrape', 'Ohne Rebsorte')}
           <Badge variant="secondary" className="text-xs">
             {wineArticles.filter(w => !w.grape_variety?.trim()).length}
+          </Badge>
+        </ToggleGroupItem>
+        <ToggleGroupItem value="missing-origin" className="gap-1.5 hidden sm:flex">
+          <MapPin className="h-3.5 w-3.5" />
+          {t('wines.filterMissingOrigin', 'Ohne Herkunftsland')}
+          <Badge variant="secondary" className="text-xs">
+            {wineArticles.filter(w => !w.origin_country?.trim()).length}
           </Badge>
         </ToggleGroupItem>
       </ToggleGroup>
