@@ -39,6 +39,7 @@ interface WineCatalogViewProps {
 export const WineCatalogView = ({ organizationId, permission, onBack }: WineCatalogViewProps) => {
   const { t } = useTranslation();
   const [wines, setWines] = useState<WineArticle[]>([]);
+  const [organizationName, setOrganizationName] = useState<string>('');
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [editingWine, setEditingWine] = useState<string | null>(null);
@@ -48,28 +49,39 @@ export const WineCatalogView = ({ organizationId, permission, onBack }: WineCata
   const [pdfProgress, setPdfProgress] = useState({ current: 0, total: 0 });
 
   useEffect(() => {
-    loadWines();
+    loadData();
   }, [organizationId]);
 
-  const loadWines = async () => {
+  const loadData = async () => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('articles')
-        .select(`
-          id, name, description, selling_price, origin_country,
-          grape_variety, flavor_profile, food_pairings, image_url, category, supplier_id,
-          supplier:suppliers(id, name)
-        `)
-        .eq('organization_id', organizationId)
-        .eq('is_active', true)
-        .ilike('category', '%wein%')
-        .order('name');
+      // Load organization name and wines in parallel
+      const [orgResult, winesResult] = await Promise.all([
+        supabase
+          .from('organizations')
+          .select('name')
+          .eq('id', organizationId)
+          .maybeSingle(),
+        supabase
+          .from('articles')
+          .select(`
+            id, name, description, selling_price, origin_country,
+            grape_variety, flavor_profile, food_pairings, image_url, category, supplier_id,
+            supplier:suppliers(id, name)
+          `)
+          .eq('organization_id', organizationId)
+          .eq('is_active', true)
+          .ilike('category', '%wein%')
+          .order('name'),
+      ]);
 
-      if (error) throw error;
-      setWines(data || []);
+      if (orgResult.data) {
+        setOrganizationName(orgResult.data.name);
+      }
+      if (winesResult.error) throw winesResult.error;
+      setWines(winesResult.data || []);
     } catch (err) {
-      console.error('Error loading wines:', err);
+      console.error('Error loading data:', err);
       toast.error(t('common.error', 'Fehler beim Laden'));
     } finally {
       setIsLoading(false);
@@ -134,7 +146,7 @@ export const WineCatalogView = ({ organizationId, permission, onBack }: WineCata
       toast.success(t('common.saved', 'Gespeichert'));
       setEditingWine(null);
       setEditForm({});
-      loadWines();
+      loadData();
     } catch (err) {
       console.error('Error saving wine:', err);
       toast.error(t('common.error', 'Fehler beim Speichern'));
@@ -170,7 +182,7 @@ export const WineCatalogView = ({ organizationId, permission, onBack }: WineCata
       await generateWineCatalogPdf(
         wines,
         suppliers,
-        undefined, // restaurantName - not available in this context
+        organizationName || undefined,
         (current, total) => setPdfProgress({ current, total })
       );
       
