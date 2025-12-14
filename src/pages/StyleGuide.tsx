@@ -74,7 +74,9 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
-import { AlertCircle, CheckCircle, Info, Palette, ArrowLeft, Sun, Moon, Sparkles, MoreHorizontal, ChevronDown, Settings, User, LogOut, HelpCircle, CalendarDays, ChevronsUpDown, Download, FileJson, FileCode } from 'lucide-react';
+import { AlertCircle, CheckCircle, Info, Palette, ArrowLeft, Sun, Moon, Sparkles, MoreHorizontal, ChevronDown, Settings, User, LogOut, HelpCircle, CalendarDays, ChevronsUpDown, Download, FileJson, FileCode, FileText, FlaskConical, Mic, Upload, Eye, Camera, Globe, TestTube, Layers, GripVertical, Users, BarChart3 } from 'lucide-react';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import { useTheme } from 'next-themes';
 import { toast } from 'sonner';
 import { ComponentPlayground } from '@/components/style-guide/ComponentPlayground';
@@ -244,6 +246,147 @@ body {
   toast.success('Design-Tokens als CSS exportiert');
 };
 
+// Advanced features data
+const advancedFeatures = [
+  {
+    category: 'Auth-Seite',
+    icon: User,
+    features: [
+      { name: 'Leere Demo', description: 'Erstellt Demo-Account ohne Beispieldaten zum Testen des Onboarding-Flows' },
+      { name: 'Sprach-Assistent', description: 'Voice-basiertes Katalog-Setup mit ElevenLabs AI für hands-free Onboarding' },
+    ]
+  },
+  {
+    category: 'Katalog (Lieferanten)',
+    icon: Upload,
+    features: [
+      { name: 'Export', description: 'Lieferantenliste als CSV, Excel oder PDF exportieren' },
+      { name: 'Import', description: 'Massenimport von Lieferanten aus CSV/Excel-Dateien' },
+      { name: 'Multi-Select', description: 'Mehrere Lieferanten gleichzeitig auswählen und bearbeiten' },
+    ]
+  },
+  {
+    category: 'Katalog (Artikel)',
+    icon: Layers,
+    features: [
+      { name: 'Export', description: 'Artikelliste als CSV, Excel oder PDF exportieren' },
+      { name: 'Import', description: 'Massenimport von Artikeln aus CSV/Excel-Dateien' },
+      { name: 'Erweiterte Ansicht', description: 'Zusätzliche Spalten in der Artikeltabelle anzeigen' },
+    ]
+  },
+  {
+    category: 'Artikel-Formular',
+    icon: Camera,
+    features: [
+      { name: 'KI-Foto-Erkennung', description: 'Automatische Artikelerkennung per Foto mittels AI-Bildanalyse' },
+    ]
+  },
+  {
+    category: 'Einstellungen - Profil',
+    icon: Settings,
+    features: [
+      { name: 'Style Guide Link', description: 'Zugang zur Design-System Dokumentation (diese Seite)' },
+      { name: 'i18n Check Tool', description: 'Übersetzungs-Vollständigkeit aller Sprachen prüfen' },
+      { name: 'Testmodus Karte', description: 'E-Mails an eine Test-Adresse umleiten statt an echte Lieferanten' },
+    ]
+  },
+  {
+    category: 'Einstellungen - Organisation',
+    icon: Layers,
+    features: [
+      { name: 'Artikel-Organisation', description: 'Kategorien und Sortierung der Artikel verwalten' },
+    ]
+  },
+  {
+    category: 'Einstellungen - Demo-Konten',
+    icon: Users,
+    features: [
+      { name: 'Demo-Konten Tab', description: 'Alle Demo-Accounts der Plattform verwalten (nur Admins)' },
+    ]
+  },
+  {
+    category: 'Einstellungen - EasyOrder',
+    icon: GripVertical,
+    features: [
+      { name: 'Reihenfolge Tab', description: 'Artikel-Reihenfolge per Drag & Drop anpassen' },
+    ]
+  },
+  {
+    category: 'Einstellungen - Nutzung',
+    icon: BarChart3,
+    features: [
+      { name: 'Tier Dropdown', description: 'Subscription-Tier manuell ändern (für Testzwecke)' },
+    ]
+  },
+];
+
+// Export advanced features as PDF
+const exportAdvancedFeaturesPDF = () => {
+  const doc = new jsPDF();
+  
+  // Title
+  doc.setFontSize(20);
+  doc.setTextColor(33, 33, 33);
+  doc.text('Erweiterte Features', 14, 22);
+  
+  // Subtitle
+  doc.setFontSize(11);
+  doc.setTextColor(100, 100, 100);
+  doc.text('Bestellung.pro - Features hinter dem "Erweiterte Einstellungen" Toggle', 14, 30);
+  
+  // Table data
+  const tableData: string[][] = [];
+  advancedFeatures.forEach(category => {
+    category.features.forEach((feature, index) => {
+      tableData.push([
+        index === 0 ? category.category : '',
+        feature.name,
+        feature.description
+      ]);
+    });
+  });
+  
+  // Generate table
+  autoTable(doc, {
+    startY: 40,
+    head: [['Bereich', 'Feature', 'Beschreibung']],
+    body: tableData,
+    styles: {
+      fontSize: 9,
+      cellPadding: 4,
+    },
+    headStyles: {
+      fillColor: [59, 130, 246],
+      textColor: 255,
+      fontStyle: 'bold',
+    },
+    columnStyles: {
+      0: { cellWidth: 45, fontStyle: 'bold' },
+      1: { cellWidth: 35 },
+      2: { cellWidth: 'auto' },
+    },
+    alternateRowStyles: {
+      fillColor: [245, 247, 250],
+    },
+  });
+  
+  // Footer
+  const pageCount = doc.getNumberOfPages();
+  for (let i = 1; i <= pageCount; i++) {
+    doc.setPage(i);
+    doc.setFontSize(8);
+    doc.setTextColor(150, 150, 150);
+    doc.text(
+      `Generiert am ${new Date().toLocaleDateString('de-DE')} | Seite ${i} von ${pageCount}`,
+      14,
+      doc.internal.pageSize.height - 10
+    );
+  }
+  
+  doc.save('erweiterte-features.pdf');
+  toast.success('Erweiterte Features als PDF exportiert');
+};
+
 // Color swatch component
 const ColorSwatch = ({ name, cssVar, className }: { name: string; cssVar: string; className: string }) => (
   <div className="flex flex-col items-center gap-2">
@@ -342,6 +485,70 @@ const StyleGuide = () => {
             </Button>
           </div>
         </div>
+
+        {/* Advanced Features Documentation */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <FlaskConical className="h-5 w-5" />
+                  Erweiterte Features
+                </CardTitle>
+                <CardDescription>
+                  Alle Features die hinter dem "Erweiterte Einstellungen" Toggle versteckt sind
+                </CardDescription>
+              </div>
+              <Button variant="outline" size="sm" onClick={exportAdvancedFeaturesPDF}>
+                <FileText className="h-4 w-4 mr-2" />
+                Als PDF
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <Accordion type="multiple" className="w-full">
+              {advancedFeatures.map((category, idx) => {
+                const IconComponent = category.icon;
+                return (
+                  <AccordionItem key={idx} value={`category-${idx}`}>
+                    <AccordionTrigger className="hover:no-underline">
+                      <div className="flex items-center gap-3">
+                        <IconComponent className="h-4 w-4 text-muted-foreground" />
+                        <span>{category.category}</span>
+                        <Badge variant="secondary" className="ml-2">
+                          {category.features.length}
+                        </Badge>
+                      </div>
+                    </AccordionTrigger>
+                    <AccordionContent>
+                      <div className="space-y-3 pl-7">
+                        {category.features.map((feature, fIdx) => (
+                          <div key={fIdx} className="flex flex-col gap-1 p-3 bg-muted/30 rounded-md">
+                            <span className="font-medium text-sm">{feature.name}</span>
+                            <span className="text-sm text-muted-foreground">{feature.description}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+                );
+              })}
+            </Accordion>
+            
+            <Separator className="my-6" />
+            
+            <div className="bg-muted/30 rounded-md p-4">
+              <h4 className="font-medium text-sm mb-2 flex items-center gap-2">
+                <Info className="h-4 w-4" />
+                Wie aktivieren?
+              </h4>
+              <p className="text-sm text-muted-foreground">
+                Gehe zu <strong>Einstellungen → Profil</strong> und aktiviere den Toggle "Erweiterte Einstellungen".
+                Alle oben aufgeführten Features werden dann in der gesamten Anwendung sichtbar.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Component Playground */}
         <ComponentPlayground />
