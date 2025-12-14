@@ -24,7 +24,7 @@ interface ArticleFormDialogProps {
   suppliers: Supplier[];
   categories: string[];
   units: string[];
-  onSubmit: (data: ArticleFormData, capturedImage?: string) => Promise<void>;
+  onSubmit: (data: ArticleFormData, capturedImage?: string, imageCleared?: boolean) => Promise<void>;
   isPending: boolean;
 }
 
@@ -45,6 +45,7 @@ export const ArticleFormDialog = ({
   const [customOrderName, setCustomOrderName] = useState('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
+  const [imageCleared, setImageCleared] = useState(false);
   const [advancedSettingsEnabled, setAdvancedSettingsEnabled] = useState(false);
   const [organizationId, setOrganizationId] = useState<string | null>(null);
   
@@ -113,12 +114,14 @@ export const ArticleFormDialog = ({
       form.reset({ supplier_id: '', name: '', description: '', sku: '', unit: 'pcs', price: '', category: '', origin_country: '', packaging_unit: '', order_unit_id: '', reference_price: '', reference_unit: '', selling_price: '' });
       setCapturedImage(null);
     }
+    setImageCleared(false);
   }, [editingArticle, form]);
 
   const handleSubmit = async (data: ArticleFormData) => {
-    await onSubmit(data, capturedImage || undefined);
+    await onSubmit(data, capturedImage || undefined, imageCleared);
     form.reset();
     setCapturedImage(null);
+    setImageCleared(false);
   };
 
   const handleImageCaptured = (base64Image: string, result: {
@@ -166,7 +169,10 @@ export const ArticleFormDialog = ({
               organizationId={organizationId}
               existingImageUrl={(editingArticle as any)?.image_url}
               onImageCaptured={handleImageCaptured}
-              onImageCleared={() => setCapturedImage(null)}
+              onImageCleared={() => {
+                setCapturedImage(null);
+                setImageCleared(true);
+              }}
               isAnalyzing={isAnalyzing}
               setIsAnalyzing={setIsAnalyzing}
             />

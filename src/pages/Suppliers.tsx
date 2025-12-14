@@ -360,10 +360,10 @@ const Suppliers = () => {
   };
 
   // Article image upload
-  const { uploadImage } = useArticleImageUpload();
+  const { uploadImage, deleteImage } = useArticleImageUpload();
 
   // Article submit handler
-  const handleArticleSubmit = async (data: ArticleFormData, capturedImage?: string) => {
+  const handleArticleSubmit = async (data: ArticleFormData, capturedImage?: string, imageCleared?: boolean) => {
     const input: ArticleInput = {
       supplier_id: data.supplier_id,
       name: data.name,
@@ -380,13 +380,24 @@ const Suppliers = () => {
     };
     
     if (editingArticle) {
-      // Upload image if captured
-      if (capturedImage && capturedImage.startsWith('data:')) {
+      // Case 1: Image was explicitly cleared
+      if (imageCleared && editingArticle.image_url) {
+        await deleteImage(editingArticle.organization_id, editingArticle.id);
+        input.image_url = null;
+      }
+      // Case 2: New image uploaded (replaces old)
+      else if (capturedImage && capturedImage.startsWith('data:')) {
+        // Delete old image if exists
+        if (editingArticle.image_url) {
+          await deleteImage(editingArticle.organization_id, editingArticle.id);
+        }
         const imageUrl = await uploadImage(capturedImage, editingArticle.organization_id, editingArticle.id);
         if (imageUrl) {
           input.image_url = imageUrl;
         }
       }
+      // Case 3: Image unchanged → don't touch image_url
+      
       await updateArticle.mutateAsync({ id: editingArticle.id, ...input });
     } else {
       // Create article first, then upload image
