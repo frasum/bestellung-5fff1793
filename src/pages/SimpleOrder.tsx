@@ -21,6 +21,7 @@ import { MultiSupplierCartOverview } from '@/components/simple-order/MultiSuppli
 import { VoiceOrderMode } from '@/components/simple-order/VoiceOrderMode';
 import { FreeItem } from '@/components/simple-order/FreeItemDialog';
 import { PhotoCaptureTab } from '@/components/simple-order/PhotoCaptureTab';
+import { WineCatalogView } from '@/components/simple-order/WineCatalogView';
 
 interface Article {
   id: string;
@@ -144,7 +145,7 @@ interface CompletedOrder {
   items: CompletedOrderItem[];
 }
 
-type OrderStatus = 'loading' | 'pin-entry' | 'location-date' | 'ready' | 'confirming' | 'submitting' | 'success' | 'error' | 'viewing-history' | 'editing' | 'voice-mode' | 'photo-capture';
+type OrderStatus = 'loading' | 'pin-entry' | 'location-date' | 'ready' | 'confirming' | 'submitting' | 'success' | 'error' | 'viewing-history' | 'editing' | 'voice-mode' | 'photo-capture' | 'wine-catalog';
 
 const SimpleOrder = () => {
   const { token } = useParams<{ token: string }>();
@@ -908,6 +909,17 @@ const SimpleOrder = () => {
     );
   }
 
+  // Wine catalog view
+  if (status === 'wine-catalog' && tokenData) {
+    return (
+      <WineCatalogView
+        organizationId={tokenData.organization_id}
+        permission={tokenData.wine_catalog_access === 'edit' ? 'edit' : 'view'}
+        onBack={() => setStatus('ready')}
+      />
+    );
+  }
+
   // Confirmation screen for auto-approve employees (multi-supplier support)
   if (status === 'confirming' || status === 'submitting') {
     // For multi-supplier: show MultiSupplierCartOverview
@@ -978,6 +990,8 @@ const SimpleOrder = () => {
         canCapturePhotos={tokenData?.can_capture_photos || false}
         onPhotoCapture={() => setStatus('photo-capture')}
         photoCaptureCount={articlesWithoutPhotos.length}
+        wineCatalogAccess={tokenData?.wine_catalog_access || 'none'}
+        onWineCatalog={() => setStatus('wine-catalog')}
       />
 
       {/* Supplier Selection for Multi-Supplier Tokens */}
