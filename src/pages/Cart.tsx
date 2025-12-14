@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLocationContext } from '@/contexts/LocationContext';
-import { useCart } from '@/contexts/CartContext';
+import { useCart, FreeCartItem } from '@/contexts/CartContext';
 import { useCreateCartDraft } from '@/hooks/useCartDrafts';
 import { useSupplierLocations } from '@/hooks/useSupplierLocations';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
@@ -17,19 +17,22 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Trash2, Plus, Minus, ShoppingCart, ArrowRight, Loader2, AlertTriangle, Save, Camera, PlusCircle, CalendarIcon, Clock } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { Trash2, Plus, Minus, ShoppingCart, ArrowRight, Loader2, AlertTriangle, Save, Camera, PlusCircle, CalendarIcon, Clock, DatabaseZap } from 'lucide-react';
 import { format } from 'date-fns';
 import { de, enUS, fr, it, th, vi } from 'date-fns/locale';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { ScanOrderListDialog } from '@/components/cart/ScanOrderListDialog';
 import { AddArticleSheet } from '@/components/cart/AddArticleSheet';
+import { ConvertToCatalogDialog } from '@/components/simple-order/ConvertToCatalogDialog';
+import { Article } from '@/hooks/useArticles';
 
 const Cart = () => {
   const { user, loading: authLoading } = useAuth();
   const { activeLocation } = useLocationContext();
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const { items, freeItems, removeItem, updateQuantity, removeFreeItem, updateFreeItemQuantity, getTotal, clearCart, draftDeliveryDate, draftTimeWindow } = useCart();
+  const { items, freeItems, removeItem, updateQuantity, removeFreeItem, updateFreeItemQuantity, addItem, getTotal, clearCart, draftDeliveryDate, draftTimeWindow } = useCart();
   const createDraft = useCreateCartDraft();
   const { data: supplierLocations } = useSupplierLocations();
   
@@ -41,6 +44,23 @@ const Cart = () => {
     supplierId: '',
     supplierName: '',
   });
+  const [convertDialogOpen, setConvertDialogOpen] = useState(false);
+  const [convertingFreeItem, setConvertingFreeItem] = useState<{ item: FreeCartItem; supplierName: string } | null>(null);
+
+  const handleConvertToCatalog = (freeItem: FreeCartItem, supplierName: string) => {
+    setConvertingFreeItem({ item: freeItem, supplierName });
+    setConvertDialogOpen(true);
+  };
+
+  const handleConvertSuccess = (article: Article) => {
+    if (convertingFreeItem) {
+      // Remove the free item and add the new article to the cart with same quantity
+      const quantity = convertingFreeItem.item.quantity;
+      removeFreeItem(convertingFreeItem.item.id);
+      addItem(article, quantity);
+      setConvertingFreeItem(null);
+    }
+  };
 
   // Helper to get locale for date formatting
   const getDateLocale = () => {
@@ -300,14 +320,31 @@ const Cart = () => {
                                   {freeItem.unit}
                                 </p>
                               </div>
-                              <Button
-                                size="icon"
-                                variant="ghost"
-                                className="h-8 w-8 md:h-10 md:w-10 text-destructive hover:text-destructive shrink-0"
-                                onClick={() => removeFreeItem(freeItem.id)}
-                              >
-                                <Trash2 className="w-4 h-4 md:w-5 md:h-5" />
-                              </Button>
+                              <div className="flex items-center gap-1 shrink-0">
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button
+                                      size="icon"
+                                      variant="ghost"
+                                      className="h-8 w-8 md:h-10 md:w-10 text-primary hover:text-primary hover:bg-primary/10"
+                                      onClick={() => handleConvertToCatalog(freeItem, name)}
+                                    >
+                                      <DatabaseZap className="w-4 h-4 md:w-5 md:h-5" />
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <p>In Katalog übernehmen</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  className="h-8 w-8 md:h-10 md:w-10 text-destructive hover:text-destructive shrink-0"
+                                  onClick={() => removeFreeItem(freeItem.id)}
+                                >
+                                  <Trash2 className="w-4 h-4 md:w-5 md:h-5" />
+                                </Button>
+                              </div>
                             </div>
                             <div className="flex items-center justify-between mt-3">
                               <div className="flex items-center gap-2">
@@ -552,6 +589,15 @@ const Cart = () => {
           onOpenChange={(open) => setAddArticleSheet(prev => ({ ...prev, open }))}
           supplierId={addArticleSheet.supplierId}
           supplierName={addArticleSheet.supplierName}
+        />
+
+        {/* Convert to Catalog Dialog */}
+        <ConvertToCatalogDialog
+          open={convertDialogOpen}
+          onOpenChange={setConvertDialogOpen}
+          freeItem={convertingFreeItem?.item || null}
+          supplierName={convertingFreeItem?.supplierName || ''}
+          onSuccess={handleConvertSuccess}
         />
       </div>
     </DashboardLayout>

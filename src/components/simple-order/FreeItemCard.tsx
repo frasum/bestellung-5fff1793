@@ -2,7 +2,8 @@ import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Minus, Plus, Trash2 } from 'lucide-react';
+import { Minus, Plus, Trash2, DatabaseZap } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { cn } from '@/lib/utils';
 import { FreeItem } from './FreeItemDialog';
@@ -12,6 +13,7 @@ interface FreeItemCardProps {
   onQuantityChange: (itemId: string, delta: number) => void;
   onEdit: (item: FreeItem) => void;
   onDelete: (itemId: string) => void;
+  onConvertToCatalog?: (item: FreeItem) => void;
 }
 
 export function FreeItemCard({ 
@@ -19,6 +21,7 @@ export function FreeItemCard({
   onQuantityChange, 
   onEdit,
   onDelete,
+  onConvertToCatalog,
 }: FreeItemCardProps) {
   const { t } = useTranslation();
   const { lightTap, mediumTap } = useHapticFeedback();
@@ -38,6 +41,12 @@ export function FreeItemCard({
     e.stopPropagation();
     mediumTap();
     onDelete(item.id);
+  };
+
+  const handleConvertToCatalog = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    mediumTap();
+    onConvertToCatalog?.(item);
   };
 
   return (
@@ -86,6 +95,24 @@ export function FreeItemCard({
           >
             <Plus className="h-6 w-6" />
           </Button>
+
+          {onConvertToCatalog && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-10 w-10 text-primary hover:text-primary hover:bg-primary/10"
+                  onClick={handleConvertToCatalog}
+                >
+                  <DatabaseZap className="h-5 w-5" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>In Katalog übernehmen</p>
+              </TooltipContent>
+            </Tooltip>
+          )}
           
           <Button
             variant="ghost"
