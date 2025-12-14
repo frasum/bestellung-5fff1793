@@ -391,9 +391,17 @@ serve(async (req) => {
 
     // Handle upload-image action
     if (action === 'upload-image') {
+      console.log('=== UPLOAD-IMAGE ACTION START ===');
+      console.log(`ArticleId: ${body.articleId}`);
+      console.log(`SupplierId: ${supplierId}`);
+      console.log(`OrganizationId: ${organizationId}`);
+      console.log(`Base64Image provided: ${body.base64Image ? 'yes' : 'no'}`);
+      console.log(`Base64Image length: ${body.base64Image?.length || 0} chars`);
+      
       const { articleId, base64Image } = body;
       
       if (!articleId || !base64Image) {
+        console.error('UPLOAD-IMAGE FAILED: Missing articleId or base64Image');
         return new Response(
           JSON.stringify({ error: 'Missing articleId or base64Image' }),
           { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -401,33 +409,43 @@ serve(async (req) => {
       }
 
       // Verify article belongs to this supplier
+      console.log('Verifying article ownership...');
       const { data: article, error: articleError } = await supabase
         .from('articles')
-        .select('id, organization_id')
+        .select('id, organization_id, name, image_url')
         .eq('id', articleId)
         .eq('supplier_id', supplierId)
         .eq('organization_id', organizationId)
         .single();
 
       if (articleError || !article) {
-        console.error('Article not found or access denied:', articleError);
+        console.error('UPLOAD-IMAGE FAILED: Article not found or access denied');
+        console.error('Article error:', articleError);
+        console.error('Query params:', { articleId, supplierId, organizationId });
         return new Response(
           JSON.stringify({ error: 'Article not found' }),
           { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
+      
+      console.log(`Article found: "${article.name}"`);
+      console.log(`Current image_url: ${article.image_url || 'NULL'}`);
 
       // Convert base64 to Uint8Array
+      console.log('Converting base64 to binary...');
       const base64Data = base64Image.split(',')[1] || base64Image;
       const binaryString = atob(base64Data);
       const bytes = new Uint8Array(binaryString.length);
       for (let i = 0; i < binaryString.length; i++) {
         bytes[i] = binaryString.charCodeAt(i);
       }
+      console.log(`Binary data size: ${bytes.length} bytes`);
 
       const fileName = `${organizationId}/${articleId}.jpg`;
+      console.log(`Storage path: article-images/${fileName}`);
 
       // Upload to storage
+      console.log('Uploading to Supabase Storage...');
       const { error: uploadError } = await supabase.storage
         .from('article-images')
         .upload(fileName, bytes, {
@@ -436,30 +454,39 @@ serve(async (req) => {
         });
 
       if (uploadError) {
-        console.error('Error uploading image:', uploadError);
+        console.error('UPLOAD-IMAGE FAILED: Storage upload error');
+        console.error('Upload error details:', JSON.stringify(uploadError));
         throw uploadError;
       }
+      console.log('Storage upload successful');
 
       // Get public URL
       const { data: { publicUrl } } = supabase.storage
         .from('article-images')
         .getPublicUrl(fileName);
+      console.log(`Public URL: ${publicUrl}`);
 
       // Add cache-busting parameter
       const imageUrl = `${publicUrl}?t=${Date.now()}`;
+      console.log(`Final image URL with cache-bust: ${imageUrl}`);
 
       // Update article with image_url
-      const { error: updateError } = await supabase
+      console.log('Updating article in database...');
+      const { data: updateData, error: updateError } = await supabase
         .from('articles')
         .update({ image_url: imageUrl })
-        .eq('id', articleId);
+        .eq('id', articleId)
+        .select('id, name, image_url');
 
       if (updateError) {
-        console.error('Error updating article image_url:', updateError);
+        console.error('UPLOAD-IMAGE FAILED: Database update error');
+        console.error('Update error details:', JSON.stringify(updateError));
         throw updateError;
       }
-
-      console.log(`Uploaded image for article ${articleId}`);
+      
+      console.log('Database update successful');
+      console.log('Updated article data:', JSON.stringify(updateData));
+      console.log('=== UPLOAD-IMAGE ACTION SUCCESS ===');
 
       return new Response(JSON.stringify({ imageUrl }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -468,9 +495,15 @@ serve(async (req) => {
 
     // Handle delete-image action
     if (action === 'delete-image') {
+      console.log('=== DELETE-IMAGE ACTION START ===');
+      console.log(`ArticleId: ${body.articleId}`);
+      console.log(`SupplierId: ${supplierId}`);
+      console.log(`OrganizationId: ${organizationId}`);
+      
       const { articleId } = body;
       
       if (!articleId) {
+        console.error('DELETE-IMAGE FAILED: Missing articleId');
         return new Response(
           JSON.stringify({ error: 'Missing articleId' }),
           { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -478,46 +511,62 @@ serve(async (req) => {
       }
 
       // Verify article belongs to this supplier
+      console.log('Verifying article ownership...');
       const { data: article, error: articleError } = await supabase
         .from('articles')
-        .select('id, organization_id, image_url')
+        .select('id, organization_id, name, image_url')
         .eq('id', articleId)
         .eq('supplier_id', supplierId)
         .eq('organization_id', organizationId)
         .single();
 
       if (articleError || !article) {
-        console.error('Article not found or access denied:', articleError);
+        console.error('DELETE-IMAGE FAILED: Article not found or access denied');
+        console.error('Article error:', articleError);
+        console.error('Query params:', { articleId, supplierId, organizationId });
         return new Response(
           JSON.stringify({ error: 'Article not found' }),
           { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
+      
+      console.log(`Article found: "${article.name}"`);
+      console.log(`Current image_url: ${article.image_url || 'NULL'}`);
 
       const fileName = `${organizationId}/${articleId}.jpg`;
+      console.log(`Storage path to delete: article-images/${fileName}`);
 
       // Delete from storage
+      console.log('Deleting from Supabase Storage...');
       const { error: deleteStorageError } = await supabase.storage
         .from('article-images')
         .remove([fileName]);
 
       if (deleteStorageError) {
-        console.error('Error deleting image from storage:', deleteStorageError);
+        console.error('DELETE-IMAGE WARNING: Storage delete error (continuing anyway)');
+        console.error('Delete error details:', JSON.stringify(deleteStorageError));
         // Continue anyway to clear the database reference
+      } else {
+        console.log('Storage delete successful');
       }
 
       // Update article to clear image_url
-      const { error: updateError } = await supabase
+      console.log('Clearing image_url in database...');
+      const { data: updateData, error: updateError } = await supabase
         .from('articles')
         .update({ image_url: null })
-        .eq('id', articleId);
+        .eq('id', articleId)
+        .select('id, name, image_url');
 
       if (updateError) {
-        console.error('Error clearing article image_url:', updateError);
+        console.error('DELETE-IMAGE FAILED: Database update error');
+        console.error('Update error details:', JSON.stringify(updateError));
         throw updateError;
       }
-
-      console.log(`Deleted image for article ${articleId}`);
+      
+      console.log('Database update successful');
+      console.log('Updated article data:', JSON.stringify(updateData));
+      console.log('=== DELETE-IMAGE ACTION SUCCESS ===');
 
       return new Response(JSON.stringify({ success: true }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
