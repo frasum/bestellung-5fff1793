@@ -74,7 +74,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
-import { AlertCircle, CheckCircle, Info, Palette, ArrowLeft, Sun, Moon, Sparkles, MoreHorizontal, ChevronDown, Settings, User, LogOut, HelpCircle, CalendarDays, ChevronsUpDown, Download, FileJson, FileCode, FileText, FlaskConical, Mic, Upload, Eye, Camera, Globe, TestTube, Layers, GripVertical, Users, BarChart3 } from 'lucide-react';
+import { AlertCircle, CheckCircle, Info, Palette, ArrowLeft, Sun, Moon, Sparkles, MoreHorizontal, ChevronDown, Settings, User, LogOut, HelpCircle, CalendarDays, ChevronsUpDown, Download, FileJson, FileCode, FileText, FlaskConical, Mic, Upload, Eye, Camera, Globe, TestTube, Layers, GripVertical, Users, BarChart3, Keyboard, Search, PanelLeftClose, Navigation, CircleHelp } from 'lucide-react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { useTheme } from 'next-themes';
@@ -387,6 +387,108 @@ const exportAdvancedFeaturesPDF = () => {
   toast.success('Erweiterte Features als PDF exportiert');
 };
 
+// Keyboard shortcuts data
+const keyboardShortcuts = [
+  {
+    category: 'Suche & Navigation',
+    icon: Search,
+    shortcuts: [
+      { keys: '⌘/Ctrl + K', action: 'Globale Suche öffnen', description: 'Schnellzugriff auf Suche nach Seiten, Lieferanten, Artikeln und Bestellungen' },
+      { keys: '⌘/Ctrl + B', action: 'Sidebar ein-/ausblenden', description: 'Wechselt die Sidebar-Ansicht zwischen erweitert und eingeklappt' },
+    ]
+  },
+  {
+    category: 'Seitennavigation',
+    icon: Navigation,
+    shortcuts: [
+      { keys: 'Alt + D', action: 'Dashboard', description: 'Navigiert zum Dashboard (Berichte)' },
+      { keys: 'Alt + S', action: 'Lieferanten', description: 'Navigiert zur Lieferanten-Übersicht' },
+      { keys: 'Alt + A', action: 'Artikel', description: 'Navigiert zur Artikel-Übersicht' },
+      { keys: 'Alt + O', action: 'Bestellungen', description: 'Navigiert zur Bestellungs-Übersicht' },
+      { keys: 'Alt + I', action: 'Inventur', description: 'Navigiert zur Inventur' },
+      { keys: 'Alt + R', action: 'Berichte', description: 'Navigiert zu den Berichten' },
+      { keys: 'Alt + C', action: 'Warenkorb', description: 'Navigiert zum Warenkorb' },
+      { keys: 'Ctrl + ,', action: 'Einstellungen', description: 'Navigiert zu den Einstellungen' },
+    ]
+  },
+  {
+    category: 'Hilfe',
+    icon: CircleHelp,
+    shortcuts: [
+      { keys: 'Shift + ?', action: 'Shortcuts anzeigen', description: 'Zeigt eine Toast-Benachrichtigung mit allen verfügbaren Shortcuts' },
+    ]
+  }
+];
+
+// Export keyboard shortcuts as PDF
+const exportShortcutsPDF = () => {
+  const doc = new jsPDF();
+  
+  // Title
+  doc.setFontSize(20);
+  doc.setTextColor(33, 33, 33);
+  doc.text('Tastatur-Shortcuts', 14, 22);
+  
+  // Subtitle
+  doc.setFontSize(11);
+  doc.setTextColor(100, 100, 100);
+  doc.text('Bestellung.pro - Schnelle Navigation mit Tastenkombinationen', 14, 30);
+  
+  // Table data
+  const tableData: string[][] = [];
+  keyboardShortcuts.forEach(category => {
+    category.shortcuts.forEach((shortcut, index) => {
+      tableData.push([
+        index === 0 ? category.category : '',
+        shortcut.keys,
+        shortcut.action,
+        shortcut.description
+      ]);
+    });
+  });
+  
+  // Generate table
+  autoTable(doc, {
+    startY: 40,
+    head: [['Kategorie', 'Tastenkombination', 'Aktion', 'Beschreibung']],
+    body: tableData,
+    styles: {
+      fontSize: 9,
+      cellPadding: 4,
+    },
+    headStyles: {
+      fillColor: [59, 130, 246],
+      textColor: 255,
+      fontStyle: 'bold',
+    },
+    columnStyles: {
+      0: { cellWidth: 35, fontStyle: 'bold' },
+      1: { cellWidth: 30 },
+      2: { cellWidth: 30 },
+      3: { cellWidth: 'auto' },
+    },
+    alternateRowStyles: {
+      fillColor: [245, 247, 250],
+    },
+  });
+  
+  // Footer
+  const pageCount = doc.getNumberOfPages();
+  for (let i = 1; i <= pageCount; i++) {
+    doc.setPage(i);
+    doc.setFontSize(8);
+    doc.setTextColor(150, 150, 150);
+    doc.text(
+      `Generiert am ${new Date().toLocaleDateString('de-DE')} | Seite ${i} von ${pageCount}`,
+      14,
+      doc.internal.pageSize.height - 10
+    );
+  }
+  
+  doc.save('tastatur-shortcuts.pdf');
+  toast.success('Tastatur-Shortcuts als PDF exportiert');
+};
+
 // Color swatch component
 const ColorSwatch = ({ name, cssVar, className }: { name: string; cssVar: string; className: string }) => (
   <div className="flex flex-col items-center gap-2">
@@ -545,6 +647,83 @@ const StyleGuide = () => {
               <p className="text-sm text-muted-foreground">
                 Gehe zu <strong>Einstellungen → Profil</strong> und aktiviere den Toggle "Erweiterte Einstellungen".
                 Alle oben aufgeführten Features werden dann in der gesamten Anwendung sichtbar.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Keyboard Shortcuts */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <Keyboard className="h-5 w-5" />
+                  Tastatur-Shortcuts
+                </CardTitle>
+                <CardDescription>
+                  Alle verfügbaren Tastenkombinationen für schnelle Navigation
+                </CardDescription>
+              </div>
+              <Button variant="outline" size="sm" onClick={exportShortcutsPDF}>
+                <FileText className="h-4 w-4 mr-2" />
+                Als PDF
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-6">
+              {keyboardShortcuts.map((category, idx) => {
+                const IconComponent = category.icon;
+                return (
+                  <div key={idx}>
+                    <h4 className="font-medium text-sm mb-3 flex items-center gap-2">
+                      <IconComponent className="h-4 w-4 text-muted-foreground" />
+                      {category.category}
+                      <Badge variant="secondary" className="ml-1">
+                        {category.shortcuts.length}
+                      </Badge>
+                    </h4>
+                    <div className="border rounded-md overflow-hidden">
+                      <Table>
+                        <TableHeader>
+                          <TableRow className="bg-muted/30">
+                            <TableHead className="w-[140px]">Tastenkombination</TableHead>
+                            <TableHead className="w-[120px]">Aktion</TableHead>
+                            <TableHead>Beschreibung</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {category.shortcuts.map((shortcut, sIdx) => (
+                            <TableRow key={sIdx}>
+                              <TableCell>
+                                <kbd className="px-2 py-1 bg-muted rounded text-xs font-mono">
+                                  {shortcut.keys}
+                                </kbd>
+                              </TableCell>
+                              <TableCell className="font-medium text-sm">{shortcut.action}</TableCell>
+                              <TableCell className="text-sm text-muted-foreground">{shortcut.description}</TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            
+            <Separator className="my-6" />
+            
+            <div className="bg-muted/30 rounded-md p-4">
+              <h4 className="font-medium text-sm mb-2 flex items-center gap-2">
+                <Info className="h-4 w-4" />
+                Hinweis
+              </h4>
+              <p className="text-sm text-muted-foreground">
+                Tastatur-Shortcuts funktionieren nicht in Eingabefeldern. 
+                Drücke <kbd className="px-1.5 py-0.5 bg-muted rounded text-xs font-mono">Shift + ?</kbd> um 
+                eine Kurzübersicht aller Shortcuts als Toast anzuzeigen.
               </p>
             </div>
           </CardContent>
