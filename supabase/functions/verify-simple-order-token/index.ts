@@ -39,7 +39,9 @@ serve(async (req) => {
       `)
       .eq('token', token)
       .eq('is_active', true)
-      .single();
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
 
     if (tokenError || !tokenData) {
       console.log('Token not found or inactive:', tokenError?.message);
