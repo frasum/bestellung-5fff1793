@@ -42,6 +42,11 @@ const formatPrice = (price: number | null | undefined): string => {
   }).format(price);
 };
 
+// Remove citation markers like [1], [2][3], etc. from AI-generated text
+const cleanCitations = (text: string): string => {
+  return text.replace(/\[\d+\]/g, '').replace(/\s{2,}/g, ' ').trim();
+};
+
 const loadImageAsBase64 = async (url: string): Promise<string | null> => {
   try {
     const response = await fetch(url);
@@ -317,7 +322,7 @@ export const generateWineCatalogPdf = async (
         doc.setTextColor(...COLORS.textMuted);
         // Reduce width by label offset to prevent overflow
         const grapeTextWidth = textWidth - 30;
-        const grapeLines = doc.splitTextToSize(wine.grape_variety, grapeTextWidth);
+        const grapeLines = doc.splitTextToSize(cleanCitations(wine.grape_variety), grapeTextWidth);
         doc.text(grapeLines.slice(0, 2), textStartX + 28, infoY);
         infoY += Math.min(grapeLines.length, 2) * 7 + 6;
       }
@@ -330,7 +335,7 @@ export const generateWineCatalogPdf = async (
         doc.setTextColor(...COLORS.textMuted);
         // Add text wrapping for long origin names
         const originTextWidth = textWidth - 30;
-        const originLines = doc.splitTextToSize(wine.origin_country, originTextWidth);
+        const originLines = doc.splitTextToSize(cleanCitations(wine.origin_country), originTextWidth);
         doc.text(originLines.slice(0, 1), textStartX + 28, infoY);
         infoY += 10;
       }
@@ -347,62 +352,70 @@ export const generateWineCatalogPdf = async (
       const fullTextY = currentY + imageHeight + 15;
       const fullTextWidth = contentWidth;
       let sectionY = fullTextY;
+      const footerMargin = 20; // Reserve space for page number
+      const maxContentY = pageHeight - footerMargin;
 
       // Description section
       if (wine.description) {
-        doc.setDrawColor(...COLORS.border);
-        doc.setLineWidth(0.3);
-        doc.line(margin, sectionY, pageWidth - margin, sectionY);
-        sectionY += 8;
-        
-        doc.setTextColor(...COLORS.darkWine);
-        doc.setFontSize(14);
-        doc.text('📝 Beschreibung', margin, sectionY);
-        sectionY += 8;
-        
-        doc.setTextColor(...COLORS.textDark);
-        doc.setFontSize(12);
-        const descLines = doc.splitTextToSize(wine.description, fullTextWidth);
-        doc.text(descLines.slice(0, 6), margin, sectionY);
-        sectionY += Math.min(descLines.length, 6) * 6.5 + 8;
+        // Check if we have enough space, otherwise skip this section on this page
+        if (sectionY < maxContentY - 30) {
+          doc.setDrawColor(...COLORS.border);
+          doc.setLineWidth(0.3);
+          doc.line(margin, sectionY, pageWidth - margin, sectionY);
+          sectionY += 6;
+          
+          doc.setTextColor(...COLORS.darkWine);
+          doc.setFontSize(14);
+          doc.text('📝 Beschreibung', margin, sectionY);
+          sectionY += 6;
+          
+          doc.setTextColor(...COLORS.textDark);
+          doc.setFontSize(12);
+          const descLines = doc.splitTextToSize(cleanCitations(wine.description), fullTextWidth);
+          // Only render lines that fit above footer
+          const availableLines = Math.min(descLines.length, 6, Math.floor((maxContentY - sectionY) / 5.5));
+          doc.text(descLines.slice(0, availableLines), margin, sectionY);
+          sectionY += availableLines * 5.5 + 5;
+        }
       }
 
       // Flavor profile section
-      if (wine.flavor_profile) {
+      if (wine.flavor_profile && sectionY < maxContentY - 25) {
         doc.setDrawColor(...COLORS.border);
         doc.setLineWidth(0.3);
         doc.line(margin, sectionY, pageWidth - margin, sectionY);
-        sectionY += 8;
+        sectionY += 6;
         
         doc.setTextColor(...COLORS.wineRed);
         doc.setFontSize(14);
         doc.text('🍷 Geschmacksprofil', margin, sectionY);
-        sectionY += 8;
+        sectionY += 6;
         
         doc.setTextColor(...COLORS.textDark);
         doc.setFontSize(12);
-        const flavorLines = doc.splitTextToSize(wine.flavor_profile, fullTextWidth);
-        doc.text(flavorLines.slice(0, 5), margin, sectionY);
-        sectionY += Math.min(flavorLines.length, 5) * 6.5 + 8;
+        const flavorLines = doc.splitTextToSize(cleanCitations(wine.flavor_profile), fullTextWidth);
+        const availableFlavorLines = Math.min(flavorLines.length, 5, Math.floor((maxContentY - sectionY) / 5.5));
+        doc.text(flavorLines.slice(0, availableFlavorLines), margin, sectionY);
+        sectionY += availableFlavorLines * 5.5 + 5;
       }
 
       // Food pairings section
-      if (wine.food_pairings) {
+      if (wine.food_pairings && sectionY < maxContentY - 20) {
         doc.setDrawColor(...COLORS.border);
         doc.setLineWidth(0.3);
         doc.line(margin, sectionY, pageWidth - margin, sectionY);
-        sectionY += 8;
+        sectionY += 6;
         
         doc.setTextColor(...COLORS.gold);
         doc.setFontSize(14);
         doc.text('🍽️ Passt zu', margin, sectionY);
-        sectionY += 8;
+        sectionY += 6;
         
         doc.setTextColor(...COLORS.textDark);
         doc.setFontSize(12);
-        const pairingLines = doc.splitTextToSize(wine.food_pairings, fullTextWidth);
-        doc.text(pairingLines.slice(0, 4), margin, sectionY);
-        sectionY += Math.min(pairingLines.length, 4) * 6.5 + 8;
+        const pairingLines = doc.splitTextToSize(cleanCitations(wine.food_pairings), fullTextWidth);
+        const availablePairingLines = Math.min(pairingLines.length, 4, Math.floor((maxContentY - sectionY) / 5.5));
+        doc.text(pairingLines.slice(0, availablePairingLines), margin, sectionY);
       }
     }
   }
