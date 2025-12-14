@@ -39,7 +39,7 @@ export const AddArticleSheetSimple = ({
   articles,
 }: AddArticleSheetSimpleProps) => {
   const { t } = useTranslation();
-  const { lightTap } = useHapticFeedback();
+  const { heavyTap } = useHapticFeedback();
   const [searchQuery, setSearchQuery] = useState('');
 
   // Filter articles by supplier
@@ -57,7 +57,7 @@ export const AddArticleSheetSimple = ({
   }, [supplierArticles, searchQuery]);
 
   const handleQuantityChange = (articleId: string, delta: number) => {
-    lightTap();
+    heavyTap();
     onQuantityChange(articleId, delta);
   };
 

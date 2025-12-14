@@ -42,7 +42,7 @@ export const SupplierSelection = ({
   totalCartItems = 0,
 }: SupplierSelectionProps) => {
   const { t } = useTranslation();
-  const { mediumTap, heavyTap } = useHapticFeedback();
+  const { heavyTap } = useHapticFeedback();
   const sortedSuppliers = sortSuppliers(suppliers);
 
   // Count how many suppliers have items in cart
@@ -51,7 +51,7 @@ export const SupplierSelection = ({
   ).length;
 
   const handleSelect = (supplierId: string) => {
-    mediumTap();
+    heavyTap();
     onSelect(supplierId);
   };
 

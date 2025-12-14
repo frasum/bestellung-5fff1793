@@ -57,7 +57,7 @@ export const OrderConfirmationScreen = ({
   isSubmitting,
 }: OrderConfirmationScreenProps) => {
   const { t, i18n } = useTranslation();
-  const { lightTap, heavyTap } = useHapticFeedback();
+  const { heavyTap } = useHapticFeedback();
   const [animatingIds, setAnimatingIds] = useState<Set<string>>(new Set());
   const prevQuantitiesRef = useRef<Record<string, number>>({});
 
@@ -89,13 +89,13 @@ export const OrderConfirmationScreen = ({
   }, 0);
 
   const handleQuantityChange = (articleId: string, delta: number) => {
-    lightTap();
+    heavyTap();
     prevQuantitiesRef.current = { ...quantities };
     onQuantityChange(articleId, delta);
   };
 
   const handleRemoveItem = (articleId: string) => {
-    lightTap();
+    heavyTap();
     onRemoveItem(articleId);
   };
 
