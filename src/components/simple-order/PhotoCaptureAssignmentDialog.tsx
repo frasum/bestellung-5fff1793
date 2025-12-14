@@ -51,6 +51,7 @@ interface IdentificationResult {
   suggestedCategory?: string;
   suggestedUnit?: string;
   suggestedDescription?: string;
+  suggestedOriginCountry?: string;
 }
 
 interface PhotoCaptureAssignmentDialogProps {
@@ -86,6 +87,7 @@ export const PhotoCaptureAssignmentDialog = ({
   const [suggestionData, setSuggestionData] = useState({
     name: '',
     description: '',
+    origin_country: '',
     category: '',
     unit: 'Stk',
     supplier_id: article.supplier_id,
@@ -135,10 +137,11 @@ export const PhotoCaptureAssignmentDialog = ({
       const result: IdentificationResult = {
         matchedArticle: data?.matchedArticle,
         confidence: data?.confidence || 'none',
-        suggestedName: data?.suggestedName || article.name,
-        suggestedCategory: data?.suggestedCategory || article.category || '',
-        suggestedUnit: data?.suggestedUnit || article.unit,
-        suggestedDescription: data?.suggestedDescription,
+        suggestedName: data?.suggestedName || data?.suggested_name || article.name,
+        suggestedCategory: data?.suggestedCategory || data?.suggested_category || article.category || '',
+        suggestedUnit: data?.suggestedUnit || data?.suggested_unit || article.unit,
+        suggestedDescription: data?.suggestedDescription || data?.suggested_description,
+        suggestedOriginCountry: data?.suggestedOriginCountry || data?.suggested_origin_country,
       };
 
       setIdentificationResult(result);
@@ -153,6 +156,7 @@ export const PhotoCaptureAssignmentDialog = ({
         setSuggestionData({
           name: result.suggestedName || article.name,
           description: result.suggestedDescription || '',
+          origin_country: result.suggestedOriginCountry || '',
           category: result.suggestedCategory || '',
           unit: result.suggestedUnit || 'Stk',
           supplier_id: article.supplier_id,
@@ -242,6 +246,7 @@ export const PhotoCaptureAssignmentDialog = ({
           token,
           name: suggestionData.name.trim(),
           description: suggestionData.description.trim() || null,
+          origin_country: suggestionData.origin_country.trim() || null,
           category: suggestionData.category || null,
           unit: suggestionData.unit,
           supplier_id: suggestionData.supplier_id,
@@ -411,6 +416,15 @@ export const PhotoCaptureAssignmentDialog = ({
                       value={suggestionData.description}
                       onChange={(e) => setSuggestionData(prev => ({ ...prev, description: e.target.value }))}
                       placeholder={t('photoCapture.descriptionPlaceholder', 'z.B. Weingut, Jahrgang, Herkunft...')}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>{t('common.originCountry', 'Herkunftsland')}</Label>
+                    <Input
+                      value={suggestionData.origin_country}
+                      onChange={(e) => setSuggestionData(prev => ({ ...prev, origin_country: e.target.value }))}
+                      placeholder={t('photoCapture.originCountryPlaceholder', 'z.B. Deutschland, Italien, Frankreich...')}
                     />
                   </div>
 

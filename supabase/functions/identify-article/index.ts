@@ -70,9 +70,10 @@ Antworte NUR im folgenden JSON-Format (keine zusätzlichen Erklärungen):
   "matched_article_name": "Name des gematchten Artikels oder null",
   "confidence": "high" | "medium" | "low",
   "suggested_name": "Erkannter/Vorgeschlagener Produktname",
-  "suggested_description": "Ausführliche Produktbeschreibung mit allen erkannten Details (Herkunft, Jahrgang, Weingut, Allergene, Alkoholgehalt etc.)",
+  "suggested_description": "Ausführliche Produktbeschreibung mit allen erkannten Details (Jahrgang, Weingut, Allergene, Alkoholgehalt etc.)",
   "suggested_category": "Passende Kategorie",
-  "suggested_unit": "Einheit (z.B. kg, Stk, L, Flasche)"
+  "suggested_unit": "Einheit (z.B. kg, Stk, L, Flasche)",
+  "suggested_origin_country": "Herkunftsland des Produkts (z.B. Deutschland, Italien, Frankreich, Spanien) oder null"
 }
 
 Wichtig:

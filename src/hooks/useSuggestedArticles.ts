@@ -12,6 +12,7 @@ export interface SuggestedArticle {
   unit: string;
   price: number;
   category: string | null;
+  origin_country: string | null;
   supplier_comment: string | null;
   status: string;
   source: string | null;
@@ -105,6 +106,7 @@ export const useApproveSuggestedArticle = () => {
           unit: suggestion.unit,
           price: suggestion.price,
           category: suggestion.category,
+          origin_country: suggestion.origin_country,
           image_url: suggestion.image_url, // Include image if available
           is_active: true,
         })
@@ -184,6 +186,7 @@ export const useApproveAllSuggestedArticles = () => {
             unit: suggestion.unit,
             price: suggestion.price,
             category: suggestion.category,
+            origin_country: suggestion.origin_country,
             image_url: suggestion.image_url, // Include image if available
             is_active: true,
           });
