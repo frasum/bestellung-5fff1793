@@ -1,0 +1,378 @@
+import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
+import { supabase } from '@/integrations/supabase/client';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
+import { ArrowLeft, Search, Wine, Grape, MapPin, Utensils, Euro, X, Check, Loader2 } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
+import { toast } from 'sonner';
+
+interface WineArticle {
+  id: string;
+  name: string;
+  description: string | null;
+  selling_price: number | null;
+  origin_country: string | null;
+  grape_variety: string | null;
+  flavor_profile: string | null;
+  food_pairings: string | null;
+  image_url: string | null;
+  category: string | null;
+  supplier: {
+    id: string;
+    name: string;
+  };
+}
+
+interface WineCatalogViewProps {
+  organizationId: string;
+  permission: 'view' | 'edit';
+  onBack: () => void;
+}
+
+export const WineCatalogView = ({ organizationId, permission, onBack }: WineCatalogViewProps) => {
+  const { t } = useTranslation();
+  const [wines, setWines] = useState<WineArticle[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [search, setSearch] = useState('');
+  const [editingWine, setEditingWine] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState<Partial<WineArticle>>({});
+  const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    loadWines();
+  }, [organizationId]);
+
+  const loadWines = async () => {
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('articles')
+        .select(`
+          id, name, description, selling_price, origin_country,
+          grape_variety, flavor_profile, food_pairings, image_url, category,
+          supplier:suppliers(id, name)
+        `)
+        .eq('organization_id', organizationId)
+        .eq('is_active', true)
+        .ilike('category', '%wein%')
+        .order('name');
+
+      if (error) throw error;
+      setWines(data || []);
+    } catch (err) {
+      console.error('Error loading wines:', err);
+      toast.error(t('common.error', 'Fehler beim Laden'));
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const filteredWines = wines.filter(wine => 
+    wine.name.toLowerCase().includes(search.toLowerCase()) ||
+    wine.description?.toLowerCase().includes(search.toLowerCase()) ||
+    wine.grape_variety?.toLowerCase().includes(search.toLowerCase()) ||
+    wine.origin_country?.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const groupedBySupplier = filteredWines.reduce((acc, wine) => {
+    const supplierId = wine.supplier?.id || 'unknown';
+    if (!acc[supplierId]) {
+      acc[supplierId] = {
+        name: wine.supplier?.name || 'Unbekannt',
+        wines: [],
+      };
+    }
+    acc[supplierId].wines.push(wine);
+    return acc;
+  }, {} as Record<string, { name: string; wines: WineArticle[] }>);
+
+  const startEditing = (wine: WineArticle) => {
+    setEditingWine(wine.id);
+    setEditForm({
+      description: wine.description || '',
+      selling_price: wine.selling_price,
+      origin_country: wine.origin_country || '',
+      grape_variety: wine.grape_variety || '',
+      flavor_profile: wine.flavor_profile || '',
+      food_pairings: wine.food_pairings || '',
+    });
+  };
+
+  const cancelEditing = () => {
+    setEditingWine(null);
+    setEditForm({});
+  };
+
+  const saveWine = async () => {
+    if (!editingWine) return;
+    
+    setIsSaving(true);
+    try {
+      const { error } = await supabase
+        .from('articles')
+        .update({
+          description: editForm.description || null,
+          selling_price: editForm.selling_price || null,
+          origin_country: editForm.origin_country || null,
+          grape_variety: editForm.grape_variety || null,
+          flavor_profile: editForm.flavor_profile || null,
+          food_pairings: editForm.food_pairings || null,
+        })
+        .eq('id', editingWine);
+
+      if (error) throw error;
+      
+      toast.success(t('common.saved', 'Gespeichert'));
+      setEditingWine(null);
+      setEditForm({});
+      loadWines();
+    } catch (err) {
+      console.error('Error saving wine:', err);
+      toast.error(t('common.error', 'Fehler beim Speichern'));
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const formatPrice = (price: number | null) => {
+    if (price == null) return '-';
+    return `€${price.toFixed(2)}`;
+  };
+
+  return (
+    <div className="min-h-screen bg-background">
+      {/* Header */}
+      <div className="sticky top-0 z-10 bg-primary text-primary-foreground border-b border-primary-foreground/10">
+        <div className="max-w-2xl mx-auto px-3 py-2">
+          <div className="flex items-center gap-3">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onBack}
+              className="h-11 w-11 text-primary-foreground hover:bg-primary-foreground/20"
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+            <div className="flex items-center gap-2 flex-1">
+              <Wine className="h-5 w-5" />
+              <h1 className="text-lg font-bold">{t('wines.ourWines', 'Unsere Weine')}</h1>
+            </div>
+            {permission === 'edit' && (
+              <Badge variant="secondary" className="bg-primary-foreground/20 text-primary-foreground">
+                {t('employees.wineCatalogEdit', 'Bearbeiten')}
+              </Badge>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Search */}
+      <div className="max-w-2xl mx-auto px-3 py-3">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder={t('common.search', 'Suchen...')}
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+      </div>
+
+      {/* Content */}
+      <div className="max-w-2xl mx-auto px-3 pb-6">
+        {isLoading ? (
+          <div className="space-y-4">
+            {[1, 2, 3].map(i => (
+              <Card key={i}>
+                <CardContent className="p-4">
+                  <div className="flex gap-4">
+                    <Skeleton className="h-24 w-20 rounded" />
+                    <div className="flex-1 space-y-2">
+                      <Skeleton className="h-5 w-3/4" />
+                      <Skeleton className="h-4 w-1/2" />
+                      <Skeleton className="h-4 w-full" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : wines.length === 0 ? (
+          <div className="text-center py-12 text-muted-foreground">
+            <Wine className="h-12 w-12 mx-auto mb-4 opacity-50" />
+            <p>{t('wines.noWines', 'Keine Weine im Katalog')}</p>
+          </div>
+        ) : filteredWines.length === 0 ? (
+          <div className="text-center py-12 text-muted-foreground">
+            <Search className="h-12 w-12 mx-auto mb-4 opacity-50" />
+            <p>{t('common.noResults', 'Keine Ergebnisse')}</p>
+          </div>
+        ) : (
+          <div className="space-y-6">
+            {Object.entries(groupedBySupplier).map(([supplierId, group]) => (
+              <div key={supplierId}>
+                <h2 className="text-lg font-semibold mb-3 text-foreground">{group.name}</h2>
+                <div className="space-y-3">
+                  {group.wines.map(wine => (
+                    <Card 
+                      key={wine.id} 
+                      className={`overflow-hidden transition-shadow ${
+                        permission === 'edit' && editingWine !== wine.id ? 'cursor-pointer hover:shadow-md' : ''
+                      }`}
+                      onClick={() => permission === 'edit' && editingWine !== wine.id && startEditing(wine)}
+                    >
+                      <CardContent className="p-0">
+                        {editingWine === wine.id ? (
+                          // Edit mode
+                          <div className="p-4 space-y-4">
+                            <div className="flex items-center justify-between">
+                              <h3 className="font-semibold text-lg">{wine.name}</h3>
+                              <div className="flex gap-2">
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={(e) => { e.stopPropagation(); cancelEditing(); }}
+                                  disabled={isSaving}
+                                >
+                                  <X className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  onClick={(e) => { e.stopPropagation(); saveWine(); }}
+                                  disabled={isSaving}
+                                >
+                                  {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+                                </Button>
+                              </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-3">
+                              <div>
+                                <label className="text-sm text-muted-foreground">{t('wines.sellingPrice', 'VK-Preis')} (€)</label>
+                                <Input
+                                  type="number"
+                                  step="0.01"
+                                  value={editForm.selling_price || ''}
+                                  onChange={(e) => setEditForm({ ...editForm, selling_price: parseFloat(e.target.value) || null })}
+                                  onClick={(e) => e.stopPropagation()}
+                                />
+                              </div>
+                              <div>
+                                <label className="text-sm text-muted-foreground">{t('wines.originCountry', 'Herkunft')}</label>
+                                <Input
+                                  value={editForm.origin_country || ''}
+                                  onChange={(e) => setEditForm({ ...editForm, origin_country: e.target.value })}
+                                  onClick={(e) => e.stopPropagation()}
+                                />
+                              </div>
+                            </div>
+
+                            <div>
+                              <label className="text-sm text-muted-foreground">{t('wines.grapeVariety', 'Rebsorte')}</label>
+                              <Input
+                                value={editForm.grape_variety || ''}
+                                onChange={(e) => setEditForm({ ...editForm, grape_variety: e.target.value })}
+                                onClick={(e) => e.stopPropagation()}
+                              />
+                            </div>
+
+                            <div>
+                              <label className="text-sm text-muted-foreground">{t('common.description', 'Beschreibung')}</label>
+                              <Textarea
+                                value={editForm.description || ''}
+                                onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
+                                onClick={(e) => e.stopPropagation()}
+                                rows={3}
+                              />
+                            </div>
+
+                            <div>
+                              <label className="text-sm text-muted-foreground">{t('wines.flavorProfile', 'Geschmack')}</label>
+                              <Textarea
+                                value={editForm.flavor_profile || ''}
+                                onChange={(e) => setEditForm({ ...editForm, flavor_profile: e.target.value })}
+                                onClick={(e) => e.stopPropagation()}
+                                rows={2}
+                              />
+                            </div>
+
+                            <div>
+                              <label className="text-sm text-muted-foreground">{t('wines.foodPairings', 'Passt zu')}</label>
+                              <Textarea
+                                value={editForm.food_pairings || ''}
+                                onChange={(e) => setEditForm({ ...editForm, food_pairings: e.target.value })}
+                                onClick={(e) => e.stopPropagation()}
+                                rows={2}
+                              />
+                            </div>
+                          </div>
+                        ) : (
+                          // View mode
+                          <div className="flex">
+                            {wine.image_url && (
+                              <div className="w-24 h-32 flex-shrink-0 bg-gradient-to-b from-muted/50 to-muted flex items-center justify-center">
+                                <img
+                                  src={wine.image_url}
+                                  alt={wine.name}
+                                  className="max-h-full max-w-full object-contain"
+                                />
+                              </div>
+                            )}
+                            <div className="flex-1 p-4 min-w-0">
+                              <div className="flex items-start justify-between gap-2 mb-2">
+                                <h3 className="font-semibold text-base leading-tight">{wine.name}</h3>
+                                {wine.selling_price != null && (
+                                  <Badge variant="secondary" className="flex-shrink-0 gap-1">
+                                    <Euro className="h-3 w-3" />
+                                    {wine.selling_price.toFixed(2)}
+                                  </Badge>
+                                )}
+                              </div>
+
+                              <div className="flex flex-wrap gap-2 mb-2 text-sm text-muted-foreground">
+                                {wine.origin_country && (
+                                  <span className="flex items-center gap-1">
+                                    <MapPin className="h-3 w-3" />
+                                    {wine.origin_country}
+                                  </span>
+                                )}
+                                {wine.grape_variety && (
+                                  <span className="flex items-center gap-1">
+                                    <Grape className="h-3 w-3" />
+                                    {wine.grape_variety}
+                                  </span>
+                                )}
+                              </div>
+
+                              {wine.description && (
+                                <p className="text-sm text-muted-foreground line-clamp-2 mb-2">
+                                  {wine.description}
+                                </p>
+                              )}
+
+                              {wine.food_pairings && (
+                                <p className="text-xs text-muted-foreground flex items-center gap-1">
+                                  <Utensils className="h-3 w-3 flex-shrink-0" />
+                                  <span className="truncate">{wine.food_pairings}</span>
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};

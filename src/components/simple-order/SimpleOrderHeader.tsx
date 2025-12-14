@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
-import { ChevronDown, ClipboardList, Mic, Camera } from 'lucide-react';
+import { ChevronDown, ClipboardList, Mic, Camera, Wine } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import {
   DropdownMenu,
@@ -28,6 +28,8 @@ interface SimpleOrderHeaderProps {
   canCapturePhotos?: boolean;
   onPhotoCapture?: () => void;
   photoCaptureCount?: number;
+  wineCatalogAccess?: 'none' | 'view' | 'edit';
+  onWineCatalog?: () => void;
 }
 
 const languages = [
@@ -53,6 +55,8 @@ export const SimpleOrderHeader = ({
   canCapturePhotos = false,
   onPhotoCapture,
   photoCaptureCount = 0,
+  wineCatalogAccess = 'none',
+  onWineCatalog,
 }: SimpleOrderHeaderProps) => {
   const { i18n, t } = useTranslation();
   const currentLanguage = languages.find(l => l.code === i18n.language) || languages[1];
@@ -61,6 +65,7 @@ export const SimpleOrderHeader = ({
   const showOrderHistory = hasEmployee && onViewOrders;
   const showVoiceButton = voiceInputEnabled && onVoiceMode;
   const showPhotoButton = canCapturePhotos && onPhotoCapture && photoCaptureCount > 0;
+  const showWineButton = wineCatalogAccess !== 'none' && onWineCatalog;
 
   return (
     <div className="sticky top-0 z-10 bg-primary text-primary-foreground border-b border-primary-foreground/10">
@@ -103,8 +108,19 @@ export const SimpleOrderHeader = ({
             )}
           </div>
 
-          {/* Right: Photo + Voice + Order history + Language */}
+          {/* Right: Wine + Photo + Voice + Order history + Language */}
           <div className="flex items-center gap-1 flex-shrink-0">
+            {showWineButton && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={onWineCatalog}
+                className="h-11 w-11 text-primary-foreground hover:bg-primary-foreground/20 touch-manipulation"
+                title={t('wines.ourWines', 'Unsere Weine')}
+              >
+                <Wine className="h-5 w-5" />
+              </Button>
+            )}
             {showPhotoButton && (
               <Button
                 variant="ghost"
