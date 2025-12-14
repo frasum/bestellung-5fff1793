@@ -273,8 +273,19 @@ const SimpleOrder = () => {
         if (data.tokenData?.requires_pin) {
           setRequiresPin(true);
           setStatus('pin-entry');
-        } else if (data.tokenData?.wine_catalog_access && data.tokenData?.wine_catalog_access !== 'none' && (!data.suppliers || data.suppliers.length === 0) && !data.tokenData?.supplier) {
+        } else if (
+          data.tokenData?.wine_catalog_access && 
+          data.tokenData?.wine_catalog_access !== 'none' && 
+          (!data.suppliers || data.suppliers.length === 0) && 
+          (!data.tokenData?.supplier || !data.tokenData?.supplier?.id)
+        ) {
           // Wine catalog only mode: no suppliers but has wine access
+          console.log('[SimpleOrder] Wine catalog only mode detected:', {
+            wine_catalog_access: data.tokenData?.wine_catalog_access,
+            suppliers_length: data.suppliers?.length,
+            tokenData_supplier: data.tokenData?.supplier,
+            tokenData_supplier_id: data.tokenData?.supplier?.id,
+          });
           setStatus('wine-catalog');
         } else if (data.tokenData?.is_multi_supplier) {
           // Multi-supplier: Start with location/date step
