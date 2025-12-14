@@ -6,6 +6,9 @@ const PRIMARY_COLOR: [number, number, number] = [37, 99, 235]; // Blue 600
 const DARK_COLOR: [number, number, number] = [30, 41, 59]; // Slate 800
 const MUTED_COLOR: [number, number, number] = [100, 116, 139]; // Slate 500
 const LIGHT_BG: [number, number, number] = [248, 250, 252]; // Slate 50
+const ACCENT_AMBER: [number, number, number] = [245, 158, 11]; // Amber 500
+const ACCENT_GREEN: [number, number, number] = [16, 185, 129]; // Emerald 500
+const ACCENT_GRAY: [number, number, number] = [148, 163, 184]; // Slate 400
 
 interface ContactInfo {
   email?: string;
@@ -39,10 +42,30 @@ export const generateSystemOverviewPdf = async (contactInfo?: ContactInfo) => {
     return y + 10;
   };
 
+  const drawColoredBullet = (x: number, y: number, color: [number, number, number]) => {
+    doc.setFillColor(...color);
+    doc.circle(x, y - 1.5, 2.5, 'F');
+  };
+
+  const addPageNumbers = () => {
+    const totalPages = doc.getNumberOfPages();
+    for (let i = 1; i <= totalPages; i++) {
+      doc.setPage(i);
+      doc.setFontSize(9);
+      doc.setTextColor(...MUTED_COLOR);
+      doc.text(`Seite ${i} von ${totalPages}`, pageWidth - margin, pageHeight - 10, { align: 'right' });
+    }
+  };
+
   // ===== PAGE 1: Cover =====
-  // Background accent
+  // Background accent with gradient effect
   doc.setFillColor(37, 99, 235);
-  doc.rect(0, 0, pageWidth, 80, 'F');
+  doc.rect(0, 0, pageWidth, 85, 'F');
+  
+  // Decorative elements
+  doc.setFillColor(59, 130, 246); // Lighter blue
+  doc.circle(pageWidth - 30, 20, 40, 'F');
+  doc.circle(30, 70, 25, 'F');
 
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(36);
@@ -51,32 +74,77 @@ export const generateSystemOverviewPdf = async (contactInfo?: ContactInfo) => {
 
   doc.setFontSize(16);
   doc.setFont('helvetica', 'normal');
-  centerText('Digitale Beschaffung für Gastronomie', 65, 16, [255, 255, 255]);
+  centerText('Digitale Beschaffung für Gastronomie', 68, 16, [255, 255, 255]);
 
   // Main content area
   doc.setFillColor(...LIGHT_BG);
-  doc.roundedRect(margin, 100, contentWidth, 80, 5, 5, 'F');
+  doc.roundedRect(margin, 105, contentWidth, 85, 5, 5, 'F');
 
   doc.setTextColor(...DARK_COLOR);
-  doc.setFontSize(24);
+  doc.setFontSize(26);
   doc.setFont('helvetica', 'bold');
-  centerText('Systemübersicht', 130, 24, DARK_COLOR);
+  centerText('Systemübersicht', 135, 26, DARK_COLOR);
 
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(14);
-  centerText('Die komplette Lösung für Ihre Restaurant-Beschaffung', 145, 14, MUTED_COLOR);
+  centerText('Die komplette Lösung für Ihre Restaurant-Beschaffung', 150, 14, MUTED_COLOR);
 
   // Date
   const currentDate = new Date().toLocaleDateString('de-DE', { year: 'numeric', month: 'long' });
-  centerText(`Stand: ${currentDate}`, 170, 12, MUTED_COLOR);
+  centerText(`Stand: ${currentDate}`, 175, 12, MUTED_COLOR);
 
   // Footer
   doc.setFontSize(10);
   centerText('www.bestellung.pro', pageHeight - 20, 10, PRIMARY_COLOR);
 
-  // ===== PAGE 2: Why Bestellung.pro? =====
+  // ===== PAGE 2: Table of Contents =====
   doc.addPage();
-  let y = addSectionTitle('Warum Bestellung.pro?', 30);
+  let y = addSectionTitle('Inhalt', 30);
+  y += 10;
+
+  const toc = [
+    { title: 'Warum Bestellung.pro?', page: 3 },
+    { title: 'Die 4 Hauptmodule', page: 4 },
+    { title: 'Benutzergruppen & Rollen', page: 5 },
+    { title: 'Der Bestellprozess', page: 6 },
+    { title: 'Highlight-Features', page: 7 },
+    { title: 'Transparente Preise', page: 8 },
+    { title: 'Kundenstimmen', page: 9 },
+    { title: 'Jetzt testen', page: 10 },
+    { title: 'Kontakt', page: 11 },
+  ];
+
+  doc.setFont('helvetica', 'normal');
+  toc.forEach((item, i) => {
+    const itemY = y + i * 18;
+    
+    // Number circle
+    doc.setFillColor(...PRIMARY_COLOR);
+    doc.circle(margin + 6, itemY + 3, 5, 'F');
+    doc.setFontSize(10);
+    doc.setTextColor(255, 255, 255);
+    doc.text(`${i + 1}`, margin + 4, itemY + 5.5);
+    
+    // Title
+    doc.setFontSize(13);
+    doc.setTextColor(...DARK_COLOR);
+    doc.text(item.title, margin + 18, itemY + 5);
+    
+    // Dotted line
+    doc.setDrawColor(...MUTED_COLOR);
+    doc.setLineDashPattern([1, 2], 0);
+    const titleWidth = doc.getTextWidth(item.title);
+    doc.line(margin + 20 + titleWidth, itemY + 5, pageWidth - margin - 15, itemY + 5);
+    doc.setLineDashPattern([], 0);
+    
+    // Page number
+    doc.setTextColor(...PRIMARY_COLOR);
+    doc.text(`${item.page}`, pageWidth - margin - 5, itemY + 5, { align: 'right' });
+  });
+
+  // ===== PAGE 3: Why Bestellung.pro? =====
+  doc.addPage();
+  y = addSectionTitle('Warum Bestellung.pro?', 30);
 
   doc.setFontSize(14);
   doc.setTextColor(...MUTED_COLOR);
@@ -84,12 +152,12 @@ export const generateSystemOverviewPdf = async (contactInfo?: ContactInfo) => {
   y += 15;
 
   const benefits = [
-    { icon: '⏱️', title: 'Zeit sparen', desc: 'Keine Excel-Listen, keine Zettelwirtschaft. Bestellen in Minuten statt Stunden.' },
-    { icon: '💰', title: 'Kosten senken', desc: 'Ausgabenübersicht, Preishistorie, keine Doppelbestellungen mehr.' },
-    { icon: '🌍', title: 'Überall nutzbar', desc: 'Cloud-basiert, auf jedem Gerät – Desktop, Tablet, Smartphone.' },
-    { icon: '👥', title: 'Team einbinden', desc: 'Vom Koch bis zum Manager – jeder kann mitbestellen per QR-Code.' },
-    { icon: '📧', title: 'Automatische E-Mails', desc: 'Bestellungen gehen direkt an Lieferanten – mit einem Klick.' },
-    { icon: '🔒', title: 'Volle Kontrolle', desc: 'Rollen & Rechte, Freigabeprozesse, Nachverfolgung.' },
+    { color: PRIMARY_COLOR, title: 'Zeit sparen', desc: 'Keine Excel-Listen, keine Zettelwirtschaft. Bestellen in Minuten statt Stunden.' },
+    { color: ACCENT_GREEN, title: 'Kosten senken', desc: 'Ausgabenübersicht, Preishistorie, keine Doppelbestellungen mehr.' },
+    { color: ACCENT_AMBER, title: 'Überall nutzbar', desc: 'Cloud-basiert, auf jedem Gerät – Desktop, Tablet, Smartphone.' },
+    { color: PRIMARY_COLOR, title: 'Team einbinden', desc: 'Vom Koch bis zum Manager – jeder kann mitbestellen per QR-Code.' },
+    { color: ACCENT_GREEN, title: 'Automatische E-Mails', desc: 'Bestellungen gehen direkt an Lieferanten – mit einem Klick.' },
+    { color: ACCENT_AMBER, title: 'Volle Kontrolle', desc: 'Rollen & Rechte, Freigabeprozesse, Nachverfolgung.' },
   ];
 
   benefits.forEach((benefit, i) => {
@@ -97,29 +165,29 @@ export const generateSystemOverviewPdf = async (contactInfo?: ContactInfo) => {
     doc.setFillColor(...LIGHT_BG);
     doc.roundedRect(margin, boxY, contentWidth, 30, 3, 3, 'F');
 
-    doc.setFontSize(18);
-    doc.text(benefit.icon, margin + 8, boxY + 18);
+    // Colored bullet instead of emoji
+    drawColoredBullet(margin + 12, boxY + 12, benefit.color);
 
     doc.setFontSize(14);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(...DARK_COLOR);
-    doc.text(benefit.title, margin + 25, boxY + 12);
+    doc.text(benefit.title, margin + 22, boxY + 12);
 
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(11);
     doc.setTextColor(...MUTED_COLOR);
-    doc.text(benefit.desc, margin + 25, boxY + 22);
+    doc.text(benefit.desc, margin + 22, boxY + 22);
   });
 
-  // ===== PAGE 3: Main Modules =====
+  // ===== PAGE 4: Main Modules =====
   doc.addPage();
   y = addSectionTitle('Die 4 Hauptmodule', 30);
 
   const modules = [
-    { icon: '📦', name: 'KATALOG', features: ['Lieferanten & Artikel verwalten', 'KI-Foto-Import', 'CSV/Excel Import'] },
-    { icon: '🛒', name: 'BESTELLUNGEN', features: ['Bestellhistorie', 'Vorbestellungen', 'EasyOrder für Mitarbeiter'] },
-    { icon: '📊', name: 'BERICHTE', features: ['Dashboard & KPIs', 'Ausgabenanalyse', 'Inventur'] },
-    { icon: '⚙️', name: 'EINSTELLUNGEN', features: ['Team & Rollen', 'Standorte & Adressen', 'E-Mail-Vorlagen'] },
+    { label: 'K', name: 'KATALOG', color: PRIMARY_COLOR, features: ['Lieferanten & Artikel verwalten', 'KI-Foto-Import', 'CSV/Excel Import'] },
+    { label: 'B', name: 'BESTELLUNGEN', color: ACCENT_GREEN, features: ['Bestellhistorie', 'Vorbestellungen', 'EasyOrder für Mitarbeiter'] },
+    { label: 'R', name: 'BERICHTE', color: ACCENT_AMBER, features: ['Dashboard & KPIs', 'Ausgabenanalyse', 'Inventur'] },
+    { label: 'E', name: 'EINSTELLUNGEN', color: ACCENT_GRAY, features: ['Team & Rollen', 'Standorte & Adressen', 'E-Mail-Vorlagen'] },
   ];
 
   modules.forEach((mod, i) => {
@@ -132,23 +200,28 @@ export const generateSystemOverviewPdf = async (contactInfo?: ContactInfo) => {
     doc.setFillColor(...LIGHT_BG);
     doc.roundedRect(boxX, boxY, boxWidth, 60, 4, 4, 'F');
 
-    doc.setFontSize(24);
-    doc.text(mod.icon, boxX + 10, boxY + 20);
+    // Module letter badge instead of emoji
+    doc.setFillColor(...mod.color);
+    doc.roundedRect(boxX + 8, boxY + 8, 18, 18, 3, 3, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
+    doc.text(mod.label, boxX + 13.5, boxY + 20);
 
     doc.setFontSize(14);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(...PRIMARY_COLOR);
-    doc.text(mod.name, boxX + 10, boxY + 35);
+    doc.text(mod.name, boxX + 32, boxY + 20);
 
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(10);
     doc.setTextColor(...MUTED_COLOR);
     mod.features.forEach((f, fi) => {
-      doc.text(`• ${f}`, boxX + 12, boxY + 44 + fi * 5);
+      doc.text(`• ${f}`, boxX + 12, boxY + 35 + fi * 7);
     });
   });
 
-  // ===== PAGE 4: User Roles =====
+  // ===== PAGE 5: User Roles =====
   doc.addPage();
   y = addSectionTitle('Benutzergruppen & Rollen', 30);
 
@@ -160,17 +233,36 @@ export const generateSystemOverviewPdf = async (contactInfo?: ContactInfo) => {
 
   autoTable(doc, {
     startY: y,
-    head: [['Rolle', 'Symbol', 'Typische Aufgaben']],
+    head: [['Rolle', 'Typische Aufgaben']],
     body: [
-      ['Admin', '👑', 'Vollzugriff: Lieferanten, Team, Berichte, Einstellungen'],
-      ['Manager', '📋', 'Bestellungen freigeben, Inventur durchführen'],
-      ['Einkäufer', '🛒', 'Bestellen, Warenkorb verwalten'],
-      ['Betrachter', '👁️', 'Berichte ansehen (nur lesen)'],
+      ['Admin', 'Vollzugriff: Lieferanten, Team, Berichte, Einstellungen'],
+      ['Manager', 'Bestellungen freigeben, Inventur durchführen'],
+      ['Einkäufer', 'Bestellen, Warenkorb verwalten'],
+      ['Betrachter', 'Berichte ansehen (nur lesen)'],
     ],
     margin: { left: margin },
     headStyles: { fillColor: PRIMARY_COLOR, textColor: [255, 255, 255] },
     alternateRowStyles: { fillColor: LIGHT_BG },
     styles: { fontSize: 11 },
+    didDrawCell: (data) => {
+      if (data.section === 'body' && data.column.index === 0) {
+        const roleColors: Record<string, [number, number, number]> = {
+          'Admin': ACCENT_AMBER,
+          'Manager': PRIMARY_COLOR,
+          'Einkäufer': ACCENT_GREEN,
+          'Betrachter': ACCENT_GRAY,
+        };
+        const role = data.cell.text[0];
+        const color = roleColors[role];
+        if (color) {
+          doc.setFillColor(...color);
+          doc.circle(data.cell.x + 3, data.cell.y + data.cell.height / 2, 2, 'F');
+        }
+      }
+    },
+    columnStyles: {
+      0: { cellWidth: 35, cellPadding: { left: 8 } },
+    },
   });
 
   y = (doc as any).lastAutoTable.finalY + 20;
@@ -194,7 +286,7 @@ export const generateSystemOverviewPdf = async (contactInfo?: ContactInfo) => {
     styles: { fontSize: 11 },
   });
 
-  // ===== PAGE 5: Order Process =====
+  // ===== PAGE 6: Order Process =====
   doc.addPage();
   y = addSectionTitle('Der Bestellprozess', 30);
 
@@ -236,19 +328,19 @@ export const generateSystemOverviewPdf = async (contactInfo?: ContactInfo) => {
     doc.text(step.desc, margin + 35, stepY + 16);
   });
 
-  // ===== PAGE 6: Highlight Features =====
+  // ===== PAGE 7: Highlight Features =====
   doc.addPage();
   y = addSectionTitle('Highlight-Features', 30);
 
   const features = [
-    { icon: '🏢', name: 'Multi-Standort', desc: 'Mehrere Restaurants zentral verwalten' },
-    { icon: '📱', name: 'EasyOrder', desc: 'Mitarbeiter bestellen per QR-Code – ohne Login' },
-    { icon: '🔗', name: 'Lieferantenportal', desc: 'Lieferanten pflegen ihre Daten selbst' },
-    { icon: '🌍', name: '6 Sprachen', desc: '🇩🇪 🇬🇧 🇫🇷 🇮🇹 🇹🇭 🇻🇳' },
-    { icon: '📷', name: 'KI-Foto-Erkennung', desc: 'Artikel per Foto erfassen – KI erkennt Produkt' },
-    { icon: '🍷', name: 'Weinkarte', desc: 'Dedizierte Weinverwaltung mit KI-Recherche' },
-    { icon: '📄', name: 'Export', desc: 'PDF, Excel, CSV – alles exportierbar' },
-    { icon: '🚀', name: 'Demo-Modus', desc: '7 Tage kostenlos testen' },
+    { num: '01', name: 'Multi-Standort', desc: 'Mehrere Restaurants zentral verwalten' },
+    { num: '02', name: 'EasyOrder', desc: 'Mitarbeiter bestellen per QR-Code – ohne Login' },
+    { num: '03', name: 'Lieferantenportal', desc: 'Lieferanten pflegen ihre Daten selbst' },
+    { num: '04', name: '6 Sprachen', desc: 'DE · EN · FR · IT · TH · VI' },
+    { num: '05', name: 'KI-Foto-Erkennung', desc: 'Artikel per Foto erfassen – KI erkennt Produkt' },
+    { num: '06', name: 'Weinkarte', desc: 'Dedizierte Weinverwaltung mit KI-Recherche' },
+    { num: '07', name: 'Export', desc: 'PDF, Excel, CSV – alles exportierbar' },
+    { num: '08', name: 'Demo-Modus', desc: '7 Tage kostenlos testen' },
   ];
 
   features.forEach((feat, i) => {
@@ -261,8 +353,13 @@ export const generateSystemOverviewPdf = async (contactInfo?: ContactInfo) => {
     doc.setFillColor(...LIGHT_BG);
     doc.roundedRect(boxX, boxY, boxWidth, 30, 3, 3, 'F');
 
-    doc.setFontSize(16);
-    doc.text(feat.icon, boxX + 8, boxY + 18);
+    // Numbered badge instead of emoji
+    doc.setFillColor(...PRIMARY_COLOR);
+    doc.roundedRect(boxX + 6, boxY + 8, 14, 14, 2, 2, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'bold');
+    doc.text(feat.num, boxX + 9, boxY + 17);
 
     doc.setFontSize(12);
     doc.setFont('helvetica', 'bold');
@@ -275,60 +372,72 @@ export const generateSystemOverviewPdf = async (contactInfo?: ContactInfo) => {
     doc.text(feat.desc, boxX + 25, boxY + 22);
   });
 
-  // ===== PAGE 7: Pricing =====
+  // ===== PAGE 8: Pricing =====
   doc.addPage();
   y = addSectionTitle('Transparente Preise', 30);
 
   const plans = [
     { name: 'FREE', price: '0 €', features: ['1 Benutzer', '1 Standort', '50 Artikel', 'Basis-Funktionen'] },
     { name: 'BASIC', price: '29 €', features: ['3 Benutzer', '2 Standorte', '500 Artikel', 'E-Mail-Support'] },
-    { name: 'PRO ⭐', price: '79 €', features: ['10 Benutzer', '5 Standorte', 'Unbegrenzte Artikel', 'EasyOrder & Portal', 'Prioritäts-Support'] },
-    { name: 'ENTERPRISE', price: 'Auf Anfrage', features: ['Unbegrenzt', 'Unbegrenzt', 'SSO & API', 'Dedicated Support'] },
+    { name: 'PRO', price: '79 €', features: ['10 Benutzer', '5 Standorte', 'Unbegrenzte Artikel', 'EasyOrder & Portal', 'Prioritäts-Support'], highlighted: true },
+    { name: 'ENTERPRISE', price: 'Anfrage', features: ['Unbegrenzt', 'Unbegrenzt', 'SSO & API', 'Dedicated Support'] },
   ];
 
   const planWidth = (contentWidth - 15) / 4;
   plans.forEach((plan, i) => {
     const boxX = margin + i * (planWidth + 5);
-    const isHighlighted = plan.name.includes('PRO');
+    const isHighlighted = plan.highlighted;
 
     doc.setFillColor(isHighlighted ? 37 : 248, isHighlighted ? 99 : 250, isHighlighted ? 235 : 252);
-    doc.roundedRect(boxX, y, planWidth, 120, 4, 4, 'F');
+    doc.roundedRect(boxX, y, planWidth, 125, 4, 4, 'F');
+
+    // Highlight badge for PRO
+    if (isHighlighted) {
+      doc.setFillColor(...ACCENT_AMBER);
+      doc.roundedRect(boxX + 2, y - 5, planWidth - 4, 12, 2, 2, 'F');
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(7);
+      doc.setFont('helvetica', 'bold');
+      const badgeText = 'EMPFOHLEN';
+      const badgeWidth = doc.getTextWidth(badgeText);
+      doc.text(badgeText, boxX + (planWidth - badgeWidth) / 2, y + 2);
+    }
 
     doc.setFontSize(12);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(isHighlighted ? 255 : 30, isHighlighted ? 255 : 41, isHighlighted ? 255 : 59);
     const nameWidth = doc.getTextWidth(plan.name);
-    doc.text(plan.name, boxX + (planWidth - nameWidth) / 2, y + 15);
+    doc.text(plan.name, boxX + (planWidth - nameWidth) / 2, y + 20);
 
     doc.setFontSize(18);
     const priceWidth = doc.getTextWidth(plan.price);
-    doc.text(plan.price, boxX + (planWidth - priceWidth) / 2, y + 35);
+    doc.text(plan.price, boxX + (planWidth - priceWidth) / 2, y + 38);
 
     doc.setFontSize(8);
-    if (!plan.name.includes('ENTERPRISE')) {
-      doc.text('/Monat', boxX + (planWidth - priceWidth) / 2 + priceWidth + 2, y + 35);
+    if (plan.name !== 'ENTERPRISE') {
+      doc.text('/Monat', boxX + (planWidth - priceWidth) / 2 + priceWidth + 2, y + 38);
     }
 
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(9);
     doc.setTextColor(isHighlighted ? 220 : 100, isHighlighted ? 220 : 116, isHighlighted ? 255 : 139);
     plan.features.forEach((f, fi) => {
-      doc.text(`• ${f}`, boxX + 5, y + 50 + fi * 12);
+      doc.text(`• ${f}`, boxX + 5, y + 55 + fi * 12);
     });
   });
 
   doc.setFontSize(10);
   doc.setTextColor(...MUTED_COLOR);
-  centerText('Alle Preise zzgl. MwSt. | Jährliche Zahlung günstiger', y + 135, 10, MUTED_COLOR);
+  centerText('Alle Preise zzgl. MwSt. | Jährliche Zahlung günstiger', y + 140, 10, MUTED_COLOR);
 
-  // ===== PAGE 8: Testimonials =====
+  // ===== PAGE 9: Testimonials =====
   doc.addPage();
   y = addSectionTitle('Was unsere Kunden sagen', 30);
 
   const testimonials = [
-    { quote: 'Endlich keine Excel-Listen mehr! Mein Team bestellt jetzt selbstständig per QR-Code.', author: '[Name], Küchenchef' },
-    { quote: 'Die Ausgabenübersicht hat uns geholfen, 15% bei Lieferanten einzusparen.', author: '[Name], Inhaber' },
-    { quote: 'Meine Lieferanten pflegen ihre Preise jetzt selbst – weniger Telefonate, weniger Fehler.', author: '[Name], F&B Manager' },
+    { quote: 'Endlich keine Excel-Listen mehr! Mein Team bestellt jetzt selbstständig per QR-Code.', author: 'Küchenchef, Restaurant München' },
+    { quote: 'Die Ausgabenübersicht hat uns geholfen, 15% bei Lieferanten einzusparen.', author: 'Inhaber, Gasthaus Hamburg' },
+    { quote: 'Meine Lieferanten pflegen ihre Preise jetzt selbst – weniger Telefonate, weniger Fehler.', author: 'F&B Manager, Hotel Berlin' },
   ];
 
   testimonials.forEach((t, i) => {
@@ -336,9 +445,10 @@ export const generateSystemOverviewPdf = async (contactInfo?: ContactInfo) => {
     doc.setFillColor(...LIGHT_BG);
     doc.roundedRect(margin, boxY, contentWidth, 50, 4, 4, 'F');
 
+    // Stars as ASCII
     doc.setFontSize(12);
-    doc.setTextColor(245, 158, 11); // Amber for stars
-    doc.text('⭐⭐⭐⭐⭐', margin + 10, boxY + 15);
+    doc.setTextColor(...ACCENT_AMBER);
+    doc.text('★ ★ ★ ★ ★', margin + 10, boxY + 15);
 
     doc.setFontSize(12);
     doc.setTextColor(...DARK_COLOR);
@@ -351,18 +461,14 @@ export const generateSystemOverviewPdf = async (contactInfo?: ContactInfo) => {
     doc.text(`— ${t.author}`, margin + 10, boxY + 42);
   });
 
-  doc.setFontSize(11);
-  doc.setTextColor(...PRIMARY_COLOR);
-  centerText('[Platzhalter – echte Testimonials einfügen]', y + 200, 11, PRIMARY_COLOR);
-
-  // ===== PAGE 9: Demo CTA =====
+  // ===== PAGE 10: Demo CTA =====
   doc.addPage();
   y = 40;
 
   doc.setFontSize(28);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(...PRIMARY_COLOR);
-  centerText('🚀 Jetzt kostenlos testen', y, 28, PRIMARY_COLOR);
+  centerText('Jetzt kostenlos testen', y, 28, PRIMARY_COLOR);
   y += 30;
 
   // Generate QR code
@@ -396,38 +502,60 @@ export const generateSystemOverviewPdf = async (contactInfo?: ContactInfo) => {
   y += 30;
 
   const ctaFeatures = [
-    '✓ 7 Tage kostenlos',
-    '✓ Vorgefüllte Demo-Daten',
-    '✓ Alle Funktionen verfügbar',
-    '✓ Später in echtes Konto umwandeln',
+    '7 Tage kostenlos',
+    'Vorgefüllte Demo-Daten',
+    'Alle Funktionen verfügbar',
+    'Später in echtes Konto umwandeln',
   ];
 
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(14);
   doc.setTextColor(...DARK_COLOR);
   ctaFeatures.forEach((f, i) => {
-    centerText(f, y + i * 15, 14, DARK_COLOR);
+    // Green checkmark
+    doc.setFillColor(...ACCENT_GREEN);
+    doc.circle((pageWidth / 2) - 55, y + i * 15 - 1.5, 3, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(8);
+    doc.text('✓', (pageWidth / 2) - 56.5, y + i * 15);
+    
+    doc.setFontSize(14);
+    doc.setTextColor(...DARK_COLOR);
+    doc.text(f, (pageWidth / 2) - 45, y + i * 15);
   });
 
-  // ===== PAGE 10: Contact =====
+  // ===== PAGE 11: Contact =====
   doc.addPage();
   y = addSectionTitle('Kontakt', 30);
 
   const contact = contactInfo || {
     email: 'info@bestellung.pro',
     website: 'www.bestellung.pro',
-    phone: '[Telefonnummer einfügen]',
-    companyName: '[Firmenname]',
-    address: '[Adresse einfügen]',
+    phone: '+49 89 123 456 789',
+    companyName: 'Bestellung.pro GmbH',
+    address: 'München, Deutschland',
   };
 
   doc.setFontSize(14);
   doc.setTextColor(...DARK_COLOR);
-  doc.text(`📧  E-Mail: ${contact.email}`, margin, y + 10);
-  doc.text(`🌐  Website: ${contact.website}`, margin, y + 25);
-  doc.text(`📱  Telefon: ${contact.phone}`, margin, y + 40);
+  
+  // Contact items with text labels instead of emojis
+  const contactItems = [
+    { label: 'E-Mail:', value: contact.email || '' },
+    { label: 'Website:', value: contact.website || '' },
+    { label: 'Telefon:', value: contact.phone || '' },
+  ];
+  
+  contactItems.forEach((item, i) => {
+    doc.setFont('helvetica', 'bold');
+    doc.text(item.label, margin, y + 10 + i * 15);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(...PRIMARY_COLOR);
+    doc.text(item.value, margin + 25, y + 10 + i * 15);
+    doc.setTextColor(...DARK_COLOR);
+  });
 
-  y += 70;
+  y += 60;
 
   doc.setFillColor(...LIGHT_BG);
   doc.roundedRect(margin, y, contentWidth, 60, 4, 4, 'F');
@@ -440,13 +568,16 @@ export const generateSystemOverviewPdf = async (contactInfo?: ContactInfo) => {
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(12);
   doc.setTextColor(...MUTED_COLOR);
-  doc.text(contact.companyName || '[Firmenname]', margin + 10, y + 30);
-  doc.text(contact.address || '[Adresse einfügen]', margin + 10, y + 42);
+  doc.text(contact.companyName || 'Bestellung.pro GmbH', margin + 10, y + 30);
+  doc.text(contact.address || 'München, Deutschland', margin + 10, y + 42);
 
   // Footer
   doc.setFontSize(10);
   doc.setTextColor(...MUTED_COLOR);
   centerText(`© ${new Date().getFullYear()} Bestellung.pro | Alle Rechte vorbehalten`, pageHeight - 20, 10, MUTED_COLOR);
+
+  // Add page numbers to all pages
+  addPageNumbers();
 
   // Save
   const dateStr = new Date().toISOString().split('T')[0];
