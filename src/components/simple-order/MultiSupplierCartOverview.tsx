@@ -276,6 +276,17 @@ export const MultiSupplierCartOverview = ({
           </div>
         </Card>
 
+        {/* Change Supplier Button - prominent position */}
+        <Button
+          variant="secondary"
+          onClick={onBack}
+          disabled={isSubmitting}
+          className="w-full h-11 touch-manipulation"
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          {t('simpleOrder.changeSuppliers', 'Lieferant wechseln')}
+        </Button>
+
         {/* Supplier Groups */}
         {suppliersWithOrders.map((supplier) => {
           const isExpanded = expandedSuppliers.has(supplier.id);
@@ -459,17 +470,7 @@ export const MultiSupplierCartOverview = ({
       <div className="fixed bottom-0 left-0 right-0 bg-background border-t border-border pb-safe">
         <div className="max-w-2xl mx-auto">
           {/* Info Row */}
-          <div className="flex items-center justify-between px-4 py-2 border-b border-border/50">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={onBack}
-              disabled={isSubmitting}
-              className="touch-manipulation"
-            >
-              <ArrowLeft className="h-4 w-4 mr-1.5" />
-              {t('simpleOrder.changeSuppliers', 'Lieferant wechseln')}
-            </Button>
+          <div className="flex items-center justify-center px-4 py-2 border-b border-border/50">
             <span className="text-sm text-muted-foreground">
               {suppliersWithOrders.length} {suppliersWithOrders.length === 1 ? t('simpleOrder.supplier', 'Lieferant') : t('simpleOrder.suppliers', 'Lieferanten')} • {totalItems} {t('simpleOrder.items', 'Artikel')}
             </span>
