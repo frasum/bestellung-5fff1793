@@ -29,6 +29,10 @@ export const articleSchema = z.object({
     'Referenzpreis muss eine positive Zahl sein'
   ),
   reference_unit: z.string().optional(),
+  selling_price: z.string().optional().refine(
+    (val) => !val || (!isNaN(Number(val)) && Number(val) >= 0),
+    'Verkaufspreis muss eine Zahl sein'
+  ),
 });
 
 export type SupplierFormData = z.infer<typeof supplierSchema>;

@@ -40,6 +40,7 @@ import { DeleteConfirmationDialogs } from '@/components/suppliers/DeleteConfirma
 import { SuggestionsTab } from '@/components/suppliers/SuggestionsTab';
 import { useSuggestedArticlesCount } from '@/hooks/useSuggestedArticles';
 import { QuickCaptureWizard } from '@/components/suppliers/QuickCaptureWizard';
+import { WinesTab } from '@/components/suppliers/WinesTab';
 
 const Suppliers = () => {
   const { user, loading: authLoading } = useAuth();
@@ -375,6 +376,7 @@ const Suppliers = () => {
       order_unit_id: data.order_unit_id || undefined,
       reference_price: data.reference_price ? Number(data.reference_price.replace(',', '.')) : undefined,
       reference_unit: data.reference_unit || undefined,
+      selling_price: data.selling_price ? Number(data.selling_price) : undefined,
     };
     
     if (editingArticle) {
@@ -504,9 +506,12 @@ const Suppliers = () => {
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-3 max-w-md md:max-w-lg">
+          <TabsList className="grid w-full grid-cols-4 max-w-lg md:max-w-xl">
             <TabsTrigger value="suppliers">Lieferanten</TabsTrigger>
             <TabsTrigger value="articles">Alle Artikel</TabsTrigger>
+            <TabsTrigger value="wines" className="gap-1">
+              <span className="hidden sm:inline">🍷</span> Weine
+            </TabsTrigger>
             <TabsTrigger value="suggestions" className="relative">
               Vorschläge
               {(suggestionsCount ?? 0) > 0 && (
@@ -811,6 +816,11 @@ const Suppliers = () => {
                 }}
               />
             )}
+          </TabsContent>
+
+          {/* Wines Tab */}
+          <TabsContent value="wines" className="space-y-4">
+            <WinesTab articles={allArticles || []} suppliers={suppliers || []} />
           </TabsContent>
 
           {/* Suggestions Tab */}
