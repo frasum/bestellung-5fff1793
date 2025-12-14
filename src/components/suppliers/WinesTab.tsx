@@ -314,6 +314,11 @@ const WineCard = ({ wine, onEdit }: WineCardProps) => {
   
   const sellingPrice = (wine as any).selling_price;
   const hasSellingPrice = sellingPrice != null && sellingPrice > 0;
+  
+  // Check if wine data is incomplete
+  const isIncomplete = !wine.description?.trim() || !wine.grape_variety?.trim();
+  const missingDescription = !wine.description?.trim();
+  const missingGrape = !wine.grape_variety?.trim();
 
   const handleResearch = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -364,9 +369,22 @@ const WineCard = ({ wine, onEdit }: WineCardProps) => {
   return (
     <>
       <Card 
-        className="overflow-hidden hover:shadow-md transition-shadow cursor-pointer group relative"
+        className={cn(
+          "overflow-hidden hover:shadow-md transition-shadow cursor-pointer group relative",
+          isIncomplete && "ring-2 ring-orange-400/50 border-orange-400"
+        )}
         onClick={onEdit}
       >
+        {/* Incomplete indicator badge */}
+        {isIncomplete && (
+          <div className="absolute top-2 left-2 z-10">
+            <Badge variant="outline" className="bg-orange-500/10 text-orange-600 border-orange-400 gap-1">
+              <AlertCircle className="h-3 w-3" />
+              {t('wines.incomplete', 'Unvollständig')}
+            </Badge>
+          </div>
+        )}
+        
         <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
           <Button
             size="icon"
@@ -398,18 +416,28 @@ const WineCard = ({ wine, onEdit }: WineCardProps) => {
           <div className="space-y-2">
             <h4 className="font-medium text-foreground line-clamp-2">{wine.name}</h4>
             
-            {wine.description && (
+            {wine.description ? (
               <p className="text-sm text-muted-foreground line-clamp-3">
                 {wine.description}
+              </p>
+            ) : (
+              <p className="text-sm text-orange-500 italic flex items-center gap-1">
+                <AlertCircle className="h-3 w-3" />
+                {t('wines.missingDescription', 'Keine Beschreibung')}
               </p>
             )}
 
             {/* Grape Variety */}
-            {wine.grape_variety && (
+            {wine.grape_variety ? (
               <div className="flex items-center gap-1.5 text-sm">
                 <Grape className="h-3.5 w-3.5 text-purple-500 shrink-0" />
                 <span className="text-muted-foreground">{wine.grape_variety}</span>
               </div>
+            ) : (
+              <p className="text-sm text-orange-500 italic flex items-center gap-1">
+                <Grape className="h-3 w-3" />
+                {t('wines.missingGrapeVariety', 'Keine Rebsorte')}
+              </p>
             )}
 
             {/* Flavor Profile */}
