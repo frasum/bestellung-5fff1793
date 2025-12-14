@@ -88,7 +88,22 @@ serve(async (req) => {
           body: JSON.stringify({
             url: pageUrl,
             formats: ['screenshot'],
-            waitFor: 2000,
+            waitFor: 1500,
+            actions: [
+              // Try common cookie consent button selectors
+              { type: 'click', selector: '#CybotCookiebotDialogBodyLevelButtonLevelOptinAllowAll' },
+              { type: 'click', selector: '#onetrust-accept-btn-handler' },
+              { type: 'click', selector: '[data-action="accept-all"]' },
+              { type: 'click', selector: '.accept-all-cookies' },
+              { type: 'click', selector: '#accept-all' },
+              { type: 'click', selector: '#acceptAll' },
+              { type: 'click', selector: 'button[data-consent="accept"]' },
+              { type: 'click', selector: '.cookie-consent-accept' },
+              { type: 'click', selector: '.klaro .cm-btn-success' },
+              { type: 'click', selector: 'a._brlbs-btn' },
+              // Wait for cookie banner to close
+              { type: 'wait', milliseconds: 800 },
+            ],
           }),
         });
 
