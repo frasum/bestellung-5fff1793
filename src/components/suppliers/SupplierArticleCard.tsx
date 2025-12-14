@@ -1,8 +1,9 @@
+import { useRef, useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Save, Loader2, Clock } from 'lucide-react';
+import { Save, Loader2, Clock, Camera, Trash2, Upload } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { SupplierUnitSelect } from './SupplierUnitSelect';
 
@@ -21,6 +22,7 @@ interface Article {
   packaging_unit: number | null;
   reference_price: number | null;
   reference_unit: string | null;
+  image_url?: string | null;
 }
 
 interface PendingChange {
@@ -56,6 +58,7 @@ interface SupplierArticleCardProps {
   categories: Category[];
   visibleColumns?: string[];
   isMissingAnnualValue?: boolean;
+  uploadingImage?: string | null;
   onFieldChange: (articleId: string, field: keyof Article, value: any) => void;
   onPriceChange: (articleId: string, value: string) => void;
   onAnnualOrderValueChange: (articleId: string, value: string) => void;
@@ -64,6 +67,8 @@ interface SupplierArticleCardProps {
   onSave: (articleId: string) => void;
   onCreateUnit: (name: string) => Promise<void>;
   onCreateCategory: (name: string) => Promise<void>;
+  onImageUpload?: (articleId: string, base64Image: string) => Promise<void>;
+  onImageDelete?: (articleId: string) => Promise<void>;
 }
 
 export function SupplierArticleCard({
@@ -79,6 +84,7 @@ export function SupplierArticleCard({
   categories,
   visibleColumns,
   isMissingAnnualValue = false,
+  uploadingImage,
   onFieldChange,
   onPriceChange,
   onAnnualOrderValueChange,
@@ -87,10 +93,47 @@ export function SupplierArticleCard({
   onSave,
   onCreateUnit,
   onCreateCategory,
+  onImageUpload,
+  onImageDelete,
 }: SupplierArticleCardProps) {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [localImagePreview, setLocalImagePreview] = useState<string | null>(null);
+  
   const defaultVisibleColumns = ['sku', 'description', 'unit', 'packaging_unit', 'price', 'annual_order_value'];
   const cols = visibleColumns || defaultVisibleColumns;
   const isVisible = (col: string) => cols.includes(col);
+  
+  const displayImageUrl = localImagePreview || article.image_url;
+  const isUploading = uploadingImage === article.id;
+  
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !onImageUpload) return;
+    
+    // Show local preview immediately
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      const base64 = event.target?.result as string;
+      setLocalImagePreview(base64);
+      
+      try {
+        await onImageUpload(article.id, base64);
+      } catch (error) {
+        // Reset preview on error
+        setLocalImagePreview(null);
+      }
+    };
+    reader.readAsDataURL(file);
+    
+    // Reset input for re-selection
+    e.target.value = '';
+  };
+  
+  const handleDeleteImage = async () => {
+    if (!onImageDelete) return;
+    setLocalImagePreview(null);
+    await onImageDelete(article.id);
+  };
   const getDisplayValue = (field: keyof Article) => {
     if (editedArticles[article.id]?.[field] !== undefined) {
       return editedArticles[article.id][field];
@@ -131,6 +174,76 @@ export function SupplierArticleCard({
       hasChanges() && "ring-2 ring-primary/50",
       isMissingAnnualValue && !hasPending && !hasChanges() && "ring-2 ring-destructive/50"
     )}>
+      {/* Product Image */}
+      {onImageUpload && (
+        <div className="mb-4">
+          <label className="text-xs text-muted-foreground font-medium">Produktfoto</label>
+          <div className="mt-1 border rounded-lg overflow-hidden bg-muted/30">
+            {displayImageUrl ? (
+              <div className="relative">
+                <img 
+                  src={displayImageUrl} 
+                  alt={article.name}
+                  className="w-full aspect-[4/3] object-contain bg-muted/50" 
+                />
+                {isUploading && (
+                  <div className="absolute inset-0 bg-background/80 flex items-center justify-center">
+                    <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                  </div>
+                )}
+                <div className="absolute bottom-2 right-2 flex gap-1">
+                  <Button 
+                    size="icon" 
+                    variant="secondary" 
+                    className="h-8 w-8"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={isUploading}
+                  >
+                    <Camera className="h-4 w-4" />
+                  </Button>
+                  {onImageDelete && (
+                    <Button 
+                      size="icon" 
+                      variant="destructive" 
+                      className="h-8 w-8"
+                      onClick={handleDeleteImage}
+                      disabled={isUploading}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <div 
+                className={cn(
+                  "aspect-[4/3] flex flex-col items-center justify-center cursor-pointer hover:bg-muted/50 transition-colors",
+                  isUploading && "pointer-events-none"
+                )}
+                onClick={() => fileInputRef.current?.click()}
+              >
+                {isUploading ? (
+                  <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                ) : (
+                  <>
+                    <Upload className="h-8 w-8 text-muted-foreground mb-2" />
+                    <span className="text-sm text-muted-foreground">Foto hinzufügen</span>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
+          <input 
+            ref={fileInputRef}
+            type="file" 
+            accept="image/*" 
+            capture="environment"
+            className="hidden"
+            onChange={handleFileSelect}
+          />
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex justify-between items-start gap-2 mb-4">
         <div className="flex-1 min-w-0">

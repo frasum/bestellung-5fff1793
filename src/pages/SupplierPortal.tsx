@@ -49,6 +49,7 @@ interface Article {
   packaging_unit: number | null;
   reference_price: number | null;
   reference_unit: string | null;
+  image_url?: string | null;
 }
 
 interface PendingChange {
@@ -99,6 +100,7 @@ const SupplierPortal = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [suggestDialogOpen, setSuggestDialogOpen] = useState(false);
   const [hasDraft, setHasDraft] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState<string | null>(null);
   const [portalSettings, setPortalSettings] = useState<PortalSettings>({
     portal_title: 'Lieferantenportal',
     welcome_message: null,
@@ -611,6 +613,70 @@ const SupplierPortal = () => {
     toast.success('Artikelvorschlag zur Genehmigung eingereicht');
   };
 
+  const handleImageUpload = async (articleId: string, base64Image: string) => {
+    if (!session) return;
+    
+    setUploadingImage(articleId);
+    try {
+      const { data, error } = await supabase.functions.invoke('supplier-portal-articles', {
+        body: {
+          action: 'upload-image',
+          supplierId: session.supplierId,
+          organizationId: session.organizationId,
+          sessionToken: session.sessionToken,
+          articleId,
+          base64Image,
+        },
+      });
+
+      if (error) throw error;
+
+      // Update local article with new image_url
+      setArticles(prev => prev.map(a => 
+        a.id === articleId ? { ...a, image_url: data.imageUrl } : a
+      ));
+
+      toast.success('Foto hochgeladen');
+    } catch (error: any) {
+      console.error('Error uploading image:', error);
+      toast.error('Fehler beim Hochladen des Fotos');
+      throw error;
+    } finally {
+      setUploadingImage(null);
+    }
+  };
+
+  const handleImageDelete = async (articleId: string) => {
+    if (!session) return;
+    
+    setUploadingImage(articleId);
+    try {
+      const { error } = await supabase.functions.invoke('supplier-portal-articles', {
+        body: {
+          action: 'delete-image',
+          supplierId: session.supplierId,
+          organizationId: session.organizationId,
+          sessionToken: session.sessionToken,
+          articleId,
+        },
+      });
+
+      if (error) throw error;
+
+      // Update local article to remove image_url
+      setArticles(prev => prev.map(a => 
+        a.id === articleId ? { ...a, image_url: null } : a
+      ));
+
+      toast.success('Foto gelöscht');
+    } catch (error: any) {
+      console.error('Error deleting image:', error);
+      toast.error('Fehler beim Löschen des Fotos');
+    } finally {
+      setUploadingImage(null);
+    }
+  };
+
   const filteredArticles = articles.filter(a =>
     a.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (a.sku && a.sku.toLowerCase().includes(searchTerm.toLowerCase())) ||
@@ -1062,6 +1128,7 @@ const SupplierPortal = () => {
                       categories={categories}
                       visibleColumns={visibleColumns}
                       isMissingAnnualValue={false}
+                      uploadingImage={uploadingImage}
                       onFieldChange={handleFieldChange}
                       onPriceChange={(articleId, value) => {
                         setPriceInputs(prev => ({ ...prev, [articleId]: value }));
@@ -1078,6 +1145,8 @@ const SupplierPortal = () => {
                       onSave={handleSave}
                       onCreateUnit={handleCreateUnit}
                       onCreateCategory={handleCreateCategory}
+                      onImageUpload={handleImageUpload}
+                      onImageDelete={handleImageDelete}
                     />
                   ))}
                 </div>

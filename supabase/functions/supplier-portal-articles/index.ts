@@ -9,7 +9,7 @@ const corsHeaders = {
 };
 
 interface ArticleUpdateRequest {
-  action: 'list' | 'update' | 'update-all' | 'get-settings' | 'get-units' | 'create-unit' | 'get-categories' | 'create-category' | 'suggest-article' | 'save-draft' | 'get-draft' | 'delete-draft';
+  action: 'list' | 'update' | 'update-all' | 'get-settings' | 'get-units' | 'create-unit' | 'get-categories' | 'create-category' | 'suggest-article' | 'save-draft' | 'get-draft' | 'delete-draft' | 'upload-image' | 'delete-image';
   supplierId: string;
   organizationId: string;
   sessionToken: string;
@@ -18,6 +18,7 @@ interface ArticleUpdateRequest {
   articleChanges?: Array<{ articleId: string; changes: Record<string, any> }>;
   unitName?: string;
   categoryName?: string;
+  base64Image?: string;
   suggestedArticle?: {
     name: string;
     description?: string | null;
@@ -354,10 +355,10 @@ serve(async (req) => {
     }
 
     if (action === 'list') {
-      // Fetch articles for this supplier including annual_order_value
+      // Fetch articles for this supplier including annual_order_value and image_url
       const { data: articles, error: articlesError } = await supabase
         .from('articles')
-        .select('id, name, description, sku, unit, price, category, is_active, annual_order_value')
+        .select('id, name, description, sku, unit, price, category, is_active, annual_order_value, packaging_unit, reference_price, reference_unit, image_url')
         .eq('supplier_id', supplierId)
         .eq('organization_id', organizationId)
         .order('name');
@@ -384,6 +385,141 @@ serve(async (req) => {
         articles, 
         pendingChanges: pendingChanges || [] 
       }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Handle upload-image action
+    if (action === 'upload-image') {
+      const { articleId, base64Image } = body;
+      
+      if (!articleId || !base64Image) {
+        return new Response(
+          JSON.stringify({ error: 'Missing articleId or base64Image' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Verify article belongs to this supplier
+      const { data: article, error: articleError } = await supabase
+        .from('articles')
+        .select('id, organization_id')
+        .eq('id', articleId)
+        .eq('supplier_id', supplierId)
+        .eq('organization_id', organizationId)
+        .single();
+
+      if (articleError || !article) {
+        console.error('Article not found or access denied:', articleError);
+        return new Response(
+          JSON.stringify({ error: 'Article not found' }),
+          { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Convert base64 to Uint8Array
+      const base64Data = base64Image.split(',')[1] || base64Image;
+      const binaryString = atob(base64Data);
+      const bytes = new Uint8Array(binaryString.length);
+      for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+      }
+
+      const fileName = `${organizationId}/${articleId}.jpg`;
+
+      // Upload to storage
+      const { error: uploadError } = await supabase.storage
+        .from('article-images')
+        .upload(fileName, bytes, {
+          contentType: 'image/jpeg',
+          upsert: true,
+        });
+
+      if (uploadError) {
+        console.error('Error uploading image:', uploadError);
+        throw uploadError;
+      }
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('article-images')
+        .getPublicUrl(fileName);
+
+      // Add cache-busting parameter
+      const imageUrl = `${publicUrl}?t=${Date.now()}`;
+
+      // Update article with image_url
+      const { error: updateError } = await supabase
+        .from('articles')
+        .update({ image_url: imageUrl })
+        .eq('id', articleId);
+
+      if (updateError) {
+        console.error('Error updating article image_url:', updateError);
+        throw updateError;
+      }
+
+      console.log(`Uploaded image for article ${articleId}`);
+
+      return new Response(JSON.stringify({ imageUrl }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Handle delete-image action
+    if (action === 'delete-image') {
+      const { articleId } = body;
+      
+      if (!articleId) {
+        return new Response(
+          JSON.stringify({ error: 'Missing articleId' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Verify article belongs to this supplier
+      const { data: article, error: articleError } = await supabase
+        .from('articles')
+        .select('id, organization_id, image_url')
+        .eq('id', articleId)
+        .eq('supplier_id', supplierId)
+        .eq('organization_id', organizationId)
+        .single();
+
+      if (articleError || !article) {
+        console.error('Article not found or access denied:', articleError);
+        return new Response(
+          JSON.stringify({ error: 'Article not found' }),
+          { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      const fileName = `${organizationId}/${articleId}.jpg`;
+
+      // Delete from storage
+      const { error: deleteStorageError } = await supabase.storage
+        .from('article-images')
+        .remove([fileName]);
+
+      if (deleteStorageError) {
+        console.error('Error deleting image from storage:', deleteStorageError);
+        // Continue anyway to clear the database reference
+      }
+
+      // Update article to clear image_url
+      const { error: updateError } = await supabase
+        .from('articles')
+        .update({ image_url: null })
+        .eq('id', articleId);
+
+      if (updateError) {
+        console.error('Error clearing article image_url:', updateError);
+        throw updateError;
+      }
+
+      console.log(`Deleted image for article ${articleId}`);
+
+      return new Response(JSON.stringify({ success: true }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
