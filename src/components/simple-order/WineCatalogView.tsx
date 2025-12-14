@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -50,13 +50,15 @@ export const WineCatalogView = ({ organizationId, permission, onBack, token }: W
   const [pdfProgress, setPdfProgress] = useState({ current: 0, total: 0 });
 
   useEffect(() => {
-    console.log('[WineCatalogView] useEffect triggered', { token });
-    loadData();
+    console.log('[WineCatalogView] component mounted', { token });
+    if (token) {
+      loadData();
+    }
   }, [token]);
  
   const [loadError, setLoadError] = useState<string | null>(null);
-
-  const loadData = async () => {
+ 
+  const loadData = useCallback(async () => {
     console.log('[WineCatalogView] loadData start');
     setIsLoading(true);
     setLoadError(null);
@@ -95,7 +97,7 @@ export const WineCatalogView = ({ organizationId, permission, onBack, token }: W
       console.log('[WineCatalogView] loadData finished');
       setIsLoading(false);
     }
-  };
+  }, [token, t]);
 
   const filteredWines = wines.filter(wine => 
     wine.name.toLowerCase().includes(search.toLowerCase()) ||
