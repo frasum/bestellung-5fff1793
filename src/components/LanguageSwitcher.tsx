@@ -38,7 +38,7 @@ export const LanguageSwitcher = ({ variant = 'icon' }: LanguageSwitcherProps) =>
           <TooltipTrigger asChild>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon">
-                <Globe className="h-5 w-5" />
+                <span className="text-lg">{currentLanguage.flag}</span>
               </Button>
             </DropdownMenuTrigger>
           </TooltipTrigger>
