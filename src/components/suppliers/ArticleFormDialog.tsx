@@ -4,6 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -86,7 +87,7 @@ export const ArticleFormDialog = ({
 
   const form = useForm<ArticleFormData>({
     resolver: zodResolver(articleSchema),
-    defaultValues: { supplier_id: '', name: '', description: '', sku: '', unit: 'pcs', price: '', category: '', origin_country: '', packaging_unit: '', order_unit_id: '', reference_price: '', reference_unit: '', selling_price: '' },
+    defaultValues: { supplier_id: '', name: '', description: '', sku: '', unit: 'pcs', price: '', category: '', origin_country: '', packaging_unit: '', order_unit_id: '', reference_price: '', reference_unit: '', selling_price: '', grape_variety: '', flavor_profile: '', food_pairings: '' },
   });
 
   // Watch category to conditionally show origin_country field
@@ -108,10 +109,13 @@ export const ArticleFormDialog = ({
         reference_price: editingArticle.reference_price ? String(editingArticle.reference_price).replace('.', ',') : '',
         reference_unit: editingArticle.reference_unit || '',
         selling_price: (editingArticle as any).selling_price ? String((editingArticle as any).selling_price) : '',
+        grape_variety: (editingArticle as any).grape_variety || '',
+        flavor_profile: (editingArticle as any).flavor_profile || '',
+        food_pairings: (editingArticle as any).food_pairings || '',
       });
       setCapturedImage((editingArticle as any).image_url || null);
     } else {
-      form.reset({ supplier_id: '', name: '', description: '', sku: '', unit: 'pcs', price: '', category: '', origin_country: '', packaging_unit: '', order_unit_id: '', reference_price: '', reference_unit: '', selling_price: '' });
+      form.reset({ supplier_id: '', name: '', description: '', sku: '', unit: 'pcs', price: '', category: '', origin_country: '', packaging_unit: '', order_unit_id: '', reference_price: '', reference_unit: '', selling_price: '', grape_variety: '', flavor_profile: '', food_pairings: '' });
       setCapturedImage(null);
     }
     setImageCleared(false);
@@ -208,7 +212,12 @@ export const ArticleFormDialog = ({
           </div>
           <div className="space-y-2">
             <Label htmlFor="article-description">Beschreibung</Label>
-            <Input id="article-description" {...form.register('description')} placeholder="Premium italienische Tomaten" />
+            <Textarea 
+              id="article-description" 
+              {...form.register('description')} 
+              placeholder="Produktbeschreibung..."
+              className="min-h-[100px] resize-y"
+            />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
@@ -449,6 +458,45 @@ export const ArticleFormDialog = ({
               <p className="text-xs text-muted-foreground">
                 Verkaufspreis im Restaurant (für Mitarbeiter sichtbar)
               </p>
+            </div>
+          )}
+
+          {/* Grape Variety - only visible for wine categories */}
+          {watchedCategory && watchedCategory.toLowerCase().includes('wein') && (
+            <div className="space-y-2">
+              <Label htmlFor="article-grape-variety">Traubensorte 🍇</Label>
+              <Textarea 
+                id="article-grape-variety" 
+                {...form.register('grape_variety')} 
+                placeholder="z.B. Riesling, Spätburgunder, Cuvée aus Merlot und Cabernet..."
+                className="min-h-[60px] resize-y"
+              />
+            </div>
+          )}
+
+          {/* Flavor Profile - only visible for wine categories */}
+          {watchedCategory && watchedCategory.toLowerCase().includes('wein') && (
+            <div className="space-y-2">
+              <Label htmlFor="article-flavor-profile">Geschmacksprofil 🍷</Label>
+              <Textarea 
+                id="article-flavor-profile" 
+                {...form.register('flavor_profile')} 
+                placeholder="z.B. fruchtig mit Noten von Kirsche und Vanille, samtige Tannine..."
+                className="min-h-[80px] resize-y"
+              />
+            </div>
+          )}
+
+          {/* Food Pairings - only visible for wine categories */}
+          {watchedCategory && watchedCategory.toLowerCase().includes('wein') && (
+            <div className="space-y-2">
+              <Label htmlFor="article-food-pairings">Speiseempfehlungen 🍽️</Label>
+              <Textarea 
+                id="article-food-pairings" 
+                {...form.register('food_pairings')} 
+                placeholder="z.B. Passt hervorragend zu Lamm, gegrilltem Gemüse, reifem Käse..."
+                className="min-h-[60px] resize-y"
+              />
             </div>
           )}
           <div className="grid grid-cols-2 gap-4">

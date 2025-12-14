@@ -33,6 +33,9 @@ export const articleSchema = z.object({
     (val) => !val || (!isNaN(Number(val)) && Number(val) >= 0),
     'Verkaufspreis muss eine Zahl sein'
   ),
+  grape_variety: z.string().optional(),
+  flavor_profile: z.string().optional(),
+  food_pairings: z.string().optional(),
 });
 
 export type SupplierFormData = z.infer<typeof supplierSchema>;
