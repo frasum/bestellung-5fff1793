@@ -38,6 +38,7 @@ export const ArticlePhotoCapture = ({
   const [lastResult, setLastResult] = useState<IdentificationResult | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
+  const pasteAreaRef = useRef<HTMLTextAreaElement>(null);
 
   const processImage = async (file: File) => {
     if (!file.type.startsWith('image/')) {
@@ -113,26 +114,26 @@ export const ArticlePhotoCapture = ({
     onImageCleared();
   };
 
-  const handlePasteFromClipboard = async () => {
-    try {
-      const clipboardItems = await navigator.clipboard.read();
-      
-      for (const item of clipboardItems) {
-        const imageType = item.types.find(type => type.startsWith('image/'));
-        
-        if (imageType) {
-          const blob = await item.getType(imageType);
-          const file = new File([blob], 'clipboard-image.png', { type: imageType });
-          await processImage(file);
+  const handlePasteButtonClick = () => {
+    pasteAreaRef.current?.focus();
+    toast.info('Jetzt Strg+V (Cmd+V auf Mac) drücken');
+  };
+
+  const handleTextareaPaste = (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+    
+    for (const item of Array.from(items)) {
+      if (item.type.startsWith('image/')) {
+        const file = item.getAsFile();
+        if (file) {
+          e.preventDefault();
+          processImage(file);
           return;
         }
       }
-      
-      toast.error('Kein Bild in der Zwischenablage gefunden');
-    } catch (err) {
-      console.error('Clipboard error:', err);
-      toast.error('Zugriff auf Zwischenablage nicht möglich');
     }
+    toast.error('Kein Bild in der Zwischenablage gefunden');
   };
 
   // Global paste event listener
@@ -281,7 +282,7 @@ export const ArticlePhotoCapture = ({
             variant="outline"
             size="sm"
             className="flex-1 h-9"
-            onClick={handlePasteFromClipboard}
+            onClick={handlePasteButtonClick}
             disabled={isAnalyzing}
           >
             <ClipboardPaste className="h-4 w-4 mr-2" />
@@ -289,6 +290,14 @@ export const ArticlePhotoCapture = ({
           </Button>
         </div>
       )}
+
+      {/* Hidden textarea to receive paste events */}
+      <textarea 
+        ref={pasteAreaRef}
+        className="sr-only" 
+        aria-hidden="true"
+        onPaste={handleTextareaPaste}
+      />
 
       <p className="text-xs text-muted-foreground">
         Foto hochladen oder aus Zwischenablage einfügen (Strg+V)
