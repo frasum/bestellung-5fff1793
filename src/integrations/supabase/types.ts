@@ -68,6 +68,9 @@ export type Database = {
           category: string | null
           created_at: string
           description: string | null
+          flavor_profile: string | null
+          food_pairings: string | null
+          grape_variety: string | null
           id: string
           image_url: string | null
           is_active: boolean
@@ -92,6 +95,9 @@ export type Database = {
           category?: string | null
           created_at?: string
           description?: string | null
+          flavor_profile?: string | null
+          food_pairings?: string | null
+          grape_variety?: string | null
           id?: string
           image_url?: string | null
           is_active?: boolean
@@ -116,6 +122,9 @@ export type Database = {
           category?: string | null
           created_at?: string
           description?: string | null
+          flavor_profile?: string | null
+          food_pairings?: string | null
+          grape_variety?: string | null
           id?: string
           image_url?: string | null
           is_active?: boolean

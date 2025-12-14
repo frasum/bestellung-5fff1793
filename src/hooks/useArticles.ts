@@ -20,6 +20,9 @@ export interface Article {
   reference_unit?: string | null;
   image_url?: string | null;
   selling_price?: number | null;
+  grape_variety?: string | null;
+  flavor_profile?: string | null;
+  food_pairings?: string | null;
   is_active: boolean;
   created_at: string;
   updated_at: string;
@@ -45,6 +48,9 @@ export interface ArticleInput {
   reference_unit?: string;
   image_url?: string | null;
   selling_price?: number | null;
+  grape_variety?: string | null;
+  flavor_profile?: string | null;
+  food_pairings?: string | null;
   is_active?: boolean;
 }
 
