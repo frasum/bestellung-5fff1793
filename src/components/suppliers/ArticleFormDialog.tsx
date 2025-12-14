@@ -55,6 +55,7 @@ export const ArticleFormDialog = ({
   const [translationsOpen, setTranslationsOpen] = useState(false);
   const [isTranslatingEn, setIsTranslatingEn] = useState(false);
   const [isTranslatingTh, setIsTranslatingTh] = useState(false);
+  const [isTranslatingFr, setIsTranslatingFr] = useState(false);
   
   const { data: orderUnits = [] } = useOrderUnits();
   const createOrderUnit = useCreateOrderUnit();
@@ -125,6 +126,7 @@ export const ArticleFormDialog = ({
       selling_price: '', grape_variety: '', flavor_profile: '', food_pairings: '',
       description_en: '', grape_variety_en: '', flavor_profile_en: '', food_pairings_en: '', origin_country_en: '',
       description_th: '', grape_variety_th: '', flavor_profile_th: '', food_pairings_th: '', origin_country_th: '',
+      description_fr: '', grape_variety_fr: '', flavor_profile_fr: '', food_pairings_fr: '', origin_country_fr: '',
     },
   });
 
@@ -161,6 +163,11 @@ export const ArticleFormDialog = ({
         flavor_profile_th: (editingArticle as any).flavor_profile_th || '',
         food_pairings_th: (editingArticle as any).food_pairings_th || '',
         origin_country_th: (editingArticle as any).origin_country_th || '',
+        description_fr: (editingArticle as any).description_fr || '',
+        grape_variety_fr: (editingArticle as any).grape_variety_fr || '',
+        flavor_profile_fr: (editingArticle as any).flavor_profile_fr || '',
+        food_pairings_fr: (editingArticle as any).food_pairings_fr || '',
+        origin_country_fr: (editingArticle as any).origin_country_fr || '',
       });
       setCapturedImage((editingArticle as any).image_url || null);
     } else {
@@ -170,6 +177,7 @@ export const ArticleFormDialog = ({
         selling_price: '', grape_variety: '', flavor_profile: '', food_pairings: '',
         description_en: '', grape_variety_en: '', flavor_profile_en: '', food_pairings_en: '', origin_country_en: '',
         description_th: '', grape_variety_th: '', flavor_profile_th: '', food_pairings_th: '', origin_country_th: '',
+        description_fr: '', grape_variety_fr: '', flavor_profile_fr: '', food_pairings_fr: '', origin_country_fr: '',
       });
       setCapturedImage(null);
     }
@@ -223,16 +231,18 @@ export const ArticleFormDialog = ({
     form.watch('flavor_profile_en') || form.watch('food_pairings_en'));
   const hasThaiTranslations = !!(form.watch('description_th') || form.watch('grape_variety_th') || 
     form.watch('flavor_profile_th') || form.watch('food_pairings_th'));
-  const hasAnyTranslations = hasEnglishTranslations || hasThaiTranslations;
+  const hasFrenchTranslations = !!(form.watch('description_fr') || form.watch('grape_variety_fr') || 
+    form.watch('flavor_profile_fr') || form.watch('food_pairings_fr'));
+  const hasAnyTranslations = hasEnglishTranslations || hasThaiTranslations || hasFrenchTranslations;
 
   // Auto-translate function
-  const handleAutoTranslate = async (targetLanguage: 'en' | 'th') => {
+  const handleAutoTranslate = async (targetLanguage: 'en' | 'th' | 'fr') => {
     if (!editingArticle?.id) {
       toast.error('Bitte speichern Sie den Artikel zuerst, bevor Sie übersetzen');
       return;
     }
 
-    const setIsTranslating = targetLanguage === 'en' ? setIsTranslatingEn : setIsTranslatingTh;
+    const setIsTranslating = targetLanguage === 'en' ? setIsTranslatingEn : targetLanguage === 'th' ? setIsTranslatingTh : setIsTranslatingFr;
     setIsTranslating(true);
 
     try {
@@ -249,22 +259,16 @@ export const ArticleFormDialog = ({
 
       if (data.translations) {
         const translations = data.translations;
+        const suffix = `_${targetLanguage}` as const;
         
-        if (targetLanguage === 'en') {
-          if (translations.description) form.setValue('description_en', translations.description);
-          if (translations.grape_variety) form.setValue('grape_variety_en', translations.grape_variety);
-          if (translations.flavor_profile) form.setValue('flavor_profile_en', translations.flavor_profile);
-          if (translations.food_pairings) form.setValue('food_pairings_en', translations.food_pairings);
-          if (translations.origin_country) form.setValue('origin_country_en', translations.origin_country);
-        } else {
-          if (translations.description) form.setValue('description_th', translations.description);
-          if (translations.grape_variety) form.setValue('grape_variety_th', translations.grape_variety);
-          if (translations.flavor_profile) form.setValue('flavor_profile_th', translations.flavor_profile);
-          if (translations.food_pairings) form.setValue('food_pairings_th', translations.food_pairings);
-          if (translations.origin_country) form.setValue('origin_country_th', translations.origin_country);
-        }
+        if (translations.description) form.setValue(`description${suffix}` as any, translations.description);
+        if (translations.grape_variety) form.setValue(`grape_variety${suffix}` as any, translations.grape_variety);
+        if (translations.flavor_profile) form.setValue(`flavor_profile${suffix}` as any, translations.flavor_profile);
+        if (translations.food_pairings) form.setValue(`food_pairings${suffix}` as any, translations.food_pairings);
+        if (translations.origin_country) form.setValue(`origin_country${suffix}` as any, translations.origin_country);
         
-        toast.success(targetLanguage === 'en' ? 'Englische Übersetzung erstellt' : 'Thailändische Übersetzung erstellt');
+        const langNames = { en: 'Englische', th: 'Thailändische', fr: 'Französische' };
+        toast.success(`${langNames[targetLanguage]} Übersetzung erstellt`);
       }
     } catch (error) {
       console.error('Translation error:', error);
@@ -669,10 +673,10 @@ export const ArticleFormDialog = ({
               <Collapsible open={translationsOpen} onOpenChange={setTranslationsOpen}>
                 <CollapsibleTrigger className="flex items-center gap-2 w-full py-2 hover:bg-muted/50 rounded-md px-2 -mx-2 transition-colors">
                   <Globe className="h-4 w-4 text-muted-foreground" />
-                  <span className="font-medium text-sm">Übersetzungen (EN/TH)</span>
+                  <span className="font-medium text-sm">Übersetzungen (EN/TH/FR)</span>
                   <Badge variant={hasAnyTranslations ? "default" : "secondary"} className="ml-auto text-xs">
                     {hasAnyTranslations ? (
-                      <>{hasEnglishTranslations && '🇬🇧'}{hasThaiTranslations && '🇹🇭'}</>
+                      <>{hasEnglishTranslations && '🇬🇧'}{hasThaiTranslations && '🇹🇭'}{hasFrenchTranslations && '🇫🇷'}</>
                     ) : 'leer'}
                   </Badge>
                   <ChevronDown className={cn("h-4 w-4 text-muted-foreground transition-transform", translationsOpen && "rotate-180")} />
@@ -769,6 +773,53 @@ export const ArticleFormDialog = ({
                     <Input 
                       {...form.register('origin_country_th')} 
                       placeholder="ประเทศต้นกำเนิด..."
+                      className="text-sm"
+                    />
+                  </div>
+                  
+                  {/* French Section */}
+                  <div className="border-l-2 border-purple-400 pl-3 space-y-3">
+                    <div className="flex items-center gap-2 justify-between">
+                      <span className="text-sm font-medium">🇫🇷 Français</span>
+                      <Button 
+                        type="button" 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => handleAutoTranslate('fr')}
+                        disabled={isTranslatingFr || !editingArticle}
+                        className="h-7 text-xs"
+                      >
+                        {isTranslatingFr ? (
+                          <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                        ) : (
+                          <Sparkles className="h-3 w-3 mr-1" />
+                        )}
+                        Auto-übersetzen
+                      </Button>
+                    </div>
+                    <Textarea 
+                      {...form.register('description_fr')} 
+                      placeholder="Description..."
+                      className="min-h-[50px] resize-none text-sm"
+                    />
+                    <Textarea 
+                      {...form.register('grape_variety_fr')} 
+                      placeholder="Cépage..."
+                      className="min-h-[40px] resize-none text-sm"
+                    />
+                    <Textarea 
+                      {...form.register('flavor_profile_fr')} 
+                      placeholder="Profil aromatique..."
+                      className="min-h-[40px] resize-none text-sm"
+                    />
+                    <Textarea 
+                      {...form.register('food_pairings_fr')} 
+                      placeholder="Accords mets-vins..."
+                      className="min-h-[40px] resize-none text-sm"
+                    />
+                    <Input 
+                      {...form.register('origin_country_fr')} 
+                      placeholder="Pays d'origine..."
                       className="text-sm"
                     />
                   </div>

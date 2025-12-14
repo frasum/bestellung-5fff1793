@@ -48,6 +48,12 @@ export const articleSchema = z.object({
   flavor_profile_th: z.string().optional(),
   food_pairings_th: z.string().optional(),
   origin_country_th: z.string().optional(),
+  // Translation fields - French
+  description_fr: z.string().optional(),
+  grape_variety_fr: z.string().optional(),
+  flavor_profile_fr: z.string().optional(),
+  food_pairings_fr: z.string().optional(),
+  origin_country_fr: z.string().optional(),
 });
 
 export type SupplierFormData = z.infer<typeof supplierSchema>;
