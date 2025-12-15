@@ -391,11 +391,53 @@ export const ArticleFormDialog = ({
               )}
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-3 gap-4">
             <div className="space-y-2">
               <Label htmlFor="article-sku">SKU</Label>
               <Input id="article-sku" {...form.register('sku')} placeholder="TOM-001" />
             </div>
+            <div className="space-y-2">
+              <Label htmlFor="article-packaging-unit">Stk. pro BE</Label>
+              <Input 
+                id="article-packaging-unit" 
+                type="number" 
+                min="1"
+                {...form.register('packaging_unit')} 
+                placeholder="z.B. 6" 
+              />
+              <p className="text-xs text-muted-foreground">
+                Wie viele {form.watch('unit') || 'Stück'} pro Bestelleinheit?
+              </p>
+            </div>
+            {/* Berechneter BE-Preis */}
+            {(() => {
+              const price = parseFloat(form.watch('price') || '0');
+              const packagingUnit = parseInt(form.watch('packaging_unit') || '0');
+              const orderUnitId = form.watch('order_unit_id');
+              const selectedOrderUnit = orderUnits.find(u => u.id === orderUnitId);
+              
+              // Verwende packaging_unit falls vorhanden, sonst orderUnit.quantity
+              const multiplier = packagingUnit > 0 ? packagingUnit : (selectedOrderUnit?.quantity || 1);
+              const bePrice = price * multiplier;
+              
+              if (price > 0 && multiplier > 1) {
+                return (
+                  <div className="space-y-2">
+                    <Label className="text-muted-foreground">BE-Preis</Label>
+                    <div className="h-9 flex items-center px-3 rounded-md border border-input bg-muted/50">
+                      <span className="font-semibold text-primary">€{bePrice.toFixed(2)}</span>
+                      <span className="text-xs text-muted-foreground ml-1">
+                        /{selectedOrderUnit?.name || 'BE'}
+                      </span>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      {multiplier}× €{price.toFixed(2)}
+                    </p>
+                  </div>
+                );
+              }
+              return null;
+            })()}
             <div className="space-y-2">
               <Label>Bestelleinheit</Label>
               <Controller
