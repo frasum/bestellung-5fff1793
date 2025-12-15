@@ -466,6 +466,16 @@ export const useDeleteTestOrders = () => {
         console.error('Error deleting confirmation tokens:', tokenError);
       }
 
+      // Delete communication logs for test orders
+      const { error: commLogsError } = await supabase
+        .from('communication_logs')
+        .delete()
+        .in('order_id', orderIds);
+
+      if (commLogsError) {
+        console.error('Error deleting communication logs:', commLogsError);
+      }
+
       // Delete order items
       const { error: itemsError } = await supabase
         .from('order_items')
@@ -510,6 +520,7 @@ export const useDeleteTestOrders = () => {
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['orders'] });
+      queryClient.invalidateQueries({ queryKey: ['communication-logs'] });
     },
     onSuccess: (data) => {
       toast.success(`${data.deletedCount} Test-Bestellungen gelöscht`);
