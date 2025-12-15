@@ -119,6 +119,7 @@ export function VoiceInventoryResults({
                           onChange={(e) => handleUpdateArticle(index, { quantity: parseInt(e.target.value) || undefined })}
                           className="h-8 text-sm"
                           placeholder="-"
+                          onFocus={(e) => e.target.select()}
                         />
                       </div>
                     </div>

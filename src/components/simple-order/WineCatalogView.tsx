@@ -350,6 +350,7 @@ export const WineCatalogView = ({ organizationId, permission, onBack, token }: W
                                   value={editForm.selling_price || ''}
                                   onChange={(e) => setEditForm({ ...editForm, selling_price: parseFloat(e.target.value) || null })}
                                   onClick={(e) => e.stopPropagation()}
+                                  onFocus={(e) => e.target.select()}
                                 />
                               </div>
                               <div>

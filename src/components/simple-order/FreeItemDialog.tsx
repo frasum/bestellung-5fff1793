@@ -337,6 +337,7 @@ export function FreeItemDialog({
                 min={1}
                 value={quantity}
                 onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
+                onFocus={(e) => e.target.select()}
               />
             </div>
 

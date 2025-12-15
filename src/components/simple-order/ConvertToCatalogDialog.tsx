@@ -111,6 +111,7 @@ export function ConvertToCatalogDialog({
               placeholder="0,00"
               value={price}
               onChange={(e) => setPrice(e.target.value)}
+              onFocus={(e) => e.target.select()}
               autoFocus
               required
             />

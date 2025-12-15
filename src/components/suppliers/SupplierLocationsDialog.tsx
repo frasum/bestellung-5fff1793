@@ -133,6 +133,7 @@ export const SupplierLocationsDialog = ({ open, onOpenChange, supplier }: Suppli
                         placeholder="0,00"
                         inputMode="decimal"
                         className="h-11 sm:h-9"
+                        onFocus={(e) => e.target.select()}
                       />
                     </div>
                   </div>
