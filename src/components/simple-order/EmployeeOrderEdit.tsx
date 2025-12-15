@@ -245,7 +245,7 @@ export const EmployeeOrderEdit = ({
                 <div className="flex-1 min-w-0">
                   <h3 className="font-medium truncate">{article.name}</h3>
                   <p className="text-sm text-muted-foreground">
-                    €{article.price.toFixed(2)} / {article.unit}
+                    {article.unit}
                     {article.packaging_unit && article.packaging_unit > 1 && (
                       <span className="ml-1">({article.packaging_unit}er)</span>
                     )}
