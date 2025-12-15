@@ -6,7 +6,7 @@ import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Package, Users, Truck, Crown, TrendingUp, AlertTriangle } from 'lucide-react';
+import { Package, Users, Truck, Crown, TrendingUp, AlertTriangle, ChevronRight } from 'lucide-react';
 import { useSubscriptionLimits, useUpdateSubscriptionTier, formatLimit, SubscriptionTier } from '@/hooks/useSubscriptionLimits';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -26,7 +26,11 @@ const tierNames: Record<string, string> = {
 
 const allTiers: SubscriptionTier[] = ['free', 'basic', 'pro', 'enterprise'];
 
-export const UsageDashboard = () => {
+interface UsageDashboardProps {
+  variant?: 'full' | 'compact';
+}
+
+export const UsageDashboard = ({ variant = 'full' }: UsageDashboardProps) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [advancedMode, setAdvancedMode] = useState(() => 
@@ -52,6 +56,9 @@ export const UsageDashboard = () => {
   }, []);
 
   if (isLoading) {
+    if (variant === 'compact') {
+      return <Skeleton className="h-12 w-full rounded-lg" />;
+    }
     return (
       <Card>
         <CardHeader>
@@ -82,6 +89,42 @@ export const UsageDashboard = () => {
   const suppliersPercentage = getUsagePercentage(usage.suppliersCount, limits.suppliers);
   const usersPercentage = getUsagePercentage(usage.usersCount, limits.users);
 
+  // Compact variant - single row summary
+  if (variant === 'compact') {
+    const hasWarning = ordersPercentage >= 80 || suppliersPercentage >= 80 || usersPercentage >= 80;
+    
+    return (
+      <div 
+        className="flex items-center justify-between p-3 bg-muted/50 rounded-lg border cursor-pointer hover:bg-muted/70 transition-colors"
+        onClick={() => navigate('/pricing')}
+      >
+        <div className="flex items-center gap-3">
+          <Badge className={`${tierColors[tier]} font-medium`}>
+            <Crown className="h-3 w-3 mr-1" />
+            {tierNames[tier]}
+          </Badge>
+          <div className="flex items-center gap-4 text-sm text-muted-foreground">
+            <span className="flex items-center gap-1">
+              <Package className="h-3.5 w-3.5" />
+              {usage.ordersThisMonth}/{formatLimit(limits.ordersPerMonth)}
+            </span>
+            <span className="flex items-center gap-1">
+              <Truck className="h-3.5 w-3.5" />
+              {usage.suppliersCount}/{formatLimit(limits.suppliers)}
+            </span>
+            <span className="flex items-center gap-1">
+              <Users className="h-3.5 w-3.5" />
+              {usage.usersCount}/{formatLimit(limits.users)}
+            </span>
+          </div>
+          {hasWarning && <AlertTriangle className="h-4 w-4 text-warning" />}
+        </div>
+        <ChevronRight className="h-4 w-4 text-muted-foreground" />
+      </div>
+    );
+  }
+
+  // Full variant
   const usageItems = [
     {
       icon: Package,
