@@ -89,18 +89,6 @@ const Settings = () => {
                 )}
               </TabsList>
             </div>
-
-            {isAdmin && (
-              <div className="flex items-center gap-2 shrink-0">
-                <Label className="text-sm text-muted-foreground whitespace-nowrap">
-                  {t('settings.advancedSettings')}
-                </Label>
-                <Switch 
-                  checked={advancedMode} 
-                  onCheckedChange={handleAdvancedModeToggle}
-                />
-              </div>
-            )}
           </div>
 
           <TabsContent value="profile" className="animate-in fade-in-50 slide-in-from-left-2 duration-200">

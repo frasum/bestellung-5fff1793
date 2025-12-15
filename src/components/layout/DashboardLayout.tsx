@@ -181,41 +181,6 @@ export const DashboardLayout = ({
               </PopoverContent>
             </Popover>
           )}
-          {isAdmin && (
-            <Popover>
-              <PopoverTrigger asChild>
-                <Badge 
-                  variant={advancedSettingsEnabled ? "default" : "outline"}
-                  className={cn(
-                    "cursor-pointer",
-                    advancedSettingsEnabled 
-                      ? "bg-primary text-primary-foreground" 
-                      : "bg-muted/50 text-muted-foreground border-border hover:bg-muted"
-                  )}
-                >
-                  <Settings2 className="w-3 h-3 mr-1" />
-                  {advancedSettingsEnabled ? 'Erweitert' : 'Standard'}
-                </Badge>
-              </PopoverTrigger>
-              <PopoverContent className="w-64 p-3" align="end">
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="advanced-settings-toggle-mobile" className="text-sm font-medium">
-                      {t('settings.advancedSettings')}
-                    </Label>
-                    <Switch
-                      id="advanced-settings-toggle-mobile"
-                      checked={advancedSettingsEnabled}
-                      onCheckedChange={handleAdvancedSettingsToggle}
-                    />
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    {t('settings.advancedSettingsDesc')}
-                  </p>
-                </div>
-              </PopoverContent>
-            </Popover>
-          )}
           <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-2 text-muted-foreground hover:text-foreground">
             {sidebarOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>
