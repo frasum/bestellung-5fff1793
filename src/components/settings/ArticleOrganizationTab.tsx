@@ -243,7 +243,7 @@ export const ArticleOrganizationTab = () => {
   };
 
   // Inline update handler
-  const handleInlineUpdate = (id: string, field: 'top_category' | 'category' | 'order_unit_id' | 'packaging_unit', value: string | number | null) => {
+  const handleInlineUpdate = (id: string, field: 'top_category' | 'category' | 'order_unit_id' | 'packaging_unit' | 'unit' | 'price', value: string | number | null) => {
     bulkUpdate.mutate({
       ids: [id],
       updates: { [field]: value } as any,
@@ -640,8 +640,22 @@ export const ArticleOrganizationTab = () => {
                             {article.suppliers?.name}
                           </button>
                         </TableCell>
-                        <TableCell className="hidden md:table-cell text-muted-foreground">
-                          {article.unit}
+                        <TableCell className="hidden md:table-cell">
+                          <Select
+                            value={article.unit || ''}
+                            onValueChange={(v) => handleInlineUpdate(article.id, 'unit', v)}
+                          >
+                            <SelectTrigger className="h-8 w-[100px]">
+                              <SelectValue placeholder="Einheit" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {units.map((unit) => (
+                                <SelectItem key={unit.id} value={unit.name}>
+                                  {unit.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                         </TableCell>
                         <TableCell>
                           <SupplierOrderUnitSelect
@@ -663,8 +677,19 @@ export const ArticleOrganizationTab = () => {
                             }}
                           />
                         </TableCell>
-                        <TableCell className="hidden lg:table-cell text-right text-muted-foreground">
-                          {formatCurrency(article.price)}
+                        <TableCell className="hidden lg:table-cell text-right">
+                          <Input
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            className="h-8 w-20 text-right"
+                            value={article.price || ''}
+                            placeholder="0.00"
+                            onChange={(e) => {
+                              const val = e.target.value ? Number(e.target.value) : 0;
+                              handleInlineUpdate(article.id, 'price', val);
+                            }}
+                          />
                         </TableCell>
                         <TableCell className="text-right">
                           <TooltipProvider>
