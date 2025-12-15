@@ -31,6 +31,7 @@ interface B2BCustomerFormDialogProps {
   onOpenChange: (open: boolean) => void;
   customer: B2BCustomer | null;
   accountId: string;
+  supplierName: string;
   onSuccess: () => void;
 }
 
@@ -39,6 +40,7 @@ const B2BCustomerFormDialog = ({
   onOpenChange,
   customer,
   accountId,
+  supplierName,
   onSuccess,
 }: B2BCustomerFormDialogProps) => {
   const [loading, setLoading] = useState(false);
@@ -94,7 +96,7 @@ const B2BCustomerFormDialog = ({
         toast.success('Kunde aktualisiert');
       } else {
         // Create new customer
-        const { error: customerError } = await supabase
+        const { data: newCustomer, error: customerError } = await supabase
           .from('supplier_b2b_customers')
           .insert({
             supplier_account_id: accountId,
@@ -105,25 +107,50 @@ const B2BCustomerFormDialog = ({
             phone: phone || null,
             delivery_address: deliveryAddress || null,
             is_active: isActive,
-          });
+          })
+          .select()
+          .single();
 
         if (customerError) throw customerError;
 
         // Create invitation token
-        const { error: invitationError } = await supabase
+        const { data: invitation, error: invitationError } = await supabase
           .from('b2b_customer_invitations')
           .insert({
             supplier_account_id: accountId,
             email,
-          });
+          })
+          .select()
+          .single();
 
         if (invitationError) {
           console.error('Error creating invitation:', invitationError);
-          // Don't throw - customer was still created
-        }
+        } else if (invitation) {
+          // Send invitation email
+          try {
+            const { error: emailError } = await supabase.functions.invoke('send-b2b-customer-invitation', {
+              body: {
+                email,
+                companyName,
+                supplierName,
+                inviteToken: invitation.token,
+                supplierAccountId: accountId,
+              },
+            });
 
-        toast.success('Kunde angelegt. Eine Einladung wird gesendet.');
-        // TODO: Send invitation email
+            if (emailError) {
+              console.error('Error sending invitation email:', emailError);
+              toast.error('Kunde angelegt, aber E-Mail konnte nicht gesendet werden');
+            } else {
+              toast.success('Kunde angelegt und Einladung gesendet');
+            }
+          } catch (emailErr) {
+            console.error('Error invoking email function:', emailErr);
+            toast.error('Kunde angelegt, aber E-Mail konnte nicht gesendet werden');
+          }
+        } else {
+          toast.success('Kunde angelegt');
+        }
       }
 
       onSuccess();
