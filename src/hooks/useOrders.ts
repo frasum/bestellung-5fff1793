@@ -45,6 +45,7 @@ export interface OrderItem {
   article_name: string;
   quantity: number;
   unit: string;
+  order_unit?: string | null;
   unit_price: number;
   total_price: number;
   created_at: string;
@@ -162,6 +163,7 @@ export const useCreateOrder = () => {
         article_name: item.article.name,
         quantity: item.quantity,
         unit: item.article.unit,
+        order_unit: formatOrderUnit(item.article.order_unit_id) || null,
         unit_price: Number(item.article.price),
         total_price: Number(item.article.price) * item.quantity,
         is_free_text_item: false,
