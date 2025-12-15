@@ -466,7 +466,7 @@ export const useDeleteTestOrders = () => {
         console.error('Error deleting confirmation tokens:', tokenError);
       }
 
-      // Delete communication logs for test orders
+      // Delete communication logs for test orders (by order_id)
       const { error: commLogsError } = await supabase
         .from('communication_logs')
         .delete()
@@ -474,6 +474,16 @@ export const useDeleteTestOrders = () => {
 
       if (commLogsError) {
         console.error('Error deleting communication logs:', commLogsError);
+      }
+
+      // Delete all test communication logs (by [TEST] in subject)
+      const { error: testLogsError } = await supabase
+        .from('communication_logs')
+        .delete()
+        .ilike('subject', '%[TEST]%');
+
+      if (testLogsError) {
+        console.error('Error deleting test communication logs:', testLogsError);
       }
 
       // Delete order items
