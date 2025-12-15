@@ -18,6 +18,7 @@ interface EmployeeTokensOverviewProps {
   onToggleActive: (id: string, isActive: boolean) => void;
   onDelete: (id: string) => void;
   onUpdateEmployeePin?: (employeeId: string, pin: string | null) => Promise<void>;
+  advancedSettingsEnabled?: boolean;
 }
 
 const LANGUAGES = [
@@ -27,7 +28,7 @@ const LANGUAGES = [
   { code: 'vi', name: 'Tiếng Việt' },
 ];
 
-export function EmployeeTokensOverview({ tokens, onEdit, onToggleActive, onDelete, onUpdateEmployeePin }: EmployeeTokensOverviewProps) {
+export function EmployeeTokensOverview({ tokens, onEdit, onToggleActive, onDelete, onUpdateEmployeePin, advancedSettingsEnabled }: EmployeeTokensOverviewProps) {
   const { t } = useTranslation();
   const { toast } = useToast();
   const [expandedSuppliers, setExpandedSuppliers] = useState<Set<string>>(new Set());
@@ -400,6 +401,16 @@ export function EmployeeTokensOverview({ tokens, onEdit, onToggleActive, onDelet
                               <Button variant="ghost" size="icon" onClick={() => copyToClipboard(token.token)} title="Link kopieren">
                                 <Copy className="h-4 w-4" />
                               </Button>
+                              {advancedSettingsEnabled && (
+                                <Button 
+                                  variant="ghost" 
+                                  size="icon" 
+                                  onClick={() => window.open(getOrderUrl(token.token), '_blank')}
+                                  title="EasyOrder direkt öffnen (Test)"
+                                >
+                                  <ExternalLink className="h-4 w-4" />
+                                </Button>
+                              )}
                               {token.employee?.phone && (
                                 <Button 
                                   variant="ghost" 
