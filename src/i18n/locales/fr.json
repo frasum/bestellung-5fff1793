@@ -489,6 +489,8 @@
     "pdfError": "Erreur lors de la création du PDF",
     "advancedSettings": "Paramètres avancés",
     "advancedSettingsDesc": "Affiche des fonctionnalités supplémentaires comme l'export et l'import",
+    "advancedMode": "Avancé",
+    "standardMode": "Standard",
     "testMode": "Mode test e-mail",
     "testModeDescription": "En mode test, toutes les commandes sont envoyées à une adresse e-mail de test, pas aux fournisseurs",
     "testModeEnable": "Activer le mode test",

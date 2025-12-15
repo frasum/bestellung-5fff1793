@@ -489,6 +489,8 @@
     "pdfError": "เกิดข้อผิดพลาดในการสร้าง PDF",
     "advancedSettings": "ตั้งค่าขั้นสูง",
     "advancedSettingsDesc": "แสดงฟีเจอร์เพิ่มเติม เช่น ส่งออกและนำเข้า",
+    "advancedMode": "ขั้นสูง",
+    "standardMode": "มาตรฐาน",
     "testMode": "โหมดทดสอบอีเมล",
     "testModeDescription": "ในโหมดทดสอบ คำสั่งซื้อทั้งหมดจะถูกส่งไปยังอีเมลทดสอบ ไม่ใช่ซัพพลายเออร์",
     "testModeEnable": "เปิดใช้งานโหมดทดสอบ",

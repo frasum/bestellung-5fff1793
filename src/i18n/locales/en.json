@@ -524,6 +524,8 @@
     },
     "advancedSettings": "Advanced Settings",
     "advancedSettingsDesc": "Shows additional features like export and import",
+    "advancedMode": "Advanced",
+    "standardMode": "Standard",
     "testMode": "Email Test Mode",
     "testModeDescription": "In test mode, all orders are sent to a test email address, not to suppliers",
     "testModeEnable": "Enable Test Mode",
