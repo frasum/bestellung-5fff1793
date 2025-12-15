@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Plus, Pencil, Trash2, Star, Store, MapPin, Check } from 'lucide-react';
+import { Plus, Pencil, Trash2, Star, Store, MapPin, Check, Mail } from 'lucide-react';
 import { useLocations, useCreateLocation, useUpdateLocation, useDeleteLocation, Location } from '@/hooks/useLocations';
 import {
   useDeliveryAddresses,
@@ -436,6 +436,12 @@ const LocationItem = ({
           {!primaryAddress && (
             <div className="text-sm text-muted-foreground italic">
               {t('settings.noAddress')}
+            </div>
+          )}
+          {location.email && (
+            <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+              <Mail className="h-3 w-3" />
+              <span className="truncate">{location.email}</span>
             </div>
           )}
           {myDefaultAddressData && myDefaultAddressData.id !== primaryAddress?.id && (
