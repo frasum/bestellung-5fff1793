@@ -11,7 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { LogOut, Save, Search, Package, Loader2, Clock, Plus, FileDown, AlertCircle, AlertTriangle, SendHorizontal } from 'lucide-react';
+import { LogOut, Save, Search, Package, Loader2, Clock, Plus, FileDown, AlertCircle, AlertTriangle, SendHorizontal, Camera, Trash2, Upload } from 'lucide-react';
 import logo from '@/assets/logo.png';
 import { SupplierArticleCard } from '@/components/suppliers/SupplierArticleCard';
 import { SupplierUnitSelect } from '@/components/suppliers/SupplierUnitSelect';
@@ -669,6 +669,18 @@ const SupplierPortal = () => {
     }
   };
 
+  const handleFileUpload = async (articleId: string, file: File) => {
+    // Convert file to base64
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      const base64 = e.target?.result as string;
+      if (base64) {
+        await handleImageUpload(articleId, base64);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleImageDelete = async (articleId: string) => {
     if (!session) return;
     
@@ -894,6 +906,7 @@ const SupplierPortal = () => {
                   <Table>
                     <TableHeader>
                       <TableRow>
+                        {isColumnVisible('image') && <TableHead className="w-[70px]">Foto</TableHead>}
                         <TableHead className="min-w-[280px]">Artikelname</TableHead>
                         {isColumnVisible('sku') && <TableHead className="w-[100px]">SKU</TableHead>}
                         {isColumnVisible('description') && <TableHead className="min-w-[150px]">Beschreibung</TableHead>}
@@ -910,6 +923,60 @@ const SupplierPortal = () => {
                       {filteredArticles.map((article) => {
                         return (
                           <TableRow key={article.id}>
+                            {isColumnVisible('image') && (
+                              <TableCell className="py-2">
+                                <div className="relative group">
+                                  {uploadingImage === article.id ? (
+                                    <div className="w-12 h-12 flex items-center justify-center bg-muted rounded border">
+                                      <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                                    </div>
+                                  ) : article.image_url ? (
+                                    <div className="relative w-12 h-12">
+                                      <img 
+                                        src={article.image_url} 
+                                        alt={article.name}
+                                        className="w-12 h-12 object-cover rounded border"
+                                      />
+                                      <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity rounded flex items-center justify-center gap-1">
+                                        <label className="cursor-pointer p-1 hover:bg-white/20 rounded">
+                                          <Camera className="h-3.5 w-3.5 text-white" />
+                                          <input 
+                                            type="file" 
+                                            accept="image/*"
+                                            className="hidden"
+                                            onChange={(e) => {
+                                              const file = e.target.files?.[0];
+                                              if (file) handleFileUpload(article.id, file);
+                                              e.target.value = '';
+                                            }}
+                                          />
+                                        </label>
+                                        <button 
+                                          className="p-1 hover:bg-white/20 rounded"
+                                          onClick={() => handleImageDelete(article.id)}
+                                        >
+                                          <Trash2 className="h-3.5 w-3.5 text-white" />
+                                        </button>
+                                      </div>
+                                    </div>
+                                  ) : (
+                                    <label className="cursor-pointer w-12 h-12 flex items-center justify-center border border-dashed rounded hover:border-primary hover:bg-muted/50 transition-colors">
+                                      <Upload className="h-4 w-4 text-muted-foreground" />
+                                      <input 
+                                        type="file" 
+                                        accept="image/*"
+                                        className="hidden"
+                                        onChange={(e) => {
+                                          const file = e.target.files?.[0];
+                                          if (file) handleFileUpload(article.id, file);
+                                          e.target.value = '';
+                                        }}
+                                      />
+                                    </label>
+                                  )}
+                                </div>
+                              </TableCell>
+                            )}
                             <TableCell>
                               <span className="font-medium">{article.name}</span>
                             </TableCell>
