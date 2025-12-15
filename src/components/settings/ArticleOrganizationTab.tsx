@@ -9,7 +9,8 @@ import { SupplierOrderUnitSelect } from '@/components/suppliers/SupplierOrderUni
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Search, CheckSquare, Square, Loader2 } from 'lucide-react';
+import { Search, CheckSquare, Square, Loader2, BarChart3 } from 'lucide-react';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { useArticles, useBulkUpdateArticles, useUpdateArticle } from '@/hooks/useArticles';
 import { useUnits } from '@/hooks/useUnits';
 import { useSuppliers } from '@/hooks/useSuppliers';
@@ -278,51 +279,64 @@ export const ArticleOrganizationTab = () => {
 
   return (
     <div className="space-y-6">
-      {/* Statistics Card */}
+      {/* Statistics Card - Accordion Design */}
       <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-lg">{t('settings.articleOrganization.statistics')}</CardTitle>
-          <CardDescription>{t('settings.articleOrganization.statisticsDesc')}</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span>{t('settings.articleOrganization.topCategoryProgress')}</span>
-                <span className="text-muted-foreground">
-                  {stats.withTopCategory}/{stats.total}
-                </span>
-              </div>
-              <Progress value={stats.progressTop} className="h-2" />
-            </div>
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span>{t('settings.articleOrganization.mainCategoryProgress')}</span>
-                <span className="text-muted-foreground">
-                  {stats.withMainCategory}/{stats.total}
-                </span>
-              </div>
-              <Progress value={stats.progressMain} className="h-2" />
-            </div>
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span>{t('settings.orderUnitsShort')}</span>
-                <span className="text-muted-foreground">
-                  {stats.withOrderUnit}/{stats.total}
-                </span>
-              </div>
-              <Progress value={stats.progressOrderUnit} className="h-2" />
-            </div>
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span>Stk/BE</span>
-                <span className="text-muted-foreground">
-                  {stats.withPackaging}/{stats.total}
-                </span>
-              </div>
-              <Progress value={stats.progressPackaging} className="h-2" />
-            </div>
-          </div>
+        <CardContent className="p-0">
+          <Accordion type="multiple" defaultValue={[]} className="w-full">
+            <AccordionItem value="statistics" className="border-b-0">
+              <AccordionTrigger className="group px-4 py-3 hover:no-underline hover:bg-muted/50 data-[state=open]:bg-primary/5">
+                <div className="flex items-center gap-2">
+                  <BarChart3 className="h-4 w-4 text-muted-foreground group-data-[state=open]:text-primary transition-colors" />
+                  <span className="font-medium group-data-[state=open]:text-primary transition-colors">
+                    {t('settings.articleOrganization.statistics')}
+                  </span>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent className="px-4 pb-4 bg-primary/5">
+                <p className="text-sm text-muted-foreground mb-4">
+                  {t('settings.articleOrganization.statisticsDesc')}
+                </p>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span>{t('settings.articleOrganization.topCategoryProgress')}</span>
+                      <span className="text-muted-foreground">
+                        {stats.withTopCategory}/{stats.total}
+                      </span>
+                    </div>
+                    <Progress value={stats.progressTop} className="h-2" />
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span>{t('settings.articleOrganization.mainCategoryProgress')}</span>
+                      <span className="text-muted-foreground">
+                        {stats.withMainCategory}/{stats.total}
+                      </span>
+                    </div>
+                    <Progress value={stats.progressMain} className="h-2" />
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span>{t('settings.orderUnitsShort')}</span>
+                      <span className="text-muted-foreground">
+                        {stats.withOrderUnit}/{stats.total}
+                      </span>
+                    </div>
+                    <Progress value={stats.progressOrderUnit} className="h-2" />
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span>Stk/BE</span>
+                      <span className="text-muted-foreground">
+                        {stats.withPackaging}/{stats.total}
+                      </span>
+                    </div>
+                    <Progress value={stats.progressPackaging} className="h-2" />
+                  </div>
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
         </CardContent>
       </Card>
 
