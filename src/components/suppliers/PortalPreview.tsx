@@ -44,7 +44,8 @@ const getCellValue = (article: typeof SAMPLE_ARTICLES[0], column: PortalColumnKe
     case 'sku':
       return <span className="text-muted-foreground text-xs">{article.sku}</span>;
     case 'description':
-      return <span className="text-muted-foreground text-xs truncate max-w-[120px] block">{article.description}</span>;
+      // Description is now shown under name, so return null here
+      return null;
     case 'unit':
       return article.unit;
     case 'price':
@@ -90,8 +91,9 @@ export const PortalPreview = ({
   const previewWidth = isDesktop ? '100%' : '375px';
   const previewHeight = isDesktop ? '350px' : '420px';
 
-  // Columns to display: always show name first, then configured columns
-  const displayColumns: PortalColumnKey[] = visibleColumns;
+  // Columns to display: filter out 'description' as it's now shown under name
+  const displayColumns: PortalColumnKey[] = visibleColumns.filter(col => col !== 'description');
+  const showDescription = visibleColumns.includes('description');
 
   return (
     <div className="border rounded-lg overflow-hidden bg-background shadow-sm">
@@ -229,7 +231,16 @@ export const PortalPreview = ({
                       <TableBody>
                         {SAMPLE_ARTICLES.map((article, i) => (
                           <TableRow key={i}>
-                            <TableCell className="text-sm font-medium py-2">{article.name}</TableCell>
+                            <TableCell className="py-2 max-w-[200px]">
+                              <div>
+                                <span className="text-sm font-medium">{article.name}</span>
+                                {showDescription && article.description && (
+                                  <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5">
+                                    {article.description}
+                                  </p>
+                                )}
+                              </div>
+                            </TableCell>
                             {displayColumns.map((col) => (
                               <TableCell key={col} className="text-sm py-2">
                                 {getCellValue(article, col)}
