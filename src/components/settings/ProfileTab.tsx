@@ -328,10 +328,10 @@ export const ProfileTab = () => {
             {/* Test Mode Section - only visible in advanced mode - FIRST */}
             {advancedMode && (
               <AccordionItem value="testmode" className="border-b">
-                <AccordionTrigger className={`px-4 py-3 hover:no-underline hover:bg-muted/50 ${organization?.test_mode_enabled ? 'bg-amber-50/50 dark:bg-amber-950/20' : ''}`}>
+                <AccordionTrigger className={`group px-4 py-3 hover:no-underline hover:bg-muted/50 ${organization?.test_mode_enabled ? 'bg-amber-50/50 dark:bg-amber-950/20' : 'data-[state=open]:bg-primary/5'}`}>
                   <div className="flex items-center gap-2">
-                    <Mail className="h-4 w-4 text-muted-foreground" />
-                    <span className="font-medium">{t('testMode.title')}</span>
+                    <Mail className={`h-4 w-4 transition-colors ${organization?.test_mode_enabled ? 'text-amber-600 dark:text-amber-400' : 'text-muted-foreground group-data-[state=open]:text-primary'}`} />
+                    <span className={`font-medium transition-colors ${organization?.test_mode_enabled ? '' : 'group-data-[state=open]:text-primary'}`}>{t('testMode.title')}</span>
                     {organization?.test_mode_enabled && (
                       <span className="text-xs bg-amber-200 dark:bg-amber-800 text-amber-800 dark:text-amber-200 px-1.5 py-0.5 rounded">
                         Aktiv
@@ -339,7 +339,7 @@ export const ProfileTab = () => {
                     )}
                   </div>
                 </AccordionTrigger>
-                <AccordionContent className={`px-4 pb-4 ${organization?.test_mode_enabled ? 'bg-amber-50/50 dark:bg-amber-950/20' : ''}`}>
+                <AccordionContent className={`px-4 pb-4 ${organization?.test_mode_enabled ? 'bg-amber-50/50 dark:bg-amber-950/20' : 'bg-primary/5'}`}>
                   <TestModeContent />
                 </AccordionContent>
               </AccordionItem>
@@ -347,13 +347,13 @@ export const ProfileTab = () => {
 
             {/* Profile & Account Section */}
             <AccordionItem value="profile" className="border-b">
-              <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-muted/50">
+              <AccordionTrigger className="group px-4 py-3 hover:no-underline hover:bg-muted/50 data-[state=open]:bg-primary/5">
                 <div className="flex items-center gap-2">
-                  <User className="h-4 w-4 text-muted-foreground" />
-                  <span className="font-medium">{t('settings.profileInfo')}</span>
+                  <User className="h-4 w-4 text-muted-foreground group-data-[state=open]:text-primary transition-colors" />
+                  <span className="font-medium group-data-[state=open]:text-primary transition-colors">{t('settings.profileInfo')}</span>
                 </div>
               </AccordionTrigger>
-              <AccordionContent className="px-4 pb-4">
+              <AccordionContent className="px-4 pb-4 bg-primary/5">
                 <div className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="email">{t('common.email')}</Label>
@@ -395,13 +395,13 @@ export const ProfileTab = () => {
 
             {/* Delivery Addresses Section */}
             <AccordionItem value="addresses" className="border-b">
-              <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-muted/50">
+              <AccordionTrigger className="group px-4 py-3 hover:no-underline hover:bg-muted/50 data-[state=open]:bg-primary/5">
                 <div className="flex items-center gap-2">
-                  <MapPin className="h-4 w-4 text-muted-foreground" />
-                  <span className="font-medium">{t('settings.defaultDeliveryAddresses')}</span>
+                  <MapPin className="h-4 w-4 text-muted-foreground group-data-[state=open]:text-primary transition-colors" />
+                  <span className="font-medium group-data-[state=open]:text-primary transition-colors">{t('settings.defaultDeliveryAddresses')}</span>
                 </div>
               </AccordionTrigger>
-              <AccordionContent className="px-4 pb-4">
+              <AccordionContent className="px-4 pb-4 bg-primary/5">
                 <p className="text-sm text-muted-foreground mb-4">
                   {t('settings.defaultDeliveryAddressesDesc')}
                 </p>
@@ -447,13 +447,13 @@ export const ProfileTab = () => {
 
             {/* Password Section */}
             <AccordionItem value="password" className={advancedMode ? "border-b" : ""}>
-              <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-muted/50">
+              <AccordionTrigger className="group px-4 py-3 hover:no-underline hover:bg-muted/50 data-[state=open]:bg-primary/5">
                 <div className="flex items-center gap-2">
-                  <Lock className="h-4 w-4 text-muted-foreground" />
-                  <span className="font-medium">{t('settings.changePassword')}</span>
+                  <Lock className="h-4 w-4 text-muted-foreground group-data-[state=open]:text-primary transition-colors" />
+                  <span className="font-medium group-data-[state=open]:text-primary transition-colors">{t('settings.changePassword')}</span>
                 </div>
               </AccordionTrigger>
-              <AccordionContent className="px-4 pb-4">
+              <AccordionContent className="px-4 pb-4 bg-primary/5">
                 <p className="text-sm text-muted-foreground mb-4">
                   {t('settings.passwordDescription')}
                 </p>
