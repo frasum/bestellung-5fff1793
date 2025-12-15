@@ -45,7 +45,7 @@ const B2BSettingsTab = ({ account, onUpdate }: B2BSettingsTabProps) => {
   const [primaryColor, setPrimaryColor] = useState(account.primary_color);
   const [secondaryColor, setSecondaryColor] = useState(account.secondary_color);
   const [welcomeMessage, setWelcomeMessage] = useState(account.welcome_message || '');
-  const [linkedSupplierId, setLinkedSupplierId] = useState(account.linked_supplier_id || '');
+  const [linkedSupplierId, setLinkedSupplierId] = useState(account.linked_supplier_id || 'none');
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [copied, setCopied] = useState(false);
 
@@ -91,7 +91,7 @@ const B2BSettingsTab = ({ account, onUpdate }: B2BSettingsTabProps) => {
           primary_color: primaryColor,
           secondary_color: secondaryColor,
           welcome_message: welcomeMessage || null,
-          linked_supplier_id: linkedSupplierId || null,
+          linked_supplier_id: linkedSupplierId === 'none' ? null : linkedSupplierId,
         })
         .eq('id', account.id);
 
@@ -135,7 +135,7 @@ const B2BSettingsTab = ({ account, onUpdate }: B2BSettingsTabProps) => {
                 <SelectValue placeholder="Lieferant auswählen..." />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Keine Verknüpfung</SelectItem>
+                <SelectItem value="none">Keine Verknüpfung</SelectItem>
                 {suppliers.map(supplier => (
                   <SelectItem key={supplier.id} value={supplier.id}>
                     {supplier.name}
