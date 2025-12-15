@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Plus, Pencil, Trash2, Tag, Check, X, Merge } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -122,121 +123,131 @@ export const CategoriesTab = () => {
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Tag className="h-5 w-5" />
-          {t('settings.manageCategories')}
-        </CardTitle>
-        <CardDescription>
-          {t('settings.manageCategoriesDesc')}
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        <div className="flex flex-col sm:flex-row gap-2">
-          <Input
-            placeholder={t('settings.newCategoryPlaceholder')}
-            value={newCategoryName}
-            onChange={(e) => setNewCategoryName(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleAddCategory()}
-            className="h-11 sm:h-9"
-          />
-          <Button onClick={handleAddCategory} disabled={createCategory.isPending || !newCategoryName.trim()} className="h-10 sm:h-9 w-full sm:w-auto">
-            <Plus className="h-4 w-4 mr-2" />
-            {t('common.add')}
-          </Button>
-        </div>
-
-        {missingCategories.length > 0 && (
-          <div className="p-4 border rounded-lg bg-muted/50 space-y-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <h4 className="font-medium text-sm">{t('settings.categoriesFromArticles')}</h4>
-                <p className="text-xs text-muted-foreground">{t('settings.categoriesFromArticlesDesc')}</p>
-              </div>
-              <Button size="sm" variant="outline" onClick={handleAddAllMissingCategories} className="h-10 sm:h-8">
-                <Plus className="h-4 w-4 mr-2" />
-                {t('settings.addAll')}
-              </Button>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {missingCategories.map((cat) => (
-                <Badge
-                  key={cat}
-                  variant="outline"
-                  className="cursor-pointer hover:bg-primary hover:text-primary-foreground transition-colors"
-                  onClick={() => handleAddMissingCategory(cat)}
-                >
-                  <Plus className="h-3 w-3 mr-1" />
-                  {cat}
-                </Badge>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {sortedCategories.length === 0 ? (
-          <p className="text-muted-foreground text-center py-8">
-            {t('settings.noCategories')}
-          </p>
-        ) : (
-          <div className="space-y-2">
-            {sortedCategories.map((category) => (
-              <div
-                key={category.id}
-                className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50"
-              >
-                {editingId === category.id ? (
-                  <div className="flex items-center gap-2 flex-1">
+    <>
+      <Card>
+        <CardContent className="p-0">
+          <Accordion type="multiple" className="w-full">
+            <AccordionItem value="categories">
+              <AccordionTrigger className="group px-4 py-3 hover:no-underline hover:bg-muted/50 data-[state=open]:bg-primary/5">
+                <div className="flex items-center gap-2">
+                  <Tag className="h-4 w-4 text-muted-foreground group-data-[state=open]:text-primary transition-colors" />
+                  <span className="font-medium group-data-[state=open]:text-primary transition-colors">{t('settings.manageCategories')}</span>
+                  <Badge variant="secondary" className="ml-1">{categories.length}</Badge>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent className="px-4 pb-4 bg-primary/5">
+                <p className="text-sm text-muted-foreground mb-4">{t('settings.manageCategoriesDesc')}</p>
+                
+                <div className="space-y-6">
+                  <div className="flex flex-col sm:flex-row gap-2">
                     <Input
-                      value={editingName}
-                      onChange={(e) => setEditingName(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') handleSaveEdit();
-                        if (e.key === 'Escape') handleCancelEdit();
-                      }}
-                      className="h-10 sm:h-8"
-                      autoFocus
+                      placeholder={t('settings.newCategoryPlaceholder')}
+                      value={newCategoryName}
+                      onChange={(e) => setNewCategoryName(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && handleAddCategory()}
+                      className="h-11 sm:h-9"
                     />
-                    <Button size="icon" variant="ghost" onClick={handleSaveEdit} className="h-10 w-10 sm:h-8 sm:w-8">
-                      <Check className="h-4 w-4 text-green-600" />
-                    </Button>
-                    <Button size="icon" variant="ghost" onClick={handleCancelEdit} className="h-10 w-10 sm:h-8 sm:w-8">
-                      <X className="h-4 w-4" />
+                    <Button onClick={handleAddCategory} disabled={createCategory.isPending || !newCategoryName.trim()} className="h-10 sm:h-9 w-full sm:w-auto">
+                      <Plus className="h-4 w-4 mr-2" />
+                      {t('common.add')}
                     </Button>
                   </div>
-                ) : (
-                  <>
-                    <span className="font-medium">{category.name}</span>
-                    <div className="flex items-center gap-1">
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        onClick={() => setMergingCategory(category)}
-                        title={t('settings.mergeCategory')}
-                        className="h-10 w-10 sm:h-8 sm:w-8"
-                      >
-                        <Merge className="h-4 w-4" />
-                      </Button>
-                      <Button size="icon" variant="ghost" onClick={() => handleStartEdit(category)} className="h-10 w-10 sm:h-8 sm:w-8">
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        onClick={() => setDeletingCategory(category)}
-                        className="text-destructive hover:text-destructive h-10 w-10 sm:h-8 sm:w-8"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+
+                  {missingCategories.length > 0 && (
+                    <div className="p-4 border rounded-lg bg-background space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h4 className="font-medium text-sm">{t('settings.categoriesFromArticles')}</h4>
+                          <p className="text-xs text-muted-foreground">{t('settings.categoriesFromArticlesDesc')}</p>
+                        </div>
+                        <Button size="sm" variant="outline" onClick={handleAddAllMissingCategories} className="h-10 sm:h-8">
+                          <Plus className="h-4 w-4 mr-2" />
+                          {t('settings.addAll')}
+                        </Button>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {missingCategories.map((cat) => (
+                          <Badge
+                            key={cat}
+                            variant="outline"
+                            className="cursor-pointer hover:bg-primary hover:text-primary-foreground transition-colors"
+                            onClick={() => handleAddMissingCategory(cat)}
+                          >
+                            <Plus className="h-3 w-3 mr-1" />
+                            {cat}
+                          </Badge>
+                        ))}
+                      </div>
                     </div>
-                  </>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
-      </CardContent>
+                  )}
+
+                  {sortedCategories.length === 0 ? (
+                    <p className="text-muted-foreground text-center py-8">
+                      {t('settings.noCategories')}
+                    </p>
+                  ) : (
+                    <div className="space-y-2">
+                      {sortedCategories.map((category) => (
+                        <div
+                          key={category.id}
+                          className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 bg-background"
+                        >
+                          {editingId === category.id ? (
+                            <div className="flex items-center gap-2 flex-1">
+                              <Input
+                                value={editingName}
+                                onChange={(e) => setEditingName(e.target.value)}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') handleSaveEdit();
+                                  if (e.key === 'Escape') handleCancelEdit();
+                                }}
+                                className="h-10 sm:h-8"
+                                autoFocus
+                              />
+                              <Button size="icon" variant="ghost" onClick={handleSaveEdit} className="h-10 w-10 sm:h-8 sm:w-8">
+                                <Check className="h-4 w-4 text-green-600" />
+                              </Button>
+                              <Button size="icon" variant="ghost" onClick={handleCancelEdit} className="h-10 w-10 sm:h-8 sm:w-8">
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          ) : (
+                            <>
+                              <span className="font-medium">{category.name}</span>
+                              <div className="flex items-center gap-1">
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  onClick={() => setMergingCategory(category)}
+                                  title={t('settings.mergeCategory')}
+                                  className="h-10 w-10 sm:h-8 sm:w-8"
+                                >
+                                  <Merge className="h-4 w-4" />
+                                </Button>
+                                <Button size="icon" variant="ghost" onClick={() => handleStartEdit(category)} className="h-10 w-10 sm:h-8 sm:w-8">
+                                  <Pencil className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  onClick={() => setDeletingCategory(category)}
+                                  className="text-destructive hover:text-destructive h-10 w-10 sm:h-8 sm:w-8"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
+        </CardContent>
+      </Card>
 
       <AlertDialog open={!!deletingCategory} onOpenChange={(open) => !open && setDeletingCategory(null)}>
         <AlertDialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-lg">
@@ -292,6 +303,6 @@ export const CategoriesTab = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </Card>
+    </>
   );
 };
