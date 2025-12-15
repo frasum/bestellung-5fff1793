@@ -355,14 +355,29 @@ export const ArticleTable = ({
                                 const orderUnit = article.order_unit_id 
                                   ? orderUnits.find(u => u.id === article.order_unit_id)
                                   : null;
-                                // Immer Bestelleinheit anzeigen: order_unit falls vorhanden, sonst unit als Fallback
+                                // Berechne Multiplikator: packaging_unit falls vorhanden, sonst orderUnit.quantity
+                                const packagingUnit = (article as any).packaging_unit;
+                                const multiplier = packagingUnit && packagingUnit > 0 
+                                  ? packagingUnit 
+                                  : (orderUnit?.quantity || 1);
                                 const displayUnitName = orderUnit?.name || article.unit;
-                                const displayQuantity = orderUnit?.quantity || 1;
+                                const bePrice = Number(article.price) * multiplier;
+                                
                                 return (
-                                  <Badge variant="outline" className="text-xs gap-1 font-normal">
-                                    <Package className="h-3 w-3" />
-                                    {displayQuantity}× {displayUnitName}
-                                  </Badge>
+                                  <>
+                                    {multiplier > 1 && (
+                                      <span className="text-sm font-semibold text-primary">
+                                        €{bePrice.toFixed(2)}
+                                        <span className="text-xs text-muted-foreground font-normal ml-1">
+                                          /{displayUnitName}
+                                        </span>
+                                      </span>
+                                    )}
+                                    <Badge variant="outline" className="text-xs gap-1 font-normal">
+                                      <Package className="h-3 w-3" />
+                                      {multiplier}× {displayUnitName}
+                                    </Badge>
+                                  </>
                                 );
                               })()}
                               {article.reference_price && article.reference_unit && (
