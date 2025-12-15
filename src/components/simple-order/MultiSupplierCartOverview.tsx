@@ -390,11 +390,10 @@ export const MultiSupplierCartOverview = ({
                           {/* Article Info */}
                           <div className="flex-1 min-w-0">
                             <p className="font-medium truncate">{article.name}</p>
-                            {article.order_unit && (
-                              <Badge variant="outline" className="text-xs">
-                                {article.order_unit.name}
-                              </Badge>
-                            )}
+                            {/* Immer Einheit anzeigen: order_unit falls vorhanden, sonst unit als Fallback */}
+                            <Badge variant="outline" className="text-xs">
+                              {article.order_unit?.name || article.unit}
+                            </Badge>
                           </div>
 
                           {/* Quantity Controls */}

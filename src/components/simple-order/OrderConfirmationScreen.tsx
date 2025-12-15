@@ -179,7 +179,8 @@ export const OrderConfirmationScreen = ({
                 {orderedArticles.map(article => {
                 const quantity = quantities[article.id];
                 const lineTotal = article.price * quantity;
-                const orderUnitName = article.order_unit?.name;
+                // Konsistenter Fallback: order_unit falls vorhanden, sonst unit
+                const displayUnit = article.order_unit?.name || article.unit;
 
                 return (
                   <div key={article.id} className="p-4">
@@ -187,7 +188,7 @@ export const OrderConfirmationScreen = ({
                       <div className="flex-1 min-w-0">
                         <p className="text-base font-medium truncate">{article.name}</p>
                         <p className="text-sm text-muted-foreground">
-                          €{article.price.toFixed(2)} / {orderUnitName || article.unit}
+                          €{article.price.toFixed(2)} / {displayUnit}
                         </p>
                       </div>
                       <Button
@@ -225,11 +226,10 @@ export const OrderConfirmationScreen = ({
                         >
                           <Plus className="h-5 w-5" />
                         </Button>
-                        {orderUnitName && (
-                          <span className="ml-1 text-sm text-muted-foreground">
-                            × {orderUnitName}
-                          </span>
-                        )}
+                        {/* Immer Einheit anzeigen */}
+                        <span className="ml-1 text-sm text-muted-foreground">
+                          × {displayUnit}
+                        </span>
                       </div>
                       <p className="text-lg font-semibold">
                         €{lineTotal.toFixed(2)}
