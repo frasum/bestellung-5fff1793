@@ -60,11 +60,13 @@ const B2BSettingsTab = ({ account, onUpdate }: B2BSettingsTabProps) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const { data: profile } = await supabase
+      const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('organization_id')
         .eq('id', user.id)
-        .single();
+        .maybeSingle();
+
+      if (profileError) throw profileError;
 
       if (profile?.organization_id) {
         const { data: suppliersData } = await supabase
@@ -134,17 +136,19 @@ const B2BSettingsTab = ({ account, onUpdate }: B2BSettingsTabProps) => {
               <SelectTrigger>
                 <SelectValue placeholder="Lieferant auswählen..." />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-card border border-border z-50">
                 <SelectItem value="none">Keine Verknüpfung</SelectItem>
-                {suppliers.map(supplier => (
-                  <SelectItem key={supplier.id} value={supplier.id}>
-                    {supplier.name}
-                  </SelectItem>
-                ))}
+                {suppliers
+                  .filter((supplier) => supplier.id && supplier.id.trim() !== '')
+                  .map((supplier) => (
+                    <SelectItem key={supplier.id} value={supplier.id}>
+                      {supplier.name}
+                    </SelectItem>
+                  ))}
               </SelectContent>
             </Select>
             <p className="text-sm text-muted-foreground">
-              {linkedSupplierId 
+              {linkedSupplierId && linkedSupplierId !== 'none'
                 ? 'Sie können jetzt Artikel aus Ihrem Bestellung.pro Katalog importieren.'
                 : 'Wählen Sie einen Lieferanten, um Artikel zu importieren.'}
             </p>
