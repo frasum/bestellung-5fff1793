@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Plus, Pencil, Trash2, Star, Store, MapPin } from 'lucide-react';
+import { Plus, Pencil, Trash2, Star, Store, MapPin, Check } from 'lucide-react';
 import { useLocations, useCreateLocation, useUpdateLocation, useDeleteLocation, Location } from '@/hooks/useLocations';
 import {
   useDeliveryAddresses,
@@ -18,6 +18,7 @@ import {
   useDeleteDeliveryAddress,
   DeliveryAddress,
 } from '@/hooks/useSettings';
+import { useAllUserDeliveryPreferences, useUpsertUserDeliveryPreferenceForLocation } from '@/hooks/useUserDeliveryPreference';
 
 // Combined Location + Address Form Dialog
 const LocationFormDialog = ({
@@ -38,6 +39,11 @@ const LocationFormDialog = ({
   
   const { data: addresses = [] } = useDeliveryAddresses(location?.id || '');
   const primaryAddress = addresses.find(a => a.is_default) || addresses[0];
+  
+  // User delivery preference
+  const { data: allPreferences = [] } = useAllUserDeliveryPreferences();
+  const upsertPreference = useUpsertUserDeliveryPreferenceForLocation();
+  const currentPreference = location ? allPreferences.find(p => p.location_id === location.id) : null;
   
   // Location fields
   const [name, setName] = useState('');
@@ -90,6 +96,11 @@ const LocationFormDialog = ({
 
   const additionalAddresses = addresses.filter(a => a.id !== primaryAddress?.id);
   const isSaving = createLocation.isPending || updateLocation.isPending || createAddress.isPending || updateAddress.isPending;
+
+  const handleSetAsMyDefault = (addressId: string) => {
+    if (!location) return;
+    upsertPreference.mutate({ locationId: location.id, deliveryAddressId: addressId });
+  };
 
   const handleSave = async () => {
     if (!name.trim()) return;
@@ -156,6 +167,10 @@ const LocationFormDialog = ({
     }
   };
 
+  const isMyDefaultAddress = (addressId: string) => {
+    return currentPreference?.delivery_address_id === addressId;
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-md max-h-[90vh] overflow-y-auto">
@@ -202,8 +217,33 @@ const LocationFormDialog = ({
 
           <Separator />
 
-          {/* Address Section */}
+          {/* Primary Address Section */}
           <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <Label className="text-sm font-medium">{t('settings.primaryAddress')}</Label>
+              {location && primaryAddress && (
+                <Button
+                  variant={isMyDefaultAddress(primaryAddress.id) ? "secondary" : "outline"}
+                  size="sm"
+                  className="h-7 text-xs gap-1"
+                  onClick={() => handleSetAsMyDefault(primaryAddress.id)}
+                  disabled={upsertPreference.isPending || isMyDefaultAddress(primaryAddress.id)}
+                >
+                  {isMyDefaultAddress(primaryAddress.id) ? (
+                    <>
+                      <Check className="h-3 w-3" />
+                      {t('settings.myDefaultAddress')}
+                    </>
+                  ) : (
+                    <>
+                      <Star className="h-3 w-3" />
+                      {t('settings.setAsMyDefault')}
+                    </>
+                  )}
+                </Button>
+              )}
+            </div>
+            
             <div className="space-y-1.5">
               <Label htmlFor="address_line1" className="text-sm">{t('settings.addressLine1')} *</Label>
               <Input
@@ -267,27 +307,49 @@ const LocationFormDialog = ({
                   className="w-full justify-start text-muted-foreground"
                   onClick={() => setShowAdditionalAddresses(!showAdditionalAddresses)}
                 >
-                  {showAdditionalAddresses ? '▼' : '▶'} {additionalAddresses.length} weitere Adresse{additionalAddresses.length > 1 ? 'n' : ''}
+                  {showAdditionalAddresses ? '▼' : '▶'} {additionalAddresses.length} {t('settings.additionalAddresses', { count: additionalAddresses.length })}
                 </Button>
                 
                 {showAdditionalAddresses && (
                   <div className="space-y-2 pl-4">
                     {additionalAddresses.map((addr) => (
                       <div key={addr.id} className="flex items-center justify-between text-sm p-2 bg-muted/50 rounded">
-                        <div>
-                          <span className="font-medium">{addr.label}</span>
-                          <span className="text-muted-foreground ml-2">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium">{addr.label}</span>
+                            {isMyDefaultAddress(addr.id) && (
+                              <Badge variant="secondary" className="text-xs h-5">
+                                <Check className="h-3 w-3 mr-1" />
+                                {t('settings.myDefault')}
+                              </Badge>
+                            )}
+                          </div>
+                          <span className="text-muted-foreground truncate block">
                             {addr.address_line1}, {addr.postal_code} {addr.city}
                           </span>
                         </div>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-6 w-6 p-0 text-destructive hover:text-destructive"
-                          onClick={() => deleteAddress.mutate(addr.id)}
-                        >
-                          <Trash2 className="h-3 w-3" />
-                        </Button>
+                        <div className="flex items-center gap-1 ml-2">
+                          {!isMyDefaultAddress(addr.id) && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 w-7 p-0"
+                              title={t('settings.setAsMyDefault')}
+                              onClick={() => handleSetAsMyDefault(addr.id)}
+                              disabled={upsertPreference.isPending}
+                            >
+                              <Star className="h-3.5 w-3.5" />
+                            </Button>
+                          )}
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 w-7 p-0 text-destructive hover:text-destructive"
+                            onClick={() => deleteAddress.mutate(addr.id)}
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -315,8 +377,14 @@ const LocationItem = ({
 }) => {
   const { t } = useTranslation();
   const { data: addresses = [] } = useDeliveryAddresses(location.id);
+  const { data: allPreferences = [] } = useAllUserDeliveryPreferences();
   const deleteLocation = useDeleteLocation();
   const primaryAddress = addresses.find(a => a.is_default) || addresses[0];
+  
+  const myDefaultAddress = allPreferences.find(p => p.location_id === location.id);
+  const myDefaultAddressData = myDefaultAddress 
+    ? addresses.find(a => a.id === myDefaultAddress.delivery_address_id) 
+    : null;
 
   const handleDelete = () => {
     if (confirm(t('settings.deleteLocationConfirm'))) {
@@ -352,6 +420,12 @@ const LocationItem = ({
           {!primaryAddress && (
             <div className="text-sm text-muted-foreground italic">
               {t('settings.noAddress')}
+            </div>
+          )}
+          {myDefaultAddressData && myDefaultAddressData.id !== primaryAddress?.id && (
+            <div className="flex items-center gap-1.5 text-xs text-primary mt-0.5">
+              <Check className="h-3 w-3" />
+              <span>{t('settings.myDefaultShort')}: {myDefaultAddressData.label}</span>
             </div>
           )}
         </div>
