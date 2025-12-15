@@ -107,3 +107,6 @@ verify_jwt = true
 
 [functions.translate-wine-content]
 verify_jwt = true
+
+[functions.create-supplier-portal-token]
+verify_jwt = true

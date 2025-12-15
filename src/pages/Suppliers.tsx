@@ -41,6 +41,7 @@ import { SuggestionsTab } from '@/components/suppliers/SuggestionsTab';
 import { useSuggestedArticlesCount } from '@/hooks/useSuggestedArticles';
 import { QuickCaptureWizard } from '@/components/suppliers/QuickCaptureWizard';
 import { WinesTab } from '@/components/suppliers/WinesTab';
+import { SupplierQRCodeDialog } from '@/components/suppliers/SupplierQRCodeDialog';
 
 const Suppliers = () => {
   const { user, loading: authLoading } = useAuth();
@@ -116,6 +117,7 @@ const Suppliers = () => {
   const [showSupplierUpgradeDialog, setShowSupplierUpgradeDialog] = useState(false);
   const [isQuickCaptureOpen, setIsQuickCaptureOpen] = useState(false);
   const [organizationId, setOrganizationId] = useState<string | null>(null);
+  const [qrCodeSupplier, setQrCodeSupplier] = useState<Supplier | null>(null);
   // Local state for multi-select toggles
   const [supplierMultiSelectEnabled, setSupplierMultiSelectEnabled] = useState(() => {
     const saved = localStorage.getItem('suppliers-multi-select');
@@ -671,6 +673,7 @@ const Suppliers = () => {
                 onEdit={(supplier) => { setEditingSupplier(supplier); setIsSupplierDialogOpen(true); }}
                 onDelete={setDeletingSupplier}
                 onSendInvitation={handleSendInvitation}
+                onShowQRCode={setQrCodeSupplier}
                 onShowChanges={setChangesDialogSupplier}
                 onShowLocations={setLocationsDialogSupplier}
                 onPrintOrderList={async (supplier, articles) => await generateOrderListPdf(supplier, articles.map(a => ({
@@ -936,6 +939,12 @@ const Suppliers = () => {
           return imageUrl;
         }}
         organizationId={organizationId}
+      />
+
+      <SupplierQRCodeDialog
+        supplier={qrCodeSupplier}
+        open={!!qrCodeSupplier}
+        onOpenChange={(open) => !open && setQrCodeSupplier(null)}
       />
     </DashboardLayout>
   );
