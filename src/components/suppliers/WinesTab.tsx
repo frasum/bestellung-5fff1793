@@ -1,5 +1,5 @@
 import { useMemo, useState, useCallback, useEffect } from 'react';
-import { Wine, MapPin, Euro, ChevronRight, ChevronDown, Pencil, Search, Loader2, ExternalLink, Grape, Utensils, Info, Sparkles, AlertCircle, Camera, ImageIcon, FileDown, Languages } from 'lucide-react';
+import { Wine, MapPin, Euro, ChevronRight, ChevronDown, Pencil, Search, Loader2, ExternalLink, Grape, Utensils, Info, Sparkles, AlertCircle, Camera, ImageIcon, FileDown, Languages, Gamepad2 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -16,6 +16,7 @@ import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { generateWineCatalogPdf } from '@/lib/wineCatalogPdf';
+import { WineQuizGame } from '@/components/wine-quiz/WineQuizGame';
 
 // Helper function to get localized wine field
 const getLocalizedField = (wine: Article, field: string): string => {
@@ -60,6 +61,7 @@ export const WinesTab = ({ articles, suppliers, onEditArticle }: WinesTabProps) 
   const [pdfProgress, setPdfProgress] = useState<{ current: number; total: number } | null>(null);
   const [filterMode, setFilterMode] = useState<FilterMode>('all');
   const [advancedMode, setAdvancedMode] = useState(() => localStorage.getItem('advanced-settings-enabled') === 'true');
+  const [quizOpen, setQuizOpen] = useState(false);
   const updateArticle = useUpdateArticle();
 
   useEffect(() => {
@@ -228,6 +230,7 @@ export const WinesTab = ({ articles, suppliers, onEditArticle }: WinesTabProps) 
   }
 
   return (
+    <>
     <div className="space-y-6">
       {/* Header with stats and actions */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -242,6 +245,18 @@ export const WinesTab = ({ articles, suppliers, onEditArticle }: WinesTabProps) 
         </div>
 
         <div className="flex items-center gap-2">
+          {/* Quiz Button - always visible */}
+          <Button
+            variant="default"
+            size="sm"
+            onClick={() => setQuizOpen(true)}
+            disabled={wineArticles.length < 4}
+            className="gap-2"
+          >
+            <Gamepad2 className="h-4 w-4" />
+            {t('wines.quiz', 'Quiz starten')}
+          </Button>
+
           {/* PDF Export Button - always visible */}
           <Button
             variant="outline"
@@ -464,6 +479,14 @@ export const WinesTab = ({ articles, suppliers, onEditArticle }: WinesTabProps) 
         );
       })}
     </div>
+
+      {/* Wine Quiz Game */}
+      <WineQuizGame 
+        wines={wineArticles} 
+        open={quizOpen} 
+        onOpenChange={setQuizOpen} 
+      />
+    </>
   );
 };
 
