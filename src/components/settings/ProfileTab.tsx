@@ -314,7 +314,7 @@ export const ProfileTab = () => {
   }
 
   // Determine default open sections
-  const defaultOpenSections = ['profile', 'addresses'];
+  const defaultOpenSections: string[] = [];
 
   return (
     <div className="space-y-4">
