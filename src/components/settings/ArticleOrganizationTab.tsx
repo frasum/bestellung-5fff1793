@@ -27,6 +27,9 @@ interface ArticleWithTopCategory {
   order_unit_id: string | null;
   supplier_id: string;
   suppliers?: { id: string; name: string } | null;
+  unit: string;
+  price: number;
+  packaging_unit: number | null;
 }
 
 export const ArticleOrganizationTab = () => {
@@ -44,6 +47,7 @@ export const ArticleOrganizationTab = () => {
   const [filterOrderUnit, setFilterOrderUnit] = useState<string>('all');
   const [filterUnassigned, setFilterUnassigned] = useState(false);
   const [filterNoOrderUnit, setFilterNoOrderUnit] = useState(false);
+  const [filterNoPackaging, setFilterNoPackaging] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   
 
@@ -56,17 +60,21 @@ export const ArticleOrganizationTab = () => {
     const withTopCategory = articlesWithTopCategory.filter(a => a.top_category).length;
     const withMainCategory = articlesWithTopCategory.filter(a => a.category).length;
     const withOrderUnit = articlesWithTopCategory.filter(a => a.order_unit_id).length;
+    const withPackaging = articlesWithTopCategory.filter(a => a.packaging_unit && a.packaging_unit > 1).length;
     return {
       total,
       withTopCategory,
       withMainCategory,
       withOrderUnit,
+      withPackaging,
       missingTopCategory: total - withTopCategory,
       missingMainCategory: total - withMainCategory,
       missingOrderUnit: total - withOrderUnit,
+      missingPackaging: total - withPackaging,
       progressTop: total > 0 ? (withTopCategory / total) * 100 : 0,
       progressMain: total > 0 ? (withMainCategory / total) * 100 : 0,
       progressOrderUnit: total > 0 ? (withOrderUnit / total) * 100 : 0,
+      progressPackaging: total > 0 ? (withPackaging / total) * 100 : 0,
     };
   }, [articlesWithTopCategory]);
 
@@ -99,6 +107,9 @@ export const ArticleOrganizationTab = () => {
         if (filterNoOrderUnit && article.order_unit_id) {
           return false;
         }
+        if (filterNoPackaging && article.packaging_unit && article.packaging_unit > 1) {
+          return false;
+        }
         return true;
       })
       .sort((a, b) => {
@@ -114,7 +125,7 @@ export const ArticleOrganizationTab = () => {
         if (supplierCompare !== 0) return supplierCompare;
         return a.name.localeCompare(b.name, 'de');
       });
-  }, [articlesWithTopCategory, searchQuery, filterTopCategory, filterMainCategory, filterSupplier, filterOrderUnit, filterUnassigned, filterNoOrderUnit]);
+  }, [articlesWithTopCategory, searchQuery, filterTopCategory, filterMainCategory, filterSupplier, filterOrderUnit, filterUnassigned, filterNoOrderUnit, filterNoPackaging]);
 
   // Selection handlers
   const toggleSelect = (id: string) => {
@@ -176,11 +187,22 @@ export const ArticleOrganizationTab = () => {
   };
 
   // Inline update handler
-  const handleInlineUpdate = (id: string, field: 'top_category' | 'category' | 'order_unit_id', value: string | null) => {
+  const handleInlineUpdate = (id: string, field: 'top_category' | 'category' | 'order_unit_id' | 'packaging_unit', value: string | number | null) => {
     bulkUpdate.mutate({
       ids: [id],
       updates: { [field]: value } as any,
     });
+  };
+
+  // Calculate BE price
+  const calculateBePrice = (article: ArticleWithTopCategory) => {
+    const multiplier = article.packaging_unit && article.packaging_unit > 1 ? article.packaging_unit : 1;
+    return article.price * multiplier;
+  };
+
+  // Format currency
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(value);
   };
 
   // Row highlight for incomplete articles
@@ -215,7 +237,7 @@ export const ArticleOrganizationTab = () => {
           <CardDescription>{t('settings.articleOrganization.statisticsDesc')}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
                 <span>{t('settings.articleOrganization.topCategoryProgress')}</span>
@@ -224,11 +246,6 @@ export const ArticleOrganizationTab = () => {
                 </span>
               </div>
               <Progress value={stats.progressTop} className="h-2" />
-              {stats.missingTopCategory > 0 && (
-                <p className="text-xs text-muted-foreground">
-                  {t('settings.articleOrganization.missingTopCategory', { count: stats.missingTopCategory })}
-                </p>
-              )}
             </div>
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
@@ -238,25 +255,24 @@ export const ArticleOrganizationTab = () => {
                 </span>
               </div>
               <Progress value={stats.progressMain} className="h-2" />
-              {stats.missingMainCategory > 0 && (
-                <p className="text-xs text-muted-foreground">
-                  {t('settings.articleOrganization.missingMainCategory', { count: stats.missingMainCategory })}
-                </p>
-              )}
             </div>
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
-                <span>{t('settings.articleOrganization.orderUnitProgress')}</span>
+                <span>{t('settings.orderUnitsShort')}</span>
                 <span className="text-muted-foreground">
                   {stats.withOrderUnit}/{stats.total}
                 </span>
               </div>
               <Progress value={stats.progressOrderUnit} className="h-2" />
-              {stats.missingOrderUnit > 0 && (
-                <p className="text-xs text-muted-foreground">
-                  {t('settings.articleOrganization.missingOrderUnit', { count: stats.missingOrderUnit })}
-                </p>
-              )}
+            </div>
+            <div className="space-y-2">
+              <div className="flex justify-between text-sm">
+                <span>Stk/BE</span>
+                <span className="text-muted-foreground">
+                  {stats.withPackaging}/{stats.total}
+                </span>
+              </div>
+              <Progress value={stats.progressPackaging} className="h-2" />
             </div>
           </div>
         </CardContent>
@@ -349,6 +365,13 @@ export const ArticleOrganizationTab = () => {
           >
             {t('settings.articleOrganization.onlyNoOrderUnit')}
           </Button>
+          <Button
+            variant={filterNoPackaging ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setFilterNoPackaging(!filterNoPackaging)}
+          >
+            Nur ohne Stk/BE
+          </Button>
         </div>
 
         {/* Bulk Actions Toolbar */}
@@ -421,83 +444,84 @@ export const ArticleOrganizationTab = () => {
                   </TableHead>
                   <TableHead>{t('articles.articleName')}</TableHead>
                   <TableHead className="hidden sm:table-cell">{t('articles.supplier')}</TableHead>
-                  <TableHead>{t('settings.articleOrganization.topCategory')}</TableHead>
-                  <TableHead>{t('settings.articleOrganization.mainCategory')}</TableHead>
+                  <TableHead className="hidden md:table-cell">Einheit</TableHead>
                   <TableHead>{t('settings.orderUnitsShort')}</TableHead>
+                  <TableHead className="w-[80px]">Stk/BE</TableHead>
+                  <TableHead className="hidden lg:table-cell text-right">Preis</TableHead>
+                  <TableHead className="text-right">BE-Preis</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredArticles.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                       {t('settings.articleOrganization.noArticles')}
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredArticles.map((article) => (
-                    <TableRow key={article.id} className={getRowHighlightClass(article)}>
-                      <TableCell>
-                        <Checkbox
-                          checked={selectedIds.has(article.id)}
-                          onCheckedChange={() => toggleSelect(article.id)}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <div>
-                          <p className="font-medium">{article.name}</p>
-                          <p className="text-xs text-muted-foreground sm:hidden">
-                            {article.suppliers?.name}
-                          </p>
-                        </div>
-                      </TableCell>
-                      <TableCell className="hidden sm:table-cell text-muted-foreground">
-                        {article.suppliers?.name}
-                      </TableCell>
-                      <TableCell>
-                        <Select
-                          value={article.top_category || 'none'}
-                          onValueChange={(v) => handleInlineUpdate(article.id, 'top_category', v === 'none' ? null : v)}
-                        >
-                          <SelectTrigger className="h-8 w-[120px]">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="none">
-                              <span className="text-muted-foreground">—</span>
-                            </SelectItem>
-                            {TOP_CATEGORIES.map(cat => (
-                              <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </TableCell>
-                      <TableCell>
-                        <Select
-                          value={article.category || 'none'}
-                          onValueChange={(v) => handleInlineUpdate(article.id, 'category', v === 'none' ? null : v)}
-                        >
-                          <SelectTrigger className="h-8 w-[120px]">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="none">
-                              <span className="text-muted-foreground">—</span>
-                            </SelectItem>
-                            {categories.map(cat => (
-                              <SelectItem key={cat.id} value={cat.name}>{cat.name}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </TableCell>
-                      <TableCell>
-                        <SupplierOrderUnitSelect
-                          value={article.order_unit_id}
-                          onChange={(v) => handleInlineUpdate(article.id, 'order_unit_id', v)}
-                          className="h-8 w-[180px]"
-                        />
-                      </TableCell>
-                    </TableRow>
-                  ))
+                  filteredArticles.map((article) => {
+                    const bePrice = calculateBePrice(article);
+                    const hasMultiplier = article.packaging_unit && article.packaging_unit > 1;
+                    
+                    return (
+                      <TableRow key={article.id} className={getRowHighlightClass(article)}>
+                        <TableCell>
+                          <Checkbox
+                            checked={selectedIds.has(article.id)}
+                            onCheckedChange={() => toggleSelect(article.id)}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <div>
+                            <p className="font-medium">{article.name}</p>
+                            <p className="text-xs text-muted-foreground sm:hidden">
+                              {article.suppliers?.name}
+                            </p>
+                          </div>
+                        </TableCell>
+                        <TableCell className="hidden sm:table-cell text-muted-foreground">
+                          {article.suppliers?.name}
+                        </TableCell>
+                        <TableCell className="hidden md:table-cell text-muted-foreground">
+                          {article.unit}
+                        </TableCell>
+                        <TableCell>
+                          <SupplierOrderUnitSelect
+                            value={article.order_unit_id}
+                            onChange={(v) => handleInlineUpdate(article.id, 'order_unit_id', v)}
+                            className="h-8 w-[140px]"
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Input
+                            type="number"
+                            min="1"
+                            className="h-8 w-16 text-center"
+                            value={article.packaging_unit || ''}
+                            placeholder="1"
+                            onChange={(e) => {
+                              const val = e.target.value ? Number(e.target.value) : null;
+                              handleInlineUpdate(article.id, 'packaging_unit', val);
+                            }}
+                          />
+                        </TableCell>
+                        <TableCell className="hidden lg:table-cell text-right text-muted-foreground">
+                          {formatCurrency(article.price)}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {hasMultiplier ? (
+                            <span className="font-medium text-primary">
+                              {formatCurrency(bePrice)}
+                            </span>
+                          ) : (
+                            <span className="text-muted-foreground">
+                              {formatCurrency(article.price)}
+                            </span>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
                 )}
               </TableBody>
             </Table>
