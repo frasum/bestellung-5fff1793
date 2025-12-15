@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -8,6 +8,7 @@ import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Plus, Pencil, Trash2, Star, Store, MapPin } from 'lucide-react';
 import { useLocations, useCreateLocation, useUpdateLocation, useDeleteLocation, Location } from '@/hooks/useLocations';
 import {
@@ -324,7 +325,7 @@ const LocationItem = ({
   };
 
   return (
-    <div className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 transition-colors group">
+    <div className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 transition-colors group bg-background">
       <div className="flex items-center gap-3 min-w-0">
         <Store className="h-4 w-4 text-primary shrink-0" />
         <div className="min-w-0">
@@ -391,45 +392,52 @@ export const LocationsWithAddressesTab = () => {
   }
 
   return (
-    <Card>
-      <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <CardTitle className="flex items-center gap-2">
-            <Store className="h-5 w-5" />
-            {t('settings.manageLocations')}
-          </CardTitle>
-          <CardDescription>
-            {t('settings.locationsWithAddressesDesc')}
-          </CardDescription>
-        </div>
-        <Button className="gap-2 w-full sm:w-auto" onClick={() => handleOpenDialog()}>
-          <Plus className="h-4 w-4" />
-          <span className="sm:inline">{t('settings.addLocation')}</span>
-        </Button>
-      </CardHeader>
-      <CardContent>
-        {locations.length === 0 ? (
-          <p className="text-muted-foreground text-center py-8">
-            {t('settings.noLocations')}
-          </p>
-        ) : (
-          <div className="space-y-2">
-            {locations.map((location) => (
-              <LocationItem 
-                key={location.id} 
-                location={location} 
-                onEdit={() => handleOpenDialog(location)}
-              />
-            ))}
-          </div>
-        )}
-      </CardContent>
+    <>
+      <Card>
+        <CardContent className="p-0">
+          <Accordion type="multiple" className="w-full">
+            <AccordionItem value="locations">
+              <AccordionTrigger className="group px-4 py-3 hover:no-underline hover:bg-muted/50 data-[state=open]:bg-primary/5">
+                <div className="flex items-center gap-2">
+                  <Store className="h-4 w-4 text-muted-foreground group-data-[state=open]:text-primary transition-colors" />
+                  <span className="font-medium group-data-[state=open]:text-primary transition-colors">{t('settings.manageLocations')}</span>
+                  <Badge variant="secondary" className="ml-1">{locations.length}</Badge>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent className="px-4 pb-4 bg-primary/5">
+                <p className="text-sm text-muted-foreground mb-4">{t('settings.locationsWithAddressesDesc')}</p>
+                
+                <Button className="gap-2 w-full sm:w-auto mb-4" onClick={() => handleOpenDialog()}>
+                  <Plus className="h-4 w-4" />
+                  <span>{t('settings.addLocation')}</span>
+                </Button>
+
+                {locations.length === 0 ? (
+                  <p className="text-muted-foreground text-center py-8">
+                    {t('settings.noLocations')}
+                  </p>
+                ) : (
+                  <div className="space-y-2">
+                    {locations.map((location) => (
+                      <LocationItem 
+                        key={location.id} 
+                        location={location} 
+                        onEdit={() => handleOpenDialog(location)}
+                      />
+                    ))}
+                  </div>
+                )}
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
+        </CardContent>
+      </Card>
 
       <LocationFormDialog
         open={dialogOpen}
         onOpenChange={setDialogOpen}
         location={editingLocation}
       />
-    </Card>
+    </>
   );
 };

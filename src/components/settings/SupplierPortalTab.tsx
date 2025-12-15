@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { ExternalLink, FileText, ImageIcon, Upload, Trash2, Loader2, RotateCcw, Columns } from 'lucide-react';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { ExternalLink, FileText, ImageIcon, Upload, Trash2, Loader2, RotateCcw } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -155,197 +156,135 @@ export const SupplierPortalTab = () => {
   }
 
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <ExternalLink className="h-5 w-5" />
-            {t('settings.portalPreview')}
-          </CardTitle>
-          <CardDescription>
-            {t('settings.portalPreviewDesc')}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <PortalPreview
-            logoUrl={logoUrl}
-            portalTitle={portalTitle}
-            welcomeMessage={welcomeMessage}
-            cardTitle={cardTitle}
-            cardDescription={cardDescription}
-            infoText={infoText}
-            footerText={footerText}
-          />
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <FileText className="h-5 w-5" />
-            {t('settings.portalTexts')}
-          </CardTitle>
-          <CardDescription>
-            {t('settings.portalTextsDesc')}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="space-y-3">
-            <Label className="flex items-center gap-2">
-              <ImageIcon className="h-4 w-4" />
-              {t('settings.portalLogo')}
-            </Label>
-            <div className="flex items-center gap-4">
-              <div className="w-24 h-24 border rounded-lg flex items-center justify-center bg-muted/30 overflow-hidden">
-                {logoUrl ? (
-                  <img src={logoUrl} alt="Portal Logo" className="max-w-full max-h-full object-contain" />
-                ) : (
-                  <ImageIcon className="h-8 w-8 text-muted-foreground/50" />
-                )}
+    <Card>
+      <CardContent className="p-0">
+        <Accordion type="multiple" className="w-full">
+          {/* Portal Preview */}
+          <AccordionItem value="preview" className="border-b">
+            <AccordionTrigger className="group px-4 py-3 hover:no-underline hover:bg-muted/50 data-[state=open]:bg-primary/5">
+              <div className="flex items-center gap-2">
+                <ExternalLink className="h-4 w-4 text-muted-foreground group-data-[state=open]:text-primary transition-colors" />
+                <span className="font-medium group-data-[state=open]:text-primary transition-colors">{t('settings.portalPreview')}</span>
               </div>
-              <div className="flex flex-col gap-2">
-                <div className="flex items-center gap-2">
-                  <label htmlFor="logo-upload">
-                    <Input
-                      id="logo-upload"
-                      type="file"
-                      accept="image/*"
-                      onChange={handleLogoUpload}
-                      className="hidden"
-                      disabled={uploadingLogo}
-                    />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      disabled={uploadingLogo}
-                      onClick={() => document.getElementById('logo-upload')?.click()}
-                    >
-                      {uploadingLogo ? (
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            </AccordionTrigger>
+            <AccordionContent className="px-4 pb-4 bg-primary/5">
+              <p className="text-sm text-muted-foreground mb-4">{t('settings.portalPreviewDesc')}</p>
+              <PortalPreview
+                logoUrl={logoUrl}
+                portalTitle={portalTitle}
+                welcomeMessage={welcomeMessage}
+                cardTitle={cardTitle}
+                cardDescription={cardDescription}
+                infoText={infoText}
+                footerText={footerText}
+              />
+            </AccordionContent>
+          </AccordionItem>
+
+          {/* Portal Texts */}
+          <AccordionItem value="texts">
+            <AccordionTrigger className="group px-4 py-3 hover:no-underline hover:bg-muted/50 data-[state=open]:bg-primary/5">
+              <div className="flex items-center gap-2">
+                <FileText className="h-4 w-4 text-muted-foreground group-data-[state=open]:text-primary transition-colors" />
+                <span className="font-medium group-data-[state=open]:text-primary transition-colors">{t('settings.portalTexts')}</span>
+              </div>
+            </AccordionTrigger>
+            <AccordionContent className="px-4 pb-4 bg-primary/5">
+              <p className="text-sm text-muted-foreground mb-4">{t('settings.portalTextsDesc')}</p>
+              
+              <div className="space-y-6">
+                {/* Logo Upload */}
+                <div className="space-y-3">
+                  <Label className="flex items-center gap-2">
+                    <ImageIcon className="h-4 w-4" />
+                    {t('settings.portalLogo')}
+                  </Label>
+                  <div className="flex items-center gap-4">
+                    <div className="w-24 h-24 border rounded-lg flex items-center justify-center bg-muted/30 overflow-hidden">
+                      {logoUrl ? (
+                        <img src={logoUrl} alt="Portal Logo" className="max-w-full max-h-full object-contain" />
                       ) : (
-                        <Upload className="h-4 w-4 mr-2" />
+                        <ImageIcon className="h-8 w-8 text-muted-foreground/50" />
                       )}
-                      {logoUrl ? t('settings.changeLogo') : t('settings.uploadLogo')}
-                    </Button>
-                  </label>
-                  {logoUrl && (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={handleRemoveLogo}
-                      className="text-destructive hover:text-destructive"
-                    >
-                      <Trash2 className="h-4 w-4 mr-1" />
-                      {t('settings.removeLogo')}
-                    </Button>
-                  )}
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  {t('settings.portalLogoMaxSize')}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="border-t pt-4 mt-4" />
-
-          <div className="p-3 bg-muted/50 rounded-lg text-xs text-muted-foreground space-y-1">
-            <p className="font-medium">{t('settings.markdownSupport')}</p>
-            <p>{t('settings.markdownExample')}</p>
-          </div>
-
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="portal-title">{t('settings.portalTitle')}</Label>
-              <Input
-                id="portal-title"
-                value={portalTitle}
-                onChange={(e) => setPortalTitle(e.target.value)}
-                placeholder={t('settings.portalTitlePlaceholder')}
-              />
-              <p className="text-xs text-muted-foreground">
-                {t('settings.portalTitleDesc')}
-              </p>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="welcome-message">{t('settings.welcomeMessage')}</Label>
-              <Textarea
-                id="welcome-message"
-                value={welcomeMessage}
-                onChange={(e) => setWelcomeMessage(e.target.value)}
-                placeholder={t('settings.welcomeMessagePlaceholder')}
-                rows={3}
-              />
-              <p className="text-xs text-muted-foreground">
-                {t('settings.welcomeMessageDesc')}
-              </p>
-              {welcomeMessage && (
-                <div className="mt-2 p-3 bg-muted/50 rounded-lg">
-                  <p className="text-xs font-medium text-muted-foreground mb-2">{t('settings.templatePreview')}:</p>
-                  <div className="prose prose-sm dark:prose-invert max-w-none">
-                    <ReactMarkdown
-                      components={{
-                        a: ({ href, children }) => (
-                          <a href={href} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
-                            {children}
-                          </a>
-                        ),
-                      }}
-                    >
-                      {welcomeMessage}
-                    </ReactMarkdown>
+                    </div>
+                    <div className="flex flex-col gap-2">
+                      <div className="flex items-center gap-2">
+                        <label htmlFor="logo-upload">
+                          <Input
+                            id="logo-upload"
+                            type="file"
+                            accept="image/*"
+                            onChange={handleLogoUpload}
+                            className="hidden"
+                            disabled={uploadingLogo}
+                          />
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            disabled={uploadingLogo}
+                            onClick={() => document.getElementById('logo-upload')?.click()}
+                          >
+                            {uploadingLogo ? (
+                              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            ) : (
+                              <Upload className="h-4 w-4 mr-2" />
+                            )}
+                            {logoUrl ? t('settings.changeLogo') : t('settings.uploadLogo')}
+                          </Button>
+                        </label>
+                        {logoUrl && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={handleRemoveLogo}
+                            className="text-destructive hover:text-destructive"
+                          >
+                            <Trash2 className="h-4 w-4 mr-1" />
+                            {t('settings.removeLogo')}
+                          </Button>
+                        )}
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        {t('settings.portalLogoMaxSize')}
+                      </p>
+                    </div>
                   </div>
                 </div>
-              )}
-            </div>
 
-            <div className="border-t pt-4 mt-4">
-              <p className="text-sm font-medium mb-4">{t('settings.articleSection')}</p>
-              
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="card-title">{t('settings.sectionTitle')}</Label>
-                  <Input
-                    id="card-title"
-                    value={cardTitle}
-                    onChange={(e) => setCardTitle(e.target.value)}
-                    placeholder={t('settings.sectionTitlePlaceholder')}
-                  />
+                <div className="border-t pt-4" />
+
+                <div className="p-3 bg-muted/50 rounded-lg text-xs text-muted-foreground space-y-1">
+                  <p className="font-medium">{t('settings.markdownSupport')}</p>
+                  <p>{t('settings.markdownExample')}</p>
                 </div>
 
+                {/* Portal Title */}
                 <div className="space-y-2">
-                  <Label htmlFor="card-description">{t('settings.sectionDescription')}</Label>
+                  <Label htmlFor="portal-title">{t('settings.portalTitle')}</Label>
                   <Input
-                    id="card-description"
-                    value={cardDescription}
-                    onChange={(e) => setCardDescription(e.target.value)}
-                    placeholder={t('settings.sectionDescriptionPlaceholder')}
+                    id="portal-title"
+                    value={portalTitle}
+                    onChange={(e) => setPortalTitle(e.target.value)}
+                    placeholder={t('settings.portalTitlePlaceholder')}
                   />
+                  <p className="text-xs text-muted-foreground">{t('settings.portalTitleDesc')}</p>
                 </div>
-              </div>
-            </div>
 
-            <div className="border-t pt-4 mt-4">
-              <p className="text-sm font-medium mb-4">{t('settings.additionalTexts')}</p>
-              
-              <div className="space-y-4">
+                {/* Welcome Message */}
                 <div className="space-y-2">
-                  <Label htmlFor="info-text">{t('settings.infoText')}</Label>
+                  <Label htmlFor="welcome-message">{t('settings.welcomeMessage')}</Label>
                   <Textarea
-                    id="info-text"
-                    value={infoText}
-                    onChange={(e) => setInfoText(e.target.value)}
-                    placeholder={t('settings.infoTextPlaceholder')}
+                    id="welcome-message"
+                    value={welcomeMessage}
+                    onChange={(e) => setWelcomeMessage(e.target.value)}
+                    placeholder={t('settings.welcomeMessagePlaceholder')}
                     rows={3}
                   />
-                  <p className="text-xs text-muted-foreground">
-                    {t('settings.infoTextDesc')}
-                  </p>
-                  {infoText && (
-                    <div className="mt-2 p-3 bg-primary/10 border border-primary/20 rounded-lg">
+                  <p className="text-xs text-muted-foreground">{t('settings.welcomeMessageDesc')}</p>
+                  {welcomeMessage && (
+                    <div className="mt-2 p-3 bg-muted/50 rounded-lg">
                       <p className="text-xs font-medium text-muted-foreground mb-2">{t('settings.templatePreview')}:</p>
                       <div className="prose prose-sm dark:prose-invert max-w-none">
                         <ReactMarkdown
@@ -357,67 +296,130 @@ export const SupplierPortalTab = () => {
                             ),
                           }}
                         >
-                          {infoText}
+                          {welcomeMessage}
                         </ReactMarkdown>
                       </div>
                     </div>
                   )}
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="footer-text">{t('settings.footerTextLabel')}</Label>
-                  <Textarea
-                    id="footer-text"
-                    value={footerText}
-                    onChange={(e) => setFooterText(e.target.value)}
-                    placeholder={t('settings.footerTextPlaceholder')}
-                    rows={2}
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    {t('settings.footerTextDesc')}
-                  </p>
-                  {footerText && (
-                    <div className="mt-2 p-3 bg-muted/30 rounded-lg text-center">
-                      <p className="text-xs font-medium text-muted-foreground mb-2">{t('settings.templatePreview')}:</p>
-                      <div className="prose prose-sm dark:prose-invert max-w-none mx-auto">
-                        <ReactMarkdown
-                          components={{
-                            a: ({ href, children }) => (
-                              <a href={href} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
-                                {children}
-                              </a>
-                            ),
-                          }}
-                        >
-                          {footerText}
-                        </ReactMarkdown>
-                      </div>
+                {/* Article Section */}
+                <div className="border-t pt-4">
+                  <p className="text-sm font-medium mb-4">{t('settings.articleSection')}</p>
+                  
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="card-title">{t('settings.sectionTitle')}</Label>
+                      <Input
+                        id="card-title"
+                        value={cardTitle}
+                        onChange={(e) => setCardTitle(e.target.value)}
+                        placeholder={t('settings.sectionTitlePlaceholder')}
+                      />
                     </div>
-                  )}
+
+                    <div className="space-y-2">
+                      <Label htmlFor="card-description">{t('settings.sectionDescription')}</Label>
+                      <Input
+                        id="card-description"
+                        value={cardDescription}
+                        onChange={(e) => setCardDescription(e.target.value)}
+                        placeholder={t('settings.sectionDescriptionPlaceholder')}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Additional Texts */}
+                <div className="border-t pt-4">
+                  <p className="text-sm font-medium mb-4">{t('settings.additionalTexts')}</p>
+                  
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="info-text">{t('settings.infoText')}</Label>
+                      <Textarea
+                        id="info-text"
+                        value={infoText}
+                        onChange={(e) => setInfoText(e.target.value)}
+                        placeholder={t('settings.infoTextPlaceholder')}
+                        rows={3}
+                      />
+                      <p className="text-xs text-muted-foreground">{t('settings.infoTextDesc')}</p>
+                      {infoText && (
+                        <div className="mt-2 p-3 bg-primary/10 border border-primary/20 rounded-lg">
+                          <p className="text-xs font-medium text-muted-foreground mb-2">{t('settings.templatePreview')}:</p>
+                          <div className="prose prose-sm dark:prose-invert max-w-none">
+                            <ReactMarkdown
+                              components={{
+                                a: ({ href, children }) => (
+                                  <a href={href} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                                    {children}
+                                  </a>
+                                ),
+                              }}
+                            >
+                              {infoText}
+                            </ReactMarkdown>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="footer-text">{t('settings.footerTextLabel')}</Label>
+                      <Textarea
+                        id="footer-text"
+                        value={footerText}
+                        onChange={(e) => setFooterText(e.target.value)}
+                        placeholder={t('settings.footerTextPlaceholder')}
+                        rows={2}
+                      />
+                      <p className="text-xs text-muted-foreground">{t('settings.footerTextDesc')}</p>
+                      {footerText && (
+                        <div className="mt-2 p-3 bg-muted/30 rounded-lg text-center">
+                          <p className="text-xs font-medium text-muted-foreground mb-2">{t('settings.templatePreview')}:</p>
+                          <div className="prose prose-sm dark:prose-invert max-w-none mx-auto">
+                            <ReactMarkdown
+                              components={{
+                                a: ({ href, children }) => (
+                                  <a href={href} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                                    {children}
+                                  </a>
+                                ),
+                              }}
+                            >
+                              {footerText}
+                            </ReactMarkdown>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Visible Columns Configuration */}
+                <div className="border-t pt-4">
+                  <PortalColumnsConfig
+                    visibleColumns={visibleColumns}
+                    onChange={setVisibleColumns}
+                  />
+                </div>
+
+                {/* Save / Reset Buttons */}
+                <div className="flex items-center gap-3 pt-4 border-t">
+                  <Button onClick={handleSave} disabled={upsertSettings.isPending}>
+                    {upsertSettings.isPending ? t('common.saving') : t('common.save')}
+                  </Button>
+                  <Button variant="outline" onClick={handleReset}>
+                    <RotateCcw className="h-4 w-4 mr-2" />
+                    {t('settings.resetToDefault')}
+                  </Button>
                 </div>
               </div>
-            </div>
-
-            {/* Visible Columns Configuration */}
-            <div className="border-t pt-4 mt-4">
-              <PortalColumnsConfig
-                visibleColumns={visibleColumns}
-                onChange={setVisibleColumns}
-              />
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3 pt-4 border-t">
-            <Button onClick={handleSave} disabled={upsertSettings.isPending}>
-              {upsertSettings.isPending ? t('common.saving') : t('common.save')}
-            </Button>
-            <Button variant="outline" onClick={handleReset}>
-              <RotateCcw className="h-4 w-4 mr-2" />
-              {t('settings.resetToDefault')}
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
+      </CardContent>
+    </Card>
   );
 };
