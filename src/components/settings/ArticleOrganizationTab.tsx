@@ -13,12 +13,13 @@ import { Search, CheckSquare, Square, Loader2, BarChart3 } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { useArticles, useBulkUpdateArticles, useUpdateArticle } from '@/hooks/useArticles';
 import { useUnits } from '@/hooks/useUnits';
-import { useSuppliers } from '@/hooks/useSuppliers';
+import { useSuppliers, useUpdateSupplier, Supplier, SupplierInput } from '@/hooks/useSuppliers';
 import { useCategories } from '@/hooks/useCategories';
 import { useOrderUnits } from '@/hooks/useOrderUnits';
 import { TOP_CATEGORIES } from '@/components/suppliers/constants';
 import { toast } from 'sonner';
 import { ArticleFormDialog } from '@/components/suppliers/ArticleFormDialog';
+import { SupplierFormDialog } from '@/components/suppliers/SupplierFormDialog';
 
 type TopCategory = typeof TOP_CATEGORIES[number];
 
@@ -57,6 +58,10 @@ export const ArticleOrganizationTab = () => {
   const [bulkPackagingValue, setBulkPackagingValue] = useState<string>('');
   const [isArticleDialogOpen, setIsArticleDialogOpen] = useState(false);
   const [editingArticle, setEditingArticle] = useState<ArticleWithTopCategory | null>(null);
+  const [isSupplierDialogOpen, setIsSupplierDialogOpen] = useState(false);
+  const [editingSupplier, setEditingSupplier] = useState<Supplier | null>(null);
+  
+  const updateSupplier = useUpdateSupplier();
 
   // Cast articles to include top_category and order_unit_id
   const articlesWithTopCategory = articles as unknown as ArticleWithTopCategory[];
@@ -562,13 +567,33 @@ export const ArticleOrganizationTab = () => {
                             >
                               {article.name}
                             </button>
-                            <p className="text-xs text-muted-foreground sm:hidden">
+                            <button
+                              onClick={() => {
+                                const supplier = suppliers.find(s => s.id === article.supplier_id);
+                                if (supplier) {
+                                  setEditingSupplier(supplier);
+                                  setIsSupplierDialogOpen(true);
+                                }
+                              }}
+                              className="text-xs text-muted-foreground sm:hidden hover:text-primary hover:underline transition-colors"
+                            >
                               {article.suppliers?.name}
-                            </p>
+                            </button>
                           </div>
                         </TableCell>
-                        <TableCell className="hidden sm:table-cell text-muted-foreground">
-                          {article.suppliers?.name}
+                        <TableCell className="hidden sm:table-cell">
+                          <button
+                            onClick={() => {
+                              const supplier = suppliers.find(s => s.id === article.supplier_id);
+                              if (supplier) {
+                                setEditingSupplier(supplier);
+                                setIsSupplierDialogOpen(true);
+                              }
+                            }}
+                            className="text-muted-foreground hover:text-primary hover:underline transition-colors"
+                          >
+                            {article.suppliers?.name}
+                          </button>
                         </TableCell>
                         <TableCell className="hidden md:table-cell text-muted-foreground">
                           {article.unit}
@@ -634,6 +659,24 @@ export const ArticleOrganizationTab = () => {
         units={units.map(u => u.name)}
         editingArticle={editingArticle as any}
         isPending={updateArticle.isPending}
+      />
+
+      {/* Supplier Edit Dialog */}
+      <SupplierFormDialog
+        open={isSupplierDialogOpen}
+        onOpenChange={(open) => {
+          setIsSupplierDialogOpen(open);
+          if (!open) setEditingSupplier(null);
+        }}
+        editingSupplier={editingSupplier}
+        onSubmit={async (data: SupplierInput) => {
+          if (editingSupplier) {
+            await updateSupplier.mutateAsync({ id: editingSupplier.id, ...data });
+          }
+          setIsSupplierDialogOpen(false);
+          setEditingSupplier(null);
+        }}
+        isPending={updateSupplier.isPending}
       />
     </div>
   );
