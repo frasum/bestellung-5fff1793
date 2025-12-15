@@ -921,6 +921,7 @@ export type Database = {
           id: string
           is_free_text_item: boolean | null
           order_id: string
+          order_unit: string | null
           quantity: number
           total_price: number
           unit: string
@@ -934,6 +935,7 @@ export type Database = {
           id?: string
           is_free_text_item?: boolean | null
           order_id: string
+          order_unit?: string | null
           quantity: number
           total_price: number
           unit: string
@@ -947,6 +949,7 @@ export type Database = {
           id?: string
           is_free_text_item?: boolean | null
           order_id?: string
+          order_unit?: string | null
           quantity?: number
           total_price?: number
           unit?: string

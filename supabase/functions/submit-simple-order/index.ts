@@ -410,7 +410,7 @@ serve(async (req) => {
         );
       }
 
-      // Create order items with order_id (exclude order_unit as it's only for email)
+      // Create order items with order_id including order_unit for display
       const orderItemsWithOrderId = orderItems.map((item: PreparedOrderItem) => ({
         order_id: order.id,
         article_id: item.article_id,
@@ -418,6 +418,7 @@ serve(async (req) => {
         quantity: item.quantity,
         unit_price: item.unit_price,
         unit: item.unit,
+        order_unit: item.order_unit || null,
         total_price: item.total_price,
         is_free_text_item: item.is_free_text_item || false,
         free_text_description: item.free_text_description || null,

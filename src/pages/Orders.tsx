@@ -832,7 +832,7 @@ const Orders = () => {
                                     <div key={item.id} className="flex items-center justify-between text-sm">
                                       <span className="text-foreground">{item.article_name}</span>
                                       <span className="text-muted-foreground">
-                                        {item.quantity} {item.unit} • €{Number(item.total_price).toFixed(2)}
+                                        {item.quantity} {item.order_unit || item.unit} • €{Number(item.total_price).toFixed(2)}
                                       </span>
                                     </div>
                                   ))}
