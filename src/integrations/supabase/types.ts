@@ -1877,6 +1877,117 @@ export type Database = {
           },
         ]
       }
+      supplier_b2b_offer_items: {
+        Row: {
+          article_id: string | null
+          article_name: string
+          created_at: string
+          id: string
+          offer_id: string
+          quantity: number
+          total_price: number
+          unit: string
+          unit_price: number
+        }
+        Insert: {
+          article_id?: string | null
+          article_name: string
+          created_at?: string
+          id?: string
+          offer_id: string
+          quantity?: number
+          total_price: number
+          unit?: string
+          unit_price: number
+        }
+        Update: {
+          article_id?: string | null
+          article_name?: string
+          created_at?: string
+          id?: string
+          offer_id?: string
+          quantity?: number
+          total_price?: number
+          unit?: string
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supplier_b2b_offer_items_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: false
+            referencedRelation: "supplier_b2b_articles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supplier_b2b_offer_items_offer_id_fkey"
+            columns: ["offer_id"]
+            isOneToOne: false
+            referencedRelation: "supplier_b2b_offers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      supplier_b2b_offers: {
+        Row: {
+          accepted_at: string | null
+          created_at: string
+          customer_id: string
+          id: string
+          notes: string | null
+          offer_number: string
+          sent_at: string | null
+          status: string
+          supplier_account_id: string
+          total_amount: number
+          updated_at: string
+          valid_until: string | null
+        }
+        Insert: {
+          accepted_at?: string | null
+          created_at?: string
+          customer_id: string
+          id?: string
+          notes?: string | null
+          offer_number?: string
+          sent_at?: string | null
+          status?: string
+          supplier_account_id: string
+          total_amount?: number
+          updated_at?: string
+          valid_until?: string | null
+        }
+        Update: {
+          accepted_at?: string | null
+          created_at?: string
+          customer_id?: string
+          id?: string
+          notes?: string | null
+          offer_number?: string
+          sent_at?: string | null
+          status?: string
+          supplier_account_id?: string
+          total_amount?: number
+          updated_at?: string
+          valid_until?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supplier_b2b_offers_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "supplier_b2b_customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supplier_b2b_offers_supplier_account_id_fkey"
+            columns: ["supplier_account_id"]
+            isOneToOne: false
+            referencedRelation: "supplier_b2b_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       supplier_b2b_order_items: {
         Row: {
           article_id: string | null
@@ -2364,6 +2475,7 @@ export type Database = {
       cleanup_old_rate_limits: { Args: never; Returns: undefined }
       cleanup_pin_verification_rate_limits: { Args: never; Returns: undefined }
       cleanup_simple_order_rate_limits: { Args: never; Returns: undefined }
+      generate_b2b_offer_number: { Args: never; Returns: string }
       generate_b2b_order_number: { Args: never; Returns: string }
       generate_order_number: { Args: never; Returns: string }
       get_b2b_customer_id: { Args: { p_user_id: string }; Returns: string }

@@ -61,7 +61,7 @@ interface B2BOrdersTabProps {
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; icon: typeof Clock }> = {
   pending: { label: 'Offen', color: 'bg-orange-500', icon: Clock },
-  confirmed: { label: 'Bestätigt', color: 'bg-blue-500', icon: Check },
+  confirmed: { label: 'Bestätigt', color: 'bg-green-500', icon: Check },
   processing: { label: 'In Bearbeitung', color: 'bg-purple-500', icon: Clock },
   shipped: { label: 'Versendet', color: 'bg-cyan-500', icon: Truck },
   delivered: { label: 'Geliefert', color: 'bg-green-500', icon: Check },
