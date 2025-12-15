@@ -330,6 +330,9 @@ export const ProfileTab = () => {
 
   return (
     <div className="space-y-4 sm:space-y-6">
+      {/* Test Mode Card - at the top for visibility */}
+      <TestModeCard />
+
       {/* Usage Dashboard */}
       <UsageDashboard />
 
@@ -368,8 +371,6 @@ export const ProfileTab = () => {
           <AdvancedToolsSection />
         </CardContent>
       </Card>
-
-      <TestModeCard />
 
       {/* Default Delivery Addresses Card - All Locations */}
       <Card>
