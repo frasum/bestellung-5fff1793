@@ -500,6 +500,8 @@
     "pdfError": "Fehler beim Erstellen des PDFs",
     "advancedSettings": "Erweiterte Einstellungen",
     "advancedSettingsDesc": "Zeigt zusätzliche Funktionen wie Export und Import an",
+    "advancedMode": "Erweitert",
+    "standardMode": "Standard",
     "testMode": "E-Mail Testmodus",
     "testModeDescription": "Im Testmodus werden alle Bestellungen an eine Test-E-Mail-Adresse gesendet, nicht an die Lieferanten",
     "testModeEnable": "Testmodus aktivieren",

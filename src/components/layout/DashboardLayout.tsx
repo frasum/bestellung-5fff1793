@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { LayoutDashboard, Users, Package, ShoppingCart, BarChart3, Settings, LogOut, Menu, X, FlaskConical, Search, Sparkles, Bell } from 'lucide-react';
+import { LayoutDashboard, Users, Package, ShoppingCart, BarChart3, Settings, LogOut, Menu, X, FlaskConical, Search, Sparkles, Bell, Settings2 } from 'lucide-react';
 import { GlobalSearch } from '@/components/GlobalSearch';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import { LocationSwitcher } from '@/components/LocationSwitcher';
@@ -21,7 +21,7 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import logoImage from '@/assets/logo.png';
-
+import { useHasRole } from '@/hooks/useUserRole';
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -49,6 +49,12 @@ export const DashboardLayout = ({
   const updateOrganization = useUpdateOrganization();
   const { data: drafts } = useCartDrafts(undefined, true);
   const openDraftsCount = drafts?.length || 0;
+  const { hasRole: isAdmin } = useHasRole(['admin']);
+  
+  // Advanced settings state
+  const [advancedSettingsEnabled, setAdvancedSettingsEnabled] = useState(() => 
+    localStorage.getItem('advanced-settings-enabled') === 'true'
+  );
   
   // Store organization ID in ref for stable access during mutations
   const organizationIdRef = useRef<string | null>(null);
@@ -58,6 +64,26 @@ export const DashboardLayout = ({
       organizationIdRef.current = organization.id;
     }
   }, [organization?.id]);
+  
+  // Sync advanced settings from other tabs
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'advanced-settings-enabled') {
+        setAdvancedSettingsEnabled(e.newValue === 'true');
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
+  
+  const handleAdvancedSettingsToggle = (checked: boolean) => {
+    setAdvancedSettingsEnabled(checked);
+    localStorage.setItem('advanced-settings-enabled', checked.toString());
+    window.dispatchEvent(new StorageEvent('storage', { 
+      key: 'advanced-settings-enabled', 
+      newValue: checked.toString() 
+    }));
+  };
   
   const handleTestModeToggle = (checked: boolean) => {
     const orgId = organization?.id || organizationIdRef.current;
@@ -155,6 +181,41 @@ export const DashboardLayout = ({
               </PopoverContent>
             </Popover>
           )}
+          {isAdmin && (
+            <Popover>
+              <PopoverTrigger asChild>
+                <Badge 
+                  variant={advancedSettingsEnabled ? "default" : "outline"}
+                  className={cn(
+                    "cursor-pointer",
+                    advancedSettingsEnabled 
+                      ? "bg-primary text-primary-foreground" 
+                      : "bg-muted/50 text-muted-foreground border-border hover:bg-muted"
+                  )}
+                >
+                  <Settings2 className="w-3 h-3 mr-1" />
+                  {advancedSettingsEnabled ? 'Erweitert' : 'Standard'}
+                </Badge>
+              </PopoverTrigger>
+              <PopoverContent className="w-64 p-3" align="end">
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="advanced-settings-toggle-mobile" className="text-sm font-medium">
+                      {t('settings.advancedSettings')}
+                    </Label>
+                    <Switch
+                      id="advanced-settings-toggle-mobile"
+                      checked={advancedSettingsEnabled}
+                      onCheckedChange={handleAdvancedSettingsToggle}
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {t('settings.advancedSettingsDesc')}
+                  </p>
+                </div>
+              </PopoverContent>
+            </Popover>
+          )}
           <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-2 text-muted-foreground hover:text-foreground">
             {sidebarOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>
@@ -214,6 +275,41 @@ export const DashboardLayout = ({
                       ? t('settings.testModeActiveDesc', { email: organization.test_email || '—' })
                       : t('settings.testModeEnabledDesc')
                     }
+                  </p>
+                </div>
+              </PopoverContent>
+            </Popover>
+          )}
+          {isAdmin && (
+            <Popover>
+              <PopoverTrigger asChild>
+                <Badge 
+                  variant={advancedSettingsEnabled ? "default" : "outline"}
+                  className={cn(
+                    "cursor-pointer",
+                    advancedSettingsEnabled 
+                      ? "bg-primary text-primary-foreground" 
+                      : "bg-muted/50 text-muted-foreground border-border hover:bg-muted"
+                  )}
+                >
+                  <Settings2 className="w-3 h-3 mr-1" />
+                  {advancedSettingsEnabled ? t('settings.advancedMode') : t('settings.standardMode')}
+                </Badge>
+              </PopoverTrigger>
+              <PopoverContent className="w-72 p-3" align="end">
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="advanced-settings-toggle-desktop" className="text-sm font-medium">
+                      {t('settings.advancedSettings')}
+                    </Label>
+                    <Switch
+                      id="advanced-settings-toggle-desktop"
+                      checked={advancedSettingsEnabled}
+                      onCheckedChange={handleAdvancedSettingsToggle}
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {t('settings.advancedSettingsDesc')}
                   </p>
                 </div>
               </PopoverContent>

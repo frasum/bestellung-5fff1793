@@ -489,6 +489,8 @@
     "pdfError": "Lỗi khi tạo PDF",
     "advancedSettings": "Cài đặt nâng cao",
     "advancedSettingsDesc": "Hiển thị các tính năng bổ sung như xuất và nhập",
+    "advancedMode": "Nâng cao",
+    "standardMode": "Tiêu chuẩn",
     "testMode": "Chế độ thử nghiệm email",
     "testModeDescription": "Trong chế độ thử nghiệm, tất cả đơn hàng được gửi đến địa chỉ email thử nghiệm, không phải nhà cung cấp",
     "testModeEnable": "Bật chế độ thử nghiệm",
