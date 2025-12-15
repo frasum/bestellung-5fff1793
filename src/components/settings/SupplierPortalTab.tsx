@@ -429,16 +429,8 @@ export const SupplierPortalTab = () => {
           </AccordionItem>
         </Accordion>
 
-        {/* Save/Reset Buttons - outside accordions */}
-        <div className="flex justify-end gap-2 p-4 border-t bg-muted/30">
-          <Button
-            variant="outline"
-            onClick={handleReset}
-            disabled={upsertSettings.isPending}
-          >
-            <RotateCcw className="h-4 w-4 mr-2" />
-            {t('common.reset')}
-          </Button>
+        {/* Save Button - outside accordions */}
+        <div className="flex justify-end p-4 border-t bg-muted/30">
           <Button
             onClick={handleSave}
             disabled={upsertSettings.isPending}
