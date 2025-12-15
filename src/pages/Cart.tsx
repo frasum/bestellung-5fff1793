@@ -249,7 +249,6 @@ const Cart = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">{t('cart.itemCount', { count: items.length + freeItems.length })}</p>
-                  <p className="text-xl font-bold text-foreground">€{getTotal().toFixed(2)}</p>
                 </div>
                 <div className="flex gap-2">
                   <Button 
@@ -287,9 +286,6 @@ const Cart = () => {
                     <div className="bg-muted/30 px-4 md:px-5 xl:px-6 py-3 md:py-4 border-b border-border flex items-center justify-between gap-2">
                       <div className="flex items-center gap-2 flex-1 min-w-0">
                         <h3 className="font-semibold text-foreground text-sm md:text-base truncate">{name}</h3>
-                        <span className="text-xs md:text-sm text-muted-foreground shrink-0">
-                          €{total.toFixed(2)}
-                        </span>
                       </div>
                       <Button
                         variant="outline"
@@ -397,7 +393,7 @@ const Cart = () => {
                               <div className="flex-1 min-w-0">
                                 <h4 className="font-medium text-foreground text-sm md:text-base">{item.article.name}</h4>
                                 <p className="text-xs md:text-sm text-muted-foreground mt-0.5">
-                                  €{Number(item.article.price).toFixed(2)} / {formatOrderUnit(item.article.order_unit_id, item.article.unit)}
+                                  {formatOrderUnit(item.article.order_unit_id, item.article.unit)}
                                 </p>
                               </div>
                               <Button
@@ -435,9 +431,6 @@ const Cart = () => {
                                   <Plus className="w-4 h-4" />
                                 </Button>
                               </div>
-                              <p className="font-semibold text-foreground text-sm md:text-base">
-                                €{(Number(item.article.price) * item.quantity).toFixed(2)}
-                              </p>
                             </div>
                           </div>
                         ))}
@@ -451,7 +444,7 @@ const Cart = () => {
                           <div className="flex-1 min-w-0">
                             <h4 className="font-medium text-foreground truncate">{item.article.name}</h4>
                             <p className="text-sm text-muted-foreground">
-                              €{Number(item.article.price).toFixed(2)} / {formatOrderUnit(item.article.order_unit_id, item.article.unit)}
+                              {formatOrderUnit(item.article.order_unit_id, item.article.unit)}
                             </p>
                           </div>
                           <div className="flex items-center gap-2">
@@ -479,11 +472,6 @@ const Cart = () => {
                               <Plus className="w-3 h-3" />
                             </Button>
                           </div>
-                          <div className="text-right min-w-[80px]">
-                            <p className="font-semibold text-foreground">
-                              €{(Number(item.article.price) * item.quantity).toFixed(2)}
-                            </p>
-                          </div>
                           <Button
                             size="icon"
                             variant="ghost"
@@ -504,16 +492,11 @@ const Cart = () => {
                 <div className="bg-card border border-border rounded-md p-6 sticky top-6">
                   <h3 className="text-lg font-semibold text-foreground mb-4">{t('checkout.orderSummary')}</h3>
                   <div className="space-y-3 mb-6">
-                    {supplierTotals.map(({ supplierId, name, total }) => (
+                    {supplierTotals.map(({ supplierId, name }) => (
                       <div key={supplierId} className="flex justify-between text-sm">
                         <span className="text-muted-foreground">{name}</span>
-                        <span className="text-foreground">€{total.toFixed(2)}</span>
                       </div>
                     ))}
-                    <div className="border-t border-border pt-3 flex justify-between">
-                      <span className="font-semibold text-foreground">{t('common.total')}</span>
-                      <span className="font-bold text-xl text-foreground">€{getTotal().toFixed(2)}</span>
-                    </div>
                   </div>
                   {hasMinimumOrderWarning && (
                     <Alert variant="destructive" className="mb-4">
