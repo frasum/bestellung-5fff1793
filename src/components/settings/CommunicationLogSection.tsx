@@ -7,8 +7,9 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { Mail, Package, UserPlus, ClipboardList, CheckCircle, AlertCircle, Clock, ChevronDown } from 'lucide-react';
+import { Mail, Package, UserPlus, ClipboardList, CheckCircle, AlertCircle, Clock, ChevronDown, Eye } from 'lucide-react';
 import i18next from 'i18next';
+import { CommunicationLogPreviewDialog } from './CommunicationLogPreviewDialog';
 
 const localeMap: Record<string, Locale> = {
   de: de,
@@ -76,6 +77,8 @@ export function CommunicationLogSection() {
   const { data: logs, isLoading } = useCommunicationLogs(filter);
   const currentLocale = localeMap[i18next.language] || de;
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
+  const [selectedLog, setSelectedLog] = useState<CommunicationLog | null>(null);
+  const [previewOpen, setPreviewOpen] = useState(false);
 
   // Group logs by date
   const groupedLogs = useMemo(() => {
@@ -190,7 +193,11 @@ export function CommunicationLogSection() {
                     {logsForDate.map((log) => (
                       <div 
                         key={log.id} 
-                        className="flex items-center gap-3 px-4 py-2.5 hover:bg-muted/30 transition-colors"
+                        className="flex items-center gap-3 px-4 py-2.5 hover:bg-muted/30 transition-colors cursor-pointer group"
+                        onClick={() => {
+                          setSelectedLog(log);
+                          setPreviewOpen(true);
+                        }}
                       >
                         {/* Time */}
                         <span className="text-sm text-muted-foreground font-mono w-12 shrink-0">
@@ -221,6 +228,9 @@ export function CommunicationLogSection() {
                         <div className="shrink-0">
                           {getStatusDisplay(log)}
                         </div>
+
+                        {/* Preview Icon */}
+                        <Eye className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
                       </div>
                     ))}
                   </div>
@@ -235,6 +245,12 @@ export function CommunicationLogSection() {
           <p className="text-muted-foreground">{t('settings.communicationLog.noLogs')}</p>
         </div>
       )}
+
+      <CommunicationLogPreviewDialog
+        log={selectedLog}
+        open={previewOpen}
+        onOpenChange={setPreviewOpen}
+      />
     </div>
   );
 }

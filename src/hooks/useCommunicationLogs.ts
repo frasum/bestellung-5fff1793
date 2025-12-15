@@ -16,6 +16,7 @@ export interface CommunicationLog {
   error_message: string | null;
   created_at: string;
   confirmed_at: string | null;
+  body_html: string | null;
 }
 
 export function useCommunicationLogs(filter?: string) {

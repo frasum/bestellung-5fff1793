@@ -461,6 +461,16 @@
         "confirmed": "Confirmed",
         "pending": "Pending",
         "failed": "Failed"
+      },
+      "preview": {
+        "title": "Email Preview",
+        "to": "To",
+        "from": "From",
+        "subject": "Subject",
+        "date": "Date",
+        "status": "Status",
+        "noContent": "Email content not available",
+        "noContentHint": "Only stored for newer emails."
       }
     },
     "demoAccounts": "Demo Accounts",

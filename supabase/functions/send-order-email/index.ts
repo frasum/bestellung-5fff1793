@@ -546,7 +546,7 @@ serve(async (req) => {
       console.error("Error updating order email status:", updateError);
     }
 
-    // Log to communication_logs
+    // Log to communication_logs with body_html
     if (order?.organization_id) {
       const { error: logError } = await supabaseClient
         .from("communication_logs")
@@ -559,6 +559,7 @@ serve(async (req) => {
           subject: subject,
           order_id: data.orderId,
           status: 'sent',
+          body_html: emailHtml,
         });
 
       if (logError) {

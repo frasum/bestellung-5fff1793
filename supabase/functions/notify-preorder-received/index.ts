@@ -270,6 +270,7 @@ ${items.map(item => `- ${item.article_name}: ${item.quantity}`).join('\n')}
           recipient_name: isTestMode ? `[TEST] Original: ${originalRecipients}` : null,
           subject: subject,
           status: 'sent',
+          body_html: htmlContent,
         });
 
       if (logError) {
