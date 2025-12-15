@@ -39,6 +39,7 @@ const WineCatalog = lazy(() => import("./pages/WineCatalog"));
 const B2BSupplierLogin = lazy(() => import("./pages/B2BSupplierLogin"));
 const B2BSupplierDashboard = lazy(() => import("./pages/B2BSupplierDashboard"));
 const B2BAcceptInvitation = lazy(() => import("./pages/B2BAcceptInvitation"));
+const B2BCustomerPortal = lazy(() => import("./pages/B2BCustomerPortal"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient();
@@ -98,7 +99,7 @@ const AppContent = () => {
           <Route path="/b2b/login" element={<B2BSupplierLogin />} />
           <Route path="/b2b/dashboard" element={<B2BSupplierDashboard />} />
           <Route path="/b2b/accept-invitation" element={<B2BAcceptInvitation />} />
-          <Route path="/b2b/portal" element={<NotFound />} /> {/* TODO: B2B Customer Portal */}
+          <Route path="/b2b/portal" element={<B2BCustomerPortal />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
