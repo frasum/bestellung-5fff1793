@@ -1,12 +1,19 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { toast } from 'sonner';
-import { Palette, Building2, ExternalLink, Copy, Check } from 'lucide-react';
+import { Palette, Building2, ExternalLink, Copy, Check, Link2 } from 'lucide-react';
 
 interface B2BAccount {
   id: string;
@@ -19,6 +26,12 @@ interface B2BAccount {
   welcome_message: string | null;
   subscription_tier: string;
   is_active: boolean;
+  linked_supplier_id: string | null;
+}
+
+interface Supplier {
+  id: string;
+  name: string;
 }
 
 interface B2BSettingsTabProps {
@@ -32,9 +45,40 @@ const B2BSettingsTab = ({ account, onUpdate }: B2BSettingsTabProps) => {
   const [primaryColor, setPrimaryColor] = useState(account.primary_color);
   const [secondaryColor, setSecondaryColor] = useState(account.secondary_color);
   const [welcomeMessage, setWelcomeMessage] = useState(account.welcome_message || '');
+  const [linkedSupplierId, setLinkedSupplierId] = useState(account.linked_supplier_id || '');
+  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [copied, setCopied] = useState(false);
 
   const portalUrl = `${window.location.origin}/b2b/portal/${account.subdomain}`;
+
+  useEffect(() => {
+    loadSuppliers();
+  }, []);
+
+  const loadSuppliers = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('organization_id')
+        .eq('id', user.id)
+        .single();
+
+      if (profile?.organization_id) {
+        const { data: suppliersData } = await supabase
+          .from('suppliers')
+          .select('id, name')
+          .eq('organization_id', profile.organization_id)
+          .order('name');
+
+        setSuppliers(suppliersData || []);
+      }
+    } catch (error) {
+      console.error('Error loading suppliers:', error);
+    }
+  };
 
   const handleSave = async () => {
     setLoading(true);
@@ -47,6 +91,7 @@ const B2BSettingsTab = ({ account, onUpdate }: B2BSettingsTabProps) => {
           primary_color: primaryColor,
           secondary_color: secondaryColor,
           welcome_message: welcomeMessage || null,
+          linked_supplier_id: linkedSupplierId || null,
         })
         .eq('id', account.id);
 
@@ -71,6 +116,42 @@ const B2BSettingsTab = ({ account, onUpdate }: B2BSettingsTabProps) => {
 
   return (
     <div className="space-y-6">
+      {/* Supplier Linking */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Link2 className="h-5 w-5" />
+            Bestellung.pro Verknüpfung
+          </CardTitle>
+          <CardDescription>
+            Verknüpfen Sie Ihren Bestellung.pro Lieferanten, um Artikel zu importieren
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-2">
+            <Label htmlFor="linkedSupplier">Verknüpfter Lieferant</Label>
+            <Select value={linkedSupplierId} onValueChange={setLinkedSupplierId}>
+              <SelectTrigger>
+                <SelectValue placeholder="Lieferant auswählen..." />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">Keine Verknüpfung</SelectItem>
+                {suppliers.map(supplier => (
+                  <SelectItem key={supplier.id} value={supplier.id}>
+                    {supplier.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-sm text-muted-foreground">
+              {linkedSupplierId 
+                ? 'Sie können jetzt Artikel aus Ihrem Bestellung.pro Katalog importieren.'
+                : 'Wählen Sie einen Lieferanten, um Artikel zu importieren.'}
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Portal URL */}
       <Card>
         <CardHeader>

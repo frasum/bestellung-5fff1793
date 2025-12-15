@@ -12,6 +12,7 @@ import {
   Trash2,
   Package,
   MoreVertical,
+  Download,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -30,6 +31,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import B2BArticleFormDialog from './B2BArticleFormDialog';
+import B2BArticleImportDialog from './B2BArticleImportDialog';
 
 interface B2BArticle {
   id: string;
@@ -46,10 +48,11 @@ interface B2BArticle {
 
 interface B2BArticlesTabProps {
   accountId: string;
+  linkedSupplierId: string | null;
   onStatsChange: () => void;
 }
 
-const B2BArticlesTab = ({ accountId, onStatsChange }: B2BArticlesTabProps) => {
+const B2BArticlesTab = ({ accountId, linkedSupplierId, onStatsChange }: B2BArticlesTabProps) => {
   const [articles, setArticles] = useState<B2BArticle[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -57,6 +60,7 @@ const B2BArticlesTab = ({ accountId, onStatsChange }: B2BArticlesTabProps) => {
   const [editingArticle, setEditingArticle] = useState<B2BArticle | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [articleToDelete, setArticleToDelete] = useState<B2BArticle | null>(null);
+  const [importDialogOpen, setImportDialogOpen] = useState(false);
 
   useEffect(() => {
     loadArticles();
@@ -124,10 +128,16 @@ const B2BArticlesTab = ({ accountId, onStatsChange }: B2BArticlesTabProps) => {
             className="pl-10"
           />
         </div>
-        <Button onClick={() => { setEditingArticle(null); setDialogOpen(true); }}>
-          <Plus className="h-4 w-4 mr-2" />
-          Artikel hinzufügen
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setImportDialogOpen(true)}>
+            <Download className="h-4 w-4 mr-2" />
+            Von Bestellung.pro importieren
+          </Button>
+          <Button onClick={() => { setEditingArticle(null); setDialogOpen(true); }}>
+            <Plus className="h-4 w-4 mr-2" />
+            Artikel hinzufügen
+          </Button>
+        </div>
       </div>
 
       {/* Articles Grid */}
@@ -237,6 +247,17 @@ const B2BArticlesTab = ({ accountId, onStatsChange }: B2BArticlesTabProps) => {
         }}
       />
 
+      {/* Import Dialog */}
+      <B2BArticleImportDialog
+        open={importDialogOpen}
+        onOpenChange={setImportDialogOpen}
+        accountId={accountId}
+        linkedSupplierId={linkedSupplierId}
+        onSuccess={() => {
+          loadArticles();
+          onStatsChange();
+        }}
+      />
       {/* Delete Confirmation */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>

@@ -36,6 +36,7 @@ interface B2BAccount {
   welcome_message: string | null;
   subscription_tier: string;
   is_active: boolean;
+  linked_supplier_id: string | null;
 }
 
 interface DashboardStats {
@@ -315,7 +316,7 @@ const B2BSupplierDashboard = () => {
 
           {/* Articles Tab */}
           <TabsContent value="articles">
-            <B2BArticlesTab accountId={account.id} onStatsChange={() => loadStats(account.id)} />
+            <B2BArticlesTab accountId={account.id} linkedSupplierId={account.linked_supplier_id} onStatsChange={() => loadStats(account.id)} />
           </TabsContent>
 
           {/* Customers Tab */}
