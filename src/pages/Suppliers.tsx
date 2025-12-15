@@ -196,6 +196,22 @@ const Suppliers = () => {
     setInvitingSupplierId(null);
   };
 
+  const handleOpenPortal = async (supplier: Supplier) => {
+    try {
+      const { data, error } = await supabase.functions.invoke('create-supplier-portal-token', {
+        body: { supplierId: supplier.id }
+      });
+      
+      if (error) throw error;
+      
+      window.open(data.portalUrl, '_blank');
+    } catch (error: any) {
+      console.error('Error opening portal:', error);
+      const { toast } = await import('sonner');
+      toast.error('Fehler beim Öffnen des Portals: ' + error.message);
+    }
+  };
+
   // Extract article categories for supplier filter
   const articleCategoriesForSupplierFilter = [...new Set(allArticles?.map(a => a.category).filter(Boolean) as string[])].sort();
 
@@ -667,6 +683,7 @@ const Suppliers = () => {
                 pendingChangesBySupplier={pendingChangesBySupplier || {}}
                 pendingArticleIds={pendingArticleIds || new Set()}
                 recentlyActiveSuppliers={recentlyActiveSuppliers || new Map()}
+                advancedSettingsEnabled={advancedSettingsEnabled}
                 onToggleExpand={toggleSupplierExpanded}
                 onToggleSelect={toggleSupplierSelected}
                 onSelectAll={selectAllSuppliers}
@@ -674,6 +691,7 @@ const Suppliers = () => {
                 onDelete={setDeletingSupplier}
                 onSendInvitation={handleSendInvitation}
                 onShowQRCode={setQrCodeSupplier}
+                onOpenPortal={handleOpenPortal}
                 onShowChanges={setChangesDialogSupplier}
                 onShowLocations={setLocationsDialogSupplier}
                 onPrintOrderList={async (supplier, articles) => await generateOrderListPdf(supplier, articles.map(a => ({
