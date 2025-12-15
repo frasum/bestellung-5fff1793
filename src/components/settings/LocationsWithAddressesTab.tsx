@@ -48,6 +48,7 @@ const LocationFormDialog = ({
   // Location fields
   const [name, setName] = useState('');
   const [shortCode, setShortCode] = useState('');
+  const [email, setEmail] = useState('');
   const [isDefault, setIsDefault] = useState(false);
   
   // Address fields
@@ -66,10 +67,12 @@ const LocationFormDialog = ({
       if (location) {
         setName(location.name);
         setShortCode(location.short_code || '');
+        setEmail(location.email || '');
         setIsDefault(location.is_default);
       } else {
         setName('');
         setShortCode('');
+        setEmail('');
         setIsDefault(false);
       }
       setShowAdditionalAddresses(false);
@@ -111,6 +114,7 @@ const LocationFormDialog = ({
         id: location.id,
         name: name.trim(),
         short_code: shortCode.trim() || undefined,
+        email: email.trim() || undefined,
         is_default: isDefault,
       });
 
@@ -145,6 +149,7 @@ const LocationFormDialog = ({
       createLocation.mutate({
         name: name.trim(),
         short_code: shortCode.trim() || undefined,
+        email: email.trim() || undefined,
         is_default: isDefault,
       }, {
         onSuccess: (newLocation) => {
@@ -211,6 +216,17 @@ const LocationFormDialog = ({
                 id="is-default"
                 checked={isDefault}
                 onCheckedChange={setIsDefault}
+              />
+            </div>
+            
+            <div className="space-y-1.5">
+              <Label htmlFor="location-email" className="text-sm">{t('settings.locationEmail')}</Label>
+              <Input
+                id="location-email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder={t('settings.locationEmailPlaceholder')}
               />
             </div>
           </div>

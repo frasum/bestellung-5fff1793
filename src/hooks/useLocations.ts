@@ -7,6 +7,7 @@ export interface Location {
   organization_id: string;
   name: string;
   short_code: string | null;
+  email: string | null;
   is_default: boolean;
   created_at: string;
   updated_at: string;
@@ -15,6 +16,7 @@ export interface Location {
 export interface LocationInput {
   name: string;
   short_code?: string;
+  email?: string;
   is_default?: boolean;
 }
 
