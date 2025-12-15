@@ -156,6 +156,17 @@ export const useCreateOrder = () => {
         console.error('Failed to create confirmation token:', tokenError);
       }
 
+      // Load order units for formatting BEFORE using formatOrderUnit
+      const { data: orderUnits } = await supabase
+        .from('order_units')
+        .select('id, name, quantity');
+
+      const formatOrderUnit = (orderUnitId: string | null | undefined) => {
+        if (!orderUnitId || !orderUnits) return undefined;
+        const unit = orderUnits.find(u => u.id === orderUnitId);
+        return unit ? unit.name : undefined;
+      };
+
       // Create order items (regular articles)
       const orderItems = input.items.map((item) => ({
         order_id: order.id,
@@ -189,17 +200,6 @@ export const useCreateOrder = () => {
         .insert(allOrderItems);
 
       if (itemsError) throw itemsError;
-
-      // Load order units for formatting
-      const { data: orderUnits } = await supabase
-        .from('order_units')
-        .select('id, name, quantity');
-
-      const formatOrderUnit = (orderUnitId: string | null | undefined) => {
-        if (!orderUnitId || !orderUnits) return undefined;
-        const unit = orderUnits.find(u => u.id === orderUnitId);
-        return unit ? unit.name : undefined;
-      };
 
       // Send email notification to supplier
       try {
