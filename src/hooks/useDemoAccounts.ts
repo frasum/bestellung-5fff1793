@@ -128,105 +128,12 @@ export function useDeleteDemoAccount() {
 
   return useMutation({
     mutationFn: async (organizationId: string) => {
-      // Delete in order due to foreign key constraints
-      
-      // 1. Delete order items and confirmation tokens via orders
-      const { data: orders } = await supabase
-        .from('orders')
-        .select('id')
-        .eq('organization_id', organizationId);
-      
-      if (orders && orders.length > 0) {
-        const orderIds = orders.map(o => o.id);
-        await supabase.from('order_items').delete().in('order_id', orderIds);
-        await supabase.from('order_confirmation_tokens').delete().in('order_id', orderIds);
-      }
-      await supabase.from('orders').delete().eq('organization_id', organizationId);
-
-      // 2. Delete cart draft items before cart drafts
-      const { data: drafts } = await supabase
-        .from('cart_drafts')
-        .select('id')
-        .eq('organization_id', organizationId);
-      
-      if (drafts && drafts.length > 0) {
-        const draftIds = drafts.map(d => d.id);
-        await supabase.from('cart_draft_items').delete().in('draft_id', draftIds);
-      }
-      await supabase.from('cart_drafts').delete().eq('organization_id', organizationId);
-
-      // 3. Delete supplier-related data before suppliers
-      const { data: suppliers } = await supabase
-        .from('suppliers')
-        .select('id')
-        .eq('organization_id', organizationId);
-      
-      if (suppliers && suppliers.length > 0) {
-        const supplierIds = suppliers.map(s => s.id);
-        await supabase.from('supplier_locations').delete().in('supplier_id', supplierIds);
-        await supabase.from('supplier_portal_tokens').delete().in('supplier_id', supplierIds);
-        await supabase.from('magic_link_rate_limits').delete().in('supplier_id', supplierIds);
-        await supabase.from('suggested_articles').delete().in('supplier_id', supplierIds);
-        await supabase.from('supplier_article_changes').delete().in('supplier_id', supplierIds);
-      }
-      
-      // 4. Delete articles before suppliers (articles reference suppliers)
-      await supabase.from('articles').delete().eq('organization_id', organizationId);
-      await supabase.from('suppliers').delete().eq('organization_id', organizationId);
-      
-      // 5. Delete other organization data
-      await supabase.from('categories').delete().eq('organization_id', organizationId);
-      await supabase.from('units').delete().eq('organization_id', organizationId);
-      await supabase.from('order_units').delete().eq('organization_id', organizationId);
-      await supabase.from('inventory_sessions').delete().eq('organization_id', organizationId);
-      await supabase.from('simple_order_tokens').delete().eq('organization_id', organizationId);
-      await supabase.from('photo_capture_tokens').delete().eq('organization_id', organizationId);
-      
-      // 6. Delete locations and delivery addresses
-      await supabase.from('delivery_addresses').delete().eq('organization_id', organizationId);
-      await supabase.from('locations').delete().eq('organization_id', organizationId);
-      
-      // 7. Delete email templates and portal settings
-      await supabase.from('email_templates').delete().eq('organization_id', organizationId);
-      await supabase.from('supplier_portal_settings').delete().eq('organization_id', organizationId);
-      
-      // 8. Delete employees and their related data
-      const { data: employees } = await supabase
-        .from('employees')
-        .select('id')
-        .eq('organization_id', organizationId);
-      
-      if (employees && employees.length > 0) {
-        const employeeIds = employees.map(e => e.id);
-        await supabase.from('employee_locations').delete().in('employee_id', employeeIds);
-        await supabase.from('employee_location_suppliers').delete().in('employee_id', employeeIds);
-        await supabase.from('employee_article_favorites').delete().in('employee_id', employeeIds);
-      }
-      await supabase.from('employees').delete().eq('organization_id', organizationId);
-      
-      // 9. Delete user roles and notification preferences for profiles in this org
-      const { data: profiles } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('organization_id', organizationId);
-      
-      if (profiles && profiles.length > 0) {
-        const userIds = profiles.map(p => p.id);
-        await supabase.from('user_roles').delete().in('user_id', userIds);
-        await supabase.from('notification_preferences').delete().in('user_id', userIds);
-        await supabase.from('user_delivery_preferences').delete().in('user_id', userIds);
-      }
-
-      // 10. Delete profiles
-      await supabase.from('profiles').delete().eq('organization_id', organizationId);
-
-      // 11. Finally delete organization
-      const { error } = await supabase
-        .from('organizations')
-        .delete()
-        .eq('id', organizationId);
+      const { data, error } = await supabase.functions.invoke('delete-demo-organization', {
+        body: { organizationId },
+      });
 
       if (error) throw error;
+      if (data?.error) throw new Error(data.error);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['demo-accounts'] });

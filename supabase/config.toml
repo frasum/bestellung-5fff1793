@@ -110,3 +110,6 @@ verify_jwt = true
 
 [functions.create-supplier-portal-token]
 verify_jwt = true
+
+[functions.delete-demo-organization]
+verify_jwt = true
