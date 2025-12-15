@@ -666,15 +666,9 @@ export const ArticleOrganizationTab = () => {
                           {formatCurrency(article.price)}
                         </TableCell>
                         <TableCell className="text-right">
-                          {hasMultiplier ? (
-                            <span className="font-medium text-primary">
-                              {formatCurrency(bePrice)}
-                            </span>
-                          ) : (
-                            <span className="text-muted-foreground">
-                              {formatCurrency(article.price)}
-                            </span>
-                          )}
+                          <span className={hasMultiplier ? "font-medium text-primary" : "text-primary"}>
+                            {formatCurrency(bePrice)}
+                          </span>
                         </TableCell>
                       </TableRow>
                     );
