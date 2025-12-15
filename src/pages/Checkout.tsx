@@ -671,6 +671,7 @@ const Checkout = () => {
                               min="1"
                               value={item.quantity}
                               onChange={(e) => updateQuantity(item.article.id, parseInt(e.target.value) || 1)}
+                              onFocus={(e) => e.target.select()}
                               className="w-14 md:w-16 h-10 md:h-12 text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                             />
                             <Button
@@ -750,6 +751,7 @@ const Checkout = () => {
                             min="1"
                             value={item.quantity}
                             onChange={(e) => updateQuantity(item.article.id, parseInt(e.target.value) || 1)}
+                            onFocus={(e) => e.target.select()}
                             className="w-16 h-8 text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                           />
                           <Button

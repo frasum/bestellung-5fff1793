@@ -102,7 +102,7 @@ export const SupplierFormDialog = ({
           </div>
           <div className="space-y-2">
             <Label htmlFor="minimum_order_value">Mindestbestellwert (€)</Label>
-            <Input id="minimum_order_value" type="number" step="0.01" min="0" {...form.register('minimum_order_value')} placeholder="50.00" />
+            <Input id="minimum_order_value" type="number" step="0.01" min="0" {...form.register('minimum_order_value')} placeholder="50.00" onFocus={(e) => e.target.select()} />
           </div>
           
           {editingSupplier && onImportArticles && (

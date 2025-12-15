@@ -366,6 +366,7 @@ const Cart = () => {
                                   min="1"
                                   value={freeItem.quantity}
                                   onChange={(e) => updateFreeItemQuantity(freeItem.id, parseInt(e.target.value) || 1)}
+                                  onFocus={(e) => e.target.select()}
                                   className="w-14 md:w-16 text-center h-9 md:h-11"
                                 />
                                 <Button
@@ -420,6 +421,7 @@ const Cart = () => {
                                   min="1"
                                   value={item.quantity}
                                   onChange={(e) => updateQuantity(item.article.id, parseInt(e.target.value) || 1)}
+                                  onFocus={(e) => e.target.select()}
                                   className="w-14 md:w-16 text-center h-9 md:h-11"
                                 />
                                 <Button
@@ -461,6 +463,7 @@ const Cart = () => {
                               min="1"
                               value={item.quantity}
                               onChange={(e) => updateQuantity(item.article.id, parseInt(e.target.value) || 1)}
+                              onFocus={(e) => e.target.select()}
                               className="w-16 text-center h-8"
                             />
                             <Button

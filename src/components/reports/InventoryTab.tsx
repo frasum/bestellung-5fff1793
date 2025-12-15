@@ -925,6 +925,7 @@ export const InventoryTab = () => {
                                         onChange={(e) =>
                                           handleItemChange(article.id, 'storage_1', e.target.value)
                                         }
+                                        onFocus={(e) => e.target.select()}
                                         className="h-11 text-center text-base [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                         placeholder="0"
                                       />
@@ -940,6 +941,7 @@ export const InventoryTab = () => {
                                         onChange={(e) =>
                                           handleItemChange(article.id, 'storage_2', e.target.value)
                                         }
+                                        onFocus={(e) => e.target.select()}
                                         className="h-11 text-center text-base [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                         placeholder="0"
                                       />
@@ -993,6 +995,7 @@ export const InventoryTab = () => {
                                           onChange={(e) =>
                                             handleItemChange(article.id, 'storage_1', e.target.value)
                                           }
+                                          onFocus={(e) => e.target.select()}
                                           className="w-full text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                           placeholder="0"
                                         />
@@ -1006,6 +1009,7 @@ export const InventoryTab = () => {
                                           onChange={(e) =>
                                             handleItemChange(article.id, 'storage_2', e.target.value)
                                           }
+                                          onFocus={(e) => e.target.select()}
                                           className="w-full text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                           placeholder="0"
                                         />

@@ -385,7 +385,7 @@ export const ArticleFormDialog = ({
             </div>
             <div className="space-y-2">
               <Label htmlFor="article-price">Preis (€) *</Label>
-              <Input id="article-price" type="number" step="0.01" {...form.register('price')} placeholder="4.50" />
+              <Input id="article-price" type="number" step="0.01" {...form.register('price')} placeholder="4.50" onFocus={(e) => e.target.select()} />
               {form.formState.errors.price && (
                 <p className="text-sm text-destructive">{form.formState.errors.price.message}</p>
               )}
@@ -404,6 +404,7 @@ export const ArticleFormDialog = ({
                 min="1"
                 {...form.register('packaging_unit')} 
                 placeholder="z.B. 6" 
+                onFocus={(e) => e.target.select()}
               />
               <p className="text-xs text-muted-foreground">
                 Wie viele {form.watch('unit') || 'Stück'} pro Bestelleinheit?
@@ -479,6 +480,7 @@ export const ArticleFormDialog = ({
                                   className="h-9"
                                   value={customOrderQuantity}
                                   onChange={(e) => setCustomOrderQuantity(e.target.value)}
+                                  onFocus={(e) => e.target.select()}
                                 />
                                 {customOrderQuantity && (
                                   <div className="space-y-2 pt-2 border-t">
@@ -621,6 +623,7 @@ export const ArticleFormDialog = ({
                   step="0.01"
                   {...form.register('selling_price')} 
                   placeholder="z.B. 42.00"
+                  onFocus={(e) => e.target.select()}
                   className={cn(
                     editingArticle && !form.watch('selling_price') && 
                     'border-orange-400 bg-orange-50/50 dark:bg-orange-950/20'

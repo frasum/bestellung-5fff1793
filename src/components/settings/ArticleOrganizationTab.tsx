@@ -528,6 +528,7 @@ export const ArticleOrganizationTab = () => {
                 className="h-8 w-20"
                 value={bulkPackagingValue}
                 onChange={(e) => setBulkPackagingValue(e.target.value)}
+                onFocus={(e) => e.target.select()}
               />
               <Button
                 variant="secondary"
@@ -671,6 +672,7 @@ export const ArticleOrganizationTab = () => {
                             className="h-8 w-16 text-center"
                             value={article.packaging_unit || ''}
                             placeholder="1"
+                            onFocus={(e) => e.target.select()}
                             onChange={(e) => {
                               const val = e.target.value ? Number(e.target.value) : null;
                               handleInlineUpdate(article.id, 'packaging_unit', val);
@@ -685,6 +687,7 @@ export const ArticleOrganizationTab = () => {
                             className="h-8 w-20 text-right"
                             value={article.price || ''}
                             placeholder="0.00"
+                            onFocus={(e) => e.target.select()}
                             onChange={(e) => {
                               const val = e.target.value ? Number(e.target.value) : 0;
                               handleInlineUpdate(article.id, 'price', val);
