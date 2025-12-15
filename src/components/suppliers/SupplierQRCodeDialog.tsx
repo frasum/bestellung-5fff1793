@@ -31,7 +31,7 @@ export const SupplierQRCodeDialog = ({ supplier, open, onOpenChange }: SupplierQ
 
       if (error) throw error;
 
-      const url = `${window.location.origin}/supplier-auth?token=${data.token}`;
+      const url = data.portalUrl;
       setPortalUrl(url);
       setExpiresAt(data.expiresAt);
 

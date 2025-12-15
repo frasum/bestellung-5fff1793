@@ -93,12 +93,16 @@ serve(async (req) => {
       );
     }
 
-    console.log('Created supplier portal token for supplier:', supplierId);
+    const appUrl = Deno.env.get('APP_URL') || 'https://bestellung.pro';
+    const portalUrl = `${appUrl}/supplier-auth?token=${tokenData.token}`;
+
+    console.log('Created supplier portal token for supplier:', supplierId, 'portalUrl:', portalUrl);
 
     return new Response(
       JSON.stringify({
         token: tokenData.token,
         expiresAt: tokenData.expires_at,
+        portalUrl: portalUrl,
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
