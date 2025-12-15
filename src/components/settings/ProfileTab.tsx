@@ -365,7 +365,6 @@ export const ProfileTab = () => {
             {updateProfile.isPending ? t('settings.savingProfile') : t('settings.saveProfile')}
           </Button>
 
-          <AdvancedSettingsSwitch />
           <AdvancedToolsSection />
         </CardContent>
       </Card>

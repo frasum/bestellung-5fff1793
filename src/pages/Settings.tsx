@@ -11,6 +11,8 @@ import { OrganizationTab } from '@/components/settings/OrganizationTab';
 import { NotificationsTab } from '@/components/settings/NotificationsTab';
 import { EmailTemplateTab } from '@/components/settings/EmailTemplateTab';
 import { SupplierPortalTab } from '@/components/settings/SupplierPortalTab';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 
 const Settings = () => {
   const { t } = useTranslation();
@@ -41,6 +43,18 @@ const Settings = () => {
     return () => window.removeEventListener('storage', handleStorageChange);
   }, [activeTab]);
 
+  const handleAdvancedModeToggle = (checked: boolean) => {
+    setAdvancedMode(checked);
+    localStorage.setItem('advanced-settings-enabled', checked.toString());
+    window.dispatchEvent(new StorageEvent('storage', { 
+      key: 'advanced-settings-enabled', 
+      newValue: checked.toString() 
+    }));
+    if (!checked && activeTab === 'demo-accounts') {
+      setActiveTab('profile');
+    }
+  };
+
   return (
     <DashboardLayout>
       <div className="space-y-2 md:space-y-5 xl:space-y-6">
@@ -50,29 +64,43 @@ const Settings = () => {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
-            <TabsList className="inline-flex w-max sm:w-auto sm:flex-wrap gap-1 bg-muted/50 border border-border rounded-md">
-              <TabsTrigger value="profile" className="gap-1.5 text-xs sm:text-sm whitespace-nowrap">
-                <User className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                <span>{t('settings.profile')}</span>
-              </TabsTrigger>
-              <TabsTrigger value="organization" className="gap-1.5 text-xs sm:text-sm whitespace-nowrap">
-                <Building2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                <span>{t('settings.organization')}</span>
-              </TabsTrigger>
-              <TabsTrigger value="communication" className="gap-1.5 text-xs sm:text-sm whitespace-nowrap">
-                <MessageSquare className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                <span className="hidden sm:inline">{t('settings.communication')}</span>
-                <span className="sm:hidden">{t('settings.communicationShort')}</span>
-              </TabsTrigger>
-              {isAdmin && advancedMode && (
-                <TabsTrigger value="demo-accounts" className="gap-1.5 text-xs sm:text-sm whitespace-nowrap">
-                  <FlaskConical className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                  <span className="hidden sm:inline">{t('settings.demoAccounts')}</span>
-                  <span className="sm:hidden">{t('settings.demoAccountsShort')}</span>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
+              <TabsList className="inline-flex w-max sm:w-auto sm:flex-wrap gap-1 bg-muted/50 border border-border rounded-md">
+                <TabsTrigger value="profile" className="gap-1.5 text-xs sm:text-sm whitespace-nowrap">
+                  <User className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                  <span>{t('settings.profile')}</span>
                 </TabsTrigger>
-              )}
-            </TabsList>
+                <TabsTrigger value="organization" className="gap-1.5 text-xs sm:text-sm whitespace-nowrap">
+                  <Building2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                  <span>{t('settings.organization')}</span>
+                </TabsTrigger>
+                <TabsTrigger value="communication" className="gap-1.5 text-xs sm:text-sm whitespace-nowrap">
+                  <MessageSquare className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                  <span className="hidden sm:inline">{t('settings.communication')}</span>
+                  <span className="sm:hidden">{t('settings.communicationShort')}</span>
+                </TabsTrigger>
+                {isAdmin && advancedMode && (
+                  <TabsTrigger value="demo-accounts" className="gap-1.5 text-xs sm:text-sm whitespace-nowrap">
+                    <FlaskConical className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                    <span className="hidden sm:inline">{t('settings.demoAccounts')}</span>
+                    <span className="sm:hidden">{t('settings.demoAccountsShort')}</span>
+                  </TabsTrigger>
+                )}
+              </TabsList>
+            </div>
+
+            {isAdmin && (
+              <div className="flex items-center gap-2 shrink-0">
+                <Label className="text-sm text-muted-foreground whitespace-nowrap">
+                  {t('settings.advancedSettings')}
+                </Label>
+                <Switch 
+                  checked={advancedMode} 
+                  onCheckedChange={handleAdvancedModeToggle}
+                />
+              </div>
+            )}
           </div>
 
           <TabsContent value="profile" className="animate-in fade-in-50 slide-in-from-left-2 duration-200">
