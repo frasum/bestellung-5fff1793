@@ -197,6 +197,9 @@ const Suppliers = () => {
   };
 
   const handleOpenPortal = async (supplier: Supplier) => {
+    // Fenster sofort öffnen (direkte Benutzeraktion - wird nicht blockiert)
+    const newWindow = window.open('', '_blank');
+    
     try {
       const { data, error } = await supabase.functions.invoke('create-supplier-portal-token', {
         body: { supplierId: supplier.id }
@@ -204,9 +207,16 @@ const Suppliers = () => {
       
       if (error) throw error;
       
-      window.open(data.portalUrl, '_blank');
+      // URL setzen, nachdem Token geladen ist
+      if (newWindow) {
+        newWindow.location.href = data.portalUrl;
+      }
     } catch (error: any) {
       console.error('Error opening portal:', error);
+      // Fenster schließen bei Fehler
+      if (newWindow) {
+        newWindow.close();
+      }
       const { toast } = await import('sonner');
       toast.error('Fehler beim Öffnen des Portals: ' + error.message);
     }
