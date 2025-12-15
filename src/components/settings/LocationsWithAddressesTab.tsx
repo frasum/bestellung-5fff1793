@@ -49,7 +49,15 @@ const LocationFormDialog = ({
   const [name, setName] = useState('');
   const [shortCode, setShortCode] = useState('');
   const [email, setEmail] = useState('');
+  const [emailError, setEmailError] = useState('');
   const [isDefault, setIsDefault] = useState(false);
+  
+  // Email validation helper
+  const validateEmail = (value: string): boolean => {
+    if (!value.trim()) return true; // Empty is valid (optional field)
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(value.trim());
+  };
   
   // Address fields
   const [addressLine1, setAddressLine1] = useState('');
@@ -107,6 +115,10 @@ const LocationFormDialog = ({
 
   const handleSave = async () => {
     if (!name.trim()) return;
+    if (email.trim() && !validateEmail(email)) {
+      setEmailError(t('validation.invalidEmail'));
+      return;
+    }
 
     if (location) {
       // Update existing location
@@ -225,9 +237,16 @@ const LocationFormDialog = ({
                 id="location-email"
                 type="email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  if (emailError) setEmailError('');
+                }}
                 placeholder={t('settings.locationEmailPlaceholder')}
+                className={emailError ? 'border-destructive' : ''}
               />
+              {emailError && (
+                <p className="text-xs text-destructive">{emailError}</p>
+              )}
             </div>
           </div>
 
