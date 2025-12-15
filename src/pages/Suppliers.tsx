@@ -42,17 +42,26 @@ import { useSuggestedArticlesCount } from '@/hooks/useSuggestedArticles';
 import { QuickCaptureWizard } from '@/components/suppliers/QuickCaptureWizard';
 import { WinesTab } from '@/components/suppliers/WinesTab';
 import { SupplierQRCodeDialog } from '@/components/suppliers/SupplierQRCodeDialog';
-
 const Suppliers = () => {
-  const { user, loading: authLoading } = useAuth();
+  const {
+    user,
+    loading: authLoading
+  } = useAuth();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { addItem, updateQuantity, items: cartItems, getItemsBySupplier } = useCart();
+  const {
+    addItem,
+    updateQuantity,
+    items: cartItems,
+    getItemsBySupplier
+  } = useCart();
 
   // Tab state from URL
   const activeTab = searchParams.get('tab') || 'suppliers';
   const setActiveTab = (tab: string) => {
-    setSearchParams({ tab });
+    setSearchParams({
+      tab
+    });
   };
 
   // Supplier tab state
@@ -76,15 +85,24 @@ const Suppliers = () => {
   const [isArticleImportOpen, setIsArticleImportOpen] = useState(false);
   const [editingArticle, setEditingArticle] = useState<Article | null>(null);
   const [deletingArticle, setDeletingArticle] = useState<Article | null>(null);
-  
   const [selectedArticles, setSelectedArticles] = useState<Set<string>>(new Set());
   const [openArticleSuppliers, setOpenArticleSuppliers] = useState<Set<string>>(new Set());
 
   // Shared data
-  const { data: suppliers, isLoading: suppliersLoading } = useSuppliers();
-  const { data: allArticles, isLoading: articlesLoading } = useArticles();
-  const { data: dbCategories } = useCategories();
-  const { data: orderUnits } = useOrderUnits();
+  const {
+    data: suppliers,
+    isLoading: suppliersLoading
+  } = useSuppliers();
+  const {
+    data: allArticles,
+    isLoading: articlesLoading
+  } = useArticles();
+  const {
+    data: dbCategories
+  } = useCategories();
+  const {
+    data: orderUnits
+  } = useOrderUnits();
 
   // Supplier mutations
   const createSupplier = useCreateSupplier();
@@ -98,19 +116,36 @@ const Suppliers = () => {
   const deleteArticle = useDeleteArticle();
   const bulkUpdateArticles = useBulkUpdateArticles();
   const importArticles = useImportArticles();
-
-  const { sendInvitation, loading: sendingInvitation } = useSendSupplierInvitation();
+  const {
+    sendInvitation,
+    loading: sendingInvitation
+  } = useSendSupplierInvitation();
   const [invitingSupplierId, setInvitingSupplierId] = useState<string | null>(null);
   const [organizationName, setOrganizationName] = useState<string>('');
   const [changesDialogSupplier, setChangesDialogSupplier] = useState<Supplier | null>(null);
-  const [changesDialogArticle, setChangesDialogArticle] = useState<{ id: string; name: string } | null>(null);
+  const [changesDialogArticle, setChangesDialogArticle] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
   const [locationsDialogSupplier, setLocationsDialogSupplier] = useState<Supplier | null>(null);
-  const { data: pendingChanges } = useSupplierPendingChanges();
-  const { data: pendingChangesBySupplier } = useCombinedPendingBySupplier();
-  const { data: pendingArticleIds } = usePendingArticleIds();
-  const { data: recentlyActiveSuppliers } = useRecentlyActiveSuppliers();
-  const { data: lastOrderMap } = useLastOrderByArticle();
-  const { data: suggestionsCount } = useSuggestedArticlesCount();
+  const {
+    data: pendingChanges
+  } = useSupplierPendingChanges();
+  const {
+    data: pendingChangesBySupplier
+  } = useCombinedPendingBySupplier();
+  const {
+    data: pendingArticleIds
+  } = usePendingArticleIds();
+  const {
+    data: recentlyActiveSuppliers
+  } = useRecentlyActiveSuppliers();
+  const {
+    data: lastOrderMap
+  } = useLastOrderByArticle();
+  const {
+    data: suggestionsCount
+  } = useSuggestedArticlesCount();
 
   // Subscription limits
   const subscriptionLimits = useSubscriptionLimits();
@@ -123,7 +158,6 @@ const Suppliers = () => {
     const saved = localStorage.getItem('suppliers-multi-select');
     return saved === 'true';
   });
-
   const [articleAdvancedViewEnabled, setArticleAdvancedViewEnabled] = useState(() => {
     const saved = localStorage.getItem('articles-advanced-view');
     return saved === 'true';
@@ -144,21 +178,17 @@ const Suppliers = () => {
     window.addEventListener('storage', handleStorageChange);
     return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
-
   useEffect(() => {
     localStorage.setItem('suppliers-multi-select', String(supplierMultiSelectEnabled));
   }, [supplierMultiSelectEnabled]);
-
   useEffect(() => {
     localStorage.setItem('articles-advanced-view', String(articleAdvancedViewEnabled));
   }, [articleAdvancedViewEnabled]);
-
   useEffect(() => {
     if (!supplierMultiSelectEnabled) {
       setSelectedSuppliers(new Set());
     }
   }, [supplierMultiSelectEnabled]);
-
   useEffect(() => {
     if (!articleAdvancedViewEnabled) {
       setSelectedArticles(new Set());
@@ -171,42 +201,38 @@ const Suppliers = () => {
   useEffect(() => {
     const fetchOrgData = async () => {
       if (!user) return;
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('organization_id')
-        .eq('id', user.id)
-        .single();
-      
+      const {
+        data: profile
+      } = await supabase.from('profiles').select('organization_id').eq('id', user.id).single();
       if (profile?.organization_id) {
         setOrganizationId(profile.organization_id);
-        const { data: org } = await supabase
-          .from('organizations')
-          .select('name')
-          .eq('id', profile.organization_id)
-          .single();
+        const {
+          data: org
+        } = await supabase.from('organizations').select('name').eq('id', profile.organization_id).single();
         if (org) setOrganizationName(org.name);
       }
     };
     fetchOrgData();
   }, [user]);
-
   const handleSendInvitation = async (supplier: Supplier) => {
     setInvitingSupplierId(supplier.id);
     await sendInvitation(supplier.id, supplier.email, supplier.name, organizationName);
     setInvitingSupplierId(null);
   };
-
   const handleOpenPortal = async (supplier: Supplier) => {
     // Fenster sofort öffnen (direkte Benutzeraktion - wird nicht blockiert)
     const newWindow = window.open('', '_blank');
-    
     try {
-      const { data, error } = await supabase.functions.invoke('create-supplier-portal-token', {
-        body: { supplierId: supplier.id }
+      const {
+        data,
+        error
+      } = await supabase.functions.invoke('create-supplier-portal-token', {
+        body: {
+          supplierId: supplier.id
+        }
       });
-      
       if (error) throw error;
-      
+
       // URL setzen, nachdem Token geladen ist
       if (newWindow) {
         newWindow.location.href = data.portalUrl;
@@ -217,7 +243,9 @@ const Suppliers = () => {
       if (newWindow) {
         newWindow.close();
       }
-      const { toast } = await import('sonner');
+      const {
+        toast
+      } = await import('sonner');
       toast.error('Fehler beim Öffnen des Portals: ' + error.message);
     }
   };
@@ -240,10 +268,7 @@ const Suppliers = () => {
   const allArticleCategories = [...new Set([...articleDerivedCategories, ...dbCategoryNames])].sort();
 
   // Extract unique units from articles + defaults
-  const existingUnits = [...new Set([
-    ...DEFAULT_UNITS,
-    ...(allArticles?.map(a => a.unit).filter(Boolean) as string[] || [])
-  ])].sort();
+  const existingUnits = [...new Set([...DEFAULT_UNITS, ...(allArticles?.map(a => a.unit).filter(Boolean) as string[] || [])])].sort();
 
   // Supplier functions
   const toggleSupplierExpanded = (supplierId: string) => {
@@ -257,7 +282,6 @@ const Suppliers = () => {
       return newSet;
     });
   };
-
   const toggleSupplierSelected = (supplierId: string) => {
     setSelectedSuppliers(prev => {
       const newSet = new Set(prev);
@@ -269,7 +293,6 @@ const Suppliers = () => {
       return newSet;
     });
   };
-
   const selectAllSuppliers = () => {
     const suppliersWithArticles = filteredSuppliers?.filter(s => (articlesBySupplier[s.id]?.length || 0) > 0) || [];
     if (selectedSuppliers.size === suppliersWithArticles.length) {
@@ -278,23 +301,17 @@ const Suppliers = () => {
       setSelectedSuppliers(new Set(suppliersWithArticles.map(s => s.id)));
     }
   };
-
   const handlePrintCombined = async () => {
     const selectedSuppliersData = suppliers?.filter(s => selectedSuppliers.has(s.id)) || [];
     // Enrich articles with last order quantities
-    const enrichedArticlesBySupplier = Object.fromEntries(
-      Object.entries(articlesBySupplier).map(([supplierId, articles]) => [
-        supplierId,
-        articles.map(a => ({
-          name: a.name,
-          unit: a.unit,
-          sku: a.sku,
-          description: a.description,
-          lastOrderQuantity: lastOrderMap?.[a.id]?.quantity,
-          lastOrderDate: lastOrderMap?.[a.id]?.date
-        }))
-      ])
-    );
+    const enrichedArticlesBySupplier = Object.fromEntries(Object.entries(articlesBySupplier).map(([supplierId, articles]) => [supplierId, articles.map(a => ({
+      name: a.name,
+      unit: a.unit,
+      sku: a.sku,
+      description: a.description,
+      lastOrderQuantity: lastOrderMap?.[a.id]?.quantity,
+      lastOrderDate: lastOrderMap?.[a.id]?.date
+    }))]));
     await generateCombinedOrderListPdf(selectedSuppliersData, enrichedArticlesBySupplier);
     setSelectedSuppliers(new Set());
   };
@@ -311,7 +328,6 @@ const Suppliers = () => {
       return next;
     });
   };
-
   const toggleArticleSelected = (articleId: string) => {
     setSelectedArticles(prev => {
       const newSet = new Set(prev);
@@ -323,41 +339,43 @@ const Suppliers = () => {
       return newSet;
     });
   };
-
   const handleBulkCategoryAssign = async (category: string | null) => {
     if (selectedArticles.size === 0) return;
     await bulkUpdateArticles.mutateAsync({
       ids: Array.from(selectedArticles),
-      updates: { category: category || undefined }
+      updates: {
+        category: category || undefined
+      }
     });
     setSelectedArticles(new Set());
   };
-
   const handleBulkOrderUnitAssign = async (orderUnitId: string | null) => {
     if (selectedArticles.size === 0) return;
     await bulkUpdateArticles.mutateAsync({
       ids: Array.from(selectedArticles),
-      updates: { order_unit_id: orderUnitId || undefined }
+      updates: {
+        order_unit_id: orderUnitId || undefined
+      }
     });
     setSelectedArticles(new Set());
   };
-
   const getCartQuantity = (articleId: string) => {
     const item = cartItems.find(i => i.article.id === articleId);
     return item?.quantity || 0;
   };
-
   useEffect(() => {
     if (!authLoading && !user) {
       navigate('/auth');
     }
   }, [user, authLoading, navigate]);
 
-
   // Supplier submit handler with limit check
   const handleSupplierSubmit = async (input: SupplierInput) => {
     if (editingSupplier) {
-      await updateSupplier.mutateAsync({ id: editingSupplier.id, ...input });
+      await updateSupplier.mutateAsync({
+        id: editingSupplier.id,
+        ...input
+      });
     } else {
       // Check subscription limit before creating
       if (!subscriptionLimits.canAddSupplier) {
@@ -379,7 +397,6 @@ const Suppliers = () => {
     setEditingSupplier(null);
     setIsSupplierDialogOpen(true);
   };
-
   const handleSupplierDelete = async () => {
     if (deletingSupplier) {
       await deleteSupplier.mutateAsync(deletingSupplier.id);
@@ -388,7 +405,10 @@ const Suppliers = () => {
   };
 
   // Article image upload
-  const { uploadImage, deleteImage } = useArticleImageUpload();
+  const {
+    uploadImage,
+    deleteImage
+  } = useArticleImageUpload();
 
   // Article submit handler
   const handleArticleSubmit = async (data: ArticleFormData, capturedImage?: string, imageCleared?: boolean) => {
@@ -408,9 +428,8 @@ const Suppliers = () => {
       selling_price: data.selling_price ? Number(data.selling_price) : undefined,
       grape_variety: data.grape_variety || undefined,
       flavor_profile: data.flavor_profile || undefined,
-      food_pairings: data.food_pairings || undefined,
+      food_pairings: data.food_pairings || undefined
     };
-    
     if (editingArticle) {
       // Case 1: Image was explicitly cleared
       if (imageCleared && editingArticle.image_url) {
@@ -429,22 +448,27 @@ const Suppliers = () => {
         }
       }
       // Case 3: Image unchanged → don't touch image_url
-      
-      await updateArticle.mutateAsync({ id: editingArticle.id, ...input });
+
+      await updateArticle.mutateAsync({
+        id: editingArticle.id,
+        ...input
+      });
     } else {
       // Create article first, then upload image
       const newArticle = await createArticle.mutateAsync(input);
       if (capturedImage && capturedImage.startsWith('data:') && newArticle) {
         const imageUrl = await uploadImage(capturedImage, newArticle.organization_id, newArticle.id);
         if (imageUrl) {
-          await updateArticle.mutateAsync({ id: newArticle.id, image_url: imageUrl });
+          await updateArticle.mutateAsync({
+            id: newArticle.id,
+            image_url: imageUrl
+          });
         }
       }
     }
     setIsArticleDialogOpen(false);
     setEditingArticle(null);
   };
-
   const handleArticleDelete = async () => {
     if (deletingArticle) {
       await deleteArticle.mutateAsync(deletingArticle.id);
@@ -459,19 +483,17 @@ const Suppliers = () => {
   // Filtered suppliers - now filter by article categories
   const filteredSuppliers = suppliers?.filter(supplier => {
     const matchesSearch = supplier.name.toLowerCase().includes(debouncedSearchQuery.toLowerCase()) || supplier.email.toLowerCase().includes(debouncedSearchQuery.toLowerCase());
-    
+
     // Filter by article categories instead of supplier categories
     const supplierArticles = articlesBySupplier[supplier.id] || [];
     const matchesTopCategory = topCategoryFilter === 'all' || supplierArticles.some(a => a.top_category === topCategoryFilter);
     const matchesCategory = categoryFilter === 'all' || supplierArticles.some(a => a.category === categoryFilter);
-    
     return matchesSearch && matchesTopCategory && matchesCategory;
   });
 
   // Filtered articles
-  const filteredArticles = allArticles?.filter((article) => {
-    const matchesSearch = article.name.toLowerCase().includes(debouncedArticleSearchQuery.toLowerCase()) ||
-      article.description?.toLowerCase().includes(debouncedArticleSearchQuery.toLowerCase());
+  const filteredArticles = allArticles?.filter(article => {
+    const matchesSearch = article.name.toLowerCase().includes(debouncedArticleSearchQuery.toLowerCase()) || article.description?.toLowerCase().includes(debouncedArticleSearchQuery.toLowerCase());
     const matchesSupplier = selectedArticleSuppliers.length === 0 || selectedArticleSuppliers.includes(article.supplier_id);
     const matchesCategory = selectedCategory === 'all' || article.category === selectedCategory;
     return matchesSearch && matchesSupplier && matchesCategory;
@@ -488,9 +510,14 @@ const Suppliers = () => {
 
   // Group articles by supplier
   const groupedBySupplier = useMemo(() => {
-    const groups: { supplier: { id: string; name: string }; articles: typeof sortedArticles }[] = [];
+    const groups: {
+      supplier: {
+        id: string;
+        name: string;
+      };
+      articles: typeof sortedArticles;
+    }[] = [];
     const groupMap = new Map<string, typeof sortedArticles>();
-    
     sortedArticles?.forEach(article => {
       const supplierId = article.supplier_id;
       if (!groupMap.has(supplierId)) {
@@ -498,12 +525,16 @@ const Suppliers = () => {
       }
       groupMap.get(supplierId)!.push(article);
     });
-    
     groupMap.forEach((articles, supplierId) => {
       const supplierName = articles[0]?.suppliers?.name || 'Unbekannt';
-      groups.push({ supplier: { id: supplierId, name: supplierName }, articles });
+      groups.push({
+        supplier: {
+          id: supplierId,
+          name: supplierName
+        },
+        articles
+      });
     });
-    
     return groups.sort((a, b) => a.supplier.name.localeCompare(b.supplier.name, 'de'));
   }, [sortedArticles]);
 
@@ -514,7 +545,6 @@ const Suppliers = () => {
   useEffect(() => {
     const prevSearch = prevArticleSearchRef.current;
     prevArticleSearchRef.current = debouncedArticleSearchQuery;
-    
     if (debouncedArticleSearchQuery.trim() !== '') {
       // Search active: open all filtered suppliers
       const supplierIds = groupedBySupplier.map(group => group.supplier.id);
@@ -525,25 +555,19 @@ const Suppliers = () => {
     }
     // If search was already empty: do nothing (allow manual toggle)
   }, [debouncedArticleSearchQuery, groupedBySupplier]);
-
-  const articleCategoriesForFilter = (allArticles?.map((a) => a.category).filter(Boolean) || []) as string[];
-
+  const articleCategoriesForFilter = (allArticles?.map(a => a.category).filter(Boolean) || []) as string[];
   if (authLoading || !user) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
+    return <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>
-    );
+      </div>;
   }
-
-  return (
-    <DashboardLayout>
+  return <DashboardLayout>
       <div className="space-y-2 md:space-y-5 xl:space-y-6">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 md:gap-4">
           <div>
             <h1 className="text-2xl md:text-3xl font-bold text-foreground">Katalog</h1>
-            <p className="text-sm md:text-base text-muted-foreground mt-0.5 md:mt-1">Verwalten Sie Ihre Lieferanten und Artikel</p>
+            <p className="text-sm md:text-base text-muted-foreground mt-0.5 md:mt-1">Verwalten Sie Ihre Lieferanten, Artikel und die Weinkarte </p>
           </div>
         </div>
 
@@ -557,11 +581,9 @@ const Suppliers = () => {
             </TabsTrigger>
             <TabsTrigger value="suggestions" className="relative">
               Vorschläge
-              {(suggestionsCount ?? 0) > 0 && (
-                <span className="absolute -top-1 -right-1 bg-amber-500 text-white text-xs font-bold rounded-full h-5 min-w-5 px-1 flex items-center justify-center">
+              {(suggestionsCount ?? 0) > 0 && <span className="absolute -top-1 -right-1 bg-amber-500 text-white text-xs font-bold rounded-full h-5 min-w-5 px-1 flex items-center justify-center">
                   {suggestionsCount}
-                </span>
-              )}
+                </span>}
             </TabsTrigger>
           </TabsList>
 
@@ -569,40 +591,17 @@ const Suppliers = () => {
           <TabsContent value="suppliers" className="space-y-4">
             {/* Combined Filter + Actions Row */}
             <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-              <SupplierFilters
-                searchQuery={searchQuery}
-                onSearchChange={setSearchQuery}
-                topCategoryFilter={topCategoryFilter}
-                onTopCategoryChange={setTopCategoryFilter}
-                categoryFilter={categoryFilter}
-                onCategoryChange={setCategoryFilter}
-                articleCategories={articleCategoriesForSupplierFilter}
-                multiSelectEnabled={supplierMultiSelectEnabled}
-                onMultiSelectChange={setSupplierMultiSelectEnabled}
-                selectedCount={selectedSuppliers.size}
-                onPrintCombined={handlePrintCombined}
-                showMultiSelectToggle={advancedSettingsEnabled}
-              />
+              <SupplierFilters searchQuery={searchQuery} onSearchChange={setSearchQuery} topCategoryFilter={topCategoryFilter} onTopCategoryChange={setTopCategoryFilter} categoryFilter={categoryFilter} onCategoryChange={setCategoryFilter} articleCategories={articleCategoriesForSupplierFilter} multiSelectEnabled={supplierMultiSelectEnabled} onMultiSelectChange={setSupplierMultiSelectEnabled} selectedCount={selectedSuppliers.size} onPrintCombined={handlePrintCombined} showMultiSelectToggle={advancedSettingsEnabled} />
               <div className="flex flex-wrap gap-2 shrink-0">
                 <Button variant="outline" className="h-10 sm:h-9 bg-primary/5 border-primary/30 text-primary hover:bg-primary/10" onClick={() => setIsQuickCaptureOpen(true)}>
                   <Package className="w-4 h-4 sm:mr-2" />
                   <span className="hidden sm:inline">Schnell-Erfassung</span>
                 </Button>
-                {advancedSettingsEnabled && (
-                  <ExportMenu 
-                    filename="suppliers" 
-                    title="Lieferanten" 
-                    headers={['Name', 'Email', 'Telefon', 'Adresse', 'Ansprechpartner', 'Kundennummer', 'Status']} 
-                    getData={() => suppliers?.map(s => [s.name, s.email, s.phone || '', s.address || '', s.contact_person || '', s.customer_number || '', s.is_active ? 'Aktiv' : 'Inaktiv']) || []} 
-                    disabled={!suppliers?.length} 
-                  />
-                )}
-                {advancedSettingsEnabled && (
-                  <Button variant="outline" className="h-10 sm:h-9" onClick={() => setIsSupplierImportOpen(true)}>
+                {advancedSettingsEnabled && <ExportMenu filename="suppliers" title="Lieferanten" headers={['Name', 'Email', 'Telefon', 'Adresse', 'Ansprechpartner', 'Kundennummer', 'Status']} getData={() => suppliers?.map(s => [s.name, s.email, s.phone || '', s.address || '', s.contact_person || '', s.customer_number || '', s.is_active ? 'Aktiv' : 'Inaktiv']) || []} disabled={!suppliers?.length} />}
+                {advancedSettingsEnabled && <Button variant="outline" className="h-10 sm:h-9" onClick={() => setIsSupplierImportOpen(true)}>
                     <Upload className="w-4 h-4 sm:mr-2" />
                     <span className="hidden sm:inline">Importieren</span>
-                  </Button>
-                )}
+                  </Button>}
                 <Button className="h-10 sm:h-9" onClick={handleOpenSupplierDialog}>
                   <Plus className="w-4 h-4 sm:mr-2" />
                   <span className="hidden sm:inline">Lieferant hinzufügen</span>
@@ -611,53 +610,35 @@ const Suppliers = () => {
             </div>
 
             {/* Supplier Form Dialog */}
-            <SupplierFormDialog
-              open={isSupplierDialogOpen}
-              onOpenChange={(open) => {
-                setIsSupplierDialogOpen(open);
-                if (!open) setEditingSupplier(null);
-              }}
-              editingSupplier={editingSupplier}
-              onSubmit={handleSupplierSubmit}
-              onImportArticles={(supplierId) => {
-                setArticleImportSupplierId(supplierId);
-                setIsSupplierDialogOpen(false);
-              }}
-              isPending={createSupplier.isPending || updateSupplier.isPending}
-            />
+            <SupplierFormDialog open={isSupplierDialogOpen} onOpenChange={open => {
+            setIsSupplierDialogOpen(open);
+            if (!open) setEditingSupplier(null);
+          }} editingSupplier={editingSupplier} onSubmit={handleSupplierSubmit} onImportArticles={supplierId => {
+            setArticleImportSupplierId(supplierId);
+            setIsSupplierDialogOpen(false);
+          }} isPending={createSupplier.isPending || updateSupplier.isPending} />
 
             {/* Supplier Import */}
-            <CsvImportDialog 
-              open={isSupplierImportOpen} 
-              onOpenChange={setIsSupplierImportOpen} 
-              title="Lieferanten importieren" 
-              fields={SUPPLIER_IMPORT_FIELDS} 
-              onImport={async data => { await importSuppliers.mutateAsync(data); }} 
-              templateFileName="suppliers_template.csv" 
-            />
+            <CsvImportDialog open={isSupplierImportOpen} onOpenChange={setIsSupplierImportOpen} title="Lieferanten importieren" fields={SUPPLIER_IMPORT_FIELDS} onImport={async data => {
+            await importSuppliers.mutateAsync(data);
+          }} templateFileName="suppliers_template.csv" />
 
             {/* Article Import Dialog for specific supplier */}
-            <CsvImportDialog 
-              open={!!articleImportSupplierId} 
-              onOpenChange={open => !open && setArticleImportSupplierId(null)} 
-              title={`Artikel importieren für ${suppliers?.find(s => s.id === articleImportSupplierId)?.name || 'Lieferant'}`} 
-              fields={ARTICLE_IMPORT_FIELDS} 
-              onImport={async data => {
-                if (articleImportSupplierId) {
-                  await importArticles.mutateAsync({ articles: data, defaultSupplierId: articleImportSupplierId });
-                }
-              }} 
-              templateFileName="articles_template.csv" 
-            />
+            <CsvImportDialog open={!!articleImportSupplierId} onOpenChange={open => !open && setArticleImportSupplierId(null)} title={`Artikel importieren für ${suppliers?.find(s => s.id === articleImportSupplierId)?.name || 'Lieferant'}`} fields={ARTICLE_IMPORT_FIELDS} onImport={async data => {
+            if (articleImportSupplierId) {
+              await importArticles.mutateAsync({
+                articles: data,
+                defaultSupplierId: articleImportSupplierId
+              });
+            }
+          }} templateFileName="articles_template.csv" />
 
             {/* Suppliers Table */}
-            {suppliersLoading ? (
-              <div className="flex items-center justify-center py-12">
+            {suppliersLoading ? <div className="flex items-center justify-center py-12">
                 <Loader2 className="w-8 h-8 animate-spin text-primary" />
-              </div>
-            ) : filteredSuppliers?.length === 0 && !searchQuery && topCategoryFilter === 'all' && categoryFilter === 'all' && (!allArticles || allArticles.length === 0) ? (
-              // Empty catalog onboarding CTA
-              <div className="text-center py-16 bg-gradient-to-b from-primary/5 to-background border border-primary/20 rounded-xl">
+              </div> : filteredSuppliers?.length === 0 && !searchQuery && topCategoryFilter === 'all' && categoryFilter === 'all' && (!allArticles || allArticles.length === 0) ?
+          // Empty catalog onboarding CTA
+          <div className="text-center py-16 bg-gradient-to-b from-primary/5 to-background border border-primary/20 rounded-xl">
                 <div className="flex flex-col items-center gap-6 max-w-md mx-auto px-4">
                   <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center">
                     <Package className="w-10 h-10 text-primary" />
@@ -676,113 +657,51 @@ const Suppliers = () => {
                     Oder <button className="underline hover:text-foreground" onClick={handleOpenSupplierDialog}>füge manuell einen Lieferanten hinzu</button>
                   </p>
                 </div>
-              </div>
-            ) : filteredSuppliers?.length === 0 ? (
-              <div className="text-center py-12 bg-card border border-border rounded-xl">
+              </div> : filteredSuppliers?.length === 0 ? <div className="text-center py-12 bg-card border border-border rounded-xl">
                 <p className="text-muted-foreground">
                   {searchQuery || topCategoryFilter !== 'all' || categoryFilter !== 'all' ? 'Keine Lieferanten gefunden' : 'Noch keine Lieferanten. Fügen Sie Ihren ersten Lieferanten hinzu.'}
                 </p>
-              </div>
-            ) : (
-              <SupplierTable
-                suppliers={filteredSuppliers || []}
-                articlesBySupplier={articlesBySupplier}
-                expandedSuppliers={expandedSuppliers}
-                selectedSuppliers={selectedSuppliers}
-                multiSelectEnabled={supplierMultiSelectEnabled}
-                pendingChangesBySupplier={pendingChangesBySupplier || {}}
-                pendingArticleIds={pendingArticleIds || new Set()}
-                recentlyActiveSuppliers={recentlyActiveSuppliers || new Map()}
-                advancedSettingsEnabled={advancedSettingsEnabled}
-                onToggleExpand={toggleSupplierExpanded}
-                onToggleSelect={toggleSupplierSelected}
-                onSelectAll={selectAllSuppliers}
-                onEdit={(supplier) => { setEditingSupplier(supplier); setIsSupplierDialogOpen(true); }}
-                onDelete={setDeletingSupplier}
-                onSendInvitation={handleSendInvitation}
-                onShowQRCode={setQrCodeSupplier}
-                onOpenPortal={handleOpenPortal}
-                onShowChanges={setChangesDialogSupplier}
-                onShowLocations={setLocationsDialogSupplier}
-                onPrintOrderList={async (supplier, articles) => await generateOrderListPdf(supplier, articles.map(a => ({
-                  name: a.name,
-                  unit: a.unit,
-                  sku: a.sku,
-                  description: a.description,
-                  lastOrderQuantity: lastOrderMap?.[a.id]?.quantity,
-                  lastOrderDate: lastOrderMap?.[a.id]?.date
-                })))}
-                onArticleChangeClick={(article, supplier) => {
-                  setChangesDialogSupplier(supplier);
-                  setChangesDialogArticle({ id: article.id, name: article.name });
-                }}
-                onEditArticle={(article) => {
-                  setEditingArticle(article);
-                  setIsArticleDialogOpen(true);
-                }}
-                onDeleteArticle={setDeletingArticle}
-                invitingSupplierId={invitingSupplierId}
-                sendingInvitation={sendingInvitation}
-                getCartQuantity={getCartQuantity}
-                onAddToCart={addItem}
-                onUpdateQuantity={updateQuantity}
-              />
-            )}
+              </div> : <SupplierTable suppliers={filteredSuppliers || []} articlesBySupplier={articlesBySupplier} expandedSuppliers={expandedSuppliers} selectedSuppliers={selectedSuppliers} multiSelectEnabled={supplierMultiSelectEnabled} pendingChangesBySupplier={pendingChangesBySupplier || {}} pendingArticleIds={pendingArticleIds || new Set()} recentlyActiveSuppliers={recentlyActiveSuppliers || new Map()} advancedSettingsEnabled={advancedSettingsEnabled} onToggleExpand={toggleSupplierExpanded} onToggleSelect={toggleSupplierSelected} onSelectAll={selectAllSuppliers} onEdit={supplier => {
+            setEditingSupplier(supplier);
+            setIsSupplierDialogOpen(true);
+          }} onDelete={setDeletingSupplier} onSendInvitation={handleSendInvitation} onShowQRCode={setQrCodeSupplier} onOpenPortal={handleOpenPortal} onShowChanges={setChangesDialogSupplier} onShowLocations={setLocationsDialogSupplier} onPrintOrderList={async (supplier, articles) => await generateOrderListPdf(supplier, articles.map(a => ({
+            name: a.name,
+            unit: a.unit,
+            sku: a.sku,
+            description: a.description,
+            lastOrderQuantity: lastOrderMap?.[a.id]?.quantity,
+            lastOrderDate: lastOrderMap?.[a.id]?.date
+          })))} onArticleChangeClick={(article, supplier) => {
+            setChangesDialogSupplier(supplier);
+            setChangesDialogArticle({
+              id: article.id,
+              name: article.name
+            });
+          }} onEditArticle={article => {
+            setEditingArticle(article);
+            setIsArticleDialogOpen(true);
+          }} onDeleteArticle={setDeletingArticle} invitingSupplierId={invitingSupplierId} sendingInvitation={sendingInvitation} getCartQuantity={getCartQuantity} onAddToCart={addItem} onUpdateQuantity={updateQuantity} />}
           </TabsContent>
 
           {/* Articles Tab */}
           <TabsContent value="articles" className="space-y-4">
             {/* Combined Filter + Actions Row */}
             <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-              <ArticleFilters
-                searchQuery={articleSearchQuery}
-                onSearchChange={setArticleSearchQuery}
-                selectedSuppliers={selectedArticleSuppliers}
-                onSupplierChange={setSelectedArticleSuppliers}
-                suppliers={suppliers || []}
-                supplierPopoverOpen={supplierPopoverOpen}
-                onSupplierPopoverChange={setSupplierPopoverOpen}
-                selectedCategory={selectedCategory}
-                onCategoryChange={setSelectedCategory}
-                articleCategories={articleCategoriesForFilter}
-                advancedViewEnabled={articleAdvancedViewEnabled}
-                onAdvancedViewChange={setArticleAdvancedViewEnabled}
-                hasFilters={articleSearchQuery !== '' || selectedArticleSuppliers.length > 0 || selectedCategory !== 'all'}
-                showAdvancedToggle={advancedSettingsEnabled}
-                recentlyActiveSuppliers={recentlyActiveSuppliers || new Map()}
-                onClearFilters={() => {
-                  setArticleSearchQuery('');
-                  setSelectedArticleSuppliers([]);
-                  setSelectedCategory('all');
-                }}
-              />
+              <ArticleFilters searchQuery={articleSearchQuery} onSearchChange={setArticleSearchQuery} selectedSuppliers={selectedArticleSuppliers} onSupplierChange={setSelectedArticleSuppliers} suppliers={suppliers || []} supplierPopoverOpen={supplierPopoverOpen} onSupplierPopoverChange={setSupplierPopoverOpen} selectedCategory={selectedCategory} onCategoryChange={setSelectedCategory} articleCategories={articleCategoriesForFilter} advancedViewEnabled={articleAdvancedViewEnabled} onAdvancedViewChange={setArticleAdvancedViewEnabled} hasFilters={articleSearchQuery !== '' || selectedArticleSuppliers.length > 0 || selectedCategory !== 'all'} showAdvancedToggle={advancedSettingsEnabled} recentlyActiveSuppliers={recentlyActiveSuppliers || new Map()} onClearFilters={() => {
+              setArticleSearchQuery('');
+              setSelectedArticleSuppliers([]);
+              setSelectedCategory('all');
+            }} />
               <div className="flex flex-wrap gap-2 shrink-0">
-                {advancedSettingsEnabled && (
-                  <ExportMenu
-                    filename="articles"
-                    title="Artikel"
-                    headers={['Name', 'Lieferant', 'Preis', 'Einheit', 'SKU', 'Kategorie', 'Status', 'Referenzpreis', 'Referenzeinheit']}
-                    getData={() => allArticles?.map(a => [
-                      a.name,
-                      a.suppliers?.name || '',
-                      `€${Number(a.price).toFixed(2)}`,
-                      a.unit,
-                      a.sku || '',
-                      a.category || '',
-                      a.is_active ? 'Aktiv' : 'Inaktiv',
-                      a.reference_price ? `€${Number(a.reference_price).toFixed(2)}` : '',
-                      a.reference_unit || ''
-                    ]) || []}
-                    disabled={!allArticles?.length}
-                  />
-                )}
-                {advancedSettingsEnabled && (
-                  <Button variant="outline" className="h-10 sm:h-9" onClick={() => setIsArticleImportOpen(true)}>
+                {advancedSettingsEnabled && <ExportMenu filename="articles" title="Artikel" headers={['Name', 'Lieferant', 'Preis', 'Einheit', 'SKU', 'Kategorie', 'Status', 'Referenzpreis', 'Referenzeinheit']} getData={() => allArticles?.map(a => [a.name, a.suppliers?.name || '', `€${Number(a.price).toFixed(2)}`, a.unit, a.sku || '', a.category || '', a.is_active ? 'Aktiv' : 'Inaktiv', a.reference_price ? `€${Number(a.reference_price).toFixed(2)}` : '', a.reference_unit || '']) || []} disabled={!allArticles?.length} />}
+                {advancedSettingsEnabled && <Button variant="outline" className="h-10 sm:h-9" onClick={() => setIsArticleImportOpen(true)}>
                     <Upload className="w-4 h-4 sm:mr-2" />
                     <span className="hidden sm:inline">Importieren</span>
-                  </Button>
-                )}
-                <Button className="h-10 sm:h-9" onClick={() => { setEditingArticle(null); setIsArticleDialogOpen(true); }}>
+                  </Button>}
+                <Button className="h-10 sm:h-9" onClick={() => {
+                setEditingArticle(null);
+                setIsArticleDialogOpen(true);
+              }}>
                   <Plus className="w-4 h-4 sm:mr-2" />
                   <span className="hidden sm:inline">Artikel hinzufügen</span>
                 </Button>
@@ -791,89 +710,51 @@ const Suppliers = () => {
 
             {/* Article Form Dialog moved outside Tabs for global availability */}
 
-            <CsvImportDialog
-              open={isArticleImportOpen}
-              onOpenChange={setIsArticleImportOpen}
-              title="Artikel importieren"
-              fields={ARTICLE_IMPORT_FIELDS}
-              onImport={async (data, defaultSupplierId) => {
-                await importArticles.mutateAsync({ articles: data, defaultSupplierId });
-              }}
-              templateFileName="articles_template.csv"
-              suppliers={suppliers?.map(s => ({ id: s.id, name: s.name }))}
-              showSupplierSelect={true}
-            />
+            <CsvImportDialog open={isArticleImportOpen} onOpenChange={setIsArticleImportOpen} title="Artikel importieren" fields={ARTICLE_IMPORT_FIELDS} onImport={async (data, defaultSupplierId) => {
+            await importArticles.mutateAsync({
+              articles: data,
+              defaultSupplierId
+            });
+          }} templateFileName="articles_template.csv" suppliers={suppliers?.map(s => ({
+            id: s.id,
+            name: s.name
+          }))} showSupplierSelect={true} />
 
             {/* Selection Toolbar */}
-            {articleAdvancedViewEnabled && selectedArticles.size > 0 && (
-              <BulkCategoryToolbar
-                selectedCount={selectedArticles.size}
-                categories={allArticleCategories}
-                orderUnits={orderUnits || []}
-                onAssignCategory={handleBulkCategoryAssign}
-                onAssignOrderUnit={handleBulkOrderUnitAssign}
-                onClearSelection={() => setSelectedArticles(new Set())}
-              />
-            )}
+            {articleAdvancedViewEnabled && selectedArticles.size > 0 && <BulkCategoryToolbar selectedCount={selectedArticles.size} categories={allArticleCategories} orderUnits={orderUnits || []} onAssignCategory={handleBulkCategoryAssign} onAssignOrderUnit={handleBulkOrderUnitAssign} onClearSelection={() => setSelectedArticles(new Set())} />}
 
             {/* Articles List */}
-            {articlesLoading ? (
-              <div className="flex items-center justify-center py-12">
+            {articlesLoading ? <div className="flex items-center justify-center py-12">
                 <Loader2 className="w-8 h-8 animate-spin text-primary" />
-              </div>
-            ) : sortedArticles?.length === 0 ? (
-              <div className="text-center py-12 bg-card border border-border rounded-xl">
+              </div> : sortedArticles?.length === 0 ? <div className="text-center py-12 bg-card border border-border rounded-xl">
                 <Package className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
                 <p className="text-muted-foreground">
-                  {articleSearchQuery || selectedArticleSuppliers.length > 0 || selectedCategory !== 'all'
-                    ? 'Keine Artikel gefunden'
-                    : 'Noch keine Artikel. Fügen Sie Ihren ersten Artikel hinzu.'}
+                  {articleSearchQuery || selectedArticleSuppliers.length > 0 || selectedCategory !== 'all' ? 'Keine Artikel gefunden' : 'Noch keine Artikel. Fügen Sie Ihren ersten Artikel hinzu.'}
                 </p>
-              </div>
-            ) : (
-              <ArticleTable
-                groupedBySupplier={groupedBySupplier}
-                openSuppliers={openArticleSuppliers}
-                selectedArticles={selectedArticles}
-                advancedViewEnabled={articleAdvancedViewEnabled}
-                getCartQuantity={getCartQuantity}
-                getItemsBySupplier={getItemsBySupplier}
-                pendingChangesBySupplier={pendingChangesBySupplier || {}}
-                pendingArticleIds={pendingArticleIds || new Set()}
-                recentlyActiveSuppliers={recentlyActiveSuppliers || new Map()}
-                lastOrderMap={lastOrderMap || {}}
-                orderUnits={orderUnits || []}
-                onToggleSupplier={toggleArticleSupplier}
-                onToggleArticle={toggleArticleSelected}
-                onAddToCart={addItem}
-                onUpdateQuantity={updateQuantity}
-                onEdit={(article) => { setEditingArticle(article); setIsArticleDialogOpen(true); }}
-                onDelete={setDeletingArticle}
-                onShowChanges={(supplierId) => {
-                  const supplier = suppliers?.find(s => s.id === supplierId);
-                  if (supplier) setChangesDialogSupplier(supplier);
-                }}
-                onArticleChangeClick={(article, supplierId, supplierName) => {
-                  const supplier = suppliers?.find(s => s.id === supplierId);
-                  if (supplier) {
-                    setChangesDialogSupplier(supplier);
-                    setChangesDialogArticle({ id: article.id, name: article.name });
-                  }
-                }}
-              />
-            )}
+              </div> : <ArticleTable groupedBySupplier={groupedBySupplier} openSuppliers={openArticleSuppliers} selectedArticles={selectedArticles} advancedViewEnabled={articleAdvancedViewEnabled} getCartQuantity={getCartQuantity} getItemsBySupplier={getItemsBySupplier} pendingChangesBySupplier={pendingChangesBySupplier || {}} pendingArticleIds={pendingArticleIds || new Set()} recentlyActiveSuppliers={recentlyActiveSuppliers || new Map()} lastOrderMap={lastOrderMap || {}} orderUnits={orderUnits || []} onToggleSupplier={toggleArticleSupplier} onToggleArticle={toggleArticleSelected} onAddToCart={addItem} onUpdateQuantity={updateQuantity} onEdit={article => {
+            setEditingArticle(article);
+            setIsArticleDialogOpen(true);
+          }} onDelete={setDeletingArticle} onShowChanges={supplierId => {
+            const supplier = suppliers?.find(s => s.id === supplierId);
+            if (supplier) setChangesDialogSupplier(supplier);
+          }} onArticleChangeClick={(article, supplierId, supplierName) => {
+            const supplier = suppliers?.find(s => s.id === supplierId);
+            if (supplier) {
+              setChangesDialogSupplier(supplier);
+              setChangesDialogArticle({
+                id: article.id,
+                name: article.name
+              });
+            }
+          }} />}
           </TabsContent>
 
           {/* Wines Tab */}
           <TabsContent value="wines" className="space-y-4">
-            <WinesTab 
-              articles={allArticles || []} 
-              suppliers={suppliers || []} 
-              onEditArticle={(article) => {
-                setEditingArticle(article);
-                setIsArticleDialogOpen(true);
-              }}
-            />
+            <WinesTab articles={allArticles || []} suppliers={suppliers || []} onEditArticle={article => {
+            setEditingArticle(article);
+            setIsArticleDialogOpen(true);
+          }} />
           </TabsContent>
 
           {/* Suggestions Tab */}
@@ -884,98 +765,47 @@ const Suppliers = () => {
       </div>
 
       {/* Article Form Dialog - outside Tabs for global availability */}
-      <ArticleFormDialog
-        open={isArticleDialogOpen}
-        onOpenChange={(open) => {
-          setIsArticleDialogOpen(open);
-          if (!open) setEditingArticle(null);
-        }}
-        editingArticle={editingArticle}
-        suppliers={suppliers || []}
-        categories={allArticleCategories}
-        units={existingUnits}
-        onSubmit={handleArticleSubmit}
-        isPending={createArticle.isPending || updateArticle.isPending}
-      />
+      <ArticleFormDialog open={isArticleDialogOpen} onOpenChange={open => {
+      setIsArticleDialogOpen(open);
+      if (!open) setEditingArticle(null);
+    }} editingArticle={editingArticle} suppliers={suppliers || []} categories={allArticleCategories} units={existingUnits} onSubmit={handleArticleSubmit} isPending={createArticle.isPending || updateArticle.isPending} />
 
       {/* Delete Confirmation Dialogs */}
-      <DeleteConfirmationDialogs
-        deletingSupplier={deletingSupplier}
-        onSupplierClose={() => setDeletingSupplier(null)}
-        onSupplierDelete={handleSupplierDelete}
-        isSupplierDeleting={deleteSupplier.isPending}
-        deletingArticle={deletingArticle}
-        onArticleClose={() => setDeletingArticle(null)}
-        onArticleDelete={handleArticleDelete}
-        isArticleDeleting={deleteArticle.isPending}
-      />
+      <DeleteConfirmationDialogs deletingSupplier={deletingSupplier} onSupplierClose={() => setDeletingSupplier(null)} onSupplierDelete={handleSupplierDelete} isSupplierDeleting={deleteSupplier.isPending} deletingArticle={deletingArticle} onArticleClose={() => setDeletingArticle(null)} onArticleDelete={handleArticleDelete} isArticleDeleting={deleteArticle.isPending} />
 
       {/* Supplier Changes Dialog */}
-      <SupplierChangesDialog
-        open={!!changesDialogSupplier}
-        onOpenChange={(open) => {
-          if (!open) {
-            setChangesDialogSupplier(null);
-            setChangesDialogArticle(null);
-          }
-        }}
-        supplierId={changesDialogSupplier?.id || null}
-        supplierName={changesDialogSupplier?.name || ''}
-        articleId={changesDialogArticle?.id}
-        articleName={changesDialogArticle?.name}
-      />
+      <SupplierChangesDialog open={!!changesDialogSupplier} onOpenChange={open => {
+      if (!open) {
+        setChangesDialogSupplier(null);
+        setChangesDialogArticle(null);
+      }
+    }} supplierId={changesDialogSupplier?.id || null} supplierName={changesDialogSupplier?.name || ''} articleId={changesDialogArticle?.id} articleName={changesDialogArticle?.name} />
 
       {/* Supplier Locations Dialog */}
-      {locationsDialogSupplier && (
-        <SupplierLocationsDialog
-          open={!!locationsDialogSupplier}
-          onOpenChange={(open) => !open && setLocationsDialogSupplier(null)}
-          supplier={locationsDialogSupplier}
-        />
-      )}
+      {locationsDialogSupplier && <SupplierLocationsDialog open={!!locationsDialogSupplier} onOpenChange={open => !open && setLocationsDialogSupplier(null)} supplier={locationsDialogSupplier} />}
 
       {/* Upgrade Dialog for Suppliers */}
-      <UpgradeDialog
-        open={showSupplierUpgradeDialog}
-        onOpenChange={setShowSupplierUpgradeDialog}
-        limitType="suppliers"
-        currentTier={subscriptionLimits.tier}
-        currentUsage={subscriptionLimits.usage.suppliersCount}
-        limit={subscriptionLimits.limits.suppliers}
-      />
+      <UpgradeDialog open={showSupplierUpgradeDialog} onOpenChange={setShowSupplierUpgradeDialog} limitType="suppliers" currentTier={subscriptionLimits.tier} currentUsage={subscriptionLimits.usage.suppliersCount} limit={subscriptionLimits.limits.suppliers} />
 
       {/* Quick Capture Wizard */}
-      <QuickCaptureWizard
-        open={isQuickCaptureOpen}
-        onOpenChange={setIsQuickCaptureOpen}
-        suppliers={suppliers || []}
-        categories={allArticleCategories}
-        units={existingUnits}
-        onCreateSupplier={async (input) => {
-          const result = await createSupplier.mutateAsync(input);
-          return result;
-        }}
-        onCreateArticle={async (input) => {
-          const result = await createArticle.mutateAsync(input);
-          return result;
-        }}
-        onUploadImage={async (base64, orgId, articleId) => {
-          const imageUrl = await uploadImage(base64, orgId, articleId);
-          if (imageUrl) {
-            await updateArticle.mutateAsync({ id: articleId, image_url: imageUrl });
-          }
-          return imageUrl;
-        }}
-        organizationId={organizationId}
-      />
+      <QuickCaptureWizard open={isQuickCaptureOpen} onOpenChange={setIsQuickCaptureOpen} suppliers={suppliers || []} categories={allArticleCategories} units={existingUnits} onCreateSupplier={async input => {
+      const result = await createSupplier.mutateAsync(input);
+      return result;
+    }} onCreateArticle={async input => {
+      const result = await createArticle.mutateAsync(input);
+      return result;
+    }} onUploadImage={async (base64, orgId, articleId) => {
+      const imageUrl = await uploadImage(base64, orgId, articleId);
+      if (imageUrl) {
+        await updateArticle.mutateAsync({
+          id: articleId,
+          image_url: imageUrl
+        });
+      }
+      return imageUrl;
+    }} organizationId={organizationId} />
 
-      <SupplierQRCodeDialog
-        supplier={qrCodeSupplier}
-        open={!!qrCodeSupplier}
-        onOpenChange={(open) => !open && setQrCodeSupplier(null)}
-      />
-    </DashboardLayout>
-  );
+      <SupplierQRCodeDialog supplier={qrCodeSupplier} open={!!qrCodeSupplier} onOpenChange={open => !open && setQrCodeSupplier(null)} />
+    </DashboardLayout>;
 };
-
 export default Suppliers;
