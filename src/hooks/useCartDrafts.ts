@@ -69,6 +69,7 @@ export const useCartDrafts = (locationId?: string, showAllLocations?: boolean) =
               sku,
               price,
               unit,
+              order_unit_id,
               category,
               top_category,
               is_active,
