@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import {
   Select,
   SelectContent,
@@ -12,6 +12,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion';
 import { toast } from 'sonner';
 import { Palette, Building2, ExternalLink, Copy, Check, Link2 } from 'lucide-react';
 
@@ -142,175 +148,191 @@ const B2BSettingsTab = ({ account, onUpdate }: B2BSettingsTabProps) => {
 
   return (
     <div className="space-y-6">
-      {/* Supplier Linking */}
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Link2 className="h-5 w-5" />
-            Bestellung.pro Verknüpfung
-          </CardTitle>
-          <CardDescription>
-            Verknüpfen Sie Ihren Bestellung.pro Lieferanten, um Artikel zu importieren
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-2">
-            <Label htmlFor="linkedSupplier">Verknüpfter Lieferant</Label>
-            <Select value={linkedSupplierId} onValueChange={setLinkedSupplierId}>
-              <SelectTrigger>
-                <SelectValue placeholder="Lieferant auswählen..." />
-              </SelectTrigger>
-              <SelectContent className="bg-card border border-border z-50">
-                <SelectItem value="none">Keine Verknüpfung</SelectItem>
-                {suppliers
-                  .filter((supplier) => supplier.id && supplier.id.trim() !== '')
-                  .map((supplier) => (
-                    <SelectItem key={supplier.id} value={supplier.id}>
-                      {supplier.name}
-                    </SelectItem>
-                  ))}
-              </SelectContent>
-            </Select>
-            <p className="text-sm text-muted-foreground">
-              {linkedSupplierId && linkedSupplierId !== 'none'
-                ? 'Sie können jetzt Artikel aus Ihrem Bestellung.pro Katalog importieren.'
-                : 'Wählen Sie einen Lieferanten, um Artikel zu importieren.'}
-            </p>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Portal URL */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <ExternalLink className="h-5 w-5" />
-            Portal-URL
-          </CardTitle>
-          <CardDescription>
-            Teilen Sie diese URL mit Ihren Kunden
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex gap-2">
-            <Input value={portalUrl} readOnly className="font-mono text-sm" />
-            <Button variant="outline" onClick={copyPortalUrl}>
-              {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-            </Button>
-            <Button variant="outline" onClick={() => window.open(portalUrl, '_blank')}>
-              <ExternalLink className="h-4 w-4" />
-            </Button>
-          </div>
-          <p className="text-sm text-muted-foreground mt-2">
-            Ihre Subdomain: <code className="bg-muted px-1 rounded">{account.subdomain}</code>
-          </p>
-        </CardContent>
-      </Card>
-
-      {/* Company Info */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Building2 className="h-5 w-5" />
-            Unternehmensdaten
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="companyName">Firmenname</Label>
-            <Input
-              id="companyName"
-              value={companyName}
-              onChange={(e) => setCompanyName(e.target.value)}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="welcomeMessage">Willkommensnachricht</Label>
-            <Textarea
-              id="welcomeMessage"
-              value={welcomeMessage}
-              onChange={(e) => setWelcomeMessage(e.target.value)}
-              placeholder="Wird auf der Startseite Ihres Portals angezeigt"
-              rows={3}
-            />
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Branding */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Palette className="h-5 w-5" />
-            Branding
-          </CardTitle>
-          <CardDescription>
-            Passen Sie das Erscheinungsbild Ihres Portals an
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="primaryColor">Primärfarbe</Label>
-              <div className="flex gap-2">
-                <Input
-                  id="primaryColor"
-                  type="color"
-                  value={primaryColor}
-                  onChange={(e) => setPrimaryColor(e.target.value)}
-                  className="w-12 h-10 p-1 cursor-pointer"
-                />
-                <Input
-                  value={primaryColor}
-                  onChange={(e) => setPrimaryColor(e.target.value)}
-                  placeholder="#3b82f6"
-                  className="flex-1"
-                />
+        <Accordion type="multiple" className="w-full">
+          {/* Supplier Linking */}
+          <AccordionItem value="linking" className="border-b">
+            <AccordionTrigger className="group px-4 py-3 hover:no-underline hover:bg-muted/50 data-[state=open]:bg-primary/5">
+              <div className="flex items-center gap-2">
+                <Link2 className="h-4 w-4 text-muted-foreground group-data-[state=open]:text-primary transition-colors" />
+                <span className="font-medium group-data-[state=open]:text-primary transition-colors">
+                  Bestellung.pro Verknüpfung
+                </span>
               </div>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="secondaryColor">Sekundärfarbe</Label>
-              <div className="flex gap-2">
-                <Input
-                  id="secondaryColor"
-                  type="color"
-                  value={secondaryColor}
-                  onChange={(e) => setSecondaryColor(e.target.value)}
-                  className="w-12 h-10 p-1 cursor-pointer"
-                />
-                <Input
-                  value={secondaryColor}
-                  onChange={(e) => setSecondaryColor(e.target.value)}
-                  placeholder="#1e40af"
-                  className="flex-1"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Color Preview */}
-          <div className="border rounded-lg p-4">
-            <p className="text-sm text-muted-foreground mb-3">Vorschau</p>
-            <div className="flex gap-2">
-              <Button style={{ backgroundColor: primaryColor }}>
-                Primär-Button
-              </Button>
-              <Button variant="outline" style={{ borderColor: primaryColor, color: primaryColor }}>
-                Outline-Button
-              </Button>
-            </div>
-          </div>
-
-          {/* Logo Upload - Placeholder */}
-          <div className="space-y-2">
-            <Label>Logo</Label>
-            <div className="border-2 border-dashed rounded-lg p-6 text-center">
-              <p className="text-sm text-muted-foreground">
-                Logo-Upload kommt bald...
+            </AccordionTrigger>
+            <AccordionContent className="px-4 pb-4 bg-primary/5">
+              <p className="text-sm text-muted-foreground mb-4">
+                Verknüpfen Sie Ihren Bestellung.pro Lieferanten, um Artikel zu importieren
               </p>
-            </div>
-          </div>
-        </CardContent>
+              <div className="space-y-2">
+                <Label htmlFor="linkedSupplier">Verknüpfter Lieferant</Label>
+                <Select value={linkedSupplierId} onValueChange={setLinkedSupplierId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Lieferant auswählen..." />
+                  </SelectTrigger>
+                  <SelectContent className="bg-card border border-border z-50">
+                    <SelectItem value="none">Keine Verknüpfung</SelectItem>
+                    {suppliers
+                      .filter((supplier) => supplier.id && supplier.id.trim() !== '')
+                      .map((supplier) => (
+                        <SelectItem key={supplier.id} value={supplier.id}>
+                          {supplier.name}
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-sm text-muted-foreground">
+                  {linkedSupplierId && linkedSupplierId !== 'none'
+                    ? 'Sie können jetzt Artikel aus Ihrem Bestellung.pro Katalog importieren.'
+                    : 'Wählen Sie einen Lieferanten, um Artikel zu importieren.'}
+                </p>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+
+          {/* Portal URL */}
+          <AccordionItem value="portal" className="border-b">
+            <AccordionTrigger className="group px-4 py-3 hover:no-underline hover:bg-muted/50 data-[state=open]:bg-primary/5">
+              <div className="flex items-center gap-2">
+                <ExternalLink className="h-4 w-4 text-muted-foreground group-data-[state=open]:text-primary transition-colors" />
+                <span className="font-medium group-data-[state=open]:text-primary transition-colors">
+                  Portal-URL
+                </span>
+              </div>
+            </AccordionTrigger>
+            <AccordionContent className="px-4 pb-4 bg-primary/5">
+              <p className="text-sm text-muted-foreground mb-4">
+                Teilen Sie diese URL mit Ihren Kunden
+              </p>
+              <div className="flex gap-2">
+                <Input value={portalUrl} readOnly className="font-mono text-sm" />
+                <Button variant="outline" onClick={copyPortalUrl}>
+                  {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                </Button>
+                <Button variant="outline" onClick={() => window.open(portalUrl, '_blank')}>
+                  <ExternalLink className="h-4 w-4" />
+                </Button>
+              </div>
+              <p className="text-sm text-muted-foreground mt-2">
+                Ihre Subdomain: <code className="bg-muted px-1 rounded">{account.subdomain}</code>
+              </p>
+            </AccordionContent>
+          </AccordionItem>
+
+          {/* Company Info */}
+          <AccordionItem value="company" className="border-b">
+            <AccordionTrigger className="group px-4 py-3 hover:no-underline hover:bg-muted/50 data-[state=open]:bg-primary/5">
+              <div className="flex items-center gap-2">
+                <Building2 className="h-4 w-4 text-muted-foreground group-data-[state=open]:text-primary transition-colors" />
+                <span className="font-medium group-data-[state=open]:text-primary transition-colors">
+                  Unternehmensdaten
+                </span>
+              </div>
+            </AccordionTrigger>
+            <AccordionContent className="px-4 pb-4 bg-primary/5">
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="companyName">Firmenname</Label>
+                  <Input
+                    id="companyName"
+                    value={companyName}
+                    onChange={(e) => setCompanyName(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="welcomeMessage">Willkommensnachricht</Label>
+                  <Textarea
+                    id="welcomeMessage"
+                    value={welcomeMessage}
+                    onChange={(e) => setWelcomeMessage(e.target.value)}
+                    placeholder="Wird auf der Startseite Ihres Portals angezeigt"
+                    rows={3}
+                  />
+                </div>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+
+          {/* Branding */}
+          <AccordionItem value="branding" className="border-b-0">
+            <AccordionTrigger className="group px-4 py-3 hover:no-underline hover:bg-muted/50 data-[state=open]:bg-primary/5">
+              <div className="flex items-center gap-2">
+                <Palette className="h-4 w-4 text-muted-foreground group-data-[state=open]:text-primary transition-colors" />
+                <span className="font-medium group-data-[state=open]:text-primary transition-colors">
+                  Branding
+                </span>
+              </div>
+            </AccordionTrigger>
+            <AccordionContent className="px-4 pb-4 bg-primary/5">
+              <p className="text-sm text-muted-foreground mb-4">
+                Passen Sie das Erscheinungsbild Ihres Portals an
+              </p>
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="primaryColor">Primärfarbe</Label>
+                    <div className="flex gap-2">
+                      <Input
+                        id="primaryColor"
+                        type="color"
+                        value={primaryColor}
+                        onChange={(e) => setPrimaryColor(e.target.value)}
+                        className="w-12 h-10 p-1 cursor-pointer"
+                      />
+                      <Input
+                        value={primaryColor}
+                        onChange={(e) => setPrimaryColor(e.target.value)}
+                        placeholder="#3b82f6"
+                        className="flex-1"
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="secondaryColor">Sekundärfarbe</Label>
+                    <div className="flex gap-2">
+                      <Input
+                        id="secondaryColor"
+                        type="color"
+                        value={secondaryColor}
+                        onChange={(e) => setSecondaryColor(e.target.value)}
+                        className="w-12 h-10 p-1 cursor-pointer"
+                      />
+                      <Input
+                        value={secondaryColor}
+                        onChange={(e) => setSecondaryColor(e.target.value)}
+                        placeholder="#1e40af"
+                        className="flex-1"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Color Preview */}
+                <div className="border rounded-lg p-4">
+                  <p className="text-sm text-muted-foreground mb-3">Vorschau</p>
+                  <div className="flex gap-2">
+                    <Button style={{ backgroundColor: primaryColor }}>
+                      Primär-Button
+                    </Button>
+                    <Button variant="outline" style={{ borderColor: primaryColor, color: primaryColor }}>
+                      Outline-Button
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Logo Upload - Placeholder */}
+                <div className="space-y-2">
+                  <Label>Logo</Label>
+                  <div className="border-2 border-dashed rounded-lg p-6 text-center">
+                    <p className="text-sm text-muted-foreground">
+                      Logo-Upload kommt bald...
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
       </Card>
 
       {/* Save Button */}
