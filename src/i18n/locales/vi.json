@@ -435,6 +435,34 @@
     "unitsAndCategories": "Đơn vị & Danh mục",
     "unitsAndCategoriesShort": "Đ.vị & D.mục",
     "communication": "Giao tiếp",
+    "communicationLog": {
+      "title": "Lịch sử giao tiếp",
+      "description": "Tổng quan tất cả email đã gửi và xác nhận",
+      "filterPlaceholder": "Chọn bộ lọc",
+      "filterAll": "Tất cả",
+      "noLogs": "Chưa có giao tiếp nào",
+      "columns": {
+        "date": "Ngày",
+        "type": "Loại",
+        "recipient": "Người nhận",
+        "subject": "Chủ đề",
+        "status": "Trạng thái"
+      },
+      "types": {
+        "orderSent": "Đơn hàng",
+        "orderConfirmed": "Đã xác nhận",
+        "preorderNotification": "Đặt trước",
+        "teamInvitation": "Lời mời",
+        "confirmationNotification": "Thông báo",
+        "unknown": "Không xác định"
+      },
+      "status": {
+        "sent": "Đã gửi",
+        "confirmed": "Đã xác nhận",
+        "pending": "Đang chờ",
+        "failed": "Thất bại"
+      }
+    },
     "demoAccounts": "Tài khoản demo",
     "demoAccountsShort": "Demo",
     "wineTokens": "Danh mục Rượu",

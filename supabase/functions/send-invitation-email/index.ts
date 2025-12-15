@@ -245,6 +245,37 @@ ${t.ignore}
 
     console.log("Invitation email sent successfully:", emailResponse);
 
+    // Log to communication_logs - we need organization_id, get it from the invite token
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    if (supabaseUrl && serviceRoleKey) {
+      const { createClient } = await import("https://esm.sh/@supabase/supabase-js@2");
+      const supabase = createClient(supabaseUrl, serviceRoleKey);
+      
+      const { data: invitation } = await supabase
+        .from("team_invitations")
+        .select("organization_id")
+        .eq("token", inviteToken)
+        .single();
+
+      if (invitation?.organization_id) {
+        const { error: logError } = await supabase
+          .from("communication_logs")
+          .insert({
+            organization_id: invitation.organization_id,
+            email_type: 'team_invitation',
+            direction: 'outgoing',
+            recipient_email: inviteeEmail,
+            subject: t.subject(organizationName),
+            status: 'sent',
+          });
+
+        if (logError) {
+          console.error("Error logging communication:", logError);
+        }
+      }
+    }
+
     return new Response(JSON.stringify({ success: true, emailResponse }), {
       status: 200,
       headers: { "Content-Type": "application/json", ...corsHeaders },
