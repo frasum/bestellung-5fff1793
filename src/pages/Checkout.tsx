@@ -659,7 +659,7 @@ const Checkout = () => {
                         <div className="text-xs md:text-sm text-muted-foreground mb-3 space-y-1">
                           <div className="flex items-center gap-1.5 flex-wrap">
                             {item.article.sku && <span>SKU: {item.article.sku} • </span>}
-                            {item.article.unit}
+                            {formatOrderUnit(item.article.order_unit_id) || item.article.unit}
                             {item.article.packaging_unit && item.article.packaging_unit > 1 && (
                               <span className="text-primary font-medium"> ({item.article.packaging_unit}er)</span>
                             )}
@@ -668,12 +668,6 @@ const Checkout = () => {
                               <span className="text-muted-foreground/70"> (€{Number(item.article.reference_price).toFixed(2)}/{item.article.reference_unit})</span>
                             )}
                           </div>
-                          {formatOrderUnit(item.article.order_unit_id) && (
-                            <Badge variant="secondary" className="text-xs gap-1">
-                              <Package className="h-3 w-3" />
-                              {formatOrderUnit(item.article.order_unit_id)}
-                            </Badge>
-                          )}
                         </div>
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-1">
@@ -746,25 +740,17 @@ const Checkout = () => {
                     <div key={item.article.id} className="p-4 flex items-center justify-between gap-4">
                       <div className="flex-1 min-w-0">
                         <p className="font-medium text-foreground truncate">{item.article.name}</p>
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <p className="text-sm text-muted-foreground">
-                            {item.article.sku && <span className="mr-2">SKU: {item.article.sku}</span>}
-                            {item.article.unit}
-                            {item.article.packaging_unit && item.article.packaging_unit > 1 && (
-                              <span className="text-primary font-medium"> ({item.article.packaging_unit}er)</span>
-                            )}
-                            {' '}× €{Number(item.article.price).toFixed(2)}
-                            {item.article.reference_price && item.article.reference_unit && (
-                              <span className="text-muted-foreground/70"> (€{Number(item.article.reference_price).toFixed(2)}/{item.article.reference_unit})</span>
-                            )}
-                          </p>
-                          {formatOrderUnit(item.article.order_unit_id) && (
-                            <Badge variant="secondary" className="text-xs gap-1">
-                              <Package className="h-3 w-3" />
-                              {formatOrderUnit(item.article.order_unit_id)}
-                            </Badge>
+                        <p className="text-sm text-muted-foreground">
+                          {item.article.sku && <span className="mr-2">SKU: {item.article.sku}</span>}
+                          {formatOrderUnit(item.article.order_unit_id) || item.article.unit}
+                          {item.article.packaging_unit && item.article.packaging_unit > 1 && (
+                            <span className="text-primary font-medium"> ({item.article.packaging_unit}er)</span>
                           )}
-                        </div>
+                          {' '}× €{Number(item.article.price).toFixed(2)}
+                          {item.article.reference_price && item.article.reference_unit && (
+                            <span className="text-muted-foreground/70"> (€{Number(item.article.reference_price).toFixed(2)}/{item.article.reference_unit})</span>
+                          )}
+                        </p>
                       </div>
                       <div className="flex items-center gap-2">
                         <div className="flex items-center gap-1">
