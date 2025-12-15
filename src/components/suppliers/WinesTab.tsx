@@ -430,7 +430,7 @@ export const WinesTab = ({ articles, suppliers, onEditArticle }: WinesTabProps) 
       )}
 
       {suppliersWithWines.map(supplier => {
-        const isOpen = openSuppliers[supplier.id] !== false; // default open
+        const isOpen = openSuppliers[supplier.id] === true; // default closed
         return (
           <Collapsible 
             key={supplier.id} 
