@@ -19,7 +19,7 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion';
 import { toast } from 'sonner';
-import { Palette, Building2, ExternalLink, Copy, Check, Link2 } from 'lucide-react';
+import { Palette, Building2, ExternalLink, Copy, Check, Link2, Upload, Trash2, Loader2, ImageIcon } from 'lucide-react';
 
 interface B2BAccount {
   id: string;
@@ -54,6 +54,8 @@ const B2BSettingsTab = ({ account, onUpdate }: B2BSettingsTabProps) => {
   const [linkedSupplierId, setLinkedSupplierId] = useState(account.linked_supplier_id || 'none');
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [copied, setCopied] = useState(false);
+  const [logoUrl, setLogoUrl] = useState(account.logo_url);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
 
   const portalUrl = `${window.location.origin}/b2b/portal/${account.subdomain}`;
 
@@ -144,6 +146,89 @@ const B2BSettingsTab = ({ account, onUpdate }: B2BSettingsTabProps) => {
     setCopied(true);
     toast.success('URL kopiert');
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      toast.error('Bitte wählen Sie eine Bilddatei');
+      return;
+    }
+
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error('Datei zu groß (max. 2MB)');
+      return;
+    }
+
+    setUploadingLogo(true);
+    try {
+      // Delete old logo if exists
+      if (logoUrl) {
+        const oldPath = logoUrl.split('/b2b-portal-logos/')[1]?.split('?')[0];
+        if (oldPath) {
+          await supabase.storage.from('b2b-portal-logos').remove([oldPath]);
+        }
+      }
+
+      // Upload new logo
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${account.id}/logo-${Date.now()}.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('b2b-portal-logos')
+        .upload(fileName, file);
+
+      if (uploadError) throw uploadError;
+
+      // Get public URL with cache busting
+      const { data: { publicUrl } } = supabase.storage
+        .from('b2b-portal-logos')
+        .getPublicUrl(fileName);
+
+      const urlWithCacheBust = `${publicUrl}?t=${Date.now()}`;
+
+      // Save URL to database
+      const { error: updateError } = await supabase
+        .from('supplier_b2b_accounts')
+        .update({ logo_url: urlWithCacheBust })
+        .eq('id', account.id);
+
+      if (updateError) throw updateError;
+
+      setLogoUrl(urlWithCacheBust);
+      toast.success('Logo hochgeladen');
+      onUpdate();
+    } catch (error: any) {
+      console.error('Error uploading logo:', error);
+      toast.error('Fehler beim Hochladen: ' + error.message);
+    } finally {
+      setUploadingLogo(false);
+    }
+  };
+
+  const handleRemoveLogo = async () => {
+    if (!logoUrl) return;
+
+    try {
+      const path = logoUrl.split('/b2b-portal-logos/')[1]?.split('?')[0];
+      if (path) {
+        await supabase.storage.from('b2b-portal-logos').remove([path]);
+      }
+
+      await supabase
+        .from('supplier_b2b_accounts')
+        .update({ logo_url: null })
+        .eq('id', account.id);
+
+      setLogoUrl(null);
+      toast.success('Logo entfernt');
+      onUpdate();
+    } catch (error: any) {
+      console.error('Error removing logo:', error);
+      toast.error('Fehler beim Entfernen: ' + error.message);
+    }
   };
 
   return (
@@ -320,13 +405,59 @@ const B2BSettingsTab = ({ account, onUpdate }: B2BSettingsTabProps) => {
                   </div>
                 </div>
 
-                {/* Logo Upload - Placeholder */}
+                {/* Logo Upload */}
                 <div className="space-y-2">
                   <Label>Logo</Label>
-                  <div className="border-2 border-dashed rounded-lg p-6 text-center">
-                    <p className="text-sm text-muted-foreground">
-                      Logo-Upload kommt bald...
-                    </p>
+                  <div className="flex items-center gap-4">
+                    {/* Logo Preview */}
+                    <div className="w-24 h-24 border rounded-lg flex items-center justify-center bg-muted/30 overflow-hidden">
+                      {logoUrl ? (
+                        <img src={logoUrl} alt="Logo" className="max-w-full max-h-full object-contain" />
+                      ) : (
+                        <ImageIcon className="h-8 w-8 text-muted-foreground/50" />
+                      )}
+                    </div>
+                    
+                    {/* Upload/Remove Buttons */}
+                    <div className="flex flex-col gap-2">
+                      <div className="flex items-center gap-2">
+                        <Input
+                          id="b2b-logo-upload"
+                          type="file"
+                          accept="image/*"
+                          onChange={handleLogoUpload}
+                          className="hidden"
+                          disabled={uploadingLogo}
+                        />
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          disabled={uploadingLogo}
+                          onClick={() => document.getElementById('b2b-logo-upload')?.click()}
+                        >
+                          {uploadingLogo ? (
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          ) : (
+                            <Upload className="h-4 w-4 mr-2" />
+                          )}
+                          {logoUrl ? 'Ändern' : 'Hochladen'}
+                        </Button>
+                        {logoUrl && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={handleRemoveLogo}
+                            className="text-destructive hover:text-destructive"
+                          >
+                            <Trash2 className="h-4 w-4 mr-1" />
+                            Entfernen
+                          </Button>
+                        )}
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        Max. 2MB, empfohlen: 200x200px
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>
