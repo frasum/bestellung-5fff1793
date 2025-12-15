@@ -8,6 +8,13 @@ import { cn } from '@/lib/utils';
 import { useOrderUnits, useCreateOrderUnit, useUpdateOrderUnit, useDeleteOrderUnit, OrderUnit } from '@/hooks/useOrderUnits';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 
+/** Minimal order unit interface for external usage (e.g., supplier portal) */
+interface MinimalOrderUnit {
+  id: string;
+  name: string;
+  quantity: number;
+}
+
 interface SupplierOrderUnitSelectProps {
   value: string | null;
   onChange: (value: string | null) => void;
@@ -16,6 +23,8 @@ interface SupplierOrderUnitSelectProps {
   className?: string;
   isFilter?: boolean;
   filterLabel?: string;
+  /** Optional: External order units (used in supplier portal where RLS prevents direct DB access) */
+  externalOrderUnits?: MinimalOrderUnit[];
 }
 
 export function SupplierOrderUnitSelect({
@@ -26,14 +35,18 @@ export function SupplierOrderUnitSelect({
   className,
   isFilter = false,
   filterLabel = 'Alle',
+  externalOrderUnits,
 }: SupplierOrderUnitSelectProps) {
   const [open, setOpen] = useState(false);
   const [customQuantity, setCustomQuantity] = useState('');
   const [customName, setCustomName] = useState('');
   const [editingUnit, setEditingUnit] = useState<{ id: string; name: string; quantity: number } | null>(null);
-  const [deleteUnit, setDeleteUnit] = useState<OrderUnit | null>(null);
+  const [deleteUnit, setDeleteUnit] = useState<MinimalOrderUnit | null>(null);
   
-  const { data: orderUnits = [] } = useOrderUnits();
+  const { data: internalOrderUnits = [] } = useOrderUnits();
+  // Use external order units if provided (for supplier portal), otherwise use internal
+  const orderUnits = externalOrderUnits ?? internalOrderUnits;
+  
   const createOrderUnit = useCreateOrderUnit();
   const updateOrderUnit = useUpdateOrderUnit();
   const deleteOrderUnitMutation = useDeleteOrderUnit();
