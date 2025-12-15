@@ -325,6 +325,26 @@ export const ProfileTab = () => {
       <Card>
         <CardContent className="p-0">
           <Accordion type="multiple" defaultValue={defaultOpenSections} className="w-full">
+            {/* Test Mode Section - only visible in advanced mode - FIRST */}
+            {advancedMode && (
+              <AccordionItem value="testmode" className="border-b">
+                <AccordionTrigger className={`px-4 py-3 hover:no-underline hover:bg-muted/50 ${organization?.test_mode_enabled ? 'bg-amber-50/50 dark:bg-amber-950/20' : ''}`}>
+                  <div className="flex items-center gap-2">
+                    <Mail className="h-4 w-4 text-muted-foreground" />
+                    <span className="font-medium">{t('testMode.title')}</span>
+                    {organization?.test_mode_enabled && (
+                      <span className="text-xs bg-amber-200 dark:bg-amber-800 text-amber-800 dark:text-amber-200 px-1.5 py-0.5 rounded">
+                        Aktiv
+                      </span>
+                    )}
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className={`px-4 pb-4 ${organization?.test_mode_enabled ? 'bg-amber-50/50 dark:bg-amber-950/20' : ''}`}>
+                  <TestModeContent />
+                </AccordionContent>
+              </AccordionItem>
+            )}
+
             {/* Profile & Account Section */}
             <AccordionItem value="profile" className="border-b">
               <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-muted/50">
@@ -475,25 +495,6 @@ export const ProfileTab = () => {
               </AccordionContent>
             </AccordionItem>
 
-            {/* Test Mode Section - only visible in advanced mode */}
-            {advancedMode && (
-              <AccordionItem value="testmode">
-                <AccordionTrigger className={`px-4 py-3 hover:no-underline hover:bg-muted/50 ${organization?.test_mode_enabled ? 'bg-amber-50/50 dark:bg-amber-950/20' : ''}`}>
-                  <div className="flex items-center gap-2">
-                    <Mail className="h-4 w-4 text-muted-foreground" />
-                    <span className="font-medium">{t('testMode.title')}</span>
-                    {organization?.test_mode_enabled && (
-                      <span className="text-xs bg-amber-200 dark:bg-amber-800 text-amber-800 dark:text-amber-200 px-1.5 py-0.5 rounded">
-                        Aktiv
-                      </span>
-                    )}
-                  </div>
-                </AccordionTrigger>
-                <AccordionContent className={`px-4 pb-4 ${organization?.test_mode_enabled ? 'bg-amber-50/50 dark:bg-amber-950/20' : ''}`}>
-                  <TestModeContent />
-                </AccordionContent>
-              </AccordionItem>
-            )}
           </Accordion>
         </CardContent>
       </Card>
