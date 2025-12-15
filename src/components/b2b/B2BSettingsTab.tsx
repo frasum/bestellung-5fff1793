@@ -57,26 +57,50 @@ const B2BSettingsTab = ({ account, onUpdate }: B2BSettingsTabProps) => {
 
   const loadSuppliers = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      let allSuppliers: Supplier[] = [];
 
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('organization_id')
-        .eq('id', user.id)
-        .maybeSingle();
-
-      if (profileError) throw profileError;
-
-      if (profile?.organization_id) {
-        const { data: suppliersData } = await supabase
+      // 1. Load linked supplier directly if exists (may be from different org)
+      if (account.linked_supplier_id) {
+        const { data: linkedSupplier } = await supabase
           .from('suppliers')
           .select('id, name')
-          .eq('organization_id', profile.organization_id)
-          .order('name');
-
-        setSuppliers(suppliersData || []);
+          .eq('id', account.linked_supplier_id)
+          .maybeSingle();
+        
+        if (linkedSupplier) {
+          allSuppliers.push(linkedSupplier);
+        }
       }
+
+      // 2. Load suppliers from user's organization
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('organization_id')
+          .eq('id', user.id)
+          .maybeSingle();
+
+        if (profile?.organization_id) {
+          const { data: orgSuppliers } = await supabase
+            .from('suppliers')
+            .select('id, name')
+            .eq('organization_id', profile.organization_id)
+            .order('name');
+
+          // Add org suppliers, avoiding duplicates
+          if (orgSuppliers) {
+            const existingIds = new Set(allSuppliers.map(s => s.id));
+            for (const s of orgSuppliers) {
+              if (!existingIds.has(s.id)) {
+                allSuppliers.push(s);
+              }
+            }
+          }
+        }
+      }
+
+      setSuppliers(allSuppliers);
     } catch (error) {
       console.error('Error loading suppliers:', error);
     }
