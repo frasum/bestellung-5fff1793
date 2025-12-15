@@ -355,15 +355,15 @@ export const ArticleTable = ({
                                 const orderUnit = article.order_unit_id 
                                   ? orderUnits.find(u => u.id === article.order_unit_id)
                                   : null;
-                                if (orderUnit) {
-                                  return (
-                                    <Badge variant="outline" className="text-xs gap-1 font-normal">
-                                      <Package className="h-3 w-3" />
-                                      {orderUnit.quantity}× {orderUnit.name}
-                                    </Badge>
-                                  );
-                                }
-                                return null;
+                                // Immer Bestelleinheit anzeigen: order_unit falls vorhanden, sonst unit als Fallback
+                                const displayUnitName = orderUnit?.name || article.unit;
+                                const displayQuantity = orderUnit?.quantity || 1;
+                                return (
+                                  <Badge variant="outline" className="text-xs gap-1 font-normal">
+                                    <Package className="h-3 w-3" />
+                                    {displayQuantity}× {displayUnitName}
+                                  </Badge>
+                                );
                               })()}
                               {article.reference_price && article.reference_unit && (
                                 <span className="text-xs text-muted-foreground/70 italic">

@@ -83,12 +83,11 @@ export const ArticleCard = memo(({
         <div className="text-right shrink-0">
           <p className="font-semibold text-foreground">€{Number(article.price).toFixed(2)}</p>
           <p className="text-xs text-muted-foreground">/{article.unit}</p>
-          {orderUnit && (
-            <Badge variant="outline" className="text-xs gap-1 font-normal mt-1">
-              <Package className="h-3 w-3" />
-              {orderUnit.quantity}× {orderUnit.name}
-            </Badge>
-          )}
+          {/* Immer Bestelleinheit anzeigen: order_unit falls vorhanden, sonst unit als Fallback */}
+          <Badge variant="outline" className="text-xs gap-1 font-normal mt-1">
+            <Package className="h-3 w-3" />
+            {orderUnit ? `${orderUnit.quantity}× ${orderUnit.name}` : `1× ${article.unit}`}
+          </Badge>
           {article.reference_price && article.reference_unit && (
             <p className="text-xs text-muted-foreground/70 italic">
               (€{Number(article.reference_price).toFixed(2)}/{article.reference_unit})

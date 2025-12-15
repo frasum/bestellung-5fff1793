@@ -423,11 +423,10 @@ const ArticleCard = ({
             
             <div className="min-w-16 text-center">
               <span className="text-xl font-bold">{quantity}</span>
-              {article.order_unit && (
-                <span className="block text-xs text-muted-foreground leading-tight">
-                  {article.order_unit.name}
-                </span>
-              )}
+              {/* Immer Einheit anzeigen: order_unit falls vorhanden, sonst unit als Fallback */}
+              <span className="block text-xs text-muted-foreground leading-tight">
+                {article.order_unit?.name || article.unit}
+              </span>
             </div>
             
             <Button
