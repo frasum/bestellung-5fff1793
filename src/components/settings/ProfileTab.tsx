@@ -160,18 +160,27 @@ const TestModeContent = () => {
 
   return (
     <div className="space-y-4">
-      <p className="text-sm text-muted-foreground">
-        {t('settings.testModeDescription')}
-      </p>
-      
       {!organization?.is_demo && (
-        <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg border">
+        <div className={`flex items-center justify-between p-3 rounded-lg border ${
+          organization?.test_mode_enabled 
+            ? 'bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800' 
+            : 'bg-muted/50'
+        }`}>
           <div className="space-y-0.5">
-            <Label htmlFor="test-mode" className="text-sm font-medium">
-              {t('settings.testModeEnable')}
+            <Label htmlFor="test-mode" className={`text-sm font-medium flex items-center gap-2 ${
+              organization?.test_mode_enabled ? 'text-amber-800 dark:text-amber-200' : ''
+            }`}>
+              {organization?.test_mode_enabled ? '✓ ' : ''}{t('settings.testModeEnable')}
             </Label>
-            <p className="text-xs text-muted-foreground">
-              {t('settings.testModeEnabledDesc')}
+            <p className={`text-xs ${
+              organization?.test_mode_enabled 
+                ? 'text-amber-700 dark:text-amber-300' 
+                : 'text-muted-foreground'
+            }`}>
+              {organization?.test_mode_enabled 
+                ? t('settings.testModeActiveDesc', { email: organization.test_email || '—' })
+                : t('settings.testModeEnabledDesc')
+              }
             </p>
           </div>
           <Switch
@@ -217,18 +226,6 @@ const TestModeContent = () => {
           </p>
         )}
       </div>
-
-      {organization?.test_mode_enabled && (
-        <div className="flex items-start gap-3 p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg">
-          <span className="text-lg">⚠️</span>
-          <div>
-            <p className="font-medium text-amber-800 dark:text-amber-200 text-sm">{t('settings.testModeActive')}</p>
-            <p className="text-xs text-amber-700 dark:text-amber-300 mt-0.5">
-              {t('settings.testModeActiveDesc', { email: organization.test_email })}
-            </p>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
