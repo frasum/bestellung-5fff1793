@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,6 +9,8 @@ import { SupplierOrderUnitSelect } from '@/components/suppliers/SupplierOrderUni
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 import { Search, CheckSquare, Square, Loader2, BarChart3 } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { useArticles, useBulkUpdateArticles, useUpdateArticle } from '@/hooks/useArticles';
@@ -61,7 +63,31 @@ export const ArticleOrganizationTab = () => {
   const [isSupplierDialogOpen, setIsSupplierDialogOpen] = useState(false);
   const [editingSupplier, setEditingSupplier] = useState<Supplier | null>(null);
   
+  // Advanced settings state (from localStorage)
+  const [advancedSettingsEnabled, setAdvancedSettingsEnabled] = useState(() => 
+    localStorage.getItem('advanced-settings-enabled') === 'true'
+  );
+  const [bulkAssignMode, setBulkAssignMode] = useState(false);
+  
   const updateSupplier = useUpdateSupplier();
+
+  // Listen for advanced settings changes
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'advanced-settings-enabled') {
+        setAdvancedSettingsEnabled(e.newValue === 'true');
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
+
+  // Reset selection when bulk assign mode is disabled
+  useEffect(() => {
+    if (!bulkAssignMode) {
+      setSelectedIds(new Set());
+    }
+  }, [bulkAssignMode]);
 
   // Cast articles to include top_category and order_unit_id
   const articlesWithTopCategory = articles as unknown as ArticleWithTopCategory[];
@@ -439,10 +465,24 @@ export const ArticleOrganizationTab = () => {
           >
             Nur ohne Stk/BE
           </Button>
+          
+          {/* Sammelzuweisung Switch - only visible when advanced settings enabled */}
+          {advancedSettingsEnabled && (
+            <div className="flex items-center gap-2 ml-auto pl-4 border-l">
+              <Switch
+                id="bulk-assign-mode"
+                checked={bulkAssignMode}
+                onCheckedChange={setBulkAssignMode}
+              />
+              <Label htmlFor="bulk-assign-mode" className="text-sm font-medium cursor-pointer">
+                Sammelzuweisung
+              </Label>
+            </div>
+          )}
         </div>
 
-        {/* Bulk Actions Toolbar */}
-        {selectedIds.size > 0 && (
+        {/* Bulk Actions Toolbar - only when bulk assign mode active and items selected */}
+        {bulkAssignMode && selectedIds.size > 0 && (
           <div className="flex flex-wrap items-center gap-2 p-3 bg-muted/50 rounded-lg border">
             <Badge variant="secondary" className="font-normal">
               {t('settings.articleOrganization.selectedCount', { count: selectedIds.size })}
@@ -513,20 +553,22 @@ export const ArticleOrganizationTab = () => {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-[50px]">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-8 w-8 p-0"
-                      onClick={selectedIds.size === filteredArticles.length ? deselectAll : selectAll}
-                    >
-                      {selectedIds.size === filteredArticles.length && filteredArticles.length > 0 ? (
-                        <CheckSquare className="h-4 w-4" />
-                      ) : (
-                        <Square className="h-4 w-4" />
-                      )}
-                    </Button>
-                  </TableHead>
+                  {bulkAssignMode && (
+                    <TableHead className="w-[50px]">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 p-0"
+                        onClick={selectedIds.size === filteredArticles.length ? deselectAll : selectAll}
+                      >
+                        {selectedIds.size === filteredArticles.length && filteredArticles.length > 0 ? (
+                          <CheckSquare className="h-4 w-4" />
+                        ) : (
+                          <Square className="h-4 w-4" />
+                        )}
+                      </Button>
+                    </TableHead>
+                  )}
                   <TableHead>{t('articles.articleName')}</TableHead>
                   <TableHead className="hidden sm:table-cell">{t('articles.supplier')}</TableHead>
                   <TableHead className="hidden md:table-cell">Einheit</TableHead>
@@ -539,7 +581,7 @@ export const ArticleOrganizationTab = () => {
               <TableBody>
                 {filteredArticles.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={bulkAssignMode ? 8 : 7} className="text-center py-8 text-muted-foreground">
                       {t('settings.articleOrganization.noArticles')}
                     </TableCell>
                   </TableRow>
@@ -550,12 +592,14 @@ export const ArticleOrganizationTab = () => {
                     
                     return (
                       <TableRow key={article.id} className={getRowHighlightClass(article)}>
-                        <TableCell>
-                          <Checkbox
-                            checked={selectedIds.has(article.id)}
-                            onCheckedChange={() => toggleSelect(article.id)}
-                          />
-                        </TableCell>
+                        {bulkAssignMode && (
+                          <TableCell>
+                            <Checkbox
+                              checked={selectedIds.has(article.id)}
+                              onCheckedChange={() => toggleSelect(article.id)}
+                            />
+                          </TableCell>
+                        )}
                         <TableCell>
                           <div>
                             <button
