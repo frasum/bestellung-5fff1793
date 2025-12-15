@@ -5,13 +5,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Lock, MapPin, Globe, Mail, Palette, User, Settings } from 'lucide-react';
+import { Lock, Globe, Mail, Palette, User, Settings } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useUserProfile, useUpdateUserProfile, useUpdatePassword, useOrganization, useUpdateOrganization } from '@/hooks/useSettings';
-import { useLocations } from '@/hooks/useLocations';
-import { useAllUserDeliveryPreferences, useAllDeliveryAddresses, useUpsertUserDeliveryPreferenceForLocation } from '@/hooks/useUserDeliveryPreference';
 import { I18nCheckDialog } from './I18nCheckDialog';
 import { UsageDashboard } from './UsageDashboard';
 
@@ -255,25 +252,6 @@ export const ProfileTab = () => {
     return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
-  // All locations and delivery addresses
-  const { data: locations = [] } = useLocations();
-  const { data: allAddresses = [] } = useAllDeliveryAddresses();
-  const { data: allPreferences = [] } = useAllUserDeliveryPreferences();
-  const upsertPreference = useUpsertUserDeliveryPreferenceForLocation();
-
-  // Get addresses for a specific location
-  const getAddressesForLocation = (locationId: string) => {
-    return allAddresses.filter(addr => addr.location_id === locationId);
-  };
-
-  // Get current preference for a location
-  const getPreferenceForLocation = (locationId: string) => {
-    return allPreferences.find(pref => pref.location_id === locationId);
-  };
-
-  const handleAddressChange = (locationId: string, addressId: string) => {
-    upsertPreference.mutate({ locationId, deliveryAddressId: addressId });
-  };
 
   const handleProfileSave = () => {
     if (fullName.trim()) {
@@ -386,58 +364,6 @@ export const ProfileTab = () => {
 
                   <AdvancedSettingsSwitch />
                   <AdvancedToolsSection />
-                </div>
-              </AccordionContent>
-            </AccordionItem>
-
-            {/* Delivery Addresses Section */}
-            <AccordionItem value="addresses" className="border-b">
-              <AccordionTrigger className="group px-4 py-3 hover:no-underline hover:bg-muted/50 data-[state=open]:bg-primary/5">
-                <div className="flex items-center gap-2">
-                  <MapPin className="h-4 w-4 text-muted-foreground group-data-[state=open]:text-primary transition-colors" />
-                  <span className="font-medium group-data-[state=open]:text-primary transition-colors">{t('settings.defaultDeliveryAddresses')}</span>
-                </div>
-              </AccordionTrigger>
-              <AccordionContent className="px-4 pb-4 bg-primary/5">
-                <p className="text-sm text-muted-foreground mb-4">
-                  {t('settings.defaultDeliveryAddressesDesc')}
-                </p>
-                <div className="space-y-3">
-                  {locations.length > 0 ? (
-                    locations.map((location) => {
-                      const locationAddresses = getAddressesForLocation(location.id);
-                      const currentPreference = getPreferenceForLocation(location.id);
-                      
-                      return (
-                        <div key={location.id} className="space-y-1.5">
-                          <Label className="text-sm font-medium">
-                            {location.short_code || location.name}
-                          </Label>
-                          {locationAddresses.length > 0 ? (
-                            <Select 
-                              value={currentPreference?.delivery_address_id || ''} 
-                              onValueChange={(value) => handleAddressChange(location.id, value)}
-                            >
-                              <SelectTrigger className="w-full h-10">
-                                <SelectValue placeholder={t('settings.selectDefaultAddress')} />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {locationAddresses.map((address) => (
-                                  <SelectItem key={address.id} value={address.id}>
-                                    {address.label} - {address.address_line1}, {address.city}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          ) : (
-                            <p className="text-sm text-muted-foreground">{t('settings.noAddressesForLocation')}</p>
-                          )}
-                        </div>
-                      );
-                    })
-                  ) : (
-                    <p className="text-sm text-muted-foreground">{t('settings.noLocations')}</p>
-                  )}
                 </div>
               </AccordionContent>
             </AccordionItem>
