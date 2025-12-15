@@ -16,6 +16,7 @@ import logo from '@/assets/logo.png';
 import { SupplierArticleCard } from '@/components/suppliers/SupplierArticleCard';
 import { SupplierUnitSelect } from '@/components/suppliers/SupplierUnitSelect';
 import { SupplierCategorySelect } from '@/components/suppliers/SupplierCategorySelect';
+import { SupplierOrderUnitSelect } from '@/components/suppliers/SupplierOrderUnitSelect';
 import { SuggestArticleDialog } from '@/components/suppliers/SuggestArticleDialog';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
@@ -966,35 +967,21 @@ const SupplierPortal = () => {
                             )}
                             {isColumnVisible('packaging_unit') && (
                               <TableCell>
-                                <div className="space-y-1">
-                                  <Input
-                                    type="text"
-                                    inputMode="numeric"
-                                    value={orderUnitInputs[article.id] !== undefined 
-                                      ? orderUnitInputs[article.id]
-                                      : getPendingChangeForField(article.id, 'packaging_unit')?.new_value 
-                                        ?? (article.packaging_unit !== null ? String(article.packaging_unit) : '')}
-                                    onChange={(e) => {
-                                      setOrderUnitInputs(prev => ({
-                                        ...prev,
-                                        [article.id]: e.target.value
-                                      }));
-                                    }}
-                                    className={cn(
-                                      "h-8",
-                                      hasPendingChange(article.id, 'packaging_unit') && "border-amber-500"
-                                    )}
-                                    placeholder="-"
-                                  />
-                                  {getPendingChangeForField(article.id, 'packaging_unit') && (
-                                    <div className="text-xs">
-                                      <span className="text-amber-600">Ausstehend</span>
-                                      <span className="text-muted-foreground ml-1">
-                                        (vorher: {getPendingChangeForField(article.id, 'packaging_unit')?.old_value || '-'})
-                                      </span>
-                                    </div>
-                                  )}
-                                </div>
+                                <SupplierOrderUnitSelect
+                                  value={orderUnitInputs[article.id] !== undefined 
+                                    ? orderUnitInputs[article.id]
+                                    : getPendingChangeForField(article.id, 'order_unit_id')?.new_value 
+                                      ?? article.order_unit_id ?? null}
+                                  onChange={(value) => {
+                                    setOrderUnitInputs(prev => ({
+                                      ...prev,
+                                      [article.id]: value ?? ''
+                                    }));
+                                  }}
+                                  hasPending={hasPendingChange(article.id, 'order_unit_id')}
+                                  pendingInfo={getPendingChangeForField(article.id, 'order_unit_id')}
+                                  externalOrderUnits={orderUnits}
+                                />
                               </TableCell>
                             )}
                             {isColumnVisible('price') && (
