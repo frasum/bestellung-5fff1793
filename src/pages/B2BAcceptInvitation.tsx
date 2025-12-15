@@ -179,9 +179,11 @@ export default function B2BAcceptInvitation() {
 
       toast({ title: 'Einladung angenommen!', description: 'Sie werden weitergeleitet...' });
       
-      // Redirect to B2B customer portal (for now, just show success)
+      const subdomain = (data as any)?.subdomain as string | undefined;
+      const target = subdomain ? `/b2b/portal/${subdomain}` : '/b2b/portal';
+
       setTimeout(() => {
-        navigate('/b2b/portal');
+        navigate(target);
       }, 1500);
     } catch (err: any) {
       console.error('Accept invitation error:', err);

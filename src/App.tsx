@@ -100,6 +100,7 @@ const AppContent = () => {
           <Route path="/b2b/dashboard" element={<B2BSupplierDashboard />} />
           <Route path="/b2b/accept-invitation" element={<B2BAcceptInvitation />} />
           <Route path="/b2b/portal" element={<B2BCustomerPortal />} />
+          <Route path="/b2b/portal/:subdomain" element={<B2BCustomerPortal />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
