@@ -5,7 +5,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
-import { LogOut, Search, Package, Clock, Monitor, Smartphone } from 'lucide-react';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { LogOut, Search, Package, Clock, Monitor, Smartphone, Camera } from 'lucide-react';
+import { PORTAL_COLUMN_OPTIONS, PortalColumnKey } from '@/hooks/useSupplierPortalSettings';
 import logo from '@/assets/logo.png';
 
 interface PortalPreviewProps {
@@ -16,7 +18,51 @@ interface PortalPreviewProps {
   cardDescription: string;
   infoText: string;
   footerText: string;
+  visibleColumns?: PortalColumnKey[];
 }
+
+// Sample data for preview
+const SAMPLE_ARTICLES = [
+  { name: 'Bio Tomaten', sku: 'ART-001', description: 'Frische Bio-Tomaten aus der Region', unit: 'kg', price: 5.00, packaging_unit: 1, reference_price: 5.00, reference_unit: 'kg', annual_order_value: 1200 },
+  { name: 'Olivenöl Extra Vergine', sku: 'ART-002', description: 'Kaltgepresstes Olivenöl aus Italien', unit: 'Liter', price: 12.00, packaging_unit: 6, reference_price: 2.00, reference_unit: 'L', annual_order_value: 3600 },
+  { name: 'Parmesan DOP', sku: 'ART-003', description: '24 Monate gereifter Parmesan', unit: 'kg', price: 19.00, packaging_unit: 1, reference_price: 19.00, reference_unit: 'kg', annual_order_value: 2400 },
+];
+
+const getColumnLabel = (key: PortalColumnKey): string => {
+  const option = PORTAL_COLUMN_OPTIONS.find(o => o.key === key);
+  return option?.label || key;
+};
+
+const getCellValue = (article: typeof SAMPLE_ARTICLES[0], column: PortalColumnKey): React.ReactNode => {
+  switch (column) {
+    case 'image':
+      return (
+        <div className="w-8 h-8 bg-muted rounded flex items-center justify-center">
+          <Camera className="h-3 w-3 text-muted-foreground" />
+        </div>
+      );
+    case 'sku':
+      return <span className="text-muted-foreground text-xs">{article.sku}</span>;
+    case 'description':
+      return <span className="text-muted-foreground text-xs truncate max-w-[120px] block">{article.description}</span>;
+    case 'unit':
+      return article.unit;
+    case 'price':
+      return `€${article.price.toFixed(2)}`;
+    case 'packaging_unit':
+      return article.packaging_unit;
+    case 'reference_price':
+      return `€${article.reference_price.toFixed(2)}/${article.reference_unit}`;
+    case 'reference_unit':
+      return article.reference_unit;
+    case 'annual_order_value':
+      return `€${article.annual_order_value.toLocaleString('de-DE')}`;
+    case 'name':
+      return article.name;
+    default:
+      return '-';
+  }
+};
 
 export const PortalPreview = ({
   logoUrl,
@@ -26,6 +72,7 @@ export const PortalPreview = ({
   cardDescription,
   infoText,
   footerText,
+  visibleColumns = ['price'],
 }: PortalPreviewProps) => {
   const [viewMode, setViewMode] = useState<'desktop' | 'mobile'>('desktop');
 
@@ -42,6 +89,9 @@ export const PortalPreview = ({
   const containerWidth = isDesktop ? '200%' : '181.8%';
   const previewWidth = isDesktop ? '100%' : '375px';
   const previewHeight = isDesktop ? '350px' : '420px';
+
+  // Columns to display: always show name first, then configured columns
+  const displayColumns: PortalColumnKey[] = visibleColumns;
 
   return (
     <div className="border rounded-lg overflow-hidden bg-background shadow-sm">
@@ -162,23 +212,55 @@ export const PortalPreview = ({
                   </div>
                 </div>
 
-                {/* Sample articles */}
+                {/* Sample articles - Dynamic columns */}
                 {isDesktop ? (
-                  <div className="border rounded-md divide-y">
-                    {['Bio Tomaten', 'Olivenöl Extra Vergine', 'Parmesan DOP'].map((name, i) => (
-                      <div key={i} className="p-3 flex items-center justify-between text-sm">
-                        <span className="font-medium">{name}</span>
-                        <span className="text-muted-foreground">€{(5 + i * 7).toFixed(2)}</span>
-                      </div>
-                    ))}
+                  <div className="border rounded-md overflow-hidden">
+                    <Table>
+                      <TableHeader>
+                        <TableRow className="bg-muted/30">
+                          <TableHead className="text-xs font-medium py-2">Name</TableHead>
+                          {displayColumns.map((col) => (
+                            <TableHead key={col} className="text-xs font-medium py-2">
+                              {getColumnLabel(col)}
+                            </TableHead>
+                          ))}
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {SAMPLE_ARTICLES.map((article, i) => (
+                          <TableRow key={i}>
+                            <TableCell className="text-sm font-medium py-2">{article.name}</TableCell>
+                            {displayColumns.map((col) => (
+                              <TableCell key={col} className="text-sm py-2">
+                                {getCellValue(article, col)}
+                              </TableCell>
+                            ))}
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
                   </div>
                 ) : (
                   <div className="space-y-2">
-                    {['Bio Tomaten', 'Olivenöl Extra Vergine'].map((name, i) => (
+                    {SAMPLE_ARTICLES.slice(0, 2).map((article, i) => (
                       <div key={i} className="border rounded-md p-3">
-                        <div className="flex items-center justify-between">
-                          <span className="font-medium text-xs">{name}</span>
-                          <span className="text-muted-foreground text-xs">€{(5 + i * 7).toFixed(2)}</span>
+                        <div className="flex items-start gap-2">
+                          {displayColumns.includes('image') && (
+                            <div className="w-10 h-10 bg-muted rounded flex items-center justify-center flex-shrink-0">
+                              <Camera className="h-4 w-4 text-muted-foreground" />
+                            </div>
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between">
+                              <span className="font-medium text-xs">{article.name}</span>
+                              {displayColumns.includes('price') && (
+                                <span className="text-muted-foreground text-xs">€{article.price.toFixed(2)}</span>
+                              )}
+                            </div>
+                            {displayColumns.includes('description') && (
+                              <p className="text-[10px] text-muted-foreground truncate">{article.description}</p>
+                            )}
+                          </div>
                         </div>
                       </div>
                     ))}
