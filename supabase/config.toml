@@ -119,3 +119,6 @@ verify_jwt = true
 
 [functions.accept-b2b-customer-invitation]
 verify_jwt = false
+
+[functions.submit-b2b-order]
+verify_jwt = true

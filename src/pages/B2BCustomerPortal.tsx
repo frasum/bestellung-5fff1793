@@ -6,8 +6,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { toast } from '@/hooks/use-toast';
-import { Loader2, ShoppingCart, LogOut, Package, Search, Plus, Minus, Lock } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
+import { toast } from 'sonner';
+import { Loader2, ShoppingCart, LogOut, Package, Search, Plus, Minus, Lock, CheckCircle, ArrowLeft } from 'lucide-react';
 
 interface Article {
   id: string;
@@ -35,7 +36,10 @@ interface CustomerInfo {
   supplierAccountId: string;
   supplierName: string;
   supplierSubdomain?: string | null;
+  deliveryAddress?: string | null;
 }
+
+type ViewState = 'catalog' | 'checkout' | 'confirmation';
 
 export default function B2BCustomerPortal() {
   const navigate = useNavigate();
@@ -52,6 +56,14 @@ export default function B2BCustomerPortal() {
   const [articles, setArticles] = useState<Article[]>([]);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
+
+  // Checkout state
+  const [viewState, setViewState] = useState<ViewState>('catalog');
+  const [deliveryAddress, setDeliveryAddress] = useState('');
+  const [deliveryDate, setDeliveryDate] = useState('');
+  const [notes, setNotes] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [orderNumber, setOrderNumber] = useState('');
 
   useEffect(() => {
     void checkAuthAndLoadData();
@@ -76,6 +88,7 @@ export default function B2BCustomerPortal() {
           id,
           company_name,
           supplier_account_id,
+          delivery_address,
           supplier_b2b_accounts!inner(company_name, subdomain)
         `)
         .eq('user_id', user.id)
@@ -92,11 +105,7 @@ export default function B2BCustomerPortal() {
 
       // If the URL contains a subdomain, ensure this user belongs to that portal
       if (subdomain && supplierSubdomain && subdomain !== supplierSubdomain) {
-        toast({
-          title: 'Falsches Portal',
-          description: `Dieser Login gehört nicht zu „${subdomain}“.`,
-          variant: 'destructive',
-        });
+        toast.error(`Dieser Login gehört nicht zu „${subdomain}".`);
         await supabase.auth.signOut();
         setCustomerInfo(null);
         setNeedsLogin(true);
@@ -109,7 +118,13 @@ export default function B2BCustomerPortal() {
         supplierAccountId: customer.supplier_account_id,
         supplierName,
         supplierSubdomain,
+        deliveryAddress: customer.delivery_address,
       });
+
+      // Pre-fill delivery address
+      if (customer.delivery_address) {
+        setDeliveryAddress(customer.delivery_address);
+      }
 
       const { data: articlesData, error: artError } = await supabase
         .from('supplier_b2b_articles')
@@ -149,12 +164,9 @@ export default function B2BCustomerPortal() {
       if (error) throw error;
 
       await checkAuthAndLoadData();
+      toast.success('Willkommen zurück!');
     } catch (err: any) {
-      toast({
-        title: 'Anmeldung fehlgeschlagen',
-        description: err.message,
-        variant: 'destructive',
-      });
+      toast.error('Anmeldung fehlgeschlagen: ' + err.message);
     } finally {
       setLoginLoading(false);
     }
@@ -164,6 +176,7 @@ export default function B2BCustomerPortal() {
     await supabase.auth.signOut();
     setCustomerInfo(null);
     setCart([]);
+    setViewState('catalog');
     setNeedsLogin(true);
   };
 
@@ -221,6 +234,45 @@ export default function B2BCustomerPortal() {
       return acc;
     }, {} as Record<string, Article[]>);
   }, [filteredArticles]);
+
+  const handleSubmitOrder = async () => {
+    if (!customerInfo || cart.length === 0) return;
+
+    setSubmitting(true);
+
+    try {
+      const items = cart.map(item => ({
+        article_id: item.articleId,
+        article_name: item.name,
+        quantity: item.quantity,
+        unit: item.unit,
+        unit_price: item.price,
+      }));
+
+      const { data, error } = await supabase.functions.invoke('submit-b2b-order', {
+        body: {
+          customer_id: customerInfo.id,
+          supplier_account_id: customerInfo.supplierAccountId,
+          items,
+          delivery_address: deliveryAddress || undefined,
+          delivery_date: deliveryDate || undefined,
+          notes: notes || undefined,
+        },
+      });
+
+      if (error) throw error;
+
+      setOrderNumber(data.order_number);
+      setCart([]);
+      setViewState('confirmation');
+      toast.success('Bestellung erfolgreich aufgegeben!');
+    } catch (error: any) {
+      console.error('Error submitting order:', error);
+      toast.error('Fehler beim Absenden: ' + error.message);
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -292,6 +344,132 @@ export default function B2BCustomerPortal() {
 
   if (!customerInfo) return null;
 
+  // Confirmation View
+  if (viewState === 'confirmation') {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background p-4">
+        <Card className="w-full max-w-md text-center">
+          <CardContent className="pt-8 pb-8 space-y-6">
+            <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto">
+              <CheckCircle className="h-10 w-10 text-green-600" />
+            </div>
+            <div>
+              <h2 className="text-2xl font-bold text-foreground">Bestellung aufgegeben!</h2>
+              <p className="text-muted-foreground mt-2">
+                Ihre Bestellung wurde erfolgreich übermittelt.
+              </p>
+            </div>
+            <div className="bg-muted p-4 rounded-lg">
+              <p className="text-sm text-muted-foreground">Bestellnummer</p>
+              <p className="text-lg font-mono font-bold">{orderNumber}</p>
+            </div>
+            <Button onClick={() => setViewState('catalog')} className="w-full">
+              Weitere Artikel bestellen
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Checkout View
+  if (viewState === 'checkout') {
+    return (
+      <div className="min-h-screen bg-background">
+        <header className="sticky top-0 z-10 bg-card border-b p-4">
+          <div className="max-w-2xl mx-auto flex items-center justify-between">
+            <Button variant="ghost" onClick={() => setViewState('catalog')}>
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Zurück
+            </Button>
+            <h1 className="font-semibold">Kasse</h1>
+            <div className="w-20" />
+          </div>
+        </header>
+
+        <main className="max-w-2xl mx-auto p-4 space-y-6 pb-32">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Ihre Bestellung</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {cart.map(item => (
+                <div key={item.articleId} className="flex justify-between items-center">
+                  <div>
+                    <p className="font-medium">{item.name}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {item.quantity} × €{item.price.toFixed(2)}
+                    </p>
+                  </div>
+                  <p className="font-semibold">
+                    €{(item.quantity * item.price).toFixed(2)}
+                  </p>
+                </div>
+              ))}
+              <div className="border-t pt-3 flex justify-between items-center">
+                <p className="font-bold">Gesamtsumme</p>
+                <p className="font-bold text-lg">€{cartTotal.toFixed(2)}</p>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Lieferdetails</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <Label className="mb-2 block">Lieferadresse</Label>
+                <Textarea
+                  value={deliveryAddress}
+                  onChange={(e) => setDeliveryAddress(e.target.value)}
+                  placeholder="Straße, PLZ, Ort"
+                  rows={3}
+                />
+              </div>
+              <div>
+                <Label className="mb-2 block">Gewünschtes Lieferdatum</Label>
+                <Input
+                  type="date"
+                  value={deliveryDate}
+                  onChange={(e) => setDeliveryDate(e.target.value)}
+                />
+              </div>
+              <div>
+                <Label className="mb-2 block">Notizen</Label>
+                <Textarea
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  placeholder="Optionale Anmerkungen zur Bestellung"
+                  rows={2}
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Button
+            onClick={handleSubmitOrder}
+            disabled={submitting}
+            className="w-full h-14 text-lg"
+          >
+            {submitting ? (
+              <>
+                <Loader2 className="h-5 w-5 animate-spin mr-2" />
+                Wird gesendet...
+              </>
+            ) : (
+              <>
+                <Package className="h-5 w-5 mr-2" />
+                Bestellung absenden
+              </>
+            )}
+          </Button>
+        </main>
+      </div>
+    );
+  }
+
+  // Catalog View (default)
   return (
     <div className="min-h-screen bg-background">
       <header className="sticky top-0 z-50 bg-background border-b">
@@ -316,7 +494,7 @@ export default function B2BCustomerPortal() {
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-6">
+      <main className="container mx-auto px-4 py-6 pb-32">
         <section aria-label="Suche" className="relative mb-6">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
@@ -412,7 +590,7 @@ export default function B2BCustomerPortal() {
               <span className="mx-2">·</span>
               <span className="text-lg font-bold">€{cartTotal.toFixed(2)}</span>
             </div>
-            <Button>
+            <Button onClick={() => setViewState('checkout')}>
               <ShoppingCart className="h-4 w-4 mr-2" />
               Zur Kasse
             </Button>
