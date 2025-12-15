@@ -10,12 +10,14 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Search, CheckSquare, Square, Loader2 } from 'lucide-react';
-import { useArticles, useBulkUpdateArticles } from '@/hooks/useArticles';
+import { useArticles, useBulkUpdateArticles, useUpdateArticle } from '@/hooks/useArticles';
+import { useUnits } from '@/hooks/useUnits';
 import { useSuppliers } from '@/hooks/useSuppliers';
 import { useCategories } from '@/hooks/useCategories';
 import { useOrderUnits } from '@/hooks/useOrderUnits';
 import { TOP_CATEGORIES } from '@/components/suppliers/constants';
 import { toast } from 'sonner';
+import { ArticleFormDialog } from '@/components/suppliers/ArticleFormDialog';
 
 type TopCategory = typeof TOP_CATEGORIES[number];
 
@@ -38,7 +40,9 @@ export const ArticleOrganizationTab = () => {
   const { data: suppliers = [] } = useSuppliers();
   const { data: categories = [] } = useCategories();
   const { data: orderUnits = [] } = useOrderUnits();
+  const { data: units = [] } = useUnits();
   const bulkUpdate = useBulkUpdateArticles();
+  const updateArticle = useUpdateArticle();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [filterTopCategory, setFilterTopCategory] = useState<string>('all');
@@ -50,6 +54,8 @@ export const ArticleOrganizationTab = () => {
   const [filterNoPackaging, setFilterNoPackaging] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkPackagingValue, setBulkPackagingValue] = useState<string>('');
+  const [isArticleDialogOpen, setIsArticleDialogOpen] = useState(false);
+  const [editingArticle, setEditingArticle] = useState<ArticleWithTopCategory | null>(null);
 
   // Cast articles to include top_category and order_unit_id
   const articlesWithTopCategory = articles as unknown as ArticleWithTopCategory[];
@@ -235,6 +241,31 @@ export const ArticleOrganizationTab = () => {
     if (!unitId) return null;
     const unit = orderUnits.find(u => u.id === unitId);
     return unit ? `${unit.quantity}× ${unit.name}` : null;
+  };
+
+  // Handle article edit submission
+  const handleArticleSubmit = async (data: any, capturedImage?: string, imageCleared?: boolean) => {
+    if (editingArticle) {
+      await updateArticle.mutateAsync({
+        id: editingArticle.id,
+        supplier_id: data.supplier_id || editingArticle.supplier_id,
+        name: data.name,
+        price: parseFloat(data.price) || 0,
+        unit: data.unit || 'Stk',
+        sku: data.sku || undefined,
+        category: data.category || undefined,
+        description: data.description || undefined,
+        packaging_unit: data.packaging_unit ? parseInt(data.packaging_unit) : undefined,
+        order_unit_id: data.order_unit_id || undefined,
+        selling_price: data.selling_price ? parseFloat(data.selling_price) : undefined,
+        grape_variety: data.grape_variety || undefined,
+        flavor_profile: data.flavor_profile || undefined,
+        food_pairings: data.food_pairings || undefined,
+        origin_country: data.origin_country || undefined,
+      });
+    }
+    setIsArticleDialogOpen(false);
+    setEditingArticle(null);
   };
 
   if (articlesLoading) {
@@ -508,7 +539,15 @@ export const ArticleOrganizationTab = () => {
                         </TableCell>
                         <TableCell>
                           <div>
-                            <p className="font-medium">{article.name}</p>
+                            <button
+                              onClick={() => {
+                                setEditingArticle(article);
+                                setIsArticleDialogOpen(true);
+                              }}
+                              className="font-medium text-left hover:text-primary hover:underline transition-colors"
+                            >
+                              {article.name}
+                            </button>
                             <p className="text-xs text-muted-foreground sm:hidden">
                               {article.suppliers?.name}
                             </p>
@@ -567,6 +606,21 @@ export const ArticleOrganizationTab = () => {
           </p>
         </CardContent>
       </Card>
+
+      {/* Article Edit Dialog */}
+      <ArticleFormDialog
+        open={isArticleDialogOpen}
+        onOpenChange={(open) => {
+          setIsArticleDialogOpen(open);
+          if (!open) setEditingArticle(null);
+        }}
+        onSubmit={handleArticleSubmit}
+        suppliers={suppliers}
+        categories={categories.map(c => c.name)}
+        units={units.map(u => u.name)}
+        editingArticle={editingArticle as any}
+        isPending={updateArticle.isPending}
+      />
     </div>
   );
 };
