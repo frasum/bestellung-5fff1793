@@ -50,6 +50,13 @@ interface Article {
   reference_price: number | null;
   reference_unit: string | null;
   image_url?: string | null;
+  order_unit_id?: string | null;
+}
+
+interface OrderUnit {
+  id: string;
+  name: string;
+  quantity: number;
 }
 
 interface PendingChange {
@@ -97,6 +104,7 @@ const SupplierPortal = () => {
   const [orderUnitInputs, setOrderUnitInputs] = useState<Record<string, string>>({});
   const [referencePriceInputs, setReferencePriceInputs] = useState<Record<string, string>>({});
   const [units, setUnits] = useState<Unit[]>([]);
+  const [orderUnits, setOrderUnits] = useState<OrderUnit[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [suggestDialogOpen, setSuggestDialogOpen] = useState(false);
   const [hasDraft, setHasDraft] = useState(false);
@@ -180,6 +188,20 @@ const SupplierPortal = () => {
 
         if (!categoriesError && categoriesData?.categories) {
           setCategories(categoriesData.categories);
+        }
+
+        // Fetch order units (Bestelleinheiten)
+        const { data: orderUnitsData, error: orderUnitsError } = await supabase.functions.invoke('supplier-portal-articles', {
+          body: {
+            action: 'get-order-units',
+            supplierId: session.supplierId,
+            organizationId: session.organizationId,
+            sessionToken: session.sessionToken,
+          },
+        });
+
+        if (!orderUnitsError && orderUnitsData?.orderUnits) {
+          setOrderUnits(orderUnitsData.orderUnits);
         }
 
         // Fetch articles
@@ -1126,6 +1148,7 @@ const SupplierPortal = () => {
                       saving={saving}
                       units={units}
                       categories={categories}
+                      orderUnits={orderUnits}
                       visibleColumns={visibleColumns}
                       isMissingAnnualValue={false}
                       uploadingImage={uploadingImage}

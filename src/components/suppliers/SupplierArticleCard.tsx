@@ -7,7 +7,6 @@ import { Save, Loader2, Clock, Camera, Trash2, Upload } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { SupplierUnitSelect } from './SupplierUnitSelect';
 import { compressImage } from '@/lib/imageCompression';
-
 import { SupplierOrderUnitSelect } from './SupplierOrderUnitSelect';
 
 interface Article {
@@ -24,6 +23,14 @@ interface Article {
   reference_price: number | null;
   reference_unit: string | null;
   image_url?: string | null;
+  order_unit_id?: string | null;
+}
+
+/** Minimal order unit interface for external usage */
+interface MinimalOrderUnit {
+  id: string;
+  name: string;
+  quantity: number;
 }
 
 interface PendingChange {
@@ -60,6 +67,8 @@ interface SupplierArticleCardProps {
   visibleColumns?: string[];
   isMissingAnnualValue?: boolean;
   uploadingImage?: string | null;
+  /** Optional: External order units (used in supplier portal) */
+  orderUnits?: MinimalOrderUnit[];
   onFieldChange: (articleId: string, field: keyof Article, value: any) => void;
   onPriceChange: (articleId: string, value: string) => void;
   onAnnualOrderValueChange: (articleId: string, value: string) => void;
@@ -86,6 +95,7 @@ export function SupplierArticleCard({
   visibleColumns,
   isMissingAnnualValue = false,
   uploadingImage,
+  orderUnits,
   onFieldChange,
   onPriceChange,
   onAnnualOrderValueChange,
@@ -368,12 +378,13 @@ export function SupplierArticleCard({
                   <SupplierOrderUnitSelect
                     value={orderUnitInputs[article.id] !== undefined 
                       ? orderUnitInputs[article.id]
-                      : getPendingChangeForField('packaging_unit')?.new_value 
-                        ?? (article.packaging_unit !== null ? String(article.packaging_unit) : '')}
-                    onChange={(value) => onOrderUnitChange(article.id, value)}
-                    hasPending={hasPendingChange('packaging_unit')}
-                    pendingInfo={getPendingChangeForField('packaging_unit')}
+                      : getPendingChangeForField('order_unit_id')?.new_value 
+                        ?? article.order_unit_id ?? null}
+                    onChange={(value) => onOrderUnitChange(article.id, value ?? '')}
+                    hasPending={hasPendingChange('order_unit_id')}
+                    pendingInfo={getPendingChangeForField('order_unit_id')}
                     className="h-11"
+                    externalOrderUnits={orderUnits}
                   />
                 </div>
               </div>

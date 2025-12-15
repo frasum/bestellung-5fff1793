@@ -9,7 +9,7 @@ const corsHeaders = {
 };
 
 interface ArticleUpdateRequest {
-  action: 'list' | 'update' | 'update-all' | 'get-settings' | 'get-units' | 'create-unit' | 'get-categories' | 'create-category' | 'suggest-article' | 'save-draft' | 'get-draft' | 'delete-draft' | 'upload-image' | 'delete-image';
+  action: 'list' | 'update' | 'update-all' | 'get-settings' | 'get-units' | 'get-order-units' | 'create-unit' | 'get-categories' | 'create-category' | 'suggest-article' | 'save-draft' | 'get-draft' | 'delete-draft' | 'upload-image' | 'delete-image';
   supplierId: string;
   organizationId: string;
   sessionToken: string;
@@ -160,6 +160,26 @@ serve(async (req) => {
       console.log(`Found ${units?.length || 0} units for organization ${organizationId}`);
 
       return new Response(JSON.stringify({ units: units || [] }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Handle get-order-units action (Bestelleinheiten)
+    if (action === 'get-order-units') {
+      const { data: orderUnits, error: orderUnitsError } = await supabase
+        .from('order_units')
+        .select('id, name, quantity')
+        .eq('organization_id', organizationId)
+        .order('name');
+
+      if (orderUnitsError) {
+        console.error('Error fetching order units:', orderUnitsError);
+        throw orderUnitsError;
+      }
+
+      console.log(`Found ${orderUnits?.length || 0} order units for organization ${organizationId}`);
+
+      return new Response(JSON.stringify({ orderUnits: orderUnits || [] }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
@@ -355,10 +375,10 @@ serve(async (req) => {
     }
 
     if (action === 'list') {
-      // Fetch articles for this supplier including annual_order_value and image_url
+      // Fetch articles for this supplier including annual_order_value, image_url, and order_unit_id
       const { data: articles, error: articlesError } = await supabase
         .from('articles')
-        .select('id, name, description, sku, unit, price, category, is_active, annual_order_value, packaging_unit, reference_price, reference_unit, image_url')
+        .select('id, name, description, sku, unit, price, category, is_active, annual_order_value, packaging_unit, reference_price, reference_unit, image_url, order_unit_id')
         .eq('supplier_id', supplierId)
         .eq('organization_id', organizationId)
         .order('name');
