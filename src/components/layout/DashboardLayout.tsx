@@ -10,12 +10,15 @@ import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import { LocationSwitcher } from '@/components/LocationSwitcher';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 import { ThemeToggle } from '@/components/ThemeToggle';
-import { useOrganization } from '@/hooks/useSettings';
+import { useOrganization, useUpdateOrganization } from '@/hooks/useSettings';
 import { Badge } from '@/components/ui/badge';
 import { MobileBottomNav } from '@/components/layout/MobileBottomNav';
 import { FloatingCartButton } from '@/components/FloatingCartButton';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { useCartDrafts } from '@/hooks/useCartDrafts';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 import logoImage from '@/assets/logo.png';
 
 
@@ -42,8 +45,17 @@ export const DashboardLayout = ({
   
   
   const { data: organization } = useOrganization();
+  const updateOrganization = useUpdateOrganization();
   const { data: drafts } = useCartDrafts(undefined, true);
   const openDraftsCount = drafts?.length || 0;
+  
+  const handleTestModeToggle = (checked: boolean) => {
+    if (!organization) return;
+    updateOrganization.mutate({
+      id: organization.id,
+      test_mode_enabled: checked,
+    });
+  };
   
   // Calculate demo days remaining
   const getDemoDaysRemaining = () => {
@@ -88,15 +100,43 @@ export const DashboardLayout = ({
               Demo ({demoDaysRemaining}d)
             </Badge>
           )}
-          {organization?.test_mode_enabled && !organization?.is_demo && (
-            <Badge 
-              variant="warning" 
-              className="opacity-80 cursor-pointer"
-              onClick={() => navigate('/settings')}
-            >
-              <FlaskConical className="w-3 h-3 mr-1" />
-              Test
-            </Badge>
+          {!organization?.is_demo && (
+            <Popover>
+              <PopoverTrigger asChild>
+                <Badge 
+                  variant={organization?.test_mode_enabled ? "warning" : "outline"}
+                  className={cn(
+                    "cursor-pointer",
+                    organization?.test_mode_enabled 
+                      ? "opacity-80" 
+                      : "bg-muted/50 text-muted-foreground border-border hover:bg-muted"
+                  )}
+                >
+                  <FlaskConical className="w-3 h-3 mr-1" />
+                  {organization?.test_mode_enabled ? 'Test' : 'Live'}
+                </Badge>
+              </PopoverTrigger>
+              <PopoverContent className="w-64 p-3" align="end">
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="test-mode-toggle" className="text-sm font-medium">
+                      {t('testMode.title')}
+                    </Label>
+                    <Switch
+                      id="test-mode-toggle"
+                      checked={organization?.test_mode_enabled || false}
+                      onCheckedChange={handleTestModeToggle}
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {organization?.test_mode_enabled 
+                      ? t('settings.testModeActiveDesc', { email: organization.test_email || '—' })
+                      : t('settings.testModeEnabledDesc')
+                    }
+                  </p>
+                </div>
+              </PopoverContent>
+            </Popover>
           )}
           <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-2 text-muted-foreground hover:text-foreground">
             {sidebarOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
@@ -123,15 +163,43 @@ export const DashboardLayout = ({
               Demo-Modus (noch {demoDaysRemaining} Tage)
             </Badge>
           )}
-          {organization?.test_mode_enabled && !organization?.is_demo && (
-            <Badge 
-              variant="warning" 
-              className="opacity-80 cursor-pointer"
-              onClick={() => navigate('/settings')}
-            >
-              <FlaskConical className="w-3 h-3 mr-1" />
-              Testmodus aktiv
-            </Badge>
+          {!organization?.is_demo && (
+            <Popover>
+              <PopoverTrigger asChild>
+                <Badge 
+                  variant={organization?.test_mode_enabled ? "warning" : "outline"}
+                  className={cn(
+                    "cursor-pointer",
+                    organization?.test_mode_enabled 
+                      ? "opacity-80" 
+                      : "bg-muted/50 text-muted-foreground border-border hover:bg-muted"
+                  )}
+                >
+                  <FlaskConical className="w-3 h-3 mr-1" />
+                  {organization?.test_mode_enabled ? t('testMode.enabled') : t('testMode.disabled')}
+                </Badge>
+              </PopoverTrigger>
+              <PopoverContent className="w-72 p-3" align="end">
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="test-mode-toggle-desktop" className="text-sm font-medium">
+                      {t('testMode.title')}
+                    </Label>
+                    <Switch
+                      id="test-mode-toggle-desktop"
+                      checked={organization?.test_mode_enabled || false}
+                      onCheckedChange={handleTestModeToggle}
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {organization?.test_mode_enabled 
+                      ? t('settings.testModeActiveDesc', { email: organization.test_email || '—' })
+                      : t('settings.testModeEnabledDesc')
+                    }
+                  </p>
+                </div>
+              </PopoverContent>
+            </Popover>
           )}
           </div>
         </TooltipProvider>
