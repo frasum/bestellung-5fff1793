@@ -288,6 +288,161 @@ const Orders = () => {
     draft.name.toLowerCase().includes(draftsSearchQuery.toLowerCase())
   ) || [];
 
+  // Group EasyOrder drafts by employee_id + created_at (within 1 minute window)
+  interface EasyOrderGroup {
+    key: string;
+    employeeName: string;
+    drafts: CartDraft[];
+    totalItems: number;
+    totalPrice: number;
+    desiredDeliveryDate: string | null;
+    location: { id: string; name: string; short_code: string | null } | null;
+    createdAt: string;
+  }
+
+  const { easyOrderGroups, regularDrafts } = useMemo(() => {
+    const easyOrderDrafts = filteredDrafts.filter(d => d.name.startsWith('EasyOrder:'));
+    const regularDrafts = filteredDrafts.filter(d => !d.name.startsWith('EasyOrder:'));
+    
+    // Group by employee_id + time window (1 minute)
+    const groupsMap = new Map<string, CartDraft[]>();
+    easyOrderDrafts.forEach(draft => {
+      const timeKey = Math.floor(new Date(draft.created_at).getTime() / 60000); // 1 minute buckets
+      const key = `${draft.employee_id || 'unknown'}-${timeKey}`;
+      if (!groupsMap.has(key)) groupsMap.set(key, []);
+      groupsMap.get(key)!.push(draft);
+    });
+    
+    // Convert to EasyOrderGroup array
+    const groups: EasyOrderGroup[] = Array.from(groupsMap.entries()).map(([key, drafts]) => {
+      // Extract employee name from first draft name (format: "EasyOrder: NAME (Supplier)")
+      const match = drafts[0].name.match(/^EasyOrder:\s*(.+?)\s*\(/);
+      const employeeName = match ? match[1] : 'Unbekannt';
+      
+      const totalItems = drafts.reduce((sum, d) => sum + (d.items?.length || 0), 0);
+      const totalPrice = drafts.reduce((sum, d) => sum + getDraftTotal(d), 0);
+      
+      return {
+        key,
+        employeeName,
+        drafts,
+        totalItems,
+        totalPrice,
+        desiredDeliveryDate: drafts[0].desired_delivery_date,
+        location: (drafts[0] as { location?: { id: string; name: string; short_code: string | null } }).location || null,
+        createdAt: drafts[0].created_at,
+      };
+    });
+    
+    // Sort groups by creation time (newest first)
+    groups.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    
+    return { easyOrderGroups: groups, regularDrafts };
+  }, [filteredDrafts]);
+
+  // Track which EasyOrder groups are expanded
+  const [openEasyOrderGroups, setOpenEasyOrderGroups] = useState<Set<string>>(new Set());
+  
+  const toggleEasyOrderGroup = (key: string) => {
+    const newOpen = new Set(openEasyOrderGroups);
+    if (newOpen.has(key)) {
+      newOpen.delete(key);
+    } else {
+      newOpen.add(key);
+    }
+    setOpenEasyOrderGroups(newOpen);
+  };
+
+  // Load all drafts from an EasyOrder group to cart
+  const loadGroupToCart = (group: EasyOrderGroup) => {
+    // Check if cart has items - show confirmation dialog
+    if (cartItems.length > 0) {
+      // Use the first draft for the confirmation dialog
+      setSelectedDraft(group.drafts[0]);
+      // Store the full group for loading - we'll handle this specially
+      (window as unknown as { __pendingEasyOrderGroup?: EasyOrderGroup }).__pendingEasyOrderGroup = group;
+      setLoadDialogOpen(true);
+      return;
+    }
+    
+    executeGroupLoad(group);
+  };
+
+  const executeGroupLoad = (group: EasyOrderGroup) => {
+    // Combine all items from all drafts in the group
+    const allItems = group.drafts.flatMap(d => d.items || []);
+    const regularItems = allItems.filter(item => item.article && !item.is_free_text_item);
+    const freeTextItems = allItems.filter(item => item.is_free_text_item && item.free_text_name);
+    
+    if (regularItems.length === 0 && freeTextItems.length === 0) {
+      toast.error('Diese Vorbestellungen enthalten keine Artikel.');
+      return;
+    }
+    
+    const mappedFreeItems = freeTextItems.map(item => ({
+      id: item.id,
+      name: item.free_text_name!,
+      unit: item.free_text_unit || 'Stk',
+      quantity: item.quantity,
+      supplier_id: item.supplier_id || '',
+    }));
+    
+    // Load all items to cart (use first draft for delivery date etc.)
+    const firstDraft = group.drafts[0];
+    if (loadFromDraft) {
+      loadFromDraft(
+        regularItems.map(item => ({
+          article: item.article!,
+          quantity: item.quantity,
+        })),
+        firstDraft.desired_delivery_date,
+        firstDraft.desired_time_window,
+        firstDraft.location_id,
+        firstDraft.employee_id,
+        mappedFreeItems
+      );
+      
+      // Delete all drafts in the group
+      group.drafts.forEach(draft => {
+        deleteDraft.mutate(draft.id);
+      });
+      
+      navigate('/cart');
+    }
+    setLoadDialogOpen(false);
+    setSelectedDraft(null);
+    (window as unknown as { __pendingEasyOrderGroup?: EasyOrderGroup }).__pendingEasyOrderGroup = undefined;
+  };
+
+  // Delete all drafts in an EasyOrder group
+  const [deleteGroupDialogOpen, setDeleteGroupDialogOpen] = useState(false);
+  const [selectedGroup, setSelectedGroup] = useState<EasyOrderGroup | null>(null);
+
+  const handleDeleteGroup = (group: EasyOrderGroup) => {
+    setSelectedGroup(group);
+    setDeleteGroupDialogOpen(true);
+  };
+
+  const confirmDeleteGroup = () => {
+    if (selectedGroup) {
+      selectedGroup.drafts.forEach(draft => {
+        deleteDraft.mutate(draft.id);
+      });
+    }
+    setDeleteGroupDialogOpen(false);
+    setSelectedGroup(null);
+  };
+
+  // Get supplier name from draft
+  const getSupplierFromDraft = (draft: CartDraft): string => {
+    // Try to extract from name (format: "EasyOrder: NAME (Supplier)")
+    const match = draft.name.match(/\(([^)]+)\)$/);
+    if (match) return match[1];
+    // Fallback: use first item's supplier
+    const firstItem = draft.items?.find(i => i.article);
+    return firstItem?.article?.suppliers?.name || 'Unbekannt';
+  };
+
   const handleDeleteDraft = (draft: CartDraft) => {
     setSelectedDraft(draft);
     setDeleteDialogOpen(true);
@@ -1090,10 +1245,140 @@ const Orders = () => {
               </div>
             )}
 
-            {/* Drafts List */}
+            {/* Drafts List - Grouped EasyOrders + Regular Drafts */}
             {!draftsLoading && filteredDrafts.length > 0 && (
-              <div className="grid gap-3 sm:gap-4">
-                {filteredDrafts.map((draft) => (
+              <div className="space-y-4">
+                {/* EasyOrder Groups */}
+                {easyOrderGroups.map((group) => {
+                  const isOpen = openEasyOrderGroups.has(group.key);
+                  
+                  return (
+                    <Collapsible
+                      key={group.key}
+                      open={isOpen}
+                      onOpenChange={() => toggleEasyOrderGroup(group.key)}
+                    >
+                      {/* Group Header */}
+                      <div className="bg-card border border-primary/30 rounded-xl overflow-hidden">
+                        <CollapsibleTrigger className="w-full">
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 hover:bg-muted/50 transition-colors">
+                            <div className="flex items-center gap-3">
+                              <ChevronRight className={cn(
+                                "w-5 h-5 text-muted-foreground transition-transform duration-200 shrink-0",
+                                isOpen && "rotate-90"
+                              )} />
+                              <div className="flex items-center gap-2">
+                                <Smartphone className="w-5 h-5 text-primary" />
+                                <Bell className="w-4 h-4 text-red-500 animate-pulse" />
+                              </div>
+                              <div className="text-left">
+                                <div className="flex items-center gap-2">
+                                  <span className="font-semibold text-foreground">
+                                    EasyOrder: {group.employeeName}
+                                  </span>
+                                  <Badge variant="secondary" className="text-xs">
+                                    {group.drafts.length} {group.drafts.length === 1 ? 'Lieferant' : 'Lieferanten'}
+                                  </Badge>
+                                </div>
+                                <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground mt-0.5">
+                                  <span>{group.totalItems} Artikel</span>
+                                  {group.location && (
+                                    <span className="flex items-center gap-1">
+                                      <MapPin className="w-3 h-3" />
+                                      {group.location.short_code || group.location.name}
+                                    </span>
+                                  )}
+                                  {group.desiredDeliveryDate && (
+                                    <span className="flex items-center gap-1">
+                                      📅 {format(new Date(group.desiredDeliveryDate), 'dd.MM.', { locale })}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-3 mt-2 sm:mt-0 pl-10 sm:pl-0">
+                              <span className="text-lg font-bold text-foreground">
+                                €{group.totalPrice.toFixed(2)}
+                              </span>
+                            </div>
+                          </div>
+                        </CollapsibleTrigger>
+                        
+                        {/* Expanded Group Content */}
+                        <CollapsibleContent>
+                          <div className="px-4 pb-4 space-y-3">
+                            {/* Supplier List */}
+                            <div className="space-y-2 pl-8">
+                              {group.drafts.map((draft) => (
+                                <div
+                                  key={draft.id}
+                                  className="flex items-center justify-between p-3 bg-muted/30 rounded-lg"
+                                >
+                                  <div className="flex items-center gap-3">
+                                    <Package className="w-4 h-4 text-muted-foreground" />
+                                    <div>
+                                      <span className="font-medium text-foreground">
+                                        {getSupplierFromDraft(draft)}
+                                      </span>
+                                      <span className="text-sm text-muted-foreground ml-2">
+                                        ({getDraftItemCount(draft)} Art.)
+                                      </span>
+                                    </div>
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <span className="font-medium text-foreground">
+                                      €{getDraftTotal(draft).toFixed(2)}
+                                    </span>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="h-8"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleLoadDraft(draft);
+                                      }}
+                                    >
+                                      <ShoppingCart className="w-4 h-4" />
+                                    </Button>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                            
+                            {/* Group Actions */}
+                            <div className="flex items-center justify-end gap-2 pt-3 border-t border-border">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="text-destructive hover:text-destructive"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDeleteGroup(group);
+                                }}
+                              >
+                                <Trash2 className="w-4 h-4 mr-2" />
+                                Alle löschen
+                              </Button>
+                              <Button
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  loadGroupToCart(group);
+                                }}
+                              >
+                                <ShoppingCart className="w-4 h-4 mr-2" />
+                                Alle in Warenkorb laden
+                              </Button>
+                            </div>
+                          </div>
+                        </CollapsibleContent>
+                      </div>
+                    </Collapsible>
+                  );
+                })}
+
+                {/* Regular Drafts (non-EasyOrder) */}
+                {regularDrafts.map((draft) => (
                   <div
                     key={draft.id}
                     className="bg-card border border-border rounded-xl p-4 sm:p-6 hover:border-primary/50 transition-colors"
@@ -1102,14 +1387,7 @@ const Orders = () => {
                       {/* Draft Info */}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-3 mb-2">
-                          {draft.name.startsWith('EasyOrder:') ? (
-                            <div className="flex items-center gap-1.5">
-                              <Smartphone className="w-5 h-5 text-primary" />
-                              <Bell className="w-4 h-4 text-red-500 animate-pulse" />
-                            </div>
-                          ) : (
-                            <FileText className="w-5 h-5 text-primary" />
-                          )}
+                          <FileText className="w-5 h-5 text-primary" />
                           <h3 className="text-base sm:text-lg font-semibold text-foreground truncate">
                             {draft.name}
                           </h3>
@@ -1244,7 +1522,12 @@ const Orders = () => {
       </AlertDialog>
 
       {/* Load Draft Confirmation Dialog */}
-      <AlertDialog open={loadDialogOpen} onOpenChange={setLoadDialogOpen}>
+      <AlertDialog open={loadDialogOpen} onOpenChange={(open) => {
+        setLoadDialogOpen(open);
+        if (!open) {
+          (window as unknown as { __pendingEasyOrderGroup?: unknown }).__pendingEasyOrderGroup = undefined;
+        }
+      }}>
         <AlertDialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-lg">
           <AlertDialogHeader>
             <AlertDialogTitle>{t('drafts.loadTitle')}</AlertDialogTitle>
@@ -1255,10 +1538,38 @@ const Orders = () => {
           <AlertDialogFooter className="flex-col sm:flex-row gap-2">
             <AlertDialogCancel className="w-full sm:w-auto h-10 sm:h-9">{t('common.cancel')}</AlertDialogCancel>
             <AlertDialogAction
-              onClick={() => selectedDraft && loadDraftToCart(selectedDraft)}
+              onClick={() => {
+                const pendingGroup = (window as unknown as { __pendingEasyOrderGroup?: typeof easyOrderGroups[0] }).__pendingEasyOrderGroup;
+                if (pendingGroup) {
+                  executeGroupLoad(pendingGroup);
+                } else if (selectedDraft) {
+                  loadDraftToCart(selectedDraft);
+                }
+              }}
               className="w-full sm:w-auto h-10 sm:h-9"
             >
               {t('drafts.replaceCart')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Delete EasyOrder Group Confirmation Dialog */}
+      <AlertDialog open={deleteGroupDialogOpen} onOpenChange={setDeleteGroupDialogOpen}>
+        <AlertDialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-lg">
+          <AlertDialogHeader>
+            <AlertDialogTitle>EasyOrder löschen?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Möchten Sie alle {selectedGroup?.drafts.length} Vorbestellungen von {selectedGroup?.employeeName} löschen? Diese Aktion kann nicht rückgängig gemacht werden.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex-col sm:flex-row gap-2">
+            <AlertDialogCancel className="w-full sm:w-auto h-10 sm:h-9">{t('common.cancel')}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDeleteGroup}
+              className="w-full sm:w-auto h-10 sm:h-9 bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {t('common.delete')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
