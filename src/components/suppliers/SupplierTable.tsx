@@ -1,5 +1,5 @@
 import { Fragment } from 'react';
-import { ChevronDown, ChevronRight, Pencil, Trash2, FileText, Send, Bell, Store, Loader2, Plus, Minus } from 'lucide-react';
+import { ChevronDown, ChevronRight, Pencil, Trash2, FileText, Send, Bell, Store, Loader2, Plus, Minus, QrCode } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -26,6 +26,7 @@ interface SupplierTableProps {
   onEdit: (supplier: Supplier) => void;
   onDelete: (supplier: Supplier) => void;
   onSendInvitation: (supplier: Supplier) => void;
+  onShowQRCode: (supplier: Supplier) => void;
   onShowChanges: (supplier: Supplier) => void;
   onShowLocations: (supplier: Supplier) => void;
   onPrintOrderList: (supplier: Supplier, articles: Article[]) => void;
@@ -54,6 +55,7 @@ export const SupplierTable = ({
   onEdit,
   onDelete,
   onSendInvitation,
+  onShowQRCode,
   onShowChanges,
   onShowLocations,
   onPrintOrderList,
@@ -160,6 +162,9 @@ export const SupplierTable = ({
                       </Button>
                       <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground hover:text-foreground" onClick={() => onSendInvitation(supplier)} disabled={invitingSupplierId === supplier.id || sendingInvitation} title="Einladung zum Lieferantenportal senden">
                         {invitingSupplierId === supplier.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                      </Button>
+                      <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground hover:text-foreground" onClick={() => onShowQRCode(supplier)} title="QR-Code für Lieferantenportal">
+                        <QrCode className="w-4 h-4" />
                       </Button>
                       {supplierArticles.length > 0 && (
                         <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground hover:text-foreground" onClick={() => onPrintOrderList(supplier, supplierArticles)} title="Bestellliste drucken">
