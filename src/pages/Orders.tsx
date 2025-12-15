@@ -284,6 +284,15 @@ const Orders = () => {
   };
 
   // Drafts functions
+  const getDraftTotal = (draft: CartDraft) => {
+    return draft.items?.reduce((sum, item) => {
+      if (item.article) {
+        return sum + Number(item.article.price) * item.quantity;
+      }
+      return sum;
+    }, 0) || 0;
+  };
+
   const filteredDrafts = drafts?.filter(draft => 
     draft.name.toLowerCase().includes(draftsSearchQuery.toLowerCase())
   ) || [];
@@ -524,15 +533,6 @@ const Orders = () => {
     }
     setLoadDialogOpen(false);
     setSelectedDraft(null);
-  };
-
-  const getDraftTotal = (draft: CartDraft) => {
-    return draft.items?.reduce((sum, item) => {
-      if (item.article) {
-        return sum + Number(item.article.price) * item.quantity;
-      }
-      return sum;
-    }, 0) || 0;
   };
 
   const getDraftItemCount = (draft: CartDraft) => {
