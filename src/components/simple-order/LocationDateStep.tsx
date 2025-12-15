@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon, MapPin, Clock, ChevronRight, Check } from 'lucide-react';
+import { CalendarIcon, MapPin, Clock, ChevronRight, Check, Wine } from 'lucide-react';
 import { format } from 'date-fns';
 import { de, enUS, fr, it, th, vi } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
@@ -26,6 +26,8 @@ interface LocationDateStepProps {
   onTimeWindowChange: (timeWindow: string) => void;
   onContinue: () => void;
   employeeName?: string;
+  wineCatalogAccess?: 'none' | 'view' | 'edit';
+  onWineCatalog?: () => void;
 }
 
 const TIME_WINDOWS = [
@@ -142,6 +144,8 @@ export const LocationDateStep = ({
   onTimeWindowChange,
   onContinue,
   employeeName,
+  wineCatalogAccess = 'none',
+  onWineCatalog,
 }: LocationDateStepProps) => {
   const { t, i18n } = useTranslation();
   const { heavyTap } = useHapticFeedback();
@@ -204,15 +208,28 @@ export const LocationDateStep = ({
     <div className="min-h-screen bg-background">
       {/* Header */}
       <div className="sticky top-0 bg-background/95 backdrop-blur-sm border-b z-10 px-4 py-4">
-        <div className="max-w-2xl mx-auto">
-          {employeeName && (
-            <p className="text-2xl font-semibold mb-1">
-              👋 {t('simpleOrder.hello', 'Hallo')}, {employeeName}!
+        <div className="max-w-2xl mx-auto flex items-start justify-between">
+          <div>
+            {employeeName && (
+              <p className="text-2xl font-semibold mb-1">
+                👋 {t('simpleOrder.hello', 'Hallo')}, {employeeName}!
+              </p>
+            )}
+            <p className="text-muted-foreground">
+              {t('simpleOrder.selectLocationAndDate', 'Wähle Standort und Lieferdatum')}
             </p>
+          </div>
+          {wineCatalogAccess !== 'none' && onWineCatalog && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onWineCatalog}
+              className="h-10 w-10 shrink-0"
+              title={t('simpleOrder.wineCatalog', 'Weinkarte')}
+            >
+              <Wine className="h-6 w-6 text-primary" />
+            </Button>
           )}
-          <p className="text-muted-foreground">
-            {t('simpleOrder.selectLocationAndDate', 'Wähle Standort und Lieferdatum')}
-          </p>
         </div>
       </div>
 

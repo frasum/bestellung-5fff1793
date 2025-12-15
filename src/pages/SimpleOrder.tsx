@@ -846,6 +846,8 @@ const SimpleOrder = () => {
         onTimeWindowChange={setTimeWindow}
         onContinue={handleLocationDateContinue}
         employeeName={isEmployeeNameLocked ? employeeName : undefined}
+        wineCatalogAccess={tokenData?.wine_catalog_access || 'none'}
+        onWineCatalog={() => setStatus('wine-catalog')}
       />
     );
   }
