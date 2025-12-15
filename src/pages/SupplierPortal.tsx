@@ -908,14 +908,13 @@ const SupplierPortal = () => {
                       <TableRow>
                         {isColumnVisible('image') && <TableHead className="w-[70px]">Foto</TableHead>}
                         <TableHead className="min-w-[280px]">Artikelname</TableHead>
-                        {isColumnVisible('sku') && <TableHead className="w-[100px]">SKU</TableHead>}
-                        {isColumnVisible('description') && <TableHead className="min-w-[150px]">Beschreibung</TableHead>}
-                        {isColumnVisible('unit') && <TableHead className="w-[80px]">Einheit</TableHead>}
-                        {isColumnVisible('packaging_unit') && <TableHead className="w-[60px]">BE</TableHead>}
-                        {isColumnVisible('price') && <TableHead className="w-[100px]">Preis (€)</TableHead>}
+                        {isColumnVisible('sku') && <TableHead className="w-[120px]">SKU</TableHead>}
+                        {isColumnVisible('unit') && <TableHead className="w-[70px]">Einheit</TableHead>}
+                        {isColumnVisible('packaging_unit') && <TableHead className="w-[120px]">BE</TableHead>}
+                        {isColumnVisible('price') && <TableHead className="w-[110px]">Preis (€)</TableHead>}
                         {isColumnVisible('annual_order_value') && <TableHead className="w-[120px]">Bestellwert (365T)</TableHead>}
-                        {isColumnVisible('reference_price') && <TableHead className="w-[100px]">Ref.-Preis (€)</TableHead>}
-                        {isColumnVisible('reference_unit') && <TableHead className="w-[80px]">Ref.-Einheit</TableHead>}
+                        {isColumnVisible('reference_price') && <TableHead className="w-[110px]">Ref.-Preis (€)</TableHead>}
+                        {isColumnVisible('reference_unit') && <TableHead className="w-[60px]">Ref.-Einheit</TableHead>}
                         <TableHead className="w-[80px]"></TableHead>
                       </TableRow>
                     </TableHeader>
@@ -977,8 +976,15 @@ const SupplierPortal = () => {
                                 </div>
                               </TableCell>
                             )}
-                            <TableCell>
-                              <span className="font-medium">{article.name}</span>
+                            <TableCell className="max-w-[350px]">
+                              <div>
+                                <span className="font-medium">{article.name}</span>
+                                {isColumnVisible('description') && article.description && (
+                                  <p className="text-sm text-muted-foreground line-clamp-2 mt-0.5">
+                                    {article.description}
+                                  </p>
+                                )}
+                              </div>
                             </TableCell>
                             {isColumnVisible('sku') && (
                               <TableCell>
@@ -994,26 +1000,6 @@ const SupplierPortal = () => {
                                       <span className="text-amber-600">Ausstehend</span>
                                       <span className="text-muted-foreground ml-1">
                                         (vorher: {getPendingChangeForField(article.id, 'sku')?.old_value || '-'})
-                                      </span>
-                                    </div>
-                                  )}
-                                </div>
-                              </TableCell>
-                            )}
-                            {isColumnVisible('description') && (
-                              <TableCell>
-                                <div className="space-y-1">
-                                  <Input
-                                    value={(getDisplayValue(article, 'description') as string) || ''}
-                                    onChange={(e) => handleFieldChange(article.id, 'description', e.target.value || null)}
-                                    className={`h-8 ${hasPendingChange(article.id, 'description') ? 'border-amber-500' : ''}`}
-                                    placeholder="-"
-                                  />
-                                  {getPendingChangeForField(article.id, 'description') && (
-                                    <div className="text-xs">
-                                      <span className="text-amber-600">Ausstehend</span>
-                                      <span className="text-muted-foreground ml-1">
-                                        (vorher: {getPendingChangeForField(article.id, 'description')?.old_value || '-'})
                                       </span>
                                     </div>
                                   )}
@@ -1067,7 +1053,7 @@ const SupplierPortal = () => {
                                         [article.id]: e.target.value
                                       }));
                                     }}
-                                    className={`h-8 ${hasPendingChange(article.id, 'price') ? 'border-amber-500' : ''}`}
+                                    className={cn("h-8 text-right", hasPendingChange(article.id, 'price') && "border-amber-500")}
                                   />
                                   {getPendingChangeForField(article.id, 'price') && (
                                     <div className="text-xs">
@@ -1129,7 +1115,7 @@ const SupplierPortal = () => {
                                         [article.id]: e.target.value
                                       }));
                                     }}
-                                    className={`h-8 ${hasPendingChange(article.id, 'reference_price') ? 'border-amber-500' : ''}`}
+                                    className={cn("h-8 text-right", hasPendingChange(article.id, 'reference_price') && "border-amber-500")}
                                     placeholder="-"
                                   />
                                   {getPendingChangeForField(article.id, 'reference_price') && (
