@@ -1,5 +1,5 @@
 import { Fragment } from 'react';
-import { ChevronDown, ChevronRight, Pencil, Trash2, FileText, Send, Bell, Store, Loader2, Plus, Minus, QrCode } from 'lucide-react';
+import { ChevronDown, ChevronRight, Pencil, Trash2, FileText, Send, Bell, Store, Loader2, Plus, Minus, QrCode, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -20,6 +20,7 @@ interface SupplierTableProps {
   pendingChangesBySupplier: Record<string, number>;
   pendingArticleIds?: Set<string>;
   recentlyActiveSuppliers?: Map<string, SupplierActivityInfo>;
+  advancedSettingsEnabled?: boolean;
   onToggleExpand: (supplierId: string) => void;
   onToggleSelect: (supplierId: string) => void;
   onSelectAll: () => void;
@@ -27,6 +28,7 @@ interface SupplierTableProps {
   onDelete: (supplier: Supplier) => void;
   onSendInvitation: (supplier: Supplier) => void;
   onShowQRCode: (supplier: Supplier) => void;
+  onOpenPortal?: (supplier: Supplier) => void;
   onShowChanges: (supplier: Supplier) => void;
   onShowLocations: (supplier: Supplier) => void;
   onPrintOrderList: (supplier: Supplier, articles: Article[]) => void;
@@ -49,6 +51,7 @@ export const SupplierTable = ({
   pendingChangesBySupplier,
   pendingArticleIds = new Set(),
   recentlyActiveSuppliers = new Map(),
+  advancedSettingsEnabled = false,
   onToggleExpand,
   onToggleSelect,
   onSelectAll,
@@ -56,6 +59,7 @@ export const SupplierTable = ({
   onDelete,
   onSendInvitation,
   onShowQRCode,
+  onOpenPortal,
   onShowChanges,
   onShowLocations,
   onPrintOrderList,
@@ -166,6 +170,11 @@ export const SupplierTable = ({
                       <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground hover:text-foreground" onClick={() => onShowQRCode(supplier)} title="QR-Code für Lieferantenportal">
                         <QrCode className="w-4 h-4" />
                       </Button>
+                      {advancedSettingsEnabled && (
+                        <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground hover:text-foreground" onClick={() => onOpenPortal?.(supplier)} title="Portal direkt öffnen (Test)">
+                          <ExternalLink className="w-4 h-4" />
+                        </Button>
+                      )}
                       {supplierArticles.length > 0 && (
                         <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground hover:text-foreground" onClick={() => onPrintOrderList(supplier, supplierArticles)} title="Bestellliste drucken">
                           <FileText className="w-4 h-4" />
