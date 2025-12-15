@@ -398,7 +398,8 @@ const ArticleCard = ({
           <h3 className="font-semibold text-base leading-tight">
             {article.name}
           </h3>
-          {article.description && (
+          {/* Hide description for wine articles to keep ordering interface clean */}
+          {article.description && !article.category?.toLowerCase().includes('wein') && (
             <p className={cn(
               selectedSupplierId === KAO_SUPPLIER_ID && containsThai(article.description)
                 ? "text-lg leading-relaxed text-foreground"
