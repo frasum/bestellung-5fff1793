@@ -19,10 +19,12 @@ import {
   ExternalLink,
   Plus,
   TrendingUp,
+  FileText,
 } from 'lucide-react';
 import B2BArticlesTab from '@/components/b2b/B2BArticlesTab';
 import B2BCustomersTab from '@/components/b2b/B2BCustomersTab';
 import B2BOrdersTab from '@/components/b2b/B2BOrdersTab';
+import B2BOffersTab from '@/components/b2b/B2BOffersTab';
 import B2BSettingsTab from '@/components/b2b/B2BSettingsTab';
 
 interface B2BAccount {
@@ -190,7 +192,7 @@ const B2BSupplierDashboard = () => {
       {/* Main Content */}
       <main className="max-w-7xl mx-auto p-4 md:p-6">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5 lg:w-auto lg:inline-grid">
+          <TabsList className="grid w-full grid-cols-6 lg:w-auto lg:inline-grid">
             <TabsTrigger value="overview" className="gap-2">
               <TrendingUp className="h-4 w-4" />
               <span className="hidden sm:inline">Übersicht</span>
@@ -202,6 +204,10 @@ const B2BSupplierDashboard = () => {
             <TabsTrigger value="customers" className="gap-2">
               <Users className="h-4 w-4" />
               <span className="hidden sm:inline">Kunden</span>
+            </TabsTrigger>
+            <TabsTrigger value="offers" className="gap-2">
+              <FileText className="h-4 w-4" />
+              <span className="hidden sm:inline">Angebote</span>
             </TabsTrigger>
             <TabsTrigger value="orders" className="gap-2">
               <ShoppingCart className="h-4 w-4" />
@@ -322,6 +328,11 @@ const B2BSupplierDashboard = () => {
           {/* Customers Tab */}
           <TabsContent value="customers">
             <B2BCustomersTab accountId={account.id} supplierName={account.company_name} onStatsChange={() => loadStats(account.id)} />
+          </TabsContent>
+
+          {/* Offers Tab */}
+          <TabsContent value="offers">
+            <B2BOffersTab accountId={account.id} />
           </TabsContent>
 
           {/* Orders Tab */}
