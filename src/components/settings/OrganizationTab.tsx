@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { Building2, Users, Store, Ruler, Tag, FolderTree, Package, FileText, Download, Loader2 } from 'lucide-react';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { Building2, Users, Store, Ruler, Tag, FolderTree, Package, FileText, Download, Loader2, Phone } from 'lucide-react';
 import { useOrganization, useUpdateOrganization } from '@/hooks/useSettings';
 import { TeamTab } from './TeamTab';
 import { LocationsWithAddressesTab } from './LocationsWithAddressesTab';
@@ -82,118 +83,136 @@ const OrganizationGeneralContent = () => {
   }
 
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>{t('settings.orgProfile')}</CardTitle>
-          <CardDescription>{t('settings.orgDetails')}</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="space-y-2">
-            <Label htmlFor="org-name">{t('settings.orgName')}</Label>
-            <Input
-              id="org-name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder={t('settings.orgNamePlaceholder')}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label>{t('settings.subscription')}</Label>
+    <Card>
+      <Accordion type="multiple">
+        <AccordionItem value="org-profile" className="border-b">
+          <AccordionTrigger className="group px-4 py-3 hover:no-underline hover:bg-muted/50 data-[state=open]:bg-primary/5">
             <div className="flex items-center gap-2">
-              <Badge variant="secondary" className="capitalize">
-                {organization?.subscription_tier || 'free'}
-              </Badge>
-              {organization?.trial_ends_at && (
-                <span className="text-sm text-muted-foreground">
-                  {t('settings.trialEnds')}: {new Date(organization.trial_ends_at).toLocaleDateString()}
-                </span>
-              )}
+              <Building2 className="h-4 w-4 group-data-[state=open]:text-primary transition-colors" />
+              <span className="group-data-[state=open]:text-primary transition-colors font-medium">
+                {t('settings.orgProfile')}
+              </span>
             </div>
-          </div>
-        </CardContent>
-      </Card>
+          </AccordionTrigger>
+          <AccordionContent className="px-4 pb-4 bg-primary/5">
+            <div className="space-y-4 pt-2">
+              <div className="space-y-2">
+                <Label htmlFor="org-name">{t('settings.orgName')}</Label>
+                <Input
+                  id="org-name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder={t('settings.orgNamePlaceholder')}
+                />
+              </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>{t('settings.contactInfo')}</CardTitle>
-          <CardDescription>{t('settings.contactInfoDesc')}</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="contact-email">{t('settings.contactEmail')}</Label>
-              <Input
-                id="contact-email"
-                type="email"
-                value={contactEmail}
-                onChange={(e) => setContactEmail(e.target.value)}
-                placeholder="info@example.com"
-              />
+              <div className="space-y-2">
+                <Label>{t('settings.subscription')}</Label>
+                <div className="flex items-center gap-2">
+                  <Badge variant="secondary" className="capitalize">
+                    {organization?.subscription_tier || 'free'}
+                  </Badge>
+                  {organization?.trial_ends_at && (
+                    <span className="text-sm text-muted-foreground">
+                      {t('settings.trialEnds')}: {new Date(organization.trial_ends_at).toLocaleDateString()}
+                    </span>
+                  )}
+                </div>
+              </div>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="contact-phone">{t('settings.contactPhone')}</Label>
-              <Input
-                id="contact-phone"
-                type="tel"
-                value={contactPhone}
-                onChange={(e) => setContactPhone(e.target.value)}
-                placeholder="+49 89 123 456 789"
-              />
+          </AccordionContent>
+        </AccordionItem>
+
+        <AccordionItem value="contact" className="border-b">
+          <AccordionTrigger className="group px-4 py-3 hover:no-underline hover:bg-muted/50 data-[state=open]:bg-primary/5">
+            <div className="flex items-center gap-2">
+              <Phone className="h-4 w-4 group-data-[state=open]:text-primary transition-colors" />
+              <span className="group-data-[state=open]:text-primary transition-colors font-medium">
+                {t('settings.contactInfo')}
+              </span>
             </div>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="website">{t('settings.website')}</Label>
-            <Input
-              id="website"
-              type="url"
-              value={website}
-              onChange={(e) => setWebsite(e.target.value)}
-              placeholder="https://example.com"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="address">{t('settings.address')}</Label>
-            <Input
-              id="address"
-              value={address}
-              onChange={(e) => setAddress(e.target.value)}
-              placeholder={t('settings.addressPlaceholder')}
-            />
-          </div>
+          </AccordionTrigger>
+          <AccordionContent className="px-4 pb-4 bg-primary/5">
+            <div className="space-y-4 pt-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="contact-email">{t('settings.contactEmail')}</Label>
+                  <Input
+                    id="contact-email"
+                    type="email"
+                    value={contactEmail}
+                    onChange={(e) => setContactEmail(e.target.value)}
+                    placeholder="info@example.com"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="contact-phone">{t('settings.contactPhone')}</Label>
+                  <Input
+                    id="contact-phone"
+                    type="tel"
+                    value={contactPhone}
+                    onChange={(e) => setContactPhone(e.target.value)}
+                    placeholder="+49 89 123 456 789"
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="website">{t('settings.website')}</Label>
+                <Input
+                  id="website"
+                  type="url"
+                  value={website}
+                  onChange={(e) => setWebsite(e.target.value)}
+                  placeholder="https://example.com"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="address">{t('settings.address')}</Label>
+                <Input
+                  id="address"
+                  value={address}
+                  onChange={(e) => setAddress(e.target.value)}
+                  placeholder={t('settings.addressPlaceholder')}
+                />
+              </div>
 
-          <Button onClick={handleSave} disabled={updateOrganization.isPending}>
-            {updateOrganization.isPending ? t('settings.savingProfile') : t('settings.saveChanges')}
-          </Button>
-        </CardContent>
-      </Card>
+              <Button onClick={handleSave} disabled={updateOrganization.isPending}>
+                {updateOrganization.isPending ? t('settings.savingProfile') : t('settings.saveChanges')}
+              </Button>
+            </div>
+          </AccordionContent>
+        </AccordionItem>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <FileText className="h-5 w-5" />
-            {t('settings.systemOverviewPdf')}
-          </CardTitle>
-          <CardDescription>{t('settings.systemOverviewPdfDesc')}</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Button onClick={handleDownloadPdf} disabled={isGeneratingPdf}>
-            {isGeneratingPdf ? (
-              <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                {t('common.loading')}
-              </>
-            ) : (
-              <>
-                <Download className="h-4 w-4 mr-2" />
-                {t('settings.downloadPdf')}
-              </>
-            )}
-          </Button>
-        </CardContent>
-      </Card>
-    </div>
+        <AccordionItem value="system-pdf">
+          <AccordionTrigger className="group px-4 py-3 hover:no-underline hover:bg-muted/50 data-[state=open]:bg-primary/5">
+            <div className="flex items-center gap-2">
+              <FileText className="h-4 w-4 group-data-[state=open]:text-primary transition-colors" />
+              <span className="group-data-[state=open]:text-primary transition-colors font-medium">
+                {t('settings.systemOverviewPdf')}
+              </span>
+            </div>
+          </AccordionTrigger>
+          <AccordionContent className="px-4 pb-4 bg-primary/5">
+            <div className="pt-2">
+              <p className="text-sm text-muted-foreground mb-4">{t('settings.systemOverviewPdfDesc')}</p>
+              <Button onClick={handleDownloadPdf} disabled={isGeneratingPdf}>
+                {isGeneratingPdf ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    {t('common.loading')}
+                  </>
+                ) : (
+                  <>
+                    <Download className="h-4 w-4 mr-2" />
+                    {t('settings.downloadPdf')}
+                  </>
+                )}
+              </Button>
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
+    </Card>
   );
 };
 
