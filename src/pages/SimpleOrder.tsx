@@ -58,6 +58,7 @@ interface TokenData {
   label: string;
   language: string;
   is_multi_supplier: boolean;
+  employee_id: string | null;
   employee_name: string | null;
   has_employee: boolean;
   auto_approve_orders: boolean;
@@ -957,6 +958,8 @@ const SimpleOrder = () => {
         permission={tokenData.wine_catalog_access === 'edit' ? 'edit' : 'view'}
         onBack={() => setStatus('ready')}
         token={token}
+        employeeId={tokenData.employee_id || undefined}
+        employeeName={tokenData.employee_name || undefined}
       />
     );
   }

@@ -7,20 +7,21 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
 import { useTranslation } from 'react-i18next';
-import { Article } from '@/hooks/useArticles';
-import { useWineQuiz, LEVEL_POINTS, SAFE_LEVELS } from '@/hooks/useWineQuiz';
+import { useWineQuiz, LEVEL_POINTS, SAFE_LEVELS, QuizWine } from '@/hooks/useWineQuiz';
 import { useWineQuizScores } from '@/hooks/useWineQuizScores';
 import { QuizQuestion } from './QuizQuestion';
 import { QuizResult } from './QuizResult';
 import { Leaderboard } from './Leaderboard';
 
 interface WineQuizGameProps {
-  wines: Article[];
+  wines: QuizWine[];
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  employeeId?: string;
+  employeeName?: string;
 }
 
-export const WineQuizGame = ({ wines, open, onOpenChange }: WineQuizGameProps) => {
+export const WineQuizGame = ({ wines, open, onOpenChange, employeeId, employeeName }: WineQuizGameProps) => {
   const { t } = useTranslation();
   const [showLeaderboard, setShowLeaderboard] = useState(false);
   const { saveScore } = useWineQuizScores();
@@ -43,6 +44,7 @@ export const WineQuizGame = ({ wines, open, onOpenChange }: WineQuizGameProps) =
       questions_answered: state.questionsAnswered,
       correct_answers: state.correctAnswers,
       level_reached: state.currentLevel,
+      employee_id: employeeId,
     });
   };
 
@@ -169,6 +171,7 @@ export const WineQuizGame = ({ wines, open, onOpenChange }: WineQuizGameProps) =
             onPlayAgain={startGame}
             onSaveScore={handleSaveScore}
             onClose={handleClose}
+            defaultPlayerName={employeeName}
           />
         </DialogContent>
       </Dialog>

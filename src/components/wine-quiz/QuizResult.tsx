@@ -17,6 +17,7 @@ interface QuizResultProps {
   onPlayAgain: () => void;
   onSaveScore: (name: string) => void;
   onClose: () => void;
+  defaultPlayerName?: string;
 }
 
 export const QuizResult = ({
@@ -28,9 +29,10 @@ export const QuizResult = ({
   onPlayAgain,
   onSaveScore,
   onClose,
+  defaultPlayerName,
 }: QuizResultProps) => {
   const { t } = useTranslation();
-  const [playerName, setPlayerName] = useState('');
+  const [playerName, setPlayerName] = useState(defaultPlayerName || '');
   const [saved, setSaved] = useState(false);
 
   const handleSave = () => {
