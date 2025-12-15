@@ -49,7 +49,7 @@ export const ArticleOrganizationTab = () => {
   const [filterNoOrderUnit, setFilterNoOrderUnit] = useState(false);
   const [filterNoPackaging, setFilterNoPackaging] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  
+  const [bulkPackagingValue, setBulkPackagingValue] = useState<string>('');
 
   // Cast articles to include top_category and order_unit_id
   const articlesWithTopCategory = articles as unknown as ArticleWithTopCategory[];
@@ -180,6 +180,23 @@ export const ArticleOrganizationTab = () => {
       {
         onSuccess: () => {
           setSelectedIds(new Set());
+          toast.success(t('settings.articleOrganization.bulkAssignSuccess', { count: selectedIds.size }));
+        },
+      }
+    );
+  };
+
+  const handleBulkAssignPackaging = () => {
+    if (selectedIds.size === 0 || !bulkPackagingValue) return;
+    const value = Number(bulkPackagingValue);
+    if (isNaN(value) || value < 1) return;
+    
+    bulkUpdate.mutate(
+      { ids: Array.from(selectedIds), updates: { packaging_unit: value } as any },
+      {
+        onSuccess: () => {
+          setSelectedIds(new Set());
+          setBulkPackagingValue('');
           toast.success(t('settings.articleOrganization.bulkAssignSuccess', { count: selectedIds.size }));
         },
       }
@@ -412,6 +429,24 @@ export const ArticleOrganizationTab = () => {
                 ))}
               </SelectContent>
             </Select>
+            <div className="flex items-center gap-1">
+              <Input
+                type="number"
+                min="1"
+                placeholder="Stk/BE"
+                className="h-8 w-20"
+                value={bulkPackagingValue}
+                onChange={(e) => setBulkPackagingValue(e.target.value)}
+              />
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={handleBulkAssignPackaging}
+                disabled={!bulkPackagingValue || Number(bulkPackagingValue) < 1}
+              >
+                Zuweisen
+              </Button>
+            </div>
             <Button variant="ghost" size="sm" onClick={deselectAll}>
               {t('common.cancel')}
             </Button>
