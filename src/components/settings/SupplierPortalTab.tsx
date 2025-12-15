@@ -177,6 +177,7 @@ export const SupplierPortalTab = () => {
                 cardDescription={cardDescription}
                 infoText={infoText}
                 footerText={footerText}
+                visibleColumns={visibleColumns}
               />
             </AccordionContent>
           </AccordionItem>
