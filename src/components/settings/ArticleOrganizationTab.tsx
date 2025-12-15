@@ -13,6 +13,7 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Search, CheckSquare, Square, Loader2, BarChart3 } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useArticles, useBulkUpdateArticles, useUpdateArticle } from '@/hooks/useArticles';
 import { useUnits } from '@/hooks/useUnits';
 import { useSuppliers, useUpdateSupplier, Supplier, SupplierInput } from '@/hooks/useSuppliers';
@@ -666,9 +667,20 @@ export const ArticleOrganizationTab = () => {
                           {formatCurrency(article.price)}
                         </TableCell>
                         <TableCell className="text-right">
-                          <span className={hasMultiplier ? "font-medium text-primary" : "text-primary"}>
-                            {formatCurrency(bePrice)}
-                          </span>
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <span className={`cursor-help ${hasMultiplier ? "font-medium text-primary" : "text-primary"}`}>
+                                  {formatCurrency(bePrice)}
+                                </span>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p className="text-xs">
+                                  {formatCurrency(article.price)} × {article.packaging_unit || 1} Stk/BE
+                                </p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
                         </TableCell>
                       </TableRow>
                     );
