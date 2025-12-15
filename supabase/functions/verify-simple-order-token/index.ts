@@ -334,6 +334,7 @@ serve(async (req) => {
           location: tokenData.location,
           organization_id: tokenData.organization_id,
           is_multi_supplier: isMultiSupplier,
+          employee_id: employeeId || null,
           employee_name: (tokenData.employee as any)?.name || tokenData.employee_name || null,
           has_employee: !!employeeId,
           auto_approve_orders: autoApproveOrders,

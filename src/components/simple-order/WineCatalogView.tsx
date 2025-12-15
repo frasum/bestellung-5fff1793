@@ -8,10 +8,11 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Progress } from '@/components/ui/progress';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, Search, Wine, Grape, MapPin, Utensils, Euro, X, Check, Loader2, FileDown } from 'lucide-react';
+import { ArrowLeft, Search, Wine, Grape, MapPin, Utensils, Euro, X, Check, Loader2, FileDown, Gamepad2 } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import { generateWineCatalogPdf } from '@/lib/wineCatalogPdf';
+import { WineQuizGame } from '@/components/wine-quiz/WineQuizGame';
 
 interface WineArticle {
   id: string;
@@ -36,9 +37,11 @@ interface WineCatalogViewProps {
   permission: 'view' | 'edit';
   onBack: () => void;
   token: string;
+  employeeId?: string;
+  employeeName?: string;
 }
 
-export const WineCatalogView = ({ organizationId, permission, onBack, token }: WineCatalogViewProps) => {
+export const WineCatalogView = ({ organizationId, permission, onBack, token, employeeId, employeeName }: WineCatalogViewProps) => {
   const { t } = useTranslation();
   const [wines, setWines] = useState<WineArticle[]>([]);
   const [organizationName, setOrganizationName] = useState<string>('');
@@ -49,6 +52,7 @@ export const WineCatalogView = ({ organizationId, permission, onBack, token }: W
   const [isSaving, setIsSaving] = useState(false);
   const [isExportingPdf, setIsExportingPdf] = useState(false);
   const [pdfProgress, setPdfProgress] = useState({ current: 0, total: 0 });
+  const [showQuiz, setShowQuiz] = useState(false);
 
   useEffect(() => {
     console.log('[WineCatalogView] component mounted', { token });
@@ -226,6 +230,16 @@ export const WineCatalogView = ({ organizationId, permission, onBack, token }: W
               <Wine className="h-5 w-5" />
               <h1 className="text-lg font-bold">{t('wines.ourWines', 'Unsere Weine')}</h1>
             </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setShowQuiz(true)}
+              disabled={wines.length < 4}
+              className="h-11 w-11 text-primary-foreground hover:bg-primary-foreground/20"
+              title={t('wines.startQuiz', 'Quiz starten')}
+            >
+              <Gamepad2 className="h-5 w-5" />
+            </Button>
             <Button
               variant="ghost"
               size="icon"
@@ -477,6 +491,26 @@ export const WineCatalogView = ({ organizationId, permission, onBack, token }: W
           </div>
         )}
       </div>
+
+      {/* Wine Quiz */}
+      <WineQuizGame
+        wines={wines.map(w => ({
+          id: w.id,
+          name: w.name,
+          description: w.description,
+          grape_variety: w.grape_variety,
+          origin_country: w.origin_country,
+          flavor_profile: w.flavor_profile,
+          food_pairings: w.food_pairings,
+          selling_price: w.selling_price,
+          image_url: w.image_url,
+          category: w.category,
+        }))}
+        open={showQuiz}
+        onOpenChange={setShowQuiz}
+        employeeId={employeeId}
+        employeeName={employeeName}
+      />
     </div>
   );
 };

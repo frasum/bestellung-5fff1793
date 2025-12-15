@@ -1,5 +1,18 @@
 import { useState, useCallback, useMemo } from 'react';
-import { Article } from '@/hooks/useArticles';
+
+// Simplified wine interface for quiz - works with both Article and WineCatalogView wines
+export interface QuizWine {
+  id: string;
+  name: string;
+  description?: string | null;
+  grape_variety?: string | null;
+  origin_country?: string | null;
+  flavor_profile?: string | null;
+  food_pairings?: string | null;
+  selling_price?: number | null;
+  image_url?: string | null;
+  category?: string | null;
+}
 
 export interface QuizQuestion {
   id: string;
@@ -7,7 +20,7 @@ export interface QuizQuestion {
   question: string;
   correctAnswer: string;
   options: string[];
-  wine: Article;
+  wine: QuizWine;
   hint?: string;
 }
 
@@ -39,7 +52,7 @@ export const LEVEL_POINTS = [
 
 export const SAFE_LEVELS = [5, 10, 15]; // Bronze, Silver, Gold
 
-export const useWineQuiz = (wines: Article[]) => {
+export const useWineQuiz = (wines: QuizWine[]) => {
   const [state, setState] = useState<QuizState>({
     currentLevel: 0,
     score: 0,
@@ -64,7 +77,7 @@ export const useWineQuiz = (wines: Article[]) => {
   }, [wines]);
 
   // Get random wine from list (excluding current)
-  const getRandomWine = useCallback((exclude?: Article): Article | null => {
+  const getRandomWine = useCallback((exclude?: QuizWine): QuizWine | null => {
     const available = exclude 
       ? validWines.filter(w => w.id !== exclude.id)
       : validWines;
@@ -73,13 +86,13 @@ export const useWineQuiz = (wines: Article[]) => {
   }, [validWines]);
 
   // Get random wrong answers for a field
-  const getWrongAnswers = useCallback((correctWine: Article, field: keyof Article, count: number): string[] => {
+  const getWrongAnswers = useCallback((correctWine: QuizWine, field: keyof QuizWine, count: number): string[] => {
     const wrongAnswers: string[] = [];
     const usedValues = new Set([correctWine[field] as string]);
     
     const shuffled = [...validWines].sort(() => Math.random() - 0.5);
     for (const wine of shuffled) {
-      const value = wine[field] as string;
+      const value = wine[field as keyof QuizWine] as string;
       if (value && !usedValues.has(value)) {
         wrongAnswers.push(value);
         usedValues.add(value);
@@ -95,8 +108,8 @@ export const useWineQuiz = (wines: Article[]) => {
       food_pairings: ['Pasta', 'Steak', 'Fisch', 'Käse', 'Desserts', 'Vorspeisen'],
     };
     
-    while (wrongAnswers.length < count && genericAnswers[field]) {
-      const generic = genericAnswers[field].find(g => !usedValues.has(g));
+    while (wrongAnswers.length < count && genericAnswers[field as string]) {
+      const generic = genericAnswers[field as string].find(g => !usedValues.has(g));
       if (generic) {
         wrongAnswers.push(generic);
         usedValues.add(generic);
@@ -135,7 +148,7 @@ export const useWineQuiz = (wines: Article[]) => {
     if (!wine) return null;
     
     const level = state.currentLevel;
-    const questionTypes: Array<{ type: QuizQuestion['type']; field: keyof Article; weight: number }> = [];
+    const questionTypes: Array<{ type: QuizQuestion['type']; field: keyof QuizWine; weight: number }> = [];
     
     // Add available question types based on wine data
     if (wine.grape_variety) questionTypes.push({ type: 'grape', field: 'grape_variety', weight: 2 });
