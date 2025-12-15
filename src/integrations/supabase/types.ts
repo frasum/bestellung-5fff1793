@@ -2466,6 +2466,57 @@ export type Database = {
         }
         Relationships: []
       }
+      wine_quiz_scores: {
+        Row: {
+          correct_answers: number
+          employee_id: string | null
+          employee_name: string
+          id: string
+          level_reached: number
+          organization_id: string
+          played_at: string
+          questions_answered: number
+          score: number
+        }
+        Insert: {
+          correct_answers?: number
+          employee_id?: string | null
+          employee_name: string
+          id?: string
+          level_reached?: number
+          organization_id: string
+          played_at?: string
+          questions_answered?: number
+          score?: number
+        }
+        Update: {
+          correct_answers?: number
+          employee_id?: string | null
+          employee_name?: string
+          id?: string
+          level_reached?: number
+          organization_id?: string
+          played_at?: string
+          questions_answered?: number
+          score?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wine_quiz_scores_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wine_quiz_scores_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
