@@ -435,6 +435,34 @@
     "unitsAndCategories": "Unités & Catégories",
     "unitsAndCategoriesShort": "Unités & Cat.",
     "communication": "Communication",
+    "communicationLog": {
+      "title": "Historique des communications",
+      "description": "Aperçu de tous les e-mails envoyés et confirmations",
+      "filterPlaceholder": "Sélectionner un filtre",
+      "filterAll": "Tous",
+      "noLogs": "Aucune communication pour l'instant",
+      "columns": {
+        "date": "Date",
+        "type": "Type",
+        "recipient": "Destinataire",
+        "subject": "Sujet",
+        "status": "Statut"
+      },
+      "types": {
+        "orderSent": "Commande",
+        "orderConfirmed": "Confirmée",
+        "preorderNotification": "Précommande",
+        "teamInvitation": "Invitation",
+        "confirmationNotification": "Notification",
+        "unknown": "Inconnu"
+      },
+      "status": {
+        "sent": "Envoyé",
+        "confirmed": "Confirmé",
+        "pending": "En attente",
+        "failed": "Échoué"
+      }
+    },
     "demoAccounts": "Comptes démo",
     "demoAccountsShort": "Démos",
     "wineTokens": "Carte des Vins",

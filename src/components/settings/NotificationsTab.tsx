@@ -6,10 +6,11 @@ import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Check, Bell, BellOff, Mail } from 'lucide-react';
+import { Check, Bell, BellOff, Mail, History } from 'lucide-react';
 import { useNotificationPreferences, useUpsertNotificationPreferences } from '@/hooks/useSettings';
 import { useDesktopNotifications } from '@/hooks/useDesktopNotifications';
 import { Separator } from '@/components/ui/separator';
+import { CommunicationLogSection } from './CommunicationLogSection';
 
 export const NotificationsTab = () => {
   const { t } = useTranslation();
@@ -156,6 +157,19 @@ export const NotificationsTab = () => {
                   />
                 </div>
               </div>
+            </AccordionContent>
+          </AccordionItem>
+
+          {/* Communication Log */}
+          <AccordionItem value="communication-log">
+            <AccordionTrigger className="group px-4 py-3 hover:no-underline hover:bg-muted/50 data-[state=open]:bg-primary/5">
+              <div className="flex items-center gap-2">
+                <History className="h-4 w-4 text-muted-foreground group-data-[state=open]:text-primary transition-colors" />
+                <span className="font-medium group-data-[state=open]:text-primary transition-colors">{t('settings.communicationLog.title')}</span>
+              </div>
+            </AccordionTrigger>
+            <AccordionContent className="px-4 pb-4 bg-primary/5">
+              <CommunicationLogSection />
             </AccordionContent>
           </AccordionItem>
         </Accordion>

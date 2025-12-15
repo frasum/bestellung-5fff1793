@@ -222,6 +222,25 @@ ${items.map(item => `- ${item.article_name}: ${item.quantity}`).join('\n')}
 
     console.log('Email sent successfully:', emailResponse);
 
+    // Log to communication_logs for each recipient
+    for (const email of recipientEmails) {
+      const { error: logError } = await supabase
+        .from("communication_logs")
+        .insert({
+          organization_id: organization_id,
+          email_type: 'preorder_notification',
+          direction: 'outgoing',
+          recipient_email: email,
+          recipient_name: null,
+          subject: `Neue EasyOrder von ${employee_name}`,
+          status: 'sent',
+        });
+
+      if (logError) {
+        console.error("Error logging communication:", logError);
+      }
+    }
+
     return new Response(
       JSON.stringify({ success: true, recipientCount: recipientEmails.length }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

@@ -435,6 +435,34 @@
     "unitsAndCategories": "หน่วย & หมวดหมู่",
     "unitsAndCategoriesShort": "หน่วย & หมวด",
     "communication": "การสื่อสาร",
+    "communicationLog": {
+      "title": "ประวัติการสื่อสาร",
+      "description": "ภาพรวมอีเมลที่ส่งและการยืนยันทั้งหมด",
+      "filterPlaceholder": "เลือกตัวกรอง",
+      "filterAll": "ทั้งหมด",
+      "noLogs": "ยังไม่มีการสื่อสาร",
+      "columns": {
+        "date": "วันที่",
+        "type": "ประเภท",
+        "recipient": "ผู้รับ",
+        "subject": "หัวข้อ",
+        "status": "สถานะ"
+      },
+      "types": {
+        "orderSent": "คำสั่งซื้อ",
+        "orderConfirmed": "ยืนยันแล้ว",
+        "preorderNotification": "การสั่งซื้อล่วงหน้า",
+        "teamInvitation": "คำเชิญ",
+        "confirmationNotification": "การแจ้งเตือน",
+        "unknown": "ไม่ทราบ"
+      },
+      "status": {
+        "sent": "ส่งแล้ว",
+        "confirmed": "ยืนยันแล้ว",
+        "pending": "รอดำเนินการ",
+        "failed": "ล้มเหลว"
+      }
+    },
     "demoAccounts": "บัญชีสาธิต",
     "demoAccountsShort": "สาธิต",
     "wineTokens": "รายการไวน์",

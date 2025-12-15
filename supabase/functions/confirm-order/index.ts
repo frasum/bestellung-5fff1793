@@ -261,6 +261,33 @@ serve(async (req) => {
       .eq("id", tokenData.id);
     console.log("Token marked as used");
 
+    // Get organization_id for logging
+    const { data: orderForLog } = await supabase
+      .from("orders")
+      .select("organization_id")
+      .eq("id", tokenData.order_id)
+      .single();
+
+    // Log confirmation to communication_logs (mark existing order_sent as confirmed)
+    if (orderForLog?.organization_id) {
+      // Update existing log entry for this order
+      const { error: updateLogError } = await supabase
+        .from("communication_logs")
+        .update({ 
+          status: 'confirmed',
+          confirmed_at: new Date().toISOString()
+        })
+        .eq("order_id", tokenData.order_id)
+        .eq("email_type", "order_sent");
+
+      if (updateLogError) {
+        console.error("Error updating communication log:", updateLogError);
+      } else {
+        console.log("Communication log updated to confirmed");
+      }
+    }
+    console.log("Token marked as used");
+
     console.log(`Order ${orderNumber} confirmed successfully`);
 
     // Send notification email to order creator
@@ -281,6 +308,25 @@ serve(async (req) => {
         items,
         order.total_amount
       );
+
+      // Log confirmation notification
+      if (orderForLog?.organization_id) {
+        const { error: logError } = await supabase
+          .from("communication_logs")
+          .insert({
+            organization_id: orderForLog.organization_id,
+            email_type: 'confirmation_notification',
+            direction: 'outgoing',
+            recipient_email: profile.email,
+            subject: `✅ Bestellung ${orderNumber} wurde von ${supplierName} bestätigt`,
+            order_id: tokenData.order_id,
+            status: 'sent',
+          });
+
+        if (logError) {
+          console.error("Error logging confirmation notification:", logError);
+        }
+      }
     }
 
     console.log("=== CONFIRM-ORDER SUCCESS ===");

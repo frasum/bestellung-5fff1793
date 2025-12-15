@@ -362,6 +362,86 @@ export type Database = {
         }
         Relationships: []
       }
+      communication_logs: {
+        Row: {
+          confirmed_at: string | null
+          created_at: string
+          direction: string
+          email_type: string
+          employee_id: string | null
+          error_message: string | null
+          id: string
+          order_id: string | null
+          organization_id: string
+          recipient_email: string
+          recipient_name: string | null
+          status: string
+          subject: string
+          supplier_id: string | null
+        }
+        Insert: {
+          confirmed_at?: string | null
+          created_at?: string
+          direction?: string
+          email_type: string
+          employee_id?: string | null
+          error_message?: string | null
+          id?: string
+          order_id?: string | null
+          organization_id: string
+          recipient_email: string
+          recipient_name?: string | null
+          status?: string
+          subject: string
+          supplier_id?: string | null
+        }
+        Update: {
+          confirmed_at?: string | null
+          created_at?: string
+          direction?: string
+          email_type?: string
+          employee_id?: string | null
+          error_message?: string | null
+          id?: string
+          order_id?: string | null
+          organization_id?: string
+          recipient_email?: string
+          recipient_name?: string | null
+          status?: string
+          subject?: string
+          supplier_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "communication_logs_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "communication_logs_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "communication_logs_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "communication_logs_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       delivery_addresses: {
         Row: {
           address_line1: string

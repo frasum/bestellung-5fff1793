@@ -546,6 +546,28 @@ serve(async (req) => {
       console.error("Error updating order email status:", updateError);
     }
 
+    // Log to communication_logs
+    if (order?.organization_id) {
+      const { error: logError } = await supabaseClient
+        .from("communication_logs")
+        .insert({
+          organization_id: order.organization_id,
+          email_type: 'order_sent',
+          direction: 'outgoing',
+          recipient_email: recipientEmail,
+          recipient_name: data.supplierName,
+          subject: subject,
+          order_id: data.orderId,
+          status: 'sent',
+        });
+
+      if (logError) {
+        console.error("Error logging communication:", logError);
+      } else {
+        console.log("Communication logged successfully");
+      }
+    }
+
     return new Response(JSON.stringify({ success: true, emailResponse }), {
       status: 200,
       headers: { "Content-Type": "application/json", ...corsHeaders },

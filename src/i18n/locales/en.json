@@ -435,6 +435,34 @@
     "unitsAndCategories": "Units & Categories",
     "unitsAndCategoriesShort": "Units & Cat.",
     "communication": "Communication",
+    "communicationLog": {
+      "title": "Communication Log",
+      "description": "Overview of all sent emails and confirmations",
+      "filterPlaceholder": "Select filter",
+      "filterAll": "All",
+      "noLogs": "No communication yet",
+      "columns": {
+        "date": "Date",
+        "type": "Type",
+        "recipient": "Recipient",
+        "subject": "Subject",
+        "status": "Status"
+      },
+      "types": {
+        "orderSent": "Order",
+        "orderConfirmed": "Confirmed",
+        "preorderNotification": "Pre-order",
+        "teamInvitation": "Invitation",
+        "confirmationNotification": "Notification",
+        "unknown": "Unknown"
+      },
+      "status": {
+        "sent": "Sent",
+        "confirmed": "Confirmed",
+        "pending": "Pending",
+        "failed": "Failed"
+      }
+    },
     "demoAccounts": "Demo Accounts",
     "demoAccountsShort": "Demos",
     "wineTokens": "Wine Catalog",
