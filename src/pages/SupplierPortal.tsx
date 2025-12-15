@@ -8,10 +8,11 @@ import { cn } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { LogOut, Save, Search, Package, Loader2, Clock, Plus, FileDown, AlertCircle, AlertTriangle, SendHorizontal, Camera, Trash2, Upload } from 'lucide-react';
+import { LogOut, Save, Search, Package, Loader2, Clock, Plus, FileDown, AlertCircle, AlertTriangle, SendHorizontal, Camera, Trash2, Upload, Pencil, Check, X } from 'lucide-react';
 import logo from '@/assets/logo.png';
 import { SupplierArticleCard } from '@/components/suppliers/SupplierArticleCard';
 import { SupplierUnitSelect } from '@/components/suppliers/SupplierUnitSelect';
@@ -87,6 +88,7 @@ interface DraftData {
   annualOrderValueInputs: Record<string, string>;
   orderUnitInputs: Record<string, string>;
   referencePriceInputs: Record<string, string>;
+  descriptionInputs?: Record<string, string>;
 }
 
 const SupplierPortal = () => {
@@ -103,6 +105,8 @@ const SupplierPortal = () => {
   const [priceInputs, setPriceInputs] = useState<Record<string, string>>({});
   const [annualOrderValueInputs, setAnnualOrderValueInputs] = useState<Record<string, string>>({});
   const [orderUnitInputs, setOrderUnitInputs] = useState<Record<string, string>>({});
+  const [descriptionInputs, setDescriptionInputs] = useState<Record<string, string>>({});
+  const [editingDescription, setEditingDescription] = useState<string | null>(null);
   const [referencePriceInputs, setReferencePriceInputs] = useState<Record<string, string>>({});
   const [units, setUnits] = useState<Unit[]>([]);
   const [orderUnits, setOrderUnits] = useState<OrderUnit[]>([]);
@@ -235,6 +239,7 @@ const SupplierPortal = () => {
           setPriceInputs(draft.priceInputs || {});
           setAnnualOrderValueInputs(draft.annualOrderValueInputs || {});
           setOrderUnitInputs(draft.orderUnitInputs || {});
+          setDescriptionInputs(draft.descriptionInputs || {});
           setHasDraft(true);
         }
       } catch (error: any) {
@@ -280,6 +285,7 @@ const SupplierPortal = () => {
             priceInputs,
             annualOrderValueInputs,
             orderUnitInputs,
+            descriptionInputs,
           },
         },
       });
@@ -347,6 +353,11 @@ const SupplierPortal = () => {
         changes.packaging_unit = null;
       }
     }
+
+    // Include description change
+    if (descriptionInputs[articleId] !== undefined) {
+      changes.description = descriptionInputs[articleId] || null;
+    }
     
     if (!changes || Object.keys(changes).length === 0) return;
 
@@ -390,6 +401,11 @@ const SupplierPortal = () => {
         delete newState[articleId];
         return newState;
       });
+      setDescriptionInputs(prev => {
+        const newState = { ...prev };
+        delete newState[articleId];
+        return newState;
+      });
 
       // Delete draft after successful submission if it exists
       if (hasDraft) {
@@ -417,14 +433,16 @@ const SupplierPortal = () => {
     const hasPriceChange = priceInputs[articleId] !== undefined;
     const hasAOVChange = annualOrderValueInputs[articleId] !== undefined;
     const hasPUChange = orderUnitInputs[articleId] !== undefined;
-    return hasFieldChanges || hasPriceChange || hasAOVChange || hasPUChange;
+    const hasDescChange = descriptionInputs[articleId] !== undefined;
+    return hasFieldChanges || hasPriceChange || hasAOVChange || hasPUChange || hasDescChange;
   };
 
   const hasAnyChanges = () => {
     return Object.keys(editedArticles).length > 0 || 
            Object.keys(priceInputs).length > 0 || 
            Object.keys(annualOrderValueInputs).length > 0 ||
-           Object.keys(orderUnitInputs).length > 0;
+           Object.keys(orderUnitInputs).length > 0 ||
+           Object.keys(descriptionInputs).length > 0;
   };
 
   const getChangedArticleCount = () => {
@@ -979,10 +997,68 @@ const SupplierPortal = () => {
                             <TableCell className="max-w-[350px]">
                               <div>
                                 <span className="font-medium">{article.name}</span>
-                                {isColumnVisible('description') && article.description && (
-                                  <p className="text-sm text-muted-foreground line-clamp-2 mt-0.5">
-                                    {article.description}
-                                  </p>
+                                {isColumnVisible('description') && (
+                                  editingDescription === article.id ? (
+                                    <div className="mt-1 space-y-1">
+                                      <Textarea
+                                        autoFocus
+                                        value={descriptionInputs[article.id] ?? article.description ?? ''}
+                                        onChange={(e) => setDescriptionInputs(prev => ({
+                                          ...prev,
+                                          [article.id]: e.target.value
+                                        }))}
+                                        className="min-h-[60px] text-sm"
+                                        placeholder="Beschreibung eingeben..."
+                                      />
+                                      <div className="flex gap-1">
+                                        <Button
+                                          size="sm"
+                                          variant="ghost"
+                                          className="h-6 px-2"
+                                          onClick={() => {
+                                            handleFieldChange(article.id, 'description', descriptionInputs[article.id] ?? article.description);
+                                            setEditingDescription(null);
+                                          }}
+                                        >
+                                          <Check className="h-3 w-3" />
+                                        </Button>
+                                        <Button
+                                          size="sm"
+                                          variant="ghost"
+                                          className="h-6 px-2"
+                                          onClick={() => {
+                                            setDescriptionInputs(prev => {
+                                              const newState = { ...prev };
+                                              delete newState[article.id];
+                                              return newState;
+                                            });
+                                            setEditingDescription(null);
+                                          }}
+                                        >
+                                          <X className="h-3 w-3" />
+                                        </Button>
+                                      </div>
+                                    </div>
+                                  ) : (
+                                    <div 
+                                      className="group flex items-start gap-1 cursor-pointer mt-0.5"
+                                      onClick={() => setEditingDescription(article.id)}
+                                    >
+                                      {article.description || descriptionInputs[article.id] ? (
+                                        <p className={cn(
+                                          "text-sm text-muted-foreground line-clamp-2 hover:text-foreground",
+                                          descriptionInputs[article.id] !== undefined && "border-l-2 border-amber-500 pl-1"
+                                        )}>
+                                          {descriptionInputs[article.id] ?? article.description}
+                                        </p>
+                                      ) : (
+                                        <span className="text-sm text-muted-foreground/50 italic hover:text-muted-foreground flex items-center gap-1">
+                                          <Pencil className="h-3 w-3" />
+                                          Beschreibung hinzufügen
+                                        </span>
+                                      )}
+                                    </div>
+                                  )
                                 )}
                               </div>
                             </TableCell>
