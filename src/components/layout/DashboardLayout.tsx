@@ -1,4 +1,4 @@
-import { ReactNode, useState } from 'react';
+import { ReactNode, useState, useRef, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
@@ -19,6 +19,7 @@ import { useCartDrafts } from '@/hooks/useCartDrafts';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
+import { toast } from 'sonner';
 import logoImage from '@/assets/logo.png';
 
 
@@ -49,11 +50,26 @@ export const DashboardLayout = ({
   const { data: drafts } = useCartDrafts(undefined, true);
   const openDraftsCount = drafts?.length || 0;
   
+  // Store organization ID in ref for stable access during mutations
+  const organizationIdRef = useRef<string | null>(null);
+  
+  useEffect(() => {
+    if (organization?.id) {
+      organizationIdRef.current = organization.id;
+    }
+  }, [organization?.id]);
+  
   const handleTestModeToggle = (checked: boolean) => {
-    if (!organization) return;
+    const orgId = organization?.id || organizationIdRef.current;
+    if (!orgId) return;
+    
     updateOrganization.mutate({
-      id: organization.id,
+      id: orgId,
       test_mode_enabled: checked,
+    }, {
+      onSuccess: () => {
+        toast.success(checked ? t('testMode.activated') : t('testMode.deactivated'));
+      }
     });
   };
   
@@ -126,6 +142,7 @@ export const DashboardLayout = ({
                       id="test-mode-toggle"
                       checked={organization?.test_mode_enabled || false}
                       onCheckedChange={handleTestModeToggle}
+                      disabled={updateOrganization.isPending}
                     />
                   </div>
                   <p className="text-xs text-muted-foreground">
@@ -189,6 +206,7 @@ export const DashboardLayout = ({
                       id="test-mode-toggle-desktop"
                       checked={organization?.test_mode_enabled || false}
                       onCheckedChange={handleTestModeToggle}
+                      disabled={updateOrganization.isPending}
                     />
                   </div>
                   <p className="text-xs text-muted-foreground">
