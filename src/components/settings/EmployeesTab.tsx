@@ -92,6 +92,11 @@ export function EmployeesTab() {
   const [isMigratingTokens, setIsMigratingTokens] = useState(false);
   const [hasMigrated, setHasMigrated] = useState(false);
   
+  // Advanced settings state
+  const [advancedSettingsEnabled, setAdvancedSettingsEnabled] = useState(() => 
+    localStorage.getItem('advanced-settings-enabled') === 'true'
+  );
+  
   // PIN Quick-Edit Dialog
   const [pinDialogEmployee, setPinDialogEmployee] = useState<Employee | null>(null);
   const [pinValue, setPinValue] = useState('');
@@ -113,6 +118,17 @@ export function EmployeesTab() {
   
   // New structure: location -> suppliers mapping
   const [locationAssignments, setLocationAssignments] = useState<LocationAssignment[]>([]);
+
+  // Listen for advanced settings changes
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'advanced-settings-enabled') {
+        setAdvancedSettingsEnabled(e.newValue === 'true');
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
 
   // Auto-migrate: Create missing tokens for employees with assignments but no token
   useEffect(() => {
@@ -766,15 +782,17 @@ export function EmployeesTab() {
                                 <MessageCircle className="h-4 w-4" />
                               </Button>
                             )}
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-10 w-10"
-                              onClick={() => window.open(getOrderUrl(token.token), '_blank')}
-                              title="Link testen"
-                            >
-                              <ExternalLink className="h-4 w-4" />
-                            </Button>
+                            {advancedSettingsEnabled && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-10 w-10"
+                                onClick={() => window.open(getOrderUrl(token.token), '_blank')}
+                                title="EasyOrder direkt öffnen (Test)"
+                              >
+                                <ExternalLink className="h-4 w-4" />
+                              </Button>
+                            )}
                           </>
                         )}
                         {/* PIN Quick-Edit Button for Auto-Approve employees */}
