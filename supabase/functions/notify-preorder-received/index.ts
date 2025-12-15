@@ -97,6 +97,20 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
     const resend = new Resend(Deno.env.get('RESEND_API_KEY'));
 
+    // Check test mode settings
+    const { data: org } = await supabase
+      .from('organizations')
+      .select('test_mode_enabled, test_email')
+      .eq('id', organization_id)
+      .single();
+
+    const isTestMode = org?.test_mode_enabled && org?.test_email;
+    const testEmail = org?.test_email;
+    
+    if (isTestMode) {
+      console.log(`[notify-preorder-received] Test mode active, redirecting to: ${testEmail}`);
+    }
+
     // Get all admin/manager profiles with email_preorder_received enabled
     const { data: profiles, error: profilesError } = await supabase
       .from('profiles')
@@ -140,7 +154,11 @@ serve(async (req) => {
       );
     }
 
-    console.log(`Sending notification to ${recipientEmails.length} recipients`);
+    // In test mode, redirect to test email
+    const finalRecipients = isTestMode ? [testEmail!] : recipientEmails;
+    const originalRecipients = recipientEmails.join(', ');
+
+    console.log(`Sending notification to ${finalRecipients.length} recipients${isTestMode ? ' (TEST MODE)' : ''}`);
 
     // Build article list HTML
     const itemsHtml = items.map(item => 
@@ -148,6 +166,15 @@ serve(async (req) => {
     ).join('');
 
     const appUrl = Deno.env.get('APP_URL') || 'https://bestellung.pro';
+
+    // Test mode notice for email
+    const testModeNotice = isTestMode ? `
+      <div style="background: #fef3c7; border: 1px solid #f59e0b; padding: 15px; border-radius: 6px; margin-bottom: 15px;">
+        <strong>🧪 TESTMODUS</strong><br>
+        Diese E-Mail wäre normalerweise an folgende Empfänger gesendet worden:<br>
+        <strong>${originalRecipients}</strong>
+      </div>
+    ` : '';
 
     const htmlContent = `
 <!DOCTYPE html>
@@ -171,9 +198,10 @@ serve(async (req) => {
 <body>
   <div class="container">
     <div class="header">
-      <h1 style="margin: 0; font-size: 20px;">📦 Neue EasyOrder eingegangen</h1>
+      <h1 style="margin: 0; font-size: 20px;">📦 ${isTestMode ? '[TEST] ' : ''}Neue EasyOrder eingegangen</h1>
     </div>
     <div class="content">
+      ${testModeNotice}
       <div class="info-box">
         <div class="info-label">Mitarbeiter</div>
         <div class="info-value">${employee_name}</div>
@@ -201,7 +229,11 @@ serve(async (req) => {
 </body>
 </html>`;
 
-    const textContent = `Neue EasyOrder eingegangen
+    const testModeTextNotice = isTestMode 
+      ? `🧪 TESTMODUS - Diese E-Mail wäre normalerweise an folgende Empfänger gesendet worden: ${originalRecipients}\n\n` 
+      : '';
+
+    const textContent = `${testModeTextNotice}${isTestMode ? '[TEST] ' : ''}Neue EasyOrder eingegangen
 
 Mitarbeiter: ${employee_name}
 Standort: ${location_name}
@@ -212,18 +244,22 @@ ${items.map(item => `- ${item.article_name}: ${item.quantity}`).join('\n')}
 
 Öffnen Sie die Vorbestellung unter: ${appUrl}/orders?tab=drafts`;
 
+    const subject = isTestMode 
+      ? `[TEST] Neue EasyOrder von ${employee_name}`
+      : `Neue EasyOrder von ${employee_name}`;
+
     const emailResponse = await resend.emails.send({
       from: 'Bestellung.pro <noreply@bestellung.pro>',
-      to: recipientEmails,
-      subject: `Neue EasyOrder von ${employee_name}`,
+      to: finalRecipients,
+      subject: subject,
       html: htmlContent,
       text: textContent,
     });
 
     console.log('Email sent successfully:', emailResponse);
 
-    // Log to communication_logs for each recipient
-    for (const email of recipientEmails) {
+    // Log to communication_logs for each recipient (log actual recipients in test mode)
+    for (const email of finalRecipients) {
       const { error: logError } = await supabase
         .from("communication_logs")
         .insert({
@@ -231,8 +267,8 @@ ${items.map(item => `- ${item.article_name}: ${item.quantity}`).join('\n')}
           email_type: 'preorder_notification',
           direction: 'outgoing',
           recipient_email: email,
-          recipient_name: null,
-          subject: `Neue EasyOrder von ${employee_name}`,
+          recipient_name: isTestMode ? `[TEST] Original: ${originalRecipients}` : null,
+          subject: subject,
           status: 'sent',
         });
 
