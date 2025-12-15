@@ -249,7 +249,7 @@ export const TeamTab = () => {
               <AccordionTrigger className="group px-4 py-3 hover:no-underline hover:bg-muted/50 data-[state=open]:bg-primary/5">
                 <div className="flex items-center gap-2">
                   <Shield className="h-4 w-4 text-muted-foreground group-data-[state=open]:text-primary transition-colors" />
-                  <span className="font-medium group-data-[state=open]:text-primary transition-colors">{t('settings.permissionsOverview')}</span>
+                  <span className="font-medium group-data-[state=open]:text-primary transition-colors">{t('settings.permissions.title')}</span>
                 </div>
               </AccordionTrigger>
               <AccordionContent className="px-4 pb-4 bg-primary/5">
