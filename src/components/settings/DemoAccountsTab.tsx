@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { 
@@ -26,6 +26,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { 
   Users, 
   Clock, 
@@ -38,7 +39,7 @@ import {
   Loader2,
   Eraser
 } from 'lucide-react';
-import { format, formatDistanceToNow } from 'date-fns';
+import { formatDistanceToNow } from 'date-fns';
 import { de } from 'date-fns/locale';
 import {
   useDemoAccounts,
@@ -142,123 +143,133 @@ export function DemoAccountsTab() {
       {/* Stats Cards */}
       <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
         <Card>
-          <CardHeader className="pb-2">
-            <CardDescription>Gesamt</CardDescription>
-            <CardTitle className="text-2xl flex items-center gap-2">
+          <CardContent className="pt-4 pb-4">
+            <p className="text-sm text-muted-foreground">Gesamt</p>
+            <p className="text-2xl font-bold flex items-center gap-2">
               <Users className="h-5 w-5 text-muted-foreground" />
               {stats.total}
-            </CardTitle>
-          </CardHeader>
+            </p>
+          </CardContent>
         </Card>
         <Card>
-          <CardHeader className="pb-2">
-            <CardDescription>Aktiv</CardDescription>
-            <CardTitle className="text-2xl flex items-center gap-2">
+          <CardContent className="pt-4 pb-4">
+            <p className="text-sm text-muted-foreground">Aktiv</p>
+            <p className="text-2xl font-bold flex items-center gap-2">
               <CheckCircle2 className="h-5 w-5 text-green-500" />
               {stats.active}
-            </CardTitle>
-          </CardHeader>
+            </p>
+          </CardContent>
         </Card>
         <Card>
-          <CardHeader className="pb-2">
-            <CardDescription>Abgelaufen</CardDescription>
-            <CardTitle className="text-2xl flex items-center gap-2">
+          <CardContent className="pt-4 pb-4">
+            <p className="text-sm text-muted-foreground">Abgelaufen</p>
+            <p className="text-2xl font-bold flex items-center gap-2">
               <Clock className="h-5 w-5 text-muted-foreground" />
               {stats.expired}
-            </CardTitle>
-          </CardHeader>
+            </p>
+          </CardContent>
         </Card>
         <Card>
-          <CardHeader className="pb-2">
-            <CardDescription>Läuft bald ab</CardDescription>
-            <CardTitle className="text-2xl flex items-center gap-2">
+          <CardContent className="pt-4 pb-4">
+            <p className="text-sm text-muted-foreground">Läuft bald ab</p>
+            <p className="text-2xl font-bold flex items-center gap-2">
               <AlertTriangle className="h-5 w-5 text-orange-500" />
               {stats.expiringIn7Days}
-            </CardTitle>
-          </CardHeader>
+            </p>
+          </CardContent>
         </Card>
       </div>
 
-      {/* Demo Accounts Table */}
+      {/* Demo Accounts Accordion */}
       <Card>
-        <CardHeader>
-          <CardTitle>Demo-Accounts</CardTitle>
-          <CardDescription>
-            Übersicht aller Demo-Accounts und deren Status
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {accounts && accounts.length > 0 ? (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Organisation</TableHead>
-                    <TableHead>E-Mail</TableHead>
-                    <TableHead>Erstellt</TableHead>
-                    <TableHead>Verbleibend</TableHead>
-                    <TableHead className="text-right">Aktionen</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {accounts.map((account) => (
-                    <TableRow key={account.id} className={account.is_expired ? 'opacity-60' : ''}>
-                      <TableCell className="font-medium">{account.name}</TableCell>
-                      <TableCell className="text-muted-foreground">{account.email}</TableCell>
-                      <TableCell>
-                        <span className="text-sm text-muted-foreground">
-                          {formatDistanceToNow(new Date(account.created_at), { 
-                            addSuffix: true, 
-                            locale: de 
-                          })}
-                        </span>
-                      </TableCell>
-                      <TableCell>{getExpiryBadge(account)}</TableCell>
-                      <TableCell className="text-right">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon">
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => handleExtend(account, 7)}>
-                              <RefreshCw className="h-4 w-4 mr-2" />
-                              +7 Tage verlängern
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleExtend(account, 30)}>
-                              <RefreshCw className="h-4 w-4 mr-2" />
-                              +30 Tage verlängern
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleConvert(account)}>
-                              <UserCheck className="h-4 w-4 mr-2" />
-                              Zu echtem Account konvertieren
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleClearCatalog(account)}>
-                              <Eraser className="h-4 w-4 mr-2" />
-                              Katalog leeren
-                            </DropdownMenuItem>
-                            <DropdownMenuItem 
-                              onClick={() => handleDelete(account)}
-                              className="text-destructive focus:text-destructive"
-                            >
-                              <Trash2 className="h-4 w-4 mr-2" />
-                              Löschen
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          ) : (
-            <div className="text-center py-12 text-muted-foreground">
-              <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>Keine Demo-Accounts vorhanden</p>
-            </div>
-          )}
+        <CardContent className="p-0">
+          <Accordion type="multiple" className="w-full">
+            <AccordionItem value="accounts">
+              <AccordionTrigger className="group px-4 py-3 hover:no-underline hover:bg-muted/50 data-[state=open]:bg-primary/5">
+                <div className="flex items-center gap-2">
+                  <Users className="h-4 w-4 text-muted-foreground group-data-[state=open]:text-primary transition-colors" />
+                  <span className="font-medium group-data-[state=open]:text-primary transition-colors">Demo-Accounts</span>
+                  <Badge variant="secondary" className="ml-1">{accounts?.length || 0}</Badge>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent className="px-4 pb-4 bg-primary/5">
+                <p className="text-sm text-muted-foreground mb-4">
+                  Übersicht aller Demo-Accounts und deren Status
+                </p>
+                {accounts && accounts.length > 0 ? (
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Organisation</TableHead>
+                          <TableHead>E-Mail</TableHead>
+                          <TableHead>Erstellt</TableHead>
+                          <TableHead>Verbleibend</TableHead>
+                          <TableHead className="text-right">Aktionen</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {accounts.map((account) => (
+                          <TableRow key={account.id} className={account.is_expired ? 'opacity-60' : ''}>
+                            <TableCell className="font-medium">{account.name}</TableCell>
+                            <TableCell className="text-muted-foreground">{account.email}</TableCell>
+                            <TableCell>
+                              <span className="text-sm text-muted-foreground">
+                                {formatDistanceToNow(new Date(account.created_at), { 
+                                  addSuffix: true, 
+                                  locale: de 
+                                })}
+                              </span>
+                            </TableCell>
+                            <TableCell>{getExpiryBadge(account)}</TableCell>
+                            <TableCell className="text-right">
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" size="icon">
+                                    <MoreHorizontal className="h-4 w-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuItem onClick={() => handleExtend(account, 7)}>
+                                    <RefreshCw className="h-4 w-4 mr-2" />
+                                    +7 Tage verlängern
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => handleExtend(account, 30)}>
+                                    <RefreshCw className="h-4 w-4 mr-2" />
+                                    +30 Tage verlängern
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => handleConvert(account)}>
+                                    <UserCheck className="h-4 w-4 mr-2" />
+                                    Zu echtem Account konvertieren
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => handleClearCatalog(account)}>
+                                    <Eraser className="h-4 w-4 mr-2" />
+                                    Katalog leeren
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem 
+                                    onClick={() => handleDelete(account)}
+                                    className="text-destructive focus:text-destructive"
+                                  >
+                                    <Trash2 className="h-4 w-4 mr-2" />
+                                    Löschen
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                ) : (
+                  <div className="text-center py-12 text-muted-foreground">
+                    <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                    <p>Keine Demo-Accounts vorhanden</p>
+                  </div>
+                )}
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
         </CardContent>
       </Card>
 

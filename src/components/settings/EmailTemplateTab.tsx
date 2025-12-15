@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
-import { FileText, Mail, RotateCcw, Check } from 'lucide-react';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { FileText, Mail, Palette, RotateCcw, Check } from 'lucide-react';
 import { useEmailTemplate, useUpsertEmailTemplate, getDefaultTemplate } from '@/hooks/useEmailTemplates';
 
 export const EmailTemplateTab = () => {
@@ -126,173 +127,184 @@ export const EmailTemplateTab = () => {
   const selectedDesign = formData.design_style || currentData.design_style || 'modern';
 
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <FileText className="h-5 w-5" />
-            {t('settings.emailFooter')}
-          </CardTitle>
-          <CardDescription>{t('settings.emailFooterDesc')}</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <Label htmlFor="show-powered-by">{t('settings.showPoweredBy')}</Label>
-              <p className="text-xs text-muted-foreground">{t('settings.showPoweredByDesc')}</p>
-            </div>
-            <Switch
-              id="show-powered-by"
-              checked={formData.show_powered_by ?? currentData.show_powered_by ?? true}
-              onCheckedChange={(checked) => setFormData(prev => ({ ...prev, show_powered_by: checked }))}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="footer-text">{t('settings.customFooterText')}</Label>
-            <Input
-              id="footer-text"
-              value={formData.footer_text || currentData.footer_text || ''}
-              onChange={(e) => handleChange('footer_text', e.target.value)}
-              placeholder={t('settings.customFooterTextPlaceholder')}
-            />
-            <p className="text-xs text-muted-foreground">{t('settings.customFooterTextHint')}</p>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="footer-logo-url">{t('settings.footerLogoUrl')}</Label>
-            <Input
-              id="footer-logo-url"
-              value={formData.footer_logo_url || currentData.footer_logo_url || ''}
-              onChange={(e) => handleChange('footer_logo_url', e.target.value)}
-              placeholder="https://example.com/logo.png"
-            />
-            <p className="text-xs text-muted-foreground">{t('settings.footerLogoUrlHint')}</p>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Mail className="h-5 w-5" />
-            {t('settings.emailDesign')}
-          </CardTitle>
-          <CardDescription>{t('settings.emailDesignDesc')}</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {designOptions.map((design) => (
-              <div
-                key={design.id}
-                onClick={() => handleDesignChange(design.id)}
-                className={`border-2 rounded-lg p-4 cursor-pointer transition-all hover:shadow-md ${
-                  selectedDesign === design.id
-                    ? 'border-primary bg-primary/5 ring-2 ring-primary/20'
-                    : 'border-muted hover:border-primary/50'
-                }`}
-              >
-                <div className={`h-20 rounded-md mb-3 ${design.preview}`} />
-                <div className="flex items-center gap-2">
-                  <h4 className="font-medium">{design.name}</h4>
-                  {selectedDesign === design.id && (
-                    <Check className="h-4 w-4 text-primary" />
-                  )}
-                </div>
-                <p className="text-xs text-muted-foreground mt-1">{design.description}</p>
+    <Card>
+      <CardContent className="p-0">
+        <Accordion type="multiple" className="w-full">
+          {/* Email Footer */}
+          <AccordionItem value="footer" className="border-b">
+            <AccordionTrigger className="group px-4 py-3 hover:no-underline hover:bg-muted/50 data-[state=open]:bg-primary/5">
+              <div className="flex items-center gap-2">
+                <FileText className="h-4 w-4 text-muted-foreground group-data-[state=open]:text-primary transition-colors" />
+                <span className="font-medium group-data-[state=open]:text-primary transition-colors">{t('settings.emailFooter')}</span>
               </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+            </AccordionTrigger>
+            <AccordionContent className="px-4 pb-4 bg-primary/5">
+              <p className="text-sm text-muted-foreground mb-4">{t('settings.emailFooterDesc')}</p>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label htmlFor="show-powered-by">{t('settings.showPoweredBy')}</Label>
+                    <p className="text-xs text-muted-foreground">{t('settings.showPoweredByDesc')}</p>
+                  </div>
+                  <Switch
+                    id="show-powered-by"
+                    checked={formData.show_powered_by ?? currentData.show_powered_by ?? true}
+                    onCheckedChange={(checked) => setFormData(prev => ({ ...prev, show_powered_by: checked }))}
+                  />
+                </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <FileText className="h-5 w-5" />
-            {t('settings.emailTemplateTitle')}
-          </CardTitle>
-          <CardDescription>{t('settings.emailTemplateDescription')}</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="space-y-2">
-            <Label htmlFor="subject-template">{t('settings.subjectTemplate')}</Label>
-            <Input
-              id="subject-template"
-              value={formData.subject_template || currentData.subject_template}
-              onChange={(e) => handleChange('subject_template', e.target.value)}
-              placeholder="Neue Bestellung von {restaurant_name}"
-            />
-            <p className="text-xs text-muted-foreground">{t('settings.subjectTemplateHelp')}</p>
-          </div>
+                <div className="space-y-2">
+                  <Label htmlFor="footer-text">{t('settings.customFooterText')}</Label>
+                  <Input
+                    id="footer-text"
+                    value={formData.footer_text || currentData.footer_text || ''}
+                    onChange={(e) => handleChange('footer_text', e.target.value)}
+                    placeholder={t('settings.customFooterTextPlaceholder')}
+                  />
+                  <p className="text-xs text-muted-foreground">{t('settings.customFooterTextHint')}</p>
+                </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="greeting">{t('settings.greeting')}</Label>
-            <Input
-              id="greeting"
-              value={formData.greeting || currentData.greeting}
-              onChange={(e) => handleChange('greeting', e.target.value)}
-              placeholder="Guten Tag,"
-            />
-          </div>
+                <div className="space-y-2">
+                  <Label htmlFor="footer-logo-url">{t('settings.footerLogoUrl')}</Label>
+                  <Input
+                    id="footer-logo-url"
+                    value={formData.footer_logo_url || currentData.footer_logo_url || ''}
+                    onChange={(e) => handleChange('footer_logo_url', e.target.value)}
+                    placeholder="https://example.com/logo.png"
+                  />
+                  <p className="text-xs text-muted-foreground">{t('settings.footerLogoUrlHint')}</p>
+                </div>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
 
-          <div className="space-y-2">
-            <Label htmlFor="introduction">{t('settings.introduction')}</Label>
-            <Textarea
-              id="introduction"
-              value={formData.introduction || currentData.introduction}
-              onChange={(e) => handleChange('introduction', e.target.value)}
-              placeholder="hiermit senden wir Ihnen unsere Bestellung:"
-              rows={2}
-            />
-          </div>
+          {/* Email Design */}
+          <AccordionItem value="design" className="border-b">
+            <AccordionTrigger className="group px-4 py-3 hover:no-underline hover:bg-muted/50 data-[state=open]:bg-primary/5">
+              <div className="flex items-center gap-2">
+                <Palette className="h-4 w-4 text-muted-foreground group-data-[state=open]:text-primary transition-colors" />
+                <span className="font-medium group-data-[state=open]:text-primary transition-colors">{t('settings.emailDesign')}</span>
+              </div>
+            </AccordionTrigger>
+            <AccordionContent className="px-4 pb-4 bg-primary/5">
+              <p className="text-sm text-muted-foreground mb-4">{t('settings.emailDesignDesc')}</p>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {designOptions.map((design) => (
+                  <div
+                    key={design.id}
+                    onClick={() => handleDesignChange(design.id)}
+                    className={`border-2 rounded-lg p-4 cursor-pointer transition-all hover:shadow-md ${
+                      selectedDesign === design.id
+                        ? 'border-primary bg-primary/5 ring-2 ring-primary/20'
+                        : 'border-muted hover:border-primary/50'
+                    }`}
+                  >
+                    <div className={`h-20 rounded-md mb-3 ${design.preview}`} />
+                    <div className="flex items-center gap-2">
+                      <h4 className="font-medium">{design.name}</h4>
+                      {selectedDesign === design.id && (
+                        <Check className="h-4 w-4 text-primary" />
+                      )}
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">{design.description}</p>
+                  </div>
+                ))}
+              </div>
+            </AccordionContent>
+          </AccordionItem>
 
-          <div className="space-y-2">
-            <Label htmlFor="closing">{t('settings.closing')}</Label>
-            <Textarea
-              id="closing"
-              value={formData.closing || currentData.closing}
-              onChange={(e) => handleChange('closing', e.target.value)}
-              placeholder="Vielen Dank für Ihre Zusammenarbeit."
-              rows={2}
-            />
-          </div>
+          {/* Email Template */}
+          <AccordionItem value="template">
+            <AccordionTrigger className="group px-4 py-3 hover:no-underline hover:bg-muted/50 data-[state=open]:bg-primary/5">
+              <div className="flex items-center gap-2">
+                <Mail className="h-4 w-4 text-muted-foreground group-data-[state=open]:text-primary transition-colors" />
+                <span className="font-medium group-data-[state=open]:text-primary transition-colors">{t('settings.emailTemplateTitle')}</span>
+              </div>
+            </AccordionTrigger>
+            <AccordionContent className="px-4 pb-4 bg-primary/5">
+              <p className="text-sm text-muted-foreground mb-4">{t('settings.emailTemplateDescription')}</p>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="subject-template">{t('settings.subjectTemplate')}</Label>
+                  <Input
+                    id="subject-template"
+                    value={formData.subject_template || currentData.subject_template}
+                    onChange={(e) => handleChange('subject_template', e.target.value)}
+                    placeholder="Neue Bestellung von {restaurant_name}"
+                  />
+                  <p className="text-xs text-muted-foreground">{t('settings.subjectTemplateHelp')}</p>
+                </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="signature">{t('settings.signature')}</Label>
-            <Textarea
-              id="signature"
-              value={formData.signature || currentData.signature}
-              onChange={(e) => handleChange('signature', e.target.value)}
-              placeholder="Mit freundlichen Grüßen,&#10;{restaurant_name}"
-              rows={3}
-            />
-            <p className="text-xs text-muted-foreground">{t('settings.signatureHelp')}</p>
-          </div>
+                <div className="space-y-2">
+                  <Label htmlFor="greeting">{t('settings.greeting')}</Label>
+                  <Input
+                    id="greeting"
+                    value={formData.greeting || currentData.greeting}
+                    onChange={(e) => handleChange('greeting', e.target.value)}
+                    placeholder="Guten Tag,"
+                  />
+                </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="article-list-format">{t('settings.articleListFormat')}</Label>
-            <Textarea
-              id="article-list-format"
-              value={formData.article_list_format || currentData.article_list_format}
-              onChange={(e) => handleChange('article_list_format', e.target.value)}
-              placeholder="- {article_name}{sku_suffix}: {quantity} {unit} à €{unit_price} = €{total_price}"
-              rows={2}
-            />
-            <p className="text-xs text-muted-foreground">{t('settings.articleListFormatHelp')}</p>
-          </div>
+                <div className="space-y-2">
+                  <Label htmlFor="introduction">{t('settings.introduction')}</Label>
+                  <Textarea
+                    id="introduction"
+                    value={formData.introduction || currentData.introduction}
+                    onChange={(e) => handleChange('introduction', e.target.value)}
+                    placeholder="hiermit senden wir Ihnen unsere Bestellung:"
+                    rows={2}
+                  />
+                </div>
 
-          <div className="flex gap-3">
-            <Button onClick={handleSave} disabled={upsertTemplate.isPending}>
-              {upsertTemplate.isPending ? t('common.saving') : t('common.save')}
-            </Button>
-            <Button variant="outline" onClick={handleReset}>
-              <RotateCcw className="h-4 w-4 mr-2" />
-              {t('settings.resetToDefault')}
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
+                <div className="space-y-2">
+                  <Label htmlFor="closing">{t('settings.closing')}</Label>
+                  <Textarea
+                    id="closing"
+                    value={formData.closing || currentData.closing}
+                    onChange={(e) => handleChange('closing', e.target.value)}
+                    placeholder="Vielen Dank für Ihre Zusammenarbeit."
+                    rows={2}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="signature">{t('settings.signature')}</Label>
+                  <Textarea
+                    id="signature"
+                    value={formData.signature || currentData.signature}
+                    onChange={(e) => handleChange('signature', e.target.value)}
+                    placeholder="Mit freundlichen Grüßen,&#10;{restaurant_name}"
+                    rows={3}
+                  />
+                  <p className="text-xs text-muted-foreground">{t('settings.signatureHelp')}</p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="article-list-format">{t('settings.articleListFormat')}</Label>
+                  <Textarea
+                    id="article-list-format"
+                    value={formData.article_list_format || currentData.article_list_format}
+                    onChange={(e) => handleChange('article_list_format', e.target.value)}
+                    placeholder="- {article_name}{sku_suffix}: {quantity} {unit} à €{unit_price} = €{total_price}"
+                    rows={2}
+                  />
+                  <p className="text-xs text-muted-foreground">{t('settings.articleListFormatHelp')}</p>
+                </div>
+
+                <div className="flex gap-3 pt-4 border-t">
+                  <Button onClick={handleSave} disabled={upsertTemplate.isPending}>
+                    {upsertTemplate.isPending ? t('common.saving') : t('common.save')}
+                  </Button>
+                  <Button variant="outline" onClick={handleReset}>
+                    <RotateCcw className="h-4 w-4 mr-2" />
+                    {t('settings.resetToDefault')}
+                  </Button>
+                </div>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
+      </CardContent>
+    </Card>
   );
 };
