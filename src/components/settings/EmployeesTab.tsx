@@ -1202,7 +1202,7 @@ export function EmployeesTab() {
             </Button>
             <Button
               onClick={handleSubmit}
-              disabled={!formData.name.trim() || (formData.autoApprove && formData.pinCode.length !== 4) || createEmployee.isPending || updateEmployee.isPending}
+              disabled={!formData.name.trim() || (formData.autoApprove && !editingEmployee?.pin_code && formData.pinCode.length !== 4) || createEmployee.isPending || updateEmployee.isPending}
             >
               {editingEmployee ? 'Speichern' : 'Anlegen'}
             </Button>
