@@ -93,10 +93,14 @@ export function DemoAccountsTab() {
 
   const confirmDelete = () => {
     if (selectedAccount) {
-      deleteDemo.mutate(selectedAccount.id);
+      deleteDemo.mutate(selectedAccount.id, {
+        onSuccess: () => {
+          setDeleteDialogOpen(false);
+          setSelectedAccount(null);
+        },
+        // Dialog bleibt bei Fehler offen
+      });
     }
-    setDeleteDialogOpen(false);
-    setSelectedAccount(null);
   };
 
   const confirmClearCatalog = () => {
@@ -303,12 +307,20 @@ export function DemoAccountsTab() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+            <AlertDialogCancel disabled={deleteDemo.isPending}>Abbrechen</AlertDialogCancel>
             <AlertDialogAction 
               onClick={confirmDelete}
+              disabled={deleteDemo.isPending}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              Endgültig löschen
+              {deleteDemo.isPending ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Löschen...
+                </>
+              ) : (
+                'Endgültig löschen'
+              )}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
