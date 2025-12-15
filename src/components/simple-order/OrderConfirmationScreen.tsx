@@ -188,7 +188,7 @@ export const OrderConfirmationScreen = ({
                       <div className="flex-1 min-w-0">
                         <p className="text-base font-medium truncate">{article.name}</p>
                         <p className="text-sm text-muted-foreground">
-                          €{article.price.toFixed(2)} / {displayUnit}
+                          {displayUnit}
                         </p>
                       </div>
                       <Button
@@ -231,9 +231,6 @@ export const OrderConfirmationScreen = ({
                           × {displayUnit}
                         </span>
                       </div>
-                      <p className="text-lg font-semibold">
-                        €{lineTotal.toFixed(2)}
-                      </p>
                     </div>
                   </div>
                 );
@@ -242,15 +239,6 @@ export const OrderConfirmationScreen = ({
           </CardContent>
         </Card>
 
-        {/* Total */}
-        <Card className="bg-muted/30">
-          <CardContent className="p-5">
-            <div className="flex items-center justify-between">
-              <span className="text-lg font-semibold">{t('simpleOrder.totalAmount', 'Gesamtsumme')}</span>
-              <span className="text-2xl font-bold text-primary">€{totalAmount.toFixed(2)}</span>
-            </div>
-          </CardContent>
-        </Card>
       </div>
 
       {/* Fixed Bottom Bar */}

@@ -94,7 +94,7 @@ export const EmailPreviewDialog = ({
     introduction: emailTemplate?.introduction || defaultTemplate.introduction || '',
     closing: emailTemplate?.closing || defaultTemplate.closing || '',
     signature: emailTemplate?.signature || defaultTemplate.signature || '',
-    article_list_format: emailTemplate?.article_list_format || defaultTemplate.article_list_format || '- {article_name}{sku_suffix}: {quantity} {unit} à €{unit_price} = €{total_price}',
+    article_list_format: '- {article_name}{sku_suffix}: {quantity} {unit}',
   };
 
   const goNext = () => {
@@ -156,8 +156,6 @@ ${email.deliveryAddress}
 
 ${email.notes ? `Notizen:\n${email.notes}\n\n` : ''}Bestellte Artikel:
 ${itemsList}
-
-Gesamtbetrag: €${email.totalAmount.toFixed(2)}
 
 ${template.closing}
 
@@ -343,20 +341,15 @@ ${signatureText}`;
                           <p className="font-medium text-sm truncate">{item.article_name}</p>
                           {item.sku && <p className="text-xs text-muted-foreground">SKU: {item.sku}</p>}
                         </div>
-                        <p className="font-semibold text-sm">€{item.total_price.toFixed(2)}</p>
                       </div>
                       <p className="text-xs text-muted-foreground mt-1">
-                        {item.quantity} {item.unit} × €{item.unit_price.toFixed(2)}
+                        {item.quantity} {item.unit}
                         {item.packaging_unit && item.packaging_unit > 1 && (
                           <span className="ml-1 text-primary">({item.packaging_unit}er)</span>
                         )}
                       </p>
                     </div>
                   ))}
-                  <div className="bg-primary text-primary-foreground rounded-lg p-3 flex justify-between items-center">
-                    <span className="font-semibold">Gesamtbetrag</span>
-                    <span className="font-bold text-lg">€{currentEmail.totalAmount.toFixed(2)}</span>
-                  </div>
                 </div>
 
                 {/* Items - Desktop Table */}
@@ -366,8 +359,6 @@ ${signatureText}`;
                       <tr>
                         <th className="text-left p-3 font-semibold">Artikel</th>
                         <th className="text-center p-3 font-semibold">Menge</th>
-                        <th className="text-right p-3 font-semibold">Stückpreis</th>
-                        <th className="text-right p-3 font-semibold">Gesamt</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-border">
@@ -383,17 +374,9 @@ ${signatureText}`;
                               <span className="ml-1 text-primary font-medium">({item.packaging_unit}er)</span>
                             )}
                           </td>
-                          <td className="p-3 text-right">€{item.unit_price.toFixed(2)}</td>
-                          <td className="p-3 text-right font-medium">€{item.total_price.toFixed(2)}</td>
                         </tr>
                       ))}
                     </tbody>
-                    <tfoot>
-                      <tr className="bg-primary text-primary-foreground">
-                        <td colSpan={3} className="p-3 font-semibold">Gesamtbetrag</td>
-                        <td className="p-3 text-right font-bold text-lg">€{currentEmail.totalAmount.toFixed(2)}</td>
-                      </tr>
-                    </tfoot>
                   </table>
                 </div>
 

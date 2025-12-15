@@ -126,7 +126,7 @@ export const AddArticleSheet = ({
                           </p>
                         )}
                         <p className="text-xs text-muted-foreground mt-0.5">
-                          €{Number(article.price).toFixed(2)} / {article.unit}
+                          {article.unit}
                           {article.packaging_unit && article.packaging_unit > 1 && (
                             <span className="ml-1">({article.packaging_unit}er)</span>
                           )}
