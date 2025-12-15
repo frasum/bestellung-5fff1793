@@ -321,7 +321,7 @@ const B2BSupplierDashboard = () => {
 
           {/* Customers Tab */}
           <TabsContent value="customers">
-            <B2BCustomersTab accountId={account.id} onStatsChange={() => loadStats(account.id)} />
+            <B2BCustomersTab accountId={account.id} supplierName={account.company_name} onStatsChange={() => loadStats(account.id)} />
           </TabsContent>
 
           {/* Orders Tab */}

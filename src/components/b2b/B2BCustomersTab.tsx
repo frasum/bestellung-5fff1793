@@ -50,10 +50,11 @@ interface B2BCustomer {
 
 interface B2BCustomersTabProps {
   accountId: string;
+  supplierName: string;
   onStatsChange: () => void;
 }
 
-const B2BCustomersTab = ({ accountId, onStatsChange }: B2BCustomersTabProps) => {
+const B2BCustomersTab = ({ accountId, supplierName, onStatsChange }: B2BCustomersTabProps) => {
   const [customers, setCustomers] = useState<B2BCustomer[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -108,8 +109,55 @@ const B2BCustomersTab = ({ accountId, onStatsChange }: B2BCustomersTabProps) => 
   };
 
   const handleResendInvitation = async (customer: B2BCustomer) => {
-    // TODO: Implement invitation resend
-    toast.info('Einladung wird gesendet...');
+    try {
+      toast.info('Einladung wird gesendet...');
+      
+      // Get or create a new invitation token
+      const { data: existingInvitation, error: fetchError } = await supabase
+        .from('b2b_customer_invitations')
+        .select('token')
+        .eq('supplier_account_id', accountId)
+        .eq('email', customer.email)
+        .gt('expires_at', new Date().toISOString())
+        .maybeSingle();
+
+      let inviteToken: string;
+
+      if (existingInvitation) {
+        inviteToken = existingInvitation.token;
+      } else {
+        // Create new invitation token
+        const { data: newInvitation, error: createError } = await supabase
+          .from('b2b_customer_invitations')
+          .insert({
+            supplier_account_id: accountId,
+            email: customer.email,
+          })
+          .select()
+          .single();
+
+        if (createError) throw createError;
+        inviteToken = newInvitation.token;
+      }
+
+      // Send email
+      const { error: emailError } = await supabase.functions.invoke('send-b2b-customer-invitation', {
+        body: {
+          email: customer.email,
+          companyName: customer.company_name,
+          supplierName,
+          inviteToken,
+          supplierAccountId: accountId,
+        },
+      });
+
+      if (emailError) throw emailError;
+
+      toast.success('Einladung erneut gesendet');
+    } catch (error: any) {
+      console.error('Error resending invitation:', error);
+      toast.error('Fehler beim Senden der Einladung');
+    }
   };
 
   const filteredCustomers = customers.filter(customer =>
@@ -251,6 +299,7 @@ const B2BCustomersTab = ({ accountId, onStatsChange }: B2BCustomersTabProps) => 
         onOpenChange={setDialogOpen}
         customer={editingCustomer}
         accountId={accountId}
+        supplierName={supplierName}
         onSuccess={() => {
           loadCustomers();
           onStatsChange();
