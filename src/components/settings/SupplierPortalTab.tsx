@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { ExternalLink, FileText, ImageIcon, Upload, Trash2, Loader2, RotateCcw } from 'lucide-react';
+import { ExternalLink, FileText, ImageIcon, Upload, Trash2, Loader2, RotateCcw, Columns } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -159,7 +159,7 @@ export const SupplierPortalTab = () => {
     <Card>
       <CardContent className="p-0">
         <Accordion type="multiple" className="w-full">
-          {/* Portal Preview */}
+          {/* 1. Portal Preview */}
           <AccordionItem value="preview" className="border-b">
             <AccordionTrigger className="group px-4 py-3 hover:no-underline hover:bg-muted/50 data-[state=open]:bg-primary/5">
               <div className="flex items-center gap-2">
@@ -181,8 +181,80 @@ export const SupplierPortalTab = () => {
             </AccordionContent>
           </AccordionItem>
 
-          {/* Portal Texts */}
-          <AccordionItem value="texts">
+          {/* 2. Branding */}
+          <AccordionItem value="branding" className="border-b">
+            <AccordionTrigger className="group px-4 py-3 hover:no-underline hover:bg-muted/50 data-[state=open]:bg-primary/5">
+              <div className="flex items-center gap-2">
+                <ImageIcon className="h-4 w-4 text-muted-foreground group-data-[state=open]:text-primary transition-colors" />
+                <span className="font-medium group-data-[state=open]:text-primary transition-colors">{t('settings.branding')}</span>
+              </div>
+            </AccordionTrigger>
+            <AccordionContent className="px-4 pb-4 bg-primary/5">
+              <p className="text-sm text-muted-foreground mb-4">{t('settings.brandingDesc')}</p>
+              
+              <div className="space-y-3">
+                <Label className="flex items-center gap-2">
+                  <ImageIcon className="h-4 w-4" />
+                  {t('settings.portalLogo')}
+                </Label>
+                <div className="flex items-center gap-4">
+                  <div className="w-24 h-24 border rounded-lg flex items-center justify-center bg-muted/30 overflow-hidden">
+                    {logoUrl ? (
+                      <img src={logoUrl} alt="Portal Logo" className="max-w-full max-h-full object-contain" />
+                    ) : (
+                      <ImageIcon className="h-8 w-8 text-muted-foreground/50" />
+                    )}
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <div className="flex items-center gap-2">
+                      <label htmlFor="logo-upload">
+                        <Input
+                          id="logo-upload"
+                          type="file"
+                          accept="image/*"
+                          onChange={handleLogoUpload}
+                          className="hidden"
+                          disabled={uploadingLogo}
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          disabled={uploadingLogo}
+                          onClick={() => document.getElementById('logo-upload')?.click()}
+                        >
+                          {uploadingLogo ? (
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          ) : (
+                            <Upload className="h-4 w-4 mr-2" />
+                          )}
+                          {logoUrl ? t('settings.changeLogo') : t('settings.uploadLogo')}
+                        </Button>
+                      </label>
+                      {logoUrl && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={handleRemoveLogo}
+                          className="text-destructive hover:text-destructive"
+                        >
+                          <Trash2 className="h-4 w-4 mr-1" />
+                          {t('settings.removeLogo')}
+                        </Button>
+                      )}
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      {t('settings.portalLogoMaxSize')}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+
+          {/* 3. Texts & Messages */}
+          <AccordionItem value="texts" className="border-b">
             <AccordionTrigger className="group px-4 py-3 hover:no-underline hover:bg-muted/50 data-[state=open]:bg-primary/5">
               <div className="flex items-center gap-2">
                 <FileText className="h-4 w-4 text-muted-foreground group-data-[state=open]:text-primary transition-colors" />
@@ -193,68 +265,7 @@ export const SupplierPortalTab = () => {
               <p className="text-sm text-muted-foreground mb-4">{t('settings.portalTextsDesc')}</p>
               
               <div className="space-y-6">
-                {/* Logo Upload */}
-                <div className="space-y-3">
-                  <Label className="flex items-center gap-2">
-                    <ImageIcon className="h-4 w-4" />
-                    {t('settings.portalLogo')}
-                  </Label>
-                  <div className="flex items-center gap-4">
-                    <div className="w-24 h-24 border rounded-lg flex items-center justify-center bg-muted/30 overflow-hidden">
-                      {logoUrl ? (
-                        <img src={logoUrl} alt="Portal Logo" className="max-w-full max-h-full object-contain" />
-                      ) : (
-                        <ImageIcon className="h-8 w-8 text-muted-foreground/50" />
-                      )}
-                    </div>
-                    <div className="flex flex-col gap-2">
-                      <div className="flex items-center gap-2">
-                        <label htmlFor="logo-upload">
-                          <Input
-                            id="logo-upload"
-                            type="file"
-                            accept="image/*"
-                            onChange={handleLogoUpload}
-                            className="hidden"
-                            disabled={uploadingLogo}
-                          />
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            disabled={uploadingLogo}
-                            onClick={() => document.getElementById('logo-upload')?.click()}
-                          >
-                            {uploadingLogo ? (
-                              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                            ) : (
-                              <Upload className="h-4 w-4 mr-2" />
-                            )}
-                            {logoUrl ? t('settings.changeLogo') : t('settings.uploadLogo')}
-                          </Button>
-                        </label>
-                        {logoUrl && (
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={handleRemoveLogo}
-                            className="text-destructive hover:text-destructive"
-                          >
-                            <Trash2 className="h-4 w-4 mr-1" />
-                            {t('settings.removeLogo')}
-                          </Button>
-                        )}
-                      </div>
-                      <p className="text-xs text-muted-foreground">
-                        {t('settings.portalLogoMaxSize')}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="border-t pt-4" />
-
+                {/* Markdown Hint */}
                 <div className="p-3 bg-muted/50 rounded-lg text-xs text-muted-foreground space-y-1">
                   <p className="font-medium">{t('settings.markdownSupport')}</p>
                   <p>{t('settings.markdownExample')}</p>
@@ -396,29 +407,48 @@ export const SupplierPortalTab = () => {
                     </div>
                   </div>
                 </div>
-
-                {/* Visible Columns Configuration */}
-                <div className="border-t pt-4">
-                  <PortalColumnsConfig
-                    visibleColumns={visibleColumns}
-                    onChange={setVisibleColumns}
-                  />
-                </div>
-
-                {/* Save / Reset Buttons */}
-                <div className="flex items-center gap-3 pt-4 border-t">
-                  <Button onClick={handleSave} disabled={upsertSettings.isPending}>
-                    {upsertSettings.isPending ? t('common.saving') : t('common.save')}
-                  </Button>
-                  <Button variant="outline" onClick={handleReset}>
-                    <RotateCcw className="h-4 w-4 mr-2" />
-                    {t('settings.resetToDefault')}
-                  </Button>
-                </div>
               </div>
             </AccordionContent>
           </AccordionItem>
+
+          {/* 4. Column Configuration */}
+          <AccordionItem value="columns">
+            <AccordionTrigger className="group px-4 py-3 hover:no-underline hover:bg-muted/50 data-[state=open]:bg-primary/5">
+              <div className="flex items-center gap-2">
+                <Columns className="h-4 w-4 text-muted-foreground group-data-[state=open]:text-primary transition-colors" />
+                <span className="font-medium group-data-[state=open]:text-primary transition-colors">{t('settings.columnConfiguration')}</span>
+              </div>
+            </AccordionTrigger>
+            <AccordionContent className="px-4 pb-4 bg-primary/5">
+              <p className="text-sm text-muted-foreground mb-4">{t('settings.columnConfigurationDesc')}</p>
+              <PortalColumnsConfig
+                visibleColumns={visibleColumns}
+                onChange={setVisibleColumns}
+              />
+            </AccordionContent>
+          </AccordionItem>
         </Accordion>
+
+        {/* Save/Reset Buttons - outside accordions */}
+        <div className="flex justify-end gap-2 p-4 border-t bg-muted/30">
+          <Button
+            variant="outline"
+            onClick={handleReset}
+            disabled={upsertSettings.isPending}
+          >
+            <RotateCcw className="h-4 w-4 mr-2" />
+            {t('common.reset')}
+          </Button>
+          <Button
+            onClick={handleSave}
+            disabled={upsertSettings.isPending}
+          >
+            {upsertSettings.isPending ? (
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            ) : null}
+            {t('common.save')}
+          </Button>
+        </div>
       </CardContent>
     </Card>
   );
