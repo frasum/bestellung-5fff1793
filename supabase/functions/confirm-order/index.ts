@@ -309,8 +309,18 @@ serve(async (req) => {
         order.total_amount
       );
 
-      // Log confirmation notification
+      // Log confirmation notification with body_html
       if (orderForLog?.organization_id) {
+        const confirmedAt = new Date().toLocaleDateString('de-DE', {
+          weekday: 'long',
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        });
+        const notificationHtml = generateConfirmationNotificationHtml(orderNumber, supplierName, confirmedAt, items, order.total_amount);
+
         const { error: logError } = await supabase
           .from("communication_logs")
           .insert({
@@ -321,6 +331,7 @@ serve(async (req) => {
             subject: `✅ Bestellung ${orderNumber} wurde von ${supplierName} bestätigt`,
             order_id: tokenData.order_id,
             status: 'sent',
+            body_html: notificationHtml,
           });
 
         if (logError) {

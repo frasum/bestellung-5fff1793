@@ -462,6 +462,16 @@
         "confirmed": "Bestätigt",
         "pending": "Ausstehend",
         "failed": "Fehlgeschlagen"
+      },
+      "preview": {
+        "title": "E-Mail-Vorschau",
+        "to": "An",
+        "from": "Von",
+        "subject": "Betreff",
+        "date": "Datum",
+        "status": "Status",
+        "noContent": "E-Mail-Inhalt nicht verfügbar",
+        "noContentHint": "Nur für neuere E-Mails gespeichert."
       }
     },
     "demoAccounts": "Demo-Accounts",

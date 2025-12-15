@@ -180,11 +180,7 @@ serve(async (req) => {
 
     const roleDescription = t.roleDescriptions[role] || role;
 
-    const emailResponse = await resend.emails.send({
-      from: "Bestellung.pro <noreply@bestellung.pro>",
-      to: [inviteeEmail],
-      subject: t.subject(organizationName),
-      html: `
+    const htmlContent = `
         <!DOCTYPE html>
         <html>
         <head>
@@ -220,7 +216,13 @@ serve(async (req) => {
           </div>
         </body>
         </html>
-      `,
+      `;
+
+    const emailResponse = await resend.emails.send({
+      from: "Bestellung.pro <noreply@bestellung.pro>",
+      to: [inviteeEmail],
+      subject: t.subject(organizationName),
+      html: htmlContent,
       text: `
 ${t.header}
 
@@ -268,6 +270,7 @@ ${t.ignore}
             recipient_email: inviteeEmail,
             subject: t.subject(organizationName),
             status: 'sent',
+            body_html: htmlContent,
           });
 
         if (logError) {

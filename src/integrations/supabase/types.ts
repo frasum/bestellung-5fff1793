@@ -364,6 +364,7 @@ export type Database = {
       }
       communication_logs: {
         Row: {
+          body_html: string | null
           confirmed_at: string | null
           created_at: string
           direction: string
@@ -380,6 +381,7 @@ export type Database = {
           supplier_id: string | null
         }
         Insert: {
+          body_html?: string | null
           confirmed_at?: string | null
           created_at?: string
           direction?: string
@@ -396,6 +398,7 @@ export type Database = {
           supplier_id?: string | null
         }
         Update: {
+          body_html?: string | null
           confirmed_at?: string | null
           created_at?: string
           direction?: string
