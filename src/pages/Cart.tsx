@@ -6,6 +6,7 @@ import { useLocationContext } from '@/contexts/LocationContext';
 import { useCart, FreeCartItem } from '@/contexts/CartContext';
 import { useCreateCartDraft } from '@/hooks/useCartDrafts';
 import { useSupplierLocations } from '@/hooks/useSupplierLocations';
+import { useOrderUnits } from '@/hooks/useOrderUnits';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -35,6 +36,14 @@ const Cart = () => {
   const { items, freeItems, removeItem, updateQuantity, removeFreeItem, updateFreeItemQuantity, addItem, getTotal, clearCart, draftDeliveryDate, draftTimeWindow } = useCart();
   const createDraft = useCreateCartDraft();
   const { data: supplierLocations } = useSupplierLocations();
+  const { data: orderUnits } = useOrderUnits();
+  
+  // Helper to format order unit with fallback to base unit
+  const formatOrderUnit = (orderUnitId: string | null | undefined, fallbackUnit: string) => {
+    if (!orderUnitId || !orderUnits) return fallbackUnit;
+    const unit = orderUnits.find(u => u.id === orderUnitId);
+    return unit?.name || fallbackUnit;
+  };
   
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const [draftName, setDraftName] = useState('');
@@ -388,7 +397,7 @@ const Cart = () => {
                               <div className="flex-1 min-w-0">
                                 <h4 className="font-medium text-foreground text-sm md:text-base">{item.article.name}</h4>
                                 <p className="text-xs md:text-sm text-muted-foreground mt-0.5">
-                                  €{Number(item.article.price).toFixed(2)} / {item.article.unit}
+                                  €{Number(item.article.price).toFixed(2)} / {formatOrderUnit(item.article.order_unit_id, item.article.unit)}
                                 </p>
                               </div>
                               <Button
@@ -442,7 +451,7 @@ const Cart = () => {
                           <div className="flex-1 min-w-0">
                             <h4 className="font-medium text-foreground truncate">{item.article.name}</h4>
                             <p className="text-sm text-muted-foreground">
-                              €{Number(item.article.price).toFixed(2)} / {item.article.unit}
+                              €{Number(item.article.price).toFixed(2)} / {formatOrderUnit(item.article.order_unit_id, item.article.unit)}
                             </p>
                           </div>
                           <div className="flex items-center gap-2">
