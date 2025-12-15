@@ -24,8 +24,13 @@ export const LocationSwitcher = ({ className, showIcon = true }: LocationSwitche
   // If only one location, show it without dropdown
   if (locations.length === 1) {
     return (
-      <div className={cn("flex items-center gap-2 px-4 py-3 text-muted-foreground", className)}>
-        {showIcon && <MapPin className="h-4 w-4" />}
+      <div className={cn(
+        "flex items-center gap-2 px-5 py-3",
+        "bg-primary/10 text-primary rounded-md font-semibold text-base",
+        "animate-pulse-glow",
+        className
+      )}>
+        {showIcon && <MapPin className="h-5 w-5" />}
         <span className="truncate">{activeLocation?.short_code || activeLocation?.name || locations[0]?.short_code || locations[0]?.name}</span>
       </div>
     );
@@ -34,12 +39,24 @@ export const LocationSwitcher = ({ className, showIcon = true }: LocationSwitche
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="sm" className={cn("gap-2", className)}>
-          {showIcon && <MapPin className="h-4 w-4" />}
-          <span className="max-w-[150px] truncate">
+        <Button 
+          variant="outline" 
+          size="lg" 
+          className={cn(
+            "gap-2",
+            "bg-primary text-primary-foreground",
+            "border-primary/50",
+            "hover:bg-primary/90",
+            "font-semibold text-base",
+            "animate-pulse-glow",
+            className
+          )}
+        >
+          {showIcon && <MapPin className="h-5 w-5 text-primary-foreground" />}
+          <span className="max-w-[200px] truncate">
             {activeLocation?.short_code || activeLocation?.name || 'Standort'}
           </span>
-          <ChevronDown className="h-3 w-3 opacity-50" />
+          <ChevronDown className="h-4 w-4 text-primary-foreground/70" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-48">
