@@ -574,10 +574,6 @@ const Checkout = () => {
               <span className="text-muted-foreground">{t('checkout.orderSummary')}</span>
               <span className="text-foreground">{Object.keys(itemsBySupplier).length}</span>
             </div>
-            <div className="flex justify-between">
-              <span className="font-semibold text-foreground">{t('common.total')}</span>
-              <span className="font-bold text-xl text-foreground">€{getTotal().toFixed(2)}</span>
-            </div>
           </div>
 
           <Button type="submit" className="w-full h-10" size="lg">
@@ -639,9 +635,6 @@ const Checkout = () => {
                     <span className="text-xs xl:text-sm text-muted-foreground">
                       {t('cart.itemCount', { count: supplierItems.length + (supplierFreeItems?.length || 0) })}
                     </span>
-                    <span className="font-bold text-foreground text-sm xl:text-base xl:hidden">
-                      €{total.toFixed(2)}
-                    </span>
                   </div>
                 </div>
                 
@@ -652,9 +645,6 @@ const Checkout = () => {
                       <div key={item.article.id} className="p-4 md:p-4 md:border md:border-border md:rounded-lg border-b border-border last:border-b-0 md:last:border-b md:border-b">
                         <div className="flex justify-between items-start mb-2">
                           <p className="font-medium text-foreground text-sm md:text-base flex-1 pr-2">{item.article.name}</p>
-                          <p className="font-semibold text-foreground text-sm md:text-base flex-shrink-0">
-                            €{(Number(item.article.price) * item.quantity).toFixed(2)}
-                          </p>
                         </div>
                         <div className="text-xs md:text-sm text-muted-foreground mb-3 space-y-1">
                           <div className="flex items-center gap-1.5 flex-wrap">
@@ -662,10 +652,6 @@ const Checkout = () => {
                             {formatOrderUnit(item.article.order_unit_id) || item.article.unit}
                             {item.article.packaging_unit && item.article.packaging_unit > 1 && (
                               <span className="text-primary font-medium"> ({item.article.packaging_unit}er)</span>
-                            )}
-                            {' '}× €{Number(item.article.price).toFixed(2)}
-                            {item.article.reference_price && item.article.reference_unit && (
-                              <span className="text-muted-foreground/70"> (€{Number(item.article.reference_price).toFixed(2)}/{item.article.reference_unit})</span>
                             )}
                           </div>
                         </div>
@@ -746,10 +732,6 @@ const Checkout = () => {
                           {item.article.packaging_unit && item.article.packaging_unit > 1 && (
                             <span className="text-primary font-medium"> ({item.article.packaging_unit}er)</span>
                           )}
-                          {' '}× €{Number(item.article.price).toFixed(2)}
-                          {item.article.reference_price && item.article.reference_unit && (
-                            <span className="text-muted-foreground/70"> (€{Number(item.article.reference_price).toFixed(2)}/{item.article.reference_unit})</span>
-                          )}
                         </p>
                       </div>
                       <div className="flex items-center gap-2">
@@ -789,9 +771,6 @@ const Checkout = () => {
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
-                        <p className="font-semibold text-foreground w-20 text-right">
-                          €{(Number(item.article.price) * item.quantity).toFixed(2)}
-                        </p>
                       </div>
                     </div>
                   ))}
@@ -817,10 +796,6 @@ const Checkout = () => {
                   )}
                 </div>
                 
-                <div className="bg-muted/30 px-4 xl:px-6 py-3 hidden xl:flex justify-between">
-                  <span className="font-medium text-foreground">{t('cart.subtotal')}</span>
-                  <span className="font-bold text-foreground">€{total.toFixed(2)}</span>
-                </div>
               </div>
             ))}
           </div>
@@ -842,7 +817,6 @@ const Checkout = () => {
             <p className="text-sm text-muted-foreground">
               {t('checkout.orderSummary')}
             </p>
-            <p className="text-xl font-bold text-foreground">€{getTotal().toFixed(2)}</p>
           </div>
           <Button onClick={() => setShowMobileForm(true)} className="h-11 px-6 touch-manipulation">
             {t('checkout.selectAddress')}
