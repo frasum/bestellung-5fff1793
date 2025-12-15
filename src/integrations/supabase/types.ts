@@ -213,6 +213,44 @@ export type Database = {
           },
         ]
       }
+      b2b_customer_invitations: {
+        Row: {
+          accepted_at: string | null
+          created_at: string
+          email: string
+          expires_at: string
+          id: string
+          supplier_account_id: string
+          token: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          created_at?: string
+          email: string
+          expires_at?: string
+          id?: string
+          supplier_account_id: string
+          token?: string
+        }
+        Update: {
+          accepted_at?: string | null
+          created_at?: string
+          email?: string
+          expires_at?: string
+          id?: string
+          supplier_account_id?: string
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "b2b_customer_invitations_supplier_account_id_fkey"
+            columns: ["supplier_account_id"]
+            isOneToOne: false
+            referencedRelation: "supplier_b2b_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cart_draft_items: {
         Row: {
           article_id: string | null
@@ -441,6 +479,48 @@ export type Database = {
             columns: ["supplier_id"]
             isOneToOne: false
             referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      customer_article_prices: {
+        Row: {
+          article_id: string
+          created_at: string
+          custom_price: number
+          customer_id: string
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          article_id: string
+          created_at?: string
+          custom_price: number
+          customer_id: string
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          article_id?: string
+          created_at?: string
+          custom_price?: number
+          customer_id?: string
+          id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_article_prices_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: false
+            referencedRelation: "supplier_b2b_articles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_article_prices_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "supplier_b2b_customers"
             referencedColumns: ["id"]
           },
         ]
@@ -1626,6 +1706,291 @@ export type Database = {
           },
         ]
       }
+      supplier_b2b_accounts: {
+        Row: {
+          company_name: string
+          created_at: string
+          email: string
+          id: string
+          is_active: boolean | null
+          linked_supplier_id: string | null
+          logo_url: string | null
+          primary_color: string | null
+          secondary_color: string | null
+          subdomain: string
+          subscription_tier:
+            | Database["public"]["Enums"]["b2b_subscription_tier"]
+            | null
+          updated_at: string
+          welcome_message: string | null
+        }
+        Insert: {
+          company_name: string
+          created_at?: string
+          email: string
+          id?: string
+          is_active?: boolean | null
+          linked_supplier_id?: string | null
+          logo_url?: string | null
+          primary_color?: string | null
+          secondary_color?: string | null
+          subdomain: string
+          subscription_tier?:
+            | Database["public"]["Enums"]["b2b_subscription_tier"]
+            | null
+          updated_at?: string
+          welcome_message?: string | null
+        }
+        Update: {
+          company_name?: string
+          created_at?: string
+          email?: string
+          id?: string
+          is_active?: boolean | null
+          linked_supplier_id?: string | null
+          logo_url?: string | null
+          primary_color?: string | null
+          secondary_color?: string | null
+          subdomain?: string
+          subscription_tier?:
+            | Database["public"]["Enums"]["b2b_subscription_tier"]
+            | null
+          updated_at?: string
+          welcome_message?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supplier_b2b_accounts_linked_supplier_id_fkey"
+            columns: ["linked_supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      supplier_b2b_articles: {
+        Row: {
+          base_price: number
+          category: string | null
+          created_at: string
+          description: string | null
+          id: string
+          image_url: string | null
+          is_active: boolean | null
+          name: string
+          sku: string | null
+          sort_order: number | null
+          supplier_account_id: string
+          unit: string
+          updated_at: string
+        }
+        Insert: {
+          base_price?: number
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          name: string
+          sku?: string | null
+          sort_order?: number | null
+          supplier_account_id: string
+          unit?: string
+          updated_at?: string
+        }
+        Update: {
+          base_price?: number
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          name?: string
+          sku?: string | null
+          sort_order?: number | null
+          supplier_account_id?: string
+          unit?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supplier_b2b_articles_supplier_account_id_fkey"
+            columns: ["supplier_account_id"]
+            isOneToOne: false
+            referencedRelation: "supplier_b2b_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      supplier_b2b_customers: {
+        Row: {
+          company_name: string
+          contact_person: string | null
+          created_at: string
+          customer_number: string | null
+          delivery_address: string | null
+          email: string
+          id: string
+          is_active: boolean | null
+          phone: string | null
+          supplier_account_id: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          company_name: string
+          contact_person?: string | null
+          created_at?: string
+          customer_number?: string | null
+          delivery_address?: string | null
+          email: string
+          id?: string
+          is_active?: boolean | null
+          phone?: string | null
+          supplier_account_id: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          company_name?: string
+          contact_person?: string | null
+          created_at?: string
+          customer_number?: string | null
+          delivery_address?: string | null
+          email?: string
+          id?: string
+          is_active?: boolean | null
+          phone?: string | null
+          supplier_account_id?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supplier_b2b_customers_supplier_account_id_fkey"
+            columns: ["supplier_account_id"]
+            isOneToOne: false
+            referencedRelation: "supplier_b2b_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      supplier_b2b_order_items: {
+        Row: {
+          article_id: string | null
+          article_name: string
+          created_at: string
+          id: string
+          order_id: string
+          quantity: number
+          total_price: number
+          unit: string
+          unit_price: number
+        }
+        Insert: {
+          article_id?: string | null
+          article_name: string
+          created_at?: string
+          id?: string
+          order_id: string
+          quantity: number
+          total_price: number
+          unit: string
+          unit_price: number
+        }
+        Update: {
+          article_id?: string | null
+          article_name?: string
+          created_at?: string
+          id?: string
+          order_id?: string
+          quantity?: number
+          total_price?: number
+          unit?: string
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supplier_b2b_order_items_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: false
+            referencedRelation: "supplier_b2b_articles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supplier_b2b_order_items_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "supplier_b2b_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      supplier_b2b_orders: {
+        Row: {
+          created_at: string
+          customer_id: string
+          delivery_address: string | null
+          delivery_date: string | null
+          email_sent: boolean | null
+          email_sent_at: string | null
+          id: string
+          notes: string | null
+          order_number: string
+          status: Database["public"]["Enums"]["b2b_order_status"] | null
+          supplier_account_id: string
+          total_amount: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          customer_id: string
+          delivery_address?: string | null
+          delivery_date?: string | null
+          email_sent?: boolean | null
+          email_sent_at?: string | null
+          id?: string
+          notes?: string | null
+          order_number: string
+          status?: Database["public"]["Enums"]["b2b_order_status"] | null
+          supplier_account_id: string
+          total_amount?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          customer_id?: string
+          delivery_address?: string | null
+          delivery_date?: string | null
+          email_sent?: boolean | null
+          email_sent_at?: string | null
+          id?: string
+          notes?: string | null
+          order_number?: string
+          status?: Database["public"]["Enums"]["b2b_order_status"] | null
+          supplier_account_id?: string
+          total_amount?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supplier_b2b_orders_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "supplier_b2b_customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supplier_b2b_orders_supplier_account_id_fkey"
+            columns: ["supplier_account_id"]
+            isOneToOne: false
+            referencedRelation: "supplier_b2b_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       supplier_locations: {
         Row: {
           created_at: string
@@ -1999,13 +2364,27 @@ export type Database = {
       cleanup_old_rate_limits: { Args: never; Returns: undefined }
       cleanup_pin_verification_rate_limits: { Args: never; Returns: undefined }
       cleanup_simple_order_rate_limits: { Args: never; Returns: undefined }
+      generate_b2b_order_number: { Args: never; Returns: string }
       generate_order_number: { Args: never; Returns: string }
+      get_b2b_customer_id: { Args: { p_user_id: string }; Returns: string }
+      get_b2b_supplier_account_id: {
+        Args: { p_user_id: string }
+        Returns: string
+      }
       get_user_organization_id: { Args: { user_id: string }; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
+        Returns: boolean
+      }
+      is_b2b_customer: {
+        Args: { p_account_id: string; p_user_id: string }
+        Returns: boolean
+      }
+      is_b2b_supplier_owner: {
+        Args: { p_account_id: string; p_user_id: string }
         Returns: boolean
       }
       is_super_admin: { Args: { _user_id: string }; Returns: boolean }
@@ -2016,6 +2395,14 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "manager" | "purchaser" | "viewer"
+      b2b_order_status:
+        | "pending"
+        | "confirmed"
+        | "processing"
+        | "shipped"
+        | "delivered"
+        | "cancelled"
+      b2b_subscription_tier: "starter" | "professional" | "enterprise"
       order_status:
         | "draft"
         | "pending"
@@ -2152,6 +2539,15 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "manager", "purchaser", "viewer"],
+      b2b_order_status: [
+        "pending",
+        "confirmed",
+        "processing",
+        "shipped",
+        "delivered",
+        "cancelled",
+      ],
+      b2b_subscription_tier: ["starter", "professional", "enterprise"],
       order_status: [
         "draft",
         "pending",

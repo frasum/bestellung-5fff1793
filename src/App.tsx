@@ -36,6 +36,8 @@ const Impressum = lazy(() => import("./pages/Impressum"));
 const Datenschutz = lazy(() => import("./pages/Datenschutz"));
 const AGB = lazy(() => import("./pages/AGB"));
 const WineCatalog = lazy(() => import("./pages/WineCatalog"));
+const B2BSupplierLogin = lazy(() => import("./pages/B2BSupplierLogin"));
+const B2BSupplierDashboard = lazy(() => import("./pages/B2BSupplierDashboard"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient();
@@ -91,6 +93,9 @@ const AppContent = () => {
           <Route path="/datenschutz" element={<Datenschutz />} />
           <Route path="/agb" element={<AGB />} />
           <Route path="/wines/:token" element={<WineCatalog />} />
+          {/* B2B Supplier Portal Routes */}
+          <Route path="/b2b/login" element={<B2BSupplierLogin />} />
+          <Route path="/b2b/dashboard" element={<B2BSupplierDashboard />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
