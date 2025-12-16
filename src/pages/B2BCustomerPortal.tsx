@@ -668,9 +668,15 @@ export default function B2BCustomerPortal() {
       )}
       <header className="sticky top-0 z-50 bg-background border-b">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
-          <div>
-            <h1 className="text-xl font-bold">{previewSupplierName || customerInfo.supplierName}</h1>
-            <p className="text-sm text-muted-foreground">{previewSupplierId ? 'Vorschau' : customerInfo.companyName}</p>
+          <div className="flex items-center gap-3">
+            {/* Dev Mode Badge */}
+            <Badge variant="outline" className="text-green-600 bg-green-100 border-0 hidden sm:flex">
+              🟢 B2B Customer
+            </Badge>
+            <div>
+              <h1 className="text-xl font-bold">{previewSupplierName || customerInfo.supplierName}</h1>
+              <p className="text-sm text-muted-foreground">{previewSupplierId ? 'Vorschau' : customerInfo.companyName}</p>
+            </div>
           </div>
           <nav className="flex items-center gap-3" aria-label="Portal actions">
             {!previewSupplierId && (

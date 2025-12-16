@@ -756,6 +756,10 @@ const SupplierPortal = () => {
       <header className="border-b bg-card">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
+            {/* Dev Mode Badge */}
+            <Badge variant="outline" className="text-purple-600 bg-purple-100 border-0 hidden sm:flex">
+              🟣 Supplier Portal
+            </Badge>
             <img 
               src={portalSettings.logo_url || logo} 
               alt="Portal Logo" 

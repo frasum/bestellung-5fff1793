@@ -127,10 +127,16 @@ export const DashboardLayout = ({
       
       {/* Mobile Header */}
       <header className="xl:hidden fixed top-0 left-0 right-0 z-50 bg-card border-b border-border h-14 flex items-center justify-between px-4">
-        <Link to="/reports" className="flex items-center gap-2">
-          <img src={logoImage} alt="Bestellung.pro" className="w-8 h-8 rounded-lg object-cover" />
-          <span className="font-bold text-lg text-foreground">Bestellung.pro</span>
-        </Link>
+        <div className="flex items-center gap-2">
+          {/* Dev Mode Badge */}
+          <Badge variant="outline" className="text-blue-600 bg-blue-100 border-0 text-xs">
+            🔵
+          </Badge>
+          <Link to="/reports" className="flex items-center gap-2">
+            <img src={logoImage} alt="Bestellung.pro" className="w-8 h-8 rounded-lg object-cover" />
+            <span className="font-bold text-lg text-foreground">Bestellung.pro</span>
+          </Link>
+        </div>
         <div className="flex items-center gap-2">
           {organization?.is_demo && demoDaysRemaining !== null && (
             <Badge 
@@ -194,6 +200,10 @@ export const DashboardLayout = ({
         </div>
         <TooltipProvider>
           <div className="flex items-center gap-3">
+            {/* Dev Mode Badge */}
+            <Badge variant="outline" className="text-blue-600 bg-blue-100 border-0 hidden">
+              🔵 Bestellung.pro
+            </Badge>
             <LanguageSwitcher variant="icon" />
             <ThemeToggle />
           {organization?.is_demo && demoDaysRemaining !== null && (

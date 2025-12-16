@@ -229,6 +229,10 @@ const B2BSupplierDashboard = () => {
       <header className="border-b bg-card">
         <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
+            {/* Dev Mode Badge */}
+            <Badge variant="outline" className="text-orange-600 bg-orange-100 border-0 hidden sm:flex">
+              🟠 B2B Supplier
+            </Badge>
             {(() => {
               const selectedSupplier = suppliers.find(s => s.id === selectedSupplierId);
               const logoUrl = selectedSupplier?.logo_url || account.logo_url;
