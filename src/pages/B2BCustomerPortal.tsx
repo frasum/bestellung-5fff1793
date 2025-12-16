@@ -8,7 +8,9 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
-import { Loader2, ShoppingCart, LogOut, Package, Search, Plus, Minus, Lock, CheckCircle, ArrowLeft, Eye } from 'lucide-react';
+import { Loader2, ShoppingCart, LogOut, Package, Search, Plus, Minus, Lock, CheckCircle, ArrowLeft, Eye, PackageSearch } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import CustomerPurchaseTab from '@/components/b2b-customer/CustomerPurchaseTab';
 
 interface Article {
   id: string;
@@ -37,9 +39,10 @@ interface CustomerInfo {
   supplierName: string;
   supplierSubdomain?: string | null;
   deliveryAddress?: string | null;
+  hasPurchaseFeature?: boolean;
 }
 
-type ViewState = 'catalog' | 'checkout' | 'confirmation';
+type ViewState = 'catalog' | 'checkout' | 'confirmation' | 'purchase';
 
 export default function B2BCustomerPortal() {
   const navigate = useNavigate();
@@ -143,6 +146,7 @@ export default function B2BCustomerPortal() {
           supplier_account_id,
           delivery_address,
           supplier_id,
+          has_purchase_feature,
           supplier_b2b_accounts!inner(company_name, subdomain)
         `)
         .eq('user_id', user.id)
@@ -173,6 +177,7 @@ export default function B2BCustomerPortal() {
         supplierName,
         supplierSubdomain,
         deliveryAddress: customer.delivery_address,
+        hasPurchaseFeature: customer.has_purchase_feature || false,
       });
 
       // Pre-fill delivery address
@@ -531,6 +536,101 @@ export default function B2BCustomerPortal() {
     );
   }
 
+  // Main Portal View with Tabs (if has purchase feature) or Catalog only
+  const renderCatalogContent = () => (
+    <>
+      <section aria-label="Suche" className="relative mb-6">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input
+          placeholder="Artikel suchen..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="pl-10"
+        />
+      </section>
+
+      <section aria-label="Artikel" className="space-y-8">
+        {Object.entries(articlesByCategory).map(([category, categoryArticles]) => (
+          <article key={category} className="space-y-4">
+            <h2 className="text-lg font-semibold">{category}</h2>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {categoryArticles.map((article) => {
+                const qty = getCartQuantity(article.id);
+                return (
+                  <Card key={article.id} className="overflow-hidden">
+                    {article.image_url && (
+                      <div className="aspect-video bg-muted">
+                        <img
+                          src={article.image_url}
+                          alt={`${article.name} Produktfoto`}
+                          className="w-full h-full object-cover"
+                          loading="lazy"
+                        />
+                      </div>
+                    )}
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-base">{article.name}</CardTitle>
+                      {article.description && (
+                        <CardDescription className="text-sm line-clamp-2">{article.description}</CardDescription>
+                      )}
+                    </CardHeader>
+                    <CardContent>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <span className="text-lg font-bold">€{article.base_price.toFixed(2)}</span>
+                          <span className="text-sm text-muted-foreground ml-1">/ {article.unit}</span>
+                        </div>
+                        {!previewSupplierId && (
+                          <>
+                            {qty === 0 ? (
+                              <Button size="sm" onClick={() => addToCart(article)}>
+                                <Plus className="h-4 w-4 mr-1" />
+                                Hinzufügen
+                              </Button>
+                            ) : (
+                              <div className="flex items-center gap-2">
+                                <Button
+                                  size="icon"
+                                  variant="outline"
+                                  className="h-8 w-8"
+                                  onClick={() => updateQuantity(article.id, -1)}
+                                  aria-label="Menge reduzieren"
+                                >
+                                  <Minus className="h-4 w-4" />
+                                </Button>
+                                <span className="w-8 text-center font-medium">{qty}</span>
+                                <Button
+                                  size="icon"
+                                  variant="outline"
+                                  className="h-8 w-8"
+                                  onClick={() => updateQuantity(article.id, 1)}
+                                  aria-label="Menge erhöhen"
+                                >
+                                  <Plus className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            )}
+                          </>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          </article>
+        ))}
+
+        {filteredArticles.length === 0 && (
+          <div className="text-center py-12">
+            <Package className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+            <p className="text-muted-foreground">Keine Artikel gefunden</p>
+          </div>
+        )}
+      </section>
+    </>
+  );
+
   // Catalog View (default)
   return (
     <div className="min-h-screen bg-background">
@@ -567,96 +667,32 @@ export default function B2BCustomerPortal() {
         </div>
       </header>
 
+      {/* Main Content - with tabs if purchase feature enabled */}
       <main className="container mx-auto px-4 py-6 pb-32">
-        <section aria-label="Suche" className="relative mb-6">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Artikel suchen..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
-          />
-        </section>
+        {customerInfo.hasPurchaseFeature && !previewSupplierId ? (
+          <Tabs defaultValue="catalog" className="space-y-6">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="catalog" className="gap-2">
+                <Package className="h-4 w-4" />
+                {customerInfo.supplierName}
+              </TabsTrigger>
+              <TabsTrigger value="purchase" className="gap-2">
+                <PackageSearch className="h-4 w-4" />
+                Mein Einkauf
+              </TabsTrigger>
+            </TabsList>
 
-        <section aria-label="Artikel" className="space-y-8">
-          {Object.entries(articlesByCategory).map(([category, categoryArticles]) => (
-            <article key={category} className="space-y-4">
-              <h2 className="text-lg font-semibold">{category}</h2>
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {categoryArticles.map((article) => {
-                  const qty = getCartQuantity(article.id);
-                  return (
-                    <Card key={article.id} className="overflow-hidden">
-                      {article.image_url && (
-                        <div className="aspect-video bg-muted">
-                          <img
-                            src={article.image_url}
-                            alt={`${article.name} Produktfoto`}
-                            className="w-full h-full object-cover"
-                            loading="lazy"
-                          />
-                        </div>
-                      )}
-                      <CardHeader className="pb-2">
-                        <CardTitle className="text-base">{article.name}</CardTitle>
-                        {article.description && (
-                          <CardDescription className="text-sm line-clamp-2">{article.description}</CardDescription>
-                        )}
-                      </CardHeader>
-                      <CardContent>
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <span className="text-lg font-bold">€{article.base_price.toFixed(2)}</span>
-                            <span className="text-sm text-muted-foreground ml-1">/ {article.unit}</span>
-                          </div>
-                          {!previewSupplierId && (
-                            <>
-                              {qty === 0 ? (
-                                <Button size="sm" onClick={() => addToCart(article)}>
-                                  <Plus className="h-4 w-4 mr-1" />
-                                  Hinzufügen
-                                </Button>
-                              ) : (
-                                <div className="flex items-center gap-2">
-                                  <Button
-                                    size="icon"
-                                    variant="outline"
-                                    className="h-8 w-8"
-                                    onClick={() => updateQuantity(article.id, -1)}
-                                    aria-label="Menge reduzieren"
-                                  >
-                                    <Minus className="h-4 w-4" />
-                                  </Button>
-                                  <span className="w-8 text-center font-medium">{qty}</span>
-                                  <Button
-                                    size="icon"
-                                    variant="outline"
-                                    className="h-8 w-8"
-                                    onClick={() => updateQuantity(article.id, 1)}
-                                    aria-label="Menge erhöhen"
-                                  >
-                                    <Plus className="h-4 w-4" />
-                                  </Button>
-                                </div>
-                              )}
-                            </>
-                          )}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  );
-                })}
-              </div>
-            </article>
-          ))}
+            <TabsContent value="catalog">
+              {renderCatalogContent()}
+            </TabsContent>
 
-          {filteredArticles.length === 0 && (
-            <div className="text-center py-12">
-              <Package className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-              <p className="text-muted-foreground">Keine Artikel gefunden</p>
-            </div>
-          )}
-        </section>
+            <TabsContent value="purchase">
+              <CustomerPurchaseTab customerId={customerInfo.id} />
+            </TabsContent>
+          </Tabs>
+        ) : (
+          renderCatalogContent()
+        )}
       </main>
 
       {cart.length > 0 && !previewSupplierId && (

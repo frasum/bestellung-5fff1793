@@ -251,6 +251,120 @@ export type Database = {
           },
         ]
       }
+      b2b_customer_purchase_order_items: {
+        Row: {
+          article_id: string | null
+          article_name: string
+          created_at: string | null
+          id: string
+          order_id: string
+          quantity: number
+          total_price: number | null
+          unit: string | null
+          unit_price: number | null
+        }
+        Insert: {
+          article_id?: string | null
+          article_name: string
+          created_at?: string | null
+          id?: string
+          order_id: string
+          quantity?: number
+          total_price?: number | null
+          unit?: string | null
+          unit_price?: number | null
+        }
+        Update: {
+          article_id?: string | null
+          article_name?: string
+          created_at?: string | null
+          id?: string
+          order_id?: string
+          quantity?: number
+          total_price?: number | null
+          unit?: string | null
+          unit_price?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "b2b_customer_purchase_order_items_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: false
+            referencedRelation: "b2b_customer_vendor_articles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "b2b_customer_purchase_order_items_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "b2b_customer_purchase_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      b2b_customer_purchase_orders: {
+        Row: {
+          created_at: string | null
+          customer_id: string
+          delivery_address: string | null
+          delivery_date: string | null
+          email_sent: boolean | null
+          email_sent_at: string | null
+          id: string
+          notes: string | null
+          order_number: string
+          status: string | null
+          total_amount: number | null
+          updated_at: string | null
+          vendor_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          customer_id: string
+          delivery_address?: string | null
+          delivery_date?: string | null
+          email_sent?: boolean | null
+          email_sent_at?: string | null
+          id?: string
+          notes?: string | null
+          order_number?: string
+          status?: string | null
+          total_amount?: number | null
+          updated_at?: string | null
+          vendor_id: string
+        }
+        Update: {
+          created_at?: string | null
+          customer_id?: string
+          delivery_address?: string | null
+          delivery_date?: string | null
+          email_sent?: boolean | null
+          email_sent_at?: string | null
+          id?: string
+          notes?: string | null
+          order_number?: string
+          status?: string | null
+          total_amount?: number | null
+          updated_at?: string | null
+          vendor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "b2b_customer_purchase_orders_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "supplier_b2b_customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "b2b_customer_purchase_orders_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "b2b_customer_vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       b2b_customer_supplier_access: {
         Row: {
           created_at: string | null
@@ -283,6 +397,113 @@ export type Database = {
             columns: ["supplier_id"]
             isOneToOne: false
             referencedRelation: "b2b_suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      b2b_customer_vendor_articles: {
+        Row: {
+          category: string | null
+          created_at: string | null
+          customer_id: string
+          description: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          price: number | null
+          sku: string | null
+          unit: string | null
+          updated_at: string | null
+          vendor_id: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string | null
+          customer_id: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          price?: number | null
+          sku?: string | null
+          unit?: string | null
+          updated_at?: string | null
+          vendor_id: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string | null
+          customer_id?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          price?: number | null
+          sku?: string | null
+          unit?: string | null
+          updated_at?: string | null
+          vendor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "b2b_customer_vendor_articles_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "supplier_b2b_customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "b2b_customer_vendor_articles_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "b2b_customer_vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      b2b_customer_vendors: {
+        Row: {
+          address: string | null
+          created_at: string | null
+          customer_id: string
+          email: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          notes: string | null
+          phone: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string | null
+          customer_id: string
+          email?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          notes?: string | null
+          phone?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          address?: string | null
+          created_at?: string | null
+          customer_id?: string
+          email?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          notes?: string | null
+          phone?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "b2b_customer_vendors_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "supplier_b2b_customers"
             referencedColumns: ["id"]
           },
         ]
@@ -2159,6 +2380,7 @@ export type Database = {
           customer_number: string | null
           delivery_address: string | null
           email: string
+          has_purchase_feature: boolean | null
           id: string
           is_active: boolean | null
           phone: string | null
@@ -2174,6 +2396,7 @@ export type Database = {
           customer_number?: string | null
           delivery_address?: string | null
           email: string
+          has_purchase_feature?: boolean | null
           id?: string
           is_active?: boolean | null
           phone?: string | null
@@ -2189,6 +2412,7 @@ export type Database = {
           customer_number?: string | null
           delivery_address?: string | null
           email?: string
+          has_purchase_feature?: boolean | null
           id?: string
           is_active?: boolean | null
           phone?: string | null

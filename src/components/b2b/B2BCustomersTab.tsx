@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
 import {
   Plus,
@@ -16,6 +17,7 @@ import {
   Pencil,
   Trash2,
   Send,
+  ShoppingCart,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -52,6 +54,7 @@ interface B2BCustomer {
   user_id: string | null;
   created_at: string;
   supplier_id: string | null;
+  has_purchase_feature: boolean;
 }
 
 interface B2BCustomersTabProps {
@@ -182,6 +185,23 @@ const B2BCustomersTab = ({
     }
   };
 
+  const handleTogglePurchaseFeature = async (customer: B2BCustomer, enabled: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('supplier_b2b_customers')
+        .update({ has_purchase_feature: enabled })
+        .eq('id', customer.id);
+
+      if (error) throw error;
+
+      toast.success(enabled ? '"Mein Einkauf" aktiviert' : '"Mein Einkauf" deaktiviert');
+      loadCustomers();
+    } catch (error: any) {
+      console.error('Error toggling purchase feature:', error);
+      toast.error('Fehler beim Ändern der Einstellung');
+    }
+  };
+
   const getSupplierName = (supplierId: string | null) => {
     if (!supplierId) return null;
     return suppliers.find(s => s.id === supplierId)?.name;
@@ -295,6 +315,17 @@ const B2BCustomersTab = ({
                           <Badge variant="outline" className="text-xs">
                             {getSupplierName(customer.supplier_id)}
                           </Badge>
+                        </div>
+                      )}
+                      {/* Mein Einkauf Toggle - only for registered customers */}
+                      {customer.user_id && (
+                        <div className="mt-3 pt-3 border-t flex items-center gap-2">
+                          <ShoppingCart className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-sm text-muted-foreground flex-1">Mein Einkauf</span>
+                          <Switch
+                            checked={customer.has_purchase_feature}
+                            onCheckedChange={(checked) => handleTogglePurchaseFeature(customer, checked)}
+                          />
                         </div>
                       )}
                     </div>
