@@ -296,7 +296,7 @@ const B2BSupplierDashboard = () => {
       {/* Main Content */}
       <main className="max-w-7xl mx-auto p-4 md:p-6">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-6 lg:w-auto lg:inline-grid">
+          <TabsList className="grid w-full grid-cols-7 lg:w-auto lg:inline-grid">
               <TabsTrigger value="overview" className="gap-2">
                 <TrendingUp className="h-4 w-4" />
                 <span className="hidden sm:inline">Übersicht</span>
@@ -321,6 +321,10 @@ const B2BSupplierDashboard = () => {
                     {stats.pendingOrders}
                   </Badge>
                 ) : null}
+              </TabsTrigger>
+              <TabsTrigger value="purchase" className="gap-2">
+                <PackageSearch className="h-4 w-4" />
+                <span className="hidden sm:inline">Mein Einkauf</span>
               </TabsTrigger>
               <TabsTrigger value="settings" className="gap-2">
                 <Settings className="h-4 w-4" />
@@ -482,6 +486,11 @@ const B2BSupplierDashboard = () => {
               selectedSupplierId={selectedSupplierId}
               suppliers={suppliers}
             />
+          </TabsContent>
+
+          {/* Purchase Tab (Mein Einkauf) */}
+          <TabsContent value="purchase">
+            <B2BPurchaseTab accountId={account.id} />
           </TabsContent>
 
           {/* Settings Tab */}
