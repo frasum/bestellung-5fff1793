@@ -2264,6 +2264,8 @@ export type Database = {
             | Database["public"]["Enums"]["b2b_subscription_tier"]
             | null
           updated_at: string
+          upgraded_at: string | null
+          upgraded_organization_id: string | null
           welcome_message: string | null
         }
         Insert: {
@@ -2281,6 +2283,8 @@ export type Database = {
             | Database["public"]["Enums"]["b2b_subscription_tier"]
             | null
           updated_at?: string
+          upgraded_at?: string | null
+          upgraded_organization_id?: string | null
           welcome_message?: string | null
         }
         Update: {
@@ -2298,6 +2302,8 @@ export type Database = {
             | Database["public"]["Enums"]["b2b_subscription_tier"]
             | null
           updated_at?: string
+          upgraded_at?: string | null
+          upgraded_organization_id?: string | null
           welcome_message?: string | null
         }
         Relationships: [
@@ -2306,6 +2312,13 @@ export type Database = {
             columns: ["linked_supplier_id"]
             isOneToOne: false
             referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supplier_b2b_accounts_upgraded_organization_id_fkey"
+            columns: ["upgraded_organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]

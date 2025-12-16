@@ -792,8 +792,9 @@ export default function B2BCustomerPortal() {
       <B2BUpgradePricingDialog
         open={showUpgradeDialog}
         onOpenChange={setShowUpgradeDialog}
-        customerId={customerInfo.id}
-        customerEmail={customerInfo.email}
+        type="customer"
+        entityId={customerInfo.id}
+        email={customerInfo.email}
         companyName={customerInfo.companyName}
         vendorCount={customerInfo.vendorCount || 0}
         articleCount={customerInfo.articleCount || 0}
