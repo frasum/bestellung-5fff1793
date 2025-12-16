@@ -13,6 +13,7 @@ import { Loader2 } from "lucide-react";
 import { useRealtimeNotifications } from "@/hooks/useRealtimeNotifications";
 import { usePerformanceMonitor } from "@/hooks/usePerformanceMonitor";
 import { PerformanceMonitor } from "@/components/debug/PerformanceMonitor";
+import { DevNavigationPanel } from "@/components/debug/DevNavigationPanel";
 
 // Lazy load pages for better performance
 const Auth = lazy(() => import("./pages/Auth"));
@@ -115,6 +116,8 @@ const AppContent = () => {
           onClose={toggleEnabled}
         />
       )}
+      
+      <DevNavigationPanel />
     </>
   );
 };
