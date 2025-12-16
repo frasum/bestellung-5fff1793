@@ -52,6 +52,7 @@ interface B2BAccount {
 interface B2BSupplier {
   id: string;
   name: string;
+  logo_url: string | null;
 }
 
 interface DashboardStats {
@@ -111,7 +112,7 @@ const B2BSupplierDashboard = () => {
   const loadSuppliers = async (accountId: string) => {
     const { data, error } = await supabase
       .from('b2b_suppliers')
-      .select('id, name')
+      .select('id, name, logo_url')
       .eq('account_id', accountId)
       .order('sort_order', { ascending: true });
 
@@ -216,22 +217,32 @@ const B2BSupplierDashboard = () => {
       <header className="border-b bg-card">
         <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            {account.logo_url ? (
-              <img src={account.logo_url} alt={account.company_name} className="h-10 w-10 object-contain" />
-            ) : (
-              <div 
-                className="h-10 w-10 rounded-lg flex items-center justify-center"
-                style={{ backgroundColor: account.primary_color + '20' }}
-              >
-                <Building2 className="h-5 w-5" style={{ color: account.primary_color }} />
-              </div>
-            )}
-            <div>
-              <h1 className="font-semibold text-lg">{account.company_name}</h1>
-              <p className="text-sm text-muted-foreground">
-                {account.subdomain}.bestellung.pro
-              </p>
-            </div>
+            {(() => {
+              const selectedSupplier = suppliers.find(s => s.id === selectedSupplierId);
+              const logoUrl = selectedSupplier?.logo_url || account.logo_url;
+              const displayName = selectedSupplier?.name || account.company_name;
+              
+              return (
+                <>
+                  {logoUrl ? (
+                    <img src={logoUrl} alt={displayName} className="h-10 w-10 object-contain" />
+                  ) : (
+                    <div 
+                      className="h-10 w-10 rounded-lg flex items-center justify-center"
+                      style={{ backgroundColor: account.primary_color + '20' }}
+                    >
+                      <Building2 className="h-5 w-5" style={{ color: account.primary_color }} />
+                    </div>
+                  )}
+                  <div>
+                    <h1 className="font-semibold text-lg">{displayName}</h1>
+                    <p className="text-sm text-muted-foreground">
+                      {account.subdomain}.bestellung.pro
+                    </p>
+                  </div>
+                </>
+              );
+            })()}
           </div>
           
           {/* Supplier Selector in Header (Hybrid Model) */}
