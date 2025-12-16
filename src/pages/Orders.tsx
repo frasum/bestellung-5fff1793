@@ -324,9 +324,9 @@ const Orders = () => {
     
     // Convert to EasyOrderGroup array
     const groups: EasyOrderGroup[] = Array.from(groupsMap.entries()).map(([key, drafts]) => {
-      // Extract employee name from first draft name (format: "EasyOrder: NAME (Supplier)")
-      const match = drafts[0].name.match(/^EasyOrder:\s*(.+?)\s*\(/);
-      const employeeName = match ? match[1] : 'Unbekannt';
+      // Extract employee name from first draft name (format: "EasyOrder: NAME" or "EasyOrder: NAME (Supplier)")
+      const match = drafts[0].name.match(/^EasyOrder:\s*(.+?)(?:\s*\(|$)/);
+      const employeeName = match ? match[1].trim() : 'Unbekannt';
       
       const totalItems = drafts.reduce((sum, d) => sum + (d.items?.length || 0), 0);
       const totalPrice = drafts.reduce((sum, d) => sum + getDraftTotal(d), 0);
