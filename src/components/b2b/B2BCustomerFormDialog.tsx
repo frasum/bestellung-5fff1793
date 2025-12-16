@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Dialog,
   DialogContent,
@@ -13,6 +14,12 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { toast } from 'sonner';
+import { Store } from 'lucide-react';
+
+interface B2BSupplier {
+  id: string;
+  name: string;
+}
 
 interface B2BCustomer {
   id: string;
@@ -24,6 +31,7 @@ interface B2BCustomer {
   delivery_address: string | null;
   is_active: boolean;
   user_id: string | null;
+  supplier_access?: string[];
 }
 
 interface B2BCustomerFormDialogProps {
@@ -32,6 +40,8 @@ interface B2BCustomerFormDialogProps {
   customer: B2BCustomer | null;
   accountId: string;
   supplierName: string;
+  suppliers: B2BSupplier[];
+  selectedSupplierId: string | null;
   onSuccess: () => void;
 }
 
@@ -41,6 +51,8 @@ const B2BCustomerFormDialog = ({
   customer,
   accountId,
   supplierName,
+  suppliers,
+  selectedSupplierId,
   onSuccess,
 }: B2BCustomerFormDialogProps) => {
   const [loading, setLoading] = useState(false);
@@ -51,6 +63,7 @@ const B2BCustomerFormDialog = ({
   const [phone, setPhone] = useState('');
   const [deliveryAddress, setDeliveryAddress] = useState('');
   const [isActive, setIsActive] = useState(true);
+  const [selectedSuppliers, setSelectedSuppliers] = useState<string[]>([]);
 
   useEffect(() => {
     if (customer) {
@@ -61,6 +74,7 @@ const B2BCustomerFormDialog = ({
       setPhone(customer.phone || '');
       setDeliveryAddress(customer.delivery_address || '');
       setIsActive(customer.is_active);
+      setSelectedSuppliers(customer.supplier_access || []);
     } else {
       setCompanyName('');
       setEmail('');
@@ -69,11 +83,31 @@ const B2BCustomerFormDialog = ({
       setPhone('');
       setDeliveryAddress('');
       setIsActive(true);
+      // For new customers: pre-select the current supplier or all suppliers
+      if (selectedSupplierId) {
+        setSelectedSuppliers([selectedSupplierId]);
+      } else {
+        setSelectedSuppliers(suppliers.map(s => s.id));
+      }
     }
-  }, [customer, open]);
+  }, [customer, open, selectedSupplierId, suppliers]);
+
+  const handleSupplierToggle = (supplierId: string) => {
+    setSelectedSuppliers(prev => 
+      prev.includes(supplierId)
+        ? prev.filter(id => id !== supplierId)
+        : [...prev, supplierId]
+    );
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (suppliers.length > 0 && selectedSuppliers.length === 0) {
+      toast.error('Bitte wählen Sie mindestens einen Lieferanten aus');
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -93,6 +127,28 @@ const B2BCustomerFormDialog = ({
           .eq('id', customer.id);
 
         if (error) throw error;
+
+        // Update supplier access
+        // First delete all existing access
+        await supabase
+          .from('b2b_customer_supplier_access')
+          .delete()
+          .eq('customer_id', customer.id);
+
+        // Then insert new access
+        if (selectedSuppliers.length > 0) {
+          const { error: accessError } = await supabase
+            .from('b2b_customer_supplier_access')
+            .insert(
+              selectedSuppliers.map(supplierId => ({
+                customer_id: customer.id,
+                supplier_id: supplierId,
+              }))
+            );
+
+          if (accessError) throw accessError;
+        }
+
         toast.success('Kunde aktualisiert');
       } else {
         // Create new customer
@@ -112,6 +168,22 @@ const B2BCustomerFormDialog = ({
           .single();
 
         if (customerError) throw customerError;
+
+        // Create supplier access entries
+        if (selectedSuppliers.length > 0) {
+          const { error: accessError } = await supabase
+            .from('b2b_customer_supplier_access')
+            .insert(
+              selectedSuppliers.map(supplierId => ({
+                customer_id: newCustomer.id,
+                supplier_id: supplierId,
+              }))
+            );
+
+          if (accessError) {
+            console.error('Error creating supplier access:', accessError);
+          }
+        }
 
         // Create invitation token
         const { data: invitation, error: invitationError } = await supabase
@@ -169,7 +241,7 @@ const B2BCustomerFormDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
             {customer ? 'Kunde bearbeiten' : 'Neuen Kunden einladen'}
@@ -252,6 +324,36 @@ const B2BCustomerFormDialog = ({
               rows={3}
             />
           </div>
+
+          {/* Supplier Access Section */}
+          {suppliers.length > 1 && (
+            <div className="space-y-3">
+              <Label className="flex items-center gap-2">
+                <Store className="h-4 w-4" />
+                Lieferanten-Zugriff
+              </Label>
+              <p className="text-xs text-muted-foreground">
+                Wählen Sie, bei welchen Lieferanten dieser Kunde bestellen darf
+              </p>
+              <div className="space-y-2 border rounded-md p-3">
+                {suppliers.map(supplier => (
+                  <div key={supplier.id} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={`supplier-${supplier.id}`}
+                      checked={selectedSuppliers.includes(supplier.id)}
+                      onCheckedChange={() => handleSupplierToggle(supplier.id)}
+                    />
+                    <label
+                      htmlFor={`supplier-${supplier.id}`}
+                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                    >
+                      {supplier.name}
+                    </label>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           <div className="flex items-center justify-between">
             <Label htmlFor="active">Aktiv (kann bestellen)</Label>

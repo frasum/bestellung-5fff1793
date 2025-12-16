@@ -16,6 +16,7 @@ import {
   Pencil,
   Trash2,
   Send,
+  Store,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -35,6 +36,11 @@ import {
 } from '@/components/ui/alert-dialog';
 import B2BCustomerFormDialog from './B2BCustomerFormDialog';
 
+interface B2BSupplier {
+  id: string;
+  name: string;
+}
+
 interface B2BCustomer {
   id: string;
   company_name: string;
@@ -46,15 +52,24 @@ interface B2BCustomer {
   is_active: boolean;
   user_id: string | null;
   created_at: string;
+  supplier_access?: string[]; // IDs of accessible suppliers
 }
 
 interface B2BCustomersTabProps {
   accountId: string;
   supplierName: string;
   onStatsChange: () => void;
+  selectedSupplierId: string | null;
+  suppliers: B2BSupplier[];
 }
 
-const B2BCustomersTab = ({ accountId, supplierName, onStatsChange }: B2BCustomersTabProps) => {
+const B2BCustomersTab = ({ 
+  accountId, 
+  supplierName, 
+  onStatsChange,
+  selectedSupplierId,
+  suppliers,
+}: B2BCustomersTabProps) => {
   const [customers, setCustomers] = useState<B2BCustomer[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -65,18 +80,43 @@ const B2BCustomersTab = ({ accountId, supplierName, onStatsChange }: B2BCustomer
 
   useEffect(() => {
     loadCustomers();
-  }, [accountId]);
+  }, [accountId, selectedSupplierId]);
 
   const loadCustomers = async () => {
     try {
-      const { data, error } = await supabase
+      // First, load all customers
+      const { data: customersData, error: customersError } = await supabase
         .from('supplier_b2b_customers')
         .select('*')
         .eq('supplier_account_id', accountId)
         .order('company_name', { ascending: true });
 
-      if (error) throw error;
-      setCustomers(data || []);
+      if (customersError) throw customersError;
+
+      // Load supplier access for all customers
+      const { data: accessData, error: accessError } = await supabase
+        .from('b2b_customer_supplier_access')
+        .select('customer_id, supplier_id');
+
+      if (accessError) throw accessError;
+
+      // Map supplier access to customers
+      const customersWithAccess = (customersData || []).map(customer => ({
+        ...customer,
+        supplier_access: accessData
+          ?.filter(a => a.customer_id === customer.id)
+          .map(a => a.supplier_id) || [],
+      }));
+
+      // Filter by selected supplier if one is selected
+      let filteredCustomers = customersWithAccess;
+      if (selectedSupplierId) {
+        filteredCustomers = customersWithAccess.filter(c => 
+          c.supplier_access.includes(selectedSupplierId)
+        );
+      }
+
+      setCustomers(filteredCustomers);
     } catch (error: any) {
       console.error('Error loading customers:', error);
       toast.error('Fehler beim Laden der Kunden');
@@ -112,7 +152,6 @@ const B2BCustomersTab = ({ accountId, supplierName, onStatsChange }: B2BCustomer
     try {
       toast.info('Einladung wird gesendet...');
       
-      // Get or create a new invitation token
       const { data: existingInvitation, error: fetchError } = await supabase
         .from('b2b_customer_invitations')
         .select('token')
@@ -126,7 +165,6 @@ const B2BCustomersTab = ({ accountId, supplierName, onStatsChange }: B2BCustomer
       if (existingInvitation) {
         inviteToken = existingInvitation.token;
       } else {
-        // Create new invitation token
         const { data: newInvitation, error: createError } = await supabase
           .from('b2b_customer_invitations')
           .insert({
@@ -140,7 +178,6 @@ const B2BCustomersTab = ({ accountId, supplierName, onStatsChange }: B2BCustomer
         inviteToken = newInvitation.token;
       }
 
-      // Send email
       const { error: emailError } = await supabase.functions.invoke('send-b2b-customer-invitation', {
         body: {
           email: customer.email,
@@ -158,6 +195,13 @@ const B2BCustomersTab = ({ accountId, supplierName, onStatsChange }: B2BCustomer
       console.error('Error resending invitation:', error);
       toast.error('Fehler beim Senden der Einladung');
     }
+  };
+
+  const getSupplierNames = (supplierIds: string[]) => {
+    return supplierIds
+      .map(id => suppliers.find(s => s.id === id)?.name)
+      .filter(Boolean)
+      .slice(0, 3);
   };
 
   const filteredCustomers = customers.filter(customer =>
@@ -203,9 +247,13 @@ const B2BCustomersTab = ({ accountId, supplierName, onStatsChange }: B2BCustomer
             <Users className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
             <h3 className="font-semibold mb-2">Keine Kunden gefunden</h3>
             <p className="text-muted-foreground mb-4">
-              {search ? 'Versuchen Sie einen anderen Suchbegriff' : 'Laden Sie Ihren ersten Kunden ein'}
+              {search 
+                ? 'Versuchen Sie einen anderen Suchbegriff' 
+                : selectedSupplierId 
+                  ? 'Keine Kunden haben Zugriff auf diesen Lieferanten'
+                  : 'Laden Sie Ihren ersten Kunden ein'}
             </p>
-            {!search && (
+            {!search && !selectedSupplierId && (
               <Button onClick={() => { setEditingCustomer(null); setDialogOpen(true); }}>
                 <Plus className="h-4 w-4 mr-2" />
                 Ersten Kunden einladen
@@ -224,7 +272,7 @@ const B2BCustomersTab = ({ accountId, supplierName, onStatsChange }: B2BCustomer
                       <Building2 className="h-5 w-5 text-primary" />
                     </div>
                     <div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <h4 className="font-medium">{customer.company_name}</h4>
                         {customer.customer_number && (
                           <Badge variant="outline" className="text-xs">
@@ -257,6 +305,22 @@ const B2BCustomersTab = ({ accountId, supplierName, onStatsChange }: B2BCustomer
                         <p className="text-sm text-muted-foreground mt-1">
                           Ansprechpartner: {customer.contact_person}
                         </p>
+                      )}
+                      {/* Supplier Access Badges */}
+                      {suppliers.length > 1 && customer.supplier_access && customer.supplier_access.length > 0 && (
+                        <div className="flex items-center gap-1 mt-2 flex-wrap">
+                          <Store className="h-3 w-3 text-muted-foreground" />
+                          {getSupplierNames(customer.supplier_access).map((name, idx) => (
+                            <Badge key={idx} variant="outline" className="text-xs">
+                              {name}
+                            </Badge>
+                          ))}
+                          {customer.supplier_access.length > 3 && (
+                            <Badge variant="outline" className="text-xs">
+                              +{customer.supplier_access.length - 3}
+                            </Badge>
+                          )}
+                        </div>
                       )}
                     </div>
                   </div>
@@ -300,6 +364,8 @@ const B2BCustomersTab = ({ accountId, supplierName, onStatsChange }: B2BCustomer
         customer={editingCustomer}
         accountId={accountId}
         supplierName={supplierName}
+        suppliers={suppliers}
+        selectedSupplierId={selectedSupplierId}
         onSuccess={() => {
           loadCustomers();
           onStatsChange();
