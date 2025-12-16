@@ -434,95 +434,34 @@ const B2BSettingsTab = ({ account, onUpdate, selectedSupplierId, suppliers: dash
                       rows={3}
                     />
                   </div>
-                  <Button onClick={handleSaveSupplier} disabled={savingSupplier}>
-                    {savingSupplier ? 'Speichern...' : 'Lieferanten-Daten speichern'}
-                  </Button>
+                  <div className="flex items-center justify-between pt-2">
+                    <Button onClick={handleSaveSupplier} disabled={savingSupplier}>
+                      {savingSupplier ? 'Speichern...' : 'Lieferanten-Daten speichern'}
+                    </Button>
+                    {(() => {
+                      const supplier = b2bSuppliers.find(s => s.id === selectedSupplierId);
+                      const canDelete = supplier && (!supplier.article_count || supplier.article_count === 0);
+                      return (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-destructive hover:text-destructive"
+                          onClick={() => {
+                            if (supplier) setDeleteSupplierToDelete(supplier);
+                          }}
+                          disabled={!canDelete}
+                          title={canDelete ? 'Lieferant löschen' : 'Lieferant hat noch Artikel'}
+                        >
+                          <Trash2 className="h-4 w-4 mr-1" />
+                          Löschen
+                        </Button>
+                      );
+                    })()}
+                  </div>
                 </div>
               </AccordionContent>
             </AccordionItem>
           )}
-
-          {/* B2B Suppliers Management */}
-          <AccordionItem value="b2b-suppliers" className="border-b">
-            <AccordionTrigger className="group px-4 py-3 hover:no-underline hover:bg-muted/50 data-[state=open]:bg-primary/5">
-              <div className="flex items-center gap-2">
-                <Truck className="h-4 w-4 text-muted-foreground group-data-[state=open]:text-primary transition-colors" />
-                <span className="font-medium group-data-[state=open]:text-primary transition-colors">
-                  Lieferanten verwalten
-                </span>
-                <span className="ml-2 text-xs text-muted-foreground">
-                  ({b2bSuppliers.length})
-                </span>
-              </div>
-            </AccordionTrigger>
-            <AccordionContent className="px-4 pb-4 bg-primary/5">
-              <p className="text-sm text-muted-foreground mb-4">
-                Verwalten Sie Ihre Lieferanten für das B2B-Portal
-              </p>
-              
-              <div className="space-y-3">
-                {loadingB2bSuppliers ? (
-                  <div className="text-sm text-muted-foreground">Laden...</div>
-                ) : b2bSuppliers.length === 0 ? (
-                  <div className="text-sm text-muted-foreground py-4 text-center">
-                    Noch keine Lieferanten angelegt.
-                  </div>
-                ) : (
-                  b2bSuppliers.map((supplier) => (
-                    <div
-                      key={supplier.id}
-                      className="flex items-center justify-between p-3 border rounded-lg bg-background"
-                    >
-                      <div className="flex-1">
-                        <div className="font-medium flex items-center gap-2">
-                          {supplier.name}
-                          {!supplier.is_active && (
-                            <span className="text-xs text-muted-foreground">(inaktiv)</span>
-                          )}
-                        </div>
-                        <div className="text-sm text-muted-foreground">
-                          {supplier.article_count} Artikel
-                          {supplier.contact_email && ` • ${supplier.contact_email}`}
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => {
-                            setEditingSupplier(supplier);
-                            setSupplierDialogOpen(true);
-                          }}
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="text-destructive hover:text-destructive"
-                          onClick={() => setDeleteSupplierToDelete(supplier)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))
-                )}
-
-                <Button
-                  variant="outline"
-                  className="w-full"
-                  onClick={() => {
-                    setEditingSupplier(null);
-                    setSupplierDialogOpen(true);
-                  }}
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Neuen Lieferanten anlegen
-                </Button>
-              </div>
-            </AccordionContent>
-          </AccordionItem>
 
           {/* Supplier Linking */}
           <AccordionItem value="linking" className="border-b">
