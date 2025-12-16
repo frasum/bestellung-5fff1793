@@ -128,3 +128,9 @@ verify_jwt = true
 
 [functions.send-b2b-purchase-order]
 verify_jwt = true
+
+[functions.reset-b2b-customer-password]
+verify_jwt = false
+
+[functions.send-b2b-customer-purchase-order]
+verify_jwt = true
