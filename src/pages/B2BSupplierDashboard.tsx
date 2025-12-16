@@ -34,6 +34,7 @@ import B2BCustomersTab from '@/components/b2b/B2BCustomersTab';
 import B2BOrdersTab from '@/components/b2b/B2BOrdersTab';
 import B2BOffersTab from '@/components/b2b/B2BOffersTab';
 import B2BSettingsTab from '@/components/b2b/B2BSettingsTab';
+import B2BSupplierFormDialog from '@/components/b2b/B2BSupplierFormDialog';
 
 interface B2BAccount {
   id: string;
@@ -73,6 +74,7 @@ const B2BSupplierDashboard = () => {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
+  const [newSupplierDialogOpen, setNewSupplierDialogOpen] = useState(false);
 
   useEffect(() => {
     if (!user) {
@@ -175,6 +177,10 @@ const B2BSupplierDashboard = () => {
   };
 
   const handleSupplierChange = (supplierId: string) => {
+    if (supplierId === '__new__') {
+      setNewSupplierDialogOpen(true);
+      return;
+    }
     setSelectedSupplierId(supplierId);
     if (account) {
       loadStats(account.id, supplierId);
@@ -263,6 +269,10 @@ const B2BSupplierDashboard = () => {
                     {suppliers.map(s => (
                       <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
                     ))}
+                    <SelectItem value="__new__" className="text-primary font-medium">
+                      <Plus className="h-4 w-4 mr-2 inline" />
+                      Neuen Lieferanten anlegen
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -484,6 +494,17 @@ const B2BSupplierDashboard = () => {
           </TabsContent>
         </Tabs>
       </main>
+
+      {/* New Supplier Dialog */}
+      <B2BSupplierFormDialog
+        open={newSupplierDialogOpen}
+        onOpenChange={setNewSupplierDialogOpen}
+        supplier={null}
+        accountId={account.id}
+        onSuccess={async () => {
+          await loadSuppliers(account.id);
+        }}
+      />
     </div>
   );
 };
