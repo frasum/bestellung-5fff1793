@@ -126,11 +126,27 @@ export default function B2BCustomerPortal() {
         setDeliveryAddress(customer.delivery_address);
       }
 
-      const { data: articlesData, error: artError } = await supabase
+      // Load accessible suppliers for this customer
+      const { data: accessData } = await supabase
+        .from('b2b_customer_supplier_access')
+        .select('supplier_id')
+        .eq('customer_id', customer.id);
+
+      const accessibleSupplierIds = accessData?.map(a => a.supplier_id) || [];
+
+      // Load articles - filter by accessible suppliers if access restrictions exist
+      let articlesQuery = supabase
         .from('supplier_b2b_articles')
         .select('*')
         .eq('supplier_account_id', customer.supplier_account_id)
-        .eq('is_active', true)
+        .eq('is_active', true);
+
+      // If customer has supplier access restrictions, filter by accessible suppliers
+      if (accessibleSupplierIds.length > 0) {
+        articlesQuery = articlesQuery.in('supplier_id', accessibleSupplierIds);
+      }
+
+      const { data: articlesData, error: artError } = await articlesQuery
         .order('category', { ascending: true })
         .order('name', { ascending: true });
 

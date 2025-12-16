@@ -251,6 +251,42 @@ export type Database = {
           },
         ]
       }
+      b2b_customer_supplier_access: {
+        Row: {
+          created_at: string | null
+          customer_id: string
+          id: string
+          supplier_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          customer_id: string
+          id?: string
+          supplier_id: string
+        }
+        Update: {
+          created_at?: string | null
+          customer_id?: string
+          id?: string
+          supplier_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "b2b_customer_supplier_access_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "supplier_b2b_customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "b2b_customer_supplier_access_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "b2b_suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       b2b_suppliers: {
         Row: {
           account_id: string
