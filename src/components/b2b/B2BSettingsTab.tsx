@@ -18,8 +18,19 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
-import { Palette, Building2, ExternalLink, Copy, Check, Link2, Upload, Trash2, Loader2, ImageIcon } from 'lucide-react';
+import { Palette, Building2, ExternalLink, Copy, Check, Link2, Upload, Trash2, Loader2, ImageIcon, Truck, Plus, Pencil } from 'lucide-react';
+import B2BSupplierFormDialog from './B2BSupplierFormDialog';
 
 interface B2BAccount {
   id: string;
@@ -40,6 +51,21 @@ interface Supplier {
   name: string;
 }
 
+interface B2BSupplier {
+  id: string;
+  name: string;
+  contact_email: string | null;
+  contact_phone: string | null;
+  description: string | null;
+  is_active: boolean | null;
+  article_count?: number;
+  account_id: string;
+  logo_url: string | null;
+  sort_order: number | null;
+  created_at: string | null;
+  updated_at: string | null;
+}
+
 interface B2BSettingsTabProps {
   account: B2BAccount;
   onUpdate: () => void;
@@ -57,10 +83,18 @@ const B2BSettingsTab = ({ account, onUpdate }: B2BSettingsTabProps) => {
   const [logoUrl, setLogoUrl] = useState(account.logo_url);
   const [uploadingLogo, setUploadingLogo] = useState(false);
 
+  // B2B Suppliers Management
+  const [b2bSuppliers, setB2bSuppliers] = useState<B2BSupplier[]>([]);
+  const [loadingB2bSuppliers, setLoadingB2bSuppliers] = useState(false);
+  const [supplierDialogOpen, setSupplierDialogOpen] = useState(false);
+  const [editingSupplier, setEditingSupplier] = useState<B2BSupplier | null>(null);
+  const [deleteSupplier, setDeleteSupplier] = useState<B2BSupplier | null>(null);
+
   const portalUrl = `${window.location.origin}/b2b/portal/${account.subdomain}`;
 
   useEffect(() => {
     loadSuppliers();
+    loadB2bSuppliers();
   }, []);
 
   const loadSuppliers = async () => {
@@ -111,6 +145,65 @@ const B2BSettingsTab = ({ account, onUpdate }: B2BSettingsTabProps) => {
       setSuppliers(allSuppliers);
     } catch (error) {
       console.error('Error loading suppliers:', error);
+    }
+  };
+
+  const loadB2bSuppliers = async () => {
+    setLoadingB2bSuppliers(true);
+    try {
+      const { data, error } = await supabase
+        .from('b2b_suppliers')
+        .select('*')
+        .eq('account_id', account.id)
+        .order('sort_order', { ascending: true });
+
+      if (error) throw error;
+
+      // Get article counts
+      const suppliersWithCounts = await Promise.all(
+        (data || []).map(async (supplier) => {
+          const { count } = await supabase
+            .from('supplier_b2b_articles')
+            .select('id', { count: 'exact', head: true })
+            .eq('supplier_id', supplier.id);
+          return { ...supplier, article_count: count || 0 };
+        })
+      );
+
+      setB2bSuppliers(suppliersWithCounts);
+    } catch (error) {
+      console.error('Error loading B2B suppliers:', error);
+    } finally {
+      setLoadingB2bSuppliers(false);
+    }
+  };
+
+  const handleDeleteSupplier = async () => {
+    if (!deleteSupplier) return;
+
+    // Check for articles
+    if (deleteSupplier.article_count && deleteSupplier.article_count > 0) {
+      toast.error(`Lieferant hat ${deleteSupplier.article_count} Artikel. Bitte löschen Sie zuerst alle Artikel.`);
+      setDeleteSupplier(null);
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('b2b_suppliers')
+        .delete()
+        .eq('id', deleteSupplier.id);
+
+      if (error) throw error;
+
+      toast.success('Lieferant gelöscht');
+      loadB2bSuppliers();
+      onUpdate();
+    } catch (error: any) {
+      console.error('Error deleting supplier:', error);
+      toast.error('Fehler beim Löschen');
+    } finally {
+      setDeleteSupplier(null);
     }
   };
 
@@ -235,6 +328,88 @@ const B2BSettingsTab = ({ account, onUpdate }: B2BSettingsTabProps) => {
     <div className="space-y-6">
       <Card>
         <Accordion type="multiple" className="w-full">
+          {/* B2B Suppliers Management */}
+          <AccordionItem value="b2b-suppliers" className="border-b">
+            <AccordionTrigger className="group px-4 py-3 hover:no-underline hover:bg-muted/50 data-[state=open]:bg-primary/5">
+              <div className="flex items-center gap-2">
+                <Truck className="h-4 w-4 text-muted-foreground group-data-[state=open]:text-primary transition-colors" />
+                <span className="font-medium group-data-[state=open]:text-primary transition-colors">
+                  Lieferanten verwalten
+                </span>
+                <span className="ml-2 text-xs text-muted-foreground">
+                  ({b2bSuppliers.length})
+                </span>
+              </div>
+            </AccordionTrigger>
+            <AccordionContent className="px-4 pb-4 bg-primary/5">
+              <p className="text-sm text-muted-foreground mb-4">
+                Verwalten Sie Ihre Lieferanten für das B2B-Portal
+              </p>
+              
+              <div className="space-y-3">
+                {loadingB2bSuppliers ? (
+                  <div className="text-sm text-muted-foreground">Laden...</div>
+                ) : b2bSuppliers.length === 0 ? (
+                  <div className="text-sm text-muted-foreground py-4 text-center">
+                    Noch keine Lieferanten angelegt.
+                  </div>
+                ) : (
+                  b2bSuppliers.map((supplier) => (
+                    <div
+                      key={supplier.id}
+                      className="flex items-center justify-between p-3 border rounded-lg bg-background"
+                    >
+                      <div className="flex-1">
+                        <div className="font-medium flex items-center gap-2">
+                          {supplier.name}
+                          {!supplier.is_active && (
+                            <span className="text-xs text-muted-foreground">(inaktiv)</span>
+                          )}
+                        </div>
+                        <div className="text-sm text-muted-foreground">
+                          {supplier.article_count} Artikel
+                          {supplier.contact_email && ` • ${supplier.contact_email}`}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => {
+                            setEditingSupplier(supplier);
+                            setSupplierDialogOpen(true);
+                          }}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="text-destructive hover:text-destructive"
+                          onClick={() => setDeleteSupplier(supplier)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))
+                )}
+
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => {
+                    setEditingSupplier(null);
+                    setSupplierDialogOpen(true);
+                  }}
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Neuen Lieferanten anlegen
+                </Button>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+
           {/* Supplier Linking */}
           <AccordionItem value="linking" className="border-b">
             <AccordionTrigger className="group px-4 py-3 hover:no-underline hover:bg-muted/50 data-[state=open]:bg-primary/5">
@@ -472,6 +647,40 @@ const B2BSettingsTab = ({ account, onUpdate }: B2BSettingsTabProps) => {
           {loading ? 'Speichern...' : 'Einstellungen speichern'}
         </Button>
       </div>
+
+      {/* Supplier Form Dialog */}
+      <B2BSupplierFormDialog
+        open={supplierDialogOpen}
+        onOpenChange={setSupplierDialogOpen}
+        supplier={editingSupplier}
+        accountId={account.id}
+        onSuccess={() => {
+          loadB2bSuppliers();
+          onUpdate();
+        }}
+      />
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!deleteSupplier} onOpenChange={() => setDeleteSupplier(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Lieferant löschen?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Möchten Sie den Lieferanten "{deleteSupplier?.name}" wirklich löschen?
+              Diese Aktion kann nicht rückgängig gemacht werden.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteSupplier}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Löschen
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
