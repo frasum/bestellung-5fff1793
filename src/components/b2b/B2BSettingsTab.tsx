@@ -69,16 +69,18 @@ interface B2BSupplier {
 interface B2BSettingsTabProps {
   account: B2BAccount;
   onUpdate: () => void;
+  selectedSupplierId?: string;
+  suppliers?: { id: string; name: string }[];
+  onSuppliersChange?: () => void;
 }
 
-const B2BSettingsTab = ({ account, onUpdate }: B2BSettingsTabProps) => {
+const B2BSettingsTab = ({ account, onUpdate, selectedSupplierId, suppliers: dashboardSuppliers, onSuppliersChange }: B2BSettingsTabProps) => {
   const [loading, setLoading] = useState(false);
-  const [companyName, setCompanyName] = useState(account.company_name);
   const [primaryColor, setPrimaryColor] = useState(account.primary_color);
   const [secondaryColor, setSecondaryColor] = useState(account.secondary_color);
   const [welcomeMessage, setWelcomeMessage] = useState(account.welcome_message || '');
   const [linkedSupplierId, setLinkedSupplierId] = useState(account.linked_supplier_id || 'none');
-  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const [bestellungSuppliers, setBestellungSuppliers] = useState<Supplier[]>([]);
   const [copied, setCopied] = useState(false);
   const [logoUrl, setLogoUrl] = useState(account.logo_url);
   const [uploadingLogo, setUploadingLogo] = useState(false);
@@ -88,16 +90,36 @@ const B2BSettingsTab = ({ account, onUpdate }: B2BSettingsTabProps) => {
   const [loadingB2bSuppliers, setLoadingB2bSuppliers] = useState(false);
   const [supplierDialogOpen, setSupplierDialogOpen] = useState(false);
   const [editingSupplier, setEditingSupplier] = useState<B2BSupplier | null>(null);
-  const [deleteSupplier, setDeleteSupplier] = useState<B2BSupplier | null>(null);
+  const [deleteSupplierToDelete, setDeleteSupplierToDelete] = useState<B2BSupplier | null>(null);
+
+  // Selected Supplier Profile (Lieferanten-Profil)
+  const [supplierName, setSupplierName] = useState('');
+  const [supplierEmail, setSupplierEmail] = useState('');
+  const [supplierPhone, setSupplierPhone] = useState('');
+  const [supplierDescription, setSupplierDescription] = useState('');
+  const [savingSupplier, setSavingSupplier] = useState(false);
 
   const portalUrl = `${window.location.origin}/b2b/portal/${account.subdomain}`;
 
   useEffect(() => {
-    loadSuppliers();
+    loadBestellungSuppliers();
     loadB2bSuppliers();
   }, []);
 
-  const loadSuppliers = async () => {
+  // Load selected supplier data when selectedSupplierId changes
+  useEffect(() => {
+    if (selectedSupplierId && b2bSuppliers.length > 0) {
+      const supplier = b2bSuppliers.find(s => s.id === selectedSupplierId);
+      if (supplier) {
+        setSupplierName(supplier.name);
+        setSupplierEmail(supplier.contact_email || '');
+        setSupplierPhone(supplier.contact_phone || '');
+        setSupplierDescription(supplier.description || '');
+      }
+    }
+  }, [selectedSupplierId, b2bSuppliers]);
+
+  const loadBestellungSuppliers = async () => {
     try {
       let allSuppliers: Supplier[] = [];
 
@@ -142,7 +164,7 @@ const B2BSettingsTab = ({ account, onUpdate }: B2BSettingsTabProps) => {
         }
       }
 
-      setSuppliers(allSuppliers);
+      setBestellungSuppliers(allSuppliers);
     } catch (error) {
       console.error('Error loading suppliers:', error);
     }
@@ -179,12 +201,12 @@ const B2BSettingsTab = ({ account, onUpdate }: B2BSettingsTabProps) => {
   };
 
   const handleDeleteSupplier = async () => {
-    if (!deleteSupplier) return;
+    if (!deleteSupplierToDelete) return;
 
     // Check for articles
-    if (deleteSupplier.article_count && deleteSupplier.article_count > 0) {
-      toast.error(`Lieferant hat ${deleteSupplier.article_count} Artikel. Bitte löschen Sie zuerst alle Artikel.`);
-      setDeleteSupplier(null);
+    if (deleteSupplierToDelete.article_count && deleteSupplierToDelete.article_count > 0) {
+      toast.error(`Lieferant hat ${deleteSupplierToDelete.article_count} Artikel. Bitte löschen Sie zuerst alle Artikel.`);
+      setDeleteSupplierToDelete(null);
       return;
     }
 
@@ -192,18 +214,48 @@ const B2BSettingsTab = ({ account, onUpdate }: B2BSettingsTabProps) => {
       const { error } = await supabase
         .from('b2b_suppliers')
         .delete()
-        .eq('id', deleteSupplier.id);
+        .eq('id', deleteSupplierToDelete.id);
 
       if (error) throw error;
 
       toast.success('Lieferant gelöscht');
       loadB2bSuppliers();
+      onSuppliersChange?.();
       onUpdate();
     } catch (error: any) {
       console.error('Error deleting supplier:', error);
       toast.error('Fehler beim Löschen');
     } finally {
-      setDeleteSupplier(null);
+      setDeleteSupplierToDelete(null);
+    }
+  };
+
+  const handleSaveSupplier = async () => {
+    if (!selectedSupplierId) return;
+    
+    setSavingSupplier(true);
+    try {
+      const { error } = await supabase
+        .from('b2b_suppliers')
+        .update({
+          name: supplierName,
+          contact_email: supplierEmail || null,
+          contact_phone: supplierPhone || null,
+          description: supplierDescription || null,
+        })
+        .eq('id', selectedSupplierId);
+
+      if (error) throw error;
+
+      toast.success('Lieferanten-Daten gespeichert');
+      loadB2bSuppliers();
+      onSuppliersChange?.();
+      onUpdate();
+    } catch (error: any) {
+      console.error('Error saving supplier:', error);
+      toast.error('Fehler beim Speichern');
+    } finally {
+      setSavingSupplier(false);
     }
   };
 
@@ -214,7 +266,6 @@ const B2BSettingsTab = ({ account, onUpdate }: B2BSettingsTabProps) => {
       const { error } = await supabase
         .from('supplier_b2b_accounts')
         .update({
-          company_name: companyName,
           primary_color: primaryColor,
           secondary_color: secondaryColor,
           welcome_message: welcomeMessage || null,
@@ -224,7 +275,7 @@ const B2BSettingsTab = ({ account, onUpdate }: B2BSettingsTabProps) => {
 
       if (error) throw error;
 
-      toast.success('Einstellungen gespeichert');
+      toast.success('Portal-Einstellungen gespeichert');
       onUpdate();
     } catch (error: any) {
       console.error('Error saving settings:', error);
@@ -328,6 +379,69 @@ const B2BSettingsTab = ({ account, onUpdate }: B2BSettingsTabProps) => {
     <div className="space-y-6">
       <Card>
         <Accordion type="multiple" className="w-full">
+          {/* Selected Supplier Profile - First section */}
+          {selectedSupplierId && (
+            <AccordionItem value="supplier-profile" className="border-b">
+              <AccordionTrigger className="group px-4 py-3 hover:no-underline hover:bg-muted/50 data-[state=open]:bg-primary/5">
+                <div className="flex items-center gap-2">
+                  <Truck className="h-4 w-4 text-muted-foreground group-data-[state=open]:text-primary transition-colors" />
+                  <span className="font-medium group-data-[state=open]:text-primary transition-colors">
+                    Lieferanten-Profil: {supplierName}
+                  </span>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent className="px-4 pb-4 bg-primary/5">
+                <p className="text-sm text-muted-foreground mb-4">
+                  Bearbeiten Sie die Daten des ausgewählten Lieferanten
+                </p>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="supplierName">Name</Label>
+                    <Input
+                      id="supplierName"
+                      value={supplierName}
+                      onChange={(e) => setSupplierName(e.target.value)}
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="supplierEmail">E-Mail</Label>
+                      <Input
+                        id="supplierEmail"
+                        type="email"
+                        value={supplierEmail}
+                        onChange={(e) => setSupplierEmail(e.target.value)}
+                        placeholder="kontakt@lieferant.de"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="supplierPhone">Telefon</Label>
+                      <Input
+                        id="supplierPhone"
+                        value={supplierPhone}
+                        onChange={(e) => setSupplierPhone(e.target.value)}
+                        placeholder="+49 123 456789"
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="supplierDescription">Beschreibung</Label>
+                    <Textarea
+                      id="supplierDescription"
+                      value={supplierDescription}
+                      onChange={(e) => setSupplierDescription(e.target.value)}
+                      placeholder="Beschreibung des Lieferanten..."
+                      rows={3}
+                    />
+                  </div>
+                  <Button onClick={handleSaveSupplier} disabled={savingSupplier}>
+                    {savingSupplier ? 'Speichern...' : 'Lieferanten-Daten speichern'}
+                  </Button>
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          )}
+
           {/* B2B Suppliers Management */}
           <AccordionItem value="b2b-suppliers" className="border-b">
             <AccordionTrigger className="group px-4 py-3 hover:no-underline hover:bg-muted/50 data-[state=open]:bg-primary/5">
@@ -386,7 +500,7 @@ const B2BSettingsTab = ({ account, onUpdate }: B2BSettingsTabProps) => {
                           variant="ghost"
                           size="icon"
                           className="text-destructive hover:text-destructive"
-                          onClick={() => setDeleteSupplier(supplier)}
+                          onClick={() => setDeleteSupplierToDelete(supplier)}
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -432,7 +546,7 @@ const B2BSettingsTab = ({ account, onUpdate }: B2BSettingsTabProps) => {
                   </SelectTrigger>
                   <SelectContent className="bg-card border border-border z-50">
                     <SelectItem value="none">Keine Verknüpfung</SelectItem>
-                    {suppliers
+                    {bestellungSuppliers
                       .filter((supplier) => supplier.id && supplier.id.trim() !== '')
                       .map((supplier) => (
                         <SelectItem key={supplier.id} value={supplier.id}>
@@ -479,26 +593,18 @@ const B2BSettingsTab = ({ account, onUpdate }: B2BSettingsTabProps) => {
             </AccordionContent>
           </AccordionItem>
 
-          {/* Company Info */}
+          {/* Portal Settings (Account-level) */}
           <AccordionItem value="company" className="border-b">
             <AccordionTrigger className="group px-4 py-3 hover:no-underline hover:bg-muted/50 data-[state=open]:bg-primary/5">
               <div className="flex items-center gap-2">
                 <Building2 className="h-4 w-4 text-muted-foreground group-data-[state=open]:text-primary transition-colors" />
                 <span className="font-medium group-data-[state=open]:text-primary transition-colors">
-                  Unternehmensdaten
+                  Portal-Einstellungen
                 </span>
               </div>
             </AccordionTrigger>
             <AccordionContent className="px-4 pb-4 bg-primary/5">
               <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="companyName">Firmenname</Label>
-                  <Input
-                    id="companyName"
-                    value={companyName}
-                    onChange={(e) => setCompanyName(e.target.value)}
-                  />
-                </div>
                 <div className="space-y-2">
                   <Label htmlFor="welcomeMessage">Willkommensnachricht</Label>
                   <Textarea
@@ -661,12 +767,12 @@ const B2BSettingsTab = ({ account, onUpdate }: B2BSettingsTabProps) => {
       />
 
       {/* Delete Confirmation Dialog */}
-      <AlertDialog open={!!deleteSupplier} onOpenChange={() => setDeleteSupplier(null)}>
+      <AlertDialog open={!!deleteSupplierToDelete} onOpenChange={() => setDeleteSupplierToDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Lieferant löschen?</AlertDialogTitle>
             <AlertDialogDescription>
-              Möchten Sie den Lieferanten "{deleteSupplier?.name}" wirklich löschen?
+              Möchten Sie den Lieferanten "{deleteSupplierToDelete?.name}" wirklich löschen?
               Diese Aktion kann nicht rückgängig gemacht werden.
             </AlertDialogDescription>
           </AlertDialogHeader>
