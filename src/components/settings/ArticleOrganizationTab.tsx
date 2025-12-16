@@ -11,7 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { Search, CheckSquare, Square, Loader2, BarChart3 } from 'lucide-react';
+import { Search, CheckSquare, Square, Loader2, BarChart3, ChevronUp, ChevronDown } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useArticles, useBulkUpdateArticles, useUpdateArticle } from '@/hooks/useArticles';
@@ -63,6 +63,10 @@ export const ArticleOrganizationTab = () => {
   const [editingArticle, setEditingArticle] = useState<ArticleWithTopCategory | null>(null);
   const [isSupplierDialogOpen, setIsSupplierDialogOpen] = useState(false);
   const [editingSupplier, setEditingSupplier] = useState<Supplier | null>(null);
+  
+  // Sorting state
+  const [sortField, setSortField] = useState<'name' | 'supplier' | 'unit' | 'price' | 'bePrice'>('supplier');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   
   // Advanced settings state (from localStorage)
   const [advancedSettingsEnabled, setAdvancedSettingsEnabled] = useState(() => 
@@ -159,12 +163,45 @@ export const ArticleOrganizationTab = () => {
         if (aIncomplete && !bIncomplete) return -1;
         if (!aIncomplete && bIncomplete) return 1;
         
-        // Dann nach Lieferant und Name sortieren
-        const supplierCompare = (a.suppliers?.name || '').localeCompare(b.suppliers?.name || '', 'de');
-        if (supplierCompare !== 0) return supplierCompare;
-        return a.name.localeCompare(b.name, 'de');
+        // Dann nach gewähltem Feld sortieren
+        const direction = sortDirection === 'asc' ? 1 : -1;
+        
+        switch (sortField) {
+          case 'name':
+            return direction * a.name.localeCompare(b.name, 'de');
+          case 'supplier':
+            return direction * (a.suppliers?.name || '').localeCompare(b.suppliers?.name || '', 'de');
+          case 'unit':
+            return direction * (a.unit || '').localeCompare(b.unit || '', 'de');
+          case 'price':
+            return direction * ((a.price || 0) - (b.price || 0));
+          case 'bePrice':
+            const aBe = a.price * (a.packaging_unit && a.packaging_unit > 1 ? a.packaging_unit : 1);
+            const bBe = b.price * (b.packaging_unit && b.packaging_unit > 1 ? b.packaging_unit : 1);
+            return direction * (aBe - bBe);
+          default:
+            return 0;
+        }
       });
-  }, [articlesWithTopCategory, searchQuery, filterTopCategory, filterMainCategory, filterSupplier, filterOrderUnit, filterUnassigned, filterNoOrderUnit, filterNoPackaging]);
+  }, [articlesWithTopCategory, searchQuery, filterTopCategory, filterMainCategory, filterSupplier, filterOrderUnit, filterUnassigned, filterNoOrderUnit, filterNoPackaging, sortField, sortDirection]);
+
+  // Sort handler
+  const handleSort = (field: typeof sortField) => {
+    if (sortField === field) {
+      setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
+    }
+  };
+
+  // Sort indicator component
+  const SortIndicator = ({ field }: { field: typeof sortField }) => {
+    if (sortField !== field) return null;
+    return sortDirection === 'asc' 
+      ? <ChevronUp className="h-4 w-4" />
+      : <ChevronDown className="h-4 w-4" />;
+  };
 
   // Selection handlers
   const toggleSelect = (id: string) => {
@@ -571,13 +608,53 @@ export const ArticleOrganizationTab = () => {
                       </Button>
                     </TableHead>
                   )}
-                  <TableHead>{t('articles.articleName')}</TableHead>
-                  <TableHead className="hidden sm:table-cell">{t('articles.supplier')}</TableHead>
-                  <TableHead className="hidden md:table-cell">Einheit</TableHead>
+                  <TableHead 
+                    className="cursor-pointer hover:bg-muted/50 select-none"
+                    onClick={() => handleSort('name')}
+                  >
+                    <div className="flex items-center gap-1">
+                      {t('articles.articleName')}
+                      <SortIndicator field="name" />
+                    </div>
+                  </TableHead>
+                  <TableHead 
+                    className="hidden sm:table-cell cursor-pointer hover:bg-muted/50 select-none"
+                    onClick={() => handleSort('supplier')}
+                  >
+                    <div className="flex items-center gap-1">
+                      {t('articles.supplier')}
+                      <SortIndicator field="supplier" />
+                    </div>
+                  </TableHead>
+                  <TableHead 
+                    className="hidden md:table-cell cursor-pointer hover:bg-muted/50 select-none"
+                    onClick={() => handleSort('unit')}
+                  >
+                    <div className="flex items-center gap-1">
+                      Einheit
+                      <SortIndicator field="unit" />
+                    </div>
+                  </TableHead>
                   <TableHead>{t('settings.orderUnitsShort')}</TableHead>
                   <TableHead className="w-[80px]">Stk/BE</TableHead>
-                  <TableHead className="hidden lg:table-cell text-right">Preis</TableHead>
-                  <TableHead className="text-right">BE-Preis</TableHead>
+                  <TableHead 
+                    className="hidden lg:table-cell text-right cursor-pointer hover:bg-muted/50 select-none"
+                    onClick={() => handleSort('price')}
+                  >
+                    <div className="flex items-center justify-end gap-1">
+                      Preis
+                      <SortIndicator field="price" />
+                    </div>
+                  </TableHead>
+                  <TableHead 
+                    className="text-right cursor-pointer hover:bg-muted/50 select-none"
+                    onClick={() => handleSort('bePrice')}
+                  >
+                    <div className="flex items-center justify-end gap-1">
+                      BE-Preis
+                      <SortIndicator field="bePrice" />
+                    </div>
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
