@@ -20,17 +20,15 @@ import {
   Loader2, 
   Building2, 
   Package, 
-  Users,
-  BarChart3,
-  Mail,
   FileText,
 } from 'lucide-react';
 
 interface B2BUpgradePricingDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  customerId: string;
-  customerEmail: string;
+  type: 'customer' | 'supplier';
+  entityId: string; // customerId or accountId
+  email: string;
   companyName: string;
   vendorCount: number;
   articleCount: number;
@@ -84,8 +82,9 @@ type Step = 'pricing' | 'account' | 'migration';
 export default function B2BUpgradePricingDialog({
   open,
   onOpenChange,
-  customerId,
-  customerEmail,
+  type,
+  entityId,
+  email,
   companyName,
   vendorCount,
   articleCount,
@@ -123,14 +122,26 @@ export default function B2BUpgradePricingDialog({
     setUpgrading(true);
 
     try {
+      const body = type === 'customer' 
+        ? {
+            type: 'customer',
+            customer_id: entityId,
+            email,
+            password,
+            organization_name: organizationName,
+            subscription_tier: selectedPlan,
+          }
+        : {
+            type: 'supplier',
+            account_id: entityId,
+            email,
+            password,
+            organization_name: organizationName,
+            subscription_tier: selectedPlan,
+          };
+
       const { data, error } = await supabase.functions.invoke('upgrade-b2b-customer', {
-        body: {
-          customer_id: customerId,
-          email: customerEmail,
-          password,
-          organization_name: organizationName,
-          subscription_tier: selectedPlan,
-        },
+        body,
       });
 
       if (error) throw error;
@@ -172,7 +183,7 @@ export default function B2BUpgradePricingDialog({
             <div className="bg-gradient-to-r from-primary/10 to-primary/5 rounded-lg p-4 text-center">
               <Badge variant="secondary" className="mb-2">B2B Upgrade Rabatt</Badge>
               <p className="text-sm text-muted-foreground">
-                Als bestehender B2B-Kunde erhalten Sie dauerhaft vergünstigte Preise
+                Als bestehender B2B-{type === 'customer' ? 'Kunde' : 'Lieferant'} erhalten Sie dauerhaft vergünstigte Preise
               </p>
             </div>
 
@@ -236,7 +247,7 @@ export default function B2BUpgradePricingDialog({
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label>E-Mail</Label>
-                <Input value={customerEmail} disabled className="bg-muted" />
+                <Input value={email} disabled className="bg-muted" />
                 <p className="text-xs text-muted-foreground">
                   Ihre E-Mail-Adresse wird als Login verwendet
                 </p>
@@ -332,7 +343,7 @@ export default function B2BUpgradePricingDialog({
                   </li>
                   <li className="flex items-center gap-2">
                     <Check className="h-4 w-4 text-green-600" />
-                    Bestellhistorie bleibt erhalten
+                    {type === 'customer' ? 'Bestellhistorie' : 'Kunden und Bestellungen'} bleiben erhalten
                   </li>
                   <li className="flex items-center gap-2">
                     <Check className="h-4 w-4 text-green-600" />
@@ -347,7 +358,7 @@ export default function B2BUpgradePricingDialog({
               <div className="text-sm space-y-1 text-muted-foreground">
                 <p>Plan: <span className="text-foreground font-medium">{selectedPlanData.name}</span></p>
                 <p>Preis: <span className="text-foreground font-medium">€{selectedPlanData.upgradePrice}/Monat</span></p>
-                <p>E-Mail: <span className="text-foreground font-medium">{customerEmail}</span></p>
+                <p>E-Mail: <span className="text-foreground font-medium">{email}</span></p>
                 <p>Firma: <span className="text-foreground font-medium">{organizationName}</span></p>
               </div>
             </div>
