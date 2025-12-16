@@ -188,7 +188,11 @@ const B2BSupplierDashboard = () => {
 
   const openCustomerPortal = () => {
     if (account) {
-      window.open(`/b2b/portal/${account.subdomain}`, '_blank');
+      let url = `/b2b/portal/${account.subdomain}`;
+      if (selectedSupplierId) {
+        url += `?preview_supplier=${selectedSupplierId}`;
+      }
+      window.open(url, '_blank');
     }
   };
 

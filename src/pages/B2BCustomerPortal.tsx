@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
-import { Loader2, ShoppingCart, LogOut, Package, Search, Plus, Minus, Lock, CheckCircle, ArrowLeft } from 'lucide-react';
+import { Loader2, ShoppingCart, LogOut, Package, Search, Plus, Minus, Lock, CheckCircle, ArrowLeft, Eye } from 'lucide-react';
 
 interface Article {
   id: string;
@@ -44,6 +44,10 @@ type ViewState = 'catalog' | 'checkout' | 'confirmation';
 export default function B2BCustomerPortal() {
   const navigate = useNavigate();
   const { subdomain } = useParams<{ subdomain?: string }>();
+  const [searchParams] = useSearchParams();
+  const previewSupplierId = searchParams.get('preview_supplier');
+
+  const [previewSupplierName, setPreviewSupplierName] = useState<string | null>(null);
 
   const [loading, setLoading] = useState(true);
   const [needsLogin, setNeedsLogin] = useState(false);
@@ -68,12 +72,61 @@ export default function B2BCustomerPortal() {
   useEffect(() => {
     void checkAuthAndLoadData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [previewSupplierId]);
 
   const checkAuthAndLoadData = async () => {
     setLoading(true);
 
     try {
+      // If in preview mode, load articles for preview supplier without login
+      if (previewSupplierId && subdomain) {
+        // Get account by subdomain
+        const { data: accountData } = await supabase
+          .from('supplier_b2b_accounts')
+          .select('id, company_name')
+          .eq('subdomain', subdomain)
+          .single();
+
+        if (!accountData) {
+          setNeedsLogin(true);
+          return;
+        }
+
+        // Get supplier name for preview banner
+        const { data: supplierData } = await supabase
+          .from('b2b_suppliers')
+          .select('name')
+          .eq('id', previewSupplierId)
+          .single();
+
+        setPreviewSupplierName(supplierData?.name || 'Lieferant');
+
+        // Set minimal customer info for preview
+        setCustomerInfo({
+          id: 'preview',
+          companyName: 'Vorschau',
+          supplierAccountId: accountData.id,
+          supplierName: accountData.company_name,
+          supplierSubdomain: subdomain,
+          deliveryAddress: null,
+        });
+
+        // Load articles filtered by preview supplier
+        const { data: articlesData } = await supabase
+          .from('supplier_b2b_articles')
+          .select('*')
+          .eq('supplier_account_id', accountData.id)
+          .eq('supplier_id', previewSupplierId)
+          .eq('is_active', true)
+          .order('category', { ascending: true })
+          .order('name', { ascending: true });
+
+        setArticles((articlesData || []) as Article[]);
+        setNeedsLogin(false);
+        setLoading(false);
+        return;
+      }
+
       const { data: { user } } = await supabase.auth.getUser();
 
       if (!user) {
@@ -481,24 +534,35 @@ export default function B2BCustomerPortal() {
   // Catalog View (default)
   return (
     <div className="min-h-screen bg-background">
+      {/* Preview Mode Banner */}
+      {previewSupplierId && previewSupplierName && (
+        <div className="bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-200 px-4 py-2 text-center text-sm flex items-center justify-center gap-2">
+          <Eye className="h-4 w-4" />
+          <span>Vorschau-Modus: Sie sehen das Portal als Kunde von „{previewSupplierName}"</span>
+        </div>
+      )}
       <header className="sticky top-0 z-50 bg-background border-b">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
           <div>
-            <h1 className="text-xl font-bold">{customerInfo.supplierName}</h1>
-            <p className="text-sm text-muted-foreground">{customerInfo.companyName}</p>
+            <h1 className="text-xl font-bold">{previewSupplierName || customerInfo.supplierName}</h1>
+            <p className="text-sm text-muted-foreground">{previewSupplierId ? 'Vorschau' : customerInfo.companyName}</p>
           </div>
           <nav className="flex items-center gap-3" aria-label="Portal actions">
-            <Button variant="outline" size="icon" className="relative" aria-label="Warenkorb">
-              <ShoppingCart className="h-5 w-5" />
-              {cartItemCount > 0 && (
-                <Badge className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center text-xs">
-                  {cartItemCount}
-                </Badge>
-              )}
-            </Button>
-            <Button variant="ghost" size="icon" onClick={handleLogout} aria-label="Abmelden">
-              <LogOut className="h-5 w-5" />
-            </Button>
+            {!previewSupplierId && (
+              <>
+                <Button variant="outline" size="icon" className="relative" aria-label="Warenkorb">
+                  <ShoppingCart className="h-5 w-5" />
+                  {cartItemCount > 0 && (
+                    <Badge className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center text-xs">
+                      {cartItemCount}
+                    </Badge>
+                  )}
+                </Button>
+                <Button variant="ghost" size="icon" onClick={handleLogout} aria-label="Abmelden">
+                  <LogOut className="h-5 w-5" />
+                </Button>
+              </>
+            )}
           </nav>
         </div>
       </header>
@@ -545,33 +609,37 @@ export default function B2BCustomerPortal() {
                             <span className="text-lg font-bold">€{article.base_price.toFixed(2)}</span>
                             <span className="text-sm text-muted-foreground ml-1">/ {article.unit}</span>
                           </div>
-                          {qty === 0 ? (
-                            <Button size="sm" onClick={() => addToCart(article)}>
-                              <Plus className="h-4 w-4 mr-1" />
-                              Hinzufügen
-                            </Button>
-                          ) : (
-                            <div className="flex items-center gap-2">
-                              <Button
-                                size="icon"
-                                variant="outline"
-                                className="h-8 w-8"
-                                onClick={() => updateQuantity(article.id, -1)}
-                                aria-label="Menge reduzieren"
-                              >
-                                <Minus className="h-4 w-4" />
-                              </Button>
-                              <span className="w-8 text-center font-medium">{qty}</span>
-                              <Button
-                                size="icon"
-                                variant="outline"
-                                className="h-8 w-8"
-                                onClick={() => updateQuantity(article.id, 1)}
-                                aria-label="Menge erhöhen"
-                              >
-                                <Plus className="h-4 w-4" />
-                              </Button>
-                            </div>
+                          {!previewSupplierId && (
+                            <>
+                              {qty === 0 ? (
+                                <Button size="sm" onClick={() => addToCart(article)}>
+                                  <Plus className="h-4 w-4 mr-1" />
+                                  Hinzufügen
+                                </Button>
+                              ) : (
+                                <div className="flex items-center gap-2">
+                                  <Button
+                                    size="icon"
+                                    variant="outline"
+                                    className="h-8 w-8"
+                                    onClick={() => updateQuantity(article.id, -1)}
+                                    aria-label="Menge reduzieren"
+                                  >
+                                    <Minus className="h-4 w-4" />
+                                  </Button>
+                                  <span className="w-8 text-center font-medium">{qty}</span>
+                                  <Button
+                                    size="icon"
+                                    variant="outline"
+                                    className="h-8 w-8"
+                                    onClick={() => updateQuantity(article.id, 1)}
+                                    aria-label="Menge erhöhen"
+                                  >
+                                    <Plus className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              )}
+                            </>
                           )}
                         </div>
                       </CardContent>
@@ -591,7 +659,7 @@ export default function B2BCustomerPortal() {
         </section>
       </main>
 
-      {cart.length > 0 && (
+      {cart.length > 0 && !previewSupplierId && (
         <aside className="fixed bottom-0 left-0 right-0 bg-background border-t p-4 shadow-lg" aria-label="Warenkorb Übersicht">
           <div className="container mx-auto flex items-center justify-between">
             <div>
