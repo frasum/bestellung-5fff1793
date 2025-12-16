@@ -8,6 +8,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { toast } from 'sonner';
 import {
   Building2,
@@ -21,6 +28,7 @@ import {
   TrendingUp,
   FileText,
   Truck,
+  Filter,
 } from 'lucide-react';
 import B2BArticlesTab from '@/components/b2b/B2BArticlesTab';
 import B2BCustomersTab from '@/components/b2b/B2BCustomersTab';
@@ -43,6 +51,11 @@ interface B2BAccount {
   linked_supplier_id: string | null;
 }
 
+interface B2BSupplier {
+  id: string;
+  name: string;
+}
+
 interface DashboardStats {
   totalArticles: number;
   totalCustomers: number;
@@ -56,6 +69,8 @@ const B2BSupplierDashboard = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [account, setAccount] = useState<B2BAccount | null>(null);
+  const [suppliers, setSuppliers] = useState<B2BSupplier[]>([]);
+  const [selectedSupplierId, setSelectedSupplierId] = useState<string>('all');
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
@@ -86,7 +101,10 @@ const B2BSupplierDashboard = () => {
       }
 
       setAccount(accountData);
-      await loadStats(accountData.id);
+      await Promise.all([
+        loadSuppliers(accountData.id),
+        loadStats(accountData.id),
+      ]);
     } catch (error: any) {
       console.error('Error loading account:', error);
       toast.error('Fehler beim Laden des Kontos');
@@ -95,13 +113,37 @@ const B2BSupplierDashboard = () => {
     }
   };
 
-  const loadStats = async (accountId: string) => {
+  const loadSuppliers = async (accountId: string) => {
+    const { data, error } = await supabase
+      .from('b2b_suppliers')
+      .select('id, name')
+      .eq('account_id', accountId)
+      .order('sort_order', { ascending: true });
+
+    if (!error && data) {
+      setSuppliers(data);
+    }
+  };
+
+  const loadStats = async (accountId: string, supplierId?: string) => {
     try {
+      let articlesQuery = supabase
+        .from('supplier_b2b_articles')
+        .select('id', { count: 'exact', head: true })
+        .eq('supplier_account_id', accountId);
+
+      let ordersQuery = supabase
+        .from('supplier_b2b_orders')
+        .select('id, status', { count: 'exact' })
+        .eq('supplier_account_id', accountId);
+
+      if (supplierId && supplierId !== 'all') {
+        articlesQuery = articlesQuery.eq('supplier_id', supplierId);
+        ordersQuery = ordersQuery.eq('supplier_id', supplierId);
+      }
+
       const [articlesRes, customersRes, suppliersRes, ordersRes] = await Promise.all([
-        supabase
-          .from('supplier_b2b_articles')
-          .select('id', { count: 'exact', head: true })
-          .eq('supplier_account_id', accountId),
+        articlesQuery,
         supabase
           .from('supplier_b2b_customers')
           .select('id', { count: 'exact', head: true })
@@ -110,10 +152,7 @@ const B2BSupplierDashboard = () => {
           .from('b2b_suppliers')
           .select('id', { count: 'exact', head: true })
           .eq('account_id', accountId),
-        supabase
-          .from('supplier_b2b_orders')
-          .select('id, status', { count: 'exact' })
-          .eq('supplier_account_id', accountId),
+        ordersQuery,
       ]);
 
       const pendingOrders = ordersRes.data?.filter(o => o.status === 'pending').length || 0;
@@ -130,6 +169,13 @@ const B2BSupplierDashboard = () => {
     }
   };
 
+  const handleSupplierChange = (supplierId: string) => {
+    setSelectedSupplierId(supplierId);
+    if (account) {
+      loadStats(account.id, supplierId);
+    }
+  };
+
   const handleLogout = async () => {
     await supabase.auth.signOut();
     navigate('/b2b/login');
@@ -137,7 +183,6 @@ const B2BSupplierDashboard = () => {
 
   const openCustomerPortal = () => {
     if (account) {
-      // In production, this would be the subdomain URL
       window.open(`/b2b/portal/${account.subdomain}`, '_blank');
     }
   };
@@ -158,6 +203,10 @@ const B2BSupplierDashboard = () => {
   }
 
   if (!account) return null;
+
+  const selectedSupplierName = selectedSupplierId === 'all' 
+    ? 'Alle Lieferanten' 
+    : suppliers.find(s => s.id === selectedSupplierId)?.name || '';
 
   return (
     <div className="min-h-screen bg-background">
@@ -200,41 +249,61 @@ const B2BSupplierDashboard = () => {
       {/* Main Content */}
       <main className="max-w-7xl mx-auto p-4 md:p-6">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-7 lg:w-auto lg:inline-grid">
-            <TabsTrigger value="overview" className="gap-2">
-              <TrendingUp className="h-4 w-4" />
-              <span className="hidden sm:inline">Übersicht</span>
-            </TabsTrigger>
-            <TabsTrigger value="suppliers" className="gap-2">
-              <Truck className="h-4 w-4" />
-              <span className="hidden sm:inline">Lieferanten</span>
-            </TabsTrigger>
-            <TabsTrigger value="articles" className="gap-2">
-              <Package className="h-4 w-4" />
-              <span className="hidden sm:inline">Artikel</span>
-            </TabsTrigger>
-            <TabsTrigger value="customers" className="gap-2">
-              <Users className="h-4 w-4" />
-              <span className="hidden sm:inline">Kunden</span>
-            </TabsTrigger>
-            <TabsTrigger value="offers" className="gap-2">
-              <FileText className="h-4 w-4" />
-              <span className="hidden sm:inline">Angebote</span>
-            </TabsTrigger>
-            <TabsTrigger value="orders" className="gap-2">
-              <ShoppingCart className="h-4 w-4" />
-              <span className="hidden sm:inline">Bestellungen</span>
-              {stats?.pendingOrders ? (
-                <Badge variant="destructive" className="ml-1 h-5 w-5 p-0 flex items-center justify-center text-xs">
-                  {stats.pendingOrders}
-                </Badge>
-              ) : null}
-            </TabsTrigger>
-            <TabsTrigger value="settings" className="gap-2">
-              <Settings className="h-4 w-4" />
-              <span className="hidden sm:inline">Einstellungen</span>
-            </TabsTrigger>
-          </TabsList>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <TabsList className="grid w-full grid-cols-7 lg:w-auto lg:inline-grid">
+              <TabsTrigger value="overview" className="gap-2">
+                <TrendingUp className="h-4 w-4" />
+                <span className="hidden sm:inline">Übersicht</span>
+              </TabsTrigger>
+              <TabsTrigger value="suppliers" className="gap-2">
+                <Truck className="h-4 w-4" />
+                <span className="hidden sm:inline">Lieferanten</span>
+              </TabsTrigger>
+              <TabsTrigger value="articles" className="gap-2">
+                <Package className="h-4 w-4" />
+                <span className="hidden sm:inline">Artikel</span>
+              </TabsTrigger>
+              <TabsTrigger value="customers" className="gap-2">
+                <Users className="h-4 w-4" />
+                <span className="hidden sm:inline">Kunden</span>
+              </TabsTrigger>
+              <TabsTrigger value="offers" className="gap-2">
+                <FileText className="h-4 w-4" />
+                <span className="hidden sm:inline">Angebote</span>
+              </TabsTrigger>
+              <TabsTrigger value="orders" className="gap-2">
+                <ShoppingCart className="h-4 w-4" />
+                <span className="hidden sm:inline">Bestellungen</span>
+                {stats?.pendingOrders ? (
+                  <Badge variant="destructive" className="ml-1 h-5 w-5 p-0 flex items-center justify-center text-xs">
+                    {stats.pendingOrders}
+                  </Badge>
+                ) : null}
+              </TabsTrigger>
+              <TabsTrigger value="settings" className="gap-2">
+                <Settings className="h-4 w-4" />
+                <span className="hidden sm:inline">Einstellungen</span>
+              </TabsTrigger>
+            </TabsList>
+
+            {/* Global Supplier Selector */}
+            {suppliers.length > 1 && activeTab !== 'suppliers' && activeTab !== 'settings' && activeTab !== 'customers' && (
+              <div className="flex items-center gap-2">
+                <Filter className="h-4 w-4 text-muted-foreground" />
+                <Select value={selectedSupplierId} onValueChange={handleSupplierChange}>
+                  <SelectTrigger className="w-[200px]">
+                    <SelectValue placeholder="Lieferant wählen" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Alle Lieferanten</SelectItem>
+                    {suppliers.map(s => (
+                      <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+          </div>
 
           {/* Overview Tab */}
           <TabsContent value="overview" className="space-y-6">
@@ -255,7 +324,7 @@ const B2BSupplierDashboard = () => {
 
               <Card className="cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => setActiveTab('articles')}>
                 <CardHeader className="pb-2">
-                  <CardDescription>Artikel</CardDescription>
+                  <CardDescription>Artikel {selectedSupplierId !== 'all' && `(${selectedSupplierName})`}</CardDescription>
                   <CardTitle className="text-3xl">{stats?.totalArticles || 0}</CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -281,7 +350,7 @@ const B2BSupplierDashboard = () => {
 
               <Card className="cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => setActiveTab('orders')}>
                 <CardHeader className="pb-2">
-                  <CardDescription>Offene Bestellungen</CardDescription>
+                  <CardDescription>Offene Bestellungen {selectedSupplierId !== 'all' && `(${selectedSupplierName})`}</CardDescription>
                   <CardTitle className="text-3xl text-orange-500">{stats?.pendingOrders || 0}</CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -355,27 +424,47 @@ const B2BSupplierDashboard = () => {
 
           {/* Suppliers Tab */}
           <TabsContent value="suppliers">
-            <B2BSuppliersTab accountId={account.id} onStatsChange={() => loadStats(account.id)} />
+            <B2BSuppliersTab 
+              accountId={account.id} 
+              onStatsChange={() => {
+                loadSuppliers(account.id);
+                loadStats(account.id, selectedSupplierId);
+              }} 
+            />
           </TabsContent>
 
           {/* Articles Tab */}
           <TabsContent value="articles">
-            <B2BArticlesTab accountId={account.id} linkedSupplierId={account.linked_supplier_id} onStatsChange={() => loadStats(account.id)} />
+            <B2BArticlesTab 
+              accountId={account.id} 
+              linkedSupplierId={account.linked_supplier_id} 
+              selectedSupplierId={selectedSupplierId}
+              suppliers={suppliers}
+              onStatsChange={() => loadStats(account.id, selectedSupplierId)} 
+            />
           </TabsContent>
 
           {/* Customers Tab */}
           <TabsContent value="customers">
-            <B2BCustomersTab accountId={account.id} supplierName={account.company_name} onStatsChange={() => loadStats(account.id)} />
+            <B2BCustomersTab accountId={account.id} supplierName={account.company_name} onStatsChange={() => loadStats(account.id, selectedSupplierId)} />
           </TabsContent>
 
           {/* Offers Tab */}
           <TabsContent value="offers">
-            <B2BOffersTab accountId={account.id} />
+            <B2BOffersTab 
+              accountId={account.id} 
+              selectedSupplierId={selectedSupplierId}
+              suppliers={suppliers}
+            />
           </TabsContent>
 
           {/* Orders Tab */}
           <TabsContent value="orders">
-            <B2BOrdersTab accountId={account.id} />
+            <B2BOrdersTab 
+              accountId={account.id} 
+              selectedSupplierId={selectedSupplierId}
+              suppliers={suppliers}
+            />
           </TabsContent>
 
           {/* Settings Tab */}

@@ -20,11 +20,18 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { Plus, Trash2, Loader2 } from 'lucide-react';
 
+interface B2BSupplier {
+  id: string;
+  name: string;
+}
+
 interface B2BOfferFormDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   accountId: string;
   offer?: any;
+  selectedSupplierId?: string;
+  suppliers?: B2BSupplier[];
   onSuccess: () => void;
 }
 
@@ -39,6 +46,7 @@ interface Article {
   name: string;
   base_price: number;
   unit: string;
+  supplier_id: string | null;
 }
 
 interface OfferItem {
@@ -55,11 +63,14 @@ export default function B2BOfferFormDialog({
   onOpenChange,
   accountId,
   offer,
+  selectedSupplierId = 'all',
+  suppliers = [],
   onSuccess,
 }: B2BOfferFormDialogProps) {
   const [customers, setCustomers] = useState<Customer[]>([]);
-  const [articles, setArticles] = useState<Article[]>([]);
+  const [allArticles, setAllArticles] = useState<Article[]>([]);
   const [selectedCustomer, setSelectedCustomer] = useState<string>('');
+  const [supplierId, setSupplierId] = useState<string>('');
   const [validUntil, setValidUntil] = useState<string>('');
   const [notes, setNotes] = useState<string>('');
   const [items, setItems] = useState<OfferItem[]>([]);
@@ -67,11 +78,17 @@ export default function B2BOfferFormDialog({
   const [saving, setSaving] = useState(false);
   const { toast } = useToast();
 
+  // Filter articles by selected supplier
+  const articles = supplierId 
+    ? allArticles.filter(a => a.supplier_id === supplierId)
+    : allArticles;
+
   useEffect(() => {
     if (open) {
       loadData();
       if (offer) {
         setSelectedCustomer(offer.customer.id);
+        setSupplierId(offer.supplier_id || '');
         setValidUntil(offer.valid_until ? offer.valid_until.split('T')[0] : '');
         setNotes(offer.notes || '');
         setItems(
@@ -86,9 +103,15 @@ export default function B2BOfferFormDialog({
         );
       } else {
         resetForm();
+        // Pre-select supplier from global filter
+        if (selectedSupplierId && selectedSupplierId !== 'all') {
+          setSupplierId(selectedSupplierId);
+        } else if (suppliers.length === 1) {
+          setSupplierId(suppliers[0].id);
+        }
       }
     }
-  }, [open, offer]);
+  }, [open, offer, selectedSupplierId, suppliers]);
 
   const loadData = async () => {
     setLoading(true);
@@ -101,7 +124,7 @@ export default function B2BOfferFormDialog({
           .eq('is_active', true),
         supabase
           .from('supplier_b2b_articles')
-          .select('id, name, base_price, unit')
+          .select('id, name, base_price, unit, supplier_id')
           .eq('supplier_account_id', accountId)
           .eq('is_active', true),
       ]);
@@ -110,7 +133,7 @@ export default function B2BOfferFormDialog({
       if (articlesRes.error) throw articlesRes.error;
 
       setCustomers(customersRes.data || []);
-      setArticles(articlesRes.data || []);
+      setAllArticles(articlesRes.data || []);
     } catch (error) {
       console.error('Error loading data:', error);
       toast({
@@ -125,6 +148,7 @@ export default function B2BOfferFormDialog({
 
   const resetForm = () => {
     setSelectedCustomer('');
+    setSupplierId('');
     setValidUntil('');
     setNotes('');
     setItems([]);
@@ -179,6 +203,15 @@ export default function B2BOfferFormDialog({
       return;
     }
 
+    if (suppliers.length > 1 && !supplierId) {
+      toast({
+        title: 'Fehler',
+        description: 'Bitte wählen Sie einen Lieferanten aus.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     if (items.length === 0) {
       toast({
         title: 'Fehler',
@@ -202,6 +235,7 @@ export default function B2BOfferFormDialog({
       const totalAmount = calculateTotal();
       const offerData = {
         supplier_account_id: accountId,
+        supplier_id: supplierId || (suppliers.length === 1 ? suppliers[0].id : null),
         customer_id: selectedCustomer,
         valid_until: validUntil || null,
         notes: notes || null,
@@ -290,6 +324,29 @@ export default function B2BOfferFormDialog({
           </div>
         ) : (
           <div className="space-y-6">
+            {/* Supplier Selection */}
+            {suppliers.length > 1 && (
+              <div className="space-y-2">
+                <Label>Lieferant *</Label>
+                <Select value={supplierId} onValueChange={(value) => {
+                  setSupplierId(value);
+                  // Clear items when supplier changes as articles may differ
+                  setItems([]);
+                }}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Lieferant auswählen..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {suppliers.map((supplier) => (
+                      <SelectItem key={supplier.id} value={supplier.id}>
+                        {supplier.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
             {/* Customer Selection */}
             <div className="space-y-2">
               <Label>Kunde *</Label>
@@ -321,13 +378,23 @@ export default function B2BOfferFormDialog({
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <Label>Artikel *</Label>
-                <Button type="button" size="sm" variant="outline" onClick={addItem}>
+                <Button 
+                  type="button" 
+                  size="sm" 
+                  variant="outline" 
+                  onClick={addItem}
+                  disabled={suppliers.length > 1 && !supplierId}
+                >
                   <Plus className="h-4 w-4 mr-2" />
                   Artikel hinzufügen
                 </Button>
               </div>
 
-              {items.length === 0 ? (
+              {suppliers.length > 1 && !supplierId ? (
+                <p className="text-sm text-muted-foreground text-center py-4">
+                  Bitte wählen Sie zuerst einen Lieferanten aus.
+                </p>
+              ) : items.length === 0 ? (
                 <p className="text-sm text-muted-foreground text-center py-4">
                   Keine Artikel hinzugefügt. Klicken Sie auf "Artikel hinzufügen".
                 </p>

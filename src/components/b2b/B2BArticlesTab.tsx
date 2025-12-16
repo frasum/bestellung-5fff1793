@@ -13,7 +13,6 @@ import {
   Package,
   MoreVertical,
   Download,
-  Filter,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -31,13 +30,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import B2BArticleFormDialog from './B2BArticleFormDialog';
 import B2BArticleImportDialog from './B2BArticleImportDialog';
 
@@ -64,15 +56,16 @@ interface B2BSupplier {
 interface B2BArticlesTabProps {
   accountId: string;
   linkedSupplierId: string | null;
+  selectedSupplierId?: string;
+  suppliers?: B2BSupplier[];
   onStatsChange: () => void;
 }
 
-const B2BArticlesTab = ({ accountId, linkedSupplierId, onStatsChange }: B2BArticlesTabProps) => {
+const B2BArticlesTab = ({ accountId, linkedSupplierId, selectedSupplierId = 'all', suppliers: externalSuppliers, onStatsChange }: B2BArticlesTabProps) => {
   const [articles, setArticles] = useState<B2BArticle[]>([]);
-  const [suppliers, setSuppliers] = useState<B2BSupplier[]>([]);
+  const [suppliers, setSuppliers] = useState<B2BSupplier[]>(externalSuppliers || []);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const [supplierFilter, setSupplierFilter] = useState<string>('all');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingArticle, setEditingArticle] = useState<B2BArticle | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -81,31 +74,45 @@ const B2BArticlesTab = ({ accountId, linkedSupplierId, onStatsChange }: B2BArtic
 
   useEffect(() => {
     loadData();
-  }, [accountId]);
+  }, [accountId, selectedSupplierId]);
+
+  useEffect(() => {
+    if (externalSuppliers) {
+      setSuppliers(externalSuppliers);
+    }
+  }, [externalSuppliers]);
 
   const loadData = async () => {
     try {
-      // Load suppliers first
-      const { data: suppliersData, error: suppliersError } = await supabase
-        .from('b2b_suppliers')
-        .select('id, name')
-        .eq('account_id', accountId)
-        .order('sort_order', { ascending: true });
+      // Load suppliers if not provided externally
+      if (!externalSuppliers) {
+        const { data: suppliersData, error: suppliersError } = await supabase
+          .from('b2b_suppliers')
+          .select('id, name')
+          .eq('account_id', accountId)
+          .order('sort_order', { ascending: true });
 
-      if (suppliersError) throw suppliersError;
-      setSuppliers(suppliersData || []);
+        if (suppliersError) throw suppliersError;
+        setSuppliers(suppliersData || []);
+      }
 
-      // Load articles
-      const { data, error } = await supabase
+      // Load articles with optional supplier filter
+      let query = supabase
         .from('supplier_b2b_articles')
         .select('*')
         .eq('supplier_account_id', accountId)
         .order('sort_order', { ascending: true });
 
+      if (selectedSupplierId && selectedSupplierId !== 'all') {
+        query = query.eq('supplier_id', selectedSupplierId);
+      }
+
+      const { data, error } = await query;
+
       if (error) throw error;
 
       // Map supplier names to articles
-      const supplierMap = new Map((suppliersData || []).map(s => [s.id, s.name]));
+      const supplierMap = new Map(suppliers.map(s => [s.id, s.name]));
       const articlesWithSupplier = (data || []).map(a => ({
         ...a,
         supplier_name: a.supplier_id ? supplierMap.get(a.supplier_id) : undefined,
@@ -147,8 +154,7 @@ const B2BArticlesTab = ({ accountId, linkedSupplierId, onStatsChange }: B2BArtic
     const matchesSearch = article.name.toLowerCase().includes(search.toLowerCase()) ||
       article.sku?.toLowerCase().includes(search.toLowerCase()) ||
       article.category?.toLowerCase().includes(search.toLowerCase());
-    const matchesSupplier = supplierFilter === 'all' || article.supplier_id === supplierFilter;
-    return matchesSearch && matchesSupplier;
+    return matchesSearch;
   });
 
   const categories = [...new Set(articles.map(a => a.category).filter(Boolean))];
@@ -157,30 +163,14 @@ const B2BArticlesTab = ({ accountId, linkedSupplierId, onStatsChange }: B2BArtic
     <div className="space-y-4">
       {/* Header */}
       <div className="flex flex-col sm:flex-row gap-4 justify-between">
-        <div className="flex flex-1 gap-2">
-          <div className="relative flex-1 max-w-sm">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Artikel suchen..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-          {suppliers.length > 1 && (
-            <Select value={supplierFilter} onValueChange={setSupplierFilter}>
-              <SelectTrigger className="w-[180px]">
-                <Filter className="h-4 w-4 mr-2" />
-                <SelectValue placeholder="Alle Lieferanten" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Alle Lieferanten</SelectItem>
-                {suppliers.map(s => (
-                  <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
+        <div className="relative flex-1 max-w-sm">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Artikel suchen..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="pl-10"
+          />
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={() => setImportDialogOpen(true)}>
@@ -280,7 +270,7 @@ const B2BArticlesTab = ({ accountId, linkedSupplierId, onStatsChange }: B2BArtic
                         {article.category}
                       </Badge>
                     )}
-                    {article.supplier_name && suppliers.length > 1 && (
+                    {article.supplier_name && suppliers.length > 1 && selectedSupplierId === 'all' && (
                       <Badge variant="outline" className="mt-2 ml-1">
                         {article.supplier_name}
                       </Badge>

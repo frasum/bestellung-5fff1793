@@ -39,6 +39,7 @@ interface B2BOrder {
   delivery_date: string | null;
   delivery_address: string | null;
   created_at: string;
+  supplier_id: string | null;
   customer: {
     id: string;
     company_name: string;
@@ -55,8 +56,15 @@ interface B2BOrder {
   }[];
 }
 
+interface B2BSupplier {
+  id: string;
+  name: string;
+}
+
 interface B2BOrdersTabProps {
   accountId: string;
+  selectedSupplierId?: string;
+  suppliers?: B2BSupplier[];
 }
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; icon: typeof Clock }> = {
@@ -68,7 +76,7 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; icon: typeof
   cancelled: { label: 'Storniert', color: 'bg-red-500', icon: X },
 };
 
-const B2BOrdersTab = ({ accountId }: B2BOrdersTabProps) => {
+const B2BOrdersTab = ({ accountId, selectedSupplierId = 'all', suppliers = [] }: B2BOrdersTabProps) => {
   const [orders, setOrders] = useState<B2BOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -77,12 +85,11 @@ const B2BOrdersTab = ({ accountId }: B2BOrdersTabProps) => {
 
   useEffect(() => {
     loadOrders();
-  }, [accountId]);
+  }, [accountId, selectedSupplierId]);
 
   const loadOrders = async () => {
     try {
-      // Load orders
-      const { data: ordersData, error: ordersError } = await supabase
+      let query = supabase
         .from('supplier_b2b_orders')
         .select(`
           *,
@@ -90,6 +97,12 @@ const B2BOrdersTab = ({ accountId }: B2BOrdersTabProps) => {
         `)
         .eq('supplier_account_id', accountId)
         .order('created_at', { ascending: false });
+
+      if (selectedSupplierId && selectedSupplierId !== 'all') {
+        query = query.eq('supplier_id', selectedSupplierId);
+      }
+
+      const { data: ordersData, error: ordersError } = await query;
 
       if (ordersError) throw ordersError;
 
@@ -144,6 +157,11 @@ const B2BOrdersTab = ({ accountId }: B2BOrdersTabProps) => {
       }
       return next;
     });
+  };
+
+  const getSupplierName = (supplierId: string | null) => {
+    if (!supplierId) return null;
+    return suppliers.find(s => s.id === supplierId)?.name;
   };
 
   const filteredOrders = orders.filter(order => {
@@ -213,6 +231,7 @@ const B2BOrdersTab = ({ accountId }: B2BOrdersTabProps) => {
           {filteredOrders.map(order => {
             const isExpanded = expandedOrders.has(order.id);
             const statusConfig = STATUS_CONFIG[order.status] || STATUS_CONFIG.pending;
+            const supplierName = getSupplierName(order.supplier_id);
 
             return (
               <Card key={order.id}>
@@ -227,11 +246,14 @@ const B2BOrdersTab = ({ accountId }: B2BOrdersTabProps) => {
                             <ChevronRight className="h-4 w-4 text-muted-foreground" />
                           )}
                           <div>
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 flex-wrap">
                               <span className="font-medium">{order.order_number}</span>
                               <Badge className={`${statusConfig.color} text-white`}>
                                 {statusConfig.label}
                               </Badge>
+                              {supplierName && selectedSupplierId === 'all' && (
+                                <Badge variant="outline">{supplierName}</Badge>
+                              )}
                             </div>
                             <p className="text-sm text-muted-foreground">
                               {order.customer?.company_name}
