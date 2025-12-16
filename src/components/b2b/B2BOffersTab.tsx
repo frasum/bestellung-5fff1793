@@ -33,6 +33,7 @@ interface B2BOffer {
   sent_at: string | null;
   accepted_at: string | null;
   created_at: string;
+  supplier_id: string | null;
   customer: {
     id: string;
     company_name: string;
@@ -50,8 +51,15 @@ interface B2BOffer {
   }[];
 }
 
+interface B2BSupplier {
+  id: string;
+  name: string;
+}
+
 interface B2BOffersTabProps {
   accountId: string;
+  selectedSupplierId?: string;
+  suppliers?: B2BSupplier[];
 }
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; icon: React.ElementType }> = {
@@ -62,7 +70,7 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; icon: React.
   expired: { label: 'Abgelaufen', color: 'bg-orange-500', icon: Clock },
 };
 
-export default function B2BOffersTab({ accountId }: B2BOffersTabProps) {
+export default function B2BOffersTab({ accountId, selectedSupplierId = 'all', suppliers = [] }: B2BOffersTabProps) {
   const [offers, setOffers] = useState<B2BOffer[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -74,11 +82,11 @@ export default function B2BOffersTab({ accountId }: B2BOffersTabProps) {
 
   useEffect(() => {
     loadOffers();
-  }, [accountId]);
+  }, [accountId, selectedSupplierId]);
 
   const loadOffers = async () => {
     try {
-      const { data: offersData, error: offersError } = await supabase
+      let query = supabase
         .from('supplier_b2b_offers')
         .select(`
           *,
@@ -86,6 +94,12 @@ export default function B2BOffersTab({ accountId }: B2BOffersTabProps) {
         `)
         .eq('supplier_account_id', accountId)
         .order('created_at', { ascending: false });
+
+      if (selectedSupplierId && selectedSupplierId !== 'all') {
+        query = query.eq('supplier_id', selectedSupplierId);
+      }
+
+      const { data: offersData, error: offersError } = await query;
 
       if (offersError) throw offersError;
 
@@ -158,6 +172,7 @@ export default function B2BOffersTab({ accountId }: B2BOffersTabProps) {
         .insert({
           order_number: orderNumber,
           supplier_account_id: accountId,
+          supplier_id: offer.supplier_id,
           customer_id: offer.customer.id,
           total_amount: offer.total_amount,
           notes: `Erstellt aus Angebot ${offer.offer_number}`,
@@ -244,6 +259,11 @@ export default function B2BOffersTab({ accountId }: B2BOffersTabProps) {
     });
   };
 
+  const getSupplierName = (supplierId: string | null) => {
+    if (!supplierId) return null;
+    return suppliers.find(s => s.id === supplierId)?.name;
+  };
+
   const filteredOffers = offers.filter((offer) => {
     const matchesSearch =
       offer.offer_number.toLowerCase().includes(search.toLowerCase()) ||
@@ -325,6 +345,7 @@ export default function B2BOffersTab({ accountId }: B2BOffersTabProps) {
             const isExpanded = expandedOffers.has(offer.id);
             const StatusIcon = STATUS_CONFIG[offer.status]?.icon || FileText;
             const statusConfig = STATUS_CONFIG[offer.status];
+            const supplierName = getSupplierName(offer.supplier_id);
 
             return (
               <Card key={offer.id}>
@@ -339,12 +360,15 @@ export default function B2BOffersTab({ accountId }: B2BOffersTabProps) {
                             <ChevronRight className="h-4 w-4 text-muted-foreground" />
                           )}
                           <div>
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 flex-wrap">
                               <span className="font-medium">{offer.offer_number}</span>
                               <Badge className={`${statusConfig.color} text-white`}>
                                 <StatusIcon className="h-3 w-3 mr-1" />
                                 {statusConfig.label}
                               </Badge>
+                              {supplierName && selectedSupplierId === 'all' && (
+                                <Badge variant="outline">{supplierName}</Badge>
+                              )}
                             </div>
                             <p className="text-sm text-muted-foreground">
                               {offer.customer.company_name} • {offer.items.length} Artikel
@@ -478,6 +502,8 @@ export default function B2BOffersTab({ accountId }: B2BOffersTabProps) {
         onOpenChange={setDialogOpen}
         accountId={accountId}
         offer={editingOffer}
+        selectedSupplierId={selectedSupplierId}
+        suppliers={suppliers}
         onSuccess={loadOffers}
       />
     </div>

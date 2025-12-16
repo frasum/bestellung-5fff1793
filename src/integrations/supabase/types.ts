@@ -1999,6 +1999,7 @@ export type Database = {
           sent_at: string | null
           status: string
           supplier_account_id: string
+          supplier_id: string | null
           total_amount: number
           updated_at: string
           valid_until: string | null
@@ -2013,6 +2014,7 @@ export type Database = {
           sent_at?: string | null
           status?: string
           supplier_account_id: string
+          supplier_id?: string | null
           total_amount?: number
           updated_at?: string
           valid_until?: string | null
@@ -2027,6 +2029,7 @@ export type Database = {
           sent_at?: string | null
           status?: string
           supplier_account_id?: string
+          supplier_id?: string | null
           total_amount?: number
           updated_at?: string
           valid_until?: string | null
@@ -2044,6 +2047,13 @@ export type Database = {
             columns: ["supplier_account_id"]
             isOneToOne: false
             referencedRelation: "supplier_b2b_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supplier_b2b_offers_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "b2b_suppliers"
             referencedColumns: ["id"]
           },
         ]
@@ -2112,6 +2122,7 @@ export type Database = {
           order_number: string
           status: Database["public"]["Enums"]["b2b_order_status"] | null
           supplier_account_id: string
+          supplier_id: string | null
           total_amount: number
           updated_at: string
         }
@@ -2127,6 +2138,7 @@ export type Database = {
           order_number: string
           status?: Database["public"]["Enums"]["b2b_order_status"] | null
           supplier_account_id: string
+          supplier_id?: string | null
           total_amount?: number
           updated_at?: string
         }
@@ -2142,6 +2154,7 @@ export type Database = {
           order_number?: string
           status?: Database["public"]["Enums"]["b2b_order_status"] | null
           supplier_account_id?: string
+          supplier_id?: string | null
           total_amount?: number
           updated_at?: string
         }
@@ -2158,6 +2171,13 @@ export type Database = {
             columns: ["supplier_account_id"]
             isOneToOne: false
             referencedRelation: "supplier_b2b_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supplier_b2b_orders_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "b2b_suppliers"
             referencedColumns: ["id"]
           },
         ]
