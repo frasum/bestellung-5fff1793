@@ -38,6 +38,7 @@ interface B2BArticleImportDialogProps {
   accountId: string;
   linkedSupplierId: string | null;
   suppliers: B2BSupplier[];
+  defaultSupplierId?: string;
   onSuccess: () => void;
 }
 
@@ -47,6 +48,7 @@ const B2BArticleImportDialog = ({
   accountId,
   linkedSupplierId,
   suppliers,
+  defaultSupplierId,
   onSuccess,
 }: B2BArticleImportDialogProps) => {
   const [articles, setArticles] = useState<SourceArticle[]>([]);
@@ -55,17 +57,19 @@ const B2BArticleImportDialog = ({
   const [importing, setImporting] = useState(false);
   const [search, setSearch] = useState('');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [selectedSupplierId, setSelectedSupplierId] = useState<string>(suppliers[0]?.id || '');
+  const [selectedSupplierId, setSelectedSupplierId] = useState<string>(defaultSupplierId || suppliers[0]?.id || '');
 
   useEffect(() => {
     if (open && linkedSupplierId) {
       loadArticles();
       loadExistingSkus();
     }
-    if (suppliers.length > 0 && !selectedSupplierId) {
+    if (open && defaultSupplierId) {
+      setSelectedSupplierId(defaultSupplierId);
+    } else if (suppliers.length > 0 && !selectedSupplierId) {
       setSelectedSupplierId(suppliers[0].id);
     }
-  }, [open, linkedSupplierId, suppliers]);
+  }, [open, linkedSupplierId, suppliers, defaultSupplierId]);
 
   const loadArticles = async () => {
     if (!linkedSupplierId) return;
