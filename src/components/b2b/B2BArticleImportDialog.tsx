@@ -157,11 +157,12 @@ const B2BArticleImportDialog = ({
         image_url: article.image_url,
         category: article.category,
         is_active: true,
+        source_article_id: article.id, // Link to original Bestellung.pro article
       }));
 
       const { error } = await supabase
         .from('supplier_b2b_articles')
-        .insert(articlesToImport);
+        .insert(articlesToImport as any);
 
       if (error) throw error;
 

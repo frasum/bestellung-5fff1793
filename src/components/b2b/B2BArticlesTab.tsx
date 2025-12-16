@@ -45,6 +45,7 @@ interface B2BArticle {
   is_active: boolean;
   sort_order: number;
   supplier_id: string | null;
+  source_article_id: string | null;
   supplier_name?: string;
 }
 
