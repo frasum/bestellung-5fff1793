@@ -301,6 +301,7 @@ const Orders = () => {
   interface EasyOrderGroup {
     key: string;
     employeeName: string;
+    supplierNames: string[];
     drafts: CartDraft[];
     totalItems: number;
     totalPrice: number;
@@ -328,12 +329,21 @@ const Orders = () => {
       const match = drafts[0].name.match(/^EasyOrder:\s*(.+?)(?:\s*\(|$)/);
       const employeeName = match ? match[1].trim() : 'Unbekannt';
       
+      // Extract supplier names from each draft
+      const supplierNames = drafts.map(draft => {
+        const supplierMatch = draft.name.match(/\(([^)]+)\)$/);
+        if (supplierMatch) return supplierMatch[1];
+        const firstItem = draft.items?.find(i => i.article);
+        return firstItem?.article?.suppliers?.name || 'Unbekannt';
+      });
+      
       const totalItems = drafts.reduce((sum, d) => sum + (d.items?.length || 0), 0);
       const totalPrice = drafts.reduce((sum, d) => sum + getDraftTotal(d), 0);
       
       return {
         key,
         employeeName,
+        supplierNames,
         drafts,
         totalItems,
         totalPrice,
@@ -1277,7 +1287,7 @@ const Orders = () => {
                                     EasyOrder: {group.employeeName}
                                   </span>
                                   <Badge variant="secondary" className="text-xs">
-                                    {group.drafts.length} {group.drafts.length === 1 ? 'Lieferant' : 'Lieferanten'}
+                                    {group.supplierNames.join(', ')}
                                   </Badge>
                                 </div>
                                 <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground mt-0.5">
