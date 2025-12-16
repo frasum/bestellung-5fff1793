@@ -28,14 +28,12 @@ import {
   TrendingUp,
   FileText,
   Truck,
-  Filter,
 } from 'lucide-react';
 import B2BArticlesTab from '@/components/b2b/B2BArticlesTab';
 import B2BCustomersTab from '@/components/b2b/B2BCustomersTab';
 import B2BOrdersTab from '@/components/b2b/B2BOrdersTab';
 import B2BOffersTab from '@/components/b2b/B2BOffersTab';
 import B2BSettingsTab from '@/components/b2b/B2BSettingsTab';
-import B2BSuppliersTab from '@/components/b2b/B2BSuppliersTab';
 
 interface B2BAccount {
   id: string;
@@ -70,7 +68,7 @@ const B2BSupplierDashboard = () => {
   const { user } = useAuth();
   const [account, setAccount] = useState<B2BAccount | null>(null);
   const [suppliers, setSuppliers] = useState<B2BSupplier[]>([]);
-  const [selectedSupplierId, setSelectedSupplierId] = useState<string>('all');
+  const [selectedSupplierId, setSelectedSupplierId] = useState<string>('');
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
@@ -101,10 +99,7 @@ const B2BSupplierDashboard = () => {
       }
 
       setAccount(accountData);
-      await Promise.all([
-        loadSuppliers(accountData.id),
-        loadStats(accountData.id),
-      ]);
+      await loadSuppliers(accountData.id);
     } catch (error: any) {
       console.error('Error loading account:', error);
       toast.error('Fehler beim Laden des Kontos');
@@ -122,6 +117,15 @@ const B2BSupplierDashboard = () => {
 
     if (!error && data) {
       setSuppliers(data);
+      // Auto-select first supplier (Hybrid Model)
+      if (data.length > 0 && !selectedSupplierId) {
+        const firstSupplierId = data[0].id;
+        setSelectedSupplierId(firstSupplierId);
+        await loadStats(accountId, firstSupplierId);
+      } else if (data.length === 0) {
+        // No suppliers yet - load stats without supplier filter
+        await loadStats(accountId);
+      }
     }
   };
 
@@ -132,26 +136,26 @@ const B2BSupplierDashboard = () => {
         .select('id', { count: 'exact', head: true })
         .eq('supplier_account_id', accountId);
 
+      let customersQuery = supabase
+        .from('supplier_b2b_customers')
+        .select('id', { count: 'exact', head: true })
+        .eq('supplier_account_id', accountId);
+
       let ordersQuery = supabase
         .from('supplier_b2b_orders')
         .select('id, status', { count: 'exact' })
         .eq('supplier_account_id', accountId);
 
-      if (supplierId && supplierId !== 'all') {
+      // Filter ALL queries by supplier_id (Hybrid Model)
+      if (supplierId) {
         articlesQuery = articlesQuery.eq('supplier_id', supplierId);
+        customersQuery = customersQuery.eq('supplier_id', supplierId);
         ordersQuery = ordersQuery.eq('supplier_id', supplierId);
       }
 
-      const [articlesRes, customersRes, suppliersRes, ordersRes] = await Promise.all([
+      const [articlesRes, customersRes, ordersRes] = await Promise.all([
         articlesQuery,
-        supabase
-          .from('supplier_b2b_customers')
-          .select('id', { count: 'exact', head: true })
-          .eq('supplier_account_id', accountId),
-        supabase
-          .from('b2b_suppliers')
-          .select('id', { count: 'exact', head: true })
-          .eq('account_id', accountId),
+        customersQuery,
         ordersQuery,
       ]);
 
@@ -160,7 +164,7 @@ const B2BSupplierDashboard = () => {
       setStats({
         totalArticles: articlesRes.count || 0,
         totalCustomers: customersRes.count || 0,
-        totalSuppliers: suppliersRes.count || 0,
+        totalSuppliers: suppliers.length,
         pendingOrders,
         totalOrders: ordersRes.count || 0,
       });
@@ -204,9 +208,7 @@ const B2BSupplierDashboard = () => {
 
   if (!account) return null;
 
-  const selectedSupplierName = selectedSupplierId === 'all' 
-    ? 'Alle Lieferanten' 
-    : suppliers.find(s => s.id === selectedSupplierId)?.name || '';
+  const selectedSupplierName = suppliers.find(s => s.id === selectedSupplierId)?.name || '';
 
   return (
     <div className="min-h-screen bg-background">
@@ -231,13 +233,31 @@ const B2BSupplierDashboard = () => {
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <Badge variant="outline" className="capitalize">
+          
+          {/* Supplier Selector in Header (Hybrid Model) */}
+          <div className="flex items-center gap-4">
+            {suppliers.length > 0 && (
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground hidden sm:inline">Lieferant:</span>
+                <Select value={selectedSupplierId} onValueChange={handleSupplierChange}>
+                  <SelectTrigger className="w-[180px]">
+                    <Truck className="h-4 w-4 mr-2" />
+                    <SelectValue placeholder="Lieferant wählen" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {suppliers.map(s => (
+                      <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+            <Badge variant="outline" className="capitalize hidden sm:flex">
               {account.subscription_tier}
             </Badge>
             <Button variant="outline" size="sm" onClick={openCustomerPortal}>
-              <ExternalLink className="h-4 w-4 mr-2" />
-              Kundenportal öffnen
+              <ExternalLink className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">Kundenportal</span>
             </Button>
             <Button variant="ghost" size="icon" onClick={handleLogout}>
               <LogOut className="h-4 w-4" />
@@ -249,15 +269,10 @@ const B2BSupplierDashboard = () => {
       {/* Main Content */}
       <main className="max-w-7xl mx-auto p-4 md:p-6">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <TabsList className="grid w-full grid-cols-7 lg:w-auto lg:inline-grid">
+          <TabsList className="grid w-full grid-cols-6 lg:w-auto lg:inline-grid">
               <TabsTrigger value="overview" className="gap-2">
                 <TrendingUp className="h-4 w-4" />
                 <span className="hidden sm:inline">Übersicht</span>
-              </TabsTrigger>
-              <TabsTrigger value="suppliers" className="gap-2">
-                <Truck className="h-4 w-4" />
-                <span className="hidden sm:inline">Lieferanten</span>
               </TabsTrigger>
               <TabsTrigger value="articles" className="gap-2">
                 <Package className="h-4 w-4" />
@@ -286,151 +301,120 @@ const B2BSupplierDashboard = () => {
               </TabsTrigger>
             </TabsList>
 
-            {/* Global Supplier Selector */}
-            {suppliers.length > 1 && activeTab !== 'suppliers' && activeTab !== 'settings' && activeTab !== 'customers' && (
-              <div className="flex items-center gap-2">
-                <Filter className="h-4 w-4 text-muted-foreground" />
-                <Select value={selectedSupplierId} onValueChange={handleSupplierChange}>
-                  <SelectTrigger className="w-[200px]">
-                    <SelectValue placeholder="Lieferant wählen" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Alle Lieferanten</SelectItem>
-                    {suppliers.map(s => (
-                      <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-          </div>
-
           {/* Overview Tab */}
           <TabsContent value="overview" className="space-y-6">
-            {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-              <Card className="cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => setActiveTab('suppliers')}>
-                <CardHeader className="pb-2">
-                  <CardDescription>Lieferanten</CardDescription>
-                  <CardTitle className="text-3xl">{stats?.totalSuppliers || 0}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <Button variant="link" className="p-0 h-auto">
-                    <Plus className="h-4 w-4 mr-1" />
-                    Lieferant hinzufügen
-                  </Button>
-                </CardContent>
-              </Card>
-
-              <Card className="cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => setActiveTab('articles')}>
-                <CardHeader className="pb-2">
-                  <CardDescription>Artikel {selectedSupplierId !== 'all' && `(${selectedSupplierName})`}</CardDescription>
-                  <CardTitle className="text-3xl">{stats?.totalArticles || 0}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <Button variant="link" className="p-0 h-auto">
-                    <Plus className="h-4 w-4 mr-1" />
-                    Artikel hinzufügen
-                  </Button>
-                </CardContent>
-              </Card>
-
-              <Card className="cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => setActiveTab('customers')}>
-                <CardHeader className="pb-2">
-                  <CardDescription>Kunden</CardDescription>
-                  <CardTitle className="text-3xl">{stats?.totalCustomers || 0}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <Button variant="link" className="p-0 h-auto">
-                    <Plus className="h-4 w-4 mr-1" />
-                    Kunden einladen
-                  </Button>
-                </CardContent>
-              </Card>
-
-              <Card className="cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => setActiveTab('orders')}>
-                <CardHeader className="pb-2">
-                  <CardDescription>Offene Bestellungen {selectedSupplierId !== 'all' && `(${selectedSupplierName})`}</CardDescription>
-                  <CardTitle className="text-3xl text-orange-500">{stats?.pendingOrders || 0}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-muted-foreground">
-                    {stats?.totalOrders || 0} Bestellungen gesamt
-                  </p>
-                </CardContent>
-              </Card>
-
+            {/* No supplier selected - prompt to create or select */}
+            {suppliers.length === 0 ? (
               <Card>
-                <CardHeader className="pb-2">
-                  <CardDescription>Portal-Status</CardDescription>
-                  <CardTitle className="text-lg flex items-center gap-2">
-                    <span className={`h-2 w-2 rounded-full ${account.is_active ? 'bg-green-500' : 'bg-red-500'}`} />
-                    {account.is_active ? 'Aktiv' : 'Inaktiv'}
-                  </CardTitle>
+                <CardHeader>
+                  <CardTitle>Willkommen bei Ihrem B2B-Portal!</CardTitle>
+                  <CardDescription>
+                    Erstellen Sie zunächst einen Lieferanten, um loszulegen.
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <Button variant="link" className="p-0 h-auto" onClick={openCustomerPortal}>
-                    <ExternalLink className="h-4 w-4 mr-1" />
-                    Portal ansehen
+                  <Button onClick={() => setActiveTab('settings')}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Ersten Lieferanten anlegen
                   </Button>
                 </CardContent>
               </Card>
-            </div>
+            ) : (
+              <>
+                {/* Stats Cards */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <Card className="cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => setActiveTab('articles')}>
+                    <CardHeader className="pb-2">
+                      <CardDescription>Artikel</CardDescription>
+                      <CardTitle className="text-3xl">{stats?.totalArticles || 0}</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <Button variant="link" className="p-0 h-auto">
+                        <Plus className="h-4 w-4 mr-1" />
+                        Artikel hinzufügen
+                      </Button>
+                    </CardContent>
+                  </Card>
 
-            {/* Quick Actions */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Erste Schritte</CardTitle>
-                <CardDescription>
-                  Richten Sie Ihr B2B-Portal ein
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <Button 
-                  variant="outline" 
-                  className="h-auto py-4 flex-col gap-2"
-                  onClick={() => setActiveTab('suppliers')}
-                >
-                  <Truck className="h-6 w-6" />
-                  <span>Lieferant anlegen</span>
-                </Button>
-                <Button 
-                  variant="outline" 
-                  className="h-auto py-4 flex-col gap-2"
-                  onClick={() => setActiveTab('articles')}
-                >
-                  <Package className="h-6 w-6" />
-                  <span>Artikel anlegen</span>
-                </Button>
-                <Button 
-                  variant="outline" 
-                  className="h-auto py-4 flex-col gap-2"
-                  onClick={() => setActiveTab('customers')}
-                >
-                  <Users className="h-6 w-6" />
-                  <span>Kunden einladen</span>
-                </Button>
-                <Button 
-                  variant="outline" 
-                  className="h-auto py-4 flex-col gap-2"
-                  onClick={() => setActiveTab('settings')}
-                >
-                  <Settings className="h-6 w-6" />
-                  <span>Branding anpassen</span>
-                </Button>
-              </CardContent>
-            </Card>
-          </TabsContent>
+                  <Card className="cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => setActiveTab('customers')}>
+                    <CardHeader className="pb-2">
+                      <CardDescription>Kunden</CardDescription>
+                      <CardTitle className="text-3xl">{stats?.totalCustomers || 0}</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <Button variant="link" className="p-0 h-auto">
+                        <Plus className="h-4 w-4 mr-1" />
+                        Kunden einladen
+                      </Button>
+                    </CardContent>
+                  </Card>
 
-          {/* Suppliers Tab */}
-          <TabsContent value="suppliers">
-            <B2BSuppliersTab 
-              accountId={account.id} 
-              onStatsChange={() => {
-                loadSuppliers(account.id);
-                loadStats(account.id, selectedSupplierId);
-              }} 
-            />
+                  <Card className="cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => setActiveTab('orders')}>
+                    <CardHeader className="pb-2">
+                      <CardDescription>Offene Bestellungen</CardDescription>
+                      <CardTitle className="text-3xl text-orange-500">{stats?.pendingOrders || 0}</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-sm text-muted-foreground">
+                        {stats?.totalOrders || 0} Bestellungen gesamt
+                      </p>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardDescription>Portal-Status</CardDescription>
+                      <CardTitle className="text-lg flex items-center gap-2">
+                        <span className={`h-2 w-2 rounded-full ${account.is_active ? 'bg-green-500' : 'bg-red-500'}`} />
+                        {account.is_active ? 'Aktiv' : 'Inaktiv'}
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <Button variant="link" className="p-0 h-auto" onClick={openCustomerPortal}>
+                        <ExternalLink className="h-4 w-4 mr-1" />
+                        Portal ansehen
+                      </Button>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {/* Quick Actions */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Schnellaktionen für {selectedSupplierName}</CardTitle>
+                    <CardDescription>
+                      Verwalten Sie Ihren Lieferanten
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <Button 
+                      variant="outline" 
+                      className="h-auto py-4 flex-col gap-2"
+                      onClick={() => setActiveTab('articles')}
+                    >
+                      <Package className="h-6 w-6" />
+                      <span>Artikel verwalten</span>
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      className="h-auto py-4 flex-col gap-2"
+                      onClick={() => setActiveTab('customers')}
+                    >
+                      <Users className="h-6 w-6" />
+                      <span>Kunden einladen</span>
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      className="h-auto py-4 flex-col gap-2"
+                      onClick={() => setActiveTab('settings')}
+                    >
+                      <Settings className="h-6 w-6" />
+                      <span>Einstellungen</span>
+                    </Button>
+                  </CardContent>
+                </Card>
+              </>
+            )}
           </TabsContent>
 
           {/* Articles Tab */}
