@@ -304,6 +304,7 @@ const B2BArticlesTab = ({ accountId, linkedSupplierId, selectedSupplierId = 'all
         accountId={accountId}
         linkedSupplierId={linkedSupplierId}
         suppliers={suppliers}
+        defaultSupplierId={selectedSupplierId !== 'all' ? selectedSupplierId : undefined}
         onSuccess={() => {
           loadData();
           onStatsChange();
