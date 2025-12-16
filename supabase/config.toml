@@ -125,3 +125,6 @@ verify_jwt = true
 
 [functions.send-b2b-offer]
 verify_jwt = true
+
+[functions.send-b2b-purchase-order]
+verify_jwt = true

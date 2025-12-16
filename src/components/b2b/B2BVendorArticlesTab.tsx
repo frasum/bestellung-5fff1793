@@ -1,0 +1,348 @@
+import { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { toast } from 'sonner';
+import {
+  Plus,
+  Search,
+  Package,
+  MoreVertical,
+  Pencil,
+  Trash2,
+  ShoppingCart,
+} from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import B2BVendorArticleFormDialog from './B2BVendorArticleFormDialog';
+import type { B2BVendor } from './B2BVendorsTab';
+
+export interface B2BVendorArticle {
+  id: string;
+  vendor_id: string;
+  name: string;
+  description: string | null;
+  price: number;
+  unit: string;
+  sku: string | null;
+  category: string | null;
+  is_active: boolean;
+  created_at: string;
+  vendor_name?: string;
+}
+
+interface B2BVendorArticlesTabProps {
+  accountId: string;
+}
+
+// Simple cart stored in localStorage
+const CART_STORAGE_KEY = 'b2b_purchase_cart';
+
+export const getPurchaseCart = (): Record<string, number> => {
+  const stored = localStorage.getItem(CART_STORAGE_KEY);
+  return stored ? JSON.parse(stored) : {};
+};
+
+export const setPurchaseCart = (cart: Record<string, number>) => {
+  localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart));
+  window.dispatchEvent(new Event('b2b-cart-update'));
+};
+
+const B2BVendorArticlesTab = ({ accountId }: B2BVendorArticlesTabProps) => {
+  const [articles, setArticles] = useState<B2BVendorArticle[]>([]);
+  const [vendors, setVendors] = useState<B2BVendor[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
+  const [selectedVendorId, setSelectedVendorId] = useState<string>('all');
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editingArticle, setEditingArticle] = useState<B2BVendorArticle | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [articleToDelete, setArticleToDelete] = useState<B2BVendorArticle | null>(null);
+  const [cart, setCart] = useState<Record<string, number>>({});
+
+  useEffect(() => {
+    loadData();
+    setCart(getPurchaseCart());
+    
+    const handleCartUpdate = () => setCart(getPurchaseCart());
+    window.addEventListener('b2b-cart-update', handleCartUpdate);
+    return () => window.removeEventListener('b2b-cart-update', handleCartUpdate);
+  }, [accountId]);
+
+  const loadData = async () => {
+    try {
+      // Load vendors
+      const { data: vendorsData, error: vendorsError } = await supabase
+        .from('b2b_supplier_vendors')
+        .select('*')
+        .eq('supplier_account_id', accountId)
+        .eq('is_active', true)
+        .order('name', { ascending: true });
+
+      if (vendorsError) throw vendorsError;
+      setVendors(vendorsData || []);
+
+      // Load articles
+      const { data: articlesData, error: articlesError } = await supabase
+        .from('b2b_supplier_vendor_articles')
+        .select('*')
+        .eq('supplier_account_id', accountId)
+        .order('name', { ascending: true });
+
+      if (articlesError) throw articlesError;
+
+      // Map vendor names
+      const vendorMap = new Map(vendorsData?.map(v => [v.id, v.name]) || []);
+      const articlesWithVendor = (articlesData || []).map(a => ({
+        ...a,
+        vendor_name: vendorMap.get(a.vendor_id) || 'Unbekannt',
+      }));
+
+      setArticles(articlesWithVendor);
+    } catch (error: any) {
+      console.error('Error loading data:', error);
+      toast.error('Fehler beim Laden');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!articleToDelete) return;
+
+    try {
+      const { error } = await supabase
+        .from('b2b_supplier_vendor_articles')
+        .delete()
+        .eq('id', articleToDelete.id);
+
+      if (error) throw error;
+
+      toast.success('Artikel gelöscht');
+      loadData();
+    } catch (error: any) {
+      console.error('Error deleting article:', error);
+      toast.error('Fehler beim Löschen');
+    } finally {
+      setDeleteDialogOpen(false);
+      setArticleToDelete(null);
+    }
+  };
+
+  const addToCart = (articleId: string) => {
+    const newCart = { ...cart };
+    newCart[articleId] = (newCart[articleId] || 0) + 1;
+    setPurchaseCart(newCart);
+    setCart(newCart);
+    toast.success('Zum Warenkorb hinzugefügt');
+  };
+
+  const filteredArticles = articles.filter(article => {
+    const matchesSearch = article.name.toLowerCase().includes(search.toLowerCase()) ||
+      article.sku?.toLowerCase().includes(search.toLowerCase()) ||
+      article.category?.toLowerCase().includes(search.toLowerCase());
+    const matchesVendor = selectedVendorId === 'all' || article.vendor_id === selectedVendorId;
+    return matchesSearch && matchesVendor;
+  });
+
+  const categories = [...new Set(articles.map(a => a.category).filter(Boolean))];
+
+  return (
+    <div className="space-y-4">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row gap-4 justify-between">
+        <div className="flex flex-col sm:flex-row gap-2 flex-1">
+          <div className="relative flex-1 max-w-sm">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Artikel suchen..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+          {vendors.length > 1 && (
+            <Select value={selectedVendorId} onValueChange={setSelectedVendorId}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Alle Lieferanten" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Alle Lieferanten</SelectItem>
+                {vendors.map(v => (
+                  <SelectItem key={v.id} value={v.id}>{v.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+        </div>
+        <Button 
+          onClick={() => { setEditingArticle(null); setDialogOpen(true); }}
+          disabled={vendors.length === 0}
+        >
+          <Plus className="h-4 w-4 mr-2" />
+          Artikel hinzufügen
+        </Button>
+      </div>
+
+      {/* Articles Grid */}
+      {loading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {[1, 2, 3].map(i => (
+            <Card key={i} className="animate-pulse">
+              <CardContent className="p-4">
+                <div className="h-4 bg-muted rounded w-3/4 mb-2" />
+                <div className="h-4 bg-muted rounded w-1/2" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      ) : vendors.length === 0 ? (
+        <Card>
+          <CardContent className="py-12 text-center">
+            <Package className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+            <h3 className="font-semibold mb-2">Erst Lieferanten anlegen</h3>
+            <p className="text-muted-foreground">
+              Legen Sie zuerst einen Lieferanten an, bevor Sie Artikel hinzufügen können.
+            </p>
+          </CardContent>
+        </Card>
+      ) : filteredArticles.length === 0 ? (
+        <Card>
+          <CardContent className="py-12 text-center">
+            <Package className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+            <h3 className="font-semibold mb-2">Keine Artikel gefunden</h3>
+            <p className="text-muted-foreground mb-4">
+              {search ? 'Versuchen Sie einen anderen Suchbegriff' : 'Fügen Sie Ihren ersten Artikel hinzu'}
+            </p>
+            {!search && (
+              <Button onClick={() => { setEditingArticle(null); setDialogOpen(true); }}>
+                <Plus className="h-4 w-4 mr-2" />
+                Ersten Artikel hinzufügen
+              </Button>
+            )}
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {filteredArticles.map(article => (
+            <Card key={article.id} className={!article.is_active ? 'opacity-60' : ''}>
+              <CardContent className="p-4">
+                <div className="flex justify-between items-start">
+                  <div className="flex-1 min-w-0">
+                    <h4 className="font-medium truncate">{article.name}</h4>
+                    {article.sku && (
+                      <p className="text-sm text-muted-foreground">SKU: {article.sku}</p>
+                    )}
+                    <div className="mt-2 flex items-center gap-2">
+                      <span className="font-semibold">
+                        €{article.price.toFixed(2)}
+                      </span>
+                      <span className="text-muted-foreground">/ {article.unit}</span>
+                    </div>
+                    <div className="flex flex-wrap gap-1 mt-2">
+                      {article.category && (
+                        <Badge variant="secondary">{article.category}</Badge>
+                      )}
+                      {vendors.length > 1 && selectedVendorId === 'all' && (
+                        <Badge variant="outline">{article.vendor_name}</Badge>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-primary"
+                      onClick={() => addToCart(article.id)}
+                    >
+                      <ShoppingCart className="h-4 w-4" />
+                    </Button>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                          <MoreVertical className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => { setEditingArticle(article); setDialogOpen(true); }}>
+                          <Pencil className="h-4 w-4 mr-2" />
+                          Bearbeiten
+                        </DropdownMenuItem>
+                        <DropdownMenuItem 
+                          className="text-destructive"
+                          onClick={() => { setArticleToDelete(article); setDeleteDialogOpen(true); }}
+                        >
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Löschen
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                </div>
+                {cart[article.id] && (
+                  <Badge className="mt-2" variant="default">
+                    {cart[article.id]} im Warenkorb
+                  </Badge>
+                )}
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      {/* Article Form Dialog */}
+      <B2BVendorArticleFormDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        article={editingArticle}
+        accountId={accountId}
+        vendors={vendors}
+        categories={categories as string[]}
+        onSuccess={loadData}
+      />
+
+      {/* Delete Confirmation */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Artikel löschen?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Möchten Sie "{articleToDelete?.name}" wirklich löschen?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground">
+              Löschen
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  );
+};
+
+export default B2BVendorArticlesTab;

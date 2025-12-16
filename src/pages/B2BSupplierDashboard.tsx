@@ -28,12 +28,14 @@ import {
   TrendingUp,
   FileText,
   Truck,
+  PackageSearch,
 } from 'lucide-react';
 import B2BArticlesTab from '@/components/b2b/B2BArticlesTab';
 import B2BCustomersTab from '@/components/b2b/B2BCustomersTab';
 import B2BOrdersTab from '@/components/b2b/B2BOrdersTab';
 import B2BOffersTab from '@/components/b2b/B2BOffersTab';
 import B2BSettingsTab from '@/components/b2b/B2BSettingsTab';
+import B2BPurchaseTab from '@/components/b2b/B2BPurchaseTab';
 import B2BSupplierFormDialog from '@/components/b2b/B2BSupplierFormDialog';
 
 interface B2BAccount {
