@@ -31,6 +31,12 @@ interface B2BArticle {
   category: string | null;
   is_active: boolean;
   sort_order: number;
+  supplier_id?: string | null;
+}
+
+interface B2BSupplier {
+  id: string;
+  name: string;
 }
 
 interface B2BArticleFormDialogProps {
@@ -39,6 +45,7 @@ interface B2BArticleFormDialogProps {
   article: B2BArticle | null;
   accountId: string;
   categories: string[];
+  suppliers: B2BSupplier[];
   onSuccess: () => void;
 }
 
@@ -50,6 +57,7 @@ const B2BArticleFormDialog = ({
   article,
   accountId,
   categories,
+  suppliers,
   onSuccess,
 }: B2BArticleFormDialogProps) => {
   const [loading, setLoading] = useState(false);
@@ -61,6 +69,7 @@ const B2BArticleFormDialog = ({
   const [category, setCategory] = useState('');
   const [newCategory, setNewCategory] = useState('');
   const [isActive, setIsActive] = useState(true);
+  const [supplierId, setSupplierId] = useState<string>('');
 
   useEffect(() => {
     if (article) {
@@ -71,6 +80,7 @@ const B2BArticleFormDialog = ({
       setBasePrice(article.base_price.toString());
       setCategory(article.category || '');
       setIsActive(article.is_active);
+      setSupplierId(article.supplier_id || suppliers[0]?.id || '');
     } else {
       setName('');
       setDescription('');
@@ -80,8 +90,9 @@ const B2BArticleFormDialog = ({
       setCategory('');
       setNewCategory('');
       setIsActive(true);
+      setSupplierId(suppliers[0]?.id || '');
     }
-  }, [article, open]);
+  }, [article, open, suppliers]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -103,6 +114,7 @@ const B2BArticleFormDialog = ({
             base_price: priceValue,
             category: finalCategory || null,
             is_active: isActive,
+            supplier_id: supplierId || null,
           })
           .eq('id', article.id);
 
@@ -121,6 +133,7 @@ const B2BArticleFormDialog = ({
             base_price: priceValue,
             category: finalCategory || null,
             is_active: isActive,
+            supplier_id: supplierId || null,
           });
 
         if (error) throw error;
@@ -147,6 +160,22 @@ const B2BArticleFormDialog = ({
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          {suppliers.length > 1 && (
+            <div className="space-y-2">
+              <Label htmlFor="supplier">Lieferant *</Label>
+              <Select value={supplierId} onValueChange={setSupplierId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Lieferant wählen" />
+                </SelectTrigger>
+                <SelectContent>
+                  {suppliers.map(s => (
+                    <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
           <div className="space-y-2">
             <Label htmlFor="name">Name *</Label>
             <Input

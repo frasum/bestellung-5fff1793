@@ -20,12 +20,14 @@ import {
   Plus,
   TrendingUp,
   FileText,
+  Truck,
 } from 'lucide-react';
 import B2BArticlesTab from '@/components/b2b/B2BArticlesTab';
 import B2BCustomersTab from '@/components/b2b/B2BCustomersTab';
 import B2BOrdersTab from '@/components/b2b/B2BOrdersTab';
 import B2BOffersTab from '@/components/b2b/B2BOffersTab';
 import B2BSettingsTab from '@/components/b2b/B2BSettingsTab';
+import B2BSuppliersTab from '@/components/b2b/B2BSuppliersTab';
 
 interface B2BAccount {
   id: string;
@@ -44,6 +46,7 @@ interface B2BAccount {
 interface DashboardStats {
   totalArticles: number;
   totalCustomers: number;
+  totalSuppliers: number;
   pendingOrders: number;
   totalOrders: number;
 }
@@ -94,7 +97,7 @@ const B2BSupplierDashboard = () => {
 
   const loadStats = async (accountId: string) => {
     try {
-      const [articlesRes, customersRes, ordersRes] = await Promise.all([
+      const [articlesRes, customersRes, suppliersRes, ordersRes] = await Promise.all([
         supabase
           .from('supplier_b2b_articles')
           .select('id', { count: 'exact', head: true })
@@ -103,6 +106,10 @@ const B2BSupplierDashboard = () => {
           .from('supplier_b2b_customers')
           .select('id', { count: 'exact', head: true })
           .eq('supplier_account_id', accountId),
+        supabase
+          .from('b2b_suppliers')
+          .select('id', { count: 'exact', head: true })
+          .eq('account_id', accountId),
         supabase
           .from('supplier_b2b_orders')
           .select('id, status', { count: 'exact' })
@@ -114,6 +121,7 @@ const B2BSupplierDashboard = () => {
       setStats({
         totalArticles: articlesRes.count || 0,
         totalCustomers: customersRes.count || 0,
+        totalSuppliers: suppliersRes.count || 0,
         pendingOrders,
         totalOrders: ordersRes.count || 0,
       });
@@ -192,10 +200,14 @@ const B2BSupplierDashboard = () => {
       {/* Main Content */}
       <main className="max-w-7xl mx-auto p-4 md:p-6">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-6 lg:w-auto lg:inline-grid">
+          <TabsList className="grid w-full grid-cols-7 lg:w-auto lg:inline-grid">
             <TabsTrigger value="overview" className="gap-2">
               <TrendingUp className="h-4 w-4" />
               <span className="hidden sm:inline">Übersicht</span>
+            </TabsTrigger>
+            <TabsTrigger value="suppliers" className="gap-2">
+              <Truck className="h-4 w-4" />
+              <span className="hidden sm:inline">Lieferanten</span>
             </TabsTrigger>
             <TabsTrigger value="articles" className="gap-2">
               <Package className="h-4 w-4" />
@@ -227,7 +239,20 @@ const B2BSupplierDashboard = () => {
           {/* Overview Tab */}
           <TabsContent value="overview" className="space-y-6">
             {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+              <Card className="cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => setActiveTab('suppliers')}>
+                <CardHeader className="pb-2">
+                  <CardDescription>Lieferanten</CardDescription>
+                  <CardTitle className="text-3xl">{stats?.totalSuppliers || 0}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <Button variant="link" className="p-0 h-auto">
+                    <Plus className="h-4 w-4 mr-1" />
+                    Lieferant hinzufügen
+                  </Button>
+                </CardContent>
+              </Card>
+
               <Card className="cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => setActiveTab('articles')}>
                 <CardHeader className="pb-2">
                   <CardDescription>Artikel</CardDescription>
@@ -291,7 +316,15 @@ const B2BSupplierDashboard = () => {
                   Richten Sie Ihr B2B-Portal ein
                 </CardDescription>
               </CardHeader>
-              <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <CardContent className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <Button 
+                  variant="outline" 
+                  className="h-auto py-4 flex-col gap-2"
+                  onClick={() => setActiveTab('suppliers')}
+                >
+                  <Truck className="h-6 w-6" />
+                  <span>Lieferant anlegen</span>
+                </Button>
                 <Button 
                   variant="outline" 
                   className="h-auto py-4 flex-col gap-2"
@@ -318,6 +351,11 @@ const B2BSupplierDashboard = () => {
                 </Button>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* Suppliers Tab */}
+          <TabsContent value="suppliers">
+            <B2BSuppliersTab accountId={account.id} onStatsChange={() => loadStats(account.id)} />
           </TabsContent>
 
           {/* Articles Tab */}

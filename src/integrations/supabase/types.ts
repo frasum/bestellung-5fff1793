@@ -251,6 +251,56 @@ export type Database = {
           },
         ]
       }
+      b2b_suppliers: {
+        Row: {
+          account_id: string
+          contact_email: string | null
+          contact_phone: string | null
+          created_at: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          logo_url: string | null
+          name: string
+          sort_order: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          account_id: string
+          contact_email?: string | null
+          contact_phone?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          logo_url?: string | null
+          name: string
+          sort_order?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          account_id?: string
+          contact_email?: string | null
+          contact_phone?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          logo_url?: string | null
+          name?: string
+          sort_order?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "b2b_suppliers_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "supplier_b2b_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cart_draft_items: {
         Row: {
           article_id: string | null
@@ -1781,6 +1831,7 @@ export type Database = {
           sku: string | null
           sort_order: number | null
           supplier_account_id: string
+          supplier_id: string | null
           unit: string
           updated_at: string
         }
@@ -1796,6 +1847,7 @@ export type Database = {
           sku?: string | null
           sort_order?: number | null
           supplier_account_id: string
+          supplier_id?: string | null
           unit?: string
           updated_at?: string
         }
@@ -1811,6 +1863,7 @@ export type Database = {
           sku?: string | null
           sort_order?: number | null
           supplier_account_id?: string
+          supplier_id?: string | null
           unit?: string
           updated_at?: string
         }
@@ -1820,6 +1873,13 @@ export type Database = {
             columns: ["supplier_account_id"]
             isOneToOne: false
             referencedRelation: "supplier_b2b_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supplier_b2b_articles_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "b2b_suppliers"
             referencedColumns: ["id"]
           },
         ]
