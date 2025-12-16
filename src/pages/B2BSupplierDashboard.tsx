@@ -459,7 +459,13 @@ const B2BSupplierDashboard = () => {
 
           {/* Settings Tab */}
           <TabsContent value="settings">
-            <B2BSettingsTab account={account} onUpdate={loadAccount} />
+            <B2BSettingsTab 
+              account={account} 
+              onUpdate={loadAccount}
+              selectedSupplierId={selectedSupplierId}
+              suppliers={suppliers}
+              onSuppliersChange={() => loadSuppliers(account.id)}
+            />
           </TabsContent>
         </Tabs>
       </main>
