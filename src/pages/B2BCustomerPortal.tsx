@@ -89,6 +89,7 @@ export default function B2BCustomerPortal() {
           company_name,
           supplier_account_id,
           delivery_address,
+          supplier_id,
           supplier_b2b_accounts!inner(company_name, subdomain)
         `)
         .eq('user_id', user.id)
@@ -126,24 +127,16 @@ export default function B2BCustomerPortal() {
         setDeliveryAddress(customer.delivery_address);
       }
 
-      // Load accessible suppliers for this customer
-      const { data: accessData } = await supabase
-        .from('b2b_customer_supplier_access')
-        .select('supplier_id')
-        .eq('customer_id', customer.id);
-
-      const accessibleSupplierIds = accessData?.map(a => a.supplier_id) || [];
-
-      // Load articles - filter by accessible suppliers if access restrictions exist
+      // Load articles - filter by customer's assigned supplier
       let articlesQuery = supabase
         .from('supplier_b2b_articles')
         .select('*')
         .eq('supplier_account_id', customer.supplier_account_id)
         .eq('is_active', true);
 
-      // If customer has supplier access restrictions, filter by accessible suppliers
-      if (accessibleSupplierIds.length > 0) {
-        articlesQuery = articlesQuery.in('supplier_id', accessibleSupplierIds);
+      // Filter by customer's assigned supplier if set
+      if (customer.supplier_id) {
+        articlesQuery = articlesQuery.eq('supplier_id', customer.supplier_id);
       }
 
       const { data: articlesData, error: artError } = await articlesQuery

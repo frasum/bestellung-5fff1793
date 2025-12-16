@@ -5,7 +5,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
-import { Checkbox } from '@/components/ui/checkbox';
 import {
   Dialog,
   DialogContent,
@@ -13,8 +12,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { toast } from 'sonner';
-import { Store } from 'lucide-react';
 
 interface B2BSupplier {
   id: string;
@@ -31,7 +36,7 @@ interface B2BCustomer {
   delivery_address: string | null;
   is_active: boolean;
   user_id: string | null;
-  supplier_access?: string[];
+  supplier_id: string | null;
 }
 
 interface B2BCustomerFormDialogProps {
@@ -63,7 +68,7 @@ const B2BCustomerFormDialog = ({
   const [phone, setPhone] = useState('');
   const [deliveryAddress, setDeliveryAddress] = useState('');
   const [isActive, setIsActive] = useState(true);
-  const [selectedSuppliers, setSelectedSuppliers] = useState<string[]>([]);
+  const [supplierId, setSupplierId] = useState<string | null>(null);
 
   useEffect(() => {
     if (customer) {
@@ -74,7 +79,7 @@ const B2BCustomerFormDialog = ({
       setPhone(customer.phone || '');
       setDeliveryAddress(customer.delivery_address || '');
       setIsActive(customer.is_active);
-      setSelectedSuppliers(customer.supplier_access || []);
+      setSupplierId(customer.supplier_id);
     } else {
       setCompanyName('');
       setEmail('');
@@ -83,34 +88,25 @@ const B2BCustomerFormDialog = ({
       setPhone('');
       setDeliveryAddress('');
       setIsActive(true);
-      // For new customers: pre-select the current supplier or all suppliers
-      if (selectedSupplierId) {
-        setSelectedSuppliers([selectedSupplierId]);
-      } else {
-        setSelectedSuppliers(suppliers.map(s => s.id));
-      }
+      // For new customers: use selected supplier or first available
+      setSupplierId(selectedSupplierId || (suppliers.length > 0 ? suppliers[0].id : null));
     }
   }, [customer, open, selectedSupplierId, suppliers]);
-
-  const handleSupplierToggle = (supplierId: string) => {
-    setSelectedSuppliers(prev => 
-      prev.includes(supplierId)
-        ? prev.filter(id => id !== supplierId)
-        : [...prev, supplierId]
-    );
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (suppliers.length > 0 && selectedSuppliers.length === 0) {
-      toast.error('Bitte wählen Sie mindestens einen Lieferanten aus');
+    if (suppliers.length > 0 && !supplierId) {
+      toast.error('Bitte wählen Sie einen Lieferanten aus');
       return;
     }
 
     setLoading(true);
 
     try {
+      const supplierForEmail = suppliers.find(s => s.id === supplierId);
+      const supplierNameForEmail = supplierForEmail?.name || supplierName;
+
       if (customer) {
         // Update existing customer
         const { error } = await supabase
@@ -123,32 +119,11 @@ const B2BCustomerFormDialog = ({
             phone: phone || null,
             delivery_address: deliveryAddress || null,
             is_active: isActive,
+            supplier_id: supplierId,
           })
           .eq('id', customer.id);
 
         if (error) throw error;
-
-        // Update supplier access
-        // First delete all existing access
-        await supabase
-          .from('b2b_customer_supplier_access')
-          .delete()
-          .eq('customer_id', customer.id);
-
-        // Then insert new access
-        if (selectedSuppliers.length > 0) {
-          const { error: accessError } = await supabase
-            .from('b2b_customer_supplier_access')
-            .insert(
-              selectedSuppliers.map(supplierId => ({
-                customer_id: customer.id,
-                supplier_id: supplierId,
-              }))
-            );
-
-          if (accessError) throw accessError;
-        }
-
         toast.success('Kunde aktualisiert');
       } else {
         // Create new customer
@@ -163,27 +138,12 @@ const B2BCustomerFormDialog = ({
             phone: phone || null,
             delivery_address: deliveryAddress || null,
             is_active: isActive,
+            supplier_id: supplierId,
           })
           .select()
           .single();
 
         if (customerError) throw customerError;
-
-        // Create supplier access entries
-        if (selectedSuppliers.length > 0) {
-          const { error: accessError } = await supabase
-            .from('b2b_customer_supplier_access')
-            .insert(
-              selectedSuppliers.map(supplierId => ({
-                customer_id: newCustomer.id,
-                supplier_id: supplierId,
-              }))
-            );
-
-          if (accessError) {
-            console.error('Error creating supplier access:', accessError);
-          }
-        }
 
         // Create invitation token
         const { data: invitation, error: invitationError } = await supabase
@@ -204,7 +164,7 @@ const B2BCustomerFormDialog = ({
               body: {
                 email,
                 companyName,
-                supplierName,
+                supplierName: supplierNameForEmail,
                 inviteToken: invitation.token,
                 supplierAccountId: accountId,
               },
@@ -283,6 +243,31 @@ const B2BCustomerFormDialog = ({
             )}
           </div>
 
+          {/* Supplier Selection - only show if multiple suppliers exist */}
+          {suppliers.length > 1 && (
+            <div className="space-y-2">
+              <Label htmlFor="supplier">Lieferant *</Label>
+              <Select
+                value={supplierId || ''}
+                onValueChange={(value) => setSupplierId(value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Lieferant auswählen" />
+                </SelectTrigger>
+                <SelectContent>
+                  {suppliers.map(supplier => (
+                    <SelectItem key={supplier.id} value={supplier.id}>
+                      {supplier.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                Der Kunde kann nur Artikel dieses Lieferanten bestellen
+              </p>
+            </div>
+          )}
+
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="customerNumber">Kundennummer</Label>
@@ -324,36 +309,6 @@ const B2BCustomerFormDialog = ({
               rows={3}
             />
           </div>
-
-          {/* Supplier Access Section */}
-          {suppliers.length > 1 && (
-            <div className="space-y-3">
-              <Label className="flex items-center gap-2">
-                <Store className="h-4 w-4" />
-                Lieferanten-Zugriff
-              </Label>
-              <p className="text-xs text-muted-foreground">
-                Wählen Sie, bei welchen Lieferanten dieser Kunde bestellen darf
-              </p>
-              <div className="space-y-2 border rounded-md p-3">
-                {suppliers.map(supplier => (
-                  <div key={supplier.id} className="flex items-center space-x-2">
-                    <Checkbox
-                      id={`supplier-${supplier.id}`}
-                      checked={selectedSuppliers.includes(supplier.id)}
-                      onCheckedChange={() => handleSupplierToggle(supplier.id)}
-                    />
-                    <label
-                      htmlFor={`supplier-${supplier.id}`}
-                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-                    >
-                      {supplier.name}
-                    </label>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
 
           <div className="flex items-center justify-between">
             <Label htmlFor="active">Aktiv (kann bestellen)</Label>

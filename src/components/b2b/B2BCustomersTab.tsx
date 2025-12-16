@@ -16,7 +16,6 @@ import {
   Pencil,
   Trash2,
   Send,
-  Store,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -52,7 +51,7 @@ interface B2BCustomer {
   is_active: boolean;
   user_id: string | null;
   created_at: string;
-  supplier_access?: string[]; // IDs of accessible suppliers
+  supplier_id: string | null;
 }
 
 interface B2BCustomersTabProps {
@@ -84,39 +83,21 @@ const B2BCustomersTab = ({
 
   const loadCustomers = async () => {
     try {
-      // First, load all customers
-      const { data: customersData, error: customersError } = await supabase
+      let query = supabase
         .from('supplier_b2b_customers')
         .select('*')
         .eq('supplier_account_id', accountId)
         .order('company_name', { ascending: true });
 
-      if (customersError) throw customersError;
-
-      // Load supplier access for all customers
-      const { data: accessData, error: accessError } = await supabase
-        .from('b2b_customer_supplier_access')
-        .select('customer_id, supplier_id');
-
-      if (accessError) throw accessError;
-
-      // Map supplier access to customers
-      const customersWithAccess = (customersData || []).map(customer => ({
-        ...customer,
-        supplier_access: accessData
-          ?.filter(a => a.customer_id === customer.id)
-          .map(a => a.supplier_id) || [],
-      }));
-
       // Filter by selected supplier if one is selected
-      let filteredCustomers = customersWithAccess;
       if (selectedSupplierId) {
-        filteredCustomers = customersWithAccess.filter(c => 
-          c.supplier_access.includes(selectedSupplierId)
-        );
+        query = query.eq('supplier_id', selectedSupplierId);
       }
 
-      setCustomers(filteredCustomers);
+      const { data, error } = await query;
+
+      if (error) throw error;
+      setCustomers(data || []);
     } catch (error: any) {
       console.error('Error loading customers:', error);
       toast.error('Fehler beim Laden der Kunden');
@@ -178,11 +159,15 @@ const B2BCustomersTab = ({
         inviteToken = newInvitation.token;
       }
 
+      // Get supplier name for the email
+      const supplier = suppliers.find(s => s.id === customer.supplier_id);
+      const supplierNameForEmail = supplier?.name || supplierName;
+
       const { error: emailError } = await supabase.functions.invoke('send-b2b-customer-invitation', {
         body: {
           email: customer.email,
           companyName: customer.company_name,
-          supplierName,
+          supplierName: supplierNameForEmail,
           inviteToken,
           supplierAccountId: accountId,
         },
@@ -197,11 +182,9 @@ const B2BCustomersTab = ({
     }
   };
 
-  const getSupplierNames = (supplierIds: string[]) => {
-    return supplierIds
-      .map(id => suppliers.find(s => s.id === id)?.name)
-      .filter(Boolean)
-      .slice(0, 3);
+  const getSupplierName = (supplierId: string | null) => {
+    if (!supplierId) return null;
+    return suppliers.find(s => s.id === supplierId)?.name;
   };
 
   const filteredCustomers = customers.filter(customer =>
@@ -250,10 +233,10 @@ const B2BCustomersTab = ({
               {search 
                 ? 'Versuchen Sie einen anderen Suchbegriff' 
                 : selectedSupplierId 
-                  ? 'Keine Kunden haben Zugriff auf diesen Lieferanten'
+                  ? 'Keine Kunden für diesen Lieferanten'
                   : 'Laden Sie Ihren ersten Kunden ein'}
             </p>
-            {!search && !selectedSupplierId && (
+            {!search && (
               <Button onClick={() => { setEditingCustomer(null); setDialogOpen(true); }}>
                 <Plus className="h-4 w-4 mr-2" />
                 Ersten Kunden einladen
@@ -306,20 +289,12 @@ const B2BCustomersTab = ({
                           Ansprechpartner: {customer.contact_person}
                         </p>
                       )}
-                      {/* Supplier Access Badges */}
-                      {suppliers.length > 1 && customer.supplier_access && customer.supplier_access.length > 0 && (
-                        <div className="flex items-center gap-1 mt-2 flex-wrap">
-                          <Store className="h-3 w-3 text-muted-foreground" />
-                          {getSupplierNames(customer.supplier_access).map((name, idx) => (
-                            <Badge key={idx} variant="outline" className="text-xs">
-                              {name}
-                            </Badge>
-                          ))}
-                          {customer.supplier_access.length > 3 && (
-                            <Badge variant="outline" className="text-xs">
-                              +{customer.supplier_access.length - 3}
-                            </Badge>
-                          )}
+                      {/* Supplier Badge - only show if not filtered and multiple suppliers exist */}
+                      {!selectedSupplierId && suppliers.length > 1 && customer.supplier_id && (
+                        <div className="mt-2">
+                          <Badge variant="outline" className="text-xs">
+                            {getSupplierName(customer.supplier_id)}
+                          </Badge>
                         </div>
                       )}
                     </div>
