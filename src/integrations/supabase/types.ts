@@ -1932,6 +1932,7 @@ export type Database = {
           is_active: boolean | null
           phone: string | null
           supplier_account_id: string
+          supplier_id: string | null
           updated_at: string
           user_id: string | null
         }
@@ -1946,6 +1947,7 @@ export type Database = {
           is_active?: boolean | null
           phone?: string | null
           supplier_account_id: string
+          supplier_id?: string | null
           updated_at?: string
           user_id?: string | null
         }
@@ -1960,6 +1962,7 @@ export type Database = {
           is_active?: boolean | null
           phone?: string | null
           supplier_account_id?: string
+          supplier_id?: string | null
           updated_at?: string
           user_id?: string | null
         }
@@ -1969,6 +1972,13 @@ export type Database = {
             columns: ["supplier_account_id"]
             isOneToOne: false
             referencedRelation: "supplier_b2b_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supplier_b2b_customers_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "b2b_suppliers"
             referencedColumns: ["id"]
           },
         ]
