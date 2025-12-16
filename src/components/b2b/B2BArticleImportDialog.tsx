@@ -27,11 +27,17 @@ interface SourceArticle {
   category: string | null;
 }
 
+interface B2BSupplier {
+  id: string;
+  name: string;
+}
+
 interface B2BArticleImportDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   accountId: string;
   linkedSupplierId: string | null;
+  suppliers: B2BSupplier[];
   onSuccess: () => void;
 }
 
@@ -40,6 +46,7 @@ const B2BArticleImportDialog = ({
   onOpenChange,
   accountId,
   linkedSupplierId,
+  suppliers,
   onSuccess,
 }: B2BArticleImportDialogProps) => {
   const [articles, setArticles] = useState<SourceArticle[]>([]);
@@ -48,13 +55,17 @@ const B2BArticleImportDialog = ({
   const [importing, setImporting] = useState(false);
   const [search, setSearch] = useState('');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [selectedSupplierId, setSelectedSupplierId] = useState<string>(suppliers[0]?.id || '');
 
   useEffect(() => {
     if (open && linkedSupplierId) {
       loadArticles();
       loadExistingSkus();
     }
-  }, [open, linkedSupplierId]);
+    if (suppliers.length > 0 && !selectedSupplierId) {
+      setSelectedSupplierId(suppliers[0].id);
+    }
+  }, [open, linkedSupplierId, suppliers]);
 
   const loadArticles = async () => {
     if (!linkedSupplierId) return;
@@ -133,6 +144,7 @@ const B2BArticleImportDialog = ({
       
       const articlesToImport = selectedArticles.map(article => ({
         supplier_account_id: accountId,
+        supplier_id: selectedSupplierId || null,
         name: article.name,
         description: article.description,
         sku: article.sku,
