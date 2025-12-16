@@ -18,6 +18,7 @@ import {
   Trash2,
   Send,
   ShoppingCart,
+  Sparkles,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -55,6 +56,8 @@ interface B2BCustomer {
   created_at: string;
   supplier_id: string | null;
   has_purchase_feature: boolean;
+  upgraded_organization_id: string | null;
+  upgraded_at: string | null;
 }
 
 interface B2BCustomersTabProps {
@@ -289,6 +292,12 @@ const B2BCustomersTab = ({
                         ) : (
                           <Badge variant="outline" className="text-xs text-orange-500 border-orange-500">
                             Einladung ausstehend
+                          </Badge>
+                        )}
+                        {customer.upgraded_organization_id && (
+                          <Badge variant="default" className="text-xs bg-gradient-to-r from-primary to-primary/80">
+                            <Sparkles className="h-3 w-3 mr-1" />
+                            Upgraded
                           </Badge>
                         )}
                       </div>

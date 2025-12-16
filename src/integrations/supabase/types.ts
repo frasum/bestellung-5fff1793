@@ -1798,6 +1798,8 @@ export type Database = {
           id: string
           is_demo: boolean | null
           name: string
+          source_b2b_customer_id: string | null
+          source_type: string | null
           subscription_tier: string
           test_email: string | null
           test_mode_enabled: boolean
@@ -1815,6 +1817,8 @@ export type Database = {
           id?: string
           is_demo?: boolean | null
           name: string
+          source_b2b_customer_id?: string | null
+          source_type?: string | null
           subscription_tier?: string
           test_email?: string | null
           test_mode_enabled?: boolean
@@ -1832,6 +1836,8 @@ export type Database = {
           id?: string
           is_demo?: boolean | null
           name?: string
+          source_b2b_customer_id?: string | null
+          source_type?: string | null
           subscription_tier?: string
           test_email?: string | null
           test_mode_enabled?: boolean
@@ -1839,7 +1845,15 @@ export type Database = {
           updated_at?: string
           website?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "organizations_source_b2b_customer_id_fkey"
+            columns: ["source_b2b_customer_id"]
+            isOneToOne: false
+            referencedRelation: "supplier_b2b_customers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       photo_capture_tokens: {
         Row: {
@@ -2387,6 +2401,8 @@ export type Database = {
           supplier_account_id: string
           supplier_id: string | null
           updated_at: string
+          upgraded_at: string | null
+          upgraded_organization_id: string | null
           user_id: string | null
         }
         Insert: {
@@ -2403,6 +2419,8 @@ export type Database = {
           supplier_account_id: string
           supplier_id?: string | null
           updated_at?: string
+          upgraded_at?: string | null
+          upgraded_organization_id?: string | null
           user_id?: string | null
         }
         Update: {
@@ -2419,6 +2437,8 @@ export type Database = {
           supplier_account_id?: string
           supplier_id?: string | null
           updated_at?: string
+          upgraded_at?: string | null
+          upgraded_organization_id?: string | null
           user_id?: string | null
         }
         Relationships: [
@@ -2434,6 +2454,13 @@ export type Database = {
             columns: ["supplier_id"]
             isOneToOne: false
             referencedRelation: "b2b_suppliers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supplier_b2b_customers_upgraded_organization_id_fkey"
+            columns: ["upgraded_organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]

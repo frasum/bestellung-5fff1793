@@ -134,3 +134,6 @@ verify_jwt = false
 
 [functions.send-b2b-customer-purchase-order]
 verify_jwt = true
+
+[functions.upgrade-b2b-customer]
+verify_jwt = true
