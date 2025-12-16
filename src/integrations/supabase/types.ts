@@ -1866,6 +1866,7 @@ export type Database = {
           name: string
           sku: string | null
           sort_order: number | null
+          source_article_id: string | null
           supplier_account_id: string
           supplier_id: string | null
           unit: string
@@ -1882,6 +1883,7 @@ export type Database = {
           name: string
           sku?: string | null
           sort_order?: number | null
+          source_article_id?: string | null
           supplier_account_id: string
           supplier_id?: string | null
           unit?: string
@@ -1898,12 +1900,20 @@ export type Database = {
           name?: string
           sku?: string | null
           sort_order?: number | null
+          source_article_id?: string | null
           supplier_account_id?: string
           supplier_id?: string | null
           unit?: string
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "supplier_b2b_articles_source_article_id_fkey"
+            columns: ["source_article_id"]
+            isOneToOne: false
+            referencedRelation: "articles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "supplier_b2b_articles_supplier_account_id_fkey"
             columns: ["supplier_account_id"]

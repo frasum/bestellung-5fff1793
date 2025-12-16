@@ -32,6 +32,18 @@ interface B2BArticle {
   is_active: boolean;
   sort_order: number;
   supplier_id?: string | null;
+  source_article_id?: string | null;
+}
+
+interface SourceArticleData {
+  id: string;
+  name: string;
+  description: string | null;
+  unit: string;
+  price: number;
+  category: string | null;
+  organization_id: string;
+  supplier_id: string;
 }
 
 interface B2BSupplier {
@@ -70,6 +82,30 @@ const B2BArticleFormDialog = ({
   const [newCategory, setNewCategory] = useState('');
   const [isActive, setIsActive] = useState(true);
   const [supplierId, setSupplierId] = useState<string>('');
+  const [sourceArticle, setSourceArticle] = useState<SourceArticleData | null>(null);
+
+  // Load source article data if linked
+  useEffect(() => {
+    const loadSourceArticle = async () => {
+      if (article?.source_article_id) {
+        const { data } = await supabase
+          .from('articles')
+          .select('id, name, description, unit, price, category, organization_id, supplier_id')
+          .eq('id', article.source_article_id)
+          .single();
+        
+        if (data) {
+          setSourceArticle(data);
+        }
+      } else {
+        setSourceArticle(null);
+      }
+    };
+
+    if (open && article) {
+      loadSourceArticle();
+    }
+  }, [open, article]);
 
   useEffect(() => {
     if (article) {
@@ -91,8 +127,56 @@ const B2BArticleFormDialog = ({
       setNewCategory('');
       setIsActive(true);
       setSupplierId(suppliers[0]?.id || '');
+      setSourceArticle(null);
     }
   }, [article, open, suppliers]);
+
+  // Create supplier_article_changes entries for syncing to Bestellung.pro
+  const createChangeEntries = async (priceValue: number, finalCategory: string | null) => {
+    if (!sourceArticle || !article?.source_article_id) return;
+
+    const changes: { field_name: string; old_value: string | null; new_value: string | null }[] = [];
+
+    // Compare fields and track changes
+    if (name !== sourceArticle.name) {
+      changes.push({ field_name: 'name', old_value: sourceArticle.name, new_value: name });
+    }
+    if ((description || null) !== (sourceArticle.description || null)) {
+      changes.push({ field_name: 'description', old_value: sourceArticle.description, new_value: description || null });
+    }
+    if (priceValue !== sourceArticle.price) {
+      changes.push({ field_name: 'price', old_value: sourceArticle.price.toString(), new_value: priceValue.toString() });
+    }
+    if (unit !== sourceArticle.unit) {
+      changes.push({ field_name: 'unit', old_value: sourceArticle.unit, new_value: unit });
+    }
+    if ((finalCategory || null) !== (sourceArticle.category || null)) {
+      changes.push({ field_name: 'category', old_value: sourceArticle.category, new_value: finalCategory });
+    }
+
+    if (changes.length === 0) return;
+
+    // Insert change entries
+    const changeEntries = changes.map(change => ({
+      article_id: article.source_article_id!,
+      supplier_id: sourceArticle.supplier_id,
+      organization_id: sourceArticle.organization_id,
+      field_name: change.field_name,
+      old_value: change.old_value,
+      new_value: change.new_value,
+      status: 'pending',
+    }));
+
+    const { error } = await supabase
+      .from('supplier_article_changes')
+      .insert(changeEntries);
+
+    if (error) {
+      console.error('Error creating change entries:', error);
+    } else {
+      toast.info(`${changes.length} Änderung(en) zur Genehmigung an Bestellung.pro gesendet`);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -103,7 +187,7 @@ const B2BArticleFormDialog = ({
 
     try {
       if (article) {
-        // Update
+        // Update B2B article
         const { error } = await supabase
           .from('supplier_b2b_articles')
           .update({
@@ -119,6 +203,12 @@ const B2BArticleFormDialog = ({
           .eq('id', article.id);
 
         if (error) throw error;
+
+        // If linked to Bestellung.pro, create change entries for approval
+        if (article.source_article_id && sourceArticle) {
+          await createChangeEntries(priceValue, finalCategory);
+        }
+
         toast.success('Artikel aktualisiert');
       } else {
         // Insert
