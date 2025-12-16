@@ -8,10 +8,10 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
-import { Loader2, ShoppingCart, LogOut, Package, Search, Plus, Minus, Lock, CheckCircle, ArrowLeft, Eye, PackageSearch } from 'lucide-react';
+import { Loader2, ShoppingCart, LogOut, Package, Search, Plus, Minus, Lock, CheckCircle, ArrowLeft, Eye, PackageSearch, Sparkles, ExternalLink } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import CustomerPurchaseTab from '@/components/b2b-customer/CustomerPurchaseTab';
-
+import B2BUpgradePricingDialog from '@/components/b2b-customer/B2BUpgradePricingDialog';
 interface Article {
   id: string;
   name: string;
@@ -35,11 +35,15 @@ interface CartItem {
 interface CustomerInfo {
   id: string;
   companyName: string;
+  email: string;
   supplierAccountId: string;
   supplierName: string;
   supplierSubdomain?: string | null;
   deliveryAddress?: string | null;
   hasPurchaseFeature?: boolean;
+  upgradedOrganizationId?: string | null;
+  vendorCount?: number;
+  articleCount?: number;
 }
 
 type ViewState = 'catalog' | 'checkout' | 'confirmation' | 'purchase';
@@ -71,6 +75,9 @@ export default function B2BCustomerPortal() {
   const [notes, setNotes] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [orderNumber, setOrderNumber] = useState('');
+
+  // Upgrade dialog state
+  const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
 
   useEffect(() => {
     void checkAuthAndLoadData();
@@ -108,6 +115,7 @@ export default function B2BCustomerPortal() {
         setCustomerInfo({
           id: 'preview',
           companyName: 'Vorschau',
+          email: '',
           supplierAccountId: accountData.id,
           supplierName: accountData.company_name,
           supplierSubdomain: subdomain,
@@ -143,10 +151,12 @@ export default function B2BCustomerPortal() {
         .select(`
           id,
           company_name,
+          email,
           supplier_account_id,
           delivery_address,
           supplier_id,
           has_purchase_feature,
+          upgraded_organization_id,
           supplier_b2b_accounts!inner(company_name, subdomain)
         `)
         .eq('user_id', user.id)
@@ -170,14 +180,29 @@ export default function B2BCustomerPortal() {
         return;
       }
 
+      // Load vendor and article counts for upgrade dialog
+      const { count: vendorCount } = await supabase
+        .from('b2b_customer_vendors')
+        .select('*', { count: 'exact', head: true })
+        .eq('customer_id', customer.id);
+
+      const { count: articleCount } = await supabase
+        .from('b2b_customer_vendor_articles')
+        .select('*', { count: 'exact', head: true })
+        .eq('customer_id', customer.id);
+
       setCustomerInfo({
         id: customer.id,
         companyName: customer.company_name,
+        email: customer.email,
         supplierAccountId: customer.supplier_account_id,
         supplierName,
         supplierSubdomain,
         deliveryAddress: customer.delivery_address,
         hasPurchaseFeature: customer.has_purchase_feature || false,
+        upgradedOrganizationId: customer.upgraded_organization_id,
+        vendorCount: vendorCount || 0,
+        articleCount: articleCount || 0,
       });
 
       // Pre-fill delivery address
@@ -687,6 +712,58 @@ export default function B2BCustomerPortal() {
             </TabsContent>
 
             <TabsContent value="purchase">
+              {/* Upgrade Banner - only show if not already upgraded */}
+              {!customerInfo.upgradedOrganizationId && (
+                <Card className="mb-6 border-primary/20 bg-gradient-to-r from-primary/5 to-primary/10">
+                  <CardContent className="p-4">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                      <div className="flex items-center gap-3">
+                        <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center">
+                          <Sparkles className="h-5 w-5 text-primary" />
+                        </div>
+                        <div>
+                          <h3 className="font-semibold">Mehr Möglichkeiten mit Bestellung.pro</h3>
+                          <p className="text-sm text-muted-foreground">
+                            Nutzen Sie die volle Bestellplattform für Ihr Unternehmen
+                          </p>
+                        </div>
+                      </div>
+                      <Button onClick={() => setShowUpgradeDialog(true)}>
+                        <Sparkles className="h-4 w-4 mr-2" />
+                        Upgraden
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Upgraded Badge */}
+              {customerInfo.upgradedOrganizationId && (
+                <Card className="mb-6 border-green-200 bg-green-50/50 dark:bg-green-950/20 dark:border-green-900">
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="h-10 w-10 rounded-full bg-green-100 dark:bg-green-900/50 flex items-center justify-center">
+                          <CheckCircle className="h-5 w-5 text-green-600" />
+                        </div>
+                        <div>
+                          <h3 className="font-semibold text-green-700 dark:text-green-400">Bestellung.pro Account verknüpft</h3>
+                          <p className="text-sm text-muted-foreground">
+                            Sie haben Zugang zu allen Funktionen
+                          </p>
+                        </div>
+                      </div>
+                      <Button variant="outline" size="sm" asChild>
+                        <a href="/" target="_blank" rel="noopener noreferrer">
+                          <ExternalLink className="h-4 w-4 mr-2" />
+                          Öffnen
+                        </a>
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
               <CustomerPurchaseTab customerId={customerInfo.id} />
             </TabsContent>
           </Tabs>
@@ -710,6 +787,18 @@ export default function B2BCustomerPortal() {
           </div>
         </aside>
       )}
+
+      {/* Upgrade Dialog */}
+      <B2BUpgradePricingDialog
+        open={showUpgradeDialog}
+        onOpenChange={setShowUpgradeDialog}
+        customerId={customerInfo.id}
+        customerEmail={customerInfo.email}
+        companyName={customerInfo.companyName}
+        vendorCount={customerInfo.vendorCount || 0}
+        articleCount={customerInfo.articleCount || 0}
+        onUpgradeSuccess={() => checkAuthAndLoadData()}
+      />
     </div>
   );
 }
