@@ -120,6 +120,8 @@ const LocationFormDialog = ({
       return;
     }
 
+    const hasAddressData = addressLine1.trim() && postalCode.trim() && city.trim();
+
     if (location) {
       // Update existing location
       updateLocation.mutate({
@@ -131,7 +133,7 @@ const LocationFormDialog = ({
       });
 
       // Update or create primary address
-      if (addressLine1.trim() && postalCode.trim() && city.trim()) {
+      if (hasAddressData) {
         if (primaryAddress) {
           updateAddress.mutate({
             id: primaryAddress.id,
@@ -141,6 +143,8 @@ const LocationFormDialog = ({
             postal_code: postalCode.trim(),
             city: city.trim(),
             country: country.trim(),
+          }, {
+            onSettled: () => onOpenChange(false),
           });
         } else {
           createAddress.mutate({
@@ -152,10 +156,13 @@ const LocationFormDialog = ({
             city: city.trim(),
             country: country.trim(),
             is_default: true,
+          }, {
+            onSettled: () => onOpenChange(false),
           });
         }
+      } else {
+        onOpenChange(false);
       }
-      onOpenChange(false);
     } else {
       // Create new location with address
       createLocation.mutate({
@@ -166,7 +173,7 @@ const LocationFormDialog = ({
       }, {
         onSuccess: (newLocation) => {
           // Create address for new location
-          if (addressLine1.trim() && postalCode.trim() && city.trim()) {
+          if (hasAddressData) {
             createAddress.mutate({
               location_id: newLocation.id,
               label: name.trim(),
@@ -176,9 +183,12 @@ const LocationFormDialog = ({
               city: city.trim(),
               country: country.trim(),
               is_default: true,
+            }, {
+              onSettled: () => onOpenChange(false),
             });
+          } else {
+            onOpenChange(false);
           }
-          onOpenChange(false);
         },
       });
     }
