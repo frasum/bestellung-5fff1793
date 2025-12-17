@@ -62,6 +62,8 @@ export const WinesTab = ({ articles, suppliers, onEditArticle }: WinesTabProps) 
   const [filterMode, setFilterMode] = useState<FilterMode>('all');
   const [advancedMode, setAdvancedMode] = useState(() => localStorage.getItem('advanced-settings-enabled') === 'true');
   const [quizOpen, setQuizOpen] = useState(false);
+  // Track successfully researched wine IDs for real-time badge updates
+  const [researchedIds, setResearchedIds] = useState<Set<string>>(new Set());
   const updateArticle = useUpdateArticle();
 
   useEffect(() => {
@@ -103,14 +105,17 @@ export const WinesTab = ({ articles, suppliers, onEditArticle }: WinesTabProps) 
   }, [wineArticles, suppliers, t]);
 
   // Count incomplete wines (missing description, grape variety, origin country, or image)
+  // Excludes wines that have been successfully researched in this session
   const incompleteCount = useMemo(() => {
     return wineArticles.filter(w => 
-      !w.description?.trim() || 
-      !w.grape_variety?.trim() ||
-      !w.origin_country?.trim() ||
-      !w.image_url
+      !researchedIds.has(w.id) && (
+        !w.description?.trim() || 
+        !w.grape_variety?.trim() ||
+        !w.origin_country?.trim() ||
+        !w.image_url
+      )
     ).length;
-  }, [wineArticles]);
+  }, [wineArticles, researchedIds]);
 
   // Filter wines based on filterMode
   const filteredWines = useMemo(() => {
@@ -134,9 +139,10 @@ export const WinesTab = ({ articles, suppliers, onEditArticle }: WinesTabProps) 
   }, [wineArticles, filterMode]);
 
   // Wines without description (candidates for batch research)
+  // Excludes wines that have been successfully researched in this session
   const winesWithoutDescription = useMemo(() => {
-    return wineArticles.filter(wine => !wine.description?.trim());
-  }, [wineArticles]);
+    return wineArticles.filter(wine => !researchedIds.has(wine.id) && !wine.description?.trim());
+  }, [wineArticles, researchedIds]);
 
   // Group wines by supplier
   const winesBySupplier = useMemo(() => {
@@ -163,7 +169,10 @@ export const WinesTab = ({ articles, suppliers, onEditArticle }: WinesTabProps) 
 
   // Batch research function
   const handleBatchResearch = useCallback(async () => {
-    if (winesWithoutDescription.length === 0) {
+    // Capture the current list at the start of batch processing
+    const winesToResearch = winesWithoutDescription;
+    
+    if (winesToResearch.length === 0) {
       toast.info(t('wines.allWinesHaveDescriptions', 'Alle Weine haben bereits Beschreibungen'));
       return;
     }
@@ -172,9 +181,9 @@ export const WinesTab = ({ articles, suppliers, onEditArticle }: WinesTabProps) 
     let successCount = 0;
     let errorCount = 0;
 
-    for (let i = 0; i < winesWithoutDescription.length; i++) {
-      const wine = winesWithoutDescription[i];
-      setBatchProgress({ current: i + 1, total: winesWithoutDescription.length, wineName: wine.name });
+    for (let i = 0; i < winesToResearch.length; i++) {
+      const wine = winesToResearch[i];
+      setBatchProgress({ current: i + 1, total: winesToResearch.length, wineName: wine.name });
 
       try {
         const { data, error } = await supabase.functions.invoke('research-wine', {
@@ -196,6 +205,8 @@ export const WinesTab = ({ articles, suppliers, onEditArticle }: WinesTabProps) 
           ...(result.food_pairings !== notFound && { food_pairings: result.food_pairings }),
         });
 
+        // Update local state for real-time badge updates
+        setResearchedIds(prev => new Set([...prev, wine.id]));
         successCount++;
       } catch (error) {
         console.error(`Error researching wine ${wine.name}:`, error);
@@ -207,6 +218,8 @@ export const WinesTab = ({ articles, suppliers, onEditArticle }: WinesTabProps) 
     }
 
     setBatchProgress(null);
+    // Reset after batch - React Query has the real data now
+    setResearchedIds(new Set());
     
     if (errorCount === 0) {
       toast.success(t('wines.batchResearchComplete', '{{count}} Weine erfolgreich recherchiert', { count: successCount }));
