@@ -4,6 +4,7 @@ import { Search, Plus, Minus, Check } from 'lucide-react';
 import { useArticlesBySupplier } from '@/hooks/useArticles';
 import { useCart } from '@/contexts/CartContext';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
+import { useOrderUnits } from '@/hooks/useOrderUnits';
 import {
   Sheet,
   SheetContent,
@@ -32,7 +33,15 @@ export const AddArticleSheet = ({
   const { lightTap } = useHapticFeedback();
   const { data: articles, isLoading } = useArticlesBySupplier(open ? supplierId : null);
   const { items, addItem, updateQuantity } = useCart();
+  const { data: orderUnits } = useOrderUnits();
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Helper to format order unit with fallback
+  const formatOrderUnit = (orderUnitId: string | null | undefined, fallbackUnit: string) => {
+    if (!orderUnitId || !orderUnits) return fallbackUnit;
+    const unit = orderUnits.find(u => u.id === orderUnitId);
+    return unit?.name || fallbackUnit;
+  };
 
   // Get cart quantities for this supplier's articles
   const cartQuantities = useMemo(() => {
@@ -126,7 +135,7 @@ export const AddArticleSheet = ({
                           </p>
                         )}
                         <p className="text-xs text-muted-foreground mt-0.5">
-                          {article.unit}
+                          {formatOrderUnit(article.order_unit_id, article.unit)}
                           {article.packaging_unit && article.packaging_unit > 1 && (
                             <span className="ml-1">({article.packaging_unit}er)</span>
                           )}
