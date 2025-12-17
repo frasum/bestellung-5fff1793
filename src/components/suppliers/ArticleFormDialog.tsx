@@ -11,7 +11,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Badge } from '@/components/ui/badge';
-import { Check, ChevronsUpDown, Loader2, Plus, Package, Save, Globe, ChevronDown, Sparkles } from 'lucide-react';
+import { Check, ChevronsUpDown, Loader2, Plus, Package, Save, Globe, ChevronDown, Sparkles, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Article } from '@/hooks/useArticles';
 import { Supplier } from '@/hooks/useSuppliers';
@@ -30,6 +30,7 @@ interface ArticleFormDialogProps {
   units: string[];
   onSubmit: (data: ArticleFormData, capturedImage?: string, imageCleared?: boolean) => Promise<void>;
   isPending: boolean;
+  onDelete?: (article: Article) => void;
 }
 
 export const ArticleFormDialog = ({
@@ -40,7 +41,8 @@ export const ArticleFormDialog = ({
   categories,
   units,
   onSubmit,
-  isPending
+  isPending,
+  onDelete
 }: ArticleFormDialogProps) => {
   const [unitPopoverOpen, setUnitPopoverOpen] = useState(false);
   const [customUnit, setCustomUnit] = useState('');
@@ -928,10 +930,22 @@ export const ArticleFormDialog = ({
             Referenzpreis ist optional und dient zum Preisvergleich (z.B. €/kg)
           </p>
           <div className="flex gap-3 pt-4">
-            <Button type="button" variant="outline" className="flex-1 h-10 sm:h-9" onClick={() => onOpenChange(false)}>
+            {editingArticle && onDelete && (
+              <Button 
+                type="button" 
+                variant="destructive" 
+                className="h-10 sm:h-9"
+                onClick={() => onDelete(editingArticle)}
+              >
+                <Trash2 className="w-4 h-4 mr-2" />
+                Löschen
+              </Button>
+            )}
+            <div className="flex-1" />
+            <Button type="button" variant="outline" className="h-10 sm:h-9" onClick={() => onOpenChange(false)}>
               Abbrechen
             </Button>
-            <Button type="submit" className="flex-1 h-10 sm:h-9" disabled={isPending}>
+            <Button type="submit" className="h-10 sm:h-9" disabled={isPending}>
               {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : editingArticle ? 'Speichern' : 'Erstellen'}
             </Button>
           </div>

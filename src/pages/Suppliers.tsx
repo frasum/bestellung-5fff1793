@@ -765,10 +765,23 @@ const Suppliers = () => {
       </div>
 
       {/* Article Form Dialog - outside Tabs for global availability */}
-      <ArticleFormDialog open={isArticleDialogOpen} onOpenChange={open => {
-      setIsArticleDialogOpen(open);
-      if (!open) setEditingArticle(null);
-    }} editingArticle={editingArticle} suppliers={suppliers || []} categories={allArticleCategories} units={existingUnits} onSubmit={handleArticleSubmit} isPending={createArticle.isPending || updateArticle.isPending} />
+      <ArticleFormDialog 
+        open={isArticleDialogOpen} 
+        onOpenChange={open => {
+          setIsArticleDialogOpen(open);
+          if (!open) setEditingArticle(null);
+        }} 
+        editingArticle={editingArticle} 
+        suppliers={suppliers || []} 
+        categories={allArticleCategories} 
+        units={existingUnits} 
+        onSubmit={handleArticleSubmit} 
+        isPending={createArticle.isPending || updateArticle.isPending}
+        onDelete={(article) => {
+          setDeletingArticle(article);
+          setIsArticleDialogOpen(false);
+        }}
+      />
 
       {/* Delete Confirmation Dialogs */}
       <DeleteConfirmationDialogs deletingSupplier={deletingSupplier} onSupplierClose={() => setDeletingSupplier(null)} onSupplierDelete={handleSupplierDelete} isSupplierDeleting={deleteSupplier.isPending} deletingArticle={deletingArticle} onArticleClose={() => setDeletingArticle(null)} onArticleDelete={handleArticleDelete} isArticleDeleting={deleteArticle.isPending} />
