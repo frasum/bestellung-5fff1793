@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -83,14 +83,24 @@ export function DemoEmailPreviewDialog({
   const [localPreviews, setLocalPreviews] = useState<DemoEmailPreviewData[]>([]);
 
   // Sync local state with props when dialog opens
-  useState(() => {
-    if (open) {
+  useEffect(() => {
+    if (open && emailPreviews.length > 0) {
       setLocalPreviews(emailPreviews);
     }
-  });
+  }, [open, emailPreviews]);
 
-  // Use local state if we have it, otherwise fall back to props
+  // Use local state
   const currentPreviews = localPreviews.length > 0 ? localPreviews : emailPreviews;
+
+  // Handle local toggle confirmation
+  const handleLocalToggleConfirm = (supplierId: string) => {
+    setLocalPreviews(prev => {
+      const updated = prev.length > 0 ? [...prev] : [...emailPreviews];
+      return updated.map(p => 
+        p.supplierId === supplierId ? { ...p, confirmed: !p.confirmed } : p
+      );
+    });
+  };
 
   const allConfirmed = currentPreviews.every(preview => preview.confirmed);
   const confirmedCount = currentPreviews.filter(preview => preview.confirmed).length;
@@ -369,16 +379,12 @@ export function DemoEmailPreviewDialog({
                   {/* Confirmation Checkbox */}
                   <div 
                     className="flex items-center space-x-2 pt-2 cursor-pointer"
-                    onClick={() => onToggleConfirm(preview.supplierId)}
+                    onClick={() => handleLocalToggleConfirm(preview.supplierId)}
                   >
                     <Checkbox
                       id={`confirm-${preview.supplierId}`}
                       checked={preview.confirmed}
-                      onCheckedChange={(checked) => {
-                        if (typeof checked === 'boolean') {
-                          onToggleConfirm(preview.supplierId);
-                        }
-                      }}
+                      onCheckedChange={() => handleLocalToggleConfirm(preview.supplierId)}
                     />
                     <label
                       htmlFor={`confirm-${preview.supplierId}`}
