@@ -8,13 +8,13 @@ import { ThemeProvider } from "next-themes";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { CartProvider } from "@/contexts/CartContext";
 import { LocationProvider } from "@/contexts/LocationContext";
+import { StyleProvider } from "@/contexts/StyleContext";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { Loader2 } from "lucide-react";
 import { useRealtimeNotifications } from "@/hooks/useRealtimeNotifications";
 import { usePerformanceMonitor } from "@/hooks/usePerformanceMonitor";
 import { PerformanceMonitor } from "@/components/debug/PerformanceMonitor";
 import { DevNavigationPanel } from "@/components/debug/DevNavigationPanel";
-
 // Lazy load pages for better performance
 const Auth = lazy(() => import("./pages/Auth"));
 const Suppliers = lazy(() => import("./pages/Suppliers"));
@@ -125,21 +125,23 @@ const AppContent = () => {
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-      <AuthProvider>
-        <LocationProvider>
-          <CartProvider>
-            <TooltipProvider>
-              <ErrorBoundary>
-                <Toaster />
-                <Sonner />
-                <BrowserRouter>
-                  <AppContent />
-                </BrowserRouter>
-              </ErrorBoundary>
-            </TooltipProvider>
-          </CartProvider>
-        </LocationProvider>
-      </AuthProvider>
+      <StyleProvider>
+        <AuthProvider>
+          <LocationProvider>
+            <CartProvider>
+              <TooltipProvider>
+                <ErrorBoundary>
+                  <Toaster />
+                  <Sonner />
+                  <BrowserRouter>
+                    <AppContent />
+                  </BrowserRouter>
+                </ErrorBoundary>
+              </TooltipProvider>
+            </CartProvider>
+          </LocationProvider>
+        </AuthProvider>
+      </StyleProvider>
     </ThemeProvider>
   </QueryClientProvider>
 );
