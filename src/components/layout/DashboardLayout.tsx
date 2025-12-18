@@ -10,6 +10,7 @@ import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import { LocationSwitcher } from '@/components/LocationSwitcher';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { StyleToggle } from '@/components/StyleToggle';
 import { useOrganization, useUpdateOrganization } from '@/hooks/useSettings';
 import { Badge } from '@/components/ui/badge';
 import { MobileBottomNav } from '@/components/layout/MobileBottomNav';
@@ -206,6 +207,7 @@ export const DashboardLayout = ({
             </Badge>
             <LanguageSwitcher variant="icon" />
             <ThemeToggle />
+            <StyleToggle />
           {organization?.is_demo && demoDaysRemaining !== null && (
             <Badge 
               variant="outline" 
