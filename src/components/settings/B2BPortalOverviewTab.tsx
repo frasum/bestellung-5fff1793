@@ -3,7 +3,7 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Building2, Users, Store, Activity, ChevronRight } from 'lucide-react';
+import { Building2, Users, Store, Activity } from 'lucide-react';
 import { useB2BAccountsOverview, useB2BStats } from '@/hooks/useSuperAdminB2BOverview';
 import { formatDistanceToNow } from 'date-fns';
 import { de, enUS } from 'date-fns/locale';
@@ -90,7 +90,6 @@ export function B2BPortalOverviewTab() {
           <AccordionItem value="accounts" className="border-b">
             <AccordionTrigger className="group px-4 py-3 hover:no-underline hover:bg-muted/50 data-[state=open]:bg-primary/5">
               <div className="flex items-center gap-2">
-                <ChevronRight className="h-4 w-4 shrink-0 transition-transform duration-200 group-data-[state=open]:rotate-90 group-data-[state=open]:text-primary" />
                 <Building2 className="h-4 w-4 group-data-[state=open]:text-primary transition-colors" />
                 <span className="group-data-[state=open]:text-primary transition-colors">
                   B2B-Accounts Übersicht
@@ -148,7 +147,6 @@ export function B2BPortalOverviewTab() {
           <AccordionItem value="suppliers" className="border-b">
             <AccordionTrigger className="group px-4 py-3 hover:no-underline hover:bg-muted/50 data-[state=open]:bg-primary/5">
               <div className="flex items-center gap-2">
-                <ChevronRight className="h-4 w-4 shrink-0 transition-transform duration-200 group-data-[state=open]:rotate-90 group-data-[state=open]:text-primary" />
                 <Store className="h-4 w-4 group-data-[state=open]:text-primary transition-colors" />
                 <span className="group-data-[state=open]:text-primary transition-colors">
                   Lieferanten pro Account
@@ -202,7 +200,6 @@ export function B2BPortalOverviewTab() {
           <AccordionItem value="users" className="border-b-0">
             <AccordionTrigger className="group px-4 py-3 hover:no-underline hover:bg-muted/50 data-[state=open]:bg-primary/5">
               <div className="flex items-center gap-2">
-                <ChevronRight className="h-4 w-4 shrink-0 transition-transform duration-200 group-data-[state=open]:rotate-90 group-data-[state=open]:text-primary" />
                 <Users className="h-4 w-4 group-data-[state=open]:text-primary transition-colors" />
                 <span className="group-data-[state=open]:text-primary transition-colors">
                   Lieferanten-Benutzer Übersicht
