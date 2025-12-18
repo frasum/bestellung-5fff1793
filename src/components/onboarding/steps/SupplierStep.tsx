@@ -24,7 +24,9 @@ export function SupplierStep({
   onSkip,
 }: SupplierStepProps) {
   const { terminology, exampleSuppliers } = industry;
-  const [name, setName] = useState('');
+  const [name, setName] = useState(
+    exampleSuppliers.length > 0 ? exampleSuppliers[0].name : ''
+  );
   const [email, setEmail] = useState('');
   const [customerNumber, setCustomerNumber] = useState('');
   const [error, setError] = useState('');
