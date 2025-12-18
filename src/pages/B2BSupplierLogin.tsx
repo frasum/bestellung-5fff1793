@@ -31,7 +31,7 @@ const B2BSupplierLogin = () => {
 
       if (error) throw error;
 
-      // Check if user has a B2B account
+      // Check if user is an account owner
       const { data: account } = await supabase
         .from('supplier_b2b_accounts')
         .select('id')
@@ -39,10 +39,33 @@ const B2BSupplierLogin = () => {
         .maybeSingle();
 
       if (account) {
+        // Account owner - full access
         navigate('/b2b/dashboard');
-      } else {
-        toast.error('Kein B2B-Konto mit dieser E-Mail gefunden');
+        return;
       }
+
+      // Check if user is a supplier user (e.g., Luigi with own login)
+      const { data: supplierUser } = await supabase
+        .from('b2b_supplier_users')
+        .select('supplier_id, account_id, role')
+        .eq('user_id', data.user?.id)
+        .maybeSingle();
+
+      if (supplierUser) {
+        // Supplier user - restricted access to their supplier only
+        navigate('/b2b/dashboard', { 
+          state: { 
+            supplierId: supplierUser.supplier_id,
+            accountId: supplierUser.account_id,
+            isSupplierUser: true,
+            supplierUserRole: supplierUser.role
+          } 
+        });
+        return;
+      }
+
+      toast.error('Kein B2B-Zugang mit dieser E-Mail gefunden');
+      await supabase.auth.signOut();
     } catch (error: any) {
       console.error('Login error:', error);
       toast.error(error.message || 'Login fehlgeschlagen');

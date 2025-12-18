@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -32,6 +32,7 @@ import {
   Truck,
   PackageSearch,
   ChevronDown,
+  User,
 } from 'lucide-react';
 import B2BArticlesTab from '@/components/b2b/B2BArticlesTab';
 import B2BCustomersTab from '@/components/b2b/B2BCustomersTab';
@@ -74,6 +75,7 @@ interface DashboardStats {
 const B2BSupplierDashboard = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuth();
   const [account, setAccount] = useState<B2BAccount | null>(null);
   const [suppliers, setSuppliers] = useState<B2BSupplier[]>([]);
@@ -83,22 +85,41 @@ const B2BSupplierDashboard = () => {
   const [activeTab, setActiveTab] = useState('overview');
   const [newSupplierDialogOpen, setNewSupplierDialogOpen] = useState(false);
   const [upgradeDialogOpen, setUpgradeDialogOpen] = useState(false);
+  
+  // Supplier User Mode (e.g., Luigi with own login)
+  const [isSupplierUser, setIsSupplierUser] = useState(false);
+  const [supplierUserRole, setSupplierUserRole] = useState<string>('manager');
 
   useEffect(() => {
     if (!user) {
       navigate('/b2b/login');
       return;
     }
-    loadAccount();
-  }, [user, navigate]);
+    
+    // Check if navigated as supplier user from login
+    const state = location.state as { 
+      supplierId?: string; 
+      accountId?: string; 
+      isSupplierUser?: boolean;
+      supplierUserRole?: string;
+    } | null;
+    
+    if (state?.isSupplierUser && state?.accountId) {
+      setIsSupplierUser(true);
+      setSupplierUserRole(state.supplierUserRole || 'manager');
+      loadAccountAsSupplierUser(state.accountId, state.supplierId!);
+    } else {
+      loadAccount();
+    }
+  }, [user, navigate, location.state]);
 
-  const loadAccount = async () => {
+  const loadAccountAsSupplierUser = async (accountId: string, supplierId: string) => {
     try {
-      // Get account by email
+      // Load account data
       const { data: accountData, error } = await supabase
         .from('supplier_b2b_accounts')
         .select('*')
-        .eq('email', user?.email)
+        .eq('id', accountId)
         .maybeSingle();
 
       if (error) throw error;
@@ -110,7 +131,61 @@ const B2BSupplierDashboard = () => {
       }
 
       setAccount(accountData);
-      await loadSuppliers(accountData.id);
+      
+      // Load only this supplier
+      const { data: supplierData } = await supabase
+        .from('b2b_suppliers')
+        .select('id, name, logo_url')
+        .eq('id', supplierId)
+        .single();
+
+      if (supplierData) {
+        setSuppliers([supplierData]);
+        setSelectedSupplierId(supplierId);
+        await loadStats(accountId, supplierId);
+      }
+    } catch (error: any) {
+      console.error('Error loading account:', error);
+      toast.error('Fehler beim Laden des Kontos');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadAccount = async () => {
+    try {
+      // First check if user is an account owner
+      const { data: accountData, error } = await supabase
+        .from('supplier_b2b_accounts')
+        .select('*')
+        .eq('email', user?.email)
+        .maybeSingle();
+
+      if (error) throw error;
+
+      if (accountData) {
+        // Account owner
+        setAccount(accountData);
+        await loadSuppliers(accountData.id);
+        return;
+      }
+
+      // Check if user is a supplier user
+      const { data: supplierUser } = await supabase
+        .from('b2b_supplier_users')
+        .select('supplier_id, account_id, role')
+        .eq('user_id', user?.id)
+        .maybeSingle();
+
+      if (supplierUser) {
+        setIsSupplierUser(true);
+        setSupplierUserRole(supplierUser.role);
+        await loadAccountAsSupplierUser(supplierUser.account_id, supplierUser.supplier_id);
+        return;
+      }
+
+      toast.error('Kein B2B-Konto gefunden');
+      navigate('/b2b/login');
     } catch (error: any) {
       console.error('Error loading account:', error);
       toast.error('Fehler beim Laden des Kontos');
@@ -237,7 +312,7 @@ const B2BSupplierDashboard = () => {
           <div className="flex items-center gap-4">
             {/* Dev Mode Badge */}
             <Badge variant="outline" className="text-orange-600 bg-orange-100 border-0 hidden sm:flex">
-              🟠 B2B Supplier
+              {isSupplierUser ? '🟡 Lieferanten-Benutzer' : '🟠 B2B Supplier'}
             </Badge>
             {(() => {
               const selectedSupplier = suppliers.find(s => s.id === selectedSupplierId);
@@ -267,9 +342,9 @@ const B2BSupplierDashboard = () => {
             })()}
           </div>
           
-          {/* Supplier Selector in Header (Hybrid Model) */}
+            {/* Supplier Selector in Header (Hybrid Model) - Hidden for Supplier Users */}
           <div className="flex items-center gap-4">
-            {suppliers.length > 0 && (
+            {suppliers.length > 0 && !isSupplierUser && (
               <div className="flex items-center gap-2">
                 <span className="text-sm text-muted-foreground hidden sm:inline">Lieferant:</span>
                 <Select value={selectedSupplierId} onValueChange={handleSupplierChange}>
@@ -287,6 +362,13 @@ const B2BSupplierDashboard = () => {
                     </SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+            )}
+            {/* Show current user info for supplier users */}
+            {isSupplierUser && (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <User className="h-4 w-4" />
+                <span className="hidden sm:inline">{user?.email}</span>
               </div>
             )}
             <Popover>
@@ -339,7 +421,7 @@ const B2BSupplierDashboard = () => {
       {/* Main Content */}
       <main className="max-w-7xl mx-auto p-4 md:p-6">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-7 lg:w-auto lg:inline-grid">
+          <TabsList className={`grid w-full lg:w-auto lg:inline-grid ${isSupplierUser ? 'grid-cols-5' : 'grid-cols-7'}`}>
               <TabsTrigger value="overview" className="gap-2">
                 <TrendingUp className="h-4 w-4" />
                 <span className="hidden sm:inline">Übersicht</span>
@@ -365,14 +447,20 @@ const B2BSupplierDashboard = () => {
                   </Badge>
                 ) : null}
               </TabsTrigger>
-              <TabsTrigger value="purchase" className="gap-2">
-                <PackageSearch className="h-4 w-4" />
-                <span className="hidden sm:inline">Mein Einkauf</span>
-              </TabsTrigger>
-              <TabsTrigger value="settings" className="gap-2">
-                <Settings className="h-4 w-4" />
-                <span className="hidden sm:inline">Einstellungen</span>
-              </TabsTrigger>
+              {/* Hide "Mein Einkauf" for supplier users */}
+              {!isSupplierUser && (
+                <TabsTrigger value="purchase" className="gap-2">
+                  <PackageSearch className="h-4 w-4" />
+                  <span className="hidden sm:inline">Mein Einkauf</span>
+                </TabsTrigger>
+              )}
+              {/* Hide "Einstellungen" for supplier users with viewer role */}
+              {(!isSupplierUser || supplierUserRole !== 'viewer') && (
+                <TabsTrigger value="settings" className="gap-2">
+                  <Settings className="h-4 w-4" />
+                  <span className="hidden sm:inline">Einstellungen</span>
+                </TabsTrigger>
+              )}
             </TabsList>
 
           {/* Overview Tab */}
@@ -544,6 +632,8 @@ const B2BSupplierDashboard = () => {
               selectedSupplierId={selectedSupplierId}
               suppliers={suppliers}
               onSuppliersChange={() => loadSuppliers(account.id)}
+              isSupplierUser={isSupplierUser}
+              supplierUserRole={supplierUserRole}
             />
           </TabsContent>
         </Tabs>
