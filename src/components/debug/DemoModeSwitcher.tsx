@@ -1,8 +1,15 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Sparkles, X, Minimize2, Maximize2 } from 'lucide-react';
+import { Sparkles, X, Minimize2, Maximize2, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from '@/hooks/use-toast';
+
+interface DemoAuth {
+  email: string;
+  password: string;
+}
 
 interface Portal {
   name: string;
@@ -10,7 +17,11 @@ interface Portal {
   color: string;
   bgColor: string;
   description: string;
+  demoAuth?: DemoAuth | null;
+  demoToken?: string;
 }
+
+const DEMO_PASSWORD = 'demo123';
 
 const PORTALS: Portal[] = [
   {
@@ -19,6 +30,10 @@ const PORTALS: Portal[] = [
     color: 'text-blue-700 dark:text-blue-300',
     bgColor: 'bg-blue-100 dark:bg-blue-900/50 hover:bg-blue-200 dark:hover:bg-blue-800/50',
     description: 'Hauptanwendung',
+    demoAuth: {
+      email: 'frank.schumann@me.com',
+      password: DEMO_PASSWORD,
+    },
   },
   {
     name: 'B2B Lieferant',
@@ -26,6 +41,10 @@ const PORTALS: Portal[] = [
     color: 'text-orange-700 dark:text-orange-300',
     bgColor: 'bg-orange-100 dark:bg-orange-900/50 hover:bg-orange-200 dark:hover:bg-orange-800/50',
     description: 'Lieferanten-Dashboard',
+    demoAuth: {
+      email: 'luigi@yum-thai.de',
+      password: DEMO_PASSWORD,
+    },
   },
   {
     name: 'B2B Kunde',
@@ -33,6 +52,10 @@ const PORTALS: Portal[] = [
     color: 'text-green-700 dark:text-green-300',
     bgColor: 'bg-green-100 dark:bg-green-900/50 hover:bg-green-200 dark:hover:bg-green-800/50',
     description: 'Kunden-Portal',
+    demoAuth: {
+      email: 'frasum@gmail.com',
+      password: DEMO_PASSWORD,
+    },
   },
   {
     name: 'Lieferanten-Portal',
@@ -40,6 +63,7 @@ const PORTALS: Portal[] = [
     color: 'text-purple-700 dark:text-purple-300',
     bgColor: 'bg-purple-100 dark:bg-purple-900/50 hover:bg-purple-200 dark:hover:bg-purple-800/50',
     description: 'Portal für Lieferanten',
+    demoToken: 'DEMO_SUPPLIER_TOKEN',
   },
   {
     name: 'Simple Order',
@@ -47,12 +71,14 @@ const PORTALS: Portal[] = [
     color: 'text-teal-700 dark:text-teal-300',
     bgColor: 'bg-teal-100 dark:bg-teal-900/50 hover:bg-teal-200 dark:hover:bg-teal-800/50',
     description: 'Mitarbeiter-Bestellung',
+    demoToken: 'DEMO_SIMPLE_ORDER_TOKEN',
   },
 ];
 
 export function DemoModeSwitcher() {
   const [isVisible, setIsVisible] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [clickCount, setClickCount] = useState(0);
   const clickTimer = useRef<NodeJS.Timeout>();
   const lastDPress = useRef(0);
@@ -69,6 +95,58 @@ export function DemoModeSwitcher() {
       setIsVisible(true);
       sessionStorage.setItem('demo-mode', 'true');
       setClickCount(0);
+    }
+  };
+
+  // Auto-login and navigate to portal
+  const handleNavigate = async (portal: Portal) => {
+    // Skip if already on this portal
+    if (location.pathname.startsWith(portal.path)) return;
+
+    // Token-based portals - just navigate with token
+    if (portal.demoToken) {
+      navigate(portal.path);
+      return;
+    }
+
+    // Auth-based portals - auto-login with demo credentials
+    if (portal.demoAuth) {
+      setIsLoggingIn(true);
+      try {
+        // Sign out first to ensure clean login
+        await supabase.auth.signOut();
+        
+        const { error } = await supabase.auth.signInWithPassword({
+          email: portal.demoAuth.email,
+          password: portal.demoAuth.password,
+        });
+
+        if (error) {
+          toast({
+            title: 'Login fehlgeschlagen',
+            description: error.message,
+            variant: 'destructive',
+          });
+          setIsLoggingIn(false);
+          return;
+        }
+
+        toast({
+          title: `Eingeloggt als ${portal.demoAuth.email}`,
+          description: portal.description,
+        });
+
+        // Small delay to ensure session is established
+        setTimeout(() => {
+          navigate(portal.path);
+          setIsLoggingIn(false);
+        }, 300);
+      } catch (err) {
+        console.error('Demo login error:', err);
+        setIsLoggingIn(false);
+      }
+    } else {
+      navigate(portal.path);
     }
   };
 
@@ -120,10 +198,6 @@ export function DemoModeSwitcher() {
     sessionStorage.removeItem('demo-mode');
   };
 
-  const handleNavigate = (path: string) => {
-    navigate(path);
-  };
-
   const currentPortal = PORTALS.find(p => location.pathname.startsWith(p.path));
 
   // Always render the secret click area
@@ -158,10 +232,14 @@ export function DemoModeSwitcher() {
     <div className="fixed top-0 left-0 right-0 z-[9999] bg-background/95 backdrop-blur-sm border-b shadow-sm">
       <div className="max-w-7xl mx-auto px-4 py-2">
         <div className="flex items-center justify-between gap-4">
-          {/* Left: Demo Label */}
+          {/* Left: Demo Label + Loading indicator */}
           <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground shrink-0">
-            <Sparkles className="h-4 w-4 text-primary" />
-            <span>Demo</span>
+            {isLoggingIn ? (
+              <Loader2 className="h-4 w-4 text-primary animate-spin" />
+            ) : (
+              <Sparkles className="h-4 w-4 text-primary" />
+            )}
+            <span>{isLoggingIn ? 'Anmelden...' : 'Demo'}</span>
           </div>
 
           {/* Center: Portal Chips */}
@@ -171,12 +249,14 @@ export function DemoModeSwitcher() {
               return (
                 <button
                   key={portal.path}
-                  onClick={() => handleNavigate(portal.path)}
+                  onClick={() => handleNavigate(portal)}
+                  disabled={isLoggingIn}
                   className={cn(
                     'px-3 py-1.5 rounded-full text-sm font-medium transition-all whitespace-nowrap',
                     portal.bgColor,
                     portal.color,
-                    isActive && 'ring-2 ring-offset-1 ring-primary shadow-md scale-105'
+                    isActive && 'ring-2 ring-offset-1 ring-primary shadow-md scale-105',
+                    isLoggingIn && 'opacity-50 cursor-not-allowed'
                   )}
                   title={portal.description}
                 >
