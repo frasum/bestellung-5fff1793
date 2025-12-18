@@ -1,5 +1,5 @@
 import { useMemo, useState, useCallback, useEffect } from 'react';
-import { Wine, MapPin, Euro, ChevronRight, ChevronDown, Pencil, Search, Loader2, ExternalLink, Grape, Utensils, Info, Sparkles, AlertCircle, Camera, ImageIcon, FileDown, Languages, Gamepad2, FileUp } from 'lucide-react';
+import { Wine, MapPin, Euro, ChevronRight, ChevronDown, Pencil, Search, Loader2, ExternalLink, Grape, Utensils, Info, Sparkles, AlertCircle, Camera, ImageIcon, FileDown, Languages, Gamepad2 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -17,7 +17,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { generateWineCatalogPdf } from '@/lib/wineCatalogPdf';
 import { WineQuizGame } from '@/components/wine-quiz/WineQuizGame';
-import { WineImportDialog } from './WineImportDialog';
 
 // Helper function to get localized wine field
 const getLocalizedField = (wine: Article, field: string): string => {
@@ -63,7 +62,6 @@ export const WinesTab = ({ articles, suppliers, onEditArticle }: WinesTabProps) 
   const [filterMode, setFilterMode] = useState<FilterMode>('all');
   const [advancedMode, setAdvancedMode] = useState(() => localStorage.getItem('advanced-settings-enabled') === 'true');
   const [quizOpen, setQuizOpen] = useState(false);
-  const [wineImportOpen, setWineImportOpen] = useState<boolean>(false);
   // Track successfully researched wine IDs for real-time badge updates
   const [researchedIds, setResearchedIds] = useState<Set<string>>(new Set());
   const updateArticle = useUpdateArticle();
@@ -272,17 +270,6 @@ export const WinesTab = ({ articles, suppliers, onEditArticle }: WinesTabProps) 
           >
             <Gamepad2 className="h-4 w-4" />
             {t('wines.quiz', 'Quiz starten')}
-          </Button>
-
-          {/* Import Wine Descriptions Button */}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setWineImportOpen(true)}
-            className="gap-2"
-          >
-            <FileUp className="h-4 w-4" />
-            {t('wines.import.button', 'Weinkarte importieren')}
           </Button>
 
           {/* PDF Export Button - always visible */}
@@ -522,14 +509,6 @@ export const WinesTab = ({ articles, suppliers, onEditArticle }: WinesTabProps) 
         onOpenChange={setQuizOpen} 
       />
 
-      {/* Wine Import Dialog */}
-      <WineImportDialog
-        open={wineImportOpen}
-        onOpenChange={setWineImportOpen}
-        onImportComplete={() => {
-          // Articles will be refetched via React Query when the dialog closes
-        }}
-      />
     </>
   );
 };
