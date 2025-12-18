@@ -29,7 +29,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
-import { Palette, Building2, ExternalLink, Copy, Check, Link2, Upload, Trash2, Loader2, ImageIcon, Truck, Plus, Pencil } from 'lucide-react';
+import { Palette, Building2, ExternalLink, Copy, Check, Link2, Upload, Trash2, Loader2, ImageIcon, Truck, Plus, Pencil, Mail, Globe } from 'lucide-react';
 import B2BSupplierFormDialog from './B2BSupplierFormDialog';
 
 interface B2BAccount {
@@ -64,6 +64,7 @@ interface B2BSupplier {
   sort_order: number | null;
   created_at: string | null;
   updated_at: string | null;
+  order_delivery_method: string;
 }
 
 interface B2BSettingsTabProps {
@@ -97,6 +98,7 @@ const B2BSettingsTab = ({ account, onUpdate, selectedSupplierId, suppliers: dash
   const [supplierEmail, setSupplierEmail] = useState('');
   const [supplierPhone, setSupplierPhone] = useState('');
   const [supplierDescription, setSupplierDescription] = useState('');
+  const [supplierOrderDeliveryMethod, setSupplierOrderDeliveryMethod] = useState<string>('email');
   const [savingSupplier, setSavingSupplier] = useState(false);
 
   const portalUrl = `${window.location.origin}/b2b/portal/${account.subdomain}`;
@@ -115,6 +117,7 @@ const B2BSettingsTab = ({ account, onUpdate, selectedSupplierId, suppliers: dash
         setSupplierEmail(supplier.contact_email || '');
         setSupplierPhone(supplier.contact_phone || '');
         setSupplierDescription(supplier.description || '');
+        setSupplierOrderDeliveryMethod(supplier.order_delivery_method || 'email');
       }
     }
   }, [selectedSupplierId, b2bSuppliers]);
@@ -242,6 +245,7 @@ const B2BSettingsTab = ({ account, onUpdate, selectedSupplierId, suppliers: dash
           contact_email: supplierEmail || null,
           contact_phone: supplierPhone || null,
           description: supplierDescription || null,
+          order_delivery_method: supplierOrderDeliveryMethod,
         })
         .eq('id', selectedSupplierId);
 
@@ -423,6 +427,37 @@ const B2BSettingsTab = ({ account, onUpdate, selectedSupplierId, suppliers: dash
                         placeholder="+49 123 456789"
                       />
                     </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="supplierOrderDelivery">Bestellungs-Zustellung</Label>
+                    <Select value={supplierOrderDeliveryMethod} onValueChange={setSupplierOrderDeliveryMethod}>
+                      <SelectTrigger id="supplierOrderDelivery">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="bg-card border border-border z-50">
+                        <SelectItem value="email">
+                          <div className="flex items-center gap-2">
+                            <Mail className="h-4 w-4" />
+                            Per E-Mail
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="portal">
+                          <div className="flex items-center gap-2">
+                            <Globe className="h-4 w-4" />
+                            Ins Lieferantenportal
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="both">
+                          <div className="flex items-center gap-2">
+                            <Mail className="h-4 w-4" />
+                            E-Mail + Portal
+                          </div>
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-muted-foreground">
+                      Legen Sie fest, wie Sie Bestellungen von Ihren Kunden erhalten möchten
+                    </p>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="supplierDescription">Beschreibung</Label>

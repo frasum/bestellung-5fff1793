@@ -20,6 +20,7 @@ interface OrderItem {
 interface SubmitOrderRequest {
   customer_id: string;
   supplier_account_id: string;
+  supplier_id?: string; // B2B supplier ID for order_delivery_method check
   items: OrderItem[];
   delivery_address?: string;
   delivery_date?: string;
@@ -36,9 +37,9 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const { customer_id, supplier_account_id, items, delivery_address, delivery_date, notes }: SubmitOrderRequest = await req.json();
+    const { customer_id, supplier_account_id, supplier_id, items, delivery_address, delivery_date, notes }: SubmitOrderRequest = await req.json();
 
-    console.log("Processing B2B order:", { customer_id, supplier_account_id, itemCount: items.length });
+    console.log("Processing B2B order:", { customer_id, supplier_account_id, supplier_id, itemCount: items.length });
 
     // Fetch customer info
     const { data: customer, error: customerError } = await supabase
@@ -68,6 +69,21 @@ serve(async (req) => {
         status: 404,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
+    }
+
+    // Fetch B2B supplier info for order_delivery_method
+    let orderDeliveryMethod = 'email'; // default
+    if (supplier_id) {
+      const { data: b2bSupplier, error: b2bSupplierError } = await supabase
+        .from("b2b_suppliers")
+        .select("order_delivery_method")
+        .eq("id", supplier_id)
+        .single();
+
+      if (!b2bSupplierError && b2bSupplier) {
+        orderDeliveryMethod = b2bSupplier.order_delivery_method || 'email';
+        console.log("Order delivery method:", orderDeliveryMethod);
+      }
     }
 
     // Calculate total
@@ -218,28 +234,35 @@ serve(async (req) => {
       </html>
     `;
 
-    // Send email to TEST address only
-    const TEST_EMAIL = "frank.schumann@me.com";
+    // Send email only if order_delivery_method is 'email' or 'both'
+    const shouldSendEmail = orderDeliveryMethod === 'email' || orderDeliveryMethod === 'both';
     
-    try {
-      const emailResponse = await resend.emails.send({
-        from: "B2B Portal <onboarding@resend.dev>",
-        to: [TEST_EMAIL],
-        subject: `[TEST] Neue B2B-Bestellung ${order_number} von ${customer.company_name}`,
-        html: emailHtml,
-      });
+    if (shouldSendEmail) {
+      // Send email to TEST address only
+      const TEST_EMAIL = "frank.schumann@me.com";
+      
+      try {
+        const emailResponse = await resend.emails.send({
+          from: "B2B Portal <onboarding@resend.dev>",
+          to: [TEST_EMAIL],
+          subject: `[TEST] Neue B2B-Bestellung ${order_number} von ${customer.company_name}`,
+          html: emailHtml,
+        });
 
-      console.log("Email sent successfully:", emailResponse);
+        console.log("Email sent successfully:", emailResponse);
 
-      // Update order with email_sent status
-      await supabase
-        .from("supplier_b2b_orders")
-        .update({ email_sent: true, email_sent_at: new Date().toISOString() })
-        .eq("id", order.id);
+        // Update order with email_sent status
+        await supabase
+          .from("supplier_b2b_orders")
+          .update({ email_sent: true, email_sent_at: new Date().toISOString() })
+          .eq("id", order.id);
 
-    } catch (emailError) {
-      console.error("Error sending email:", emailError);
-      // Don't fail the order if email fails
+      } catch (emailError) {
+        console.error("Error sending email:", emailError);
+        // Don't fail the order if email fails
+      }
+    } else {
+      console.log("Skipping email - order_delivery_method is 'portal' only");
     }
 
     return new Response(
@@ -248,6 +271,7 @@ serve(async (req) => {
         order_id: order.id,
         order_number,
         total_amount,
+        email_sent: shouldSendEmail,
       }),
       {
         status: 200,
