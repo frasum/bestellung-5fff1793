@@ -97,14 +97,17 @@ export function IndustrySelectStep({
         })}
       </div>
 
-      <div className="flex justify-end pt-4">
+      <div className="sticky bottom-4 pt-6 flex justify-center sm:justify-end">
         <Button 
           onClick={onContinue} 
           disabled={!selectedIndustry}
-          className="gap-2"
+          className="w-full sm:w-auto gap-2"
+          size="lg"
         >
-          Weiter
-          <ArrowRight className="w-4 h-4" />
+          {selectedIndustry 
+            ? `Mit "${selectedIndustry.name}" fortfahren` 
+            : 'Bitte wählen Sie eine Branche'}
+          <ArrowRight className="w-5 h-5" />
         </Button>
       </div>
     </div>
