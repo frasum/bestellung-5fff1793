@@ -32,6 +32,7 @@ import {
   Truck,
   PackageSearch,
   ChevronDown,
+  Sparkles,
   User,
 } from 'lucide-react';
 import B2BArticlesTab from '@/components/b2b/B2BArticlesTab';
@@ -332,7 +333,30 @@ const B2BSupplierDashboard = () => {
                     </div>
                   )}
                   <div>
-                    <h1 className="font-semibold text-lg">{displayName}</h1>
+                    <div className="flex items-center gap-2">
+                      <h1 className="font-semibold text-lg">{displayName}</h1>
+                      {/* Upgrade Badge */}
+                      {!account.upgraded_organization_id ? (
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="h-7 gap-1.5 bg-gradient-to-r from-primary/10 to-amber-500/10 border-primary/30 hover:border-primary hover:bg-gradient-to-r hover:from-primary/20 hover:to-amber-500/20"
+                          onClick={() => setUpgradeDialogOpen(true)}
+                        >
+                          <Sparkles className="h-3.5 w-3.5 text-primary" />
+                          <span className="capitalize text-xs font-medium">
+                            {account.subscription_tier}
+                          </span>
+                          <Badge variant="secondary" className="h-4 text-[10px] px-1.5 bg-primary/20 text-primary hover:bg-primary/30">
+                            Upgrade
+                          </Badge>
+                        </Button>
+                      ) : (
+                        <Badge variant="outline" className="text-green-600 bg-green-100 border-green-300">
+                          ✓ Bestellung.pro
+                        </Badge>
+                      )}
+                    </div>
                     <p className="text-sm text-muted-foreground">
                       {account.subdomain}.bestellung.pro
                     </p>
@@ -371,42 +395,6 @@ const B2BSupplierDashboard = () => {
                 <span className="hidden sm:inline">{user?.email}</span>
               </div>
             )}
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button variant="outline" size="sm" className="capitalize hidden sm:flex gap-1">
-                  {account.subscription_tier}
-                  <ChevronDown className="h-3 w-3" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-64" align="end">
-                <div className="space-y-3">
-                  <div>
-                    <p className="font-medium capitalize">{account.subscription_tier}</p>
-                    <p className="text-sm text-muted-foreground">
-                      B2B-Lieferanten Portal
-                    </p>
-                  </div>
-                  {!account.upgraded_organization_id && (
-                    <>
-                      <Separator />
-                      <div>
-                        <p className="text-sm text-muted-foreground mb-2">
-                          Mehr Funktionen freischalten
-                        </p>
-                        <Button 
-                          size="sm" 
-                          className="w-full"
-                          onClick={() => setUpgradeDialogOpen(true)}
-                        >
-                          <TrendingUp className="h-4 w-4 mr-2" />
-                          Zu Bestellung.pro upgraden
-                        </Button>
-                      </div>
-                    </>
-                  )}
-                </div>
-              </PopoverContent>
-            </Popover>
             <Button variant="outline" size="sm" onClick={openCustomerPortal}>
               <ExternalLink className="h-4 w-4 sm:mr-2" />
               <span className="hidden sm:inline">Kundenportal</span>
