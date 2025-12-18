@@ -7,6 +7,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   Select,
@@ -29,6 +31,7 @@ import {
   FileText,
   Truck,
   PackageSearch,
+  ChevronDown,
 } from 'lucide-react';
 import B2BArticlesTab from '@/components/b2b/B2BArticlesTab';
 import B2BCustomersTab from '@/components/b2b/B2BCustomersTab';
@@ -286,9 +289,42 @@ const B2BSupplierDashboard = () => {
                 </Select>
               </div>
             )}
-            <Badge variant="outline" className="capitalize hidden sm:flex">
-              {account.subscription_tier}
-            </Badge>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" size="sm" className="capitalize hidden sm:flex gap-1">
+                  {account.subscription_tier}
+                  <ChevronDown className="h-3 w-3" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-64" align="end">
+                <div className="space-y-3">
+                  <div>
+                    <p className="font-medium capitalize">{account.subscription_tier}</p>
+                    <p className="text-sm text-muted-foreground">
+                      B2B-Lieferanten Portal
+                    </p>
+                  </div>
+                  {!account.upgraded_organization_id && (
+                    <>
+                      <Separator />
+                      <div>
+                        <p className="text-sm text-muted-foreground mb-2">
+                          Mehr Funktionen freischalten
+                        </p>
+                        <Button 
+                          size="sm" 
+                          className="w-full"
+                          onClick={() => setUpgradeDialogOpen(true)}
+                        >
+                          <TrendingUp className="h-4 w-4 mr-2" />
+                          Zu Bestellung.pro upgraden
+                        </Button>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </PopoverContent>
+            </Popover>
             <Button variant="outline" size="sm" onClick={openCustomerPortal}>
               <ExternalLink className="h-4 w-4 sm:mr-2" />
               <span className="hidden sm:inline">Kundenportal</span>
@@ -359,28 +395,6 @@ const B2BSupplierDashboard = () => {
               </Card>
             ) : (
               <>
-                {/* Upgrade Banner - show if not yet upgraded */}
-                {!account.upgraded_organization_id && (
-                  <Card className="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border-primary/20">
-                    <CardContent className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center">
-                          <TrendingUp className="h-5 w-5 text-primary" />
-                        </div>
-                        <div>
-                          <p className="font-medium">Upgraden Sie zu Bestellung.pro</p>
-                          <p className="text-sm text-muted-foreground">
-                            Nutzen Sie alle Funktionen für Ihren eigenen Einkauf - mit Sonderkonditionen für B2B-Lieferanten
-                          </p>
-                        </div>
-                      </div>
-                      <Button onClick={() => setUpgradeDialogOpen(true)}>
-                        Jetzt upgraden
-                      </Button>
-                    </CardContent>
-                  </Card>
-                )}
-
                 {/* Stats Cards */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                   <Card className="cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => setActiveTab('articles')}>
