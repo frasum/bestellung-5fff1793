@@ -698,7 +698,7 @@ const Auth = () => {
                   <Button 
                     variant="outline" 
                     className="w-full gap-2"
-                    onClick={() => setShowQuestionOnboardingDialog(true)}
+                    onClick={() => navigate('/onboarding/questions')}
                   >
                     <ClipboardList className="w-4 h-4" />
                     Mit Fragebogen starten
