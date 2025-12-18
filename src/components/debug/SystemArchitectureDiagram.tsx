@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button';
 import { Download, Loader2 } from 'lucide-react';
 import { jsPDF } from 'jspdf';
 import { useTranslation } from 'react-i18next';
-import html2canvas from 'html2canvas';
 
 const diagramDefinition = `
 flowchart TB
@@ -174,67 +173,109 @@ export const SystemArchitectureDiagram = () => {
   }, []);
 
   const exportToPDF = async () => {
-    if (!containerRef.current) return;
+    if (!svgContent || !containerRef.current) return;
 
     setIsExporting(true);
     try {
-      // Capture the diagram as an image using html2canvas
-      const canvas = await html2canvas(containerRef.current, {
-        backgroundColor: '#ffffff',
-        scale: 2, // Higher resolution
-        logging: false,
-      });
-
-      const imgData = canvas.toDataURL('image/png');
-
-      // Create PDF in landscape for better fit
-      const pdf = new jsPDF({
-        orientation: 'landscape',
-        unit: 'mm',
-      });
-
-      const pageWidth = pdf.internal.pageSize.getWidth();
-      const pageHeight = pdf.internal.pageSize.getHeight();
-      const margin = 15;
-
-      // Add title
-      pdf.setFontSize(18);
-      pdf.setTextColor(30, 41, 59);
-      pdf.text('Bestellung.pro - Systemarchitektur', margin, margin + 5);
-      
-      // Add date
-      pdf.setFontSize(10);
-      pdf.setTextColor(100, 116, 139);
-      pdf.text(`Stand: ${new Date().toLocaleDateString('de-DE')}`, pageWidth - margin - 35, margin + 5);
-
-      // Calculate image dimensions to fit the page
-      const imgWidth = pageWidth - 2 * margin;
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-      
-      // Check if image fits on page, otherwise scale down
-      const maxHeight = pageHeight - margin - 30; // Leave space for title and footer
-      let finalWidth = imgWidth;
-      let finalHeight = imgHeight;
-      
-      if (imgHeight > maxHeight) {
-        finalHeight = maxHeight;
-        finalWidth = (canvas.width * finalHeight) / canvas.height;
+      // Get the SVG element from the container
+      const svgElement = containerRef.current.querySelector('svg');
+      if (!svgElement) {
+        console.error('SVG element not found');
+        setIsExporting(false);
+        return;
       }
 
-      // Add the captured diagram image
-      const xOffset = (pageWidth - finalWidth) / 2; // Center horizontally
-      pdf.addImage(imgData, 'PNG', xOffset, margin + 15, finalWidth, finalHeight);
+      // Get SVG dimensions
+      const svgRect = svgElement.getBoundingClientRect();
+      const scale = 2; // Higher resolution
+      
+      // Create a canvas
+      const canvas = document.createElement('canvas');
+      canvas.width = svgRect.width * scale;
+      canvas.height = svgRect.height * scale;
+      const ctx = canvas.getContext('2d');
+      
+      if (!ctx) {
+        console.error('Canvas context not available');
+        setIsExporting(false);
+        return;
+      }
 
-      // Add footer
-      pdf.setFontSize(8);
-      pdf.setTextColor(148, 163, 184);
-      pdf.text('Generiert von Bestellung.pro', margin, pageHeight - 8);
+      // Set white background
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.scale(scale, scale);
 
-      // Save
-      pdf.save('systemarchitektur.pdf');
+      // Convert SVG to data URL
+      const svgData = new XMLSerializer().serializeToString(svgElement);
+      const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+      const svgUrl = URL.createObjectURL(svgBlob);
+
+      // Load SVG as image
+      const img = new Image();
+      img.onload = () => {
+        ctx.drawImage(img, 0, 0);
+        URL.revokeObjectURL(svgUrl);
+
+        const imgData = canvas.toDataURL('image/png');
+
+        // Create PDF in landscape for better fit
+        const pdf = new jsPDF({
+          orientation: 'landscape',
+          unit: 'mm',
+        });
+
+        const pageWidth = pdf.internal.pageSize.getWidth();
+        const pageHeight = pdf.internal.pageSize.getHeight();
+        const margin = 15;
+
+        // Add title
+        pdf.setFontSize(18);
+        pdf.setTextColor(30, 41, 59);
+        pdf.text('Bestellung.pro - Systemarchitektur', margin, margin + 5);
+        
+        // Add date
+        pdf.setFontSize(10);
+        pdf.setTextColor(100, 116, 139);
+        pdf.text(`Stand: ${new Date().toLocaleDateString('de-DE')}`, pageWidth - margin - 35, margin + 5);
+
+        // Calculate image dimensions to fit the page
+        const imgWidth = pageWidth - 2 * margin;
+        const imgHeight = (canvas.height / scale * imgWidth) / (canvas.width / scale);
+        
+        // Check if image fits on page, otherwise scale down
+        const maxHeight = pageHeight - margin - 30;
+        let finalWidth = imgWidth;
+        let finalHeight = imgHeight;
+        
+        if (imgHeight > maxHeight) {
+          finalHeight = maxHeight;
+          finalWidth = (canvas.width / scale * finalHeight) / (canvas.height / scale);
+        }
+
+        // Add the captured diagram image
+        const xOffset = (pageWidth - finalWidth) / 2;
+        pdf.addImage(imgData, 'PNG', xOffset, margin + 15, finalWidth, finalHeight);
+
+        // Add footer
+        pdf.setFontSize(8);
+        pdf.setTextColor(148, 163, 184);
+        pdf.text('Generiert von Bestellung.pro', margin, pageHeight - 8);
+
+        // Save
+        pdf.save('systemarchitektur.pdf');
+        setIsExporting(false);
+      };
+
+      img.onerror = () => {
+        console.error('Failed to load SVG as image');
+        URL.revokeObjectURL(svgUrl);
+        setIsExporting(false);
+      };
+
+      img.src = svgUrl;
     } catch (error) {
       console.error('PDF export failed:', error);
-    } finally {
       setIsExporting(false);
     }
   };
