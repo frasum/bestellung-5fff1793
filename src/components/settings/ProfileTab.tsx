@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Lock, Globe, Mail, Palette, User, Settings } from 'lucide-react';
+import { Lock, Globe, Mail, Palette, User, Settings, Map } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useUserProfile, useUpdateUserProfile, useUpdatePassword, useOrganization, useUpdateOrganization } from '@/hooks/useSettings';
 import { I18nCheckDialog } from './I18nCheckDialog';
@@ -94,6 +94,22 @@ const AdvancedToolsSection = () => {
         </Button>
       </div>
       <I18nCheckDialog open={dialogOpen} onOpenChange={setDialogOpen} />
+
+      {/* System Architecture */}
+      <div className="flex items-center justify-between">
+        <div>
+          <Label className="mb-1 block flex items-center gap-2">
+            <Map className="h-4 w-4" />
+            Systemarchitektur
+          </Label>
+          <p className="text-xs text-muted-foreground">
+            Grafische Übersicht aller Module und Portale
+          </p>
+        </div>
+        <Button variant="outline" size="sm" onClick={() => navigate('/system-architecture')}>
+          Öffnen
+        </Button>
+      </div>
     </div>
   );
 };
