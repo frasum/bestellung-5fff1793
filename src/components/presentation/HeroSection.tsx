@@ -44,7 +44,7 @@ export const HeroSection = () => {
           <Button
             size="lg"
             className="text-lg px-8 py-6 shadow-lg hover:shadow-xl transition-all"
-            onClick={() => navigate('/auth')}
+            onClick={() => navigate('/onboarding/questions')}
           >
             <Play className="mr-2 h-5 w-5" />
             Demo starten
