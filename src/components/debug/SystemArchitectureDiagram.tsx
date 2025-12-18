@@ -7,7 +7,7 @@ import { useTranslation } from 'react-i18next';
 
 const diagramDefinition = `
 flowchart TB
-    subgraph PUBLIC["🌐 Öffentlich"]
+    subgraph PUBLIC["Oeffentliche Seiten"]
         LANDING["/"]
         PRICING["/pricing"]
         AGB["/agb"]
@@ -15,13 +15,13 @@ flowchart TB
         DATENSCHUTZ["/datenschutz"]
     end
 
-    subgraph AUTH["🔐 Authentifizierung"]
+    subgraph AUTH["Authentifizierung"]
         LOGIN["/auth<br/>Login/Signup"]
         SUP_AUTH["/supplier/auth<br/>Lieferanten-Login"]
         B2B_LOGIN["/b2b/login<br/>B2B Supplier Login"]
     end
 
-    subgraph MAIN["📦 Bestellung.pro Hauptapp"]
+    subgraph MAIN["Bestellung.pro Hauptapp"]
         KATALOG["/suppliers<br/>Katalog"]
         ORDERS["/orders<br/>Bestellungen"]
         REPORTS["/reports<br/>Berichte"]
@@ -33,7 +33,7 @@ flowchart TB
             KT1["Lieferanten"]
             KT2["Artikel"]
             KT3["Weine"]
-            KT4["Vorschläge"]
+            KT4["Vorschlaege"]
         end
         
         subgraph ORDER_TABS["Bestellungen Tabs"]
@@ -43,7 +43,7 @@ flowchart TB
         end
         
         subgraph REPORT_TABS["Berichte Tabs"]
-            RT1["Übersicht"]
+            RT1["Uebersicht"]
             RT2["Inventur"]
         end
         
@@ -54,16 +54,16 @@ flowchart TB
         end
     end
 
-    subgraph SUP_PORTAL["📋 Lieferanten-Portal"]
+    subgraph SUP_PORTAL["Lieferanten-Portal"]
         SUP_PORTAL_PAGE["/supplier/portal<br/>Artikel bearbeiten"]
     end
 
-    subgraph EASY["📱 EasyOrder Kiosk"]
+    subgraph EASY["EasyOrder Kiosk"]
         SIMPLE_ORDER["/simple-order?token=xxx<br/>Vereinfachte Bestellung"]
         WINE_CAT["/wine-catalog?token=xxx<br/>Weinkarte"]
     end
 
-    subgraph B2B_SUP["🏢 B2B Supplier Portal"]
+    subgraph B2B_SUP["B2B Supplier Portal"]
         B2B_DASH["/b2b/portal<br/>B2B Dashboard"]
         
         subgraph B2B_TABS["B2B Tabs"]
@@ -76,7 +76,7 @@ flowchart TB
         end
     end
 
-    subgraph B2B_CUST["🛒 B2B Kunden-Portal"]
+    subgraph B2B_CUST["B2B Kunden-Portal"]
         B2B_CUST_PORTAL["/b2b/customer<br/>Kundenportal"]
         
         subgraph B2B_CUST_TABS["Kunden Tabs"]
@@ -87,11 +87,11 @@ flowchart TB
         end
     end
 
-    subgraph SPECIAL["⚡ Spezialseiten"]
+    subgraph SPECIAL["Spezialseiten"]
         PHOTO["/photo-capture<br/>QR Foto-Upload"]
         ONBOARD["/onboarding<br/>Onboarding"]
         STYLE["/style-guide<br/>Design System"]
-        SYSARCH["/system-architecture<br/>Systemübersicht"]
+        SYSARCH["/system-architecture<br/>Systemuebersicht"]
     end
 
     %% Navigation flows
@@ -133,6 +133,7 @@ flowchart TB
 
 mermaid.initialize({
   startOnLoad: false,
+  securityLevel: 'loose',
   theme: 'base',
   themeVariables: {
     primaryColor: '#3b82f6',
