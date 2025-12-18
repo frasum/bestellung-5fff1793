@@ -37,6 +37,7 @@ import B2BOffersTab from '@/components/b2b/B2BOffersTab';
 import B2BSettingsTab from '@/components/b2b/B2BSettingsTab';
 import B2BPurchaseTab from '@/components/b2b/B2BPurchaseTab';
 import B2BSupplierFormDialog from '@/components/b2b/B2BSupplierFormDialog';
+import B2BUpgradePricingDialog from '@/components/b2b-customer/B2BUpgradePricingDialog';
 
 interface B2BAccount {
   id: string;
@@ -50,6 +51,7 @@ interface B2BAccount {
   subscription_tier: string;
   is_active: boolean;
   linked_supplier_id: string | null;
+  upgraded_organization_id: string | null;
 }
 
 interface B2BSupplier {
@@ -77,6 +79,7 @@ const B2BSupplierDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
   const [newSupplierDialogOpen, setNewSupplierDialogOpen] = useState(false);
+  const [upgradeDialogOpen, setUpgradeDialogOpen] = useState(false);
 
   useEffect(() => {
     if (!user) {
@@ -356,6 +359,28 @@ const B2BSupplierDashboard = () => {
               </Card>
             ) : (
               <>
+                {/* Upgrade Banner - show if not yet upgraded */}
+                {!account.upgraded_organization_id && (
+                  <Card className="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border-primary/20">
+                    <CardContent className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 py-4">
+                      <div className="flex items-center gap-3">
+                        <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center">
+                          <TrendingUp className="h-5 w-5 text-primary" />
+                        </div>
+                        <div>
+                          <p className="font-medium">Upgraden Sie zu Bestellung.pro</p>
+                          <p className="text-sm text-muted-foreground">
+                            Nutzen Sie alle Funktionen für Ihren eigenen Einkauf - mit Sonderkonditionen für B2B-Lieferanten
+                          </p>
+                        </div>
+                      </div>
+                      <Button onClick={() => setUpgradeDialogOpen(true)}>
+                        Jetzt upgraden
+                      </Button>
+                    </CardContent>
+                  </Card>
+                )}
+
                 {/* Stats Cards */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                   <Card className="cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => setActiveTab('articles')}>
@@ -518,6 +543,21 @@ const B2BSupplierDashboard = () => {
         accountId={account.id}
         onSuccess={async () => {
           await loadSuppliers(account.id);
+        }}
+      />
+
+      {/* Upgrade Dialog */}
+      <B2BUpgradePricingDialog
+        open={upgradeDialogOpen}
+        onOpenChange={setUpgradeDialogOpen}
+        type="supplier"
+        entityId={account.id}
+        email={account.email}
+        companyName={account.company_name}
+        vendorCount={0}
+        articleCount={0}
+        onUpgradeSuccess={() => {
+          loadAccount();
         }}
       />
     </div>
