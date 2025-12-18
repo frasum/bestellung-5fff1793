@@ -79,10 +79,7 @@ const PORTALS: Portal[] = [
     color: 'text-amber-700 dark:text-amber-300',
     bgColor: 'bg-amber-100 dark:bg-amber-900/50 hover:bg-amber-200 dark:hover:bg-amber-800/50',
     description: 'Fragen-basiertes Onboarding für Neukunden',
-    demoAuth: {
-      email: 'frank.schumann@me.com',
-      password: DEMO_PASSWORD,
-    },
+    demoAuth: null, // Kein Login - reine Demo-Simulation
   },
 ];
 
