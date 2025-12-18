@@ -57,31 +57,36 @@ export function IndustrySelectStep({
         </p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {/* Voice selection card */}
-        <Card
-          className="cursor-pointer transition-all hover:shadow-md hover:border-primary/50 
-                     bg-gradient-to-br from-primary/5 to-primary/10 border-primary/20"
+      {/* Voice option - separate section */}
+      <div className="flex justify-center mb-6">
+        <button
           onClick={() => setShowVoiceSelector(true)}
+          className="flex items-center gap-3 px-6 py-3 rounded-full 
+                     bg-gradient-to-r from-primary/10 to-primary/5 
+                     border border-primary/20 hover:border-primary/40
+                     hover:shadow-md transition-all group"
         >
-          <CardContent className="p-6 text-center space-y-3">
-            <div className="w-12 h-12 rounded-full bg-primary text-primary-foreground flex items-center justify-center mx-auto animate-pulse">
-              <Mic className="w-6 h-6" />
-            </div>
-            <div>
-              <h3 className="font-semibold">Per Sprache auswählen</h3>
-              <p className="text-sm text-muted-foreground">
-                Sagen Sie einfach, in welcher Branche Sie arbeiten
-              </p>
-            </div>
-            <div className="flex flex-wrap gap-1 justify-center">
-              <span className="text-xs px-2 py-0.5 rounded-full bg-primary/20 text-primary">
-                🎤 Natürliche Sprache
-              </span>
-            </div>
-          </CardContent>
-        </Card>
+          <div className="w-10 h-10 rounded-full bg-primary text-primary-foreground 
+                          flex items-center justify-center group-hover:scale-110 transition-transform">
+            <Mic className="w-5 h-5" />
+          </div>
+          <div className="text-left">
+            <span className="font-medium">Per Sprache auswählen</span>
+            <span className="text-sm text-muted-foreground block">
+              🎤 Sagen Sie einfach Ihre Branche
+            </span>
+          </div>
+        </button>
+      </div>
 
+      {/* Separator */}
+      <div className="flex items-center gap-4 mb-6">
+        <div className="flex-1 h-px bg-border" />
+        <span className="text-sm text-muted-foreground">oder manuell wählen</span>
+        <div className="flex-1 h-px bg-border" />
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {/* Industry cards */}
         {industryTemplates.map((industry) => {
           const Icon = iconMap[industry.icon] || Settings;
