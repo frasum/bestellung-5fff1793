@@ -63,6 +63,12 @@ export default function DemoCart() {
     );
   };
 
+  const handleUpdateItems = (supplierId: string, items: typeof emailPreviews[0]['items'], totalAmount: number) => {
+    setEmailPreviews(prev =>
+      prev.map(p => (p.supplierId === supplierId ? { ...p, items, totalAmount } : p))
+    );
+  };
+
   const handleSendOrders = async () => {
     setIsOrdering(true);
     // Simulate order processing
@@ -233,6 +239,7 @@ export default function DemoCart() {
         onSendOrders={handleSendOrders}
         isOrdering={isOrdering}
         industry={industry}
+        onUpdateItems={handleUpdateItems}
       />
     </div>
   );
