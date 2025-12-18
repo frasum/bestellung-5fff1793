@@ -52,7 +52,7 @@ const generateConfirmationNotificationHtml = (
     return `
       <tr style="background: ${bgColor};">
         <td style="padding: 12px 10px; border-bottom: 1px solid #e5e7eb; font-size: 14px; color: #1f2937;">${item.article_name}</td>
-        <td style="padding: 12px 10px; border-bottom: 1px solid #e5e7eb; text-align: center; font-weight: 600; color: #1e40af;">${item.quantity} ${item.unit}</td>
+        <td style="padding: 12px 10px; border-bottom: 1px solid #e5e7eb; text-align: center; font-weight: 600; color: #1e40af;">${item.quantity}× ${item.unit}</td>
         <td style="padding: 12px 10px; border-bottom: 1px solid #e5e7eb; text-align: right; color: #6b7280;">€${item.unit_price.toFixed(2)}</td>
         <td style="padding: 12px 10px; border-bottom: 1px solid #e5e7eb; text-align: right; font-weight: 600; color: #1f2937;">€${item.total_price.toFixed(2)}</td>
       </tr>
