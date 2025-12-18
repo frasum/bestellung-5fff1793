@@ -1,20 +1,25 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDemo } from '@/contexts/DemoContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
-import { Trash2, Plus, Minus, ShoppingCart, ArrowLeft, Send, CheckCircle2 } from 'lucide-react';
+import { Trash2, Plus, Minus, ShoppingCart, ArrowLeft, Send, CheckCircle2, Search } from 'lucide-react';
 import { DemoEmailPreviewDialog, DemoEmailPreviewData } from '@/components/demo/DemoEmailPreviewDialog';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 export default function DemoCart() {
   const navigate = useNavigate();
-  const { cart, updateCartQuantity, removeFromCart, clearCart, cartTotal, industry, getArticles } = useDemo();
+  const { cart, updateCartQuantity, removeFromCart, clearCart, cartTotal, industry, getArticles, addToCart, getSuppliers } = useDemo();
   const [isOrdering, setIsOrdering] = useState(false);
   const [orderComplete, setOrderComplete] = useState(false);
   const [showEmailPreview, setShowEmailPreview] = useState(false);
   const [emailPreviews, setEmailPreviews] = useState<DemoEmailPreviewData[]>([]);
+  const [showAddArticleSheet, setShowAddArticleSheet] = useState(false);
+  const [activeSupplierForAdd, setActiveSupplierForAdd] = useState<string | null>(null);
+  const [articleSearchQuery, setArticleSearchQuery] = useState('');
 
   // Build allSupplierArticles from DemoContext for all suppliers
   const allSupplierArticles = React.useMemo(() => {
@@ -49,6 +54,41 @@ export default function DemoCart() {
     acc[item.supplierId].total += item.price * item.quantity;
     return acc;
   }, {} as Record<string, { supplierName: string; items: typeof cart; total: number }>);
+
+  // Get available articles for active supplier (not already in cart)
+  const availableArticlesForSupplier = useMemo(() => {
+    if (!activeSupplierForAdd) return [];
+    const articles = getArticles();
+    const cartArticleIds = new Set(cart.map(item => item.articleId));
+    return articles
+      .filter(a => a.supplierId === activeSupplierForAdd && !cartArticleIds.has(a.id))
+      .filter(a => 
+        articleSearchQuery === '' || 
+        a.name.toLowerCase().includes(articleSearchQuery.toLowerCase())
+      );
+  }, [activeSupplierForAdd, getArticles, cart, articleSearchQuery]);
+
+  const handleOpenAddArticleSheet = (supplierId: string) => {
+    setActiveSupplierForAdd(supplierId);
+    setArticleSearchQuery('');
+    setShowAddArticleSheet(true);
+  };
+
+  const handleAddArticleFromSheet = (article: ReturnType<typeof getArticles>[0]) => {
+    const suppliers = getSuppliers();
+    const supplier = suppliers.find(s => s.id === article.supplierId);
+    if (supplier) {
+      addToCart({
+        articleId: article.id,
+        articleName: article.name,
+        supplierId: article.supplierId,
+        supplierName: supplier.name,
+        unit: article.unit,
+        price: article.price,
+      }, 1);
+      toast.success(`${article.name} hinzugefügt`);
+    }
+  };
 
   const handleOpenEmailPreview = () => {
     // Generate email previews from cart (one per supplier)
@@ -166,8 +206,16 @@ export default function DemoCart() {
       <div className="space-y-4">
         {Object.entries(groupedItems).map(([supplierId, group]) => (
           <Card key={supplierId}>
-            <CardHeader className="pb-2">
+            <CardHeader className="pb-2 flex flex-row items-center justify-between">
               <CardTitle className="text-lg">{group.supplierName}</CardTitle>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handleOpenAddArticleSheet(supplierId)}
+              >
+                <Plus className="w-4 h-4 mr-1" />
+                Artikel
+              </Button>
             </CardHeader>
             <CardContent className="space-y-3">
               {group.items.map(item => (
@@ -262,6 +310,56 @@ export default function DemoCart() {
         onUpdateItems={handleUpdateItems}
         allSupplierArticles={allSupplierArticles}
       />
+
+      {/* Add Article Sheet */}
+      <Sheet open={showAddArticleSheet} onOpenChange={setShowAddArticleSheet}>
+        <SheetContent side="right" className="w-full sm:max-w-md">
+          <SheetHeader>
+            <SheetTitle>Artikel hinzufügen</SheetTitle>
+          </SheetHeader>
+          <div className="mt-4 space-y-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                placeholder="Artikel suchen..."
+                value={articleSearchQuery}
+                onChange={(e) => setArticleSearchQuery(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+            <ScrollArea className="h-[calc(100vh-200px)]">
+              <div className="space-y-2 pr-4">
+                {availableArticlesForSupplier.length === 0 ? (
+                  <p className="text-sm text-muted-foreground text-center py-8">
+                    Keine weiteren Artikel verfügbar
+                  </p>
+                ) : (
+                  availableArticlesForSupplier.map(article => (
+                    <div
+                      key={article.id}
+                      className="flex items-center justify-between p-3 rounded-lg border bg-card"
+                    >
+                      <div className="min-w-0 flex-1">
+                        <p className="font-medium truncate">{article.name}</p>
+                        <p className="text-sm text-muted-foreground">
+                          €{article.price.toFixed(2)} / {article.unit}
+                        </p>
+                      </div>
+                      <Button
+                        size="sm"
+                        onClick={() => handleAddArticleFromSheet(article)}
+                      >
+                        <Plus className="w-4 h-4 mr-1" />
+                        Hinzufügen
+                      </Button>
+                    </div>
+                  ))
+                )}
+              </div>
+            </ScrollArea>
+          </div>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
