@@ -140,7 +140,7 @@ export function QuestionOnboardingWizard() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-accent/5 p-4 md:p-8">
+    <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-accent/5 p-4 md:p-8 pt-20 md:pt-24">
       <div className="max-w-4xl mx-auto">
         {/* Header with progress */}
         <div className="mb-8 space-y-4">
