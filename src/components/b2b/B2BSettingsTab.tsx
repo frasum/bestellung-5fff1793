@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import {
   Select,
   SelectContent,
@@ -28,8 +29,16 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { toast } from 'sonner';
-import { Palette, Building2, ExternalLink, Copy, Check, Link2, Upload, Trash2, Loader2, ImageIcon, Truck, Plus, Pencil, Mail, Globe } from 'lucide-react';
+import { Palette, Building2, ExternalLink, Copy, Check, Link2, Upload, Trash2, Loader2, ImageIcon, Truck, Plus, Pencil, Mail, Globe, Users, UserPlus } from 'lucide-react';
 import B2BSupplierFormDialog from './B2BSupplierFormDialog';
 
 interface B2BAccount {
@@ -67,15 +76,28 @@ interface B2BSupplier {
   order_delivery_method: string;
 }
 
+interface B2BSupplierUser {
+  id: string;
+  user_id: string;
+  supplier_id: string;
+  account_id: string;
+  role: string;
+  email: string;
+  created_at: string | null;
+  supplier_name?: string;
+}
+
 interface B2BSettingsTabProps {
   account: B2BAccount;
   onUpdate: () => void;
   selectedSupplierId?: string;
   suppliers?: { id: string; name: string }[];
   onSuppliersChange?: () => void;
+  isSupplierUser?: boolean;
+  supplierUserRole?: string;
 }
 
-const B2BSettingsTab = ({ account, onUpdate, selectedSupplierId, suppliers: dashboardSuppliers, onSuppliersChange }: B2BSettingsTabProps) => {
+const B2BSettingsTab = ({ account, onUpdate, selectedSupplierId, suppliers: dashboardSuppliers, onSuppliersChange, isSupplierUser = false, supplierUserRole = 'manager' }: B2BSettingsTabProps) => {
   const [loading, setLoading] = useState(false);
   const [primaryColor, setPrimaryColor] = useState(account.primary_color);
   const [secondaryColor, setSecondaryColor] = useState(account.secondary_color);
@@ -101,12 +123,25 @@ const B2BSettingsTab = ({ account, onUpdate, selectedSupplierId, suppliers: dash
   const [supplierOrderDeliveryMethod, setSupplierOrderDeliveryMethod] = useState<string>('email');
   const [savingSupplier, setSavingSupplier] = useState(false);
 
+  // Supplier Users Management (only for account owners)
+  const [supplierUsers, setSupplierUsers] = useState<B2BSupplierUser[]>([]);
+  const [loadingSupplierUsers, setLoadingSupplierUsers] = useState(false);
+  const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState('');
+  const [inviteSupplierId, setInviteSupplierId] = useState('');
+  const [inviteRole, setInviteRole] = useState<string>('manager');
+  const [inviting, setInviting] = useState(false);
+  const [deleteUserToDelete, setDeleteUserToDelete] = useState<B2BSupplierUser | null>(null);
+
   const portalUrl = `${window.location.origin}/b2b/portal/${account.subdomain}`;
 
   useEffect(() => {
     loadBestellungSuppliers();
     loadB2bSuppliers();
-  }, []);
+    if (!isSupplierUser) {
+      loadSupplierUsers();
+    }
+  }, [isSupplierUser]);
 
   // Load selected supplier data when selectedSupplierId changes
   useEffect(() => {
@@ -200,6 +235,110 @@ const B2BSettingsTab = ({ account, onUpdate, selectedSupplierId, suppliers: dash
       console.error('Error loading B2B suppliers:', error);
     } finally {
       setLoadingB2bSuppliers(false);
+    }
+  };
+
+  const loadSupplierUsers = async () => {
+    setLoadingSupplierUsers(true);
+    try {
+      const { data, error } = await supabase
+        .from('b2b_supplier_users')
+        .select('*')
+        .eq('account_id', account.id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      // Add supplier names
+      const usersWithSupplierNames = (data || []).map(user => {
+        const supplier = b2bSuppliers.find(s => s.id === user.supplier_id);
+        return { ...user, supplier_name: supplier?.name || 'Unbekannt' };
+      });
+
+      setSupplierUsers(usersWithSupplierNames);
+    } catch (error) {
+      console.error('Error loading supplier users:', error);
+    } finally {
+      setLoadingSupplierUsers(false);
+    }
+  };
+
+  const handleInviteSupplierUser = async () => {
+    if (!inviteEmail || !inviteSupplierId) {
+      toast.error('Bitte füllen Sie alle Felder aus');
+      return;
+    }
+
+    setInviting(true);
+    try {
+      // First, sign up the user (they will need to confirm their email)
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: inviteEmail,
+        password: crypto.randomUUID(), // Temporary password, user will reset
+        options: {
+          emailRedirectTo: `${window.location.origin}/b2b/login`,
+        },
+      });
+
+      if (authError) {
+        // If user already exists, try to get their ID
+        if (authError.message.includes('already registered')) {
+          // Get user by email from profiles or handle differently
+          toast.error('Diese E-Mail ist bereits registriert. Der Benutzer muss sich mit seinem bestehenden Passwort anmelden.');
+          return;
+        }
+        throw authError;
+      }
+
+      if (!authData.user) {
+        throw new Error('Benutzer konnte nicht erstellt werden');
+      }
+
+      // Create the supplier user entry
+      const { error: insertError } = await supabase
+        .from('b2b_supplier_users')
+        .insert({
+          user_id: authData.user.id,
+          supplier_id: inviteSupplierId,
+          account_id: account.id,
+          role: inviteRole as 'owner' | 'manager' | 'viewer',
+          email: inviteEmail,
+        } as any);
+
+      if (insertError) throw insertError;
+
+      toast.success(`Einladung an ${inviteEmail} gesendet. Der Benutzer muss seine E-Mail bestätigen.`);
+      setInviteDialogOpen(false);
+      setInviteEmail('');
+      setInviteSupplierId('');
+      setInviteRole('manager');
+      loadSupplierUsers();
+    } catch (error: any) {
+      console.error('Error inviting supplier user:', error);
+      toast.error(error.message || 'Fehler beim Einladen');
+    } finally {
+      setInviting(false);
+    }
+  };
+
+  const handleDeleteSupplierUser = async () => {
+    if (!deleteUserToDelete) return;
+
+    try {
+      const { error } = await supabase
+        .from('b2b_supplier_users')
+        .delete()
+        .eq('id', deleteUserToDelete.id);
+
+      if (error) throw error;
+
+      toast.success('Benutzer-Zugang entfernt');
+      loadSupplierUsers();
+    } catch (error: any) {
+      console.error('Error deleting supplier user:', error);
+      toast.error('Fehler beim Entfernen');
+    } finally {
+      setDeleteUserToDelete(null);
     }
   };
 
@@ -498,45 +637,116 @@ const B2BSettingsTab = ({ account, onUpdate, selectedSupplierId, suppliers: dash
             </AccordionItem>
           )}
 
-          {/* Supplier Linking */}
-          <AccordionItem value="linking" className="border-b">
-            <AccordionTrigger className="group px-4 py-3 hover:no-underline hover:bg-muted/50 data-[state=open]:bg-primary/5">
-              <div className="flex items-center gap-2">
-                <Link2 className="h-4 w-4 text-muted-foreground group-data-[state=open]:text-primary transition-colors" />
-                <span className="font-medium group-data-[state=open]:text-primary transition-colors">
-                  Bestellung.pro Verknüpfung
-                </span>
-              </div>
-            </AccordionTrigger>
-            <AccordionContent className="px-4 pb-4 bg-primary/5">
-              <p className="text-sm text-muted-foreground mb-4">
-                Verknüpfen Sie Ihren Bestellung.pro Lieferanten, um Artikel zu importieren
-              </p>
-              <div className="space-y-2">
-                <Label htmlFor="linkedSupplier">Verknüpfter Lieferant</Label>
-                <Select value={linkedSupplierId} onValueChange={setLinkedSupplierId}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Lieferant auswählen..." />
-                  </SelectTrigger>
-                  <SelectContent className="bg-card border border-border z-50">
-                    <SelectItem value="none">Keine Verknüpfung</SelectItem>
-                    {bestellungSuppliers
-                      .filter((supplier) => supplier.id && supplier.id.trim() !== '')
-                      .map((supplier) => (
-                        <SelectItem key={supplier.id} value={supplier.id}>
-                          {supplier.name}
-                        </SelectItem>
-                      ))}
-                  </SelectContent>
-                </Select>
-                <p className="text-sm text-muted-foreground">
-                  {linkedSupplierId && linkedSupplierId !== 'none'
-                    ? 'Sie können jetzt Artikel aus Ihrem Bestellung.pro Katalog importieren.'
-                    : 'Wählen Sie einen Lieferanten, um Artikel zu importieren.'}
+          {/* Supplier Users Management - Only for Account Owners */}
+          {!isSupplierUser && (
+            <AccordionItem value="supplier-users" className="border-b">
+              <AccordionTrigger className="group px-4 py-3 hover:no-underline hover:bg-muted/50 data-[state=open]:bg-primary/5">
+                <div className="flex items-center gap-2">
+                  <Users className="h-4 w-4 text-muted-foreground group-data-[state=open]:text-primary transition-colors" />
+                  <span className="font-medium group-data-[state=open]:text-primary transition-colors">
+                    Lieferanten-Benutzer
+                  </span>
+                  {supplierUsers.length > 0 && (
+                    <Badge variant="secondary" className="ml-2">{supplierUsers.length}</Badge>
+                  )}
+                </div>
+              </AccordionTrigger>
+              <AccordionContent className="px-4 pb-4 bg-primary/5">
+                <p className="text-sm text-muted-foreground mb-4">
+                  Geben Sie Lieferanten einen eigenen Login, um ihr Portal selbst zu verwalten
                 </p>
-              </div>
-            </AccordionContent>
-          </AccordionItem>
+                
+                <div className="space-y-4">
+                  <Button onClick={() => setInviteDialogOpen(true)} size="sm">
+                    <UserPlus className="h-4 w-4 mr-2" />
+                    Benutzer einladen
+                  </Button>
+
+                  {loadingSupplierUsers ? (
+                    <div className="flex items-center justify-center py-4">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    </div>
+                  ) : supplierUsers.length === 0 ? (
+                    <p className="text-sm text-muted-foreground py-4">
+                      Noch keine Lieferanten-Benutzer angelegt
+                    </p>
+                  ) : (
+                    <div className="space-y-2">
+                      {supplierUsers.map(user => (
+                        <div key={user.id} className="flex items-center justify-between p-3 bg-background rounded-lg border">
+                          <div className="flex items-center gap-3">
+                            <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+                              <Mail className="h-4 w-4 text-primary" />
+                            </div>
+                            <div>
+                              <p className="font-medium text-sm">{user.email}</p>
+                              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                <span>{user.supplier_name}</span>
+                                <span>•</span>
+                                <Badge variant="outline" className="text-xs capitalize">
+                                  {user.role === 'owner' ? 'Eigentümer' : user.role === 'manager' ? 'Manager' : 'Betrachter'}
+                                </Badge>
+                              </div>
+                            </div>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-destructive hover:text-destructive"
+                            onClick={() => setDeleteUserToDelete(user)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          )}
+
+          {/* Supplier Linking - Only for Account Owners */}
+          {!isSupplierUser && (
+            <AccordionItem value="linking" className="border-b">
+              <AccordionTrigger className="group px-4 py-3 hover:no-underline hover:bg-muted/50 data-[state=open]:bg-primary/5">
+                <div className="flex items-center gap-2">
+                  <Link2 className="h-4 w-4 text-muted-foreground group-data-[state=open]:text-primary transition-colors" />
+                  <span className="font-medium group-data-[state=open]:text-primary transition-colors">
+                    Bestellung.pro Verknüpfung
+                  </span>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent className="px-4 pb-4 bg-primary/5">
+                <p className="text-sm text-muted-foreground mb-4">
+                  Verknüpfen Sie Ihren Bestellung.pro Lieferanten, um Artikel zu importieren
+                </p>
+                <div className="space-y-2">
+                  <Label htmlFor="linkedSupplier">Verknüpfter Lieferant</Label>
+                  <Select value={linkedSupplierId} onValueChange={setLinkedSupplierId}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Lieferant auswählen..." />
+                    </SelectTrigger>
+                    <SelectContent className="bg-card border border-border z-50">
+                      <SelectItem value="none">Keine Verknüpfung</SelectItem>
+                      {bestellungSuppliers
+                        .filter((supplier) => supplier.id && supplier.id.trim() !== '')
+                        .map((supplier) => (
+                          <SelectItem key={supplier.id} value={supplier.id}>
+                            {supplier.name}
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-sm text-muted-foreground">
+                    {linkedSupplierId && linkedSupplierId !== 'none'
+                      ? 'Sie können jetzt Artikel aus Ihrem Bestellung.pro Katalog importieren.'
+                      : 'Wählen Sie einen Lieferanten, um Artikel zu importieren.'}
+                  </p>
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          )}
 
           {/* Portal URL */}
           <AccordionItem value="portal" className="border-b">
@@ -757,6 +967,83 @@ const B2BSettingsTab = ({ account, onUpdate, selectedSupplierId, suppliers: dash
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               Löschen
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Invite Supplier User Dialog */}
+      <Dialog open={inviteDialogOpen} onOpenChange={setInviteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Lieferanten-Benutzer einladen</DialogTitle>
+            <DialogDescription>
+              Der Benutzer erhält einen eigenen Login und kann nur den ausgewählten Lieferanten verwalten.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="inviteEmail">E-Mail</Label>
+              <Input
+                id="inviteEmail"
+                type="email"
+                value={inviteEmail}
+                onChange={(e) => setInviteEmail(e.target.value)}
+                placeholder="luigi@esempio.it"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="inviteSupplierId">Lieferant</Label>
+              <Select value={inviteSupplierId} onValueChange={setInviteSupplierId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Lieferant auswählen..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {b2bSuppliers.map(s => (
+                    <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="inviteRole">Rolle</Label>
+              <Select value={inviteRole} onValueChange={setInviteRole}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="manager">Manager (kann bearbeiten)</SelectItem>
+                  <SelectItem value="viewer">Betrachter (nur lesen)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setInviteDialogOpen(false)}>Abbrechen</Button>
+            <Button onClick={handleInviteSupplierUser} disabled={inviting}>
+              {inviting ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <UserPlus className="h-4 w-4 mr-2" />}
+              Einladen
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete User Confirmation Dialog */}
+      <AlertDialog open={!!deleteUserToDelete} onOpenChange={() => setDeleteUserToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Benutzer-Zugang entfernen?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Der Benutzer "{deleteUserToDelete?.email}" verliert seinen Zugang zum Lieferanten-Portal.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteSupplierUser}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Entfernen
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

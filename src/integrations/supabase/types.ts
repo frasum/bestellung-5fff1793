@@ -622,6 +622,54 @@ export type Database = {
           },
         ]
       }
+      b2b_supplier_users: {
+        Row: {
+          account_id: string
+          created_at: string | null
+          email: string
+          id: string
+          role: Database["public"]["Enums"]["b2b_supplier_role"]
+          supplier_id: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          account_id: string
+          created_at?: string | null
+          email: string
+          id?: string
+          role?: Database["public"]["Enums"]["b2b_supplier_role"]
+          supplier_id: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          account_id?: string
+          created_at?: string | null
+          email?: string
+          id?: string
+          role?: Database["public"]["Enums"]["b2b_supplier_role"]
+          supplier_id?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "b2b_supplier_users_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "supplier_b2b_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "b2b_supplier_users_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "b2b_suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       b2b_supplier_vendor_articles: {
         Row: {
           category: string | null
@@ -3204,6 +3252,10 @@ export type Database = {
         Args: { p_user_id: string }
         Returns: string
       }
+      get_b2b_supplier_user_supplier_id: {
+        Args: { p_user_id: string }
+        Returns: string
+      }
       get_user_organization_id: { Args: { user_id: string }; Returns: string }
       has_role: {
         Args: {
@@ -3218,6 +3270,10 @@ export type Database = {
       }
       is_b2b_supplier_owner: {
         Args: { p_account_id: string; p_user_id: string }
+        Returns: boolean
+      }
+      is_b2b_supplier_user: {
+        Args: { p_supplier_id: string; p_user_id: string }
         Returns: boolean
       }
       is_super_admin: { Args: { _user_id: string }; Returns: boolean }
@@ -3236,6 +3292,7 @@ export type Database = {
         | "delivered"
         | "cancelled"
       b2b_subscription_tier: "starter" | "professional" | "enterprise"
+      b2b_supplier_role: "owner" | "manager" | "viewer"
       order_status:
         | "draft"
         | "pending"
@@ -3381,6 +3438,7 @@ export const Constants = {
         "cancelled",
       ],
       b2b_subscription_tier: ["starter", "professional", "enterprise"],
+      b2b_supplier_role: ["owner", "manager", "viewer"],
       order_status: [
         "draft",
         "pending",
