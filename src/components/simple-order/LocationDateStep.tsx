@@ -337,10 +337,10 @@ export const LocationDateStep = ({
             {TIME_WINDOWS.map((tw) => (
               <Button
                 key={tw.value}
-                variant={timeWindow === tw.value ? "default" : "outline"}
+                variant="outline"
                 className={cn(
                   "h-14 text-lg font-medium touch-manipulation",
-                  timeWindow === tw.value && "border-primary bg-primary/5"
+                  timeWindow === tw.value && "border-primary bg-primary/10 text-primary font-semibold"
                 )}
                 onClick={() => handleTimeWindowChange(tw.value)}
               >
