@@ -206,16 +206,15 @@ export const SystemArchitectureDiagram = () => {
       ctx.fillRect(0, 0, canvas.width, canvas.height);
       ctx.scale(scale, scale);
 
-      // Convert SVG to data URL
+      // Convert SVG to Base64 Data-URL (avoids canvas tainting)
       const svgData = new XMLSerializer().serializeToString(svgElement);
-      const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
-      const svgUrl = URL.createObjectURL(svgBlob);
+      const base64Svg = btoa(unescape(encodeURIComponent(svgData)));
+      const svgDataUrl = `data:image/svg+xml;base64,${base64Svg}`;
 
       // Load SVG as image
       const img = new Image();
       img.onload = () => {
         ctx.drawImage(img, 0, 0);
-        URL.revokeObjectURL(svgUrl);
 
         const imgData = canvas.toDataURL('image/png');
 
@@ -269,11 +268,10 @@ export const SystemArchitectureDiagram = () => {
 
       img.onerror = () => {
         console.error('Failed to load SVG as image');
-        URL.revokeObjectURL(svgUrl);
         setIsExporting(false);
       };
 
-      img.src = svgUrl;
+      img.src = svgDataUrl;
     } catch (error) {
       console.error('PDF export failed:', error);
       setIsExporting(false);
