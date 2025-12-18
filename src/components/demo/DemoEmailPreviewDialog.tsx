@@ -62,6 +62,7 @@ interface DemoEmailPreviewDialogProps {
     };
   };
   onUpdateItems?: (supplierId: string, items: DemoEmailPreviewItem[], totalAmount: number) => void;
+  allSupplierArticles?: Record<string, DemoEmailPreviewItem[]>;
 }
 
 export function DemoEmailPreviewDialog({
@@ -74,6 +75,7 @@ export function DemoEmailPreviewDialog({
   isOrdering,
   industry,
   onUpdateItems,
+  allSupplierArticles,
 }: DemoEmailPreviewDialogProps) {
   const [showAddArticleSheet, setShowAddArticleSheet] = useState(false);
   const [activeSupplierForAdd, setActiveSupplierForAdd] = useState<string | null>(null);
@@ -107,13 +109,20 @@ export function DemoEmailPreviewDialog({
     return Array.from(articlesMap.values());
   }, [currentPreviews]);
 
-  // Get articles available to add (not already in the current supplier's email)
+  // Get articles available to add (from full supplier catalog, not already in current email)
   const getAvailableArticlesToAdd = (supplierId: string) => {
     const currentPreview = currentPreviews.find(p => p.supplierId === supplierId);
     if (!currentPreview) return [];
 
+    // Use full supplier articles if available, otherwise fall back to collected articles
+    const supplierArticles = allSupplierArticles?.[supplierId] || 
+      allAvailableArticles.filter(a => {
+        const preview = currentPreviews.find(p => p.supplierId === supplierId);
+        return preview?.supplierName === a.supplierName;
+      });
+
     const currentArticleNames = new Set(currentPreview.items.map(item => item.articleName));
-    return allAvailableArticles.filter(article => !currentArticleNames.has(article.articleName));
+    return supplierArticles.filter(article => !currentArticleNames.has(article.articleName));
   };
 
   const filteredArticlesToAdd = useMemo(() => {
