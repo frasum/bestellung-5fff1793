@@ -14,6 +14,7 @@ import { useRealtimeNotifications } from "@/hooks/useRealtimeNotifications";
 import { usePerformanceMonitor } from "@/hooks/usePerformanceMonitor";
 import { PerformanceMonitor } from "@/components/debug/PerformanceMonitor";
 import { DevNavigationPanel } from "@/components/debug/DevNavigationPanel";
+import { DemoModeSwitcher } from "@/components/debug/DemoModeSwitcher";
 
 // Lazy load pages for better performance
 const Auth = lazy(() => import("./pages/Auth"));
@@ -120,6 +121,7 @@ const AppContent = () => {
       )}
       
       <DevNavigationPanel />
+      <DemoModeSwitcher />
     </>
   );
 };
