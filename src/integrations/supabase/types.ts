@@ -628,6 +628,7 @@ export type Database = {
           created_at: string | null
           email: string
           id: string
+          name: string | null
           role: Database["public"]["Enums"]["b2b_supplier_role"]
           supplier_id: string
           updated_at: string | null
@@ -638,6 +639,7 @@ export type Database = {
           created_at?: string | null
           email: string
           id?: string
+          name?: string | null
           role?: Database["public"]["Enums"]["b2b_supplier_role"]
           supplier_id: string
           updated_at?: string | null
@@ -648,6 +650,7 @@ export type Database = {
           created_at?: string | null
           email?: string
           id?: string
+          name?: string | null
           role?: Database["public"]["Enums"]["b2b_supplier_role"]
           supplier_id?: string
           updated_at?: string | null

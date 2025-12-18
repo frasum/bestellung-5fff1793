@@ -90,6 +90,7 @@ const B2BSupplierDashboard = () => {
   // Supplier User Mode (e.g., Luigi with own login)
   const [isSupplierUser, setIsSupplierUser] = useState(false);
   const [supplierUserRole, setSupplierUserRole] = useState<string>('manager');
+  const [supplierUserName, setSupplierUserName] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) {
@@ -133,6 +134,17 @@ const B2BSupplierDashboard = () => {
 
       setAccount(accountData);
       
+      // Load supplier user name
+      const { data: supplierUserData } = await supabase
+        .from('b2b_supplier_users')
+        .select('name')
+        .eq('user_id', user?.id)
+        .maybeSingle();
+      
+      if (supplierUserData?.name) {
+        setSupplierUserName(supplierUserData.name);
+      }
+      
       // Load only this supplier
       const { data: supplierData } = await supabase
         .from('b2b_suppliers')
@@ -174,13 +186,16 @@ const B2BSupplierDashboard = () => {
       // Check if user is a supplier user
       const { data: supplierUser } = await supabase
         .from('b2b_supplier_users')
-        .select('supplier_id, account_id, role')
+        .select('supplier_id, account_id, role, name')
         .eq('user_id', user?.id)
         .maybeSingle();
 
       if (supplierUser) {
         setIsSupplierUser(true);
         setSupplierUserRole(supplierUser.role);
+        if (supplierUser.name) {
+          setSupplierUserName(supplierUser.name);
+        }
         await loadAccountAsSupplierUser(supplierUser.account_id, supplierUser.supplier_id);
         return;
       }
@@ -392,7 +407,7 @@ const B2BSupplierDashboard = () => {
             {isSupplierUser && (
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <User className="h-4 w-4" />
-                <span className="hidden sm:inline">{user?.email}</span>
+                <span className="hidden sm:inline">{supplierUserName || user?.email}</span>
               </div>
             )}
             <Button variant="outline" size="sm" onClick={openCustomerPortal}>
