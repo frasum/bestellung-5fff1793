@@ -6,12 +6,15 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 import { Trash2, Plus, Minus, ShoppingCart, ArrowLeft, Send, CheckCircle2 } from 'lucide-react';
+import { DemoEmailPreviewDialog, DemoEmailPreviewData } from '@/components/demo/DemoEmailPreviewDialog';
 
 export default function DemoCart() {
   const navigate = useNavigate();
   const { cart, updateCartQuantity, removeFromCart, clearCart, cartTotal, industry } = useDemo();
   const [isOrdering, setIsOrdering] = useState(false);
   const [orderComplete, setOrderComplete] = useState(false);
+  const [showEmailPreview, setShowEmailPreview] = useState(false);
+  const [emailPreviews, setEmailPreviews] = useState<DemoEmailPreviewData[]>([]);
 
   // Group cart items by supplier
   const groupedItems = cart.reduce((acc, item) => {
@@ -27,11 +30,45 @@ export default function DemoCart() {
     return acc;
   }, {} as Record<string, { supplierName: string; items: typeof cart; total: number }>);
 
-  const handleOrder = async () => {
+  const handleOpenEmailPreview = () => {
+    // Generate email previews from cart (one per supplier)
+    const previews: DemoEmailPreviewData[] = Object.entries(groupedItems).map(([supplierId, group]) => ({
+      supplierId,
+      supplierName: group.supplierName,
+      supplierEmail: `bestellung@${group.supplierName.toLowerCase().replace(/\s+/g, '-')}.de`,
+      deliveryAddress: 'Demo-Betrieb GmbH\nMusterstraße 1\n12345 Berlin',
+      items: group.items.map(item => ({
+        articleName: item.articleName,
+        quantity: item.quantity,
+        unit: item.unit,
+        price: item.price,
+      })),
+      totalAmount: group.total,
+      notes: '',
+      confirmed: false,
+    }));
+    setEmailPreviews(previews);
+    setShowEmailPreview(true);
+  };
+
+  const handleUpdateNotes = (supplierId: string, notes: string) => {
+    setEmailPreviews(prev =>
+      prev.map(p => (p.supplierId === supplierId ? { ...p, notes } : p))
+    );
+  };
+
+  const handleToggleConfirm = (supplierId: string) => {
+    setEmailPreviews(prev =>
+      prev.map(p => (p.supplierId === supplierId ? { ...p, confirmed: !p.confirmed } : p))
+    );
+  };
+
+  const handleSendOrders = async () => {
     setIsOrdering(true);
     // Simulate order processing
     await new Promise(resolve => setTimeout(resolve, 1500));
     setIsOrdering(false);
+    setShowEmailPreview(false);
     setOrderComplete(true);
     toast.success('Demo-Bestellung erfolgreich!');
   };
@@ -39,7 +76,7 @@ export default function DemoCart() {
   const handleNewOrder = () => {
     clearCart();
     setOrderComplete(false);
-    navigate('/demo/suppliers');
+    navigate(`/demo/suppliers?industry=${industry.id}`);
   };
 
   if (orderComplete) {
@@ -55,7 +92,7 @@ export default function DemoCart() {
           </p>
         </div>
         <div className="flex gap-3 justify-center">
-          <Button variant="outline" onClick={() => navigate('/demo/orders')}>
+          <Button variant="outline" onClick={() => navigate(`/demo/orders?industry=${industry.id}`)}>
             Bestellungen ansehen
           </Button>
           <Button onClick={handleNewOrder}>
@@ -76,7 +113,7 @@ export default function DemoCart() {
             Fügen Sie {industry.terminology.articlePlural} aus dem Katalog hinzu.
           </p>
         </div>
-        <Button onClick={() => navigate('/demo/suppliers')}>
+        <Button onClick={() => navigate(`/demo/suppliers?industry=${industry.id}`)}>
           <ArrowLeft className="w-4 h-4 mr-2" />
           Zum Katalog
         </Button>
@@ -93,7 +130,7 @@ export default function DemoCart() {
             {cart.length} {cart.length === 1 ? 'Artikel' : 'Artikel'} von {Object.keys(groupedItems).length} {industry.terminology.supplierPlural}
           </p>
         </div>
-        <Button variant="outline" onClick={() => navigate('/demo/suppliers')}>
+        <Button variant="outline" onClick={() => navigate(`/demo/suppliers?industry=${industry.id}`)}>
           <ArrowLeft className="w-4 h-4 mr-2" />
           Weiter einkaufen
         </Button>
@@ -175,23 +212,28 @@ export default function DemoCart() {
           <Button
             className="w-full"
             size="lg"
-            onClick={handleOrder}
-            disabled={isOrdering}
+            onClick={handleOpenEmailPreview}
           >
-            {isOrdering ? (
-              'Wird gesendet...'
-            ) : (
-              <>
-                <Send className="w-4 h-4 mr-2" />
-                Demo-Bestellung senden
-              </>
-            )}
+            <Send className="w-4 h-4 mr-2" />
+            E-Mails prüfen & Bestellung senden
           </Button>
           <p className="text-xs text-muted-foreground text-center mt-2">
             Dies ist eine Simulation. Es werden keine echten Bestellungen gesendet.
           </p>
         </CardContent>
       </Card>
+
+      {/* Email Preview Dialog */}
+      <DemoEmailPreviewDialog
+        open={showEmailPreview}
+        onOpenChange={setShowEmailPreview}
+        emailPreviews={emailPreviews}
+        onUpdateNotes={handleUpdateNotes}
+        onToggleConfirm={handleToggleConfirm}
+        onSendOrders={handleSendOrders}
+        isOrdering={isOrdering}
+        industry={industry}
+      />
     </div>
   );
 }
