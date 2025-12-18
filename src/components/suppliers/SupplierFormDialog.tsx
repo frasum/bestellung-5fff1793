@@ -5,8 +5,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Loader2, Package } from 'lucide-react';
-import { Supplier, SupplierInput } from '@/hooks/useSuppliers';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Loader2, Package, Mail, Globe, Send } from 'lucide-react';
+import { Supplier, SupplierInput, OrderDeliveryMethod } from '@/hooks/useSuppliers';
 import { supplierSchema, SupplierFormData } from './schemas';
 
 interface SupplierFormDialogProps {
@@ -26,11 +27,11 @@ export const SupplierFormDialog = ({
   onImportArticles,
   isPending
 }: SupplierFormDialogProps) => {
-  const form = useForm<SupplierFormData>({
+  const form = useForm<SupplierFormData & { order_delivery_method: OrderDeliveryMethod }>({
     resolver: zodResolver(supplierSchema),
     defaultValues: {
       name: '', email: '', phone: '', address: '', contact_person: '',
-      customer_number: '', minimum_order_value: ''
+      customer_number: '', minimum_order_value: '', order_delivery_method: 'email'
     }
   });
 
@@ -44,16 +45,17 @@ export const SupplierFormDialog = ({
         contact_person: editingSupplier.contact_person || '',
         customer_number: editingSupplier.customer_number || '',
         minimum_order_value: editingSupplier.minimum_order_value?.toString() || '',
+        order_delivery_method: editingSupplier.order_delivery_method || 'email',
       });
     } else {
       form.reset({
         name: '', email: '', phone: '', address: '', contact_person: '',
-        customer_number: '', minimum_order_value: ''
+        customer_number: '', minimum_order_value: '', order_delivery_method: 'email'
       });
     }
   }, [editingSupplier, form]);
 
-  const handleSubmit = async (data: SupplierFormData) => {
+  const handleSubmit = async (data: SupplierFormData & { order_delivery_method: OrderDeliveryMethod }) => {
     const input: SupplierInput = {
       name: data.name,
       email: data.email,
@@ -62,6 +64,7 @@ export const SupplierFormDialog = ({
       contact_person: data.contact_person || undefined,
       customer_number: data.customer_number || undefined,
       minimum_order_value: data.minimum_order_value ? parseFloat(data.minimum_order_value) : undefined,
+      order_delivery_method: data.order_delivery_method,
     };
     await onSubmit(input);
     form.reset();
@@ -103,6 +106,43 @@ export const SupplierFormDialog = ({
           <div className="space-y-2">
             <Label htmlFor="minimum_order_value">Mindestbestellwert (€)</Label>
             <Input id="minimum_order_value" type="number" step="0.01" min="0" {...form.register('minimum_order_value')} placeholder="50.00" onFocus={(e) => e.target.select()} />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="order_delivery_method">Bestellungs-Zustellung</Label>
+            <Select 
+              value={form.watch('order_delivery_method')} 
+              onValueChange={(value: OrderDeliveryMethod) => form.setValue('order_delivery_method', value)}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="email">
+                  <div className="flex items-center gap-2">
+                    <Mail className="h-4 w-4" />
+                    Per E-Mail
+                  </div>
+                </SelectItem>
+                <SelectItem value="portal">
+                  <div className="flex items-center gap-2">
+                    <Globe className="h-4 w-4" />
+                    Ins Lieferantenportal
+                  </div>
+                </SelectItem>
+                <SelectItem value="both">
+                  <div className="flex items-center gap-2">
+                    <Send className="h-4 w-4" />
+                    E-Mail + Portal
+                  </div>
+                </SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              {form.watch('order_delivery_method') === 'email' && 'Bestellungen werden per E-Mail an den Lieferanten gesendet'}
+              {form.watch('order_delivery_method') === 'portal' && 'Bestellungen werden im Lieferantenportal angezeigt (keine E-Mail)'}
+              {form.watch('order_delivery_method') === 'both' && 'Bestellungen werden per E-Mail gesendet und im Portal angezeigt'}
+            </p>
           </div>
           
           {editingSupplier && onImportArticles && (

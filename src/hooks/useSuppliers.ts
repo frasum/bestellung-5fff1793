@@ -2,6 +2,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
+export type OrderDeliveryMethod = 'email' | 'portal' | 'both';
+
 export interface Supplier {
   id: string;
   organization_id: string;
@@ -12,6 +14,7 @@ export interface Supplier {
   contact_person: string | null;
   customer_number: string | null;
   minimum_order_value: number | null;
+  order_delivery_method: OrderDeliveryMethod;
   is_active: boolean;
   created_at: string;
   updated_at: string;
@@ -25,6 +28,7 @@ export interface SupplierInput {
   contact_person?: string;
   customer_number?: string;
   minimum_order_value?: number;
+  order_delivery_method?: OrderDeliveryMethod;
   is_active?: boolean;
 }
 
@@ -72,7 +76,7 @@ export const useCreateSupplier = () => {
         .single();
 
       if (error) throw error;
-      return data;
+      return data as Supplier;
     },
     onMutate: async (input) => {
       await queryClient.cancelQueries({ queryKey: ['suppliers'] });
@@ -88,6 +92,7 @@ export const useCreateSupplier = () => {
         contact_person: input.contact_person || null,
         customer_number: input.customer_number || null,
         minimum_order_value: input.minimum_order_value || null,
+        order_delivery_method: input.order_delivery_method || 'email',
         is_active: input.is_active ?? true,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
@@ -126,7 +131,7 @@ export const useUpdateSupplier = () => {
         .single();
 
       if (error) throw error;
-      return data;
+      return data as Supplier;
     },
     onMutate: async ({ id, ...input }) => {
       await queryClient.cancelQueries({ queryKey: ['suppliers'] });

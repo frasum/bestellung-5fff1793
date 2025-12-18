@@ -2771,6 +2771,48 @@ export type Database = {
           },
         ]
       }
+      supplier_order_views: {
+        Row: {
+          confirmed_at: string | null
+          created_at: string
+          id: string
+          order_id: string
+          seen_at: string | null
+          supplier_id: string
+        }
+        Insert: {
+          confirmed_at?: string | null
+          created_at?: string
+          id?: string
+          order_id: string
+          seen_at?: string | null
+          supplier_id: string
+        }
+        Update: {
+          confirmed_at?: string | null
+          created_at?: string
+          id?: string
+          order_id?: string
+          seen_at?: string | null
+          supplier_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supplier_order_views_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supplier_order_views_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       supplier_portal_drafts: {
         Row: {
           created_at: string
@@ -2912,6 +2954,7 @@ export type Database = {
           is_active: boolean
           minimum_order_value: number | null
           name: string
+          order_delivery_method: string | null
           organization_id: string
           phone: string | null
           updated_at: string
@@ -2926,6 +2969,7 @@ export type Database = {
           is_active?: boolean
           minimum_order_value?: number | null
           name: string
+          order_delivery_method?: string | null
           organization_id: string
           phone?: string | null
           updated_at?: string
@@ -2940,6 +2984,7 @@ export type Database = {
           is_active?: boolean
           minimum_order_value?: number | null
           name?: string
+          order_delivery_method?: string | null
           organization_id?: string
           phone?: string | null
           updated_at?: string

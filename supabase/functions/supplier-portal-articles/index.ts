@@ -9,11 +9,12 @@ const corsHeaders = {
 };
 
 interface ArticleUpdateRequest {
-  action: 'list' | 'update' | 'update-all' | 'get-settings' | 'get-units' | 'get-order-units' | 'create-unit' | 'get-categories' | 'create-category' | 'suggest-article' | 'save-draft' | 'get-draft' | 'delete-draft' | 'upload-image' | 'delete-image';
+  action: 'list' | 'update' | 'update-all' | 'get-settings' | 'get-units' | 'get-order-units' | 'create-unit' | 'get-categories' | 'create-category' | 'suggest-article' | 'save-draft' | 'get-draft' | 'delete-draft' | 'upload-image' | 'delete-image' | 'get-orders' | 'mark-order-seen' | 'confirm-order';
   supplierId: string;
   organizationId: string;
   sessionToken: string;
   articleId?: string;
+  orderId?: string;
   changes?: Record<string, any>;
   articleChanges?: Array<{ articleId: string; changes: Record<string, any> }>;
   unitName?: string;
@@ -1227,6 +1228,156 @@ serve(async (req) => {
         message: 'Artikelvorschlag eingereicht',
         suggestedArticle: newSuggestion 
       }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Handle get-orders action - fetch orders for this supplier
+    if (action === 'get-orders') {
+      // Fetch orders for this supplier
+      const { data: orders, error: ordersError } = await supabase
+        .from('orders')
+        .select(`
+          id, order_number, created_at, delivery_address, notes, status, total_amount,
+          location:locations(name),
+          organization:organizations(name)
+        `)
+        .eq('supplier_id', supplierId)
+        .eq('organization_id', organizationId)
+        .order('created_at', { ascending: false })
+        .limit(100);
+
+      if (ordersError) {
+        console.error('Error fetching orders:', ordersError);
+        throw ordersError;
+      }
+
+      // Fetch order items for each order
+      const orderIds = orders?.map(o => o.id) || [];
+      const { data: orderItems, error: itemsError } = await supabase
+        .from('order_items')
+        .select('id, order_id, article_name, quantity, unit, order_unit')
+        .in('order_id', orderIds);
+
+      if (itemsError) {
+        console.error('Error fetching order items:', itemsError);
+      }
+
+      // Fetch seen/confirmed status from supplier_order_views if it exists
+      let orderViews: Record<string, { seen_at: string | null; confirmed_at: string | null }> = {};
+      const { data: viewsData } = await supabase
+        .from('supplier_order_views')
+        .select('order_id, seen_at, confirmed_at')
+        .eq('supplier_id', supplierId)
+        .in('order_id', orderIds);
+
+      if (viewsData) {
+        viewsData.forEach(v => {
+          orderViews[v.order_id] = { seen_at: v.seen_at, confirmed_at: v.confirmed_at };
+        });
+      }
+
+      // Map orders with items and view status
+      const ordersWithItems = orders?.map(order => {
+        const locationData = (order.location as unknown) as { name: string } | null;
+        const orgData = (order.organization as unknown) as { name: string } | null;
+        return {
+          id: order.id,
+          order_number: order.order_number,
+          created_at: order.created_at,
+          delivery_address: order.delivery_address,
+          notes: order.notes,
+          status: order.status,
+          total_amount: order.total_amount,
+          location_name: locationData?.name || null,
+          restaurant_name: orgData?.name || 'Restaurant',
+          items: (orderItems || []).filter(i => i.order_id === order.id),
+          seen_at: orderViews[order.id]?.seen_at || null,
+          confirmed_at: orderViews[order.id]?.confirmed_at || null,
+        };
+      }) || [];
+
+      console.log(`Found ${ordersWithItems.length} orders for supplier ${supplierId}`);
+
+      return new Response(JSON.stringify({ orders: ordersWithItems }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Handle mark-order-seen action
+    if (action === 'mark-order-seen') {
+      const { orderId } = body;
+      if (!orderId) {
+        return new Response(
+          JSON.stringify({ error: 'Missing orderId' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Upsert the view record
+      const { error: viewError } = await supabase
+        .from('supplier_order_views')
+        .upsert({
+          supplier_id: supplierId,
+          order_id: orderId,
+          seen_at: new Date().toISOString(),
+        }, {
+          onConflict: 'supplier_id,order_id',
+        });
+
+      if (viewError) {
+        console.error('Error marking order as seen:', viewError);
+        throw viewError;
+      }
+
+      console.log(`Marked order ${orderId} as seen by supplier ${supplierId}`);
+
+      return new Response(JSON.stringify({ success: true }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Handle confirm-order action
+    if (action === 'confirm-order') {
+      const { orderId } = body;
+      if (!orderId) {
+        return new Response(
+          JSON.stringify({ error: 'Missing orderId' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Update order status to confirmed
+      const { error: updateError } = await supabase
+        .from('orders')
+        .update({ status: 'confirmed' })
+        .eq('id', orderId)
+        .eq('supplier_id', supplierId);
+
+      if (updateError) {
+        console.error('Error confirming order:', updateError);
+        throw updateError;
+      }
+
+      // Update the supplier_order_views with confirmed_at
+      const { error: viewError } = await supabase
+        .from('supplier_order_views')
+        .upsert({
+          supplier_id: supplierId,
+          order_id: orderId,
+          seen_at: new Date().toISOString(),
+          confirmed_at: new Date().toISOString(),
+        }, {
+          onConflict: 'supplier_id,order_id',
+        });
+
+      if (viewError) {
+        console.error('Error updating order view:', viewError);
+      }
+
+      console.log(`Order ${orderId} confirmed by supplier ${supplierId}`);
+
+      return new Response(JSON.stringify({ success: true }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }

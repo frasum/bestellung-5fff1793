@@ -11,14 +11,16 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
-import { LogOut, Save, Search, Package, Loader2, Clock, Plus, FileDown, AlertCircle, AlertTriangle, SendHorizontal, Camera, Trash2, Upload, Pencil, Check, X } from 'lucide-react';
+import { LogOut, Save, Search, Package, Loader2, Clock, Plus, FileDown, AlertCircle, AlertTriangle, SendHorizontal, Camera, Trash2, Upload, Pencil, Check, X, ShoppingCart } from 'lucide-react';
 import logo from '@/assets/logo.png';
 import { SupplierArticleCard } from '@/components/suppliers/SupplierArticleCard';
 import { SupplierUnitSelect } from '@/components/suppliers/SupplierUnitSelect';
 import { SupplierCategorySelect } from '@/components/suppliers/SupplierCategorySelect';
 import { SupplierOrderUnitSelect } from '@/components/suppliers/SupplierOrderUnitSelect';
 import { SuggestArticleDialog } from '@/components/suppliers/SuggestArticleDialog';
+import { SupplierPortalOrdersTab } from '@/components/suppliers/SupplierPortalOrdersTab';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface Unit {
@@ -844,7 +846,20 @@ const SupplierPortal = () => {
         )}
 
 
-        <Card>
+        <Tabs defaultValue="articles" className="space-y-6">
+          <TabsList>
+            <TabsTrigger value="articles" className="gap-2">
+              <Package className="h-4 w-4" />
+              Artikel
+            </TabsTrigger>
+            <TabsTrigger value="orders" className="gap-2">
+              <ShoppingCart className="h-4 w-4" />
+              Bestellungen
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="articles">
+            <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
@@ -1297,6 +1312,12 @@ const SupplierPortal = () => {
             )}
           </CardContent>
         </Card>
+          </TabsContent>
+
+          <TabsContent value="orders">
+            <SupplierPortalOrdersTab session={session} />
+          </TabsContent>
+        </Tabs>
 
         {/* Footer Text */}
         {portalSettings.footer_text && (
