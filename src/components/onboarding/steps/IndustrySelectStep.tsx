@@ -1,5 +1,6 @@
 import { industryTemplates, IndustryTemplate } from '@/data/industryTemplates';
 import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import {
   UtensilsCrossed,
@@ -9,6 +10,7 @@ import {
   Briefcase,
   Factory,
   Settings,
+  ArrowRight,
 } from 'lucide-react';
 
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -34,10 +36,6 @@ export function IndustrySelectStep({
 }: IndustrySelectStepProps) {
   const handleSelect = (industry: IndustryTemplate) => {
     onSelectIndustry(industry.id);
-    // Small delay for visual feedback before continuing
-    setTimeout(() => {
-      onContinue();
-    }, 200);
   };
 
   return (
@@ -97,6 +95,17 @@ export function IndustrySelectStep({
             </Card>
           );
         })}
+      </div>
+
+      <div className="flex justify-end pt-4">
+        <Button 
+          onClick={onContinue} 
+          disabled={!selectedIndustry}
+          className="gap-2"
+        >
+          Weiter
+          <ArrowRight className="w-4 h-4" />
+        </Button>
       </div>
     </div>
   );
