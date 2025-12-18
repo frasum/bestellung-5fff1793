@@ -73,7 +73,7 @@ export function CompletionStep({
   };
 
   const handleGoToPresentation = () => {
-    navigate('/');
+    navigate('/presentation');
   };
 
   return (
