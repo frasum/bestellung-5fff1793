@@ -81,7 +81,7 @@ export const PresentationNav = () => {
                 <Download className="h-4 w-4 mr-2" />
                 PDF
               </Button>
-              <Button size="sm" onClick={() => navigate('/auth')}>
+              <Button size="sm" onClick={() => navigate('/onboarding/questions')}>
                 Demo starten
               </Button>
             </div>
@@ -124,7 +124,7 @@ export const PresentationNav = () => {
                   <Download className="h-4 w-4 mr-2" />
                   PDF herunterladen
                 </Button>
-                <Button onClick={() => navigate('/auth')}>
+                <Button onClick={() => navigate('/onboarding/questions')}>
                   Demo starten
                 </Button>
               </div>

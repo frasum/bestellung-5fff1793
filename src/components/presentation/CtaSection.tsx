@@ -11,7 +11,7 @@ export const CtaSection = () => {
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
 
   useEffect(() => {
-    QRCode.toDataURL('https://bestellung.pro/auth', {
+    QRCode.toDataURL('https://bestellung.pro/onboarding/questions', {
       width: 200,
       margin: 2,
       color: { dark: '#1e293b', light: '#ffffff' },
@@ -57,7 +57,7 @@ export const CtaSection = () => {
                 Scannen oder besuchen Sie:
               </p>
               <p className="text-2xl font-bold text-primary-foreground mb-6">
-                bestellung.pro/auth
+                bestellung.pro/demo
               </p>
 
               <ul className="space-y-3">
@@ -82,7 +82,7 @@ export const CtaSection = () => {
               size="lg"
               variant="secondary"
               className="text-lg px-8 py-6"
-              onClick={() => navigate('/auth')}
+              onClick={() => navigate('/onboarding/questions')}
             >
               <Rocket className="mr-2 h-5 w-5" />
               Demo starten
