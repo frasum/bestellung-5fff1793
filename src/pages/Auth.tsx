@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Mail, Lock, User, Building2, ArrowRight, Loader2, Play, Users, FlaskConical, Mic } from 'lucide-react';
+import { Mail, Lock, User, Building2, ArrowRight, Loader2, Play, Users, FlaskConical, Mic, ClipboardList } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -65,6 +65,7 @@ const Auth = () => {
   const [showDemoDialog, setShowDemoDialog] = useState(false);
   const [showEmptyDemoDialog, setShowEmptyDemoDialog] = useState(false);
   const [showVoiceOnboardingDialog, setShowVoiceOnboardingDialog] = useState(false);
+  const [showQuestionOnboardingDialog, setShowQuestionOnboardingDialog] = useState(false);
   const [isDemoLoading, setIsDemoLoading] = useState(false);
   const [isEmptyDemoLoading, setIsEmptyDemoLoading] = useState(false);
   const [isVoiceOnboardingLoading, setIsVoiceOnboardingLoading] = useState(false);
