@@ -103,9 +103,6 @@ export const EmailPreviewDialog = ({
     article_list_format: '- {article_name}{sku_suffix}: {quantity} {unit}',
   };
 
-  // Early return AFTER all hooks
-  if (!currentEmail) return null;
-
   const goNext = () => {
     setCurrentIndex((i) => Math.min(i + 1, emailPreviews.length - 1));
     setIsEditingNotes(false);
@@ -143,19 +140,23 @@ export const EmailPreviewDialog = ({
 
   // Filter articles not already in current email
   const availableArticlesToAdd = useMemo(() => {
+    if (!currentEmail) return allAvailableArticles;
     const currentArticleNames = new Set(currentEmail.items.map(i => i.article_name));
     return allAvailableArticles.filter(a => !currentArticleNames.has(a.article_name));
-  }, [allAvailableArticles, currentEmail.items]);
+  }, [allAvailableArticles, currentEmail]);
 
   // Filtered by search
   const filteredArticlesToAdd = useMemo(() => {
     if (!articleSearchQuery.trim()) return availableArticlesToAdd;
     const query = articleSearchQuery.toLowerCase();
-    return availableArticlesToAdd.filter(a => 
+    return availableArticlesToAdd.filter(a =>
       a.article_name.toLowerCase().includes(query) ||
       (a.sku && a.sku.toLowerCase().includes(query))
     );
   }, [availableArticlesToAdd, articleSearchQuery]);
+
+  // Early return AFTER all hooks
+  if (!currentEmail) return null;
 
   // Update item quantity
   const updateItemQuantity = (itemIndex: number, newQuantity: number) => {
