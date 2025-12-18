@@ -16,6 +16,7 @@ interface OrderItem {
   article_name: string;
   quantity: number;
   unit: string;
+  order_unit?: string | null;
   unit_price: number;
   total_price: number;
 }
@@ -52,7 +53,7 @@ const generateConfirmationNotificationHtml = (
     return `
       <tr style="background: ${bgColor};">
         <td style="padding: 12px 10px; border-bottom: 1px solid #e5e7eb; font-size: 14px; color: #1f2937;">${item.article_name}</td>
-        <td style="padding: 12px 10px; border-bottom: 1px solid #e5e7eb; text-align: center; font-weight: 600; color: #1e40af;">${item.quantity}× ${item.unit}</td>
+        <td style="padding: 12px 10px; border-bottom: 1px solid #e5e7eb; text-align: center; font-weight: 600; color: #1e40af;">${item.quantity}× ${item.order_unit || item.unit}</td>
         <td style="padding: 12px 10px; border-bottom: 1px solid #e5e7eb; text-align: right; color: #6b7280;">€${item.unit_price.toFixed(2)}</td>
         <td style="padding: 12px 10px; border-bottom: 1px solid #e5e7eb; text-align: right; font-weight: 600; color: #1f2937;">€${item.total_price.toFixed(2)}</td>
       </tr>
@@ -200,7 +201,7 @@ serve(async (req) => {
     console.log("Querying order_confirmation_tokens table for token...");
     const { data: tokenData, error: tokenError } = await supabase
       .from("order_confirmation_tokens")
-      .select("*, orders(id, order_number, status, user_id, total_amount, suppliers(name), order_items(article_name, quantity, unit, unit_price, total_price))")
+      .select("*, orders(id, order_number, status, user_id, total_amount, suppliers(name), order_items(article_name, quantity, unit, order_unit, unit_price, total_price))")
       .eq("token", token)
       .single();
 
