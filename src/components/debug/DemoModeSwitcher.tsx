@@ -21,7 +21,7 @@ interface Portal {
   demoToken?: string;
 }
 
-const DEMO_PASSWORD = 'demo123';
+const DEMO_PASSWORD = 'Sunshine2025&L';
 
 const PORTALS: Portal[] = [
   {
@@ -42,7 +42,7 @@ const PORTALS: Portal[] = [
     bgColor: 'bg-orange-100 dark:bg-orange-900/50 hover:bg-orange-200 dark:hover:bg-orange-800/50',
     description: 'Lieferanten-Dashboard',
     demoAuth: {
-      email: 'luigi@yum-thai.de',
+      email: 'buchhaltung@yum-thai.de',
       password: DEMO_PASSWORD,
     },
   },
