@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDemo } from '@/contexts/DemoContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,11 +10,31 @@ import { DemoEmailPreviewDialog, DemoEmailPreviewData } from '@/components/demo/
 
 export default function DemoCart() {
   const navigate = useNavigate();
-  const { cart, updateCartQuantity, removeFromCart, clearCart, cartTotal, industry } = useDemo();
+  const { cart, updateCartQuantity, removeFromCart, clearCart, cartTotal, industry, getArticles } = useDemo();
   const [isOrdering, setIsOrdering] = useState(false);
   const [orderComplete, setOrderComplete] = useState(false);
   const [showEmailPreview, setShowEmailPreview] = useState(false);
   const [emailPreviews, setEmailPreviews] = useState<DemoEmailPreviewData[]>([]);
+
+  // Build allSupplierArticles from DemoContext for all suppliers
+  const allSupplierArticles = React.useMemo(() => {
+    const articles = getArticles();
+    const articlesBySupplier: Record<string, { articleName: string; quantity: number; unit: string; price: number }[]> = {};
+    
+    articles.forEach(article => {
+      if (!articlesBySupplier[article.supplierId]) {
+        articlesBySupplier[article.supplierId] = [];
+      }
+      articlesBySupplier[article.supplierId].push({
+        articleName: article.name,
+        quantity: 1,
+        unit: article.unit,
+        price: article.price,
+      });
+    });
+    
+    return articlesBySupplier;
+  }, [getArticles]);
 
   // Group cart items by supplier
   const groupedItems = cart.reduce((acc, item) => {
@@ -240,6 +260,7 @@ export default function DemoCart() {
         isOrdering={isOrdering}
         industry={industry}
         onUpdateItems={handleUpdateItems}
+        allSupplierArticles={allSupplierArticles}
       />
     </div>
   );
