@@ -83,6 +83,7 @@ interface B2BSupplierUser {
   account_id: string;
   role: string;
   email: string;
+  name: string | null;
   created_at: string | null;
   supplier_name?: string;
 }
@@ -128,6 +129,7 @@ const B2BSettingsTab = ({ account, onUpdate, selectedSupplierId, suppliers: dash
   const [loadingSupplierUsers, setLoadingSupplierUsers] = useState(false);
   const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
   const [inviteEmail, setInviteEmail] = useState('');
+  const [inviteName, setInviteName] = useState('');
   const [inviteSupplierId, setInviteSupplierId] = useState('');
   const [inviteRole, setInviteRole] = useState<string>('manager');
   const [inviting, setInviting] = useState(false);
@@ -303,6 +305,7 @@ const B2BSettingsTab = ({ account, onUpdate, selectedSupplierId, suppliers: dash
           account_id: account.id,
           role: inviteRole as 'owner' | 'manager' | 'viewer',
           email: inviteEmail,
+          name: inviteName || null,
         } as any);
 
       if (insertError) throw insertError;
@@ -310,6 +313,7 @@ const B2BSettingsTab = ({ account, onUpdate, selectedSupplierId, suppliers: dash
       toast.success(`Einladung an ${inviteEmail} gesendet. Der Benutzer muss seine E-Mail bestätigen.`);
       setInviteDialogOpen(false);
       setInviteEmail('');
+      setInviteName('');
       setInviteSupplierId('');
       setInviteRole('manager');
       loadSupplierUsers();
@@ -679,8 +683,10 @@ const B2BSettingsTab = ({ account, onUpdate, selectedSupplierId, suppliers: dash
                               <Mail className="h-4 w-4 text-primary" />
                             </div>
                             <div>
-                              <p className="font-medium text-sm">{user.email}</p>
+                              <p className="font-medium text-sm">{user.name || user.email}</p>
                               <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                {user.name && <span>{user.email}</span>}
+                                {user.name && <span>•</span>}
                                 <span>{user.supplier_name}</span>
                                 <span>•</span>
                                 <Badge variant="outline" className="text-xs capitalize">
@@ -982,6 +988,16 @@ const B2BSettingsTab = ({ account, onUpdate, selectedSupplierId, suppliers: dash
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="inviteName">Name</Label>
+              <Input
+                id="inviteName"
+                type="text"
+                value={inviteName}
+                onChange={(e) => setInviteName(e.target.value)}
+                placeholder="Luigi Rossi"
+              />
+            </div>
             <div className="space-y-2">
               <Label htmlFor="inviteEmail">E-Mail</Label>
               <Input
