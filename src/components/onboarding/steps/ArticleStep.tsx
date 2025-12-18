@@ -63,7 +63,7 @@ export function ArticleStep({
       name: name.trim(),
       unit,
       price: price ? parseFloat(price.replace(',', '.')) : undefined,
-      category: category || undefined,
+      category: category && category !== '__none__' ? category : undefined,
       supplierName: currentSupplier.name,
     });
 
@@ -202,7 +202,7 @@ export function ArticleStep({
                   <SelectValue placeholder="Kategorie wählen" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Keine Kategorie</SelectItem>
+                  <SelectItem value="__none__">Keine Kategorie</SelectItem>
                   {categories.map((c) => (
                     <SelectItem key={c} value={c}>
                       {c}
