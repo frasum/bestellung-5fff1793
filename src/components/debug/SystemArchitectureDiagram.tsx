@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Download, Loader2 } from 'lucide-react';
 import { jsPDF } from 'jspdf';
 import { useTranslation } from 'react-i18next';
+import html2canvas from 'html2canvas';
 
 const diagramDefinition = `
 flowchart TB
@@ -173,10 +174,19 @@ export const SystemArchitectureDiagram = () => {
   }, []);
 
   const exportToPDF = async () => {
-    if (!svgContent) return;
+    if (!containerRef.current) return;
 
     setIsExporting(true);
     try {
+      // Capture the diagram as an image using html2canvas
+      const canvas = await html2canvas(containerRef.current, {
+        backgroundColor: '#ffffff',
+        scale: 2, // Higher resolution
+        logging: false,
+      });
+
+      const imgData = canvas.toDataURL('image/png');
+
       // Create PDF in landscape for better fit
       const pdf = new jsPDF({
         orientation: 'landscape',
@@ -197,79 +207,23 @@ export const SystemArchitectureDiagram = () => {
       pdf.setTextColor(100, 116, 139);
       pdf.text(`Stand: ${new Date().toLocaleDateString('de-DE')}`, pageWidth - margin - 35, margin + 5);
 
-      // Add legend section
-      const legendY = margin + 15;
-      pdf.setFontSize(9);
-      const legendItems = [
-        { color: '#e0f2fe', label: 'Öffentlich' },
-        { color: '#fef3c7', label: 'Auth' },
-        { color: '#dcfce7', label: 'Hauptapp' },
-        { color: '#f3e8ff', label: 'Lieferanten' },
-        { color: '#ffe4e6', label: 'EasyOrder' },
-        { color: '#dbeafe', label: 'B2B Supplier' },
-        { color: '#fce7f3', label: 'B2B Kunden' },
-        { color: '#f1f5f9', label: 'Spezial' },
-      ];
+      // Calculate image dimensions to fit the page
+      const imgWidth = pageWidth - 2 * margin;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      
+      // Check if image fits on page, otherwise scale down
+      const maxHeight = pageHeight - margin - 30; // Leave space for title and footer
+      let finalWidth = imgWidth;
+      let finalHeight = imgHeight;
+      
+      if (imgHeight > maxHeight) {
+        finalHeight = maxHeight;
+        finalWidth = (canvas.width * finalHeight) / canvas.height;
+      }
 
-      let legendX = margin;
-      legendItems.forEach((item) => {
-        // Draw colored box
-        pdf.setFillColor(item.color);
-        pdf.rect(legendX, legendY, 4, 4, 'F');
-        // Draw label
-        pdf.setTextColor(30, 41, 59);
-        pdf.text(item.label, legendX + 6, legendY + 3);
-        legendX += 30;
-      });
-
-      // Add module overview as structured text
-      const contentY = legendY + 15;
-      pdf.setFontSize(11);
-      pdf.setTextColor(30, 41, 59);
-
-      const modules = [
-        { title: 'Oeffentliche Seiten', items: ['/ (Landing)', '/pricing', '/agb', '/impressum', '/datenschutz'] },
-        { title: 'Authentifizierung', items: ['/auth (Login/Signup)', '/supplier/auth', '/b2b/login'] },
-        { title: 'Bestellung.pro Hauptapp', items: ['/suppliers (Katalog)', '/orders (Bestellungen)', '/reports (Berichte)', '/settings', '/cart', '/checkout'] },
-        { title: 'Lieferanten-Portal', items: ['/supplier/portal'] },
-        { title: 'EasyOrder', items: ['/simple-order/:token', '/wines/:token'] },
-        { title: 'B2B Supplier', items: ['/b2b/portal', '/b2b/dashboard'] },
-        { title: 'B2B Kunden', items: ['/b2b/customer'] },
-      ];
-
-      let yPos = contentY;
-      const colWidth = (pageWidth - 2 * margin) / 3;
-      let col = 0;
-
-      modules.forEach((module, idx) => {
-        const xPos = margin + col * colWidth;
-        
-        if (yPos > pageHeight - 30) {
-          col++;
-          yPos = contentY;
-          if (col > 2) {
-            pdf.addPage();
-            col = 0;
-            yPos = margin + 10;
-          }
-        }
-
-        pdf.setFontSize(10);
-        pdf.setFont(undefined, 'bold');
-        pdf.text(module.title, xPos, yPos);
-        yPos += 5;
-
-        pdf.setFontSize(8);
-        pdf.setFont(undefined, 'normal');
-        pdf.setTextColor(71, 85, 105);
-        module.items.forEach(item => {
-          pdf.text(`• ${item}`, xPos + 2, yPos);
-          yPos += 4;
-        });
-        
-        pdf.setTextColor(30, 41, 59);
-        yPos += 4;
-      });
+      // Add the captured diagram image
+      const xOffset = (pageWidth - finalWidth) / 2; // Center horizontally
+      pdf.addImage(imgData, 'PNG', xOffset, margin + 15, finalWidth, finalHeight);
 
       // Add footer
       pdf.setFontSize(8);
