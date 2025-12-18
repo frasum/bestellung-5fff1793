@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -11,10 +11,17 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
-import * as pdfjsLib from 'pdfjs-dist';
 
-// Set worker path
-pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.worker.min.mjs`;
+// Dynamic import for pdfjs-dist to avoid top-level await issues
+let pdfjsLib: typeof import('pdfjs-dist') | null = null;
+
+const loadPdfJs = async () => {
+  if (!pdfjsLib) {
+    pdfjsLib = await import('pdfjs-dist');
+    pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.worker.min.mjs`;
+  }
+  return pdfjsLib;
+};
 
 interface ExtractedWine {
   name: string;
@@ -85,10 +92,13 @@ export function WineImportDialog({ open, onOpenChange, onImportComplete }: WineI
     setStep('upload');
 
     try {
+      // Dynamically load pdfjs-dist
+      const pdfjs = await loadPdfJs();
+      
       const arrayBuffer = await file.arrayBuffer();
       
       // Use pdfjs-dist to render pages
-      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+      const pdf = await pdfjs.getDocument({ data: arrayBuffer }).promise;
       const numPages = pdf.numPages;
       const renderedPages: string[] = [];
 
