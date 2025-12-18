@@ -92,6 +92,7 @@ const AppContent = () => {
           <Route path="/simple-order/:token" element={<SimpleOrder />} />
           <Route path="/photo-capture" element={<PhotoCapture />} />
           <Route path="/onboarding" element={<Onboarding />} />
+          <Route path="/onboarding/questions" element={<QuestionOnboarding />} />
           <Route path="/style-guide" element={<StyleGuide />} />
           <Route path="/system-architecture" element={<SystemArchitecture />} />
           <Route path="/pricing" element={<Pricing />} />

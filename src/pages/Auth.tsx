@@ -69,6 +69,7 @@ const Auth = () => {
   const [isDemoLoading, setIsDemoLoading] = useState(false);
   const [isEmptyDemoLoading, setIsEmptyDemoLoading] = useState(false);
   const [isVoiceOnboardingLoading, setIsVoiceOnboardingLoading] = useState(false);
+  const [isQuestionOnboardingLoading, setIsQuestionOnboardingLoading] = useState(false);
   const [isAcceptingInvitation, setIsAcceptingInvitation] = useState(false);
   const [advancedSettingsEnabled, setAdvancedSettingsEnabled] = useState(() => {
     return localStorage.getItem('advanced-settings-enabled') === 'true';
@@ -325,6 +326,47 @@ const Auth = () => {
     }
     
     setIsVoiceOnboardingLoading(false);
+  };
+
+  const handleStartQuestionOnboarding = async (data: DemoFormData) => {
+    setIsQuestionOnboardingLoading(true);
+    
+    try {
+      const { data: result, error } = await supabase.functions.invoke('create-demo-account', {
+        body: { email: data.email, emptyAccount: true }
+      });
+
+      if (error) {
+        toast.error(error.message || 'Fehler beim Erstellen des Demo-Accounts');
+        setIsQuestionOnboardingLoading(false);
+        return;
+      }
+
+      if (result?.error) {
+        toast.error(result.error);
+        setIsQuestionOnboardingLoading(false);
+        return;
+      }
+
+      if (result?.session) {
+        await supabase.auth.setSession({
+          access_token: result.session.access_token,
+          refresh_token: result.session.refresh_token,
+        });
+        
+        toast.success('Demo-Account erstellt! Starte Fragebogen-Onboarding...');
+        setShowQuestionOnboardingDialog(false);
+        navigate('/onboarding/questions');
+      } else if (result?.needsManualLogin) {
+        toast.success('Demo-Account erstellt! Bitte melden Sie sich an.');
+        setShowQuestionOnboardingDialog(false);
+      }
+    } catch (err) {
+      console.error('Question onboarding error:', err);
+      toast.error('Ein unerwarteter Fehler ist aufgetreten');
+    }
+    
+    setIsQuestionOnboardingLoading(false);
   };
 
   // Show loading state while accepting invitation for logged-in user
@@ -652,8 +694,17 @@ const Auth = () => {
                     <Mic className="w-4 h-4" />
                     Mit Sprach-Assistent starten
                   </Button>
+
+                  <Button 
+                    variant="outline" 
+                    className="w-full gap-2"
+                    onClick={() => setShowQuestionOnboardingDialog(true)}
+                  >
+                    <ClipboardList className="w-4 h-4" />
+                    Mit Fragebogen starten
+                  </Button>
                   <p className="text-xs text-muted-foreground text-center">
-                    Richten Sie Ihren Katalog per Sprache ein
+                    Richten Sie Ihren Katalog Schritt für Schritt ein
                   </p>
                 </>
               )}
@@ -865,6 +916,75 @@ const Auth = () => {
                   <>
                     <FlaskConical className="w-4 h-4 mr-2" />
                     Leere Demo starten
+                  </>
+                )}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Question Onboarding Dialog */}
+      <Dialog open={showQuestionOnboardingDialog} onOpenChange={setShowQuestionOnboardingDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <ClipboardList className="w-5 h-5 text-primary" />
+              Fragebogen-Onboarding starten
+            </DialogTitle>
+            <DialogDescription>
+              Richten Sie Ihren Katalog Schritt für Schritt ein. 
+              Wählen Sie Ihre Branche und wir laden passende Vorlagen.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <form onSubmit={demoForm.handleSubmit(handleStartQuestionOnboarding)} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="question-demo-email">E-Mail-Adresse</Label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  id="question-demo-email"
+                  type="email"
+                  placeholder="ihre@email.de"
+                  className="pl-10"
+                  {...demoForm.register('email')}
+                />
+              </div>
+              {demoForm.formState.errors.email && (
+                <p className="text-sm text-destructive">{demoForm.formState.errors.email.message}</p>
+              )}
+            </div>
+
+            <div className="bg-primary/5 border border-primary/20 rounded-lg p-3 text-sm">
+              <p className="font-medium mb-1 flex items-center gap-2">
+                <ClipboardList className="w-4 h-4 text-primary" />
+                So funktioniert's
+              </p>
+              <ul className="text-muted-foreground space-y-1 text-xs">
+                <li>• Wählen Sie Ihre Branche (Gastronomie, Handwerk, etc.)</li>
+                <li>• Passende Kategorien und Einheiten werden geladen</li>
+                <li>• Fügen Sie Lieferanten und Artikel hinzu</li>
+                <li>• Fertig – Ihr Katalog ist einsatzbereit</li>
+              </ul>
+            </div>
+
+            <div className="flex gap-3">
+              <Button 
+                type="button" 
+                variant="outline" 
+                className="flex-1"
+                onClick={() => setShowQuestionOnboardingDialog(false)}
+              >
+                Abbrechen
+              </Button>
+              <Button type="submit" className="flex-1" disabled={isQuestionOnboardingLoading}>
+                {isQuestionOnboardingLoading ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <>
+                    <ClipboardList className="w-4 h-4 mr-2" />
+                    Jetzt starten
                   </>
                 )}
               </Button>
