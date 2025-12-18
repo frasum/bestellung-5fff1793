@@ -159,6 +159,8 @@ export function DemoModeSwitcher() {
         setIsLoggingIn(false);
       }
     } else {
+      // For demo portals without auth (like onboarding), sign out first for clean demo
+      await supabase.auth.signOut();
       navigate(portal.path);
     }
   };
