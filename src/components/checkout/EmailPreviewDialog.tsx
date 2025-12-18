@@ -3,7 +3,8 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Mail, Send, Loader2, ChevronLeft, ChevronRight, Pencil, Check, ExternalLink } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Mail, Send, Loader2, ChevronLeft, ChevronRight, Pencil, Check, ExternalLink, CheckCircle2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -197,6 +198,12 @@ ${signatureText}`;
                 ({currentIndex + 1}/{emailPreviews.length} | {confirmedEmails.size} geprüft)
               </span>
             )}
+            {confirmedEmails.has(currentIndex) && (
+              <Badge variant="outline" className="bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300 border-green-300 dark:border-green-700">
+                <CheckCircle2 className="w-3 h-3 mr-1" />
+                Bestätigt
+              </Badge>
+            )}
           </DialogTitle>
         </DialogHeader>
 
@@ -222,7 +229,11 @@ ${signatureText}`;
 
 
             {/* Email Body Preview */}
-            <div className="border border-border rounded-lg overflow-hidden">
+            <div className={`border-2 rounded-lg overflow-hidden transition-all ${
+              confirmedEmails.has(currentIndex)
+                ? 'border-green-500 bg-green-50/30 dark:bg-green-950/20'
+                : 'border-border'
+            }`}>
               {/* Header */}
               <div className="bg-primary px-6 py-4">
                 <h2 className="text-primary-foreground text-xl font-semibold">{generateEmailSubject(currentEmail)}</h2>
