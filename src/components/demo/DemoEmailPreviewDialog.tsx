@@ -367,11 +367,18 @@ export function DemoEmailPreviewDialog({
                   </div>
 
                   {/* Confirmation Checkbox */}
-                  <div className="flex items-center space-x-2 pt-2">
+                  <div 
+                    className="flex items-center space-x-2 pt-2 cursor-pointer"
+                    onClick={() => onToggleConfirm(preview.supplierId)}
+                  >
                     <Checkbox
                       id={`confirm-${preview.supplierId}`}
                       checked={preview.confirmed}
-                      onCheckedChange={() => onToggleConfirm(preview.supplierId)}
+                      onCheckedChange={(checked) => {
+                        if (typeof checked === 'boolean') {
+                          onToggleConfirm(preview.supplierId);
+                        }
+                      }}
                     />
                     <label
                       htmlFor={`confirm-${preview.supplierId}`}
