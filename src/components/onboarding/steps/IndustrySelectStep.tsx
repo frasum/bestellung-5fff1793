@@ -71,9 +71,9 @@ export function IndustrySelectStep({
             <Mic className="w-5 h-5" />
           </div>
           <div className="text-left">
-            <span className="font-medium">Per Sprache auswählen</span>
+            <span className="font-medium">Gemeinsam per Sprache einrichten</span>
             <span className="text-sm text-muted-foreground block">
-              🎤 Sagen Sie einfach Ihre Branche
+              🎤 Sag mir einfach, was du brauchst
             </span>
           </div>
         </button>
