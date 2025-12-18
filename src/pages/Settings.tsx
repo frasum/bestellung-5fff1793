@@ -2,8 +2,9 @@ import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Building2, User, FlaskConical, MessageSquare } from 'lucide-react';
+import { Building2, User, FlaskConical, MessageSquare, Store } from 'lucide-react';
 import { useUserRole } from '@/hooks/useTeam';
+import { useIsSuperAdmin } from '@/hooks/useIsSuperAdmin';
 import { DemoAccountsTab } from '@/components/settings/DemoAccountsTab';
 import { CommunicationTab } from '@/components/settings/CommunicationTab';
 import { ProfileTab } from '@/components/settings/ProfileTab';
@@ -11,12 +12,14 @@ import { OrganizationTab } from '@/components/settings/OrganizationTab';
 import { NotificationsTab } from '@/components/settings/NotificationsTab';
 import { EmailTemplateTab } from '@/components/settings/EmailTemplateTab';
 import { SupplierPortalTab } from '@/components/settings/SupplierPortalTab';
+import { B2BPortalOverviewTab } from '@/components/settings/B2BPortalOverviewTab';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 
 const Settings = () => {
   const { t } = useTranslation();
   const { data: userRole } = useUserRole();
+  const { data: isSuperAdmin } = useIsSuperAdmin();
   const isAdmin = userRole === 'admin';
 
   const [activeTab, setActiveTab] = useState('profile');
@@ -87,6 +90,12 @@ const Settings = () => {
                     <span className="sm:hidden">{t('settings.demoAccountsShort')}</span>
                   </TabsTrigger>
                 )}
+                {isSuperAdmin && (
+                  <TabsTrigger value="b2b-portal" className="gap-1.5 text-xs sm:text-sm whitespace-nowrap">
+                    <Store className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                    <span>B2B Portal</span>
+                  </TabsTrigger>
+                )}
               </TabsList>
             </div>
           </div>
@@ -116,6 +125,12 @@ const Settings = () => {
           {isAdmin && advancedMode && (
             <TabsContent value="demo-accounts" className="animate-in fade-in-50 slide-in-from-right-2 duration-200">
               <DemoAccountsTab />
+            </TabsContent>
+          )}
+
+          {isSuperAdmin && (
+            <TabsContent value="b2b-portal" className="animate-in fade-in-50 slide-in-from-right-2 duration-200">
+              <B2BPortalOverviewTab />
             </TabsContent>
           )}
         </Tabs>
