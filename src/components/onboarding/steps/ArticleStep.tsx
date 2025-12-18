@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -49,6 +49,21 @@ export function ArticleStep({
     (s) => s.name.toLowerCase() === currentSupplier.name.toLowerCase()
   );
   const exampleArticles = exampleSupplier?.articles || [];
+
+  // Auto-add all example articles in demo mode
+  useEffect(() => {
+    if (exampleArticles.length > 0 && articlesForSupplier.length === 0) {
+      exampleArticles.forEach((article) => {
+        onAddArticle({
+          name: article.name,
+          unit: article.unit,
+          price: article.price,
+          category: article.category,
+          supplierName: currentSupplier.name,
+        });
+      });
+    }
+  }, [currentSupplier?.name]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
