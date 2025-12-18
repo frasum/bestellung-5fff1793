@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useDemo } from '@/contexts/DemoContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -6,13 +6,22 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { Plus, Minus, Package, Search, ShoppingCart } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
 export default function DemoSuppliers() {
   const navigate = useNavigate();
-  const { getSuppliers, getArticles, addToCart, cart, industry, cartItemCount } = useDemo();
+  const [searchParams] = useSearchParams();
+  const { getSuppliers, getArticles, addToCart, cart, industry, cartItemCount, setIndustryId } = useDemo();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedSupplier, setSelectedSupplier] = useState<string | null>(null);
+
+  // Read industry from URL parameter and set it in context
+  useEffect(() => {
+    const industryParam = searchParams.get('industry');
+    if (industryParam) {
+      setIndustryId(industryParam);
+    }
+  }, [searchParams, setIndustryId]);
 
   const suppliers = getSuppliers();
   const articles = getArticles();
