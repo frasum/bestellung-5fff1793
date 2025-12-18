@@ -228,13 +228,13 @@ export const SystemArchitectureDiagram = () => {
       pdf.setTextColor(30, 41, 59);
 
       const modules = [
-        { title: '🌐 Öffentliche Seiten', items: ['/ (Landing)', '/pricing', '/agb', '/impressum', '/datenschutz'] },
-        { title: '🔐 Authentifizierung', items: ['/auth (Login/Signup)', '/supplier/auth', '/b2b/login'] },
-        { title: '📦 Bestellung.pro Hauptapp', items: ['/suppliers (Katalog)', '/orders (Bestellungen)', '/reports (Berichte)', '/settings', '/cart', '/checkout'] },
-        { title: '📋 Lieferanten-Portal', items: ['/supplier/portal'] },
-        { title: '📱 EasyOrder', items: ['/simple-order/:token', '/wines/:token'] },
-        { title: '🏢 B2B Supplier', items: ['/b2b/portal', '/b2b/dashboard'] },
-        { title: '🛒 B2B Kunden', items: ['/b2b/customer'] },
+        { title: 'Oeffentliche Seiten', items: ['/ (Landing)', '/pricing', '/agb', '/impressum', '/datenschutz'] },
+        { title: 'Authentifizierung', items: ['/auth (Login/Signup)', '/supplier/auth', '/b2b/login'] },
+        { title: 'Bestellung.pro Hauptapp', items: ['/suppliers (Katalog)', '/orders (Bestellungen)', '/reports (Berichte)', '/settings', '/cart', '/checkout'] },
+        { title: 'Lieferanten-Portal', items: ['/supplier/portal'] },
+        { title: 'EasyOrder', items: ['/simple-order/:token', '/wines/:token'] },
+        { title: 'B2B Supplier', items: ['/b2b/portal', '/b2b/dashboard'] },
+        { title: 'B2B Kunden', items: ['/b2b/customer'] },
       ];
 
       let yPos = contentY;
