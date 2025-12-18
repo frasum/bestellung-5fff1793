@@ -59,6 +59,8 @@ export const EmailPreviewDialog = ({
   const [isEditingNotes, setIsEditingNotes] = useState(false);
   const [isEditingAddress, setIsEditingAddress] = useState(false);
   const [confirmedEmails, setConfirmedEmails] = useState<Set<number>>(new Set());
+  const [showAddArticleSheet, setShowAddArticleSheet] = useState(false);
+  const [articleSearchQuery, setArticleSearchQuery] = useState('');
   const { data: emailTemplate } = useEmailTemplate();
   const defaultTemplate = getDefaultTemplate();
   const currentEmail = emailPreviews[currentIndex];
@@ -70,6 +72,8 @@ export const EmailPreviewDialog = ({
       setCurrentIndex(0);
       setIsEditingNotes(false);
       setIsEditingAddress(false);
+      setShowAddArticleSheet(false);
+      setArticleSearchQuery('');
     }
   }, [open]);
 
@@ -89,8 +93,6 @@ export const EmailPreviewDialog = ({
     });
   };
 
-  if (!currentEmail) return null;
-
   // Get template values (use saved or defaults)
   const template = {
     subject_template: emailTemplate?.subject_template || defaultTemplate.subject_template || '',
@@ -100,6 +102,9 @@ export const EmailPreviewDialog = ({
     signature: emailTemplate?.signature || defaultTemplate.signature || '',
     article_list_format: '- {article_name}{sku_suffix}: {quantity} {unit}',
   };
+
+  // Early return AFTER all hooks
+  if (!currentEmail) return null;
 
   const goNext = () => {
     setCurrentIndex((i) => Math.min(i + 1, emailPreviews.length - 1));
@@ -122,10 +127,6 @@ export const EmailPreviewDialog = ({
     const newPreviews = emailPreviews.map(preview => ({ ...preview, ...updates }));
     onEmailPreviewsChange(newPreviews);
   };
-
-  // State for adding articles
-  const [showAddArticleSheet, setShowAddArticleSheet] = useState(false);
-  const [articleSearchQuery, setArticleSearchQuery] = useState('');
 
   // Get all available articles from all email previews for adding
   const allAvailableArticles = useMemo(() => {
