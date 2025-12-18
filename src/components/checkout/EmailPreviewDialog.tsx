@@ -4,8 +4,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
-import { Mail, Send, Loader2, ChevronLeft, ChevronRight, Pencil, Check, ExternalLink, CheckCircle2 } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { Input } from '@/components/ui/input';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Mail, Send, Loader2, ChevronLeft, ChevronRight, Pencil, Check, ExternalLink, CheckCircle2, Plus, Minus, Trash2, PlusCircle, Search, Package } from 'lucide-react';
+import { useState, useEffect, useMemo } from 'react';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { toast } from 'sonner';
@@ -118,6 +121,74 @@ export const EmailPreviewDialog = ({
   const updateAllEmails = (updates: Partial<EmailPreviewData>) => {
     const newPreviews = emailPreviews.map(preview => ({ ...preview, ...updates }));
     onEmailPreviewsChange(newPreviews);
+  };
+
+  // State for adding articles
+  const [showAddArticleSheet, setShowAddArticleSheet] = useState(false);
+  const [articleSearchQuery, setArticleSearchQuery] = useState('');
+
+  // Get all available articles from all email previews for adding
+  const allAvailableArticles = useMemo(() => {
+    const articlesMap = new Map<string, OrderItem>();
+    emailPreviews.forEach(preview => {
+      preview.items.forEach(item => {
+        if (!articlesMap.has(item.article_name)) {
+          articlesMap.set(item.article_name, item);
+        }
+      });
+    });
+    return Array.from(articlesMap.values());
+  }, [emailPreviews]);
+
+  // Filter articles not already in current email
+  const availableArticlesToAdd = useMemo(() => {
+    const currentArticleNames = new Set(currentEmail.items.map(i => i.article_name));
+    return allAvailableArticles.filter(a => !currentArticleNames.has(a.article_name));
+  }, [allAvailableArticles, currentEmail.items]);
+
+  // Filtered by search
+  const filteredArticlesToAdd = useMemo(() => {
+    if (!articleSearchQuery.trim()) return availableArticlesToAdd;
+    const query = articleSearchQuery.toLowerCase();
+    return availableArticlesToAdd.filter(a => 
+      a.article_name.toLowerCase().includes(query) ||
+      (a.sku && a.sku.toLowerCase().includes(query))
+    );
+  }, [availableArticlesToAdd, articleSearchQuery]);
+
+  // Update item quantity
+  const updateItemQuantity = (itemIndex: number, newQuantity: number) => {
+    const newItems = [...currentEmail.items];
+    if (newQuantity <= 0) {
+      // Remove item if quantity is 0 or less
+      newItems.splice(itemIndex, 1);
+    } else {
+      newItems[itemIndex] = { 
+        ...newItems[itemIndex], 
+        quantity: newQuantity,
+        total_price: newItems[itemIndex].unit_price * newQuantity
+      };
+    }
+    // Recalculate total
+    const newTotal = newItems.reduce((sum, item) => sum + item.total_price, 0);
+    updateCurrentEmail({ items: newItems, totalAmount: newTotal });
+  };
+
+  // Remove item
+  const removeItem = (itemIndex: number) => {
+    const newItems = currentEmail.items.filter((_, i) => i !== itemIndex);
+    const newTotal = newItems.reduce((sum, item) => sum + item.total_price, 0);
+    updateCurrentEmail({ items: newItems, totalAmount: newTotal });
+  };
+
+  // Add article to current email
+  const addArticleToEmail = (article: OrderItem) => {
+    const newItem = { ...article, quantity: 1, total_price: article.unit_price };
+    const newItems = [...currentEmail.items, newItem];
+    const newTotal = newItems.reduce((sum, item) => sum + item.total_price, 0);
+    updateCurrentEmail({ items: newItems, totalAmount: newTotal });
+    setShowAddArticleSheet(false);
+    setArticleSearchQuery('');
   };
 
   const generateEmailSubject = (email: EmailPreviewData) => {
@@ -352,43 +423,134 @@ ${signatureText}`;
                           <p className="font-medium text-sm truncate">{item.article_name}</p>
                           {item.sku && <p className="text-xs text-muted-foreground">SKU: {item.sku}</p>}
                         </div>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="h-7 w-7 text-destructive hover:text-destructive shrink-0"
+                          onClick={() => removeItem(idx)}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
                       </div>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {item.quantity} {item.unit}
+                      <div className="flex items-center gap-2 mt-2">
+                        <Button
+                          size="icon"
+                          variant="outline"
+                          className="h-8 w-8"
+                          onClick={() => updateItemQuantity(idx, item.quantity - 1)}
+                        >
+                          <Minus className="w-3 h-3" />
+                        </Button>
+                        <Input
+                          type="number"
+                          value={item.quantity}
+                          onChange={(e) => updateItemQuantity(idx, parseInt(e.target.value) || 0)}
+                          className="w-16 h-8 text-center"
+                          min={1}
+                        />
+                        <Button
+                          size="icon"
+                          variant="outline"
+                          className="h-8 w-8"
+                          onClick={() => updateItemQuantity(idx, item.quantity + 1)}
+                        >
+                          <Plus className="w-3 h-3" />
+                        </Button>
+                        <span className="text-xs text-muted-foreground">{item.unit}</span>
                         {item.packaging_unit && item.packaging_unit > 1 && (
-                          <span className="ml-1 text-primary">({item.packaging_unit}er)</span>
+                          <span className="text-xs text-primary">({item.packaging_unit}er)</span>
                         )}
-                      </p>
+                      </div>
                     </div>
                   ))}
+                  
+                  {/* Add Article Button - Mobile */}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full"
+                    onClick={() => setShowAddArticleSheet(true)}
+                  >
+                    <PlusCircle className="w-4 h-4 mr-2" />
+                    Artikel hinzufügen
+                  </Button>
                 </div>
 
                 {/* Items - Desktop Table */}
-                <div className="hidden sm:block border border-border rounded-lg overflow-hidden">
-                  <table className="w-full text-sm">
-                    <thead className="bg-muted/50">
-                      <tr>
-                        <th className="text-left p-3 font-semibold">Artikel</th>
-                        <th className="text-center p-3 font-semibold">Menge</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-border">
-                      {currentEmail.items.map((item, idx) => (
-                        <tr key={idx}>
-                          <td className="p-3">
-                            <div>{item.article_name}</div>
-                            {item.sku && <div className="text-xs text-muted-foreground">SKU: {item.sku}</div>}
-                          </td>
-                          <td className="p-3 text-center">
-                            {item.quantity} {item.unit}
-                            {item.packaging_unit && item.packaging_unit > 1 && (
-                              <span className="ml-1 text-primary font-medium">({item.packaging_unit}er)</span>
-                            )}
-                          </td>
+                <div className="hidden sm:block">
+                  <div className="border border-border rounded-lg overflow-hidden">
+                    <table className="w-full text-sm">
+                      <thead className="bg-muted/50">
+                        <tr>
+                          <th className="text-left p-3 font-semibold">Artikel</th>
+                          <th className="text-center p-3 font-semibold">Menge</th>
+                          <th className="text-center p-3 font-semibold w-16"></th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody className="divide-y divide-border">
+                        {currentEmail.items.map((item, idx) => (
+                          <tr key={idx}>
+                            <td className="p-3">
+                              <div>{item.article_name}</div>
+                              {item.sku && <div className="text-xs text-muted-foreground">SKU: {item.sku}</div>}
+                            </td>
+                            <td className="p-3">
+                              <div className="flex items-center justify-center gap-1">
+                                <Button
+                                  size="icon"
+                                  variant="outline"
+                                  className="h-8 w-8"
+                                  onClick={() => updateItemQuantity(idx, item.quantity - 1)}
+                                >
+                                  <Minus className="w-3 h-3" />
+                                </Button>
+                                <Input
+                                  type="number"
+                                  value={item.quantity}
+                                  onChange={(e) => updateItemQuantity(idx, parseInt(e.target.value) || 0)}
+                                  className="w-16 h-8 text-center"
+                                  min={1}
+                                />
+                                <Button
+                                  size="icon"
+                                  variant="outline"
+                                  className="h-8 w-8"
+                                  onClick={() => updateItemQuantity(idx, item.quantity + 1)}
+                                >
+                                  <Plus className="w-3 h-3" />
+                                </Button>
+                                <span className="text-muted-foreground ml-1">{item.unit}</span>
+                                {item.packaging_unit && item.packaging_unit > 1 && (
+                                  <span className="ml-1 text-primary font-medium">({item.packaging_unit}er)</span>
+                                )}
+                              </div>
+                            </td>
+                            <td className="p-3 text-center">
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                className="h-8 w-8 text-destructive hover:text-destructive"
+                                onClick={() => removeItem(idx)}
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  
+                  {/* Add Article Button - Desktop */}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full mt-2"
+                    onClick={() => setShowAddArticleSheet(true)}
+                  >
+                    <PlusCircle className="w-4 h-4 mr-2" />
+                    Artikel hinzufügen
+                  </Button>
                 </div>
 
                 {/* Closing and Signature */}
@@ -482,6 +644,68 @@ ${signatureText}`;
           </Button>
         </DialogFooter>
       </DialogContent>
+
+      {/* Add Article Sheet */}
+      <Sheet open={showAddArticleSheet} onOpenChange={setShowAddArticleSheet}>
+        <SheetContent side="right" className="w-full sm:max-w-md">
+          <SheetHeader>
+            <SheetTitle className="flex items-center gap-2">
+              <Package className="w-5 h-5" />
+              Artikel hinzufügen
+            </SheetTitle>
+          </SheetHeader>
+
+          <div className="mt-4 space-y-4">
+            {/* Search Input */}
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                placeholder="Artikel suchen..."
+                value={articleSearchQuery}
+                onChange={(e) => setArticleSearchQuery(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+
+            {/* Available Articles */}
+            <ScrollArea className="h-[calc(100vh-200px)]">
+              {filteredArticlesToAdd.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  {availableArticlesToAdd.length === 0 
+                    ? 'Alle Artikel sind bereits in der Bestellung'
+                    : 'Keine Artikel gefunden'
+                  }
+                </div>
+              ) : (
+                <div className="space-y-2 pr-4">
+                  {filteredArticlesToAdd.map((article, idx) => (
+                    <div
+                      key={idx}
+                      className="p-3 border border-border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors"
+                      onClick={() => addArticleToEmail(article)}
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="min-w-0 flex-1">
+                          <p className="font-medium text-sm truncate">{article.article_name}</p>
+                          {article.sku && (
+                            <p className="text-xs text-muted-foreground">SKU: {article.sku}</p>
+                          )}
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {article.unit_price.toFixed(2)} € / {article.unit}
+                          </p>
+                        </div>
+                        <Button size="sm" variant="ghost">
+                          <Plus className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </ScrollArea>
+          </div>
+        </SheetContent>
+      </Sheet>
     </Dialog>
   );
 };
