@@ -68,8 +68,8 @@ export function CompletionStep({
   }, [createdSuppliers, createdArticles, importCategories, industry.categories]);
 
   const handleRestartDemo = () => {
-    navigate('/onboarding/questions');
-    window.location.reload();
+    // Force a clean restart of the demo wizard on the correct route
+    window.location.href = '/onboarding/questions';
   };
 
   const handleGoToPresentation = () => {
