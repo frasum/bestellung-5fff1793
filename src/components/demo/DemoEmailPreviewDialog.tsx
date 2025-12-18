@@ -93,14 +93,19 @@ export function DemoEmailPreviewDialog({
   // Use local state
   const currentPreviews = localPreviews.length > 0 ? localPreviews : emailPreviews;
 
-  // Handle local toggle confirmation
-  const handleLocalToggleConfirm = (supplierId: string) => {
-    setLocalPreviews(prev => {
-      const updated = prev.length > 0 ? [...prev] : [...emailPreviews];
-      return updated.map(p => 
-        p.supplierId === supplierId ? { ...p, confirmed: !p.confirmed } : p
-      );
+  // Handle local confirmation change (avoid double-toggle issues)
+  const handleLocalConfirmChange = (supplierId: string, confirmed: boolean) => {
+    const before = currentPreviews.find((p) => p.supplierId === supplierId)?.confirmed;
+
+    setLocalPreviews((prev) => {
+      const base = prev.length > 0 ? prev : emailPreviews;
+      return base.map((p) => (p.supplierId === supplierId ? { ...p, confirmed } : p));
     });
+
+    // Keep parent state in sync so "Send" uses the latest data
+    if (typeof before === "boolean" && before !== confirmed) {
+      onToggleConfirm(supplierId);
+    }
   };
 
   const allConfirmed = currentPreviews.every(preview => preview.confirmed);
@@ -371,21 +376,31 @@ export function DemoEmailPreviewDialog({
                     <Textarea
                       placeholder="Optional: Zusätzliche Hinweise für diese Bestellung..."
                       value={preview.notes}
-                      onChange={(e) => onUpdateNotes(preview.supplierId, e.target.value)}
+                      onChange={(e) => {
+                        const nextNotes = e.target.value;
+                        setLocalPreviews((prev) => {
+                          const base = prev.length > 0 ? prev : emailPreviews;
+                          return base.map((p) =>
+                            p.supplierId === preview.supplierId ? { ...p, notes: nextNotes } : p
+                          );
+                        });
+                        onUpdateNotes(preview.supplierId, nextNotes);
+                      }}
                       rows={2}
                       disabled={preview.confirmed}
                     />
                   </div>
 
                   {/* Confirmation Checkbox */}
-                  <div 
-                    className="flex items-center space-x-2 pt-2 cursor-pointer"
-                    onClick={() => handleLocalToggleConfirm(preview.supplierId)}
-                  >
+                  <div className="flex items-center space-x-2 pt-2">
                     <Checkbox
                       id={`confirm-${preview.supplierId}`}
                       checked={preview.confirmed}
-                      onCheckedChange={() => handleLocalToggleConfirm(preview.supplierId)}
+                      onCheckedChange={(checked) => {
+                        if (typeof checked === "boolean") {
+                          handleLocalConfirmChange(preview.supplierId, checked);
+                        }
+                      }}
                     />
                     <label
                       htmlFor={`confirm-${preview.supplierId}`}
