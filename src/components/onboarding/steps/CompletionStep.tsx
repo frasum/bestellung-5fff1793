@@ -77,7 +77,7 @@ export function CompletionStep({
   };
 
   const handleExploreSystem = () => {
-    window.location.href = '/demo/suppliers';
+    window.location.href = `/demo/suppliers?industry=${industry.id}`;
   };
 
   return (
