@@ -82,12 +82,13 @@ export function DemoEmailPreviewDialog({
   const [articleSearchQuery, setArticleSearchQuery] = useState('');
   const [localPreviews, setLocalPreviews] = useState<DemoEmailPreviewData[]>([]);
 
-  // Sync local state with props when dialog opens
+  // Sync local state with props ONLY when dialog opens (not on emailPreviews changes)
   useEffect(() => {
-    if (open && emailPreviews.length > 0) {
+    if (open) {
       setLocalPreviews(emailPreviews);
     }
-  }, [open, emailPreviews]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
 
   // Use local state
   const currentPreviews = localPreviews.length > 0 ? localPreviews : emailPreviews;
