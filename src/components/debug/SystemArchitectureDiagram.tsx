@@ -185,14 +185,27 @@ export const SystemArchitectureDiagram = () => {
         return;
       }
 
-      // Get SVG dimensions
-      const svgRect = svgElement.getBoundingClientRect();
+      // Get ACTUAL SVG dimensions from viewBox (not visible rect)
+      const viewBox = svgElement.getAttribute('viewBox');
+      let svgWidth: number;
+      let svgHeight: number;
+
+      if (viewBox) {
+        const parts = viewBox.split(' ').map(Number);
+        svgWidth = parts[2];
+        svgHeight = parts[3];
+      } else {
+        // Fallback to width/height attributes or getBoundingClientRect
+        svgWidth = parseFloat(svgElement.getAttribute('width') || '0') || svgElement.getBoundingClientRect().width;
+        svgHeight = parseFloat(svgElement.getAttribute('height') || '0') || svgElement.getBoundingClientRect().height;
+      }
+
       const scale = 2; // Higher resolution
       
-      // Create a canvas
+      // Create a canvas with FULL SVG dimensions
       const canvas = document.createElement('canvas');
-      canvas.width = svgRect.width * scale;
-      canvas.height = svgRect.height * scale;
+      canvas.width = svgWidth * scale;
+      canvas.height = svgHeight * scale;
       const ctx = canvas.getContext('2d');
       
       if (!ctx) {
@@ -214,7 +227,7 @@ export const SystemArchitectureDiagram = () => {
       // Load SVG as image
       const img = new Image();
       img.onload = () => {
-        ctx.drawImage(img, 0, 0);
+        ctx.drawImage(img, 0, 0, svgWidth, svgHeight);
 
         const imgData = canvas.toDataURL('image/png');
 
@@ -240,7 +253,7 @@ export const SystemArchitectureDiagram = () => {
 
         // Calculate image dimensions to fit the page
         const imgWidth = pageWidth - 2 * margin;
-        const imgHeight = (canvas.height / scale * imgWidth) / (canvas.width / scale);
+        const imgHeight = (svgHeight * imgWidth) / svgWidth;
         
         // Check if image fits on page, otherwise scale down
         const maxHeight = pageHeight - margin - 30;
@@ -249,7 +262,7 @@ export const SystemArchitectureDiagram = () => {
         
         if (imgHeight > maxHeight) {
           finalHeight = maxHeight;
-          finalWidth = (canvas.width / scale * finalHeight) / (canvas.height / scale);
+          finalWidth = (svgWidth * finalHeight) / svgHeight;
         }
 
         // Add the captured diagram image
