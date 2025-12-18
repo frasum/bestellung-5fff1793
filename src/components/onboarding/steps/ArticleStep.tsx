@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/select';
 import { IndustryTemplate } from '@/data/industryTemplates';
 import { CreatedSupplier, CreatedArticle } from '../hooks/useQuestionOnboarding';
-import { ArrowRight, ArrowLeft, Plus, Package, Scale, Euro, Tag } from 'lucide-react';
+import { ArrowRight, ArrowLeft, Plus, Package, Scale, Euro, Tag, Check } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
 interface ArticleStepProps {
@@ -124,15 +124,18 @@ export function ArticleStep({
                 <Button
                   key={article.name}
                   type="button"
-                  variant="outline"
+                  variant={alreadyAdded ? "secondary" : "outline"}
                   size="sm"
                   disabled={alreadyAdded}
                   className="gap-1"
                   onClick={() => handleQuickAdd(article)}
                 >
-                  <Plus className="w-3 h-3" />
+                  {alreadyAdded ? (
+                    <Check className="w-3 h-3 text-green-600" />
+                  ) : (
+                    <Plus className="w-3 h-3" />
+                  )}
                   {article.name} ({article.unit})
-                  {alreadyAdded && ' ✓'}
                 </Button>
               );
             })}
