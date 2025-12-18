@@ -1,9 +1,394 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import mermaid from 'mermaid';
 import { Button } from '@/components/ui/button';
-import { Download, Loader2 } from 'lucide-react';
+import { Download, Loader2, CheckCircle, Info } from 'lucide-react';
 import jsPDF from 'jspdf';
 import { useTranslation } from 'react-i18next';
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet';
+
+// Node details for interactive clicks
+const nodeDetails: Record<string, { title: string; description: string; items: string[]; icon?: string }> = {
+  // Frontend Layer
+  React: {
+    title: "React 18 + TypeScript",
+    description: "Modernes Frontend-Framework für reaktive Benutzeroberflächen",
+    items: [
+      "Functional Components mit Hooks",
+      "TypeScript für Type-Safety",
+      "Context API für globalen State",
+      "Lazy Loading für Performance"
+    ],
+    icon: "⚛️"
+  },
+  Vite: {
+    title: "Vite Build Tool",
+    description: "Blitzschnelles Build-Tool für moderne Webentwicklung",
+    items: [
+      "Hot Module Replacement (HMR)",
+      "Native ESM-Unterstützung",
+      "Optimierter Production Build",
+      "Plugin-Ökosystem"
+    ],
+    icon: "⚡"
+  },
+  TanStack: {
+    title: "TanStack Query",
+    description: "Leistungsstarkes Server-State-Management",
+    items: [
+      "Automatisches Caching",
+      "Background Refetching",
+      "Optimistic Updates",
+      "Infinite Queries für Pagination"
+    ],
+    icon: "🔄"
+  },
+  Tailwind: {
+    title: "Tailwind CSS",
+    description: "Utility-First CSS Framework für schnelles Styling",
+    items: [
+      "Design System Integration",
+      "Responsive Design",
+      "Dark Mode Support",
+      "Optimierte Bundle-Größe"
+    ],
+    icon: "🎨"
+  },
+  i18n: {
+    title: "i18next Internationalisierung",
+    description: "Vollständige Mehrsprachigkeit mit 6 Sprachen",
+    items: [
+      "Deutsch (DE)",
+      "Englisch (EN)",
+      "Französisch (FR)",
+      "Italienisch (IT)",
+      "Thai (TH)",
+      "Vietnamesisch (VI)"
+    ],
+    icon: "🌍"
+  },
+  Router: {
+    title: "React Router v6",
+    description: "Deklaratives Routing für React-Anwendungen",
+    items: [
+      "Nested Routes",
+      "Protected Routes",
+      "Dynamic Parameters",
+      "Programmatic Navigation"
+    ],
+    icon: "🧭"
+  },
+  // Authentication
+  AuthEmail: {
+    title: "Email/Password Auth",
+    description: "Klassische E-Mail-Authentifizierung",
+    items: [
+      "Sichere Passwort-Hashing",
+      "Email-Verifizierung",
+      "Passwort-Reset Flow",
+      "Session Management"
+    ],
+    icon: "📧"
+  },
+  AuthMagic: {
+    title: "Magic Links",
+    description: "Passwortlose Anmeldung per E-Mail-Link",
+    items: [
+      "Ein-Klick-Anmeldung",
+      "Zeitlich begrenzte Tokens",
+      "Sichere Zustellung",
+      "Für Lieferanten-Portal"
+    ],
+    icon: "✨"
+  },
+  AuthPin: {
+    title: "Employee PIN",
+    description: "Schnelle PIN-Authentifizierung für Mitarbeiter",
+    items: [
+      "4-6 stelliger PIN",
+      "Rate Limiting",
+      "Gehashte Speicherung",
+      "Für Simple Order"
+    ],
+    icon: "🔢"
+  },
+  // Database
+  RLS: {
+    title: "Row Level Security",
+    description: "Datenbankbasierte Zugriffskontrolle",
+    items: [
+      "Mandantentrennung",
+      "Feingranulare Policies",
+      "Automatische Filterung",
+      "Audit-fähig"
+    ],
+    icon: "🛡️"
+  },
+  Tables: {
+    title: "50+ Datenbanktabellen",
+    description: "Umfassendes Datenbankschema",
+    items: [
+      "Organizations & Profiles",
+      "Suppliers & Articles",
+      "Orders & Cart Drafts",
+      "B2B Portal Entities"
+    ],
+    icon: "📊"
+  },
+  Functions: {
+    title: "Database Functions",
+    description: "Serverseitige PostgreSQL-Funktionen",
+    items: [
+      "Trigger Functions",
+      "Computed Columns",
+      "RPC-Aufrufe",
+      "Datenvalidierung"
+    ],
+    icon: "⚙️"
+  },
+  // Storage
+  ArticleImages: {
+    title: "Article Images Bucket",
+    description: "Speicher für Artikelbilder",
+    items: [
+      "Automatische Komprimierung",
+      "WebP-Konvertierung",
+      "CDN-Delivery",
+      "RLS-geschützt"
+    ],
+    icon: "🖼️"
+  },
+  PortalLogos: {
+    title: "Portal Logos Bucket",
+    description: "Lieferanten-Portal Logos",
+    items: [
+      "SVG & PNG Support",
+      "Automatische Skalierung",
+      "Öffentlich zugänglich",
+      "Optimiert"
+    ],
+    icon: "🏢"
+  },
+  B2BLogos: {
+    title: "B2B Portal Logos",
+    description: "Logos für B2B-Kundenportale",
+    items: [
+      "Multi-Tenant Support",
+      "Branding-Anpassung",
+      "Sichere Speicherung",
+      "CDN-Distribution"
+    ],
+    icon: "🤝"
+  },
+  Realtime: {
+    title: "Realtime WebSocket",
+    description: "Echtzeit-Datensynchronisation",
+    items: [
+      "PostgreSQL Changes",
+      "Broadcast Messages",
+      "Presence Tracking",
+      "Benachrichtigungen"
+    ],
+    icon: "⚡"
+  },
+  // Edge Functions - Orders
+  SendOrder: {
+    title: "send-order-email",
+    description: "Versand von Bestellungen per E-Mail",
+    items: [
+      "HTML-E-Mail-Templates",
+      "Artikel-Auflistung",
+      "Bestätigungs-Links",
+      "Multi-Sprach-Support"
+    ],
+    icon: "📤"
+  },
+  ConfirmOrder: {
+    title: "confirm-order",
+    description: "Bestellbestätigung verarbeiten",
+    items: [
+      "Token-Validierung",
+      "Status-Update",
+      "Benachrichtigungen",
+      "Logging"
+    ],
+    icon: "✅"
+  },
+  SubmitSimple: {
+    title: "submit-simple-order",
+    description: "Simple Order Bestellungen einreichen",
+    items: [
+      "PIN-Verifizierung",
+      "Multi-Supplier Support",
+      "E-Mail-Versand",
+      "Rate Limiting"
+    ],
+    icon: "📝"
+  },
+  // Edge Functions - AI
+  AIImport: {
+    title: "ai-import-helper",
+    description: "KI-gestützte Datenimporte",
+    items: [
+      "CSV/Excel Parsing",
+      "Spalten-Mapping",
+      "Datenvalidierung",
+      "OpenAI Integration"
+    ],
+    icon: "🤖"
+  },
+  Transcribe: {
+    title: "transcribe-order",
+    description: "Sprachgesteuerte Bestellungen",
+    items: [
+      "Whisper Transkription",
+      "Artikel-Erkennung",
+      "Mengen-Parsing",
+      "Multi-Sprach"
+    ],
+    icon: "🎤"
+  },
+  Identify: {
+    title: "identify-article",
+    description: "Artikelerkennung per Foto",
+    items: [
+      "GPT-4 Vision",
+      "Produkterkennung",
+      "Preisschätzung",
+      "Batch-Processing"
+    ],
+    icon: "📷"
+  },
+  ResearchWine: {
+    title: "research-wine",
+    description: "Automatische Weinrecherche",
+    items: [
+      "Perplexity AI",
+      "Detaillierte Infos",
+      "Geschmacksprofil",
+      "Food Pairings"
+    ],
+    icon: "🍷"
+  },
+  // Edge Functions - B2B
+  B2BOffer: {
+    title: "send-b2b-offer",
+    description: "B2B-Angebote versenden",
+    items: [
+      "PDF-Generierung",
+      "Preiskalkulation",
+      "Kundenspezifisch",
+      "E-Mail-Versand"
+    ],
+    icon: "💼"
+  },
+  B2BOrder: {
+    title: "submit-b2b-order",
+    description: "B2B-Bestellungen verarbeiten",
+    items: [
+      "Kundenvalidierung",
+      "Bestandsprüfung",
+      "Benachrichtigungen",
+      "Order Tracking"
+    ],
+    icon: "📦"
+  },
+  B2BInvite: {
+    title: "send-b2b-customer-invitation",
+    description: "B2B-Kundeneinladungen",
+    items: [
+      "Token-Generierung",
+      "E-Mail-Einladung",
+      "Ablaufdatum",
+      "Registrierungs-Flow"
+    ],
+    icon: "✉️"
+  },
+  // Edge Functions - Auth
+  VerifyPin: {
+    title: "verify-employee-pin",
+    description: "Mitarbeiter-PIN verifizieren",
+    items: [
+      "Sichere Verifikation",
+      "Rate Limiting",
+      "Logging",
+      "Fehlerbehandlung"
+    ],
+    icon: "🔐"
+  },
+  VerifyToken: {
+    title: "verify-supplier-token",
+    description: "Lieferanten-Token prüfen",
+    items: [
+      "Token-Validierung",
+      "Ablaufprüfung",
+      "Session-Erstellung",
+      "Audit Trail"
+    ],
+    icon: "🎫"
+  },
+  HashPin: {
+    title: "hash-employee-pin",
+    description: "PIN sicher hashen",
+    items: [
+      "Bcrypt-Hashing",
+      "Salt-Generierung",
+      "Sichere Speicherung",
+      "Keine Klartext-PINs"
+    ],
+    icon: "🔒"
+  },
+  // External Services
+  Resend: {
+    title: "Resend E-Mail Service",
+    description: "Professioneller E-Mail-Versand",
+    items: [
+      "Transaktions-E-Mails",
+      "HTML-Templates",
+      "Zustellungsraten >99%",
+      "Bounce-Handling"
+    ],
+    icon: "📧"
+  },
+  OpenAI: {
+    title: "OpenAI GPT-4o",
+    description: "Fortschrittliche KI-Funktionen",
+    items: [
+      "Text-Generierung",
+      "Vision (Bilder)",
+      "Datenextraktion",
+      "Klassifizierung"
+    ],
+    icon: "🤖"
+  },
+  ElevenLabs: {
+    title: "ElevenLabs Voice AI",
+    description: "Sprachsynthese und -erkennung",
+    items: [
+      "Natürliche Stimmen",
+      "Multi-Sprach",
+      "Echtzeit-Streaming",
+      "Voice Cloning"
+    ],
+    icon: "🎤"
+  },
+  Perplexity: {
+    title: "Perplexity AI",
+    description: "KI-gestützte Recherche",
+    items: [
+      "Echtzeit-Suche",
+      "Quellenangaben",
+      "Strukturierte Daten",
+      "Weinrecherche"
+    ],
+    icon: "🔍"
+  }
+};
 
 const diagramDefinition = `
 flowchart TB
@@ -143,7 +528,14 @@ export function InfrastructureDiagram() {
   const { t } = useTranslation();
   const [isRendered, setIsRendered] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
+  const [selectedNode, setSelectedNode] = useState<string | null>(null);
   const diagramRef = useRef<HTMLDivElement>(null);
+
+  const handleNodeClick = useCallback((nodeId: string) => {
+    if (nodeDetails[nodeId]) {
+      setSelectedNode(nodeId);
+    }
+  }, []);
 
   useEffect(() => {
     const renderDiagram = async () => {
@@ -162,6 +554,42 @@ export function InfrastructureDiagram() {
 
     renderDiagram();
   }, []);
+
+  // Add click handlers to nodes after rendering
+  useEffect(() => {
+    if (isRendered && diagramRef.current) {
+      const nodes = diagramRef.current.querySelectorAll('.node');
+      nodes.forEach((node) => {
+        const nodeElement = node as HTMLElement;
+        // Extract node ID from the element id (format: flowchart-NodeId-123)
+        const idMatch = nodeElement.id.match(/flowchart-(\w+)-/);
+        if (idMatch) {
+          const nodeId = idMatch[1];
+          if (nodeDetails[nodeId]) {
+            nodeElement.style.cursor = 'pointer';
+            nodeElement.classList.add('interactive-node');
+            
+            const clickHandler = () => handleNodeClick(nodeId);
+            nodeElement.addEventListener('click', clickHandler);
+            
+            // Store reference for cleanup
+            (nodeElement as any)._clickHandler = clickHandler;
+          }
+        }
+      });
+
+      // Cleanup function
+      return () => {
+        const nodes = diagramRef.current?.querySelectorAll('.interactive-node');
+        nodes?.forEach((node) => {
+          const nodeElement = node as HTMLElement;
+          if ((nodeElement as any)._clickHandler) {
+            nodeElement.removeEventListener('click', (nodeElement as any)._clickHandler);
+          }
+        });
+      };
+    }
+  }, [isRendered, handleNodeClick]);
 
   const exportToPDF = async () => {
     if (!diagramRef.current) return;
@@ -249,8 +677,28 @@ export function InfrastructureDiagram() {
     }
   };
 
+  const selectedDetails = selectedNode ? nodeDetails[selectedNode] : null;
+
   return (
     <div className="space-y-6">
+      <style>{`
+        .interactive-node {
+          transition: all 0.2s ease;
+        }
+        .interactive-node:hover {
+          filter: brightness(0.92);
+          transform: scale(1.02);
+        }
+        .interactive-node rect,
+        .interactive-node polygon {
+          transition: all 0.2s ease;
+        }
+        .interactive-node:hover rect,
+        .interactive-node:hover polygon {
+          stroke-width: 3px !important;
+        }
+      `}</style>
+
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold">Infrastruktur-Übersicht</h2>
@@ -275,6 +723,14 @@ export function InfrastructureDiagram() {
           </div>
         </div>
       </div>
+
+      {/* Hint */}
+      {isRendered && (
+        <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+          <Info className="h-4 w-4" />
+          <span>Klicke auf einen Node für mehr Details</span>
+        </div>
+      )}
 
       {/* Legend */}
       <div className="rounded-lg border bg-card p-4">
@@ -318,6 +774,27 @@ export function InfrastructureDiagram() {
           <div className="text-sm text-muted-foreground">AI-Integrationen</div>
         </div>
       </div>
+
+      {/* Detail Sheet */}
+      <Sheet open={!!selectedNode} onOpenChange={() => setSelectedNode(null)}>
+        <SheetContent>
+          <SheetHeader>
+            <SheetTitle className="flex items-center gap-2">
+              {selectedDetails?.icon && <span className="text-2xl">{selectedDetails.icon}</span>}
+              {selectedDetails?.title}
+            </SheetTitle>
+            <SheetDescription>{selectedDetails?.description}</SheetDescription>
+          </SheetHeader>
+          <div className="mt-6 space-y-3">
+            {selectedDetails?.items.map((item, i) => (
+              <div key={i} className="flex items-start gap-3 p-2 rounded-lg bg-muted/50">
+                <CheckCircle className="h-5 w-5 text-primary mt-0.5 shrink-0" />
+                <span className="text-sm">{item}</span>
+              </div>
+            ))}
+          </div>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
