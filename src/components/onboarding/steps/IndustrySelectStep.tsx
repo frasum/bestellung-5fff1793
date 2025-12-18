@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { industryTemplates, IndustryTemplate } from '@/data/industryTemplates';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -11,7 +12,9 @@ import {
   Factory,
   Settings,
   ArrowRight,
+  Mic,
 } from 'lucide-react';
+import { VoiceIndustrySelector } from '../VoiceIndustrySelector';
 
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   UtensilsCrossed,
@@ -34,8 +37,15 @@ export function IndustrySelectStep({
   onSelectIndustry,
   onContinue,
 }: IndustrySelectStepProps) {
+  const [showVoiceSelector, setShowVoiceSelector] = useState(false);
+
   const handleSelect = (industry: IndustryTemplate) => {
     onSelectIndustry(industry.id);
+  };
+
+  const handleVoiceIndustrySelected = (industryId: string) => {
+    onSelectIndustry(industryId);
+    onContinue();
   };
 
   return (
@@ -48,6 +58,31 @@ export function IndustrySelectStep({
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {/* Voice selection card */}
+        <Card
+          className="cursor-pointer transition-all hover:shadow-md hover:border-primary/50 
+                     bg-gradient-to-br from-primary/5 to-primary/10 border-primary/20"
+          onClick={() => setShowVoiceSelector(true)}
+        >
+          <CardContent className="p-6 text-center space-y-3">
+            <div className="w-12 h-12 rounded-full bg-primary text-primary-foreground flex items-center justify-center mx-auto animate-pulse">
+              <Mic className="w-6 h-6" />
+            </div>
+            <div>
+              <h3 className="font-semibold">Per Sprache auswählen</h3>
+              <p className="text-sm text-muted-foreground">
+                Sagen Sie einfach, in welcher Branche Sie arbeiten
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-1 justify-center">
+              <span className="text-xs px-2 py-0.5 rounded-full bg-primary/20 text-primary">
+                🎤 Natürliche Sprache
+              </span>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Industry cards */}
         {industryTemplates.map((industry) => {
           const Icon = iconMap[industry.icon] || Settings;
           const isSelected = selectedIndustry?.id === industry.id;
@@ -110,6 +145,13 @@ export function IndustrySelectStep({
           <ArrowRight className="w-5 h-5" />
         </Button>
       </div>
+
+      {/* Voice selector dialog */}
+      <VoiceIndustrySelector
+        open={showVoiceSelector}
+        onClose={() => setShowVoiceSelector(false)}
+        onIndustrySelected={handleVoiceIndustrySelected}
+      />
     </div>
   );
 }

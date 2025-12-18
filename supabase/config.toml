@@ -140,3 +140,6 @@ verify_jwt = true
 
 [functions.import-wine-data]
 verify_jwt = false
+
+[functions.elevenlabs-industry-token]
+verify_jwt = false
