@@ -63,7 +63,7 @@ export const WinesTab = ({ articles, suppliers, onEditArticle }: WinesTabProps) 
   const [filterMode, setFilterMode] = useState<FilterMode>('all');
   const [advancedMode, setAdvancedMode] = useState(() => localStorage.getItem('advanced-settings-enabled') === 'true');
   const [quizOpen, setQuizOpen] = useState(false);
-  const [wineImportOpen, setWineImportOpen] = useState(false);
+  const [wineImportOpen, setWineImportOpen] = useState<boolean>(false);
   // Track successfully researched wine IDs for real-time badge updates
   const [researchedIds, setResearchedIds] = useState<Set<string>>(new Set());
   const updateArticle = useUpdateArticle();
@@ -521,6 +521,15 @@ export const WinesTab = ({ articles, suppliers, onEditArticle }: WinesTabProps) 
         open={quizOpen} 
         onOpenChange={setQuizOpen} 
       />
+
+      {/* Wine Import Dialog */}
+      <WineImportDialog
+        open={wineImportOpen}
+        onOpenChange={setWineImportOpen}
+        onImportComplete={() => {
+          // Articles will be refetched via React Query when the dialog closes
+        }}
+      />
     </>
   );
 };
@@ -894,15 +903,6 @@ const WineCard = ({ wine, onEdit }: WineCardProps) => {
           </div>
         </DialogContent>
       </Dialog>
-
-      {/* Wine Import Dialog */}
-      <WineImportDialog
-        open={wineImportOpen}
-        onOpenChange={setWineImportOpen}
-        onImportComplete={() => {
-          // Articles will be refetched via React Query when the dialog closes
-        }}
-      />
     </>
   );
 };
