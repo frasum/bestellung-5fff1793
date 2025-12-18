@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Lock, Globe, Mail, Palette, User, Settings, Map } from 'lucide-react';
+import { Lock, Globe, Mail, Palette, User, Settings, Map, Database } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useUserProfile, useUpdateUserProfile, useUpdatePassword, useOrganization, useUpdateOrganization } from '@/hooks/useSettings';
 import { I18nCheckDialog } from './I18nCheckDialog';
@@ -107,6 +107,22 @@ const AdvancedToolsSection = () => {
           </p>
         </div>
         <Button variant="outline" size="sm" onClick={() => navigate('/system-architecture')}>
+          Öffnen
+        </Button>
+      </div>
+
+      {/* Database Architecture */}
+      <div className="flex items-center justify-between">
+        <div>
+          <Label className="mb-1 block flex items-center gap-2">
+            <Database className="h-4 w-4" />
+            Datenbankarchitektur
+          </Label>
+          <p className="text-xs text-muted-foreground">
+            Entity-Relationship-Diagramm aller Tabellen
+          </p>
+        </div>
+        <Button variant="outline" size="sm" onClick={() => navigate('/database-architecture')}>
           Öffnen
         </Button>
       </div>
