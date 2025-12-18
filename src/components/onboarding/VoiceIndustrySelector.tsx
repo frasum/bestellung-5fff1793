@@ -125,7 +125,7 @@ export function VoiceIndustrySelector({ open, onClose, onIndustrySelected }: Voi
 
   return (
     <Dialog open={open} onOpenChange={(isOpen) => !isOpen && handleClose()}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto my-4">
         <DialogHeader>
           <DialogTitle className="text-center">Sprachauswahl</DialogTitle>
         </DialogHeader>
