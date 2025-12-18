@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Sparkles, X, Minimize2, Maximize2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -53,8 +53,24 @@ const PORTALS: Portal[] = [
 export function DemoModeSwitcher() {
   const [isVisible, setIsVisible] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
+  const [clickCount, setClickCount] = useState(0);
+  const clickTimer = useRef<NodeJS.Timeout>();
+  const lastDPress = useRef(0);
   const navigate = useNavigate();
   const location = useLocation();
+
+  // Secret 5x click activation
+  const handleSecretClick = () => {
+    setClickCount(prev => prev + 1);
+    clearTimeout(clickTimer.current);
+    clickTimer.current = setTimeout(() => setClickCount(0), 1000);
+    
+    if (clickCount >= 4) { // 5th click
+      setIsVisible(true);
+      sessionStorage.setItem('demo-mode', 'true');
+      setClickCount(0);
+    }
+  };
 
   useEffect(() => {
     // Check URL parameter
@@ -69,19 +85,29 @@ export function DemoModeSwitcher() {
       setIsVisible(true);
     }
 
-    // Keyboard shortcut: Ctrl+Shift+D
+    // Keyboard shortcuts
     const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'D') {
-        e.preventDefault();
-        setIsVisible(prev => {
-          const newValue = !prev;
-          if (newValue) {
-            sessionStorage.setItem('demo-mode', 'true');
-          } else {
-            sessionStorage.removeItem('demo-mode');
-          }
-          return newValue;
-        });
+      // Skip if typing in input
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+        return;
+      }
+
+      // Double-D shortcut
+      if (e.key === 'd' || e.key === 'D') {
+        const now = Date.now();
+        if (now - lastDPress.current < 500) {
+          e.preventDefault();
+          setIsVisible(prev => {
+            const newValue = !prev;
+            if (newValue) {
+              sessionStorage.setItem('demo-mode', 'true');
+            } else {
+              sessionStorage.removeItem('demo-mode');
+            }
+            return newValue;
+          });
+        }
+        lastDPress.current = now;
       }
     };
 
@@ -100,7 +126,16 @@ export function DemoModeSwitcher() {
 
   const currentPortal = PORTALS.find(p => location.pathname.startsWith(p.path));
 
-  if (!isVisible) return null;
+  // Always render the secret click area
+  if (!isVisible) {
+    return (
+      <div 
+        className="fixed bottom-2 right-2 w-12 h-12 cursor-default z-[9998]"
+        onClick={handleSecretClick}
+        aria-hidden="true"
+      />
+    );
+  }
 
   if (isMinimized) {
     return (
