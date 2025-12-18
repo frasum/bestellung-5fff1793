@@ -37,6 +37,7 @@ const QuestionOnboarding = lazy(() => import("./pages/QuestionOnboarding"));
 const StyleGuide = lazy(() => import("./pages/StyleGuide"));
 const SystemArchitecture = lazy(() => import("./pages/SystemArchitecture"));
 const DatabaseArchitecture = lazy(() => import("./pages/DatabaseArchitecture"));
+const Infrastructure = lazy(() => import("./pages/Infrastructure"));
 const Pricing = lazy(() => import("./pages/Pricing"));
 const Presentation = lazy(() => import("./pages/Presentation"));
 const Impressum = lazy(() => import("./pages/Impressum"));
@@ -102,6 +103,7 @@ const AppContent = () => {
           <Route path="/style-guide" element={<StyleGuide />} />
           <Route path="/system-architecture" element={<SystemArchitecture />} />
           <Route path="/database-architecture" element={<DatabaseArchitecture />} />
+          <Route path="/infrastructure" element={<Infrastructure />} />
           <Route path="/pricing" element={<Pricing />} />
           <Route path="/presentation" element={<Presentation />} />
           <Route path="/impressum" element={<Impressum />} />
