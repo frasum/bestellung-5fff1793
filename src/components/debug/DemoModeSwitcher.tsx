@@ -62,16 +62,16 @@ const PORTALS: Portal[] = [
     path: '/supplier-portal',
     color: 'text-purple-700 dark:text-purple-300',
     bgColor: 'bg-purple-100 dark:bg-purple-900/50 hover:bg-purple-200 dark:hover:bg-purple-800/50',
-    description: 'Portal für Lieferanten',
-    demoToken: 'DEMO_SUPPLIER_TOKEN',
+    description: 'Portal für Lieferanten (KAO)',
+    demoToken: 'DEMO_SUPPLIER_PORTAL_TOKEN_2025',
   },
   {
     name: 'Simple Order',
-    path: '/simple-order',
+    path: '/simple-order/443c35802365a54743f5813f00d4098c',
     color: 'text-teal-700 dark:text-teal-300',
     bgColor: 'bg-teal-100 dark:bg-teal-900/50 hover:bg-teal-200 dark:hover:bg-teal-800/50',
-    description: 'Mitarbeiter-Bestellung',
-    demoToken: 'DEMO_SIMPLE_ORDER_TOKEN',
+    description: 'Mitarbeiter-Bestellung (Moo)',
+    demoToken: '443c35802365a54743f5813f00d4098c',
   },
 ];
 
@@ -100,12 +100,17 @@ export function DemoModeSwitcher() {
 
   // Auto-login and navigate to portal
   const handleNavigate = async (portal: Portal) => {
-    // Skip if already on this portal
-    if (location.pathname.startsWith(portal.path)) return;
+    // Skip if already on this portal (check base path for token-based portals)
+    const basePath = portal.path.split('/').slice(0, 3).join('/');
+    if (location.pathname.startsWith(basePath)) return;
 
-    // Token-based portals - just navigate with token
+    // Token-based portals - navigate with correct token format
     if (portal.demoToken) {
-      navigate(portal.path);
+      if (portal.path.includes('supplier-portal')) {
+        navigate(`/supplier-portal?token=${portal.demoToken}`);
+      } else {
+        navigate(portal.path);
+      }
       return;
     }
 
