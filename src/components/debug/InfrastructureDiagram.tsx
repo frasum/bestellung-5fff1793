@@ -93,6 +93,21 @@ flowchart TB
     AIFuncs --> Perplexity
     B2BFuncs --> Database
     B2BFuncs --> Resend
+
+    %% Layer Styling
+    style Frontend fill:#dbeafe,stroke:#3b82f6,stroke-width:2px,color:#1e40af
+    style Cloud fill:#d1fae5,stroke:#10b981,stroke-width:2px,color:#065f46
+    style EdgeFunctions fill:#fef3c7,stroke:#f59e0b,stroke-width:2px,color:#92400e
+    style External fill:#ede9fe,stroke:#8b5cf6,stroke-width:2px,color:#5b21b6
+
+    %% Inner Subgraph Styling
+    style Auth fill:#a7f3d0,stroke:#059669,stroke-width:1px
+    style Database fill:#a7f3d0,stroke:#059669,stroke-width:1px
+    style Storage fill:#a7f3d0,stroke:#059669,stroke-width:1px
+    style OrderFuncs fill:#fde68a,stroke:#d97706,stroke-width:1px
+    style AIFuncs fill:#fde68a,stroke:#d97706,stroke-width:1px
+    style B2BFuncs fill:#fde68a,stroke:#d97706,stroke-width:1px
+    style AuthFuncs fill:#fde68a,stroke:#d97706,stroke-width:1px
 `;
 
 mermaid.initialize({
