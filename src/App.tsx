@@ -31,6 +31,7 @@ const OrderConfirmed = lazy(() => import("./pages/OrderConfirmed"));
 const SimpleOrder = lazy(() => import("./pages/SimpleOrder"));
 const PhotoCapture = lazy(() => import("./pages/PhotoCapture"));
 const Onboarding = lazy(() => import("./pages/Onboarding"));
+const QuestionOnboarding = lazy(() => import("./pages/QuestionOnboarding"));
 const StyleGuide = lazy(() => import("./pages/StyleGuide"));
 const SystemArchitecture = lazy(() => import("./pages/SystemArchitecture"));
 const Pricing = lazy(() => import("./pages/Pricing"));
