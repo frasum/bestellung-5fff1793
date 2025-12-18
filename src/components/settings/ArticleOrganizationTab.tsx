@@ -11,7 +11,8 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { Search, CheckSquare, Square, Loader2, BarChart3, ChevronUp, ChevronDown } from 'lucide-react';
+import { Search, CheckSquare, Square, Loader2, BarChart3, ChevronUp, ChevronDown, Eye } from 'lucide-react';
+import { ArticlePreviewPanel } from './ArticlePreviewPanel';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useArticles, useBulkUpdateArticles, useUpdateArticle } from '@/hooks/useArticles';
@@ -403,6 +404,32 @@ export const ArticleOrganizationTab = () => {
                     <Progress value={stats.progressPackaging} className="h-2" />
                   </div>
                 </div>
+              </AccordionContent>
+            </AccordionItem>
+            
+            {/* BE Preview Accordion */}
+            <AccordionItem value="preview" className="border-b-0">
+              <AccordionTrigger className="group px-4 py-3 hover:no-underline hover:bg-muted/50 data-[state=open]:bg-primary/5">
+                <div className="flex items-center gap-2">
+                  <Eye className="h-4 w-4 text-muted-foreground group-data-[state=open]:text-primary transition-colors" />
+                  <span className="font-medium group-data-[state=open]:text-primary transition-colors">
+                    BE-Vorschau
+                  </span>
+                  {stats.missingOrderUnit > 0 && (
+                    <Badge variant="outline" className="ml-2 bg-yellow-50 text-yellow-700 border-yellow-200 dark:bg-yellow-950/50 dark:text-yellow-400">
+                      {stats.missingOrderUnit} ohne BE
+                    </Badge>
+                  )}
+                </div>
+              </AccordionTrigger>
+              <AccordionContent className="px-4 pb-4 bg-primary/5">
+                <p className="text-sm text-muted-foreground mb-4">
+                  Prüfen Sie wie Bestelleinheiten in EasyOrder und E-Mails angezeigt werden
+                </p>
+                <ArticlePreviewPanel 
+                  articles={articlesWithTopCategory}
+                  onArticleUpdate={() => {}}
+                />
               </AccordionContent>
             </AccordionItem>
           </Accordion>
