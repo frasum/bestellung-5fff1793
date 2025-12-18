@@ -73,7 +73,11 @@ export function CompletionStep({
   };
 
   const handleGoToPresentation = () => {
-    navigate('/presentation');
+    window.location.href = '/presentation';
+  };
+
+  const handleExploreSystem = () => {
+    window.location.href = '/demo/suppliers';
   };
 
   return (
@@ -155,15 +159,21 @@ export function CompletionStep({
             )}
           </div>
 
-          <div className="flex gap-3 justify-center pt-4">
-            <Button variant="outline" onClick={handleRestartDemo} className="gap-2">
-              <RotateCcw className="w-4 h-4" />
-              Demo neu starten
-            </Button>
-            <Button onClick={handleGoToPresentation} className="gap-2">
-              Zur Startseite
+          <div className="flex flex-col gap-3 pt-4">
+            <Button onClick={handleExploreSystem} className="gap-2" size="lg">
+              <Package className="w-4 h-4" />
+              System erkunden
               <ArrowRight className="w-4 h-4" />
             </Button>
+            <div className="flex gap-3 justify-center">
+              <Button variant="outline" onClick={handleRestartDemo} className="gap-2">
+                <RotateCcw className="w-4 h-4" />
+                Demo neu starten
+              </Button>
+              <Button variant="ghost" onClick={handleGoToPresentation} className="gap-2">
+                Zur Startseite
+              </Button>
+            </div>
           </div>
         </>
       )}

@@ -8,6 +8,7 @@ import { ThemeProvider } from "next-themes";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { CartProvider } from "@/contexts/CartContext";
 import { LocationProvider } from "@/contexts/LocationContext";
+import { DemoProvider } from "@/contexts/DemoContext";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { Loader2 } from "lucide-react";
 import { useRealtimeNotifications } from "@/hooks/useRealtimeNotifications";
@@ -15,6 +16,7 @@ import { usePerformanceMonitor } from "@/hooks/usePerformanceMonitor";
 import { PerformanceMonitor } from "@/components/debug/PerformanceMonitor";
 import { DevNavigationPanel } from "@/components/debug/DevNavigationPanel";
 import { DemoModeSwitcher } from "@/components/debug/DemoModeSwitcher";
+import { DemoLayout } from "@/components/layout/DemoLayout";
 
 // Lazy load pages for better performance
 const Auth = lazy(() => import("./pages/Auth"));
@@ -44,6 +46,9 @@ const B2BSupplierLogin = lazy(() => import("./pages/B2BSupplierLogin"));
 const B2BSupplierDashboard = lazy(() => import("./pages/B2BSupplierDashboard"));
 const B2BAcceptInvitation = lazy(() => import("./pages/B2BAcceptInvitation"));
 const B2BCustomerPortal = lazy(() => import("./pages/B2BCustomerPortal"));
+const DemoSuppliers = lazy(() => import("./pages/DemoSuppliers"));
+const DemoCart = lazy(() => import("./pages/DemoCart"));
+const DemoOrders = lazy(() => import("./pages/DemoOrders"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient();
@@ -101,6 +106,12 @@ const AppContent = () => {
           <Route path="/datenschutz" element={<Datenschutz />} />
           <Route path="/agb" element={<AGB />} />
           <Route path="/wines/:token" element={<WineCatalog />} />
+          {/* Demo Mode Routes */}
+          <Route path="/demo" element={<DemoLayout />}>
+            <Route path="suppliers" element={<DemoSuppliers />} />
+            <Route path="cart" element={<DemoCart />} />
+            <Route path="orders" element={<DemoOrders />} />
+          </Route>
           {/* B2B Supplier Portal Routes */}
           <Route path="/b2b/login" element={<B2BSupplierLogin />} />
           <Route path="/b2b/dashboard" element={<B2BSupplierDashboard />} />
@@ -131,21 +142,23 @@ const AppContent = () => {
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-      <AuthProvider>
-        <LocationProvider>
-          <CartProvider>
-            <TooltipProvider>
-              <ErrorBoundary>
-                <Toaster />
-                <Sonner />
-                <BrowserRouter>
-                  <AppContent />
-                </BrowserRouter>
-              </ErrorBoundary>
-            </TooltipProvider>
-          </CartProvider>
-        </LocationProvider>
-      </AuthProvider>
+      <DemoProvider>
+        <AuthProvider>
+          <LocationProvider>
+            <CartProvider>
+              <TooltipProvider>
+                <ErrorBoundary>
+                  <Toaster />
+                  <Sonner />
+                  <BrowserRouter>
+                    <AppContent />
+                  </BrowserRouter>
+                </ErrorBoundary>
+              </TooltipProvider>
+            </CartProvider>
+          </LocationProvider>
+        </AuthProvider>
+      </DemoProvider>
     </ThemeProvider>
   </QueryClientProvider>
 );

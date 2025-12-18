@@ -1,0 +1,197 @@
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useDemo } from '@/contexts/DemoContext';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { toast } from 'sonner';
+import { Trash2, Plus, Minus, ShoppingCart, ArrowLeft, Send, CheckCircle2 } from 'lucide-react';
+
+export default function DemoCart() {
+  const navigate = useNavigate();
+  const { cart, updateCartQuantity, removeFromCart, clearCart, cartTotal, industry } = useDemo();
+  const [isOrdering, setIsOrdering] = useState(false);
+  const [orderComplete, setOrderComplete] = useState(false);
+
+  // Group cart items by supplier
+  const groupedItems = cart.reduce((acc, item) => {
+    if (!acc[item.supplierId]) {
+      acc[item.supplierId] = {
+        supplierName: item.supplierName,
+        items: [],
+        total: 0,
+      };
+    }
+    acc[item.supplierId].items.push(item);
+    acc[item.supplierId].total += item.price * item.quantity;
+    return acc;
+  }, {} as Record<string, { supplierName: string; items: typeof cart; total: number }>);
+
+  const handleOrder = async () => {
+    setIsOrdering(true);
+    // Simulate order processing
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    setIsOrdering(false);
+    setOrderComplete(true);
+    toast.success('Demo-Bestellung erfolgreich!');
+  };
+
+  const handleNewOrder = () => {
+    clearCart();
+    setOrderComplete(false);
+    navigate('/demo/suppliers');
+  };
+
+  if (orderComplete) {
+    return (
+      <div className="max-w-md mx-auto text-center py-12 space-y-6">
+        <div className="w-20 h-20 mx-auto rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
+          <CheckCircle2 className="w-12 h-12 text-green-600 dark:text-green-400" />
+        </div>
+        <div>
+          <h1 className="text-2xl font-bold mb-2">Bestellung gesendet!</h1>
+          <p className="text-muted-foreground">
+            Dies ist eine Demo. In der echten Anwendung würde jetzt eine E-Mail an Ihre {industry.terminology.supplierPlural} gesendet.
+          </p>
+        </div>
+        <div className="flex gap-3 justify-center">
+          <Button variant="outline" onClick={() => navigate('/demo/orders')}>
+            Bestellungen ansehen
+          </Button>
+          <Button onClick={handleNewOrder}>
+            Neue Bestellung
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  if (cart.length === 0) {
+    return (
+      <div className="max-w-md mx-auto text-center py-12 space-y-6">
+        <ShoppingCart className="w-16 h-16 mx-auto text-muted-foreground" />
+        <div>
+          <h1 className="text-2xl font-bold mb-2">Warenkorb ist leer</h1>
+          <p className="text-muted-foreground">
+            Fügen Sie {industry.terminology.articlePlural} aus dem Katalog hinzu.
+          </p>
+        </div>
+        <Button onClick={() => navigate('/demo/suppliers')}>
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Zum Katalog
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold">Warenkorb</h1>
+          <p className="text-muted-foreground">
+            {cart.length} {cart.length === 1 ? 'Artikel' : 'Artikel'} von {Object.keys(groupedItems).length} {industry.terminology.supplierPlural}
+          </p>
+        </div>
+        <Button variant="outline" onClick={() => navigate('/demo/suppliers')}>
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Weiter einkaufen
+        </Button>
+      </div>
+
+      {/* Grouped by Supplier */}
+      <div className="space-y-4">
+        {Object.entries(groupedItems).map(([supplierId, group]) => (
+          <Card key={supplierId}>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg">{group.supplierName}</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {group.items.map(item => (
+                <div
+                  key={item.articleId}
+                  className="flex items-center gap-4 py-2 border-b last:border-0"
+                >
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium truncate">{item.articleName}</p>
+                    <p className="text-sm text-muted-foreground">
+                      €{item.price.toFixed(2)} / {item.unit}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={() => updateCartQuantity(item.articleId, item.quantity - 1)}
+                    >
+                      <Minus className="w-3 h-3" />
+                    </Button>
+                    <Input
+                      type="number"
+                      value={item.quantity}
+                      onChange={e => updateCartQuantity(item.articleId, parseInt(e.target.value) || 0)}
+                      className="w-16 text-center h-8"
+                      min={1}
+                    />
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={() => updateCartQuantity(item.articleId, item.quantity + 1)}
+                    >
+                      <Plus className="w-3 h-3" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-destructive"
+                      onClick={() => removeFromCart(item.articleId)}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                  <div className="w-24 text-right font-medium">
+                    €{(item.price * item.quantity).toFixed(2)}
+                  </div>
+                </div>
+              ))}
+              <div className="flex justify-between pt-2 font-medium">
+                <span>Zwischensumme</span>
+                <span>€{group.total.toFixed(2)}</span>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {/* Order Summary */}
+      <Card className="bg-muted/50">
+        <CardContent className="pt-6">
+          <div className="flex justify-between text-lg font-bold mb-4">
+            <span>Gesamtsumme</span>
+            <span>€{cartTotal.toFixed(2)}</span>
+          </div>
+          <Button
+            className="w-full"
+            size="lg"
+            onClick={handleOrder}
+            disabled={isOrdering}
+          >
+            {isOrdering ? (
+              'Wird gesendet...'
+            ) : (
+              <>
+                <Send className="w-4 h-4 mr-2" />
+                Demo-Bestellung senden
+              </>
+            )}
+          </Button>
+          <p className="text-xs text-muted-foreground text-center mt-2">
+            Dies ist eine Simulation. Es werden keine echten Bestellungen gesendet.
+          </p>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
