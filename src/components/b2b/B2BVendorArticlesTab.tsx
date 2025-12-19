@@ -20,7 +20,9 @@ import {
   Pencil,
   Trash2,
   ShoppingCart,
+  Upload,
 } from 'lucide-react';
+import { CsvImportDialog, ImportField } from '@/components/CsvImportDialog';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -82,6 +84,16 @@ const B2BVendorArticlesTab = ({ accountId }: B2BVendorArticlesTabProps) => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [articleToDelete, setArticleToDelete] = useState<B2BVendorArticle | null>(null);
   const [cart, setCart] = useState<Record<string, number>>({});
+  const [importDialogOpen, setImportDialogOpen] = useState(false);
+
+  const importFields: ImportField[] = [
+    { name: 'name', label: 'Artikelname', required: true },
+    { name: 'sku', label: 'Artikelnummer', required: false },
+    { name: 'description', label: 'Beschreibung', required: false },
+    { name: 'category', label: 'Kategorie', required: false },
+    { name: 'price', label: 'Preis', required: false },
+    { name: 'unit', label: 'Einheit', required: false },
+  ];
 
   useEffect(() => {
     loadData();
@@ -170,6 +182,39 @@ const B2BVendorArticlesTab = ({ accountId }: B2BVendorArticlesTabProps) => {
 
   const categories = [...new Set(articles.map(a => a.category).filter(Boolean))];
 
+  const handleImportArticles = async (data: Record<string, string>[], defaultVendorId?: string) => {
+    if (!defaultVendorId) {
+      throw new Error('Bitte wählen Sie einen Lieferanten aus');
+    }
+
+    const articlesToInsert = data
+      .filter(a => a.name?.trim())
+      .map(a => ({
+        supplier_account_id: accountId,
+        vendor_id: defaultVendorId,
+        name: a.name.trim(),
+        description: a.description?.trim() || null,
+        sku: a.sku?.trim() || null,
+        category: a.category?.trim() || null,
+        price: parseFloat(a.price?.replace(',', '.')) || 0,
+        unit: a.unit?.trim() || 'Stk',
+        is_active: true,
+      }));
+
+    if (articlesToInsert.length === 0) {
+      throw new Error('Keine gültigen Artikel zum Importieren');
+    }
+
+    const { error } = await supabase
+      .from('b2b_supplier_vendor_articles')
+      .insert(articlesToInsert);
+
+    if (error) throw error;
+    
+    toast.success(`${articlesToInsert.length} Artikel importiert`);
+    loadData();
+  };
+
   return (
     <div className="space-y-4">
       {/* Header */}
@@ -198,13 +243,23 @@ const B2BVendorArticlesTab = ({ accountId }: B2BVendorArticlesTabProps) => {
             </Select>
           )}
         </div>
-        <Button 
-          onClick={() => { setEditingArticle(null); setDialogOpen(true); }}
-          disabled={vendors.length === 0}
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          Artikel hinzufügen
-        </Button>
+        <div className="flex gap-2">
+          <Button 
+            variant="outline" 
+            onClick={() => setImportDialogOpen(true)}
+            disabled={vendors.length === 0}
+          >
+            <Upload className="h-4 w-4 mr-2" />
+            Import
+          </Button>
+          <Button 
+            onClick={() => { setEditingArticle(null); setDialogOpen(true); }}
+            disabled={vendors.length === 0}
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Artikel hinzufügen
+          </Button>
+        </div>
       </div>
 
       {/* Articles Grid */}
@@ -341,6 +396,19 @@ const B2BVendorArticlesTab = ({ accountId }: B2BVendorArticlesTabProps) => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Import Dialog */}
+      <CsvImportDialog
+        open={importDialogOpen}
+        onOpenChange={setImportDialogOpen}
+        title="Artikel importieren"
+        fields={importFields}
+        onImport={handleImportArticles}
+        templateFileName="artikel_vorlage.xlsx"
+        enableAI={true}
+        showSupplierSelect={true}
+        suppliers={vendors.map(v => ({ id: v.id, name: v.name }))}
+      />
     </div>
   );
 };
