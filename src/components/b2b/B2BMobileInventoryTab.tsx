@@ -359,6 +359,11 @@ const B2BMobileInventoryTab = ({ accountId, supplierId, token }: B2BMobileInvent
                             <p className="text-sm text-muted-foreground">
                               {getVendorName(article.vendor_id)}
                               {article.unit && ` · ${article.unit}`}
+                              {article.price != null && (
+                                <span className="font-medium text-foreground">
+                                  {' · '}{article.price.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}
+                                </span>
+                              )}
                             </p>
                           </div>
                           {hasValue && (
@@ -388,6 +393,25 @@ const B2BMobileInventoryTab = ({ accountId, supplierId, token }: B2BMobileInvent
                               className="h-10"
                             />
                           </div>
+                        </div>
+                        {/* Total quantity and value */}
+                        <div className="flex justify-between text-sm pt-2 border-t border-border">
+                          <span className="text-muted-foreground">
+                            Gesamt:{' '}
+                            <span className="font-medium text-foreground">
+                              {((item?.storage_1 || 0) + (item?.storage_2 || 0)).toLocaleString('de-DE')}
+                              {article.unit && ` ${article.unit}`}
+                            </span>
+                          </span>
+                          {article.price != null && (
+                            <span className="text-muted-foreground">
+                              Wert:{' '}
+                              <span className="font-medium text-foreground">
+                                {(((item?.storage_1 || 0) + (item?.storage_2 || 0)) * article.price)
+                                  .toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}
+                              </span>
+                            </span>
+                          )}
                         </div>
                       </div>
                     </Card>
