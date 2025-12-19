@@ -2967,6 +2967,7 @@ export type Database = {
           created_at: string
           expires_at: string
           id: string
+          price_edit_expires_at: string | null
           supplier_id: string
           token: string
           used_at: string | null
@@ -2975,6 +2976,7 @@ export type Database = {
           created_at?: string
           expires_at?: string
           id?: string
+          price_edit_expires_at?: string | null
           supplier_id: string
           token?: string
           used_at?: string | null
@@ -2983,6 +2985,7 @@ export type Database = {
           created_at?: string
           expires_at?: string
           id?: string
+          price_edit_expires_at?: string | null
           supplier_id?: string
           token?: string
           used_at?: string | null

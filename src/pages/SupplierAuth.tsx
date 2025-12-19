@@ -54,13 +54,15 @@ const SupplierAuth = () => {
         const randomHash = Math.random().toString(36).substring(2, 15);
         const sessionToken = `${data.supplierId}:${data.organizationId}:${timestamp}:${randomHash}`;
         
-        // Store supplier session with token expiry
+        // Store supplier session with token expiry and price edit permission
         const supplierSession = {
           supplierId: data.supplierId,
           supplierName: data.supplierName,
           organizationId: data.organizationId,
           sessionToken,
           expiresAt: data.expiresAt || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+          priceEditExpiresAt: data.priceEditExpiresAt,
+          canEditPrices: data.canEditPrices,
         };
         localStorage.setItem('supplierSession', JSON.stringify(supplierSession));
 

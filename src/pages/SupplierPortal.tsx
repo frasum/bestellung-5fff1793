@@ -38,6 +38,8 @@ interface SupplierSession {
   organizationId: string;
   sessionToken: string;
   expiresAt: string;
+  priceEditExpiresAt?: string;
+  canEditPrices?: boolean;
 }
 
 interface Article {
@@ -744,6 +746,11 @@ const SupplierPortal = () => {
   
   const isColumnVisible = (column: string) => visibleColumns.includes(column);
 
+  // Check if price editing is still allowed
+  const canEditPrices = session?.priceEditExpiresAt 
+    ? new Date(session.priceEditExpiresAt) > new Date() 
+    : true; // Default to true for backwards compatibility
+
   if (!session) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -843,6 +850,17 @@ const SupplierPortal = () => {
               {portalSettings.info_text}
             </ReactMarkdown>
           </div>
+        )}
+
+        {/* Price Edit Expired Alert */}
+        {session?.priceEditExpiresAt && new Date(session.priceEditExpiresAt) < new Date() && (
+          <Alert className="mb-6 border-amber-500/50 bg-amber-50 dark:bg-amber-950/20">
+            <Clock className="h-4 w-4 text-amber-600" />
+            <AlertDescription className="text-amber-700 dark:text-amber-400">
+              Die Bearbeitungsfrist für Preise ist am {format(new Date(session.priceEditExpiresAt), 'dd.MM.yyyy', { locale: de })} abgelaufen. 
+              Sie können weiterhin Bestellungen einsehen. Für einen neuen Zugangslink kontaktieren Sie bitte Ihren Ansprechpartner.
+            </AlertDescription>
+          </Alert>
         )}
 
 
@@ -1143,12 +1161,18 @@ const SupplierPortal = () => {
                                       : getPendingChangeForField(article.id, 'price')?.new_value?.replace('.', ',') 
                                         ?? String(article.price).replace('.', ',')}
                                     onChange={(e) => {
+                                      if (!canEditPrices) return;
                                       setPriceInputs(prev => ({
                                         ...prev,
                                         [article.id]: e.target.value
                                       }));
                                     }}
-                                    className={cn("h-8 text-right", hasPendingChange(article.id, 'price') && "border-amber-500")}
+                                    readOnly={!canEditPrices}
+                                    className={cn(
+                                      "h-8 text-right", 
+                                      hasPendingChange(article.id, 'price') && "border-amber-500",
+                                      !canEditPrices && "bg-muted cursor-not-allowed opacity-60"
+                                    )}
                                   />
                                   {getPendingChangeForField(article.id, 'price') && (
                                     <div className="text-xs">
@@ -1172,14 +1196,17 @@ const SupplierPortal = () => {
                                       : getPendingChangeForField(article.id, 'annual_order_value')?.new_value?.replace('.', ',') 
                                         ?? (article.annual_order_value !== null ? String(article.annual_order_value).replace('.', ',') : '')}
                                     onChange={(e) => {
+                                      if (!canEditPrices) return;
                                       setAnnualOrderValueInputs(prev => ({
                                         ...prev,
                                         [article.id]: e.target.value
                                       }));
                                     }}
+                                    readOnly={!canEditPrices}
                                     className={cn(
                                       "h-8",
-                                      hasPendingChange(article.id, 'annual_order_value') && "border-amber-500"
+                                      hasPendingChange(article.id, 'annual_order_value') && "border-amber-500",
+                                      !canEditPrices && "bg-muted cursor-not-allowed opacity-60"
                                     )}
                                     placeholder="Optional"
                                   />
@@ -1205,12 +1232,18 @@ const SupplierPortal = () => {
                                       : getPendingChangeForField(article.id, 'reference_price')?.new_value?.replace('.', ',') 
                                         ?? (article.reference_price !== null ? String(article.reference_price).replace('.', ',') : '')}
                                     onChange={(e) => {
+                                      if (!canEditPrices) return;
                                       setReferencePriceInputs(prev => ({
                                         ...prev,
                                         [article.id]: e.target.value
                                       }));
                                     }}
-                                    className={cn("h-8 text-right", hasPendingChange(article.id, 'reference_price') && "border-amber-500")}
+                                    readOnly={!canEditPrices}
+                                    className={cn(
+                                      "h-8 text-right", 
+                                      hasPendingChange(article.id, 'reference_price') && "border-amber-500",
+                                      !canEditPrices && "bg-muted cursor-not-allowed opacity-60"
+                                    )}
                                     placeholder="-"
                                   />
                                   {getPendingChangeForField(article.id, 'reference_price') && (
