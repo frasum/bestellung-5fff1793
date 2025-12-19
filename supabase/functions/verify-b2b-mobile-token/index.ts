@@ -28,7 +28,7 @@ serve(async (req) => {
 
     console.log('Verifying B2B mobile token');
 
-    // Find the token
+    // Find the token with account info
     const { data: tokenData, error: tokenError } = await supabaseClient
       .from('b2b_mobile_tokens')
       .select(`
@@ -37,10 +37,6 @@ serve(async (req) => {
           id,
           company_name,
           email
-        ),
-        supplier:b2b_suppliers(
-          id,
-          name
         )
       `)
       .eq('token', token)
@@ -70,6 +66,15 @@ serve(async (req) => {
       );
     }
 
+    // Get the single supplier for this account (1 Account = 1 Supplier)
+    const { data: supplier } = await supabaseClient
+      .from('b2b_suppliers')
+      .select('id, name')
+      .eq('account_id', tokenData.account_id)
+      .order('created_at', { ascending: true })
+      .limit(1)
+      .maybeSingle();
+
     // Update used_at timestamp if this is first use
     if (!tokenData.used_at) {
       await supabaseClient
@@ -85,9 +90,10 @@ serve(async (req) => {
         success: true,
         session: {
           accountId: tokenData.account_id,
-          supplierId: tokenData.supplier_id,
+          supplierId: supplier?.id || null,
+          // Use company_name as the display name (1 Account = 1 Supplier)
           companyName: tokenData.account?.company_name,
-          supplierName: tokenData.supplier?.name,
+          supplierName: supplier?.name || tokenData.account?.company_name,
           expiresAt: tokenData.expires_at,
         }
       }),

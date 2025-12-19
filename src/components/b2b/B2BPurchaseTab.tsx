@@ -211,7 +211,6 @@ const B2BPurchaseTab = ({ accountId, supplierId }: B2BPurchaseTabProps) => {
         open={showMobileDialog}
         onOpenChange={setShowMobileDialog}
         accountId={accountId}
-        supplierId={supplierId}
       />
     </div>
   );

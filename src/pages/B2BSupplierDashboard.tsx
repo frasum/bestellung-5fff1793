@@ -7,16 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { toast } from 'sonner';
 import {
   Building2,
@@ -29,9 +20,7 @@ import {
   Plus,
   TrendingUp,
   FileText,
-  Truck,
   PackageSearch,
-  ChevronDown,
   Sparkles,
   User,
 } from 'lucide-react';
@@ -41,7 +30,6 @@ import B2BOrdersTab from '@/components/b2b/B2BOrdersTab';
 import B2BOffersTab from '@/components/b2b/B2BOffersTab';
 import B2BSettingsTab from '@/components/b2b/B2BSettingsTab';
 import B2BPurchaseTab from '@/components/b2b/B2BPurchaseTab';
-import B2BSupplierFormDialog from '@/components/b2b/B2BSupplierFormDialog';
 import B2BUpgradePricingDialog from '@/components/b2b-customer/B2BUpgradePricingDialog';
 
 interface B2BAccount {
@@ -68,7 +56,6 @@ interface B2BSupplier {
 interface DashboardStats {
   totalArticles: number;
   totalCustomers: number;
-  totalSuppliers: number;
   pendingOrders: number;
   totalOrders: number;
 }
@@ -79,12 +66,10 @@ const B2BSupplierDashboard = () => {
   const location = useLocation();
   const { user } = useAuth();
   const [account, setAccount] = useState<B2BAccount | null>(null);
-  const [suppliers, setSuppliers] = useState<B2BSupplier[]>([]);
-  const [selectedSupplierId, setSelectedSupplierId] = useState<string>('');
+  const [supplier, setSupplier] = useState<B2BSupplier | null>(null);
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
-  const [newSupplierDialogOpen, setNewSupplierDialogOpen] = useState(false);
   const [upgradeDialogOpen, setUpgradeDialogOpen] = useState(false);
   
   // Supplier User Mode (e.g., Luigi with own login)
@@ -145,7 +130,7 @@ const B2BSupplierDashboard = () => {
         setSupplierUserName(supplierUserData.name);
       }
       
-      // Load only this supplier
+      // Load this supplier
       const { data: supplierData } = await supabase
         .from('b2b_suppliers')
         .select('id, name, logo_url')
@@ -153,8 +138,7 @@ const B2BSupplierDashboard = () => {
         .single();
 
       if (supplierData) {
-        setSuppliers([supplierData]);
-        setSelectedSupplierId(supplierId);
+        setSupplier(supplierData);
         await loadStats(accountId, supplierId);
       }
     } catch (error: any) {
@@ -179,7 +163,7 @@ const B2BSupplierDashboard = () => {
       if (accountData) {
         // Account owner
         setAccount(accountData);
-        await loadSuppliers(accountData.id);
+        await loadSupplier(accountData.id);
         return;
       }
 
@@ -210,24 +194,22 @@ const B2BSupplierDashboard = () => {
     }
   };
 
-  const loadSuppliers = async (accountId: string) => {
+  // Load the single supplier for this account (1 Account = 1 Supplier)
+  const loadSupplier = async (accountId: string) => {
     const { data, error } = await supabase
       .from('b2b_suppliers')
       .select('id, name, logo_url')
       .eq('account_id', accountId)
-      .order('sort_order', { ascending: true });
+      .order('created_at', { ascending: true })
+      .limit(1)
+      .maybeSingle();
 
     if (!error && data) {
-      setSuppliers(data);
-      // Auto-select first supplier (Hybrid Model)
-      if (data.length > 0 && !selectedSupplierId) {
-        const firstSupplierId = data[0].id;
-        setSelectedSupplierId(firstSupplierId);
-        await loadStats(accountId, firstSupplierId);
-      } else if (data.length === 0) {
-        // No suppliers yet - load stats without supplier filter
-        await loadStats(accountId);
-      }
+      setSupplier(data);
+      await loadStats(accountId, data.id);
+    } else {
+      // No supplier yet - still load stats without supplier filter
+      await loadStats(accountId);
     }
   };
 
@@ -248,7 +230,6 @@ const B2BSupplierDashboard = () => {
         .select('id, status', { count: 'exact' })
         .eq('supplier_account_id', accountId);
 
-      // Filter ALL queries by supplier_id (Hybrid Model)
       if (supplierId) {
         articlesQuery = articlesQuery.eq('supplier_id', supplierId);
         customersQuery = customersQuery.eq('supplier_id', supplierId);
@@ -266,23 +247,11 @@ const B2BSupplierDashboard = () => {
       setStats({
         totalArticles: articlesRes.count || 0,
         totalCustomers: customersRes.count || 0,
-        totalSuppliers: suppliers.length,
         pendingOrders,
         totalOrders: ordersRes.count || 0,
       });
     } catch (error) {
       console.error('Error loading stats:', error);
-    }
-  };
-
-  const handleSupplierChange = (supplierId: string) => {
-    if (supplierId === '__new__') {
-      setNewSupplierDialogOpen(true);
-      return;
-    }
-    setSelectedSupplierId(supplierId);
-    if (account) {
-      loadStats(account.id, supplierId);
     }
   };
 
@@ -293,10 +262,7 @@ const B2BSupplierDashboard = () => {
 
   const openCustomerPortal = () => {
     if (account) {
-      let url = `/b2b/portal/${account.subdomain}`;
-      if (selectedSupplierId) {
-        url += `?preview_supplier=${selectedSupplierId}`;
-      }
+      const url = `/b2b/portal/${account.subdomain}`;
       window.open(url, '_blank');
     }
   };
@@ -318,7 +284,9 @@ const B2BSupplierDashboard = () => {
 
   if (!account) return null;
 
-  const selectedSupplierName = suppliers.find(s => s.id === selectedSupplierId)?.name || '';
+  // Use supplier name if available, otherwise company name
+  const displayName = supplier?.name || account.company_name;
+  const logoUrl = supplier?.logo_url || account.logo_url;
 
   return (
     <div className="min-h-screen bg-background">
@@ -330,79 +298,48 @@ const B2BSupplierDashboard = () => {
             <Badge variant="outline" className="text-orange-600 bg-orange-100 border-0 hidden sm:flex">
               {isSupplierUser ? '🟡 Lieferanten-Benutzer' : '🟠 B2B Supplier'}
             </Badge>
-            {(() => {
-              const selectedSupplier = suppliers.find(s => s.id === selectedSupplierId);
-              const logoUrl = selectedSupplier?.logo_url || account.logo_url;
-              const displayName = selectedSupplier?.name || account.company_name;
-              
-              return (
-                <>
-                  {logoUrl ? (
-                    <img src={logoUrl} alt={displayName} className="h-10 w-10 object-contain" />
-                  ) : (
-                    <div 
-                      className="h-10 w-10 rounded-lg flex items-center justify-center"
-                      style={{ backgroundColor: account.primary_color + '20' }}
-                    >
-                      <Building2 className="h-5 w-5" style={{ color: account.primary_color }} />
-                    </div>
-                  )}
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <h1 className="font-semibold text-lg">{displayName}</h1>
-                      {/* Upgrade Badge */}
-                      {!account.upgraded_organization_id ? (
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          className="h-7 gap-1.5 bg-gradient-to-r from-primary/10 to-amber-500/10 border-primary/30 hover:border-primary hover:bg-gradient-to-r hover:from-primary/20 hover:to-amber-500/20"
-                          onClick={() => setUpgradeDialogOpen(true)}
-                        >
-                          <Sparkles className="h-3.5 w-3.5 text-primary" />
-                          <span className="capitalize text-xs font-medium">
-                            {account.subscription_tier}
-                          </span>
-                          <Badge variant="secondary" className="h-4 text-[10px] px-1.5 bg-primary/20 text-primary hover:bg-primary/30">
-                            Upgrade
-                          </Badge>
-                        </Button>
-                      ) : (
-                        <Badge variant="outline" className="text-green-600 bg-green-100 border-green-300">
-                          ✓ Bestellung.pro
-                        </Badge>
-                      )}
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      {account.subdomain}.bestellung.pro
-                    </p>
-                  </div>
-                </>
-              );
-            })()}
-          </div>
-          
-            {/* Supplier Selector in Header (Hybrid Model) - Hidden for Supplier Users */}
-          <div className="flex items-center gap-4">
-            {suppliers.length > 0 && !isSupplierUser && (
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-muted-foreground hidden sm:inline">Lieferant:</span>
-                <Select value={selectedSupplierId} onValueChange={handleSupplierChange}>
-                  <SelectTrigger className="w-[180px]">
-                    <Truck className="h-4 w-4 mr-2" />
-                    <SelectValue placeholder="Lieferant wählen" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {suppliers.map(s => (
-                      <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
-                    ))}
-                    <SelectItem value="__new__" className="text-primary font-medium">
-                      <Plus className="h-4 w-4 mr-2 inline" />
-                      Neuen Lieferanten anlegen
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
+            {logoUrl ? (
+              <img src={logoUrl} alt={displayName} className="h-10 w-10 object-contain" />
+            ) : (
+              <div 
+                className="h-10 w-10 rounded-lg flex items-center justify-center"
+                style={{ backgroundColor: account.primary_color + '20' }}
+              >
+                <Building2 className="h-5 w-5" style={{ color: account.primary_color }} />
               </div>
             )}
+            <div>
+              <div className="flex items-center gap-2">
+                <h1 className="font-semibold text-lg">{displayName}</h1>
+                {/* Upgrade Badge */}
+                {!account.upgraded_organization_id ? (
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="h-7 gap-1.5 bg-gradient-to-r from-primary/10 to-amber-500/10 border-primary/30 hover:border-primary hover:bg-gradient-to-r hover:from-primary/20 hover:to-amber-500/20"
+                    onClick={() => setUpgradeDialogOpen(true)}
+                  >
+                    <Sparkles className="h-3.5 w-3.5 text-primary" />
+                    <span className="capitalize text-xs font-medium">
+                      {account.subscription_tier}
+                    </span>
+                    <Badge variant="secondary" className="h-4 text-[10px] px-1.5 bg-primary/20 text-primary hover:bg-primary/30">
+                      Upgrade
+                    </Badge>
+                  </Button>
+                ) : (
+                  <Badge variant="outline" className="text-green-600 bg-green-100 border-green-300">
+                    ✓ Bestellung.pro
+                  </Badge>
+                )}
+              </div>
+              <p className="text-sm text-muted-foreground">
+                {account.subdomain}.bestellung.pro
+              </p>
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-4">
             {/* Show current user info for supplier users */}
             {isSupplierUser && (
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -425,64 +362,58 @@ const B2BSupplierDashboard = () => {
       <main className="max-w-7xl mx-auto p-4 md:p-6">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <TabsList className={`grid w-full lg:w-auto lg:inline-grid ${isSupplierUser ? 'grid-cols-5' : 'grid-cols-7'}`}>
-              <TabsTrigger value="overview" className="gap-2">
-                <TrendingUp className="h-4 w-4" />
-                <span className="hidden sm:inline">Übersicht</span>
+            <TabsTrigger value="overview" className="gap-2">
+              <TrendingUp className="h-4 w-4" />
+              <span className="hidden sm:inline">Übersicht</span>
+            </TabsTrigger>
+            <TabsTrigger value="articles" className="gap-2">
+              <Package className="h-4 w-4" />
+              <span className="hidden sm:inline">Artikel</span>
+            </TabsTrigger>
+            <TabsTrigger value="customers" className="gap-2">
+              <Users className="h-4 w-4" />
+              <span className="hidden sm:inline">Kunden</span>
+            </TabsTrigger>
+            <TabsTrigger value="offers" className="gap-2">
+              <FileText className="h-4 w-4" />
+              <span className="hidden sm:inline">Angebote</span>
+            </TabsTrigger>
+            <TabsTrigger value="orders" className="gap-2">
+              <ShoppingCart className="h-4 w-4" />
+              <span className="hidden sm:inline">Bestellungen</span>
+              {stats?.pendingOrders ? (
+                <Badge variant="destructive" className="ml-1 h-5 w-5 p-0 flex items-center justify-center text-xs">
+                  {stats.pendingOrders}
+                </Badge>
+              ) : null}
+            </TabsTrigger>
+            {/* Hide "Mein Einkauf" for supplier users or when no supplier */}
+            {!isSupplierUser && supplier && (
+              <TabsTrigger value="purchase" className="gap-2">
+                <PackageSearch className="h-4 w-4" />
+                <span className="hidden sm:inline">Mein Einkauf</span>
               </TabsTrigger>
-              <TabsTrigger value="articles" className="gap-2">
-                <Package className="h-4 w-4" />
-                <span className="hidden sm:inline">Artikel</span>
+            )}
+            {/* Hide "Einstellungen" for supplier users with viewer role */}
+            {(!isSupplierUser || supplierUserRole !== 'viewer') && (
+              <TabsTrigger value="settings" className="gap-2">
+                <Settings className="h-4 w-4" />
+                <span className="hidden sm:inline">Einstellungen</span>
               </TabsTrigger>
-              <TabsTrigger value="customers" className="gap-2">
-                <Users className="h-4 w-4" />
-                <span className="hidden sm:inline">Kunden</span>
-              </TabsTrigger>
-              <TabsTrigger value="offers" className="gap-2">
-                <FileText className="h-4 w-4" />
-                <span className="hidden sm:inline">Angebote</span>
-              </TabsTrigger>
-              <TabsTrigger value="orders" className="gap-2">
-                <ShoppingCart className="h-4 w-4" />
-                <span className="hidden sm:inline">Bestellungen</span>
-                {stats?.pendingOrders ? (
-                  <Badge variant="destructive" className="ml-1 h-5 w-5 p-0 flex items-center justify-center text-xs">
-                    {stats.pendingOrders}
-                  </Badge>
-                ) : null}
-              </TabsTrigger>
-              {/* Hide "Mein Einkauf" for supplier users or when no supplier selected */}
-              {!isSupplierUser && selectedSupplierId && (
-                <TabsTrigger value="purchase" className="gap-2">
-                  <PackageSearch className="h-4 w-4" />
-                  <span className="hidden sm:inline">Mein Einkauf</span>
-                </TabsTrigger>
-              )}
-              {/* Hide "Einstellungen" for supplier users with viewer role */}
-              {(!isSupplierUser || supplierUserRole !== 'viewer') && (
-                <TabsTrigger value="settings" className="gap-2">
-                  <Settings className="h-4 w-4" />
-                  <span className="hidden sm:inline">Einstellungen</span>
-                </TabsTrigger>
-              )}
-            </TabsList>
+            )}
+          </TabsList>
 
           {/* Overview Tab */}
           <TabsContent value="overview" className="space-y-6">
-            {/* No supplier selected - prompt to create or select */}
-            {suppliers.length === 0 ? (
+            {/* No supplier yet - should not happen after registration fix */}
+            {!supplier ? (
               <Card>
                 <CardHeader>
                   <CardTitle>Willkommen bei Ihrem B2B-Portal!</CardTitle>
                   <CardDescription>
-                    Erstellen Sie zunächst einen Lieferanten, um loszulegen.
+                    Es ist ein Fehler aufgetreten. Bitte kontaktieren Sie den Support.
                   </CardDescription>
                 </CardHeader>
-                <CardContent>
-                  <Button onClick={() => setActiveTab('settings')}>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Ersten Lieferanten anlegen
-                  </Button>
-                </CardContent>
               </Card>
             ) : (
               <>
@@ -546,9 +477,9 @@ const B2BSupplierDashboard = () => {
                 {/* Quick Actions */}
                 <Card>
                   <CardHeader>
-                    <CardTitle>Schnellaktionen für {selectedSupplierName}</CardTitle>
+                    <CardTitle>Schnellaktionen</CardTitle>
                     <CardDescription>
-                      Verwalten Sie Ihren Lieferanten
+                      Verwalten Sie Ihr B2B-Portal
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -587,9 +518,9 @@ const B2BSupplierDashboard = () => {
             <B2BArticlesTab 
               accountId={account.id} 
               linkedSupplierId={account.linked_supplier_id} 
-              selectedSupplierId={selectedSupplierId}
-              suppliers={suppliers}
-              onStatsChange={() => loadStats(account.id, selectedSupplierId)} 
+              selectedSupplierId={supplier?.id || ''}
+              suppliers={supplier ? [supplier] : []}
+              onStatsChange={() => loadStats(account.id, supplier?.id)} 
             />
           </TabsContent>
 
@@ -598,9 +529,9 @@ const B2BSupplierDashboard = () => {
             <B2BCustomersTab 
               accountId={account.id} 
               supplierName={account.company_name} 
-              onStatsChange={() => loadStats(account.id, selectedSupplierId)}
-              selectedSupplierId={selectedSupplierId}
-              suppliers={suppliers}
+              onStatsChange={() => loadStats(account.id, supplier?.id)}
+              selectedSupplierId={supplier?.id || ''}
+              suppliers={supplier ? [supplier] : []}
             />
           </TabsContent>
 
@@ -608,8 +539,8 @@ const B2BSupplierDashboard = () => {
           <TabsContent value="offers">
             <B2BOffersTab 
               accountId={account.id} 
-              selectedSupplierId={selectedSupplierId}
-              suppliers={suppliers}
+              selectedSupplierId={supplier?.id || ''}
+              suppliers={supplier ? [supplier] : []}
             />
           </TabsContent>
 
@@ -617,14 +548,14 @@ const B2BSupplierDashboard = () => {
           <TabsContent value="orders">
             <B2BOrdersTab 
               accountId={account.id} 
-              selectedSupplierId={selectedSupplierId}
-              suppliers={suppliers}
+              selectedSupplierId={supplier?.id || ''}
+              suppliers={supplier ? [supplier] : []}
             />
           </TabsContent>
 
           {/* Purchase Tab (Mein Einkauf) */}
           <TabsContent value="purchase">
-            <B2BPurchaseTab accountId={account.id} supplierId={selectedSupplierId} />
+            {supplier && <B2BPurchaseTab accountId={account.id} supplierId={supplier.id} />}
           </TabsContent>
 
           {/* Settings Tab */}
@@ -632,26 +563,15 @@ const B2BSupplierDashboard = () => {
             <B2BSettingsTab 
               account={account} 
               onUpdate={loadAccount}
-              selectedSupplierId={selectedSupplierId}
-              suppliers={suppliers}
-              onSuppliersChange={() => loadSuppliers(account.id)}
+              selectedSupplierId={supplier?.id || ''}
+              suppliers={supplier ? [supplier] : []}
+              onSuppliersChange={() => loadSupplier(account.id)}
               isSupplierUser={isSupplierUser}
               supplierUserRole={supplierUserRole}
             />
           </TabsContent>
         </Tabs>
       </main>
-
-      {/* New Supplier Dialog */}
-      <B2BSupplierFormDialog
-        open={newSupplierDialogOpen}
-        onOpenChange={setNewSupplierDialogOpen}
-        supplier={null}
-        accountId={account.id}
-        onSuccess={async () => {
-          await loadSuppliers(account.id);
-        }}
-      />
 
       {/* Upgrade Dialog */}
       <B2BUpgradePricingDialog

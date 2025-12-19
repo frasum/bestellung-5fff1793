@@ -39,7 +39,7 @@ serve(async (req) => {
     }
 
     // Parse request body
-    const { accountId, supplierId, expiresInDays = 7 } = await req.json();
+    const { accountId, expiresInDays = 7 } = await req.json();
 
     if (!accountId) {
       return new Response(
@@ -48,49 +48,49 @@ serve(async (req) => {
       );
     }
 
-    console.log(`Creating B2B mobile token for account ${accountId}, supplier ${supplierId}`);
+    console.log(`Creating B2B mobile token for account ${accountId}`);
 
-    // Verify user has access to this account (is supplier owner)
-    const { data: profile } = await supabaseClient
-      .from('profiles')
-      .select('organization_id')
-      .eq('id', user.id)
-      .single();
-
-    if (!profile) {
-      return new Response(
-        JSON.stringify({ error: 'User profile not found' }),
-        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // Check if user is supplier owner for this account
-    const { data: account } = await supabaseClient
+    // Get the account and verify ownership
+    const { data: account, error: accountError } = await supabaseClient
       .from('supplier_b2b_accounts')
-      .select('id, linked_supplier_id')
+      .select('id, email')
       .eq('id', accountId)
       .single();
 
-    if (!account) {
+    if (accountError || !account) {
+      console.error('Account not found:', accountError);
       return new Response(
         JSON.stringify({ error: 'Account not found' }),
         { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Verify ownership through linked supplier
-    const { data: supplier } = await supabaseClient
-      .from('suppliers')
-      .select('organization_id')
-      .eq('id', account.linked_supplier_id)
-      .single();
+    // Check if user is the account owner
+    if (account.email !== user.email) {
+      // Check if user is a supplier user for this account
+      const { data: supplierUser } = await supabaseClient
+        .from('b2b_supplier_users')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('account_id', accountId)
+        .maybeSingle();
 
-    if (!supplier || supplier.organization_id !== profile.organization_id) {
-      return new Response(
-        JSON.stringify({ error: 'Not authorized to create tokens for this account' }),
-        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      if (!supplierUser) {
+        return new Response(
+          JSON.stringify({ error: 'Not authorized to create tokens for this account' }),
+          { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
     }
+
+    // Get the single supplier for this account (1 Account = 1 Supplier)
+    const { data: supplier } = await supabaseClient
+      .from('b2b_suppliers')
+      .select('id')
+      .eq('account_id', accountId)
+      .order('created_at', { ascending: true })
+      .limit(1)
+      .maybeSingle();
 
     // Calculate expiry date
     const expiresAt = new Date();
@@ -101,7 +101,7 @@ serve(async (req) => {
       .from('b2b_mobile_tokens')
       .insert({
         account_id: accountId,
-        supplier_id: supplierId || null,
+        supplier_id: supplier?.id || null,
         expires_at: expiresAt.toISOString(),
         created_by: user.id,
       })
@@ -116,7 +116,7 @@ serve(async (req) => {
       );
     }
 
-    console.log(`Token created successfully: ${newToken.id}`);
+    console.log(`Token created successfully: ${newToken.id} for supplier: ${supplier?.id || 'none'}`);
 
     return new Response(
       JSON.stringify({
