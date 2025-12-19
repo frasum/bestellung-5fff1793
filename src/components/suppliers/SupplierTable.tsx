@@ -1,5 +1,5 @@
 import { Fragment } from 'react';
-import { ChevronDown, ChevronRight, Pencil, Trash2, FileText, Send, Bell, Store, Loader2, Plus, Minus, QrCode, ExternalLink } from 'lucide-react';
+import { ChevronDown, ChevronRight, Pencil, Trash2, FileText, Send, Bell, Store, Loader2, Plus, Minus, QrCode, ExternalLink, Key } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -28,6 +28,7 @@ interface SupplierTableProps {
   onDelete: (supplier: Supplier) => void;
   onSendInvitation: (supplier: Supplier) => void;
   onShowQRCode: (supplier: Supplier) => void;
+  onShowTokens?: (supplier: Supplier) => void;
   onOpenPortal?: (supplier: Supplier) => void;
   onShowChanges: (supplier: Supplier) => void;
   onShowLocations: (supplier: Supplier) => void;
@@ -59,6 +60,7 @@ export const SupplierTable = ({
   onDelete,
   onSendInvitation,
   onShowQRCode,
+  onShowTokens,
   onOpenPortal,
   onShowChanges,
   onShowLocations,
@@ -170,6 +172,11 @@ export const SupplierTable = ({
                       <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground hover:text-foreground" onClick={() => onShowQRCode(supplier)} title="QR-Code für Lieferantenportal">
                         <QrCode className="w-4 h-4" />
                       </Button>
+                      {advancedSettingsEnabled && onShowTokens && (
+                        <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground hover:text-foreground" onClick={() => onShowTokens(supplier)} title="Tokens verwalten">
+                          <Key className="w-4 h-4" />
+                        </Button>
+                      )}
                       {advancedSettingsEnabled && (
                         <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground hover:text-foreground" onClick={() => onOpenPortal?.(supplier)} title="Portal direkt öffnen (Test)">
                           <ExternalLink className="w-4 h-4" />
