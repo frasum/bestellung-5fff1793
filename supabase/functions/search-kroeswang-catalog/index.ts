@@ -45,11 +45,14 @@ serve(async (req) => {
     };
 
     const categoryKeywords = categoryMap[category?.toLowerCase()] || category || 'Fleisch';
-    const searchQuery = searchTerm 
-      ? `${searchTerm} ${categoryKeywords}`
-      : categoryKeywords;
+    
+    // Prioritize search term over category keywords for focused results
+    const searchQuery = searchTerm || categoryKeywords;
+    const searchContext = searchTerm 
+      ? `Suche GENAU nach "${searchTerm}" Produkten`
+      : `Suche nach ${categoryKeywords} Produkten`;
 
-    console.log(`Searching Kröswang catalog for: ${searchQuery}`);
+    console.log(`Searching Kröswang catalog for: ${searchQuery} (context: ${searchContext})`);
 
     // Use Perplexity to search kroeswang.at
     const perplexityResponse = await fetch('https://api.perplexity.ai/chat/completions', {
@@ -65,7 +68,10 @@ serve(async (req) => {
             role: 'system',
             content: `Du bist ein Produkt-Recherche-Assistent. Suche auf kroeswang.at nach Produkten und extrahiere die Informationen als strukturiertes JSON.
 
-WICHTIG: Gib NUR valides JSON zurück, ohne Markdown-Formatierung oder zusätzlichen Text.
+WICHTIG: 
+- Gib NUR valides JSON zurück, ohne Markdown-Formatierung oder zusätzlichen Text.
+- Zeige NUR Produkte die DIREKT zum Suchbegriff passen.
+- Wenn nach "Huhn" gesucht wird, zeige NUR Huhn-Produkte, KEINE Rind- oder Schweinefleisch-Produkte.
 
 Für jedes gefundene Produkt gib zurück:
 - name: Produktname
@@ -80,9 +86,9 @@ Antworte AUSSCHLIESSLICH mit einem JSON-Array wie folgt:
           },
           {
             role: 'user',
-            content: `Suche auf kroeswang.at nach folgenden Produkten und gib mir bis zu ${limit} Ergebnisse: ${searchQuery}
+            content: `${searchContext} auf kroeswang.at. Gib mir bis zu ${limit} Ergebnisse.
 
-Fokussiere dich auf die Produktkategorie "${categoryKeywords}" und liste die verfügbaren Produkte mit Preisen auf.`
+WICHTIG: Zeige NUR Produkte die DIREKT mit "${searchQuery}" zu tun haben. Keine anderen Produkte!`
           }
         ],
         search_domain_filter: ['kroeswang.at'],
