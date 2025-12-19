@@ -4,8 +4,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Heart, Gift, Search, Check, X, Edit2, Building2, Users, Crown } from 'lucide-react';
-import { useSponsoredAccounts, useSponsoredAccountStats, useSetSponsored, useUpdateSponsoredNote, SponsoredAccount } from '@/hooks/useSponsoredAccounts';
+import { Loader2, Heart, Gift, Search, Check, X, Edit2, Building2, Users, Crown, Trash2, MoreHorizontal } from 'lucide-react';
+import { useSponsoredAccounts, useSponsoredAccountStats, useSetSponsored, useUpdateSponsoredNote, useDeleteOrganization, useUpdateOrganization, SponsoredAccount } from '@/hooks/useSponsoredAccounts';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
@@ -19,6 +19,24 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { Label } from '@/components/ui/label';
 
 export function FriendsAndFamilyTab() {
   const { t } = useTranslation();
@@ -26,6 +44,8 @@ export function FriendsAndFamilyTab() {
   const stats = useSponsoredAccountStats();
   const setSponsored = useSetSponsored();
   const updateNote = useUpdateSponsoredNote();
+  const deleteOrganization = useDeleteOrganization();
+  const updateOrganization = useUpdateOrganization();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [filterMode, setFilterMode] = useState<'all' | 'sponsored' | 'regular'>('all');
@@ -33,6 +53,9 @@ export function FriendsAndFamilyTab() {
   const [noteText, setNoteText] = useState('');
   const [sponsorDialog, setSponsorDialog] = useState<{ account: SponsoredAccount; action: 'add' | 'remove' } | null>(null);
   const [sponsorNote, setSponsorNote] = useState('');
+  const [deleteDialog, setDeleteDialog] = useState<SponsoredAccount | null>(null);
+  const [editDialog, setEditDialog] = useState<SponsoredAccount | null>(null);
+  const [editName, setEditName] = useState('');
 
   if (isLoading) {
     return (
@@ -258,27 +281,53 @@ export function FriendsAndFamilyTab() {
                         {format(new Date(account.created_at), 'dd.MM.yyyy', { locale: de })}
                       </TableCell>
                       <TableCell className="text-right">
-                        {account.is_sponsored ? (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => setSponsorDialog({ account, action: 'remove' })}
-                            className="text-destructive hover:text-destructive"
-                          >
-                            <X className="h-4 w-4 mr-1" />
-                            Entfernen
-                          </Button>
-                        ) : (
-                          <Button
-                            size="sm"
-                            variant="default"
-                            onClick={() => setSponsorDialog({ account, action: 'add' })}
-                            className="bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white"
-                          >
-                            <Gift className="h-4 w-4 mr-1" />
-                            Sponsern
-                          </Button>
-                        )}
+                        <div className="flex items-center justify-end gap-2">
+                          {account.is_sponsored ? (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => setSponsorDialog({ account, action: 'remove' })}
+                              className="text-destructive hover:text-destructive"
+                            >
+                              <X className="h-4 w-4 mr-1" />
+                              Entfernen
+                            </Button>
+                          ) : (
+                            <Button
+                              size="sm"
+                              variant="default"
+                              onClick={() => setSponsorDialog({ account, action: 'add' })}
+                              className="bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white"
+                            >
+                              <Gift className="h-4 w-4 mr-1" />
+                              Sponsern
+                            </Button>
+                          )}
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-8 w-8">
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => {
+                                setEditDialog(account);
+                                setEditName(account.name);
+                              }}>
+                                <Edit2 className="h-4 w-4 mr-2" />
+                                Bearbeiten
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem 
+                                onClick={() => setDeleteDialog(account)}
+                                className="text-destructive focus:text-destructive"
+                              >
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                Löschen
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))
@@ -335,6 +384,79 @@ export function FriendsAndFamilyTab() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Edit Dialog */}
+      <Dialog open={!!editDialog} onOpenChange={() => setEditDialog(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Account bearbeiten</DialogTitle>
+            <DialogDescription>
+              Ändere die Organisationsdaten für "{editDialog?.name}"
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="org-name">Organisationsname</Label>
+              <Input
+                id="org-name"
+                value={editName}
+                onChange={(e) => setEditName(e.target.value)}
+                placeholder="Name der Organisation"
+              />
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditDialog(null)}>
+              Abbrechen
+            </Button>
+            <Button
+              onClick={() => {
+                if (editDialog) {
+                  updateOrganization.mutate(
+                    { organizationId: editDialog.id, name: editName },
+                    { onSuccess: () => setEditDialog(null) }
+                  );
+                }
+              }}
+              disabled={updateOrganization.isPending || !editName.trim()}
+            >
+              {updateOrganization.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Speichern
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!deleteDialog} onOpenChange={() => setDeleteDialog(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Account löschen?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Bist du sicher, dass du "{deleteDialog?.name}" löschen möchtest? 
+              Diese Aktion kann nicht rückgängig gemacht werden. Alle Daten dieser Organisation werden unwiderruflich gelöscht.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (deleteDialog) {
+                  deleteOrganization.mutate(deleteDialog.id, {
+                    onSuccess: () => setDeleteDialog(null)
+                  });
+                }
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleteOrganization.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Löschen
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
