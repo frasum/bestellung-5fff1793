@@ -13,7 +13,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
-import { LogOut, Save, Search, Package, Loader2, Clock, Plus, FileDown, AlertCircle, AlertTriangle, SendHorizontal, Camera, Trash2, Upload, Pencil, Check, X, ShoppingCart } from 'lucide-react';
+import { LogOut, Save, Search, Package, Loader2, Clock, Plus, FileDown, AlertCircle, AlertTriangle, SendHorizontal, Camera, Trash2, Upload, Pencil, Check, X, ShoppingCart, Building2, ClipboardList } from 'lucide-react';
 import logo from '@/assets/logo.png';
 import { SupplierArticleCard } from '@/components/suppliers/SupplierArticleCard';
 import { SupplierUnitSelect } from '@/components/suppliers/SupplierUnitSelect';
@@ -21,6 +21,9 @@ import { SupplierCategorySelect } from '@/components/suppliers/SupplierCategoryS
 import { SupplierOrderUnitSelect } from '@/components/suppliers/SupplierOrderUnitSelect';
 import { SuggestArticleDialog } from '@/components/suppliers/SuggestArticleDialog';
 import { SupplierPortalOrdersTab } from '@/components/suppliers/SupplierPortalOrdersTab';
+import { SupplierPortalOwnVendorsTab } from '@/components/suppliers/SupplierPortalOwnVendorsTab';
+import { SupplierPortalOwnArticlesTab } from '@/components/suppliers/SupplierPortalOwnArticlesTab';
+import { SupplierPortalOwnInventoryTab } from '@/components/suppliers/SupplierPortalOwnInventoryTab';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface Unit {
@@ -874,6 +877,10 @@ const SupplierPortal = () => {
               <ShoppingCart className="h-4 w-4" />
               Bestellungen
             </TabsTrigger>
+            <TabsTrigger value="purchasing" className="gap-2">
+              <Building2 className="h-4 w-4" />
+              Mein Einkauf
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="articles">
@@ -1349,6 +1356,35 @@ const SupplierPortal = () => {
 
           <TabsContent value="orders">
             <SupplierPortalOrdersTab session={session} />
+          </TabsContent>
+
+          <TabsContent value="purchasing">
+            <Tabs defaultValue="vendors" className="space-y-4">
+              <TabsList>
+                <TabsTrigger value="vendors" className="gap-2">
+                  <Building2 className="h-4 w-4" />
+                  Lieferanten
+                </TabsTrigger>
+                <TabsTrigger value="own-articles" className="gap-2">
+                  <Package className="h-4 w-4" />
+                  Artikelkatalog
+                </TabsTrigger>
+                <TabsTrigger value="inventory" className="gap-2">
+                  <ClipboardList className="h-4 w-4" />
+                  Inventur
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="vendors">
+                <SupplierPortalOwnVendorsTab session={session} />
+              </TabsContent>
+              <TabsContent value="own-articles">
+                <SupplierPortalOwnArticlesTab session={session} />
+              </TabsContent>
+              <TabsContent value="inventory">
+                <SupplierPortalOwnInventoryTab session={session} />
+              </TabsContent>
+            </Tabs>
           </TabsContent>
         </Tabs>
 
