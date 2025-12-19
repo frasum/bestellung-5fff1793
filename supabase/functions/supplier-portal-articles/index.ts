@@ -602,6 +602,31 @@ serve(async (req) => {
         );
       }
 
+      // Check if price editing is still allowed (when price-related fields are being changed)
+      const priceFields = ['price', 'annual_order_value', 'reference_price'];
+      const isPriceChangeAttempt = Object.keys(changes).some(field => priceFields.includes(field));
+      
+      if (isPriceChangeAttempt) {
+        const { data: tokenData } = await supabase
+          .from('supplier_portal_tokens')
+          .select('price_edit_expires_at')
+          .eq('supplier_id', supplierId)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        
+        if (tokenData?.price_edit_expires_at && new Date(tokenData.price_edit_expires_at) < new Date()) {
+          console.log('Price editing no longer allowed for supplier:', supplierId);
+          return new Response(
+            JSON.stringify({ 
+              error: 'Die Bearbeitungsfrist für Preise ist abgelaufen. Kontaktieren Sie Ihren Ansprechpartner für einen neuen Zugangslink.',
+              code: 'PRICE_EDIT_EXPIRED'
+            }),
+            { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+      }
+
       // Fetch the current article to get old values
       const { data: currentArticle, error: fetchError } = await supabase
         .from('articles')
@@ -838,6 +863,33 @@ serve(async (req) => {
           JSON.stringify({ error: 'Missing or empty articleChanges array' }),
           { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
+      }
+
+      // Check if any price-related fields are being changed
+      const priceFields = ['price', 'annual_order_value', 'reference_price'];
+      const hasPriceChanges = articleChanges.some(({ changes }) => 
+        Object.keys(changes || {}).some(field => priceFields.includes(field))
+      );
+
+      if (hasPriceChanges) {
+        const { data: tokenData } = await supabase
+          .from('supplier_portal_tokens')
+          .select('price_edit_expires_at')
+          .eq('supplier_id', supplierId)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        
+        if (tokenData?.price_edit_expires_at && new Date(tokenData.price_edit_expires_at) < new Date()) {
+          console.log('Price editing no longer allowed for supplier:', supplierId);
+          return new Response(
+            JSON.stringify({ 
+              error: 'Die Bearbeitungsfrist für Preise ist abgelaufen. Kontaktieren Sie Ihren Ansprechpartner für einen neuen Zugangslink.',
+              code: 'PRICE_EDIT_EXPIRED'
+            }),
+            { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
       }
 
       console.log(`Processing batch update for ${articleChanges.length} articles`);

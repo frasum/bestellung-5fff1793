@@ -78,7 +78,12 @@ serve(async (req) => {
 
     console.log('Token verified successfully for supplier:', tokenData.suppliers?.name);
 
-    // Return supplier session data including expiry
+    // Check if price editing is still allowed
+    const priceEditExpiresAt = tokenData.price_edit_expires_at;
+    const canEditPrices = priceEditExpiresAt ? new Date(priceEditExpiresAt) > new Date() : false;
+    console.log('Price edit expires at:', priceEditExpiresAt, 'Can edit prices:', canEditPrices);
+
+    // Return supplier session data including expiry and price edit permission
     return new Response(
       JSON.stringify({
         status: 'success',
@@ -86,6 +91,8 @@ serve(async (req) => {
         supplierName: tokenData.suppliers?.name || 'Lieferant',
         organizationId: tokenData.suppliers?.organization_id,
         expiresAt: tokenData.expires_at,
+        priceEditExpiresAt: priceEditExpiresAt,
+        canEditPrices: canEditPrices,
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
