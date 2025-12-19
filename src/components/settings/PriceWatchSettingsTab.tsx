@@ -313,7 +313,6 @@ export const PriceWatchSettingsTab = () => {
               >
                 <Checkbox 
                   checked={selectedCategories.includes(category)}
-                  onCheckedChange={() => toggleCategory(category)}
                 />
                 <Label className="text-sm cursor-pointer">{category}</Label>
               </div>
