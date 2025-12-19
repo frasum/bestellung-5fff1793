@@ -139,7 +139,79 @@ export function LiveDemoAdminPanel({ soundEnabled }: LiveDemoAdminPanelProps) {
     };
   }, [soundEnabled]);
 
-  // Approve draft - create real order
+  // Generate simulated email HTML for demo (admin approval)
+  const generateApprovalEmailHtml = (draft: CartDraft, orderNumber: string) => {
+    const supplierName = draft.items[0]?.supplier?.name || 'Unbekannt';
+    const employeeName = draft.name.replace('EasyOrder: ', '').split(' (')[0];
+    const totalAmount = draft.items.reduce((sum, item) => sum + (item.article?.price || 0) * item.quantity, 0);
+    
+    const itemRows = draft.items.map(item => `
+      <tr>
+        <td style="padding: 8px; border-bottom: 1px solid #eee;">${item.article?.name || 'Unbekannt'}</td>
+        <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: center;">${item.quantity}</td>
+        <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: center;">${item.article?.unit || 'Stk'}</td>
+        <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: right;">€${(item.article?.price || 0).toFixed(2)}</td>
+        <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: right;">€${((item.article?.price || 0) * item.quantity).toFixed(2)}</td>
+      </tr>
+    `).join('');
+
+    return `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <title>Bestellung ${orderNumber}</title>
+      </head>
+      <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <div style="background: linear-gradient(135deg, #f472b6 0%, #ec4899 100%); color: white; padding: 20px; border-radius: 8px 8px 0 0;">
+          <h1 style="margin: 0; font-size: 24px;">EasyOrder Bestellung</h1>
+          <p style="margin: 5px 0 0 0; opacity: 0.9;">${orderNumber} • Freigegeben</p>
+        </div>
+        
+        <div style="background: #fdf2f8; padding: 15px; border-left: 4px solid #ec4899;">
+          <p style="margin: 0;"><strong>Mitarbeiter:</strong> ${employeeName}</p>
+          <p style="margin: 5px 0 0 0;"><strong>Status:</strong> ✅ Freigegeben vom Admin</p>
+        </div>
+        
+        <div style="background: #f9fafb; padding: 20px; border: 1px solid #e5e7eb;">
+          <p>Sehr geehrte Damen und Herren von <strong>${supplierName}</strong>,</p>
+          <p>wir möchten folgende Artikel bestellen (EasyOrder - Admin freigegeben):</p>
+          
+          <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+            <thead>
+              <tr style="background: #f3f4f6;">
+                <th style="padding: 10px; text-align: left;">Artikel</th>
+                <th style="padding: 10px; text-align: center;">Menge</th>
+                <th style="padding: 10px; text-align: center;">Einheit</th>
+                <th style="padding: 10px; text-align: right;">Preis</th>
+                <th style="padding: 10px; text-align: right;">Gesamt</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${itemRows}
+            </tbody>
+            <tfoot>
+              <tr style="font-weight: bold; background: #f3f4f6;">
+                <td colspan="4" style="padding: 10px; text-align: right;">Gesamtsumme:</td>
+                <td style="padding: 10px; text-align: right;">€${totalAmount.toFixed(2)}</td>
+              </tr>
+            </tfoot>
+          </table>
+          
+          <p><strong>Lieferadresse:</strong><br>EasyOrder Demo<br>Live-Demo Adresse</p>
+          
+          <p style="margin-top: 20px;">Mit freundlichen Grüßen<br>Live-Demo Restaurant</p>
+        </div>
+        
+        <div style="background: #fdf2f8; padding: 15px; border-radius: 0 0 8px 8px; text-align: center; font-size: 12px; color: #9d174d;">
+          <p style="margin: 0;">🛡️ Diese E-Mail wurde simuliert für die Live-Demo (Admin-Freigabe)</p>
+        </div>
+      </body>
+      </html>
+    `;
+  };
+
+  // Approve draft - create real order with simulated email
   const approveDraft = useMutation({
     mutationFn: async (draft: CartDraft) => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -147,6 +219,7 @@ export function LiveDemoAdminPanel({ soundEnabled }: LiveDemoAdminPanelProps) {
 
       // Get supplier from first item
       const supplierId = draft.items[0]?.supplier_id;
+      const supplierName = draft.items[0]?.supplier?.name || 'Unbekannt';
       if (!supplierId) throw new Error('No supplier found');
 
       const { data: orderNumber } = await supabase.rpc('generate_order_number');
@@ -167,6 +240,8 @@ export function LiveDemoAdminPanel({ soundEnabled }: LiveDemoAdminPanelProps) {
           delivery_address: 'EasyOrder Demo',
           notes: draft.notes || `Freigegeben aus: ${draft.name}`,
           is_test_order: true,
+          email_sent: true,
+          email_sent_at: new Date().toISOString(),
         })
         .select()
         .single();
@@ -188,6 +263,22 @@ export function LiveDemoAdminPanel({ soundEnabled }: LiveDemoAdminPanelProps) {
 
       await supabase.from('order_items').insert(orderItems);
 
+      // Create SIMULATED email log (no real email sent)
+      const emailHtml = generateApprovalEmailHtml(draft, orderNumber);
+      
+      await supabase.from('communication_logs').insert({
+        organization_id: draft.organization_id,
+        order_id: order.id,
+        supplier_id: supplierId,
+        email_type: 'order_sent',
+        direction: 'outgoing',
+        recipient_email: 'demo@example.com',
+        recipient_name: supplierName,
+        subject: `EasyOrder Bestellung ${orderNumber} (Freigegeben)`,
+        status: 'simulated',
+        body_html: emailHtml,
+      });
+
       // Delete draft items first, then draft
       await supabase.from('cart_draft_items').delete().eq('draft_id', draft.id);
       await supabase.from('cart_drafts').delete().eq('id', draft.id);
@@ -197,7 +288,8 @@ export function LiveDemoAdminPanel({ soundEnabled }: LiveDemoAdminPanelProps) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['orders'] });
       queryClient.invalidateQueries({ queryKey: ['cart-drafts'] });
-      toast.success('Bestellung freigegeben!');
+      queryClient.invalidateQueries({ queryKey: ['communication-logs-demo'] });
+      toast.success('Bestellung freigegeben! (Demo)');
       fetchDrafts();
     },
     onError: (error) => {
