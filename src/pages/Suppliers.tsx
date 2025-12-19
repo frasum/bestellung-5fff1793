@@ -42,6 +42,7 @@ import { useSuggestedArticlesCount } from '@/hooks/useSuggestedArticles';
 import { QuickCaptureWizard } from '@/components/suppliers/QuickCaptureWizard';
 import { WinesTab } from '@/components/suppliers/WinesTab';
 import { SupplierQRCodeDialog } from '@/components/suppliers/SupplierQRCodeDialog';
+import { SupplierTokensDialog } from '@/components/suppliers/SupplierTokensDialog';
 const Suppliers = () => {
   const {
     user,
@@ -153,6 +154,7 @@ const Suppliers = () => {
   const [isQuickCaptureOpen, setIsQuickCaptureOpen] = useState(false);
   const [organizationId, setOrganizationId] = useState<string | null>(null);
   const [qrCodeSupplier, setQrCodeSupplier] = useState<Supplier | null>(null);
+  const [tokensDialogSupplier, setTokensDialogSupplier] = useState<Supplier | null>(null);
   // Local state for multi-select toggles
   const [supplierMultiSelectEnabled, setSupplierMultiSelectEnabled] = useState(() => {
     const saved = localStorage.getItem('suppliers-multi-select');
@@ -661,10 +663,10 @@ const Suppliers = () => {
                 <p className="text-muted-foreground">
                   {searchQuery || topCategoryFilter !== 'all' || categoryFilter !== 'all' ? 'Keine Lieferanten gefunden' : 'Noch keine Lieferanten. Fügen Sie Ihren ersten Lieferanten hinzu.'}
                 </p>
-              </div> : <SupplierTable suppliers={filteredSuppliers || []} articlesBySupplier={articlesBySupplier} expandedSuppliers={expandedSuppliers} selectedSuppliers={selectedSuppliers} multiSelectEnabled={supplierMultiSelectEnabled} pendingChangesBySupplier={pendingChangesBySupplier || {}} pendingArticleIds={pendingArticleIds || new Set()} recentlyActiveSuppliers={recentlyActiveSuppliers || new Map()} advancedSettingsEnabled={advancedSettingsEnabled} onToggleExpand={toggleSupplierExpanded} onToggleSelect={toggleSupplierSelected} onSelectAll={selectAllSuppliers} onEdit={supplier => {
+               </div> : <SupplierTable suppliers={filteredSuppliers || []} articlesBySupplier={articlesBySupplier} expandedSuppliers={expandedSuppliers} selectedSuppliers={selectedSuppliers} multiSelectEnabled={supplierMultiSelectEnabled} pendingChangesBySupplier={pendingChangesBySupplier || {}} pendingArticleIds={pendingArticleIds || new Set()} recentlyActiveSuppliers={recentlyActiveSuppliers || new Map()} advancedSettingsEnabled={advancedSettingsEnabled} onToggleExpand={toggleSupplierExpanded} onToggleSelect={toggleSupplierSelected} onSelectAll={selectAllSuppliers} onEdit={supplier => {
             setEditingSupplier(supplier);
             setIsSupplierDialogOpen(true);
-          }} onDelete={setDeletingSupplier} onSendInvitation={handleSendInvitation} onShowQRCode={setQrCodeSupplier} onOpenPortal={handleOpenPortal} onShowChanges={setChangesDialogSupplier} onShowLocations={setLocationsDialogSupplier} onPrintOrderList={async (supplier, articles) => await generateOrderListPdf(supplier, articles.map(a => ({
+          }} onDelete={setDeletingSupplier} onSendInvitation={handleSendInvitation} onShowQRCode={setQrCodeSupplier} onShowTokens={setTokensDialogSupplier} onOpenPortal={handleOpenPortal} onShowChanges={setChangesDialogSupplier} onShowLocations={setLocationsDialogSupplier} onPrintOrderList={async (supplier, articles) => await generateOrderListPdf(supplier, articles.map(a => ({
             name: a.name,
             unit: a.unit,
             sku: a.sku,
@@ -819,6 +821,12 @@ const Suppliers = () => {
     }} organizationId={organizationId} />
 
       <SupplierQRCodeDialog supplier={qrCodeSupplier} open={!!qrCodeSupplier} onOpenChange={open => !open && setQrCodeSupplier(null)} />
+      
+      <SupplierTokensDialog 
+        open={!!tokensDialogSupplier} 
+        onOpenChange={open => !open && setTokensDialogSupplier(null)} 
+        supplier={tokensDialogSupplier} 
+      />
     </DashboardLayout>;
 };
 export default Suppliers;

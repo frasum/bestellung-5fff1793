@@ -2967,6 +2967,7 @@ export type Database = {
           created_at: string
           expires_at: string
           id: string
+          is_active: boolean
           price_edit_expires_at: string | null
           supplier_id: string
           token: string
@@ -2976,6 +2977,7 @@ export type Database = {
           created_at?: string
           expires_at?: string
           id?: string
+          is_active?: boolean
           price_edit_expires_at?: string | null
           supplier_id: string
           token?: string
@@ -2985,6 +2987,7 @@ export type Database = {
           created_at?: string
           expires_at?: string
           id?: string
+          is_active?: boolean
           price_edit_expires_at?: string | null
           supplier_id?: string
           token?: string

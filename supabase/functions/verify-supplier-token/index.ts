@@ -51,6 +51,20 @@ serve(async (req) => {
       );
     }
 
+    // Check if token is revoked
+    if (!tokenData.is_active) {
+      console.log('Token revoked');
+      return new Response(
+        JSON.stringify({ 
+          error: 'Token revoked', 
+          status: 'revoked',
+          supplierId: tokenData.supplier_id,
+          supplierEmail: tokenData.suppliers?.email
+        }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     // Check if token is expired
     if (new Date(tokenData.expires_at) < new Date()) {
       console.log('Token expired');
