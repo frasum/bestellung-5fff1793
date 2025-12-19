@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { 
   usePriceWatchSettings, 
@@ -7,6 +7,7 @@ import {
   usePriceWatchResults
 } from '@/hooks/usePriceWatch';
 import { useOrganization } from '@/hooks/useSettings';
+import { useCategories } from '@/hooks/useCategories';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
@@ -35,36 +36,34 @@ import {
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 
-const ALL_CATEGORIES = [
-  'Fleisch',
-  'Fisch',
-  'Spirituosen',
-  'Wein',
-  'Softdrinks',
-  'Milchprodukte',
-  'Gemüse',
-  'Obst',
-  'Backwaren',
-  'Gewürze',
-  'Öle & Fette',
-  'Konserven',
-  'Tiefkühl',
-];
-
 export const PriceWatchSettingsTab = () => {
   const { t } = useTranslation();
   const { data: settings, isLoading } = usePriceWatchSettings();
   const { data: organization } = useOrganization();
   const { data: results } = usePriceWatchResults();
+  const { data: dbCategories = [], isLoading: categoriesLoading } = useCategories();
   const updateSettings = useUpdatePriceWatchSettings();
   const runPriceSearch = useRunPriceSearch();
+
+  // Get unique category names from database, removing duplicates
+  const availableCategories = useMemo(() => {
+    const categoryNames = dbCategories.map(cat => cat.name);
+    return [...new Set(categoryNames)].sort();
+  }, [dbCategories]);
 
   const [isEnabled, setIsEnabled] = useState(true);
   const [minSavingsPercent, setMinSavingsPercent] = useState(5);
   const [searchRadiusKm, setSearchRadiusKm] = useState(50);
-  const [selectedCategories, setSelectedCategories] = useState<string[]>(ALL_CATEGORIES);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [searchFrequency, setSearchFrequency] = useState('daily');
   const [emailNotifications, setEmailNotifications] = useState(true);
+
+  // Initialize selected categories when db categories are loaded
+  useEffect(() => {
+    if (availableCategories.length > 0 && selectedCategories.length === 0 && !settings) {
+      setSelectedCategories(availableCategories);
+    }
+  }, [availableCategories, selectedCategories.length, settings]);
 
   // Load settings when available
   useEffect(() => {
@@ -72,11 +71,12 @@ export const PriceWatchSettingsTab = () => {
       setIsEnabled(settings.is_enabled);
       setMinSavingsPercent(settings.min_savings_percent);
       setSearchRadiusKm(settings.search_radius_km);
-      setSelectedCategories(settings.categories || ALL_CATEGORIES);
+      // Use saved categories, or fall back to all available
+      setSelectedCategories(settings.categories?.length ? settings.categories : availableCategories);
       setSearchFrequency(settings.search_frequency);
       setEmailNotifications(settings.email_notifications);
     }
-  }, [settings]);
+  }, [settings, availableCategories]);
 
   const handleSaveSettings = () => {
     if (!organization?.id) return;
@@ -299,28 +299,40 @@ export const PriceWatchSettingsTab = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
-            {ALL_CATEGORIES.map(category => (
-              <div
-                key={category}
-                className={`
-                  flex items-center gap-2 p-3 rounded-lg border cursor-pointer transition-colors
-                  ${selectedCategories.includes(category)
-                    ? 'border-primary bg-primary/5'
-                    : 'border-border hover:border-primary/50'}
-                `}
-                onClick={() => toggleCategory(category)}
-              >
-                <Checkbox 
-                  checked={selectedCategories.includes(category)}
-                />
-                <Label className="text-sm cursor-pointer">{category}</Label>
+          {categoriesLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+            </div>
+          ) : availableCategories.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-8">
+              Keine Kategorien gefunden. Erstellen Sie zuerst Kategorien für Ihre Artikel.
+            </p>
+          ) : (
+            <>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+                {availableCategories.map(category => (
+                  <div
+                    key={category}
+                    className={`
+                      flex items-center gap-2 p-3 rounded-lg border cursor-pointer transition-colors
+                      ${selectedCategories.includes(category)
+                        ? 'border-primary bg-primary/5'
+                        : 'border-border hover:border-primary/50'}
+                    `}
+                    onClick={() => toggleCategory(category)}
+                  >
+                    <Checkbox 
+                      checked={selectedCategories.includes(category)}
+                    />
+                    <Label className="text-sm cursor-pointer">{category}</Label>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
-          <p className="text-xs text-muted-foreground mt-4">
-            {selectedCategories.length} von {ALL_CATEGORIES.length} Kategorien ausgewählt
-          </p>
+              <p className="text-xs text-muted-foreground mt-4">
+                {selectedCategories.length} von {availableCategories.length} Kategorien ausgewählt
+              </p>
+            </>
+          )}
         </CardContent>
       </Card>
 
