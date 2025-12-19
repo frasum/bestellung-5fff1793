@@ -508,6 +508,98 @@ export type Database = {
           },
         ]
       }
+      b2b_inventory_items: {
+        Row: {
+          article_id: string
+          created_at: string
+          id: string
+          session_id: string
+          storage_1: number
+          storage_2: number
+          total: number | null
+          unit_price: number | null
+          updated_at: string
+        }
+        Insert: {
+          article_id: string
+          created_at?: string
+          id?: string
+          session_id: string
+          storage_1?: number
+          storage_2?: number
+          total?: number | null
+          unit_price?: number | null
+          updated_at?: string
+        }
+        Update: {
+          article_id?: string
+          created_at?: string
+          id?: string
+          session_id?: string
+          storage_1?: number
+          storage_2?: number
+          total?: number | null
+          unit_price?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "b2b_inventory_items_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: false
+            referencedRelation: "b2b_supplier_vendor_articles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "b2b_inventory_items_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "b2b_inventory_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      b2b_inventory_sessions: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          id: string
+          name: string
+          notes: string | null
+          status: string
+          supplier_account_id: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          name?: string
+          notes?: string | null
+          status?: string
+          supplier_account_id: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          name?: string
+          notes?: string | null
+          status?: string
+          supplier_account_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "b2b_inventory_sessions_supplier_account_id_fkey"
+            columns: ["supplier_account_id"]
+            isOneToOne: false
+            referencedRelation: "supplier_b2b_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       b2b_supplier_purchase_order_items: {
         Row: {
           article_id: string | null
