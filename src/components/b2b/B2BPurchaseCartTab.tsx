@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
 import { ShoppingCart, Trash2, Plus, Minus, Send } from 'lucide-react';
 import { getPurchaseCart, setPurchaseCart, B2BVendorArticle } from './B2BVendorArticlesTab';
@@ -17,10 +16,11 @@ interface CartItem extends B2BVendorArticle {
 
 interface B2BPurchaseCartTabProps {
   accountId: string;
+  supplierId?: string;
   onOrderPlaced: () => void;
 }
 
-const B2BPurchaseCartTab = ({ accountId, onOrderPlaced }: B2BPurchaseCartTabProps) => {
+const B2BPurchaseCartTab = ({ accountId, supplierId, onOrderPlaced }: B2BPurchaseCartTabProps) => {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [vendors, setVendors] = useState<B2BVendor[]>([]);
   const [loading, setLoading] = useState(true);
@@ -32,10 +32,10 @@ const B2BPurchaseCartTab = ({ accountId, onOrderPlaced }: B2BPurchaseCartTabProp
     const handleCartUpdate = () => loadCartData();
     window.addEventListener('b2b-cart-update', handleCartUpdate);
     return () => window.removeEventListener('b2b-cart-update', handleCartUpdate);
-  }, [accountId]);
+  }, [accountId, supplierId]);
 
   const loadCartData = async () => {
-    const cart = getPurchaseCart();
+    const cart = getPurchaseCart(supplierId);
     const articleIds = Object.keys(cart);
     
     if (articleIds.length === 0) {
@@ -45,11 +45,17 @@ const B2BPurchaseCartTab = ({ accountId, onOrderPlaced }: B2BPurchaseCartTabProp
     }
 
     try {
-      // Load vendors
-      const { data: vendorsData } = await supabase
+      // Load vendors (filtered by supplier_id)
+      let vendorsQuery = supabase
         .from('b2b_supplier_vendors')
         .select('*')
         .eq('supplier_account_id', accountId);
+
+      if (supplierId) {
+        vendorsQuery = vendorsQuery.eq('supplier_id', supplierId);
+      }
+
+      const { data: vendorsData } = await vendorsQuery;
       
       setVendors(vendorsData || []);
 
@@ -78,7 +84,7 @@ const B2BPurchaseCartTab = ({ accountId, onOrderPlaced }: B2BPurchaseCartTabProp
   };
 
   const updateQuantity = (articleId: string, delta: number) => {
-    const cart = getPurchaseCart();
+    const cart = getPurchaseCart(supplierId);
     const newQuantity = (cart[articleId] || 1) + delta;
     
     if (newQuantity <= 0) {
@@ -87,19 +93,19 @@ const B2BPurchaseCartTab = ({ accountId, onOrderPlaced }: B2BPurchaseCartTabProp
       cart[articleId] = newQuantity;
     }
     
-    setPurchaseCart(cart);
+    setPurchaseCart(cart, supplierId);
     loadCartData();
   };
 
   const removeItem = (articleId: string) => {
-    const cart = getPurchaseCart();
+    const cart = getPurchaseCart(supplierId);
     delete cart[articleId];
-    setPurchaseCart(cart);
+    setPurchaseCart(cart, supplierId);
     loadCartData();
   };
 
   const clearCart = () => {
-    setPurchaseCart({});
+    setPurchaseCart({}, supplierId);
     loadCartData();
   };
 
@@ -193,13 +199,13 @@ const B2BPurchaseCartTab = ({ accountId, onOrderPlaced }: B2BPurchaseCartTabProp
                       value={item.quantity}
                       onChange={(e) => {
                         const newQty = parseInt(e.target.value) || 0;
-                        const cart = getPurchaseCart();
+                        const cart = getPurchaseCart(supplierId);
                         if (newQty <= 0) {
                           delete cart[item.id];
                         } else {
                           cart[item.id] = newQty;
                         }
-                        setPurchaseCart(cart);
+                        setPurchaseCart(cart, supplierId);
                         loadCartData();
                       }}
                       className="w-16 text-center h-8"
@@ -257,11 +263,11 @@ const B2BPurchaseCartTab = ({ accountId, onOrderPlaced }: B2BPurchaseCartTabProp
           total={itemsByVendor[checkoutVendorId]?.total || 0}
           onSuccess={() => {
             // Remove ordered items from cart
-            const cart = getPurchaseCart();
+            const cart = getPurchaseCart(supplierId);
             itemsByVendor[checkoutVendorId]?.items.forEach(item => {
               delete cart[item.id];
             });
-            setPurchaseCart(cart);
+            setPurchaseCart(cart, supplierId);
             setCheckoutVendorId(null);
             onOrderPlaced();
           }}

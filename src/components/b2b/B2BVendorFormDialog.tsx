@@ -20,6 +20,7 @@ interface B2BVendorFormDialogProps {
   onOpenChange: (open: boolean) => void;
   vendor: B2BVendor | null;
   accountId: string;
+  supplierId?: string;
   onSuccess: () => void;
 }
 
@@ -28,6 +29,7 @@ const B2BVendorFormDialog = ({
   onOpenChange,
   vendor,
   accountId,
+  supplierId,
   onSuccess,
 }: B2BVendorFormDialogProps) => {
   const [loading, setLoading] = useState(false);
@@ -73,6 +75,7 @@ const B2BVendorFormDialog = ({
     try {
       const data = {
         supplier_account_id: accountId,
+        supplier_id: supplierId || null,
         name: formData.name.trim(),
         email: formData.email.trim() || null,
         phone: formData.phone.trim() || null,

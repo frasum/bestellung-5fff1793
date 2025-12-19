@@ -13,6 +13,7 @@ import B2BUpgradePricingDialog from '@/components/b2b-customer/B2BUpgradePricing
 
 interface B2BPurchaseTabProps {
   accountId: string;
+  supplierId: string;
 }
 
 interface AccountInfo {
@@ -23,7 +24,7 @@ interface AccountInfo {
   articleCount: number;
 }
 
-const B2BPurchaseTab = ({ accountId }: B2BPurchaseTabProps) => {
+const B2BPurchaseTab = ({ accountId, supplierId }: B2BPurchaseTabProps) => {
   const [activeSubTab, setActiveSubTab] = useState('vendors');
   const [refreshKey, setRefreshKey] = useState(0);
   const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
@@ -31,7 +32,7 @@ const B2BPurchaseTab = ({ accountId }: B2BPurchaseTabProps) => {
 
   useEffect(() => {
     loadAccountInfo();
-  }, [accountId]);
+  }, [accountId, supplierId]);
 
   const loadAccountInfo = async () => {
     // Get account info
@@ -41,13 +42,18 @@ const B2BPurchaseTab = ({ accountId }: B2BPurchaseTabProps) => {
       .eq('id', accountId)
       .single();
 
-    // Get vendor count
-    const { count: vendorCount } = await supabase
+    // Get vendor count (filtered by supplier)
+    let vendorQuery = supabase
       .from('b2b_supplier_vendors')
       .select('*', { count: 'exact', head: true })
       .eq('supplier_account_id', accountId);
+    
+    if (supplierId) {
+      vendorQuery = vendorQuery.eq('supplier_id', supplierId);
+    }
+    const { count: vendorCount } = await vendorQuery;
 
-    // Get article count
+    // Get article count (filtered by supplier through vendors)
     const { count: articleCount } = await supabase
       .from('b2b_supplier_vendor_articles')
       .select('*', { count: 'exact', head: true })
@@ -132,7 +138,8 @@ const B2BPurchaseTab = ({ accountId }: B2BPurchaseTabProps) => {
 
         <TabsContent value="vendors" className="mt-4">
           <B2BVendorsTab 
-            accountId={accountId} 
+            accountId={accountId}
+            supplierId={supplierId}
             onVendorChange={handleRefresh}
           />
         </TabsContent>
@@ -141,6 +148,7 @@ const B2BPurchaseTab = ({ accountId }: B2BPurchaseTabProps) => {
           <B2BVendorArticlesTab 
             key={refreshKey}
             accountId={accountId}
+            supplierId={supplierId}
           />
         </TabsContent>
 
@@ -148,6 +156,7 @@ const B2BPurchaseTab = ({ accountId }: B2BPurchaseTabProps) => {
           <B2BPurchaseCartTab 
             key={refreshKey}
             accountId={accountId}
+            supplierId={supplierId}
             onOrderPlaced={() => {
               handleRefresh();
               setActiveSubTab('orders');
@@ -159,6 +168,7 @@ const B2BPurchaseTab = ({ accountId }: B2BPurchaseTabProps) => {
           <B2BPurchaseOrdersTab 
             key={refreshKey}
             accountId={accountId}
+            supplierId={supplierId}
           />
         </TabsContent>
 
@@ -166,6 +176,7 @@ const B2BPurchaseTab = ({ accountId }: B2BPurchaseTabProps) => {
           <B2BInventoryTab 
             key={refreshKey}
             accountId={accountId}
+            supplierId={supplierId}
           />
         </TabsContent>
       </Tabs>
