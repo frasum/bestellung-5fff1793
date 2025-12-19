@@ -14,25 +14,12 @@ const isPreviewEnvironment = (): boolean => {
   return hostname.includes('--') || hostname === 'localhost' || hostname === '127.0.0.1';
 };
 
-// Known project ID for this Lovable project
-const PROJECT_ID = '113bb70f-2619-492d-82eb-ef1843c240c4';
+// Custom domain for production QR codes
+const CUSTOM_DOMAIN = 'https://bestellung.pro';
 
-// Get the production URL for QR codes
+// Get the production URL for QR codes - always use custom domain
 const getProductionUrl = (): string => {
-  const hostname = window.location.hostname;
-  
-  // If we're on localhost or a preview environment, use the known production URL
-  if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname.includes('--')) {
-    return `https://${PROJECT_ID}.lovableproject.com`;
-  }
-  
-  // If we're on a production URL (lovable.app or lovableproject.com), use current origin
-  if (hostname.endsWith('.lovable.app') || hostname.endsWith('.lovableproject.com')) {
-    return window.location.origin;
-  }
-  
-  // Fallback: use known production URL
-  return `https://${PROJECT_ID}.lovableproject.com`;
+  return CUSTOM_DOMAIN;
 };
 
 interface B2BMobileQRDialogProps {
