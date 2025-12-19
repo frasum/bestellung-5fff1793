@@ -129,3 +129,55 @@ export function useUpdateSponsoredNote() {
     },
   });
 }
+
+export function useUpdateOrganization() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ 
+      organizationId, 
+      name 
+    }: { 
+      organizationId: string; 
+      name: string;
+    }) => {
+      const { error } = await supabase
+        .from('organizations')
+        .update({ name })
+        .eq('id', organizationId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['sponsored-accounts'] });
+      toast.success('Organisation aktualisiert');
+    },
+    onError: (error) => {
+      toast.error('Fehler beim Aktualisieren der Organisation');
+      console.error(error);
+    },
+  });
+}
+
+export function useDeleteOrganization() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (organizationId: string) => {
+      const { error } = await supabase
+        .from('organizations')
+        .delete()
+        .eq('id', organizationId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['sponsored-accounts'] });
+      toast.success('Organisation gelöscht');
+    },
+    onError: (error) => {
+      toast.error('Fehler beim Löschen der Organisation');
+      console.error(error);
+    },
+  });
+}
