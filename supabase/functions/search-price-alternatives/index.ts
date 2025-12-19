@@ -162,7 +162,8 @@ serve(async (req) => {
                 content: `Du bist ein Preisrecherche-Assistent für Gastronomiebetriebe und Unternehmen.
                 Suche nach den günstigsten Preisen aus ALLEN verfügbaren Quellen:
                 
-                B2B-GROSSHANDEL DEUTSCHLAND: Metro, Selgros, Transgourmet, Chefs Culinar, Rungis Express
+                B2B-GROSSHANDEL DEUTSCHLAND: Metro, Selgros, Transgourmet, Chefs Culinar, Rungis Express, Bierbichler, Frischeparadies, Eichsfeld, Niggemann, Becker's Bester
+                SERVICE-BUND PARTNER: Bierbichler (Bayern), Eichsfeld (Thüringen/Hessen), Niggemann (NRW), Frischeparadies (bundesweit)
                 B2B-GROSSHANDEL ÖSTERREICH: Kröswang (kroeswang.at), Kastner, AGM, Wedl, PFEIFFER, C+C Pfeiffer
                 CASH & CARRY: Hamberger, Handelshof, Ratio, Metro Cash & Carry
                 SUPERMARKTKETTEN DEUTSCHLAND: Aldi, Lidl, Rewe, Edeka, Kaufland, Penny, Netto
