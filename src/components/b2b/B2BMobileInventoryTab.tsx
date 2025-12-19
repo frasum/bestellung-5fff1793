@@ -80,22 +80,36 @@ const B2BMobileInventoryTab = ({ accountId, supplierId }: B2BMobileInventoryTabP
       const { data: vendorData } = await vendorQuery;
       setVendors(vendorData || []);
 
-      // Load articles
-      const { data: articleData } = await supabase
-        .from('b2b_supplier_vendor_articles')
-        .select('id, name, price, unit, category, vendor_id')
-        .eq('supplier_account_id', accountId)
-        .eq('is_active', true)
-        .order('name');
+      // Get vendor IDs for article filtering
+      const vendorIds = (vendorData || []).map(v => v.id);
 
-      setArticles(articleData || []);
+      // Load articles - only from filtered vendors
+      let articleData: Article[] = [];
+      if (vendorIds.length > 0) {
+        const { data } = await supabase
+          .from('b2b_supplier_vendor_articles')
+          .select('id, name, price, unit, category, vendor_id')
+          .eq('supplier_account_id', accountId)
+          .eq('is_active', true)
+          .in('vendor_id', vendorIds)
+          .order('name');
+        articleData = data || [];
+      }
 
-      // Load sessions
-      const { data: sessionData } = await supabase
+      setArticles(articleData);
+
+      // Load sessions - filter by supplierId if provided
+      let sessionQuery = supabase
         .from('b2b_inventory_sessions')
         .select('id, name, status, created_at')
         .eq('supplier_account_id', accountId)
         .order('created_at', { ascending: false });
+
+      if (supplierId) {
+        sessionQuery = sessionQuery.eq('supplier_id', supplierId);
+      }
+
+      const { data: sessionData } = await sessionQuery;
 
       setSessions(sessionData || []);
 
