@@ -1348,6 +1348,33 @@ export type Database = {
         }
         Relationships: []
       }
+      edge_function_registry: {
+        Row: {
+          created_at: string | null
+          function_name: string
+          id: string
+          is_active: boolean | null
+          label_de: string
+          label_en: string
+        }
+        Insert: {
+          created_at?: string | null
+          function_name: string
+          id?: string
+          is_active?: boolean | null
+          label_de: string
+          label_en: string
+        }
+        Update: {
+          created_at?: string | null
+          function_name?: string
+          id?: string
+          is_active?: boolean | null
+          label_de?: string
+          label_en?: string
+        }
+        Relationships: []
+      }
       email_templates: {
         Row: {
           article_list_format: string
@@ -3559,6 +3586,7 @@ export type Database = {
           category: string
           feature_key: string
           id: string
+          is_worked_on: boolean | null
           notes: string | null
           organization_id: string
           priority: string | null
@@ -3569,6 +3597,7 @@ export type Database = {
           category: string
           feature_key: string
           id?: string
+          is_worked_on?: boolean | null
           notes?: string | null
           organization_id: string
           priority?: string | null
@@ -3579,6 +3608,7 @@ export type Database = {
           category?: string
           feature_key?: string
           id?: string
+          is_worked_on?: boolean | null
           notes?: string | null
           organization_id?: string
           priority?: string | null

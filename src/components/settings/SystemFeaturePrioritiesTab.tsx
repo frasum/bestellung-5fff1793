@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -7,18 +7,31 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
-import { FileJson, FileText, Circle, MessageSquare } from 'lucide-react';
-import { SYSTEM_FEATURES, getTotalFeatureCount } from '@/data/systemFeatures';
+import { FileJson, FileText, Circle, MessageSquare, Check, Plus } from 'lucide-react';
+import { SYSTEM_FEATURES, getTotalFeatureCount, SystemFeatureCategory } from '@/data/systemFeatures';
 import {
   useSystemFeaturePriorities,
   useUpsertFeaturePriority,
   useUpdateFeatureNotes,
   useBulkSetCategoryPriority,
+  useToggleFeatureWorkedOn,
   FeaturePriority,
 } from '@/hooks/useSystemFeaturePriorities';
+import { useEdgeFunctionRegistry } from '@/hooks/useEdgeFunctionRegistry';
 import { exportPrioritiesToPdf, exportPrioritiesToJson } from '@/lib/systemPrioritiesExport';
 import { useOrganization } from '@/hooks/useSettings';
 import { cn } from '@/lib/utils';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { useIsSuperAdmin } from '@/hooks/useIsSuperAdmin';
+import { useAddEdgeFunction } from '@/hooks/useEdgeFunctionRegistry';
 
 const PriorityButton = ({
   priority,
@@ -65,6 +78,33 @@ const PriorityButton = ({
   );
 };
 
+const WorkedOnButton = ({
+  isWorkedOn,
+  onClick,
+  disabled,
+}: {
+  isWorkedOn: boolean;
+  onClick: () => void;
+  disabled: boolean;
+}) => {
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      className={cn(
+        'w-6 h-6 rounded-full border-2 transition-all duration-200 flex items-center justify-center',
+        isWorkedOn
+          ? 'bg-blue-500 hover:bg-blue-600 border-blue-600'
+          : 'border-blue-300 hover:border-blue-500 hover:bg-blue-50',
+        disabled && 'opacity-50 cursor-not-allowed'
+      )}
+      title={isWorkedOn ? 'Bearbeitet' : 'Als bearbeitet markieren'}
+    >
+      {isWorkedOn && <Check className="w-3 h-3 text-white" />}
+    </button>
+  );
+};
+
 const FeatureRow = ({
   category,
   featureKey,
@@ -72,6 +112,7 @@ const FeatureRow = ({
   labelEn,
   currentPriority,
   notes,
+  isWorkedOn,
 }: {
   category: string;
   featureKey: string;
@@ -79,18 +120,29 @@ const FeatureRow = ({
   labelEn: string;
   currentPriority: FeaturePriority;
   notes: string | null;
+  isWorkedOn: boolean;
 }) => {
   const { i18n } = useTranslation();
   const [showNotes, setShowNotes] = useState(false);
   const [noteValue, setNoteValue] = useState(notes || '');
   const upsertMutation = useUpsertFeaturePriority();
   const notesMutation = useUpdateFeatureNotes();
+  const workedOnMutation = useToggleFeatureWorkedOn();
 
   const label = i18n.language === 'de' ? labelDe : labelEn;
+
+  // Sync noteValue when notes prop changes
+  useEffect(() => {
+    setNoteValue(notes || '');
+  }, [notes]);
 
   const handlePriorityClick = (priority: FeaturePriority) => {
     const newPriority = currentPriority === priority ? null : priority;
     upsertMutation.mutate({ category, featureKey, priority: newPriority });
+  };
+
+  const handleWorkedOnClick = () => {
+    workedOnMutation.mutate({ category, featureKey, isWorkedOn: !isWorkedOn });
   };
 
   const handleNotesBlur = () => {
@@ -121,8 +173,16 @@ const FeatureRow = ({
             onClick={() => handlePriorityClick('red')}
             disabled={upsertMutation.isPending}
           />
+          <div className="w-px h-4 bg-border mx-1" />
+          <WorkedOnButton
+            isWorkedOn={isWorkedOn}
+            onClick={handleWorkedOnClick}
+            disabled={workedOnMutation.isPending}
+          />
         </div>
-        <span className="flex-1 text-sm">{label}</span>
+        <span className={cn('flex-1 text-sm', isWorkedOn && 'line-through text-muted-foreground')}>
+          {label}
+        </span>
         <Button
           variant="ghost"
           size="sm"
@@ -149,21 +209,127 @@ const FeatureRow = ({
   );
 };
 
+const AddEdgeFunctionDialog = () => {
+  const { i18n } = useTranslation();
+  const [open, setOpen] = useState(false);
+  const [functionName, setFunctionName] = useState('');
+  const [labelDe, setLabelDe] = useState('');
+  const [labelEn, setLabelEn] = useState('');
+  const addMutation = useAddEdgeFunction();
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!functionName || !labelDe || !labelEn) return;
+    
+    addMutation.mutate(
+      { functionName, labelDe, labelEn },
+      {
+        onSuccess: () => {
+          setOpen(false);
+          setFunctionName('');
+          setLabelDe('');
+          setLabelEn('');
+        },
+      }
+    );
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant="outline" size="sm" className="h-7">
+          <Plus className="h-3 w-3 mr-1" />
+          {i18n.language === 'de' ? 'Function hinzufügen' : 'Add Function'}
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>
+            {i18n.language === 'de' ? 'Edge Function registrieren' : 'Register Edge Function'}
+          </DialogTitle>
+          <DialogDescription>
+            {i18n.language === 'de'
+              ? 'Neue Edge Function zur Checkliste hinzufügen'
+              : 'Add new Edge Function to the checklist'}
+          </DialogDescription>
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="functionName">Function Name</Label>
+            <Input
+              id="functionName"
+              placeholder="z.B. my-new-function"
+              value={functionName}
+              onChange={(e) => setFunctionName(e.target.value)}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="labelDe">Label (Deutsch)</Label>
+            <Input
+              id="labelDe"
+              placeholder="z.B. Meine neue Funktion"
+              value={labelDe}
+              onChange={(e) => setLabelDe(e.target.value)}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="labelEn">Label (English)</Label>
+            <Input
+              id="labelEn"
+              placeholder="e.g. My new function"
+              value={labelEn}
+              onChange={(e) => setLabelEn(e.target.value)}
+            />
+          </div>
+          <Button type="submit" disabled={addMutation.isPending || !functionName || !labelDe || !labelEn}>
+            {addMutation.isPending ? 'Wird gespeichert...' : 'Registrieren'}
+          </Button>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
 export const SystemFeaturePrioritiesTab = () => {
   const { t, i18n } = useTranslation();
   const { data: priorities, isLoading } = useSystemFeaturePriorities();
+  const { data: edgeFunctions, isLoading: edgeFunctionsLoading } = useEdgeFunctionRegistry();
   const { data: organization } = useOrganization();
   const bulkMutation = useBulkSetCategoryPriority();
-  const [activeFilter, setActiveFilter] = useState<FeaturePriority | 'unrated' | null>(null);
+  const isSuperAdmin = useIsSuperAdmin();
+  const [activeFilter, setActiveFilter] = useState<FeaturePriority | 'unrated' | 'worked_on' | 'not_worked_on' | null>(null);
 
-  const totalFeatures = getTotalFeatureCount();
+  // Combine static features with dynamic edge functions
+  const allFeatures = useMemo((): SystemFeatureCategory[] => {
+    const staticFeatures = [...SYSTEM_FEATURES];
+    
+    if (edgeFunctions && edgeFunctions.length > 0) {
+      const edgeFunctionsCategory: SystemFeatureCategory = {
+        key: 'edge_functions',
+        labelDe: 'Edge Functions',
+        labelEn: 'Edge Functions',
+        features: edgeFunctions.map(ef => ({
+          key: ef.function_name,
+          labelDe: ef.label_de,
+          labelEn: ef.label_en,
+        })),
+      };
+      staticFeatures.push(edgeFunctionsCategory);
+    }
+    
+    return staticFeatures;
+  }, [edgeFunctions]);
+
+  const totalFeatures = useMemo(() => {
+    return allFeatures.reduce((sum, cat) => sum + cat.features.length, 0);
+  }, [allFeatures]);
 
   const stats = useMemo(() => {
-    if (!priorities) return { green: 0, yellow: 0, red: 0, unrated: totalFeatures };
+    if (!priorities) return { green: 0, yellow: 0, red: 0, unrated: totalFeatures, workedOn: 0 };
 
-    // Nur Prioritäten für Features zählen, die noch in SYSTEM_FEATURES existieren
+    // Count priorities for features that exist in allFeatures
     const validPriorities = priorities.filter(p => 
-      SYSTEM_FEATURES.some(cat => 
+      allFeatures.some(cat => 
         cat.key === p.category && 
         cat.features.some(f => f.key === p.feature_key)
       )
@@ -172,10 +338,11 @@ export const SystemFeaturePrioritiesTab = () => {
     const green = validPriorities.filter((p) => p.priority === 'green').length;
     const yellow = validPriorities.filter((p) => p.priority === 'yellow').length;
     const red = validPriorities.filter((p) => p.priority === 'red').length;
+    const workedOn = validPriorities.filter((p) => p.is_worked_on).length;
     const rated = green + yellow + red;
 
-    return { green, yellow, red, unrated: totalFeatures - rated };
-  }, [priorities, totalFeatures]);
+    return { green, yellow, red, unrated: totalFeatures - rated, workedOn };
+  }, [priorities, totalFeatures, allFeatures]);
 
   const getPriorityForFeature = (category: string, featureKey: string): FeaturePriority => {
     const found = priorities?.find(
@@ -184,21 +351,31 @@ export const SystemFeaturePrioritiesTab = () => {
     return found?.priority || null;
   };
 
+  const getWorkedOnForFeature = (category: string, featureKey: string): boolean => {
+    const found = priorities?.find(
+      (p) => p.category === category && p.feature_key === featureKey
+    );
+    return found?.is_worked_on || false;
+  };
+
   const filteredFeatures = useMemo(() => {
-    if (!activeFilter) return SYSTEM_FEATURES;
+    if (!activeFilter) return allFeatures;
     
-    return SYSTEM_FEATURES.map(category => ({
+    return allFeatures.map(category => ({
       ...category,
       features: category.features.filter(feature => {
         const priority = getPriorityForFeature(category.key, feature.key);
+        const isWorkedOn = getWorkedOnForFeature(category.key, feature.key);
+        
         if (activeFilter === 'unrated') return !priority;
+        if (activeFilter === 'worked_on') return isWorkedOn;
+        if (activeFilter === 'not_worked_on') return !isWorkedOn;
         return priority === activeFilter;
       })
     })).filter(category => category.features.length > 0);
-  }, [activeFilter, priorities]);
+  }, [activeFilter, priorities, allFeatures]);
 
   const progressPercent = ((totalFeatures - stats.unrated) / totalFeatures) * 100;
-
 
   const getNotesForFeature = (category: string, featureKey: string): string | null => {
     const found = priorities?.find(
@@ -223,7 +400,7 @@ export const SystemFeaturePrioritiesTab = () => {
     }
   };
 
-  if (isLoading) {
+  if (isLoading || edgeFunctionsLoading) {
     return (
       <Card>
         <CardHeader>
@@ -301,6 +478,16 @@ export const SystemFeaturePrioritiesTab = () => {
             <Badge 
               variant="outline" 
               className={cn(
+                "border-blue-500 text-blue-600 cursor-pointer transition-all hover:bg-blue-50",
+                activeFilter === 'worked_on' && "bg-blue-500 text-white hover:bg-blue-600"
+              )}
+              onClick={() => setActiveFilter(activeFilter === 'worked_on' ? null : 'worked_on')}
+            >
+              🔵 {stats.workedOn} {i18n.language === 'de' ? 'Bearbeitet' : 'Worked On'}
+            </Badge>
+            <Badge 
+              variant="outline" 
+              className={cn(
                 "text-muted-foreground cursor-pointer transition-all hover:bg-muted",
                 activeFilter === 'unrated' && "bg-gray-500 text-white border-gray-500 hover:bg-gray-600"
               )}
@@ -337,9 +524,13 @@ export const SystemFeaturePrioritiesTab = () => {
             const categoryPriorities = category.features.map((f) =>
               getPriorityForFeature(category.key, f.key)
             );
+            const categoryWorkedOn = category.features.filter((f) =>
+              getWorkedOnForFeature(category.key, f.key)
+            ).length;
             const greenCount = categoryPriorities.filter((p) => p === 'green').length;
             const yellowCount = categoryPriorities.filter((p) => p === 'yellow').length;
             const redCount = categoryPriorities.filter((p) => p === 'red').length;
+            const isEdgeFunctions = category.key === 'edge_functions';
 
             return (
               <AccordionItem
@@ -366,6 +557,11 @@ export const SystemFeaturePrioritiesTab = () => {
                           {redCount}
                         </Badge>
                       )}
+                      {categoryWorkedOn > 0 && (
+                        <Badge className="bg-blue-500 hover:bg-blue-500 text-white text-xs px-1.5 py-0 min-w-[1.25rem] justify-center">
+                          {categoryWorkedOn}
+                        </Badge>
+                      )}
                       <Badge variant="outline" className="text-xs px-1.5 py-0 min-w-[1.5rem] justify-center">
                         {category.features.length}
                       </Badge>
@@ -374,7 +570,7 @@ export const SystemFeaturePrioritiesTab = () => {
                 </AccordionTrigger>
                 <AccordionContent>
                   {/* Bulk actions */}
-                  <div className="flex gap-2 mb-3 pt-1">
+                  <div className="flex gap-2 mb-3 pt-1 items-center">
                     <span className="text-xs text-muted-foreground">
                       {i18n.language === 'de' ? 'Alle setzen:' : 'Set all:'}
                     </span>
@@ -393,6 +589,11 @@ export const SystemFeaturePrioritiesTab = () => {
                       onClick={() => handleBulkSet(category.key, featureKeys, 'red')}
                       title={i18n.language === 'de' ? 'Alle Unwichtig' : 'All Unimportant'}
                     />
+                    {isEdgeFunctions && isSuperAdmin && (
+                      <div className="ml-auto">
+                        <AddEdgeFunctionDialog />
+                      </div>
+                    )}
                   </div>
 
                   {/* Features list */}
@@ -406,6 +607,7 @@ export const SystemFeaturePrioritiesTab = () => {
                         labelEn={feature.labelEn}
                         currentPriority={getPriorityForFeature(category.key, feature.key)}
                         notes={getNotesForFeature(category.key, feature.key)}
+                        isWorkedOn={getWorkedOnForFeature(category.key, feature.key)}
                       />
                     ))}
                   </div>
