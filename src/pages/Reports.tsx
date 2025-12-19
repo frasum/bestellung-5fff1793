@@ -49,8 +49,9 @@ import {
   Line,
 } from 'recharts';
 import { format, subMonths, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns';
-import { Download, TrendingUp, TrendingDown, Euro, ShoppingCart, Users, Loader2, Package, BarChart3, ClipboardList, ChevronRight, MapPin, Smartphone, User } from 'lucide-react';
+import { Download, TrendingUp, TrendingDown, Euro, ShoppingCart, Users, Loader2, Package, BarChart3, ClipboardList, ChevronRight, MapPin, Smartphone, User, Eye } from 'lucide-react';
 import { InventoryTab } from '@/components/reports/InventoryTab';
+import { PriceWatchTab } from '@/components/reports/PriceWatchTab';
 import { cn } from '@/lib/utils';
 
 const COLORS = ['hsl(var(--primary))', 'hsl(var(--accent))', 'hsl(142, 76%, 36%)', 'hsl(38, 92%, 50%)', 'hsl(0, 84%, 60%)', 'hsl(262, 83%, 58%)'];
@@ -495,6 +496,13 @@ const Reports = () => {
               <ClipboardList className="w-4 h-4" />
               <span>{t('reports.inventoryTab')}</span>
             </TabsTrigger>
+            <TabsTrigger 
+              value="pricewatch" 
+              className="flex-1 sm:flex-initial h-8 gap-2 px-4 text-sm font-medium data-[state=active]:bg-background"
+            >
+              <Eye className="w-4 h-4" />
+              <span>Preisüberwachung</span>
+            </TabsTrigger>
           </TabsList>
 
           {/* Overview Tab */}
@@ -938,6 +946,11 @@ const Reports = () => {
           {/* Inventory Tab */}
           <TabsContent value="inventur" className="mt-4">
             <InventoryTab />
+          </TabsContent>
+
+          {/* Price Watch Tab */}
+          <TabsContent value="pricewatch" className="mt-4">
+            <PriceWatchTab />
           </TabsContent>
         </Tabs>
       </div>
