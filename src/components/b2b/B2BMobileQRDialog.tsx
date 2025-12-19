@@ -2,10 +2,42 @@ import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Loader2, Copy, Check, QrCode, RefreshCw, Smartphone } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Loader2, Copy, Check, QrCode, RefreshCw, Smartphone, AlertTriangle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import QRCode from 'qrcode';
+
+// Helper to detect if we're in a preview environment
+const isPreviewEnvironment = (): boolean => {
+  const hostname = window.location.hostname;
+  // Preview URLs contain '--' or are localhost
+  return hostname.includes('--') || hostname === 'localhost' || hostname === '127.0.0.1';
+};
+
+// Get the production URL for QR codes
+const getProductionUrl = (): string => {
+  const hostname = window.location.hostname;
+  const protocol = window.location.protocol;
+  
+  // If already on production (no '--' and is lovable domain), use as-is
+  if (!hostname.includes('--') && 
+      (hostname.endsWith('.lovable.app') || hostname.endsWith('.lovableproject.com'))) {
+    return window.location.origin;
+  }
+  
+  // Extract project ID from preview URL patterns:
+  // Pattern: "{projectId}--{suffix}.lovableproject.com"
+  if (hostname.includes('--') && hostname.includes('lovableproject.com')) {
+    const projectId = hostname.split('--')[0];
+    if (projectId) {
+      return `${protocol}//${projectId}.lovableproject.com`;
+    }
+  }
+  
+  // Fallback: return current origin
+  return window.location.origin;
+};
 
 interface B2BMobileQRDialogProps {
   open: boolean;
@@ -20,6 +52,7 @@ const B2BMobileQRDialog = ({ open, onOpenChange, accountId, supplierId }: B2BMob
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [expiresAt, setExpiresAt] = useState<string | null>(null);
+  const [isPreview, setIsPreview] = useState(false);
 
   useEffect(() => {
     if (open && !mobileUrl) {
@@ -38,10 +71,12 @@ const B2BMobileQRDialog = ({ open, onOpenChange, accountId, supplierId }: B2BMob
         throw new Error(data?.error || 'Failed to create token');
       }
 
-      // Generate URL in frontend using current origin
-      const generatedUrl = `${window.location.origin}/b2b/mobile?token=${data.token}`;
+      // Generate URL using production origin for QR code
+      const productionOrigin = getProductionUrl();
+      const generatedUrl = `${productionOrigin}/b2b/mobile?token=${data.token}`;
       setMobileUrl(generatedUrl);
       setExpiresAt(data.expiresAt);
+      setIsPreview(isPreviewEnvironment());
 
       // Generate QR code
       const qrDataUrl = await QRCode.toDataURL(generatedUrl, {
@@ -103,6 +138,16 @@ const B2BMobileQRDialog = ({ open, onOpenChange, accountId, supplierId }: B2BMob
             Scannen Sie den QR-Code mit Ihrem Smartphone, um die mobile Einkaufs- und Inventur-App zu öffnen.
           </DialogDescription>
         </DialogHeader>
+
+        {isPreview && (
+          <Alert variant="default" className="border-amber-500 bg-amber-50 dark:bg-amber-950/20">
+            <AlertTriangle className="h-4 w-4 text-amber-600" />
+            <AlertDescription className="text-amber-700 dark:text-amber-400">
+              Hinweis: Sie befinden sich in der Vorschau-Umgebung. Der QR-Code verweist auf die veröffentlichte App-URL. 
+              Stellen Sie sicher, dass die App veröffentlicht ist.
+            </AlertDescription>
+          </Alert>
+        )}
 
         <div className="space-y-4">
           {loading ? (
