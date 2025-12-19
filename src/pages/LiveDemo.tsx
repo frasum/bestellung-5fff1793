@@ -3,10 +3,11 @@ import { useTranslation } from 'react-i18next';
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Maximize2, Minimize2, RotateCcw, ShoppingCart, Truck, Volume2, VolumeX, ArrowLeft, AlertTriangle, ClipboardList } from 'lucide-react';
+import { Maximize2, Minimize2, RotateCcw, ShoppingCart, Truck, Volume2, VolumeX, ArrowLeft, AlertTriangle, ClipboardList, Mail } from 'lucide-react';
 import { LiveDemoRestaurantPanel } from '@/components/demo/LiveDemoRestaurantPanel';
 import { LiveDemoSupplierPanel } from '@/components/demo/LiveDemoSupplierPanel';
 import { LiveDemoEasyOrderPanel } from '@/components/demo/LiveDemoEasyOrderPanel';
+import { LiveDemoEmailPanel } from '@/components/demo/LiveDemoEmailPanel';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -126,10 +127,10 @@ export default function LiveDemo() {
         </div>
       </div>
 
-      {/* 3-Panel Split Screen */}
+      {/* 4-Panel Split Screen */}
       <ResizablePanelGroup direction="horizontal" className="flex-1">
         {/* Restaurant Panel */}
-        <ResizablePanel defaultSize={33} minSize={20}>
+        <ResizablePanel defaultSize={25} minSize={15}>
           <div className="h-full flex flex-col">
             <div className="flex items-center gap-2 px-4 py-2 bg-blue-500/10 border-b border-blue-500/20">
               <ShoppingCart className="h-4 w-4 text-blue-600" />
@@ -144,7 +145,7 @@ export default function LiveDemo() {
         <ResizableHandle withHandle />
 
         {/* EasyOrder Panel */}
-        <ResizablePanel defaultSize={34} minSize={20}>
+        <ResizablePanel defaultSize={25} minSize={15}>
           <div className="h-full flex flex-col">
             <div className="flex items-center gap-2 px-4 py-2 bg-orange-500/10 border-b border-orange-500/20">
               <ClipboardList className="h-4 w-4 text-orange-600" />
@@ -159,7 +160,7 @@ export default function LiveDemo() {
         <ResizableHandle withHandle />
 
         {/* Supplier Panel */}
-        <ResizablePanel defaultSize={33} minSize={20}>
+        <ResizablePanel defaultSize={25} minSize={15}>
           <div className="h-full flex flex-col">
             <div className="flex items-center gap-2 px-4 py-2 bg-green-500/10 border-b border-green-500/20">
               <Truck className="h-4 w-4 text-green-600" />
@@ -167,6 +168,21 @@ export default function LiveDemo() {
             </div>
             <div className="flex-1 overflow-hidden">
               <LiveDemoSupplierPanel soundEnabled={soundEnabled} />
+            </div>
+          </div>
+        </ResizablePanel>
+
+        <ResizableHandle withHandle />
+
+        {/* Email Panel */}
+        <ResizablePanel defaultSize={25} minSize={15}>
+          <div className="h-full flex flex-col">
+            <div className="flex items-center gap-2 px-4 py-2 bg-violet-500/10 border-b border-violet-500/20">
+              <Mail className="h-4 w-4 text-violet-600" />
+              <span className="font-medium text-violet-700 dark:text-violet-300 text-sm">E-Mail-Log</span>
+            </div>
+            <div className="flex-1 overflow-hidden">
+              <LiveDemoEmailPanel soundEnabled={soundEnabled} />
             </div>
           </div>
         </ResizablePanel>
