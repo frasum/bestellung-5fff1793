@@ -2,12 +2,13 @@ import { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Factory, Package, ShoppingCart, ClipboardList, Sparkles, CheckCircle } from 'lucide-react';
+import { Factory, Package, ShoppingCart, ClipboardList, Sparkles, CheckCircle, Clipboard } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import B2BVendorsTab from './B2BVendorsTab';
 import B2BVendorArticlesTab from './B2BVendorArticlesTab';
 import B2BPurchaseCartTab from './B2BPurchaseCartTab';
 import B2BPurchaseOrdersTab from './B2BPurchaseOrdersTab';
+import B2BInventoryTab from './B2BInventoryTab';
 import B2BUpgradePricingDialog from '@/components/b2b-customer/B2BUpgradePricingDialog';
 
 interface B2BPurchaseTabProps {
@@ -106,7 +107,7 @@ const B2BPurchaseTab = ({ accountId }: B2BPurchaseTabProps) => {
       )}
 
       <Tabs value={activeSubTab} onValueChange={setActiveSubTab}>
-        <TabsList className="grid w-full grid-cols-4 lg:w-auto lg:inline-grid">
+        <TabsList className="grid w-full grid-cols-5 lg:w-auto lg:inline-grid">
           <TabsTrigger value="vendors" className="gap-2">
             <Factory className="h-4 w-4" />
             <span className="hidden sm:inline">Meine Lieferanten</span>
@@ -122,6 +123,10 @@ const B2BPurchaseTab = ({ accountId }: B2BPurchaseTabProps) => {
           <TabsTrigger value="orders" className="gap-2">
             <ClipboardList className="h-4 w-4" />
             <span className="hidden sm:inline">Bestellungen</span>
+          </TabsTrigger>
+          <TabsTrigger value="inventory" className="gap-2">
+            <Clipboard className="h-4 w-4" />
+            <span className="hidden sm:inline">Inventur</span>
           </TabsTrigger>
         </TabsList>
 
@@ -152,6 +157,13 @@ const B2BPurchaseTab = ({ accountId }: B2BPurchaseTabProps) => {
 
         <TabsContent value="orders" className="mt-4">
           <B2BPurchaseOrdersTab 
+            key={refreshKey}
+            accountId={accountId}
+          />
+        </TabsContent>
+
+        <TabsContent value="inventory" className="mt-4">
+          <B2BInventoryTab 
             key={refreshKey}
             accountId={accountId}
           />
