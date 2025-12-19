@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, ReactNode, useMemo } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useMemo, useCallback } from 'react';
 import { IndustryTemplate, getIndustryById } from '@/data/industryTemplates';
 import { suppliers as mockSuppliers, articles as mockArticles } from '@/data/mockData';
 
@@ -10,6 +10,19 @@ export interface DemoCartItem {
   price: number;
   supplierId: string;
   supplierName: string;
+}
+
+export interface DemoOrder {
+  id: string;
+  orderNumber: string;
+  items: DemoCartItem[];
+  status: 'pending' | 'confirmed' | 'processing' | 'shipped' | 'delivered';
+  supplierId: string;
+  supplierName: string;
+  totalAmount: number;
+  createdAt: Date;
+  updatedAt: Date;
+  notes?: string;
 }
 
 interface DemoSupplier {
@@ -48,6 +61,12 @@ interface DemoContextType {
   getArticles: () => DemoArticle[];
   cartTotal: number;
   cartItemCount: number;
+  // Mock Orders
+  orders: DemoOrder[];
+  createOrder: (supplierId: string, notes?: string) => DemoOrder | null;
+  updateOrderStatus: (orderId: string, status: DemoOrder['status']) => void;
+  clearOrders: () => void;
+  getOrdersBySupplier: (supplierId: string) => DemoOrder[];
 }
 
 const DemoContext = createContext<DemoContextType | undefined>(undefined);
@@ -55,6 +74,7 @@ const DemoContext = createContext<DemoContextType | undefined>(undefined);
 export function DemoProvider({ children }: { children: ReactNode }) {
   const [industryId, setIndustryId] = useState('gastronomy');
   const [cart, setCart] = useState<DemoCartItem[]>([]);
+  const [orders, setOrders] = useState<DemoOrder[]>([]);
 
   const industry = getIndustryById(industryId) || getIndustryById('gastronomy')!;
 
@@ -158,6 +178,54 @@ export function DemoProvider({ children }: { children: ReactNode }) {
   const cartTotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const cartItemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
+  // Order management functions
+  const createOrder = useCallback((supplierId: string, notes?: string): DemoOrder | null => {
+    const supplierItems = cart.filter(item => item.supplierId === supplierId);
+    if (supplierItems.length === 0) return null;
+
+    const supplier = suppliers.find(s => s.id === supplierId);
+    if (!supplier) return null;
+
+    const totalAmount = supplierItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+    const now = new Date();
+    
+    const newOrder: DemoOrder = {
+      id: `order-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      orderNumber: `DEMO-${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}-${String(orders.length + 1).padStart(4, '0')}`,
+      items: [...supplierItems],
+      status: 'pending',
+      supplierId,
+      supplierName: supplier.name,
+      totalAmount,
+      createdAt: now,
+      updatedAt: now,
+      notes,
+    };
+
+    setOrders(prev => [newOrder, ...prev]);
+    
+    // Remove ordered items from cart
+    setCart(prev => prev.filter(item => item.supplierId !== supplierId));
+    
+    return newOrder;
+  }, [cart, suppliers, orders.length]);
+
+  const updateOrderStatus = useCallback((orderId: string, status: DemoOrder['status']) => {
+    setOrders(prev => prev.map(order => 
+      order.id === orderId 
+        ? { ...order, status, updatedAt: new Date() }
+        : order
+    ));
+  }, []);
+
+  const clearOrders = useCallback(() => {
+    setOrders([]);
+  }, []);
+
+  const getOrdersBySupplier = useCallback((supplierId: string): DemoOrder[] => {
+    return orders.filter(order => order.supplierId === supplierId);
+  }, [orders]);
+
   return (
     <DemoContext.Provider
       value={{
@@ -172,6 +240,11 @@ export function DemoProvider({ children }: { children: ReactNode }) {
         getArticles,
         cartTotal,
         cartItemCount,
+        orders,
+        createOrder,
+        updateOrderStatus,
+        clearOrders,
+        getOrdersBySupplier,
       }}
     >
       {children}
