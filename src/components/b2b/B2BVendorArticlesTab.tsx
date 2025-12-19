@@ -282,14 +282,15 @@ const B2BVendorArticlesTab = ({ accountId, supplierId }: B2BVendorArticlesTabPro
 
       {/* Articles Grid */}
       {loading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="border rounded-lg divide-y">
           {[1, 2, 3].map(i => (
-            <Card key={i} className="animate-pulse">
-              <CardContent className="p-4">
-                <div className="h-4 bg-muted rounded w-3/4 mb-2" />
-                <div className="h-4 bg-muted rounded w-1/2" />
-              </CardContent>
-            </Card>
+            <div key={i} className="p-3 animate-pulse flex items-center gap-4">
+              <div className="flex-1">
+                <div className="h-4 bg-muted rounded w-1/3 mb-2" />
+                <div className="h-3 bg-muted rounded w-1/4" />
+              </div>
+              <div className="h-4 bg-muted rounded w-20" />
+            </div>
           ))}
         </div>
       ) : vendors.length === 0 ? (
@@ -319,69 +320,69 @@ const B2BVendorArticlesTab = ({ accountId, supplierId }: B2BVendorArticlesTabPro
           </CardContent>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="border rounded-lg divide-y">
           {filteredArticles.map(article => (
-            <Card key={article.id} className={!article.is_active ? 'opacity-60' : ''}>
-              <CardContent className="p-4">
-                <div className="flex justify-between items-start">
+            <div 
+              key={article.id} 
+              className={`flex items-center justify-between p-3 hover:bg-muted/50 ${!article.is_active ? 'opacity-60' : ''}`}
+            >
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-3">
                   <div className="flex-1 min-w-0">
                     <h4 className="font-medium truncate">{article.name}</h4>
-                    {article.sku && (
-                      <p className="text-sm text-muted-foreground">SKU: {article.sku}</p>
-                    )}
-                    <div className="mt-2 flex items-center gap-2">
-                      <span className="font-semibold">
-                        €{article.price.toFixed(2)}
-                      </span>
-                      <span className="text-muted-foreground">/ {article.unit}</span>
-                    </div>
-                    <div className="flex flex-wrap gap-1 mt-2">
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      {article.sku && <span>SKU: {article.sku}</span>}
                       {article.category && (
-                        <Badge variant="secondary">{article.category}</Badge>
+                        <Badge variant="secondary" className="text-xs">{article.category}</Badge>
                       )}
                       {vendors.length > 1 && selectedVendorId === 'all' && (
-                        <Badge variant="outline">{article.vendor_name}</Badge>
+                        <Badge variant="outline" className="text-xs">{article.vendor_name}</Badge>
                       )}
                     </div>
                   </div>
-                  <div className="flex items-center gap-1">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 text-primary"
-                      onClick={() => addToCart(article.id)}
-                    >
-                      <ShoppingCart className="h-4 w-4" />
-                    </Button>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
-                          <MoreVertical className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => { setEditingArticle(article); setDialogOpen(true); }}>
-                          <Pencil className="h-4 w-4 mr-2" />
-                          Bearbeiten
-                        </DropdownMenuItem>
-                        <DropdownMenuItem 
-                          className="text-destructive"
-                          onClick={() => { setArticleToDelete(article); setDeleteDialogOpen(true); }}
-                        >
-                          <Trash2 className="h-4 w-4 mr-2" />
-                          Löschen
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold whitespace-nowrap">
+                      €{article.price.toFixed(2)} / {article.unit}
+                    </span>
+                    {cart[article.id] && (
+                      <Badge variant="default" className="text-xs">
+                        {cart[article.id]}×
+                      </Badge>
+                    )}
                   </div>
                 </div>
-                {cart[article.id] && (
-                  <Badge className="mt-2" variant="default">
-                    {cart[article.id]} im Warenkorb
-                  </Badge>
-                )}
-              </CardContent>
-            </Card>
+              </div>
+              <div className="flex items-center gap-1 ml-2">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 text-primary"
+                  onClick={() => addToCart(article.id)}
+                >
+                  <ShoppingCart className="h-4 w-4" />
+                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-8 w-8">
+                      <MoreVertical className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => { setEditingArticle(article); setDialogOpen(true); }}>
+                      <Pencil className="h-4 w-4 mr-2" />
+                      Bearbeiten
+                    </DropdownMenuItem>
+                    <DropdownMenuItem 
+                      className="text-destructive"
+                      onClick={() => { setArticleToDelete(article); setDeleteDialogOpen(true); }}
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Löschen
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            </div>
           ))}
         </div>
       )}
