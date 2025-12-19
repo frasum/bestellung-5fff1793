@@ -104,6 +104,45 @@ const employeeEmailTranslations: Record<string, {
   },
 };
 
+// Time window labels for each language
+const timeWindowLabels: Record<string, Record<string, string>> = {
+  de: {
+    morning: '10-12 Uhr',
+    afternoon: '12-15 Uhr',
+    flexible: 'Flexibel',
+  },
+  en: {
+    morning: '10-12 AM',
+    afternoon: '12-15 PM',
+    flexible: 'Flexible',
+  },
+  fr: {
+    morning: '10h-12h',
+    afternoon: '12h-15h',
+    flexible: 'Flexible',
+  },
+  it: {
+    morning: '10-12',
+    afternoon: '12-15',
+    flexible: 'Flessibile',
+  },
+  th: {
+    morning: '10-12 น.',
+    afternoon: '12-15 น.',
+    flexible: 'ยืดหยุ่น',
+  },
+  vi: {
+    morning: '10-12 giờ',
+    afternoon: '12-15 giờ',
+    flexible: 'Linh hoạt',
+  },
+};
+
+const getTimeWindowLabel = (lang: string, value: string): string => {
+  const labels = timeWindowLabels[lang] || timeWindowLabels.de;
+  return labels[value] || value;
+};
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -510,7 +549,7 @@ serve(async (req) => {
                   <tr><td style="padding: 8px 0; color: #6b7280;">${t.orderNumber}:</td><td style="padding: 8px 0; font-weight: 600;">${orderNumber}</td></tr>
                   <tr><td style="padding: 8px 0; color: #6b7280;">${t.supplier}:</td><td style="padding: 8px 0;">${supplierData.name}</td></tr>
                   ${delivery_date ? `<tr><td style="padding: 8px 0; color: #6b7280;">${t.deliveryDate}:</td><td style="padding: 8px 0;">${delivery_date}</td></tr>` : ''}
-                  ${time_window ? `<tr><td style="padding: 8px 0; color: #6b7280;">${t.timeWindow}:</td><td style="padding: 8px 0;">${time_window}</td></tr>` : ''}
+                  ${time_window ? `<tr><td style="padding: 8px 0; color: #6b7280;">${t.timeWindow}:</td><td style="padding: 8px 0;">${getTimeWindowLabel(lang, time_window)}</td></tr>` : ''}
                   <tr><td style="padding: 8px 0; color: #6b7280;">${t.location}:</td><td style="padding: 8px 0;">${locationName}</td></tr>
                 </table>
                 <h3 style="margin-top: 24px; color: #374151;">${t.items}</h3>
