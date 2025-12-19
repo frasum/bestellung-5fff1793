@@ -160,9 +160,9 @@ const generateModernEmail = (data: OrderEmailRequest, template: EmailTemplate): 
 
           ${data.confirmationToken ? `
           <!-- Confirmation Button -->
-          <div style="margin-bottom: 28px; text-align: center;">
+          <div style="margin-bottom: 28px; text-align: left;">
             <a href="${Deno.env.get("SUPABASE_URL")}/functions/v1/confirm-order?token=${data.confirmationToken}" 
-               style="display: inline-block; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; font-weight: 700; font-size: 18px; padding: 18px 48px; border-radius: 12px; text-decoration: none; box-shadow: 0 4px 14px rgba(16, 185, 129, 0.4);">
+               style="display: inline-block; background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); color: white; font-weight: 700; font-size: 18px; padding: 18px 48px; border-radius: 12px; text-decoration: none; box-shadow: 0 4px 14px rgba(37, 99, 235, 0.4);">
               ✅ Bestellung bestätigen
             </a>
             <p style="margin-top: 12px; color: #6b7280; font-size: 13px;">
@@ -268,10 +268,10 @@ const generateClassicEmail = (data: OrderEmailRequest, template: EmailTemplate):
           ` : ''}
 
           ${data.confirmationToken ? `
-          <div style="margin-bottom: 24px; text-align: center; padding: 20px; background: #f0fdf4; border: 2px solid #16a34a;">
+          <div style="margin-bottom: 24px; text-align: left; padding: 20px; background: #eff6ff; border: 2px solid #2563eb;">
             <a href="${Deno.env.get("SUPABASE_URL")}/functions/v1/confirm-order?token=${data.confirmationToken}" 
-               style="display: inline-block; background: #16a34a; color: white; font-weight: 600; font-size: 16px; padding: 14px 32px; text-decoration: none;">
-              Bestellung bestätigen
+               style="display: inline-block; background: #2563eb; color: white; font-weight: 700; font-size: 18px; padding: 16px 36px; text-decoration: none;">
+              ✅ Bestellung bestätigen
             </a>
           </div>
           ` : ''}
@@ -344,10 +344,10 @@ const generateMinimalistEmail = (data: OrderEmailRequest, template: EmailTemplat
         ` : ''}
 
         ${data.confirmationToken ? `
-        <div style="margin-bottom: 24px; text-align: center;">
+        <div style="margin-bottom: 28px; text-align: left;">
           <a href="${Deno.env.get("SUPABASE_URL")}/functions/v1/confirm-order?token=${data.confirmationToken}" 
-             style="display: inline-block; background: #111827; color: white; font-size: 14px; padding: 12px 24px; text-decoration: none; border-radius: 4px;">
-            Bestellung bestätigen →
+             style="display: inline-block; background: #2563eb; color: white; font-weight: 700; font-size: 18px; padding: 18px 36px; text-decoration: none; border-radius: 8px; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);">
+            ✅ Bestellung bestätigen
           </a>
         </div>
         ` : ''}
