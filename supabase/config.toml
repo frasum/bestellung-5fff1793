@@ -161,3 +161,9 @@ verify_jwt = false
 
 [functions.invite-sponsored-account]
 verify_jwt = true
+
+[functions.search-price-alternatives]
+verify_jwt = true
+
+[functions.send-price-alerts]
+verify_jwt = true

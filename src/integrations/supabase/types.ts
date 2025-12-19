@@ -2164,6 +2164,185 @@ export type Database = {
         }
         Relationships: []
       }
+      price_watch_alerts: {
+        Row: {
+          created_at: string
+          email_sent: boolean
+          email_sent_at: string | null
+          id: string
+          is_read: boolean
+          organization_id: string
+          result_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          email_sent?: boolean
+          email_sent_at?: string | null
+          id?: string
+          is_read?: boolean
+          organization_id: string
+          result_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          email_sent?: boolean
+          email_sent_at?: string | null
+          id?: string
+          is_read?: boolean
+          organization_id?: string
+          result_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "price_watch_alerts_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "price_watch_alerts_result_id_fkey"
+            columns: ["result_id"]
+            isOneToOne: false
+            referencedRelation: "price_watch_results"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      price_watch_results: {
+        Row: {
+          article_category: string | null
+          article_id: string | null
+          article_name: string
+          created_at: string
+          current_price: number
+          expires_at: string
+          found_price: number
+          found_supplier: string
+          id: string
+          is_dismissed: boolean
+          is_reviewed: boolean
+          notes: string | null
+          organization_id: string
+          savings_amount: number
+          savings_percent: number
+          search_query: string
+          searched_at: string
+          source_url: string | null
+        }
+        Insert: {
+          article_category?: string | null
+          article_id?: string | null
+          article_name: string
+          created_at?: string
+          current_price: number
+          expires_at?: string
+          found_price: number
+          found_supplier: string
+          id?: string
+          is_dismissed?: boolean
+          is_reviewed?: boolean
+          notes?: string | null
+          organization_id: string
+          savings_amount: number
+          savings_percent: number
+          search_query: string
+          searched_at?: string
+          source_url?: string | null
+        }
+        Update: {
+          article_category?: string | null
+          article_id?: string | null
+          article_name?: string
+          created_at?: string
+          current_price?: number
+          expires_at?: string
+          found_price?: number
+          found_supplier?: string
+          id?: string
+          is_dismissed?: boolean
+          is_reviewed?: boolean
+          notes?: string | null
+          organization_id?: string
+          savings_amount?: number
+          savings_percent?: number
+          search_query?: string
+          searched_at?: string
+          source_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "price_watch_results_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: false
+            referencedRelation: "articles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "price_watch_results_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      price_watch_settings: {
+        Row: {
+          categories: Json
+          created_at: string
+          email_notifications: boolean
+          id: string
+          is_enabled: boolean
+          last_search_at: string | null
+          last_search_results_count: number | null
+          min_savings_percent: number
+          organization_id: string
+          search_frequency: string
+          search_radius_km: number
+          updated_at: string
+        }
+        Insert: {
+          categories?: Json
+          created_at?: string
+          email_notifications?: boolean
+          id?: string
+          is_enabled?: boolean
+          last_search_at?: string | null
+          last_search_results_count?: number | null
+          min_savings_percent?: number
+          organization_id: string
+          search_frequency?: string
+          search_radius_km?: number
+          updated_at?: string
+        }
+        Update: {
+          categories?: Json
+          created_at?: string
+          email_notifications?: boolean
+          id?: string
+          is_enabled?: boolean
+          last_search_at?: string | null
+          last_search_results_count?: number | null
+          min_savings_percent?: number
+          organization_id?: string
+          search_frequency?: string
+          search_radius_km?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "price_watch_settings_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: true
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           color_scheme: string | null
