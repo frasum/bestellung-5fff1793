@@ -62,6 +62,19 @@ interface ArticleUpdateRequest {
     storage_2: number;
     unit_price?: number | null;
   }>;
+  orderData?: {
+    vendor_id: string;
+    delivery_date?: string | null;
+    notes?: string | null;
+    items: Array<{
+      article_id: string;
+      article_name: string;
+      quantity: number;
+      unit: string;
+      unit_price: number;
+      total_price: number;
+    }>;
+  };
 }
 
 serve(async (req) => {
