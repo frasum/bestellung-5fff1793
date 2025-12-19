@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Building2, User, FlaskConical, MessageSquare, Store } from 'lucide-react';
+import { Building2, User, FlaskConical, MessageSquare, Store, ClipboardCheck } from 'lucide-react';
 import { useUserRole } from '@/hooks/useTeam';
 import { useIsSuperAdmin } from '@/hooks/useIsSuperAdmin';
 import { DemoAccountsTab } from '@/components/settings/DemoAccountsTab';
@@ -13,6 +13,7 @@ import { NotificationsTab } from '@/components/settings/NotificationsTab';
 import { EmailTemplateTab } from '@/components/settings/EmailTemplateTab';
 import { SupplierPortalTab } from '@/components/settings/SupplierPortalTab';
 import { B2BPortalOverviewTab } from '@/components/settings/B2BPortalOverviewTab';
+import { SystemFeaturePrioritiesTab } from '@/components/settings/SystemFeaturePrioritiesTab';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 
@@ -96,6 +97,13 @@ const Settings = () => {
                     <span>B2B Portal</span>
                   </TabsTrigger>
                 )}
+                {isAdmin && advancedMode && (
+                  <TabsTrigger value="developer-checklist" className="gap-1.5 text-xs sm:text-sm whitespace-nowrap">
+                    <ClipboardCheck className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                    <span className="hidden sm:inline">{t('settings.developerChecklist')}</span>
+                    <span className="sm:hidden">{t('settings.developerChecklistShort')}</span>
+                  </TabsTrigger>
+                )}
               </TabsList>
             </div>
           </div>
@@ -131,6 +139,12 @@ const Settings = () => {
           {isSuperAdmin && (
             <TabsContent value="b2b-portal" className="animate-in fade-in-50 slide-in-from-right-2 duration-200">
               <B2BPortalOverviewTab />
+            </TabsContent>
+          )}
+
+          {isAdmin && advancedMode && (
+            <TabsContent value="developer-checklist" className="animate-in fade-in-50 slide-in-from-right-2 duration-200">
+              <SystemFeaturePrioritiesTab />
             </TabsContent>
           )}
         </Tabs>
