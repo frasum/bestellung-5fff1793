@@ -58,22 +58,24 @@ export interface B2BVendorArticle {
 
 interface B2BVendorArticlesTabProps {
   accountId: string;
+  supplierId?: string;
 }
 
-// Simple cart stored in localStorage
-const CART_STORAGE_KEY = 'b2b_purchase_cart';
+// Simple cart stored in localStorage - now with supplier isolation
+const getCartStorageKey = (supplierId?: string) => 
+  supplierId ? `b2b_purchase_cart_${supplierId}` : 'b2b_purchase_cart';
 
-export const getPurchaseCart = (): Record<string, number> => {
-  const stored = localStorage.getItem(CART_STORAGE_KEY);
+export const getPurchaseCart = (supplierId?: string): Record<string, number> => {
+  const stored = localStorage.getItem(getCartStorageKey(supplierId));
   return stored ? JSON.parse(stored) : {};
 };
 
-export const setPurchaseCart = (cart: Record<string, number>) => {
-  localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart));
+export const setPurchaseCart = (cart: Record<string, number>, supplierId?: string) => {
+  localStorage.setItem(getCartStorageKey(supplierId), JSON.stringify(cart));
   window.dispatchEvent(new Event('b2b-cart-update'));
 };
 
-const B2BVendorArticlesTab = ({ accountId }: B2BVendorArticlesTabProps) => {
+const B2BVendorArticlesTab = ({ accountId, supplierId }: B2BVendorArticlesTabProps) => {
   const [articles, setArticles] = useState<B2BVendorArticle[]>([]);
   const [vendors, setVendors] = useState<B2BVendor[]>([]);
   const [loading, setLoading] = useState(true);
@@ -97,31 +99,47 @@ const B2BVendorArticlesTab = ({ accountId }: B2BVendorArticlesTabProps) => {
 
   useEffect(() => {
     loadData();
-    setCart(getPurchaseCart());
+    setCart(getPurchaseCart(supplierId));
     
-    const handleCartUpdate = () => setCart(getPurchaseCart());
+    const handleCartUpdate = () => setCart(getPurchaseCart(supplierId));
     window.addEventListener('b2b-cart-update', handleCartUpdate);
     return () => window.removeEventListener('b2b-cart-update', handleCartUpdate);
-  }, [accountId]);
+  }, [accountId, supplierId]);
 
   const loadData = async () => {
     try {
-      // Load vendors
-      const { data: vendorsData, error: vendorsError } = await supabase
+      // Load vendors (filtered by supplier_id)
+      let vendorsQuery = supabase
         .from('b2b_supplier_vendors')
         .select('*')
         .eq('supplier_account_id', accountId)
         .eq('is_active', true)
         .order('name', { ascending: true });
 
+      if (supplierId) {
+        vendorsQuery = vendorsQuery.eq('supplier_id', supplierId);
+      }
+
+      const { data: vendorsData, error: vendorsError } = await vendorsQuery;
+
       if (vendorsError) throw vendorsError;
       setVendors(vendorsData || []);
 
-      // Load articles
+      // Get vendor IDs for filtering articles
+      const vendorIds = vendorsData?.map(v => v.id) || [];
+
+      if (vendorIds.length === 0) {
+        setArticles([]);
+        setLoading(false);
+        return;
+      }
+
+      // Load articles (only for the filtered vendors)
       const { data: articlesData, error: articlesError } = await supabase
         .from('b2b_supplier_vendor_articles')
         .select('*')
         .eq('supplier_account_id', accountId)
+        .in('vendor_id', vendorIds)
         .order('name', { ascending: true });
 
       if (articlesError) throw articlesError;
@@ -167,7 +185,7 @@ const B2BVendorArticlesTab = ({ accountId }: B2BVendorArticlesTabProps) => {
   const addToCart = (articleId: string) => {
     const newCart = { ...cart };
     newCart[articleId] = (newCart[articleId] || 0) + 1;
-    setPurchaseCart(newCart);
+    setPurchaseCart(newCart, supplierId);
     setCart(newCart);
     toast.success('Zum Warenkorb hinzugefügt');
   };

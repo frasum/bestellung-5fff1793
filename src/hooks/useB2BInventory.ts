@@ -164,11 +164,13 @@ export const useCreateB2BInventorySession = () => {
     mutationFn: async ({ 
       accountId, 
       name, 
-      notes 
+      notes,
+      supplierId 
     }: { 
       accountId: string; 
       name: string; 
-      notes?: string 
+      notes?: string;
+      supplierId?: string;
     }) => {
       const { data, error } = await supabase
         .from('b2b_inventory_sessions')
@@ -176,6 +178,7 @@ export const useCreateB2BInventorySession = () => {
           name,
           notes,
           supplier_account_id: accountId,
+          supplier_id: supplierId || null,
           user_id: user?.id,
         })
         .select()

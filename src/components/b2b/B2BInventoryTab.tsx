@@ -77,6 +77,7 @@ import * as XLSX from 'xlsx';
 
 interface B2BInventoryTabProps {
   accountId: string;
+  supplierId?: string;
 }
 
 interface LocalInventoryItem {
@@ -86,7 +87,7 @@ interface LocalInventoryItem {
   unit_price?: number;
 }
 
-const B2BInventoryTab = ({ accountId }: B2BInventoryTabProps) => {
+const B2BInventoryTab = ({ accountId, supplierId }: B2BInventoryTabProps) => {
   const { t, i18n } = useTranslation();
 
   const [activeTab, setActiveTab] = useState<string>('inventory');
@@ -107,10 +108,26 @@ const B2BInventoryTab = ({ accountId }: B2BInventoryTabProps) => {
   const [voiceTranscript, setVoiceTranscript] = useState<string>('');
   const [voiceArticles, setVoiceArticles] = useState<ExtractedArticle[]>([]);
 
-  // Fetch B2B vendor articles
+  // Fetch B2B vendor articles (filtered by supplierId through vendors)
   const { data: articles, isLoading: articlesLoading } = useQuery({
-    queryKey: ['b2b-vendor-articles-for-inventory', accountId],
+    queryKey: ['b2b-vendor-articles-for-inventory', accountId, supplierId],
     queryFn: async () => {
+      // First get vendors (filtered by supplier_id)
+      let vendorsQuery = supabase
+        .from('b2b_supplier_vendors')
+        .select('id')
+        .eq('supplier_account_id', accountId)
+        .eq('is_active', true);
+
+      if (supplierId) {
+        vendorsQuery = vendorsQuery.eq('supplier_id', supplierId);
+      }
+
+      const { data: vendorData } = await vendorsQuery;
+      const vendorIds = vendorData?.map(v => v.id) || [];
+
+      if (vendorIds.length === 0) return [];
+
       const { data, error } = await supabase
         .from('b2b_supplier_vendor_articles')
         .select(`
@@ -118,6 +135,7 @@ const B2BInventoryTab = ({ accountId }: B2BInventoryTabProps) => {
           vendor:b2b_supplier_vendors(id, name)
         `)
         .eq('supplier_account_id', accountId)
+        .in('vendor_id', vendorIds)
         .eq('is_active', true)
         .order('name');
 
@@ -127,24 +145,70 @@ const B2BInventoryTab = ({ accountId }: B2BInventoryTabProps) => {
     enabled: !!accountId,
   });
 
-  // Fetch vendors
+  // Fetch vendors (filtered by supplier_id)
   const { data: vendors } = useQuery({
-    queryKey: ['b2b-vendors-for-inventory', accountId],
+    queryKey: ['b2b-vendors-for-inventory', accountId, supplierId],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from('b2b_supplier_vendors')
         .select('id, name')
         .eq('supplier_account_id', accountId)
         .eq('is_active', true)
         .order('name');
 
+      if (supplierId) {
+        query = query.eq('supplier_id', supplierId);
+      }
+
+      const { data, error } = await query;
+
       if (error) throw error;
       return data;
     },
     enabled: !!accountId,
   });
 
-  const { data: sessions, isLoading: sessionsLoading } = useB2BInventorySessionsWithStats(accountId);
+  // Fetch sessions (filtered by supplier_id)
+  const { data: sessions, isLoading: sessionsLoading } = useQuery({
+    queryKey: ['b2b-inventory-sessions-filtered', accountId, supplierId],
+    queryFn: async () => {
+      let query = supabase
+        .from('b2b_inventory_sessions')
+        .select('*')
+        .eq('supplier_account_id', accountId)
+        .order('created_at', { ascending: false });
+
+      if (supplierId) {
+        query = query.eq('supplier_id', supplierId);
+      }
+
+      const { data, error } = await query;
+
+      if (error) throw error;
+
+      // Calculate stats for each session
+      if (!data || data.length === 0) return [];
+
+      const { data: allItems } = await supabase
+        .from('b2b_inventory_items')
+        .select('session_id, storage_1, storage_2, unit_price')
+        .in('session_id', data.map(s => s.id));
+
+      return data.map(session => {
+        const sessionItems = allItems?.filter(item => item.session_id === session.id) || [];
+        const itemCount = sessionItems.length;
+        const totalValue = sessionItems.reduce((sum, item) => {
+          const quantity = (Number(item.storage_1) || 0) + (Number(item.storage_2) || 0);
+          const price = Number(item.unit_price) || 0;
+          return sum + (quantity * price);
+        }, 0);
+
+        return { ...session, itemCount, totalValue };
+      }) as B2BInventorySessionWithStats[];
+    },
+    enabled: !!accountId,
+  });
+
   const { data: activeSession } = useB2BInventorySession(activeSessionId);
   const { data: inventoryItems } = useB2BInventoryItems(activeSessionId);
 
@@ -287,7 +351,8 @@ const B2BInventoryTab = ({ accountId }: B2BInventoryTabProps) => {
     if (!newSessionName.trim()) return;
     const result = await createSession.mutateAsync({ 
       accountId, 
-      name: newSessionName 
+      name: newSessionName,
+      supplierId
     });
     setActiveSessionId(result.id);
     setShowNewSessionDialog(false);

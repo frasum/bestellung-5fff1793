@@ -450,8 +450,8 @@ const B2BSupplierDashboard = () => {
                   </Badge>
                 ) : null}
               </TabsTrigger>
-              {/* Hide "Mein Einkauf" for supplier users */}
-              {!isSupplierUser && (
+              {/* Hide "Mein Einkauf" for supplier users or when no supplier selected */}
+              {!isSupplierUser && selectedSupplierId && (
                 <TabsTrigger value="purchase" className="gap-2">
                   <PackageSearch className="h-4 w-4" />
                   <span className="hidden sm:inline">Mein Einkauf</span>
@@ -624,7 +624,7 @@ const B2BSupplierDashboard = () => {
 
           {/* Purchase Tab (Mein Einkauf) */}
           <TabsContent value="purchase">
-            <B2BPurchaseTab accountId={account.id} />
+            <B2BPurchaseTab accountId={account.id} supplierId={selectedSupplierId} />
           </TabsContent>
 
           {/* Settings Tab */}

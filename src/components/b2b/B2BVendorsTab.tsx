@@ -43,14 +43,16 @@ export interface B2BVendor {
   notes: string | null;
   is_active: boolean;
   created_at: string;
+  supplier_id?: string | null;
 }
 
 interface B2BVendorsTabProps {
   accountId: string;
+  supplierId?: string;
   onVendorChange?: () => void;
 }
 
-const B2BVendorsTab = ({ accountId, onVendorChange }: B2BVendorsTabProps) => {
+const B2BVendorsTab = ({ accountId, supplierId, onVendorChange }: B2BVendorsTabProps) => {
   const [vendors, setVendors] = useState<B2BVendor[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -61,15 +63,22 @@ const B2BVendorsTab = ({ accountId, onVendorChange }: B2BVendorsTabProps) => {
 
   useEffect(() => {
     loadVendors();
-  }, [accountId]);
+  }, [accountId, supplierId]);
 
   const loadVendors = async () => {
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('b2b_supplier_vendors')
         .select('*')
         .eq('supplier_account_id', accountId)
         .order('name', { ascending: true });
+
+      // Filter by supplier_id if provided
+      if (supplierId) {
+        query = query.eq('supplier_id', supplierId);
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
       setVendors(data || []);
@@ -232,6 +241,7 @@ const B2BVendorsTab = ({ accountId, onVendorChange }: B2BVendorsTabProps) => {
         onOpenChange={setDialogOpen}
         vendor={editingVendor}
         accountId={accountId}
+        supplierId={supplierId}
         onSuccess={() => {
           loadVendors();
           onVendorChange?.();

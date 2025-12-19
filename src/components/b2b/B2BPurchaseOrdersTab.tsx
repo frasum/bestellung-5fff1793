@@ -40,6 +40,7 @@ interface PurchaseOrder {
 
 interface B2BPurchaseOrdersTabProps {
   accountId: string;
+  supplierId?: string;
 }
 
 const statusLabels: Record<string, { label: string; variant: 'default' | 'secondary' | 'outline' | 'destructive' }> = {
@@ -49,30 +50,44 @@ const statusLabels: Record<string, { label: string; variant: 'default' | 'second
   cancelled: { label: 'Storniert', variant: 'destructive' },
 };
 
-const B2BPurchaseOrdersTab = ({ accountId }: B2BPurchaseOrdersTabProps) => {
+const B2BPurchaseOrdersTab = ({ accountId, supplierId }: B2BPurchaseOrdersTabProps) => {
   const [orders, setOrders] = useState<PurchaseOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedOrders, setExpandedOrders] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     loadOrders();
-  }, [accountId]);
+  }, [accountId, supplierId]);
 
   const loadOrders = async () => {
     try {
-      // Load vendors
-      const { data: vendorsData } = await supabase
+      // Load vendors (filtered by supplier_id)
+      let vendorsQuery = supabase
         .from('b2b_supplier_vendors')
         .select('id, name')
         .eq('supplier_account_id', accountId);
 
-      const vendorMap = new Map(vendorsData?.map(v => [v.id, v.name]) || []);
+      if (supplierId) {
+        vendorsQuery = vendorsQuery.eq('supplier_id', supplierId);
+      }
 
-      // Load orders
+      const { data: vendorsData } = await vendorsQuery;
+
+      const vendorMap = new Map(vendorsData?.map(v => [v.id, v.name]) || []);
+      const vendorIds = vendorsData?.map(v => v.id) || [];
+
+      if (vendorIds.length === 0) {
+        setOrders([]);
+        setLoading(false);
+        return;
+      }
+
+      // Load orders (only for the filtered vendors)
       const { data: ordersData, error: ordersError } = await supabase
         .from('b2b_supplier_purchase_orders')
         .select('*')
         .eq('supplier_account_id', accountId)
+        .in('vendor_id', vendorIds)
         .order('created_at', { ascending: false });
 
       if (ordersError) throw ordersError;

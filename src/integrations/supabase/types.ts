@@ -568,6 +568,7 @@ export type Database = {
           notes: string | null
           status: string
           supplier_account_id: string
+          supplier_id: string | null
           user_id: string
         }
         Insert: {
@@ -578,6 +579,7 @@ export type Database = {
           notes?: string | null
           status?: string
           supplier_account_id: string
+          supplier_id?: string | null
           user_id: string
         }
         Update: {
@@ -588,6 +590,7 @@ export type Database = {
           notes?: string | null
           status?: string
           supplier_account_id?: string
+          supplier_id?: string | null
           user_id?: string
         }
         Relationships: [
@@ -596,6 +599,13 @@ export type Database = {
             columns: ["supplier_account_id"]
             isOneToOne: false
             referencedRelation: "supplier_b2b_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "b2b_inventory_sessions_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "b2b_suppliers"
             referencedColumns: ["id"]
           },
         ]
@@ -836,6 +846,7 @@ export type Database = {
           notes: string | null
           phone: string | null
           supplier_account_id: string
+          supplier_id: string | null
           updated_at: string | null
         }
         Insert: {
@@ -848,6 +859,7 @@ export type Database = {
           notes?: string | null
           phone?: string | null
           supplier_account_id: string
+          supplier_id?: string | null
           updated_at?: string | null
         }
         Update: {
@@ -860,6 +872,7 @@ export type Database = {
           notes?: string | null
           phone?: string | null
           supplier_account_id?: string
+          supplier_id?: string | null
           updated_at?: string | null
         }
         Relationships: [
@@ -868,6 +881,13 @@ export type Database = {
             columns: ["supplier_account_id"]
             isOneToOne: false
             referencedRelation: "supplier_b2b_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "b2b_supplier_vendors_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "b2b_suppliers"
             referencedColumns: ["id"]
           },
         ]
