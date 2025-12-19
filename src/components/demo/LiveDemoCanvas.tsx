@@ -94,6 +94,14 @@ export function LiveDemoCanvas({ soundEnabled }: LiveDemoCanvasProps) {
     );
   }, []);
 
+  const handleSizeChange = useCallback((id: string, width: number, height: number) => {
+    setPositions(prev => 
+      prev.map(pos => 
+        pos.id === id ? { ...pos, width, height } : pos
+      )
+    );
+  }, []);
+
   const handleResetLayout = () => {
     setPositions(defaultPositions);
     localStorage.removeItem(STORAGE_KEY);
@@ -138,6 +146,7 @@ export function LiveDemoCanvas({ soundEnabled }: LiveDemoCanvasProps) {
             id={id}
             position={position}
             onPositionChange={handlePositionChange}
+            onSizeChange={handleSizeChange}
             title={title}
             icon={icon}
             borderColor={borderColor}
