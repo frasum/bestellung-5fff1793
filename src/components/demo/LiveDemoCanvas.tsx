@@ -24,10 +24,10 @@ const defaultPositions: TilePosition[] = [
 ];
 
 const connections: Connection[] = [
-  { from: 'restaurant', to: 'admin', label: 'Bestellung', color: '#3b82f6' },
+  { from: 'restaurant', to: 'admin', label: '↔ Sync', color: '#3b82f6', bidirectional: true },
   { from: 'easyorder', to: 'admin', label: 'Entwurf', color: '#f97316' },
-  { from: 'admin', to: 'supplier', label: 'An Lieferant', color: '#ec4899' },
-  { from: 'supplier', to: 'email', label: 'E-Mail', color: '#22c55e' },
+  { from: 'admin', to: 'supplier', label: 'An Lieferant', color: '#22c55e' },
+  { from: 'supplier', to: 'email', label: 'E-Mail', color: '#8b5cf6' },
 ];
 
 const tileConfig = [
@@ -48,8 +48,8 @@ const tileConfig = [
   { 
     id: 'admin', 
     title: 'Admin', 
-    icon: <LayoutDashboard className="h-4 w-4 text-pink-500" />,
-    borderColor: 'bg-pink-500/10 border-b-pink-500/30',
+    icon: <LayoutDashboard className="h-4 w-4 text-blue-500" />,
+    borderColor: 'bg-blue-500/10 border-b-blue-500/30',
     Component: LiveDemoAdminPanel
   },
   { 
@@ -162,12 +162,7 @@ export function LiveDemoCanvas({ soundEnabled }: LiveDemoCanvasProps) {
         <div className="flex flex-wrap gap-2 text-xs">
           <div className="flex items-center gap-1.5">
             <div className="w-2 h-2 rounded-full bg-blue-500" />
-            <span>Restaurant bestellt</span>
-          </div>
-          <span className="text-muted-foreground">→</span>
-          <div className="flex items-center gap-1.5">
-            <div className="w-2 h-2 rounded-full bg-pink-500" />
-            <span>Admin prüft</span>
+            <span>Gastro-System</span>
           </div>
           <span className="text-muted-foreground">→</span>
           <div className="flex items-center gap-1.5">

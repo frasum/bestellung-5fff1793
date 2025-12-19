@@ -6,6 +6,7 @@ export interface Connection {
   to: string;
   label?: string;
   color?: string;
+  bidirectional?: boolean;
 }
 
 interface ConnectionArrowsProps {
@@ -66,18 +67,27 @@ export function ConnectionArrows({ connections, positions }: ConnectionArrowsPro
             strokeWidth={2.5}
             strokeLinecap="round"
             className="connection-path"
-            style={{
+            style={conn.bidirectional ? {} : {
               strokeDasharray: '8, 4',
               animation: 'dashFlow 0.8s linear infinite',
             }}
           />
           
-          {/* Arrow head */}
+          {/* Arrow head at destination */}
           <polygon
             points={`${toX - 8},${toY - 5} ${toX},${toY} ${toX - 8},${toY + 5}`}
             fill={color}
             className="drop-shadow-sm"
           />
+          
+          {/* Arrow head at source (for bidirectional) */}
+          {conn.bidirectional && (
+            <polygon
+              points={`${fromX + 8},${fromY - 5} ${fromX},${fromY} ${fromX + 8},${fromY + 5}`}
+              fill={color}
+              className="drop-shadow-sm"
+            />
+          )}
           
           {/* Connection label */}
           {conn.label && (
