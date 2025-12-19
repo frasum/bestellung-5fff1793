@@ -27,9 +27,9 @@ export function LiveDemoEasyOrderPanel({ soundEnabled }: LiveDemoEasyOrderPanelP
   const [quantities, setQuantities] = useState<Record<string, number>>({});
   const [selectedSupplierId, setSelectedSupplierId] = useState<string | null>(null);
 
-  // Simple order creation for demo
-  const createDemoOrder = useMutation({
-    mutationFn: async (orderData: { supplierId: string; items: { articleId: string; quantity: number; name: string; unit: string; price: number }[]; employeeName: string }) => {
+  // Create draft for admin approval instead of direct order
+  const createDemoDraft = useMutation({
+    mutationFn: async (draftData: { supplierId: string; items: { articleId: string; quantity: number }[]; employeeName: string; supplierName: string }) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
@@ -41,43 +41,35 @@ export function LiveDemoEasyOrderPanel({ soundEnabled }: LiveDemoEasyOrderPanelP
 
       if (!profile?.organization_id) throw new Error('No organization');
 
-      const { data: orderNumber } = await supabase.rpc('generate_order_number');
-
-      const totalAmount = orderData.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
-
-      const { data: order, error: orderError } = await supabase
-        .from('orders')
+      // Create cart draft
+      const { data: draft, error: draftError } = await supabase
+        .from('cart_drafts')
         .insert({
-          order_number: orderNumber,
+          name: `EasyOrder: ${draftData.employeeName} (${draftData.supplierName})`,
           organization_id: profile.organization_id,
-          supplier_id: orderData.supplierId,
           user_id: user.id,
-          total_amount: totalAmount,
-          delivery_address: 'EasyOrder Demo',
-          notes: `EasyOrder Demo - Mitarbeiter: ${orderData.employeeName}`,
-          is_test_order: true,
+          notes: `EasyOrder Demo - Mitarbeiter: ${draftData.employeeName}`,
         })
         .select()
         .single();
 
-      if (orderError) throw orderError;
+      if (draftError) throw draftError;
 
-      const orderItems = orderData.items.map(item => ({
-        order_id: order.id,
+      // Create draft items
+      const draftItems = draftData.items.map(item => ({
+        draft_id: draft.id,
         article_id: item.articleId,
-        article_name: item.name,
         quantity: item.quantity,
-        unit: item.unit,
-        unit_price: item.price,
-        total_price: item.price * item.quantity,
+        supplier_id: draftData.supplierId,
       }));
 
-      await supabase.from('order_items').insert(orderItems);
+      const { error: itemsError } = await supabase.from('cart_draft_items').insert(draftItems);
+      if (itemsError) throw itemsError;
 
-      return order;
+      return draft;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['orders'] });
+      queryClient.invalidateQueries({ queryKey: ['cart-drafts'] });
     },
   });
 
@@ -115,22 +107,17 @@ export function LiveDemoEasyOrderPanel({ soundEnabled }: LiveDemoEasyOrderPanelP
 
     const orderItems = Object.entries(quantities)
       .filter(([_, qty]) => qty > 0)
-      .map(([articleId, quantity]) => {
-        const article = articles.find(a => a.id === articleId)!;
-        return {
-          articleId,
-          quantity,
-          name: article.name,
-          unit: article.unit,
-          price: article.price
-        };
-      });
+      .map(([articleId, quantity]) => ({
+        articleId,
+        quantity,
+      }));
 
     try {
-      await createDemoOrder.mutateAsync({
+      await createDemoDraft.mutateAsync({
         supplierId: activeSupplier.id,
         items: orderItems,
-        employeeName
+        employeeName,
+        supplierName: activeSupplier.name
       });
 
       if (soundEnabled) {
@@ -138,11 +125,13 @@ export function LiveDemoEasyOrderPanel({ soundEnabled }: LiveDemoEasyOrderPanelP
         audio.play().catch(() => {});
       }
 
-      toast.success('EasyOrder Bestellung gesendet!');
+      toast.success('Vorbestellung gesendet!', {
+        description: 'Warte auf Freigabe durch Admin'
+      });
       setQuantities({});
     } catch (error) {
-      console.error('Order error:', error);
-      toast.error('Fehler beim Senden der Bestellung');
+      console.error('Draft error:', error);
+      toast.error('Fehler beim Senden der Vorbestellung');
     }
   };
 
@@ -244,10 +233,10 @@ export function LiveDemoEasyOrderPanel({ soundEnabled }: LiveDemoEasyOrderPanelP
           <Button 
             className="w-full gap-2" 
             onClick={handleSubmitOrder}
-            disabled={createDemoOrder.isPending}
+            disabled={createDemoDraft.isPending}
           >
             <Send className="h-4 w-4" />
-            Bestellung senden ({totalItems} Artikel)
+            Vorbestellung senden ({totalItems} Artikel)
           </Button>
         </div>
       )}
