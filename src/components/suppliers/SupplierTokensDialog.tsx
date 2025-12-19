@@ -162,25 +162,55 @@ export const SupplierTokensDialog = ({ open, onOpenChange, supplier }: SupplierT
     if (!supplier) return;
     setActionLoading('delete');
     try {
-      const { error } = await supabase
-        .from('supplier_portal_tokens')
-        .delete()
-        .eq('supplier_id', supplier.id)
-        .or(`expires_at.lt.${new Date().toISOString()},is_active.eq.false,used_at.is.null`);
-
-      if (error) throw error;
+      const now = new Date().toISOString();
+      
+      // Separate Queries für jeden Lösch-Typ für mehr Robustheit
+      const queries = [
+        // Abgelaufene Tokens löschen
+        supabase
+          .from('supplier_portal_tokens')
+          .delete()
+          .eq('supplier_id', supplier.id)
+          .lt('expires_at', now),
+        // Widerrufene Tokens löschen
+        supabase
+          .from('supplier_portal_tokens')
+          .delete()
+          .eq('supplier_id', supplier.id)
+          .eq('is_active', false),
+        // Unbenutzte Tokens löschen
+        supabase
+          .from('supplier_portal_tokens')
+          .delete()
+          .eq('supplier_id', supplier.id)
+          .is('used_at', null)
+      ];
+      
+      const results = await Promise.all(queries);
+      const errors = results.filter(r => r.error);
+      
+      if (errors.length > 0) {
+        console.error('Errors during cleanup:', errors);
+        throw new Error('Einige Tokens konnten nicht gelöscht werden');
+      }
+      
       toast.success('Abgelaufene, widerrufene und unbenutzte Tokens gelöscht');
       loadTokens();
     } catch (error: any) {
       console.error('Error deleting tokens:', error);
-      toast.error('Fehler beim Löschen');
+      toast.error(error.message || 'Fehler beim Löschen');
     } finally {
       setActionLoading(null);
     }
   };
 
   const activeTokenCount = tokens.filter(t => t.is_active && new Date(t.expires_at) > new Date()).length;
-  const expiredTokenCount = tokens.filter(t => !t.is_active || new Date(t.expires_at) < new Date()).length;
+  // Erweiterte Berechnung: inkludiert auch unbenutzte Tokens
+  const cleanupTokenCount = tokens.filter(t => 
+    !t.is_active || 
+    new Date(t.expires_at) < new Date() ||
+    t.used_at === null
+  ).length;
 
   return (
     <>
@@ -196,10 +226,10 @@ export const SupplierTokensDialog = ({ open, onOpenChange, supplier }: SupplierT
           <div className="flex items-center justify-between mb-4">
             <div className="flex gap-2">
               <Badge variant="default">{activeTokenCount} aktiv</Badge>
-              <Badge variant="secondary">{expiredTokenCount} abgelaufen/widerrufen</Badge>
+              <Badge variant="secondary">{cleanupTokenCount} aufzuräumen</Badge>
             </div>
             <div className="flex gap-2">
-              {expiredTokenCount > 0 && (
+              {cleanupTokenCount > 0 && (
                 <Button
                   variant="outline"
                   size="sm"
@@ -211,7 +241,7 @@ export const SupplierTokensDialog = ({ open, onOpenChange, supplier }: SupplierT
                   ) : (
                     <Trash2 className="w-4 h-4 mr-2" />
                   )}
-                  Aufräumen
+                  Aufräumen ({cleanupTokenCount})
                 </Button>
               )}
               {activeTokenCount > 0 && (
