@@ -15,14 +15,14 @@ import {
   ChevronUp,
   Loader2
 } from 'lucide-react';
-import { useOrders, useUpdateOrder } from '@/hooks/useOrders';
+import { useOrders } from '@/hooks/useOrders';
 import { useSuppliers } from '@/hooks/useSuppliers';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { toast } from 'sonner';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQueryClient, useMutation } from '@tanstack/react-query';
 
 type OrderStatus = 'pending' | 'confirmed' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
 
@@ -44,7 +44,20 @@ export function LiveDemoSupplierPanel({ soundEnabled }: LiveDemoSupplierPanelPro
   const queryClient = useQueryClient();
   const { data: orders = [], isLoading: ordersLoading } = useOrders();
   const { data: suppliers = [] } = useSuppliers();
-  const updateOrder = useUpdateOrder();
+  
+  // Local update order mutation
+  const updateOrder = useMutation({
+    mutationFn: async ({ id, status }: { id: string; status: OrderStatus }) => {
+      const { error } = await supabase
+        .from('orders')
+        .update({ status, updated_at: new Date().toISOString() })
+        .eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+    },
+  });
   
   const [selectedSupplier, setSelectedSupplier] = useState<string>('all');
   const [expandedOrders, setExpandedOrders] = useState<Set<string>>(new Set());
