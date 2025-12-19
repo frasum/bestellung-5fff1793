@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { LayoutDashboard, Users, Package, ShoppingCart, BarChart3, Settings, LogOut, Menu, X, FlaskConical, Search, Sparkles, Bell, Settings2 } from 'lucide-react';
+import { LayoutDashboard, Users, Package, ShoppingCart, BarChart3, Settings, LogOut, Menu, X, FlaskConical, Search, Sparkles, Bell, Settings2, Gift } from 'lucide-react';
 import { GlobalSearch } from '@/components/GlobalSearch';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import { LocationSwitcher } from '@/components/LocationSwitcher';
@@ -138,7 +138,15 @@ export const DashboardLayout = ({
           </Link>
         </div>
         <div className="flex items-center gap-2">
-          {organization?.is_demo && demoDaysRemaining !== null && (
+          {organization?.is_sponsored && (
+            <Badge 
+              className="bg-gradient-to-r from-pink-500 to-rose-500 text-white border-0"
+            >
+              <Gift className="w-3 h-3 mr-1" />
+              Sponsored
+            </Badge>
+          )}
+          {organization?.is_demo && demoDaysRemaining !== null && !organization?.is_sponsored && (
             <Badge 
               variant="outline" 
               className="bg-primary/10 text-primary border-primary/30 cursor-pointer hover:bg-primary/20"
@@ -206,7 +214,15 @@ export const DashboardLayout = ({
             </Badge>
             <LanguageSwitcher variant="icon" />
             <ThemeToggle />
-          {organization?.is_demo && demoDaysRemaining !== null && (
+          {organization?.is_sponsored && (
+            <Badge 
+              className="bg-gradient-to-r from-pink-500 to-rose-500 text-white border-0"
+            >
+              <Gift className="w-3 h-3 mr-1" />
+              Sponsored Account
+            </Badge>
+          )}
+          {organization?.is_demo && demoDaysRemaining !== null && !organization?.is_sponsored && (
             <Badge 
               variant="outline" 
               className="bg-primary/10 text-primary border-primary/30 cursor-pointer hover:bg-primary/20"

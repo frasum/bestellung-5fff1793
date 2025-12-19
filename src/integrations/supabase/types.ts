@@ -2014,9 +2014,11 @@ export type Database = {
           demo_expires_at: string | null
           id: string
           is_demo: boolean | null
+          is_sponsored: boolean
           name: string
           source_b2b_customer_id: string | null
           source_type: string | null
+          sponsored_note: string | null
           subscription_tier: string
           test_email: string | null
           test_mode_enabled: boolean
@@ -2033,9 +2035,11 @@ export type Database = {
           demo_expires_at?: string | null
           id?: string
           is_demo?: boolean | null
+          is_sponsored?: boolean
           name: string
           source_b2b_customer_id?: string | null
           source_type?: string | null
+          sponsored_note?: string | null
           subscription_tier?: string
           test_email?: string | null
           test_mode_enabled?: boolean
@@ -2052,9 +2056,11 @@ export type Database = {
           demo_expires_at?: string | null
           id?: string
           is_demo?: boolean | null
+          is_sponsored?: boolean
           name?: string
           source_b2b_customer_id?: string | null
           source_type?: string | null
+          sponsored_note?: string | null
           subscription_tier?: string
           test_email?: string | null
           test_mode_enabled?: boolean

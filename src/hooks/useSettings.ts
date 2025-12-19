@@ -41,6 +41,8 @@ export interface Organization {
   contact_phone: string | null;
   website: string | null;
   address: string | null;
+  is_sponsored: boolean;
+  sponsored_note: string | null;
 }
 
 export const useOrganization = () => {
