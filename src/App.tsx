@@ -53,6 +53,8 @@ const B2BMobile = lazy(() => import("./pages/B2BMobile"));
 const DemoSuppliers = lazy(() => import("./pages/DemoSuppliers"));
 const DemoCart = lazy(() => import("./pages/DemoCart"));
 const DemoOrders = lazy(() => import("./pages/DemoOrders"));
+const DemoShowcase = lazy(() => import("./pages/DemoShowcase"));
+const LiveDemo = lazy(() => import("./pages/LiveDemo"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient();
@@ -119,6 +121,9 @@ const AppContent = () => {
             <Route path="cart" element={<DemoCart />} />
             <Route path="orders" element={<DemoOrders />} />
           </Route>
+          {/* Demo Showcase Routes */}
+          <Route path="/demo-showcase" element={<DemoShowcase />} />
+          <Route path="/live-demo" element={<LiveDemo />} />
           {/* B2B Supplier Portal Routes */}
           <Route path="/b2b/login" element={<B2BSupplierLogin />} />
           <Route path="/b2b/dashboard" element={<B2BSupplierDashboard />} />

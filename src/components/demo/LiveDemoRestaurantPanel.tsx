@@ -7,21 +7,17 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Plus, Minus, Search, ShoppingCart, Send, Package, Loader2 } from 'lucide-react';
-import { useArticles } from '@/hooks/useArticles';
+import { useArticles, Article } from '@/hooks/useArticles';
 import { useSuppliers } from '@/hooks/useSuppliers';
 import { useCreateOrder } from '@/hooks/useOrders';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { CartItem as OrderCartItem } from '@/contexts/CartContext';
 
-interface CartItem {
-  articleId: string;
-  articleName: string;
+interface LocalCartItem {
+  article: Article;
   quantity: number;
-  unit: string;
-  price: number;
-  supplierId: string;
-  supplierName: string;
 }
 
 interface LiveDemoRestaurantPanelProps {
@@ -35,7 +31,7 @@ export function LiveDemoRestaurantPanel({ soundEnabled }: LiveDemoRestaurantPane
   const { data: suppliers = [], isLoading: suppliersLoading } = useSuppliers();
   const createOrder = useCreateOrder();
   
-  const [cart, setCart] = useState<CartItem[]>([]);
+  const [cart, setCart] = useState<LocalCartItem[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedSupplier, setSelectedSupplier] = useState<string | null>(null);
   const [isOrdering, setIsOrdering] = useState(false);
@@ -50,78 +46,77 @@ export function LiveDemoRestaurantPanel({ soundEnabled }: LiveDemoRestaurantPane
   }, [articles, searchTerm, selectedSupplier]);
 
   const cartBySupplierId = useMemo(() => {
-    const grouped: Record<string, CartItem[]> = {};
+    const grouped: Record<string, LocalCartItem[]> = {};
     cart.forEach(item => {
-      if (!grouped[item.supplierId]) {
-        grouped[item.supplierId] = [];
+      if (!grouped[item.article.supplier_id]) {
+        grouped[item.article.supplier_id] = [];
       }
-      grouped[item.supplierId].push(item);
+      grouped[item.article.supplier_id].push(item);
     });
     return grouped;
   }, [cart]);
 
-  const cartTotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const cartTotal = cart.reduce((sum, item) => sum + item.article.price * item.quantity, 0);
   const cartItemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
-  const handleAddToCart = (article: typeof articles[0]) => {
-    const supplier = suppliers.find(s => s.id === article.supplier_id);
+  const handleAddToCart = (article: Article) => {
     setCart(prev => {
-      const existing = prev.find(i => i.articleId === article.id);
+      const existing = prev.find(i => i.article.id === article.id);
       if (existing) {
         return prev.map(i => 
-          i.articleId === article.id ? { ...i, quantity: i.quantity + 1 } : i
+          i.article.id === article.id ? { ...i, quantity: i.quantity + 1 } : i
         );
       }
-      return [...prev, {
-        articleId: article.id,
-        articleName: article.name,
-        quantity: 1,
-        unit: article.unit,
-        price: article.price,
-        supplierId: article.supplier_id,
-        supplierName: supplier?.name || 'Unknown',
-      }];
+      return [...prev, { article, quantity: 1 }];
     });
   };
 
   const updateQuantity = (articleId: string, quantity: number) => {
     if (quantity <= 0) {
-      setCart(prev => prev.filter(i => i.articleId !== articleId));
+      setCart(prev => prev.filter(i => i.article.id !== articleId));
     } else {
       setCart(prev => prev.map(i => 
-        i.articleId === articleId ? { ...i, quantity } : i
+        i.article.id === articleId ? { ...i, quantity } : i
       ));
     }
   };
 
   const getCartQuantity = (articleId: string) => {
-    const item = cart.find(i => i.articleId === articleId);
+    const item = cart.find(i => i.article.id === articleId);
     return item?.quantity || 0;
   };
 
   const handleSendOrder = async (supplierId: string) => {
     if (!user) return;
     
-    const supplierItems = cart.filter(item => item.supplierId === supplierId);
+    const supplierItems = cart.filter(item => item.article.supplier_id === supplierId);
     if (supplierItems.length === 0) return;
+    
+    const supplier = suppliers.find(s => s.id === supplierId);
+    if (!supplier) return;
     
     setIsOrdering(true);
     
     try {
-      const orderItems = supplierItems.map(item => ({
-        article_id: item.articleId,
+      // Convert to the format expected by useCreateOrder
+      const orderItems: OrderCartItem[] = supplierItems.map(item => ({
+        article: item.article,
         quantity: item.quantity,
       }));
 
       await createOrder.mutateAsync({
-        supplier_id: supplierId,
+        supplierId,
+        supplierName: supplier.name,
+        supplierEmail: supplier.email,
         items: orderItems,
-        is_test_order: true,
+        deliveryAddress: 'Live-Demo Adresse',
+        restaurantName: 'Live-Demo Restaurant',
+        isTestOrder: true,
         notes: 'Live-Demo Bestellung',
       });
 
       // Remove ordered items from cart
-      setCart(prev => prev.filter(item => item.supplierId !== supplierId));
+      setCart(prev => prev.filter(item => item.article.supplier_id !== supplierId));
       
       if (soundEnabled) {
         const audio = new Audio('/notification.mp3');
@@ -277,7 +272,7 @@ export function LiveDemoRestaurantPanel({ soundEnabled }: LiveDemoRestaurantPane
                 <div className="space-y-4">
                   {Object.entries(cartBySupplierId).map(([supplierId, items]) => {
                     const supplier = suppliers.find(s => s.id === supplierId);
-                    const supplierTotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+                    const supplierTotal = items.reduce((sum, item) => sum + item.article.price * item.quantity, 0);
                     
                     return (
                       <Card key={supplierId}>
@@ -289,11 +284,11 @@ export function LiveDemoRestaurantPanel({ soundEnabled }: LiveDemoRestaurantPane
                         </CardHeader>
                         <CardContent className="px-4 pb-3 pt-0 space-y-2">
                           {items.map(item => (
-                            <div key={item.articleId} className="flex justify-between items-center text-sm">
+                            <div key={item.article.id} className="flex justify-between items-center text-sm">
                               <div className="flex-1">
-                                <span>{item.articleName}</span>
+                                <span>{item.article.name}</span>
                                 <span className="text-muted-foreground ml-2">
-                                  {item.quantity} × €{item.price.toFixed(2)}
+                                  {item.quantity} × €{item.article.price.toFixed(2)}
                                 </span>
                               </div>
                               <div className="flex items-center gap-1">
@@ -301,7 +296,7 @@ export function LiveDemoRestaurantPanel({ soundEnabled }: LiveDemoRestaurantPane
                                   variant="ghost"
                                   size="icon"
                                   className="h-6 w-6"
-                                  onClick={() => updateQuantity(item.articleId, item.quantity - 1)}
+                                  onClick={() => updateQuantity(item.article.id, item.quantity - 1)}
                                 >
                                   <Minus className="h-3 w-3" />
                                 </Button>
@@ -310,7 +305,7 @@ export function LiveDemoRestaurantPanel({ soundEnabled }: LiveDemoRestaurantPane
                                   variant="ghost"
                                   size="icon"
                                   className="h-6 w-6"
-                                  onClick={() => updateQuantity(item.articleId, item.quantity + 1)}
+                                  onClick={() => updateQuantity(item.article.id, item.quantity + 1)}
                                 >
                                   <Plus className="h-3 w-3" />
                                 </Button>

@@ -15,7 +15,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 export default function LiveDemo() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { user, isLoading } = useAuth();
+  const { user, loading } = useAuth();
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [isResetting, setIsResetting] = useState(false);
@@ -60,7 +60,7 @@ export default function LiveDemo() {
     return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
   }, []);
 
-  if (isLoading) {
+  if (loading) {
     return (
       <div className="h-screen flex items-center justify-center">
         <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" />
