@@ -14,6 +14,118 @@ interface ConnectionArrowsProps {
   positions: TilePosition[];
 }
 
+type Direction = 'right' | 'left' | 'down' | 'up';
+
+interface ConnectionPoints {
+  fromX: number;
+  fromY: number;
+  toX: number;
+  toY: number;
+  fromDirection: Direction;
+  toDirection: Direction;
+}
+
+function getConnectionPoints(from: TilePosition, to: TilePosition): ConnectionPoints {
+  // Calculate centers
+  const fromCenterX = from.x + from.width / 2;
+  const fromCenterY = from.y + from.height / 2;
+  const toCenterX = to.x + to.width / 2;
+  const toCenterY = to.y + to.height / 2;
+
+  // Calculate direction vector
+  const dx = toCenterX - fromCenterX;
+  const dy = toCenterY - fromCenterY;
+
+  let fromX: number, fromY: number, toX: number, toY: number;
+  let fromDirection: Direction, toDirection: Direction;
+
+  // Determine based on dominant direction
+  if (Math.abs(dx) > Math.abs(dy)) {
+    // Horizontal dominant
+    if (dx > 0) {
+      // Target is to the right → from right edge to left edge
+      fromX = from.x + from.width;
+      fromY = from.y + from.height / 2;
+      toX = to.x;
+      toY = to.y + to.height / 2;
+      fromDirection = 'right';
+      toDirection = 'left';
+    } else {
+      // Target is to the left → from left edge to right edge
+      fromX = from.x;
+      fromY = from.y + from.height / 2;
+      toX = to.x + to.width;
+      toY = to.y + to.height / 2;
+      fromDirection = 'left';
+      toDirection = 'right';
+    }
+  } else {
+    // Vertical dominant
+    if (dy > 0) {
+      // Target is below → from bottom edge to top edge
+      fromX = from.x + from.width / 2;
+      fromY = from.y + from.height;
+      toX = to.x + to.width / 2;
+      toY = to.y;
+      fromDirection = 'down';
+      toDirection = 'up';
+    } else {
+      // Target is above → from top edge to bottom edge
+      fromX = from.x + from.width / 2;
+      fromY = from.y;
+      toX = to.x + to.width / 2;
+      toY = to.y + to.height;
+      fromDirection = 'up';
+      toDirection = 'down';
+    }
+  }
+
+  return { fromX, fromY, toX, toY, fromDirection, toDirection };
+}
+
+function createPath(points: ConnectionPoints): string {
+  const { fromX, fromY, toX, toY, fromDirection } = points;
+  
+  // Calculate control points based on direction
+  const isHorizontal = fromDirection === 'left' || fromDirection === 'right';
+  
+  if (isHorizontal) {
+    const deltaX = toX - fromX;
+    const controlOffset = Math.min(Math.abs(deltaX) * 0.4, 80);
+    const sign = fromDirection === 'right' ? 1 : -1;
+    
+    return `M ${fromX} ${fromY} C ${fromX + controlOffset * sign} ${fromY}, ${toX - controlOffset * sign} ${toY}, ${toX} ${toY}`;
+  } else {
+    const deltaY = toY - fromY;
+    const controlOffset = Math.min(Math.abs(deltaY) * 0.4, 80);
+    const sign = fromDirection === 'down' ? 1 : -1;
+    
+    return `M ${fromX} ${fromY} C ${fromX} ${fromY + controlOffset * sign}, ${toX} ${toY - controlOffset * sign}, ${toX} ${toY}`;
+  }
+}
+
+function getArrowPoints(x: number, y: number, direction: Direction, size: number = 8): string {
+  switch (direction) {
+    case 'left': // Arrow pointing left (entering from right)
+      return `${x + size},${y - size * 0.625} ${x},${y} ${x + size},${y + size * 0.625}`;
+    case 'right': // Arrow pointing right (entering from left)
+      return `${x - size},${y - size * 0.625} ${x},${y} ${x - size},${y + size * 0.625}`;
+    case 'up': // Arrow pointing up (entering from below)
+      return `${x - size * 0.625},${y + size} ${x},${y} ${x + size * 0.625},${y + size}`;
+    case 'down': // Arrow pointing down (entering from above)
+      return `${x - size * 0.625},${y - size} ${x},${y} ${x + size * 0.625},${y - size}`;
+  }
+}
+
+function getOppositeDirection(direction: Direction): Direction {
+  switch (direction) {
+    case 'left': return 'right';
+    case 'right': return 'left';
+    case 'up': return 'down';
+    case 'down': return 'up';
+  }
+}
+
 export function ConnectionArrows({ connections, positions }: ConnectionArrowsProps) {
   const positionMap = useMemo(() => {
     return positions.reduce((acc, pos) => {
@@ -29,17 +141,12 @@ export function ConnectionArrows({ connections, positions }: ConnectionArrowsPro
       
       if (!fromPos || !toPos) return null;
 
-      // Calculate connection points (from right edge of source to left edge of target)
-      const fromX = fromPos.x + fromPos.width;
-      const fromY = fromPos.y + fromPos.height / 2;
-      const toX = toPos.x;
-      const toY = toPos.y + toPos.height / 2;
-
-      // Calculate control points for smooth Bézier curve
-      const deltaX = toX - fromX;
-      const controlOffset = Math.min(Math.abs(deltaX) * 0.4, 80);
+      // Get dynamic connection points
+      const points = getConnectionPoints(fromPos, toPos);
+      const { fromX, fromY, toX, toY, fromDirection, toDirection } = points;
       
-      const path = `M ${fromX} ${fromY} C ${fromX + controlOffset} ${fromY}, ${toX - controlOffset} ${toY}, ${toX} ${toY}`;
+      // Create curved path
+      const path = createPath(points);
       
       // Calculate midpoint for label
       const midX = (fromX + toX) / 2;
@@ -75,7 +182,7 @@ export function ConnectionArrows({ connections, positions }: ConnectionArrowsPro
           
           {/* Arrow head at destination */}
           <polygon
-            points={`${toX - 8},${toY - 5} ${toX},${toY} ${toX - 8},${toY + 5}`}
+            points={getArrowPoints(toX, toY, toDirection)}
             fill={color}
             className="drop-shadow-sm"
           />
@@ -83,7 +190,7 @@ export function ConnectionArrows({ connections, positions }: ConnectionArrowsPro
           {/* Arrow head at source (for bidirectional) */}
           {conn.bidirectional && (
             <polygon
-              points={`${fromX + 8},${fromY - 5} ${fromX},${fromY} ${fromX + 8},${fromY + 5}`}
+              points={getArrowPoints(fromX, fromY, getOppositeDirection(fromDirection))}
               fill={color}
               className="drop-shadow-sm"
             />
