@@ -63,7 +63,16 @@ export function LiveDemoCanvas({ soundEnabled }: LiveDemoCanvasProps) {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
       try {
-        return JSON.parse(saved);
+        const parsed = JSON.parse(saved) as TilePosition[];
+        // Validate that all required tile IDs exist
+        const requiredIds = defaultPositions.map(p => p.id);
+        const savedIds = parsed.map(p => p.id);
+        const allIdsPresent = requiredIds.every(id => savedIds.includes(id));
+        if (allIdsPresent) {
+          return parsed;
+        }
+        // If IDs don't match (e.g. after restructure), use defaults
+        return defaultPositions;
       } catch {
         return defaultPositions;
       }
