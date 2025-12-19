@@ -134,8 +134,8 @@ serve(async (req) => {
     for (const article of articles) {
       const supplierName = (article as any).suppliers?.name || "";
       
-      // Build search query
-      const searchQuery = `${article.name} Großhandel Preis ${city} ${searchRadiusKm}km kaufen B2B`;
+      // Build search query - include B2B, retail and online sources
+      const searchQuery = `${article.name} Preis ${city} kaufen Großhandel Supermarkt Online`;
       
       console.log(`Searching: ${searchQuery}`);
 
@@ -152,24 +152,31 @@ serve(async (req) => {
             messages: [
               {
                 role: "system",
-                content: `Du bist ein Preisrecherche-Assistent für Gastronomiebetriebe. 
-                Suche nach B2B-Großhandelspreisen für Gastronomieprodukte.
-                Fokussiere dich auf: Metro, Selgros, Transgourmet, Chefs Culinar, Rungis Express, regionale Getränkehändler, Weingroßhandel.
+                content: `Du bist ein Preisrecherche-Assistent für Gastronomiebetriebe und Unternehmen.
+                Suche nach den günstigsten Preisen aus ALLEN verfügbaren Quellen:
+                
+                B2B-GROSSHANDEL: Metro, Selgros, Transgourmet, Chefs Culinar, Rungis Express, Getränkehändler, Weingroßhandel
+                SUPERMARKTKETTEN: Aldi, Lidl, Rewe, Edeka, Kaufland, Penny, Netto, Real
+                ONLINE-HÄNDLER: Amazon, eBay, Otto, idealo, geizhals.de, billiger.de
+                CASH & CARRY: Hamberger, Handelshof, Ratio
+                
                 Antworte NUR mit einem JSON-Objekt im Format:
                 {
                   "found": true/false,
                   "price": number (Preis pro Einheit in Euro, ohne Währungszeichen),
-                  "supplier": "Name des Lieferanten",
+                  "supplier": "Name des Lieferanten/Händlers",
+                  "supplier_type": "B2B" | "Supermarkt" | "Online",
                   "source_url": "URL der Quelle falls vorhanden",
                   "unit": "Einheit",
-                  "notes": "Zusätzliche Infos"
+                  "notes": "Zusätzliche Infos (z.B. Mindestbestellmenge)"
                 }
                 Falls kein Preis gefunden wurde, setze "found" auf false.`
               },
               {
                 role: "user",
-                content: `Finde den günstigsten B2B-Großhandelspreis für: "${article.name}" (Einheit: ${article.unit})
-                Region: ${city} ${postalCode}, Umkreis ${searchRadiusKm}km
+                content: `Finde den günstigsten Preis für: "${article.name}" (Einheit: ${article.unit})
+                Region: ${city} ${postalCode}
+                Suche in: B2B-Großhandel, Supermarktketten (Aldi, Lidl, Rewe, Edeka, Kaufland) UND Online-Händler
                 Aktueller Einkaufspreis: ${article.price}€ pro ${article.unit}`
               }
             ],
