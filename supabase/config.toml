@@ -152,3 +152,6 @@ verify_jwt = false
 
 [functions.manage-b2b-mobile-inventory]
 verify_jwt = false
+
+[functions.create-b2b-account-user]
+verify_jwt = false
