@@ -14,24 +14,25 @@ const isPreviewEnvironment = (): boolean => {
   return hostname.includes('--') || hostname === 'localhost' || hostname === '127.0.0.1';
 };
 
+// Known project ID for this Lovable project
+const PROJECT_ID = '113bb70f-2619-492d-82eb-ef1843c240c4';
+
 // Get the production URL for QR codes
 const getProductionUrl = (): string => {
   const hostname = window.location.hostname;
-  const protocol = window.location.protocol;
   
-  if (!hostname.includes('--') && 
-      (hostname.endsWith('.lovable.app') || hostname.endsWith('.lovableproject.com'))) {
+  // If we're on localhost or a preview environment, use the known production URL
+  if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname.includes('--')) {
+    return `https://${PROJECT_ID}.lovableproject.com`;
+  }
+  
+  // If we're on a production URL (lovable.app or lovableproject.com), use current origin
+  if (hostname.endsWith('.lovable.app') || hostname.endsWith('.lovableproject.com')) {
     return window.location.origin;
   }
   
-  if (hostname.includes('--') && hostname.includes('lovableproject.com')) {
-    const projectId = hostname.split('--')[0];
-    if (projectId) {
-      return `${protocol}//${projectId}.lovableproject.com`;
-    }
-  }
-  
-  return window.location.origin;
+  // Fallback: use known production URL
+  return `https://${PROJECT_ID}.lovableproject.com`;
 };
 
 interface B2BMobileQRDialogProps {
