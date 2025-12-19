@@ -155,3 +155,6 @@ verify_jwt = false
 
 [functions.create-b2b-account-user]
 verify_jwt = false
+
+[functions.update-b2b-account-email]
+verify_jwt = false
