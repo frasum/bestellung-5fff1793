@@ -1,14 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Maximize2, Minimize2, RotateCcw, Volume2, VolumeX, ArrowLeft, AlertTriangle } from 'lucide-react';
-import { LiveDemoRestaurantPanel } from '@/components/demo/LiveDemoRestaurantPanel';
-import { LiveDemoSupplierPanel } from '@/components/demo/LiveDemoSupplierPanel';
-import { LiveDemoEasyOrderPanel } from '@/components/demo/LiveDemoEasyOrderPanel';
-import { LiveDemoEmailPanel } from '@/components/demo/LiveDemoEmailPanel';
-import { LiveDemoAdminPanel } from '@/components/demo/LiveDemoAdminPanel';
+import { LiveDemoCanvas } from '@/components/demo/LiveDemoCanvas';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -165,51 +159,8 @@ export default function LiveDemo() {
         </div>
       </div>
 
-      {/* 5-Panel Split Screen */}
-      <ResizablePanelGroup direction="horizontal" className="flex-1">
-        {/* Restaurant Panel */}
-        <ResizablePanel defaultSize={20} minSize={12}>
-          <div className="h-full flex flex-col border-l-4 border-l-blue-500">
-            <LiveDemoRestaurantPanel soundEnabled={soundEnabled} />
-          </div>
-        </ResizablePanel>
-
-        <ResizableHandle withHandle />
-
-        {/* EasyOrder Panel */}
-        <ResizablePanel defaultSize={20} minSize={12}>
-          <div className="h-full flex flex-col border-l-4 border-l-orange-500">
-            <LiveDemoEasyOrderPanel soundEnabled={soundEnabled} />
-          </div>
-        </ResizablePanel>
-
-        <ResizableHandle withHandle />
-
-        {/* Admin Panel */}
-        <ResizablePanel defaultSize={20} minSize={12}>
-          <div className="h-full flex flex-col border-l-4 border-l-pink-500">
-            <LiveDemoAdminPanel soundEnabled={soundEnabled} />
-          </div>
-        </ResizablePanel>
-
-        <ResizableHandle withHandle />
-
-        {/* Supplier Panel */}
-        <ResizablePanel defaultSize={20} minSize={12}>
-          <div className="h-full flex flex-col border-l-4 border-l-green-500">
-            <LiveDemoSupplierPanel soundEnabled={soundEnabled} />
-          </div>
-        </ResizablePanel>
-
-        <ResizableHandle withHandle />
-
-        {/* Email Panel */}
-        <ResizablePanel defaultSize={20} minSize={12}>
-          <div className="h-full flex flex-col border-l-4 border-l-violet-500">
-            <LiveDemoEmailPanel soundEnabled={soundEnabled} />
-          </div>
-        </ResizablePanel>
-      </ResizablePanelGroup>
+      {/* Drag-and-Drop Canvas */}
+      <LiveDemoCanvas soundEnabled={soundEnabled} />
     </div>
   );
 }
