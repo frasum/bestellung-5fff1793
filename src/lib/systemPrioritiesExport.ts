@@ -11,9 +11,9 @@ interface PriorityData {
 }
 
 const priorityLabels: Record<string, string> = {
-  green: '🟢 Kritisch',
-  yellow: '🟡 Wichtig',
-  red: '🔴 Unwichtig',
+  green: 'Kritisch',
+  yellow: 'Wichtig',
+  red: 'Unwichtig',
 };
 
 const priorityColors: Record<string, [number, number, number]> = {
@@ -79,7 +79,7 @@ export const exportPrioritiesToPdf = (
       const priority = priorityData?.priority;
       const notes = priorityData?.notes || '';
 
-      return [feature.labelDe, priority ? priorityLabels[priority] : '⚪ Nicht bewertet', notes];
+      return [feature.labelDe, priority ? priorityLabels[priority] : 'Nicht bewertet', notes];
     });
 
     autoTable(doc, {
@@ -96,12 +96,14 @@ export const exportPrioritiesToPdf = (
       didParseCell: (data) => {
         if (data.section === 'body' && data.column.index === 1) {
           const cellText = data.cell.text[0] || '';
-          if (cellText.includes('Kritisch')) {
+          if (cellText === 'Kritisch') {
             data.cell.styles.textColor = priorityColors.green;
-          } else if (cellText.includes('Wichtig')) {
+          } else if (cellText === 'Wichtig') {
             data.cell.styles.textColor = priorityColors.yellow;
-          } else if (cellText.includes('Unwichtig')) {
+          } else if (cellText === 'Unwichtig') {
             data.cell.styles.textColor = priorityColors.red;
+          } else if (cellText === 'Nicht bewertet') {
+            data.cell.styles.textColor = [156, 163, 175];
           }
         }
       },
