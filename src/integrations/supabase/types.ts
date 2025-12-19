@@ -2474,6 +2474,7 @@ export type Database = {
           is_active: boolean | null
           linked_supplier_id: string | null
           logo_url: string | null
+          owner_user_id: string | null
           primary_color: string | null
           secondary_color: string | null
           subdomain: string
@@ -2493,6 +2494,7 @@ export type Database = {
           is_active?: boolean | null
           linked_supplier_id?: string | null
           logo_url?: string | null
+          owner_user_id?: string | null
           primary_color?: string | null
           secondary_color?: string | null
           subdomain: string
@@ -2512,6 +2514,7 @@ export type Database = {
           is_active?: boolean | null
           linked_supplier_id?: string | null
           logo_url?: string | null
+          owner_user_id?: string | null
           primary_color?: string | null
           secondary_color?: string | null
           subdomain?: string
