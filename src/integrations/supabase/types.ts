@@ -3059,6 +3059,47 @@ export type Database = {
           },
         ]
       }
+      system_feature_priorities: {
+        Row: {
+          category: string
+          feature_key: string
+          id: string
+          notes: string | null
+          organization_id: string
+          priority: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          category: string
+          feature_key: string
+          id?: string
+          notes?: string | null
+          organization_id: string
+          priority?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          category?: string
+          feature_key?: string
+          id?: string
+          notes?: string | null
+          organization_id?: string
+          priority?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "system_feature_priorities_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       team_invitations: {
         Row: {
           created_at: string
