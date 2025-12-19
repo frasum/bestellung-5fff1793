@@ -11,11 +11,12 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { Search, CheckSquare, Square, Loader2, BarChart3, ChevronUp, ChevronDown, Eye } from 'lucide-react';
+import { Search, CheckSquare, Square, Loader2, BarChart3, ChevronUp, ChevronDown, Eye, Trash2 } from 'lucide-react';
 import { ArticlePreviewPanel } from './ArticlePreviewPanel';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { useArticles, useBulkUpdateArticles, useUpdateArticle } from '@/hooks/useArticles';
+import { useArticles, useBulkUpdateArticles, useUpdateArticle, useDeleteArticle } from '@/hooks/useArticles';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { useUnits } from '@/hooks/useUnits';
 import { useSuppliers, useUpdateSupplier, Supplier, SupplierInput } from '@/hooks/useSuppliers';
 import { useCategories } from '@/hooks/useCategories';
@@ -49,6 +50,7 @@ export const ArticleOrganizationTab = () => {
   const { data: units = [] } = useUnits();
   const bulkUpdate = useBulkUpdateArticles();
   const updateArticle = useUpdateArticle();
+  const deleteArticle = useDeleteArticle();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [filterTopCategory, setFilterTopCategory] = useState<string>('all');
@@ -64,6 +66,7 @@ export const ArticleOrganizationTab = () => {
   const [editingArticle, setEditingArticle] = useState<ArticleWithTopCategory | null>(null);
   const [isSupplierDialogOpen, setIsSupplierDialogOpen] = useState(false);
   const [editingSupplier, setEditingSupplier] = useState<Supplier | null>(null);
+  const [deletingArticle, setDeletingArticle] = useState<ArticleWithTopCategory | null>(null);
   
   // Sorting state
   const [sortField, setSortField] = useState<'name' | 'supplier' | 'unit' | 'price' | 'bePrice'>('supplier');
@@ -337,6 +340,13 @@ export const ArticleOrganizationTab = () => {
     }
     setIsArticleDialogOpen(false);
     setEditingArticle(null);
+  };
+
+  // Delete article handler
+  const handleDeleteArticle = async () => {
+    if (!deletingArticle) return;
+    await deleteArticle.mutateAsync(deletingArticle.id);
+    setDeletingArticle(null);
   };
 
   if (articlesLoading) {
@@ -682,12 +692,13 @@ export const ArticleOrganizationTab = () => {
                       <SortIndicator field="bePrice" />
                     </div>
                   </TableHead>
+                  <TableHead className="w-[50px]"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredArticles.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={bulkAssignMode ? 8 : 7} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={bulkAssignMode ? 9 : 8} className="text-center py-8 text-muted-foreground">
                       {t('settings.articleOrganization.noArticles')}
                     </TableCell>
                   </TableRow>
@@ -814,6 +825,16 @@ export const ArticleOrganizationTab = () => {
                             </Tooltip>
                           </TooltipProvider>
                         </TableCell>
+                        <TableCell className="text-right">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                            onClick={() => setDeletingArticle(article)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </TableCell>
                       </TableRow>
                     );
                   })
@@ -860,6 +881,27 @@ export const ArticleOrganizationTab = () => {
         }}
         isPending={updateSupplier.isPending}
       />
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!deletingArticle} onOpenChange={() => setDeletingArticle(null)}>
+        <AlertDialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-lg">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Artikel löschen</AlertDialogTitle>
+            <AlertDialogDescription>
+              Sind Sie sicher, dass Sie "{deletingArticle?.name}" löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex-col sm:flex-row gap-2 sm:gap-0">
+            <AlertDialogCancel className="w-full sm:w-auto h-10 sm:h-9">Abbrechen</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDeleteArticle} 
+              className="w-full sm:w-auto h-10 sm:h-9 bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleteArticle.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Löschen'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
