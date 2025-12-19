@@ -49,6 +49,7 @@ const B2BSupplierLogin = lazy(() => import("./pages/B2BSupplierLogin"));
 const B2BSupplierDashboard = lazy(() => import("./pages/B2BSupplierDashboard"));
 const B2BAcceptInvitation = lazy(() => import("./pages/B2BAcceptInvitation"));
 const B2BCustomerPortal = lazy(() => import("./pages/B2BCustomerPortal"));
+const B2BMobile = lazy(() => import("./pages/B2BMobile"));
 const DemoSuppliers = lazy(() => import("./pages/DemoSuppliers"));
 const DemoCart = lazy(() => import("./pages/DemoCart"));
 const DemoOrders = lazy(() => import("./pages/DemoOrders"));
@@ -124,6 +125,7 @@ const AppContent = () => {
           <Route path="/b2b/accept-invitation" element={<B2BAcceptInvitation />} />
           <Route path="/b2b/portal" element={<B2BCustomerPortal />} />
           <Route path="/b2b/portal/:subdomain" element={<B2BCustomerPortal />} />
+          <Route path="/b2b/mobile" element={<B2BMobile />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

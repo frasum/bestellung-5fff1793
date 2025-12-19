@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Factory, Package, ShoppingCart, ClipboardList, Sparkles, CheckCircle, Clipboard } from 'lucide-react';
+import { Factory, Package, ShoppingCart, ClipboardList, Sparkles, CheckCircle, Clipboard, Smartphone } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import B2BVendorsTab from './B2BVendorsTab';
 import B2BVendorArticlesTab from './B2BVendorArticlesTab';
@@ -10,6 +10,7 @@ import B2BPurchaseCartTab from './B2BPurchaseCartTab';
 import B2BPurchaseOrdersTab from './B2BPurchaseOrdersTab';
 import B2BInventoryTab from './B2BInventoryTab';
 import B2BUpgradePricingDialog from '@/components/b2b-customer/B2BUpgradePricingDialog';
+import B2BMobileQRDialog from './B2BMobileQRDialog';
 
 interface B2BPurchaseTabProps {
   accountId: string;
@@ -28,6 +29,7 @@ const B2BPurchaseTab = ({ accountId, supplierId }: B2BPurchaseTabProps) => {
   const [activeSubTab, setActiveSubTab] = useState('vendors');
   const [refreshKey, setRefreshKey] = useState(0);
   const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
+  const [showMobileDialog, setShowMobileDialog] = useState(false);
   const [accountInfo, setAccountInfo] = useState<AccountInfo | null>(null);
 
   useEffect(() => {
@@ -80,6 +82,14 @@ const B2BPurchaseTab = ({ accountId, supplierId }: B2BPurchaseTabProps) => {
 
   return (
     <div className="space-y-4">
+      {/* Mobile App Button */}
+      <div className="flex justify-end">
+        <Button variant="outline" onClick={() => setShowMobileDialog(true)}>
+          <Smartphone className="h-4 w-4 mr-2" />
+          Mobile App
+        </Button>
+      </div>
+
       {/* Upgrade Banner */}
       {accountInfo && !accountInfo.upgradedOrganizationId && (
         <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent rounded-lg p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -195,6 +205,14 @@ const B2BPurchaseTab = ({ accountId, supplierId }: B2BPurchaseTabProps) => {
           onUpgradeSuccess={handleUpgradeSuccess}
         />
       )}
+
+      {/* Mobile QR Dialog */}
+      <B2BMobileQRDialog
+        open={showMobileDialog}
+        onOpenChange={setShowMobileDialog}
+        accountId={accountId}
+        supplierId={supplierId}
+      />
     </div>
   );
 };
