@@ -9,12 +9,14 @@ const corsHeaders = {
 };
 
 interface ArticleUpdateRequest {
-  action: 'list' | 'update' | 'update-all' | 'get-settings' | 'get-units' | 'get-order-units' | 'create-unit' | 'get-categories' | 'create-category' | 'suggest-article' | 'save-draft' | 'get-draft' | 'delete-draft' | 'upload-image' | 'delete-image' | 'get-orders' | 'mark-order-seen' | 'confirm-order';
+  action: 'list' | 'update' | 'update-all' | 'get-settings' | 'get-units' | 'get-order-units' | 'create-unit' | 'get-categories' | 'create-category' | 'suggest-article' | 'save-draft' | 'get-draft' | 'delete-draft' | 'upload-image' | 'delete-image' | 'get-orders' | 'mark-order-seen' | 'confirm-order' | 'list-own-vendors' | 'create-own-vendor' | 'update-own-vendor' | 'delete-own-vendor' | 'list-own-articles' | 'create-own-article' | 'update-own-article' | 'delete-own-article' | 'list-own-inventory-sessions' | 'create-own-inventory-session' | 'get-own-inventory-session' | 'save-own-inventory-items' | 'complete-own-inventory-session' | 'delete-own-inventory-session';
   supplierId: string;
   organizationId: string;
   sessionToken: string;
   articleId?: string;
   orderId?: string;
+  vendorId?: string;
+  sessionId?: string;
   changes?: Record<string, any>;
   articleChanges?: Array<{ articleId: string; changes: Record<string, any> }>;
   unitName?: string;
@@ -34,6 +36,32 @@ interface ArticleUpdateRequest {
     priceInputs: Record<string, string>;
     annualOrderValueInputs: Record<string, string>;
   };
+  vendorData?: {
+    name: string;
+    email?: string | null;
+    phone?: string | null;
+    address?: string | null;
+    notes?: string | null;
+  };
+  articleData?: {
+    vendor_id: string;
+    name: string;
+    description?: string | null;
+    sku?: string | null;
+    price: number;
+    unit: string;
+    category?: string | null;
+  };
+  sessionData?: {
+    name: string;
+    vendor_id?: string | null;
+  };
+  items?: Array<{
+    article_id: string;
+    storage_1: number;
+    storage_2: number;
+    unit_price?: number | null;
+  }>;
 }
 
 serve(async (req) => {
@@ -1429,6 +1457,397 @@ serve(async (req) => {
 
       console.log(`Order ${orderId} confirmed by supplier ${supplierId}`);
 
+      return new Response(JSON.stringify({ success: true }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // ============== OWN VENDORS ==============
+    if (action === 'list-own-vendors') {
+      const { data: vendors, error } = await supabase
+        .from('supplier_own_vendors')
+        .select('*')
+        .eq('supplier_id', supplierId)
+        .order('name');
+
+      if (error) {
+        console.error('Error fetching own vendors:', error);
+        throw error;
+      }
+
+      return new Response(JSON.stringify({ vendors: vendors || [] }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    if (action === 'create-own-vendor') {
+      const { vendorData } = body;
+      if (!vendorData?.name) {
+        return new Response(JSON.stringify({ error: 'Missing vendor name' }), {
+          status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      const { data: vendor, error } = await supabase
+        .from('supplier_own_vendors')
+        .insert({
+          supplier_id: supplierId,
+          name: vendorData.name,
+          email: vendorData.email,
+          phone: vendorData.phone,
+          address: vendorData.address,
+          notes: vendorData.notes,
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error creating own vendor:', error);
+        throw error;
+      }
+
+      console.log(`Created own vendor: ${vendor.name}`);
+      return new Response(JSON.stringify({ vendor }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    if (action === 'update-own-vendor') {
+      const { vendorId, vendorData } = body;
+      if (!vendorId || !vendorData) {
+        return new Response(JSON.stringify({ error: 'Missing vendorId or vendorData' }), {
+          status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      const { data: vendor, error } = await supabase
+        .from('supplier_own_vendors')
+        .update({
+          name: vendorData.name,
+          email: vendorData.email,
+          phone: vendorData.phone,
+          address: vendorData.address,
+          notes: vendorData.notes,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', vendorId)
+        .eq('supplier_id', supplierId)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error updating own vendor:', error);
+        throw error;
+      }
+
+      return new Response(JSON.stringify({ vendor }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    if (action === 'delete-own-vendor') {
+      const { vendorId } = body;
+      if (!vendorId) {
+        return new Response(JSON.stringify({ error: 'Missing vendorId' }), {
+          status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      const { error } = await supabase
+        .from('supplier_own_vendors')
+        .delete()
+        .eq('id', vendorId)
+        .eq('supplier_id', supplierId);
+
+      if (error) {
+        console.error('Error deleting own vendor:', error);
+        throw error;
+      }
+
+      return new Response(JSON.stringify({ success: true }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // ============== OWN ARTICLES ==============
+    if (action === 'list-own-articles') {
+      const { data: articles, error } = await supabase
+        .from('supplier_own_articles')
+        .select('*, vendor:supplier_own_vendors(id, name)')
+        .eq('supplier_id', supplierId)
+        .order('name');
+
+      if (error) {
+        console.error('Error fetching own articles:', error);
+        throw error;
+      }
+
+      return new Response(JSON.stringify({ articles: articles || [] }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    if (action === 'create-own-article') {
+      const { articleData } = body;
+      if (!articleData?.name || !articleData?.vendor_id) {
+        return new Response(JSON.stringify({ error: 'Missing article name or vendor_id' }), {
+          status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      const { data: article, error } = await supabase
+        .from('supplier_own_articles')
+        .insert({
+          supplier_id: supplierId,
+          vendor_id: articleData.vendor_id,
+          name: articleData.name,
+          description: articleData.description,
+          sku: articleData.sku,
+          price: articleData.price || 0,
+          unit: articleData.unit || 'Stk',
+          category: articleData.category,
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error creating own article:', error);
+        throw error;
+      }
+
+      console.log(`Created own article: ${article.name}`);
+      return new Response(JSON.stringify({ article }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    if (action === 'update-own-article') {
+      const { articleId, articleData } = body;
+      if (!articleId || !articleData) {
+        return new Response(JSON.stringify({ error: 'Missing articleId or articleData' }), {
+          status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      const { data: article, error } = await supabase
+        .from('supplier_own_articles')
+        .update({
+          vendor_id: articleData.vendor_id,
+          name: articleData.name,
+          description: articleData.description,
+          sku: articleData.sku,
+          price: articleData.price,
+          unit: articleData.unit,
+          category: articleData.category,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', articleId)
+        .eq('supplier_id', supplierId)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error updating own article:', error);
+        throw error;
+      }
+
+      return new Response(JSON.stringify({ article }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    if (action === 'delete-own-article') {
+      const { articleId } = body;
+      if (!articleId) {
+        return new Response(JSON.stringify({ error: 'Missing articleId' }), {
+          status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      const { error } = await supabase
+        .from('supplier_own_articles')
+        .delete()
+        .eq('id', articleId)
+        .eq('supplier_id', supplierId);
+
+      if (error) {
+        console.error('Error deleting own article:', error);
+        throw error;
+      }
+
+      return new Response(JSON.stringify({ success: true }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // ============== OWN INVENTORY ==============
+    if (action === 'list-own-inventory-sessions') {
+      const { data: sessions, error } = await supabase
+        .from('supplier_own_inventory_sessions')
+        .select('*')
+        .eq('supplier_id', supplierId)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching own inventory sessions:', error);
+        throw error;
+      }
+
+      return new Response(JSON.stringify({ sessions: sessions || [] }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    if (action === 'create-own-inventory-session') {
+      const { sessionData } = body;
+      if (!sessionData?.name) {
+        return new Response(JSON.stringify({ error: 'Missing session name' }), {
+          status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      const { data: session, error } = await supabase
+        .from('supplier_own_inventory_sessions')
+        .insert({
+          supplier_id: supplierId,
+          name: sessionData.name,
+          vendor_id: sessionData.vendor_id,
+          status: 'in_progress',
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error creating own inventory session:', error);
+        throw error;
+      }
+
+      console.log(`Created own inventory session: ${session.name}`);
+      return new Response(JSON.stringify({ session }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    if (action === 'get-own-inventory-session') {
+      const { sessionId } = body;
+      if (!sessionId) {
+        return new Response(JSON.stringify({ error: 'Missing sessionId' }), {
+          status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      const { data: items, error } = await supabase
+        .from('supplier_own_inventory_items')
+        .select('*')
+        .eq('session_id', sessionId);
+
+      if (error) {
+        console.error('Error fetching own inventory items:', error);
+        throw error;
+      }
+
+      return new Response(JSON.stringify({ items: items || [] }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    if (action === 'save-own-inventory-items') {
+      const { sessionId, items } = body;
+      if (!sessionId || !items || !Array.isArray(items)) {
+        return new Response(JSON.stringify({ error: 'Missing sessionId or items' }), {
+          status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      // Verify session belongs to supplier
+      const { data: session, error: sessionError } = await supabase
+        .from('supplier_own_inventory_sessions')
+        .select('id')
+        .eq('id', sessionId)
+        .eq('supplier_id', supplierId)
+        .single();
+
+      if (sessionError || !session) {
+        return new Response(JSON.stringify({ error: 'Session not found' }), {
+          status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      // Upsert items
+      for (const item of items) {
+        const { error } = await supabase
+          .from('supplier_own_inventory_items')
+          .upsert({
+            session_id: sessionId,
+            article_id: item.article_id,
+            storage_1: item.storage_1,
+            storage_2: item.storage_2,
+            unit_price: item.unit_price,
+            updated_at: new Date().toISOString(),
+          }, {
+            onConflict: 'session_id,article_id',
+          });
+
+        if (error) {
+          console.error('Error saving inventory item:', error);
+          throw error;
+        }
+      }
+
+      console.log(`Saved ${items.length} inventory items for session ${sessionId}`);
+      return new Response(JSON.stringify({ success: true }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    if (action === 'complete-own-inventory-session') {
+      const { sessionId } = body;
+      if (!sessionId) {
+        return new Response(JSON.stringify({ error: 'Missing sessionId' }), {
+          status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      const { error } = await supabase
+        .from('supplier_own_inventory_sessions')
+        .update({
+          status: 'completed',
+          completed_at: new Date().toISOString(),
+        })
+        .eq('id', sessionId)
+        .eq('supplier_id', supplierId);
+
+      if (error) {
+        console.error('Error completing own inventory session:', error);
+        throw error;
+      }
+
+      console.log(`Completed own inventory session ${sessionId}`);
+      return new Response(JSON.stringify({ success: true }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    if (action === 'delete-own-inventory-session') {
+      const { sessionId } = body;
+      if (!sessionId) {
+        return new Response(JSON.stringify({ error: 'Missing sessionId' }), {
+          status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      const { error } = await supabase
+        .from('supplier_own_inventory_sessions')
+        .delete()
+        .eq('id', sessionId)
+        .eq('supplier_id', supplierId);
+
+      if (error) {
+        console.error('Error deleting own inventory session:', error);
+        throw error;
+      }
+
+      console.log(`Deleted own inventory session ${sessionId}`);
       return new Response(JSON.stringify({ success: true }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });

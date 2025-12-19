@@ -2979,6 +2979,215 @@ export type Database = {
           },
         ]
       }
+      supplier_own_articles: {
+        Row: {
+          category: string | null
+          created_at: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          price: number | null
+          sku: string | null
+          supplier_id: string
+          unit: string | null
+          updated_at: string | null
+          vendor_id: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          price?: number | null
+          sku?: string | null
+          supplier_id: string
+          unit?: string | null
+          updated_at?: string | null
+          vendor_id: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          price?: number | null
+          sku?: string | null
+          supplier_id?: string
+          unit?: string | null
+          updated_at?: string | null
+          vendor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supplier_own_articles_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supplier_own_articles_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "supplier_own_vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      supplier_own_inventory_items: {
+        Row: {
+          article_id: string
+          created_at: string | null
+          id: string
+          notes: string | null
+          session_id: string
+          storage_1: number | null
+          storage_2: number | null
+          total: number | null
+          unit_price: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          article_id: string
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          session_id: string
+          storage_1?: number | null
+          storage_2?: number | null
+          total?: number | null
+          unit_price?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          article_id?: string
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          session_id?: string
+          storage_1?: number | null
+          storage_2?: number | null
+          total?: number | null
+          unit_price?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supplier_own_inventory_items_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: false
+            referencedRelation: "supplier_own_articles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supplier_own_inventory_items_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "supplier_own_inventory_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      supplier_own_inventory_sessions: {
+        Row: {
+          completed_at: string | null
+          created_at: string | null
+          id: string
+          name: string
+          notes: string | null
+          status: string | null
+          supplier_id: string
+          vendor_id: string | null
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          status?: string | null
+          supplier_id: string
+          vendor_id?: string | null
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          status?: string | null
+          supplier_id?: string
+          vendor_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supplier_own_inventory_sessions_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supplier_own_inventory_sessions_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "supplier_own_vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      supplier_own_vendors: {
+        Row: {
+          address: string | null
+          created_at: string | null
+          email: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          notes: string | null
+          phone: string | null
+          supplier_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          notes?: string | null
+          phone?: string | null
+          supplier_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          address?: string | null
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          notes?: string | null
+          phone?: string | null
+          supplier_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supplier_own_vendors_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       supplier_portal_drafts: {
         Row: {
           created_at: string
