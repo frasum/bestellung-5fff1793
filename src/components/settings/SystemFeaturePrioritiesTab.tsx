@@ -161,9 +161,17 @@ export const SystemFeaturePrioritiesTab = () => {
   const stats = useMemo(() => {
     if (!priorities) return { green: 0, yellow: 0, red: 0, unrated: totalFeatures };
 
-    const green = priorities.filter((p) => p.priority === 'green').length;
-    const yellow = priorities.filter((p) => p.priority === 'yellow').length;
-    const red = priorities.filter((p) => p.priority === 'red').length;
+    // Nur Prioritäten für Features zählen, die noch in SYSTEM_FEATURES existieren
+    const validPriorities = priorities.filter(p => 
+      SYSTEM_FEATURES.some(cat => 
+        cat.key === p.category && 
+        cat.features.some(f => f.key === p.feature_key)
+      )
+    );
+
+    const green = validPriorities.filter((p) => p.priority === 'green').length;
+    const yellow = validPriorities.filter((p) => p.priority === 'yellow').length;
+    const red = validPriorities.filter((p) => p.priority === 'red').length;
     const rated = green + yellow + red;
 
     return { green, yellow, red, unrated: totalFeatures - rated };
