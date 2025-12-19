@@ -1,10 +1,9 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Check, X, Clock, Package } from 'lucide-react';
+import { Check, X, Clock, Package, Shield } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient, useMutation } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -327,25 +326,27 @@ export function LiveDemoAdminPanel({ soundEnabled }: LiveDemoAdminPanelProps) {
 
   return (
     <div className="h-full flex flex-col bg-background">
-      {/* Header with count */}
-      <div className="p-3 border-b">
-        <div className="flex items-center justify-between">
-          <span className="text-sm font-medium">Vorbestellungen</span>
-          {pendingCount > 0 && (
-            <Badge variant="destructive" className="animate-pulse">
-              {pendingCount} ausstehend
-            </Badge>
-          )}
+      {/* Panel Header */}
+      <div className="flex items-center justify-between px-3 py-2.5 bg-pink-500/5 border-b">
+        <div className="flex items-center gap-2">
+          <Shield className="h-4 w-4 text-pink-600" />
+          <div>
+            <span className="font-semibold text-sm text-pink-700 dark:text-pink-300">Admin</span>
+            <p className="text-xs text-muted-foreground">Freigabe & Kontrolle</p>
+          </div>
         </div>
+        {pendingCount > 0 && (
+          <Badge variant="destructive" className="animate-pulse">{pendingCount}</Badge>
+        )}
       </div>
 
       {/* Drafts List */}
       <ScrollArea className="flex-1">
         <div className="p-2 space-y-2">
           {drafts.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground text-sm">
-              <Clock className="h-8 w-8 mx-auto mb-2 opacity-50" />
-              <p>Keine Vorbestellungen</p>
+            <div className="text-center py-8 text-muted-foreground">
+              <Clock className="h-10 w-10 mx-auto mb-2 opacity-30" />
+              <p className="text-sm font-medium">Keine Vorbestellungen</p>
               <p className="text-xs mt-1">Warten auf EasyOrder...</p>
             </div>
           ) : (
@@ -358,67 +359,65 @@ export function LiveDemoAdminPanel({ soundEnabled }: LiveDemoAdminPanelProps) {
               );
 
               return (
-                <Card key={draft.id} className="border-orange-200 dark:border-orange-800 bg-orange-50/50 dark:bg-orange-950/20">
-                  <CardContent className="p-3 space-y-2">
-                    {/* Header */}
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <p className="font-medium text-sm">{employeeName}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {format(new Date(draft.created_at), 'HH:mm', { locale: de })} • {supplierName}
-                        </p>
+                <div key={draft.id} className="rounded-lg border border-orange-200 dark:border-orange-800 bg-orange-50/50 dark:bg-orange-950/20 p-2.5 space-y-2">
+                  {/* Header */}
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <p className="font-medium text-sm">{employeeName}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {format(new Date(draft.created_at), 'HH:mm', { locale: de })} • {supplierName}
+                      </p>
+                    </div>
+                    <Badge variant="outline" className="text-xs">
+                      <Package className="h-3 w-3 mr-1" />
+                      {totalItems}
+                    </Badge>
+                  </div>
+
+                  {/* Items Preview */}
+                  <div className="text-xs text-muted-foreground space-y-0.5 max-h-14 overflow-y-auto">
+                    {draft.items.slice(0, 3).map(item => (
+                      <div key={item.id} className="flex justify-between">
+                        <span className="truncate">{item.quantity}x {item.article?.name || 'Unbekannt'}</span>
+                        <span>€{((item.article?.price || 0) * item.quantity).toFixed(2)}</span>
                       </div>
-                      <Badge variant="outline" className="text-xs">
-                        <Package className="h-3 w-3 mr-1" />
-                        {totalItems}
-                      </Badge>
-                    </div>
+                    ))}
+                    {draft.items.length > 3 && (
+                      <div className="text-muted-foreground/70">
+                        +{draft.items.length - 3} weitere...
+                      </div>
+                    )}
+                  </div>
 
-                    {/* Items Preview */}
-                    <div className="text-xs text-muted-foreground space-y-0.5 max-h-16 overflow-y-auto">
-                      {draft.items.slice(0, 3).map(item => (
-                        <div key={item.id} className="flex justify-between">
-                          <span className="truncate">{item.quantity}x {item.article?.name || 'Unbekannt'}</span>
-                          <span>€{((item.article?.price || 0) * item.quantity).toFixed(2)}</span>
-                        </div>
-                      ))}
-                      {draft.items.length > 3 && (
-                        <div className="text-muted-foreground/70">
-                          +{draft.items.length - 3} weitere...
-                        </div>
-                      )}
-                    </div>
+                  {/* Total */}
+                  <div className="flex justify-between text-sm font-medium pt-1 border-t">
+                    <span>Gesamt</span>
+                    <span>€{totalAmount.toFixed(2)}</span>
+                  </div>
 
-                    {/* Total */}
-                    <div className="flex justify-between text-sm font-medium pt-1 border-t">
-                      <span>Gesamt</span>
-                      <span>€{totalAmount.toFixed(2)}</span>
-                    </div>
-
-                    {/* Actions */}
-                    <div className="flex gap-2 pt-1">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="flex-1 text-destructive hover:text-destructive"
-                        onClick={() => rejectDraft.mutate(draft.id)}
-                        disabled={rejectDraft.isPending}
-                      >
-                        <X className="h-3 w-3 mr-1" />
-                        Ablehnen
-                      </Button>
-                      <Button
-                        size="sm"
-                        className="flex-1"
-                        onClick={() => approveDraft.mutate(draft)}
-                        disabled={approveDraft.isPending}
-                      >
-                        <Check className="h-3 w-3 mr-1" />
-                        Freigeben
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
+                  {/* Actions */}
+                  <div className="flex gap-2 pt-1">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex-1 h-7 text-xs text-destructive hover:text-destructive"
+                      onClick={() => rejectDraft.mutate(draft.id)}
+                      disabled={rejectDraft.isPending}
+                    >
+                      <X className="h-3 w-3 mr-1" />
+                      Ablehnen
+                    </Button>
+                    <Button
+                      size="sm"
+                      className="flex-1 h-7 text-xs"
+                      onClick={() => approveDraft.mutate(draft)}
+                      disabled={approveDraft.isPending}
+                    >
+                      <Check className="h-3 w-3 mr-1" />
+                      Freigeben
+                    </Button>
+                  </div>
+                </div>
               );
             })
           )}
@@ -427,9 +426,7 @@ export function LiveDemoAdminPanel({ soundEnabled }: LiveDemoAdminPanelProps) {
 
       {/* Footer */}
       <div className="p-2 border-t bg-muted/30 text-center">
-        <p className="text-xs text-muted-foreground">
-          EasyOrder Freigabe-Workflow
-        </p>
+        <p className="text-xs text-muted-foreground">EasyOrder Freigabe-Workflow</p>
       </div>
     </div>
   );
