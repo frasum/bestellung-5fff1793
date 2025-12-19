@@ -3,11 +3,12 @@ import { useTranslation } from 'react-i18next';
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Maximize2, Minimize2, RotateCcw, ShoppingCart, Truck, Volume2, VolumeX, ArrowLeft, AlertTriangle, ClipboardList, Mail } from 'lucide-react';
+import { Maximize2, Minimize2, RotateCcw, ShoppingCart, Truck, Volume2, VolumeX, ArrowLeft, AlertTriangle, ClipboardList, Mail, Shield } from 'lucide-react';
 import { LiveDemoRestaurantPanel } from '@/components/demo/LiveDemoRestaurantPanel';
 import { LiveDemoSupplierPanel } from '@/components/demo/LiveDemoSupplierPanel';
 import { LiveDemoEasyOrderPanel } from '@/components/demo/LiveDemoEasyOrderPanel';
 import { LiveDemoEmailPanel } from '@/components/demo/LiveDemoEmailPanel';
+import { LiveDemoAdminPanel } from '@/components/demo/LiveDemoAdminPanel';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -27,14 +28,40 @@ export default function LiveDemo() {
     
     setIsResetting(true);
     try {
-      const { error } = await supabase
+      // Delete test orders
+      const { error: ordersError } = await supabase
         .from('orders')
         .delete()
         .eq('is_test_order', true);
       
-      if (error) throw error;
+      if (ordersError) throw ordersError;
+
+      // Delete EasyOrder drafts
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      if (currentUser) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('organization_id')
+          .eq('id', currentUser.id)
+          .single();
+
+        if (profile?.organization_id) {
+          // Get all EasyOrder drafts
+          const { data: drafts } = await supabase
+            .from('cart_drafts')
+            .select('id')
+            .eq('organization_id', profile.organization_id)
+            .ilike('name', 'EasyOrder:%');
+
+          if (drafts && drafts.length > 0) {
+            const draftIds = drafts.map(d => d.id);
+            await supabase.from('cart_draft_items').delete().in('draft_id', draftIds);
+            await supabase.from('cart_drafts').delete().in('id', draftIds);
+          }
+        }
+      }
       
-      toast.success('Demo-Bestellungen zurückgesetzt');
+      toast.success('Demo-Daten zurückgesetzt');
     } catch (error) {
       console.error('Reset error:', error);
       toast.error('Fehler beim Zurücksetzen');
@@ -127,14 +154,14 @@ export default function LiveDemo() {
         </div>
       </div>
 
-      {/* 4-Panel Split Screen */}
+      {/* 5-Panel Split Screen */}
       <ResizablePanelGroup direction="horizontal" className="flex-1">
         {/* Restaurant Panel */}
-        <ResizablePanel defaultSize={25} minSize={15}>
+        <ResizablePanel defaultSize={20} minSize={12}>
           <div className="h-full flex flex-col">
-            <div className="flex items-center gap-2 px-4 py-2 bg-blue-500/10 border-b border-blue-500/20">
+            <div className="flex items-center gap-2 px-3 py-2 bg-blue-500/10 border-b border-blue-500/20">
               <ShoppingCart className="h-4 w-4 text-blue-600" />
-              <span className="font-medium text-blue-700 dark:text-blue-300 text-sm">Restaurant / Besteller</span>
+              <span className="font-medium text-blue-700 dark:text-blue-300 text-xs">Restaurant</span>
             </div>
             <div className="flex-1 overflow-hidden">
               <LiveDemoRestaurantPanel soundEnabled={soundEnabled} />
@@ -145,11 +172,11 @@ export default function LiveDemo() {
         <ResizableHandle withHandle />
 
         {/* EasyOrder Panel */}
-        <ResizablePanel defaultSize={25} minSize={15}>
+        <ResizablePanel defaultSize={20} minSize={12}>
           <div className="h-full flex flex-col">
-            <div className="flex items-center gap-2 px-4 py-2 bg-orange-500/10 border-b border-orange-500/20">
+            <div className="flex items-center gap-2 px-3 py-2 bg-orange-500/10 border-b border-orange-500/20">
               <ClipboardList className="h-4 w-4 text-orange-600" />
-              <span className="font-medium text-orange-700 dark:text-orange-300 text-sm">EasyOrder / Mitarbeiter</span>
+              <span className="font-medium text-orange-700 dark:text-orange-300 text-xs">EasyOrder</span>
             </div>
             <div className="flex-1 overflow-hidden">
               <LiveDemoEasyOrderPanel soundEnabled={soundEnabled} />
@@ -159,12 +186,27 @@ export default function LiveDemo() {
 
         <ResizableHandle withHandle />
 
-        {/* Supplier Panel */}
-        <ResizablePanel defaultSize={25} minSize={15}>
+        {/* Admin Panel */}
+        <ResizablePanel defaultSize={20} minSize={12}>
           <div className="h-full flex flex-col">
-            <div className="flex items-center gap-2 px-4 py-2 bg-green-500/10 border-b border-green-500/20">
+            <div className="flex items-center gap-2 px-3 py-2 bg-pink-500/10 border-b border-pink-500/20">
+              <Shield className="h-4 w-4 text-pink-600" />
+              <span className="font-medium text-pink-700 dark:text-pink-300 text-xs">Admin</span>
+            </div>
+            <div className="flex-1 overflow-hidden">
+              <LiveDemoAdminPanel soundEnabled={soundEnabled} />
+            </div>
+          </div>
+        </ResizablePanel>
+
+        <ResizableHandle withHandle />
+
+        {/* Supplier Panel */}
+        <ResizablePanel defaultSize={20} minSize={12}>
+          <div className="h-full flex flex-col">
+            <div className="flex items-center gap-2 px-3 py-2 bg-green-500/10 border-b border-green-500/20">
               <Truck className="h-4 w-4 text-green-600" />
-              <span className="font-medium text-green-700 dark:text-green-300 text-sm">Lieferanten-Portal</span>
+              <span className="font-medium text-green-700 dark:text-green-300 text-xs">Lieferant</span>
             </div>
             <div className="flex-1 overflow-hidden">
               <LiveDemoSupplierPanel soundEnabled={soundEnabled} />
@@ -175,11 +217,11 @@ export default function LiveDemo() {
         <ResizableHandle withHandle />
 
         {/* Email Panel */}
-        <ResizablePanel defaultSize={25} minSize={15}>
+        <ResizablePanel defaultSize={20} minSize={12}>
           <div className="h-full flex flex-col">
-            <div className="flex items-center gap-2 px-4 py-2 bg-violet-500/10 border-b border-violet-500/20">
+            <div className="flex items-center gap-2 px-3 py-2 bg-violet-500/10 border-b border-violet-500/20">
               <Mail className="h-4 w-4 text-violet-600" />
-              <span className="font-medium text-violet-700 dark:text-violet-300 text-sm">E-Mail-Log</span>
+              <span className="font-medium text-violet-700 dark:text-violet-300 text-xs">E-Mail-Log</span>
             </div>
             <div className="flex-1 overflow-hidden">
               <LiveDemoEmailPanel soundEnabled={soundEnabled} />
