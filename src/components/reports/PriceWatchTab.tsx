@@ -33,6 +33,11 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible';
 import { 
   Search, 
   TrendingDown, 
@@ -44,10 +49,13 @@ import {
   Euro,
   Percent,
   Package,
-  Filter
+  Filter,
+  ChevronDown,
+  ShoppingCart
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
+import { KroeswangCatalogSearch } from './KroeswangCatalogSearch';
 
 export const PriceWatchTab = () => {
   const { t } = useTranslation();
@@ -62,6 +70,7 @@ export const PriceWatchTab = () => {
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('active');
   const [minSavingsFilter, setMinSavingsFilter] = useState<string>('all');
+  const [showCatalogSearch, setShowCatalogSearch] = useState(false);
 
   // Get unique categories
   const categories = useMemo(() => {
@@ -402,6 +411,22 @@ export const PriceWatchTab = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* Kröswang Catalog Search */}
+      <Collapsible open={showCatalogSearch} onOpenChange={setShowCatalogSearch}>
+        <CollapsibleTrigger asChild>
+          <Button variant="outline" className="w-full flex items-center justify-between">
+            <span className="flex items-center gap-2">
+              <ShoppingCart className="w-4 h-4" />
+              Kröswang Katalog durchsuchen
+            </span>
+            <ChevronDown className={`w-4 h-4 transition-transform ${showCatalogSearch ? 'rotate-180' : ''}`} />
+          </Button>
+        </CollapsibleTrigger>
+        <CollapsibleContent className="pt-4">
+          <KroeswangCatalogSearch />
+        </CollapsibleContent>
+      </Collapsible>
     </div>
   );
 };
