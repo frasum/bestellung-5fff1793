@@ -154,6 +154,7 @@ export const SystemFeaturePrioritiesTab = () => {
   const { data: priorities, isLoading } = useSystemFeaturePriorities();
   const { data: organization } = useOrganization();
   const bulkMutation = useBulkSetCategoryPriority();
+  const [activeFilter, setActiveFilter] = useState<FeaturePriority | 'unrated' | null>(null);
 
   const totalFeatures = getTotalFeatureCount();
 
@@ -168,14 +169,28 @@ export const SystemFeaturePrioritiesTab = () => {
     return { green, yellow, red, unrated: totalFeatures - rated };
   }, [priorities, totalFeatures]);
 
-  const progressPercent = ((totalFeatures - stats.unrated) / totalFeatures) * 100;
-
   const getPriorityForFeature = (category: string, featureKey: string): FeaturePriority => {
     const found = priorities?.find(
       (p) => p.category === category && p.feature_key === featureKey
     );
     return found?.priority || null;
   };
+
+  const filteredFeatures = useMemo(() => {
+    if (!activeFilter) return SYSTEM_FEATURES;
+    
+    return SYSTEM_FEATURES.map(category => ({
+      ...category,
+      features: category.features.filter(feature => {
+        const priority = getPriorityForFeature(category.key, feature.key);
+        if (activeFilter === 'unrated') return !priority;
+        return priority === activeFilter;
+      })
+    })).filter(category => category.features.length > 0);
+  }, [activeFilter, priorities]);
+
+  const progressPercent = ((totalFeatures - stats.unrated) / totalFeatures) * 100;
+
 
   const getNotesForFeature = (category: string, featureKey: string): string | null => {
     const found = priorities?.find(
@@ -245,18 +260,56 @@ export const SystemFeaturePrioritiesTab = () => {
         {/* Stats */}
         <div className="mt-4 space-y-3">
           <div className="flex flex-wrap gap-2">
-            <Badge variant="outline" className="border-green-500 text-green-600">
+            <Badge 
+              variant="outline" 
+              className={cn(
+                "border-green-500 text-green-600 cursor-pointer transition-all hover:bg-green-50",
+                activeFilter === 'green' && "bg-green-500 text-white hover:bg-green-600"
+              )}
+              onClick={() => setActiveFilter(activeFilter === 'green' ? null : 'green')}
+            >
               🟢 {stats.green} {i18n.language === 'de' ? 'Kritisch' : 'Critical'}
             </Badge>
-            <Badge variant="outline" className="border-yellow-500 text-yellow-600">
+            <Badge 
+              variant="outline" 
+              className={cn(
+                "border-yellow-500 text-yellow-600 cursor-pointer transition-all hover:bg-yellow-50",
+                activeFilter === 'yellow' && "bg-yellow-500 text-white hover:bg-yellow-600"
+              )}
+              onClick={() => setActiveFilter(activeFilter === 'yellow' ? null : 'yellow')}
+            >
               🟡 {stats.yellow} {i18n.language === 'de' ? 'Wichtig' : 'Important'}
             </Badge>
-            <Badge variant="outline" className="border-red-500 text-red-600">
+            <Badge 
+              variant="outline" 
+              className={cn(
+                "border-red-500 text-red-600 cursor-pointer transition-all hover:bg-red-50",
+                activeFilter === 'red' && "bg-red-500 text-white hover:bg-red-600"
+              )}
+              onClick={() => setActiveFilter(activeFilter === 'red' ? null : 'red')}
+            >
               🔴 {stats.red} {i18n.language === 'de' ? 'Unwichtig' : 'Unimportant'}
             </Badge>
-            <Badge variant="outline" className="text-muted-foreground">
+            <Badge 
+              variant="outline" 
+              className={cn(
+                "text-muted-foreground cursor-pointer transition-all hover:bg-muted",
+                activeFilter === 'unrated' && "bg-gray-500 text-white border-gray-500 hover:bg-gray-600"
+              )}
+              onClick={() => setActiveFilter(activeFilter === 'unrated' ? null : 'unrated')}
+            >
               ⚪ {stats.unrated} {i18n.language === 'de' ? 'Nicht bewertet' : 'Unrated'}
             </Badge>
+            {activeFilter && (
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => setActiveFilter(null)}
+                className="text-xs h-6 px-2"
+              >
+                {i18n.language === 'de' ? 'Filter zurücksetzen' : 'Reset filter'}
+              </Button>
+            )}
           </div>
           <div className="flex items-center gap-3">
             <Progress value={progressPercent} className="flex-1 h-2" />
@@ -270,7 +323,7 @@ export const SystemFeaturePrioritiesTab = () => {
 
       <CardContent>
         <Accordion type="multiple" className="space-y-2">
-          {SYSTEM_FEATURES.map((category) => {
+          {filteredFeatures.map((category) => {
             const categoryLabel = i18n.language === 'de' ? category.labelDe : category.labelEn;
             const featureKeys = category.features.map((f) => f.key);
             const categoryPriorities = category.features.map((f) =>
