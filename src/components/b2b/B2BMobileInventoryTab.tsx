@@ -6,7 +6,7 @@ import { Card } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
-import { Search, Plus, Save, FileSpreadsheet, Loader2, Clipboard, Check, ClipboardList } from 'lucide-react';
+import { Search, Plus, Save, Loader2, Check, ClipboardList } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
@@ -15,6 +15,7 @@ import { de } from 'date-fns/locale';
 interface B2BMobileInventoryTabProps {
   accountId: string;
   supplierId: string | null;
+  token: string;
 }
 
 interface Vendor {
@@ -45,7 +46,7 @@ interface InventoryItem {
   unit_price: number | null;
 }
 
-const B2BMobileInventoryTab = ({ accountId, supplierId }: B2BMobileInventoryTabProps) => {
+const B2BMobileInventoryTab = ({ accountId, supplierId, token }: B2BMobileInventoryTabProps) => {
   const [vendors, setVendors] = useState<Vendor[]>([]);
   const [articles, setArticles] = useState<Article[]>([]);
   const [sessions, setSessions] = useState<InventorySession[]>([]);
@@ -58,6 +59,23 @@ const B2BMobileInventoryTab = ({ accountId, supplierId }: B2BMobileInventoryTabP
   const [showNewSessionDialog, setShowNewSessionDialog] = useState(false);
   const [newSessionName, setNewSessionName] = useState('');
 
+  const callEdgeFunction = async (action: string, data?: any) => {
+    const { data: response, error } = await supabase.functions.invoke('manage-b2b-mobile-inventory', {
+      body: { token, action, data },
+    });
+
+    if (error) {
+      console.error('Edge function error:', error);
+      throw new Error(error.message || 'Edge function call failed');
+    }
+
+    if (response?.error) {
+      throw new Error(response.error);
+    }
+
+    return response;
+  };
+
   useEffect(() => {
     loadData();
   }, [accountId, supplierId]);
@@ -65,56 +83,14 @@ const B2BMobileInventoryTab = ({ accountId, supplierId }: B2BMobileInventoryTabP
   const loadData = async () => {
     setLoading(true);
     try {
-      // Load vendors
-      let vendorQuery = supabase
-        .from('b2b_supplier_vendors')
-        .select('id, name')
-        .eq('supplier_account_id', accountId)
-        .eq('is_active', true)
-        .order('name');
-
-      if (supplierId) {
-        vendorQuery = vendorQuery.eq('supplier_id', supplierId);
-      }
-
-      const { data: vendorData } = await vendorQuery;
-      setVendors(vendorData || []);
-
-      // Get vendor IDs for article filtering
-      const vendorIds = (vendorData || []).map(v => v.id);
-
-      // Load articles - only from filtered vendors
-      let articleData: Article[] = [];
-      if (vendorIds.length > 0) {
-        const { data } = await supabase
-          .from('b2b_supplier_vendor_articles')
-          .select('id, name, price, unit, category, vendor_id')
-          .eq('supplier_account_id', accountId)
-          .eq('is_active', true)
-          .in('vendor_id', vendorIds)
-          .order('name');
-        articleData = data || [];
-      }
-
-      setArticles(articleData);
-
-      // Load sessions - filter by supplierId if provided
-      let sessionQuery = supabase
-        .from('b2b_inventory_sessions')
-        .select('id, name, status, created_at')
-        .eq('supplier_account_id', accountId)
-        .order('created_at', { ascending: false });
-
-      if (supplierId) {
-        sessionQuery = sessionQuery.eq('supplier_id', supplierId);
-      }
-
-      const { data: sessionData } = await sessionQuery;
-
-      setSessions(sessionData || []);
+      const response = await callEdgeFunction('load-data');
+      
+      setVendors(response.vendors || []);
+      setArticles(response.articles || []);
+      setSessions(response.sessions || []);
 
       // Auto-select in-progress session
-      const inProgressSession = sessionData?.find(s => s.status === 'in_progress');
+      const inProgressSession = response.sessions?.find((s: InventorySession) => s.status === 'in_progress');
       if (inProgressSession) {
         setActiveSession(inProgressSession);
         await loadSessionItems(inProgressSession.id);
@@ -132,17 +108,18 @@ const B2BMobileInventoryTab = ({ accountId, supplierId }: B2BMobileInventoryTabP
   };
 
   const loadSessionItems = async (sessionId: string) => {
-    const { data: items } = await supabase
-      .from('b2b_inventory_items')
-      .select('article_id, storage_1, storage_2, unit_price')
-      .eq('session_id', sessionId);
-
-    if (items) {
-      const itemsMap: Record<string, InventoryItem> = {};
-      items.forEach(item => {
-        itemsMap[item.article_id] = item;
-      });
-      setInventoryItems(itemsMap);
+    try {
+      const response = await callEdgeFunction('load-session-items', { sessionId });
+      
+      if (response.items) {
+        const itemsMap: Record<string, InventoryItem> = {};
+        response.items.forEach((item: InventoryItem) => {
+          itemsMap[item.article_id] = item;
+        });
+        setInventoryItems(itemsMap);
+      }
+    } catch (error) {
+      console.error('Error loading session items:', error);
     }
   };
 
@@ -167,23 +144,10 @@ const B2BMobileInventoryTab = ({ accountId, supplierId }: B2BMobileInventoryTabP
     }
 
     try {
-      // Get a user ID - for mobile we'll use the account ID as a reference
-      const { data: session, error } = await supabase
-        .from('b2b_inventory_sessions')
-        .insert({
-          supplier_account_id: accountId,
-          supplier_id: supplierId,
-          name: newSessionName.trim(),
-          status: 'in_progress',
-          user_id: accountId, // Use accountId as user reference for mobile
-        })
-        .select()
-        .single();
+      const response = await callEdgeFunction('create-session', { name: newSessionName.trim() });
 
-      if (error) throw error;
-
-      setSessions(prev => [session, ...prev]);
-      setActiveSession(session);
+      setSessions(prev => [response.session, ...prev]);
+      setActiveSession(response.session);
       setInventoryItems({});
       setShowNewSessionDialog(false);
       setNewSessionName('');
@@ -225,31 +189,20 @@ const B2BMobileInventoryTab = ({ accountId, supplierId }: B2BMobileInventoryTabP
       const itemsToSave = Object.entries(inventoryItems)
         .filter(([_, item]) => item.storage_1 > 0 || item.storage_2 > 0)
         .map(([articleId, item]) => ({
-          session_id: activeSession.id,
           article_id: articleId,
           storage_1: item.storage_1,
           storage_2: item.storage_2,
           unit_price: item.unit_price,
         }));
 
-      // Delete existing items for this session
-      await supabase
-        .from('b2b_inventory_items')
-        .delete()
-        .eq('session_id', activeSession.id);
-
-      // Insert new items
-      if (itemsToSave.length > 0) {
-        const { error } = await supabase
-          .from('b2b_inventory_items')
-          .insert(itemsToSave);
-
-        if (error) throw error;
-      }
+      const response = await callEdgeFunction('save-inventory', { 
+        sessionId: activeSession.id, 
+        items: itemsToSave 
+      });
 
       toast({
         title: 'Gespeichert',
-        description: `${itemsToSave.length} Positionen gespeichert`,
+        description: `${response.itemCount} Positionen gespeichert`,
       });
     } catch (error) {
       console.error('Error saving inventory:', error);
@@ -269,13 +222,7 @@ const B2BMobileInventoryTab = ({ accountId, supplierId }: B2BMobileInventoryTabP
     await saveInventory();
 
     try {
-      await supabase
-        .from('b2b_inventory_sessions')
-        .update({ 
-          status: 'completed',
-          completed_at: new Date().toISOString(),
-        })
-        .eq('id', activeSession.id);
+      await callEdgeFunction('complete-session', { sessionId: activeSession.id });
 
       setSessions(prev =>
         prev.map(s =>
@@ -500,8 +447,8 @@ const B2BMobileInventoryTab = ({ accountId, supplierId }: B2BMobileInventoryTabP
                         {format(new Date(session.created_at), 'PPp', { locale: de })}
                       </p>
                     </div>
-                    <Badge variant={session.status === 'completed' ? 'secondary' : 'default'}>
-                      {session.status === 'completed' ? 'Abgeschlossen' : 'In Bearbeitung'}
+                    <Badge variant={session.status === 'in_progress' ? 'default' : 'secondary'}>
+                      {session.status === 'in_progress' ? 'In Arbeit' : 'Abgeschlossen'}
                     </Badge>
                   </div>
                 </Card>
