@@ -158,3 +158,6 @@ verify_jwt = false
 
 [functions.update-b2b-account-email]
 verify_jwt = false
+
+[functions.invite-sponsored-account]
+verify_jwt = true
