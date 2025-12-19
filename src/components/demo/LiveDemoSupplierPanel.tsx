@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -62,7 +61,6 @@ export function LiveDemoSupplierPanel({ soundEnabled }: LiveDemoSupplierPanelPro
   const [selectedSupplier, setSelectedSupplier] = useState<string>('all');
   const [expandedOrders, setExpandedOrders] = useState<Set<string>>(new Set());
   const [highlightedOrder, setHighlightedOrder] = useState<string | null>(null);
-  const prevOrderCountRef = useRef(orders.length);
 
   // Subscribe to realtime updates
   useEffect(() => {
@@ -105,14 +103,6 @@ export function LiveDemoSupplierPanel({ soundEnabled }: LiveDemoSupplierPanelPro
     };
   }, [queryClient, soundEnabled]);
 
-  // Track new orders for sound
-  useEffect(() => {
-    if (orders.length > prevOrderCountRef.current && prevOrderCountRef.current > 0) {
-      // New order detected via query update
-    }
-    prevOrderCountRef.current = orders.length;
-  }, [orders.length]);
-
   const filteredOrders = orders.filter(order => 
     (selectedSupplier === 'all' || order.supplier_id === selectedSupplier) &&
     order.is_test_order === true
@@ -149,17 +139,35 @@ export function LiveDemoSupplierPanel({ soundEnabled }: LiveDemoSupplierPanelPro
   if (ordersLoading) {
     return (
       <div className="h-full flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
       </div>
     );
   }
 
+  const newCount = filteredOrders.filter(o => o.status === 'pending').length;
+  const inProgressCount = filteredOrders.filter(o => ['confirmed', 'processing'].includes(o.status || '')).length;
+  const completedCount = filteredOrders.filter(o => ['shipped', 'delivered'].includes(o.status || '')).length;
+
   return (
-    <div className="h-full flex flex-col p-4">
+    <div className="h-full flex flex-col bg-background">
+      {/* Panel Header */}
+      <div className="flex items-center justify-between px-3 py-2.5 bg-green-500/5 border-b">
+        <div className="flex items-center gap-2">
+          <Truck className="h-4 w-4 text-green-600" />
+          <div>
+            <span className="font-semibold text-sm text-green-700 dark:text-green-300">Lieferant</span>
+            <p className="text-xs text-muted-foreground">Bestellungs-Verwaltung</p>
+          </div>
+        </div>
+        {newCount > 0 && (
+          <Badge variant="destructive" className="animate-pulse">{newCount} neu</Badge>
+        )}
+      </div>
+
       {/* Supplier Filter */}
-      <div className="mb-4">
+      <div className="p-3 border-b">
         <Select value={selectedSupplier} onValueChange={setSelectedSupplier}>
-          <SelectTrigger>
+          <SelectTrigger className="h-8 text-sm">
             <SelectValue placeholder="Lieferant auswählen" />
           </SelectTrigger>
           <SelectContent>
@@ -175,17 +183,15 @@ export function LiveDemoSupplierPanel({ soundEnabled }: LiveDemoSupplierPanelPro
 
       {/* Orders List */}
       <ScrollArea className="flex-1">
-        {filteredOrders.length === 0 ? (
-          <div className="flex items-center justify-center h-full text-muted-foreground">
-            <div className="text-center">
-              <Package className="h-12 w-12 mx-auto mb-2 opacity-50" />
-              <p>Keine Demo-Bestellungen</p>
-              <p className="text-sm">Bestellungen erscheinen hier sobald sie eingehen</p>
+        <div className="p-2 space-y-2">
+          {filteredOrders.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              <Package className="h-10 w-10 mx-auto mb-2 opacity-30" />
+              <p className="text-sm font-medium">Keine Demo-Bestellungen</p>
+              <p className="text-xs mt-1">Bestellungen erscheinen sobald sie eingehen</p>
             </div>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {filteredOrders.map(order => {
+          ) : (
+            filteredOrders.map(order => {
               const status = order.status || 'pending';
               const config = statusConfig[status] || statusConfig.pending;
               const StatusIcon = config.icon;
@@ -194,58 +200,58 @@ export function LiveDemoSupplierPanel({ soundEnabled }: LiveDemoSupplierPanelPro
               const supplier = suppliers.find(s => s.id === order.supplier_id);
               
               return (
-                <Card 
+                <div 
                   key={order.id} 
                   className={cn(
-                    "transition-all duration-500",
+                    "rounded-lg border transition-all duration-500",
                     highlightedOrder === order.id && "ring-2 ring-green-500 animate-pulse",
                     status === 'pending' && "border-orange-500/50"
                   )}
                 >
-                  <CardHeader 
-                    className="py-3 px-4 cursor-pointer"
+                  <div 
+                    className="p-2.5 cursor-pointer"
                     onClick={() => toggleExpanded(order.id)}
                   >
                     <div className="flex justify-between items-center">
                       <div className="flex items-center gap-2">
-                        <CardTitle className="text-sm font-mono">{order.order_number}</CardTitle>
+                        <span className="text-xs font-mono">{order.order_number}</span>
                         {status === 'pending' && (
-                          <Badge variant="destructive" className="animate-pulse">NEU</Badge>
+                          <Badge variant="destructive" className="text-xs h-5 animate-pulse">NEU</Badge>
                         )}
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Badge className={cn("gap-1", config.color)}>
+                      <div className="flex items-center gap-1.5">
+                        <Badge className={cn("text-xs gap-1 h-5", config.color)}>
                           <StatusIcon className="h-3 w-3" />
                           {config.label}
                         </Badge>
-                        {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                        {isExpanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
                       </div>
                     </div>
                     <div className="flex justify-between text-xs text-muted-foreground mt-1">
                       <span>{supplier?.name}</span>
-                      <span>{format(new Date(order.created_at), 'dd.MM.yyyy HH:mm', { locale: de })}</span>
+                      <span>{format(new Date(order.created_at), 'HH:mm', { locale: de })}</span>
                     </div>
-                  </CardHeader>
+                  </div>
                   
                   {isExpanded && (
-                    <CardContent className="px-4 pb-3 pt-0">
-                      <div className="border-t pt-3 space-y-2">
+                    <div className="px-2.5 pb-2.5 pt-0">
+                      <div className="border-t pt-2 space-y-1">
                         {order.order_items?.map((item: any, idx: number) => (
-                          <div key={idx} className="flex justify-between text-sm">
-                            <span>{item.article_name}</span>
+                          <div key={idx} className="flex justify-between text-xs">
+                            <span className="truncate">{item.article_name}</span>
                             <span className="text-muted-foreground">
-                              {item.quantity} {item.unit} × €{item.unit_price?.toFixed(2)}
+                              {item.quantity} {item.unit}
                             </span>
                           </div>
                         ))}
-                        <div className="border-t pt-2 flex justify-between font-semibold">
+                        <div className="border-t pt-1.5 flex justify-between text-sm font-medium">
                           <span>Gesamt:</span>
                           <span>€{order.total_amount?.toFixed(2) || '0.00'}</span>
                         </div>
                         
                         {nextStatus && (
                           <Button
-                            className="w-full mt-2"
+                            className="w-full mt-1.5 h-7 text-xs"
                             size="sm"
                             onClick={(e) => {
                               e.stopPropagation();
@@ -253,39 +259,35 @@ export function LiveDemoSupplierPanel({ soundEnabled }: LiveDemoSupplierPanelPro
                             }}
                             disabled={updateOrder.isPending}
                           >
-                            {updateOrder.isPending ? (
-                              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                            ) : null}
+                            {updateOrder.isPending && (
+                              <Loader2 className="h-3 w-3 mr-1.5 animate-spin" />
+                            )}
                             {statusConfig[nextStatus].label} setzen
                           </Button>
                         )}
                       </div>
-                    </CardContent>
+                    </div>
                   )}
-                </Card>
+                </div>
               );
-            })}
-          </div>
-        )}
+            })
+          )}
+        </div>
       </ScrollArea>
 
-      {/* Summary */}
-      <div className="border-t pt-3 mt-3 grid grid-cols-3 gap-2 text-center text-sm">
-        <div className="p-2 rounded bg-orange-500/10">
-          <p className="text-orange-600 font-bold">{filteredOrders.filter(o => o.status === 'pending').length}</p>
+      {/* Summary Footer */}
+      <div className="border-t p-2 grid grid-cols-3 gap-1.5 text-center">
+        <div className="p-1.5 rounded bg-orange-500/10">
+          <p className="text-orange-600 font-bold text-sm">{newCount}</p>
           <p className="text-xs text-muted-foreground">Neu</p>
         </div>
-        <div className="p-2 rounded bg-blue-500/10">
-          <p className="text-blue-600 font-bold">
-            {filteredOrders.filter(o => ['confirmed', 'processing'].includes(o.status || '')).length}
-          </p>
+        <div className="p-1.5 rounded bg-blue-500/10">
+          <p className="text-blue-600 font-bold text-sm">{inProgressCount}</p>
           <p className="text-xs text-muted-foreground">In Arbeit</p>
         </div>
-        <div className="p-2 rounded bg-green-500/10">
-          <p className="text-green-600 font-bold">
-            {filteredOrders.filter(o => ['shipped', 'delivered'].includes(o.status || '')).length}
-          </p>
-          <p className="text-xs text-muted-foreground">Abgeschlossen</p>
+        <div className="p-1.5 rounded bg-green-500/10">
+          <p className="text-green-600 font-bold text-sm">{completedCount}</p>
+          <p className="text-xs text-muted-foreground">Fertig</p>
         </div>
       </div>
     </div>

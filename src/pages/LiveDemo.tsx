@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Maximize2, Minimize2, RotateCcw, ShoppingCart, Truck, Volume2, VolumeX, ArrowLeft, AlertTriangle, ClipboardList, Mail, Shield } from 'lucide-react';
+import { Maximize2, Minimize2, RotateCcw, Volume2, VolumeX, ArrowLeft, AlertTriangle } from 'lucide-react';
 import { LiveDemoRestaurantPanel } from '@/components/demo/LiveDemoRestaurantPanel';
 import { LiveDemoSupplierPanel } from '@/components/demo/LiveDemoSupplierPanel';
 import { LiveDemoEasyOrderPanel } from '@/components/demo/LiveDemoEasyOrderPanel';
@@ -119,36 +119,47 @@ export default function LiveDemo() {
 
   return (
     <div className="h-screen flex flex-col bg-background">
-      {/* Control Bar */}
-      <div className="flex items-center justify-between px-4 py-2 bg-green-500/10 border-b border-green-500/20">
-        <div className="flex items-center gap-3">
-          <Button variant="ghost" size="sm" onClick={() => navigate('/presentation')}>
+      {/* Professional Control Bar with Gradient */}
+      <div className="flex items-center justify-between px-4 py-2.5 bg-gradient-to-r from-emerald-500/10 via-emerald-500/5 to-background border-b border-emerald-500/20">
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" size="sm" onClick={() => navigate('/presentation')} className="text-muted-foreground hover:text-foreground">
             <ArrowLeft className="h-4 w-4 mr-2" />
             Zurück
           </Button>
-          <Badge variant="secondary" className="bg-green-500/20 text-green-700 dark:text-green-300">
-            Live-Demo – Echte Daten
-          </Badge>
+          
+          <div className="flex items-center gap-2">
+            {/* Live Indicator with pulsing dot */}
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/15 border border-emerald-500/30">
+              <span className="relative flex h-2.5 w-2.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+              </span>
+              <span className="text-sm font-medium text-emerald-700 dark:text-emerald-300">LIVE-DEMO</span>
+            </div>
+            <span className="text-xs text-muted-foreground hidden sm:block">Verbunden mit Ihren echten Daten</span>
+          </div>
         </div>
         
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
           <Button
-            variant="outline"
+            variant="ghost"
             size="sm"
             onClick={() => setSoundEnabled(!soundEnabled)}
+            className={soundEnabled ? 'text-emerald-600' : 'text-muted-foreground'}
           >
             {soundEnabled ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
           </Button>
           <Button 
-            variant="outline" 
+            variant="ghost" 
             size="sm" 
             onClick={handleReset}
             disabled={isResetting}
+            className="text-muted-foreground hover:text-foreground"
           >
-            <RotateCcw className="h-4 w-4 mr-2" />
-            Demo zurücksetzen
+            <RotateCcw className={`h-4 w-4 mr-2 ${isResetting ? 'animate-spin' : ''}`} />
+            <span className="hidden sm:inline">Zurücksetzen</span>
           </Button>
-          <Button variant="outline" size="sm" onClick={toggleFullscreen}>
+          <Button variant="ghost" size="sm" onClick={toggleFullscreen} className="text-muted-foreground hover:text-foreground">
             {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
           </Button>
         </div>
@@ -158,14 +169,8 @@ export default function LiveDemo() {
       <ResizablePanelGroup direction="horizontal" className="flex-1">
         {/* Restaurant Panel */}
         <ResizablePanel defaultSize={20} minSize={12}>
-          <div className="h-full flex flex-col">
-            <div className="flex items-center gap-2 px-3 py-2 bg-blue-500/10 border-b border-blue-500/20">
-              <ShoppingCart className="h-4 w-4 text-blue-600" />
-              <span className="font-medium text-blue-700 dark:text-blue-300 text-xs">Restaurant</span>
-            </div>
-            <div className="flex-1 overflow-hidden">
-              <LiveDemoRestaurantPanel soundEnabled={soundEnabled} />
-            </div>
+          <div className="h-full flex flex-col border-l-4 border-l-blue-500">
+            <LiveDemoRestaurantPanel soundEnabled={soundEnabled} />
           </div>
         </ResizablePanel>
 
@@ -173,14 +178,8 @@ export default function LiveDemo() {
 
         {/* EasyOrder Panel */}
         <ResizablePanel defaultSize={20} minSize={12}>
-          <div className="h-full flex flex-col">
-            <div className="flex items-center gap-2 px-3 py-2 bg-orange-500/10 border-b border-orange-500/20">
-              <ClipboardList className="h-4 w-4 text-orange-600" />
-              <span className="font-medium text-orange-700 dark:text-orange-300 text-xs">EasyOrder</span>
-            </div>
-            <div className="flex-1 overflow-hidden">
-              <LiveDemoEasyOrderPanel soundEnabled={soundEnabled} />
-            </div>
+          <div className="h-full flex flex-col border-l-4 border-l-orange-500">
+            <LiveDemoEasyOrderPanel soundEnabled={soundEnabled} />
           </div>
         </ResizablePanel>
 
@@ -188,14 +187,8 @@ export default function LiveDemo() {
 
         {/* Admin Panel */}
         <ResizablePanel defaultSize={20} minSize={12}>
-          <div className="h-full flex flex-col">
-            <div className="flex items-center gap-2 px-3 py-2 bg-pink-500/10 border-b border-pink-500/20">
-              <Shield className="h-4 w-4 text-pink-600" />
-              <span className="font-medium text-pink-700 dark:text-pink-300 text-xs">Admin</span>
-            </div>
-            <div className="flex-1 overflow-hidden">
-              <LiveDemoAdminPanel soundEnabled={soundEnabled} />
-            </div>
+          <div className="h-full flex flex-col border-l-4 border-l-pink-500">
+            <LiveDemoAdminPanel soundEnabled={soundEnabled} />
           </div>
         </ResizablePanel>
 
@@ -203,14 +196,8 @@ export default function LiveDemo() {
 
         {/* Supplier Panel */}
         <ResizablePanel defaultSize={20} minSize={12}>
-          <div className="h-full flex flex-col">
-            <div className="flex items-center gap-2 px-3 py-2 bg-green-500/10 border-b border-green-500/20">
-              <Truck className="h-4 w-4 text-green-600" />
-              <span className="font-medium text-green-700 dark:text-green-300 text-xs">Lieferant</span>
-            </div>
-            <div className="flex-1 overflow-hidden">
-              <LiveDemoSupplierPanel soundEnabled={soundEnabled} />
-            </div>
+          <div className="h-full flex flex-col border-l-4 border-l-green-500">
+            <LiveDemoSupplierPanel soundEnabled={soundEnabled} />
           </div>
         </ResizablePanel>
 
@@ -218,14 +205,8 @@ export default function LiveDemo() {
 
         {/* Email Panel */}
         <ResizablePanel defaultSize={20} minSize={12}>
-          <div className="h-full flex flex-col">
-            <div className="flex items-center gap-2 px-3 py-2 bg-violet-500/10 border-b border-violet-500/20">
-              <Mail className="h-4 w-4 text-violet-600" />
-              <span className="font-medium text-violet-700 dark:text-violet-300 text-xs">E-Mail-Log</span>
-            </div>
-            <div className="flex-1 overflow-hidden">
-              <LiveDemoEmailPanel soundEnabled={soundEnabled} />
-            </div>
+          <div className="h-full flex flex-col border-l-4 border-l-violet-500">
+            <LiveDemoEmailPanel soundEnabled={soundEnabled} />
           </div>
         </ResizablePanel>
       </ResizablePanelGroup>

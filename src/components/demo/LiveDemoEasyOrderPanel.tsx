@@ -1,16 +1,16 @@
 import { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Search, Plus, Minus, Send } from 'lucide-react';
+import { Search, Plus, Minus, Send, ClipboardList, User } from 'lucide-react';
 import { useArticles } from '@/hooks/useArticles';
 import { useSuppliers } from '@/hooks/useSuppliers';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
 
 interface LiveDemoEasyOrderPanelProps {
   soundEnabled?: boolean;
@@ -137,17 +137,34 @@ export function LiveDemoEasyOrderPanel({ soundEnabled }: LiveDemoEasyOrderPanelP
 
   return (
     <div className="h-full flex flex-col bg-background">
+      {/* Panel Header */}
+      <div className="flex items-center justify-between px-3 py-2.5 bg-orange-500/5 border-b">
+        <div className="flex items-center gap-2">
+          <ClipboardList className="h-4 w-4 text-orange-600" />
+          <div>
+            <span className="font-semibold text-sm text-orange-700 dark:text-orange-300">EasyOrder</span>
+            <p className="text-xs text-muted-foreground">Mitarbeiter-Bestellungen</p>
+          </div>
+        </div>
+        {totalItems > 0 && (
+          <Badge className="bg-orange-600 text-white">{totalItems}</Badge>
+        )}
+      </div>
+
       {/* Employee Name Input */}
       <div className="p-3 border-b space-y-2">
-        <Input
-          value={employeeName}
-          onChange={(e) => setEmployeeName(e.target.value)}
-          placeholder="Mitarbeiter-Name"
-          className="text-sm"
-        />
+        <div className="relative">
+          <User className="absolute left-2.5 top-1/2 transform -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+          <Input
+            value={employeeName}
+            onChange={(e) => setEmployeeName(e.target.value)}
+            placeholder="Mitarbeiter-Name"
+            className="pl-8 h-8 text-sm"
+          />
+        </div>
         
         {/* Supplier Selection */}
-        <div className="flex gap-1 overflow-x-auto pb-1">
+        <div className="flex gap-1.5 overflow-x-auto pb-1">
           {suppliers.filter(s => s.is_active).slice(0, 4).map(supplier => (
             <Badge
               key={supplier.id}
@@ -164,63 +181,68 @@ export function LiveDemoEasyOrderPanel({ soundEnabled }: LiveDemoEasyOrderPanelP
       {/* Search */}
       <div className="p-3 border-b">
         <div className="relative">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Search className="absolute left-2.5 top-1/2 transform -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
           <Input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Artikel suchen..."
-            className="pl-9 text-sm"
+            className="pl-8 h-8 text-sm"
           />
         </div>
       </div>
 
       {/* Article List */}
       <ScrollArea className="flex-1">
-        <div className="p-2 space-y-1.5">
+        <div className="p-2 space-y-1">
           {filteredArticles.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground text-sm">
-              {activeSupplier ? 'Keine Artikel gefunden' : 'Bitte Lieferant wählen'}
+            <div className="text-center py-8 text-muted-foreground">
+              <ClipboardList className="h-10 w-10 mx-auto mb-2 opacity-30" />
+              <p className="text-sm">{activeSupplier ? 'Keine Artikel gefunden' : 'Bitte Lieferant wählen'}</p>
             </div>
           ) : (
             filteredArticles.map(article => {
               const qty = quantities[article.id] || 0;
               return (
-                <Card key={article.id} className={`transition-all ${qty > 0 ? 'ring-1 ring-primary bg-primary/5' : ''}`}>
-                  <CardContent className="p-2.5 flex items-center gap-2">
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-sm truncate">{article.name}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {article.unit} • €{article.price.toFixed(2)}
-                      </p>
-                    </div>
-                    
-                    <div className="flex items-center gap-1">
-                      {qty > 0 && (
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          className="h-7 w-7"
-                          onClick={() => updateQuantity(article.id, -1)}
-                        >
-                          <Minus className="h-3 w-3" />
-                        </Button>
-                      )}
-                      
-                      {qty > 0 ? (
-                        <span className="w-6 text-center font-medium text-sm">{qty}</span>
-                      ) : null}
-                      
+                <div 
+                  key={article.id} 
+                  className={cn(
+                    "flex items-center gap-2 p-2 rounded-md border transition-all",
+                    qty > 0 ? "bg-orange-500/5 border-orange-500/30" : "bg-background border-border hover:bg-muted/50"
+                  )}
+                >
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-sm truncate">{article.name}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {article.unit} • €{article.price.toFixed(2)}
+                    </p>
+                  </div>
+                  
+                  <div className="flex items-center gap-1">
+                    {qty > 0 && (
                       <Button
-                        variant={qty > 0 ? "default" : "outline"}
+                        variant="outline"
                         size="icon"
-                        className="h-7 w-7"
-                        onClick={() => updateQuantity(article.id, 1)}
+                        className="h-6 w-6"
+                        onClick={() => updateQuantity(article.id, -1)}
                       >
-                        <Plus className="h-3 w-3" />
+                        <Minus className="h-3 w-3" />
                       </Button>
-                    </div>
-                  </CardContent>
-                </Card>
+                    )}
+                    
+                    {qty > 0 && (
+                      <span className="w-5 text-center font-medium text-sm">{qty}</span>
+                    )}
+                    
+                    <Button
+                      variant={qty > 0 ? "default" : "ghost"}
+                      size="icon"
+                      className="h-6 w-6"
+                      onClick={() => updateQuantity(article.id, 1)}
+                    >
+                      <Plus className="h-3 w-3" />
+                    </Button>
+                  </div>
+                </div>
               );
             })
           )}
@@ -231,15 +253,20 @@ export function LiveDemoEasyOrderPanel({ soundEnabled }: LiveDemoEasyOrderPanelP
       {totalItems > 0 && (
         <div className="p-3 border-t bg-muted/30">
           <Button 
-            className="w-full gap-2" 
+            className="w-full h-8 text-sm gap-2" 
             onClick={handleSubmitOrder}
             disabled={createDemoDraft.isPending}
           >
-            <Send className="h-4 w-4" />
-            Vorbestellung senden ({totalItems} Artikel)
+            <Send className="h-3.5 w-3.5" />
+            Vorbestellung senden ({totalItems})
           </Button>
         </div>
       )}
+
+      {/* Footer */}
+      <div className="p-2 border-t text-center">
+        <p className="text-xs text-muted-foreground">Mitarbeiter → Admin Freigabe</p>
+      </div>
     </div>
   );
 }

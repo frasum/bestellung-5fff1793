@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -47,7 +47,7 @@ const statusConfig: Record<string, { label: string; icon: typeof Clock; color: s
   sent: { label: 'Gesendet', icon: CheckCircle2, color: 'text-green-500 bg-green-500/10' },
   failed: { label: 'Fehlgeschlagen', icon: AlertCircle, color: 'text-red-500 bg-red-500/10' },
   confirmed: { label: 'Bestätigt', icon: CheckCircle2, color: 'text-blue-500 bg-blue-500/10' },
-  simulated: { label: 'Simuliert (Demo)', icon: Eye, color: 'text-violet-500 bg-violet-500/10' },
+  simulated: { label: 'Simuliert', icon: Eye, color: 'text-violet-500 bg-violet-500/10' },
 };
 
 interface LiveDemoEmailPanelProps {
@@ -60,7 +60,6 @@ export function LiveDemoEmailPanel({ soundEnabled }: LiveDemoEmailPanelProps) {
   const queryClient = useQueryClient();
   const [selectedEmail, setSelectedEmail] = useState<CommunicationLog | null>(null);
   const [highlightedEmail, setHighlightedEmail] = useState<string | null>(null);
-  const prevCountRef = useRef(0);
 
   // Fetch communication logs
   const { data: emails = [], isLoading } = useQuery({
@@ -144,20 +143,39 @@ export function LiveDemoEmailPanel({ soundEnabled }: LiveDemoEmailPanelProps) {
   if (isLoading) {
     return (
       <div className="h-full flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
       </div>
     );
   }
 
+  const simulatedCount = emails.filter(e => e.status === 'simulated').length;
+  const sentCount = emails.filter(e => e.status === 'sent').length;
+  const confirmedCount = emails.filter(e => e.confirmed_at).length;
+  const failedCount = emails.filter(e => e.status === 'failed').length;
+
   return (
-    <div className="h-full flex flex-col">
+    <div className="h-full flex flex-col bg-background">
+      {/* Panel Header */}
+      <div className="flex items-center justify-between px-3 py-2.5 bg-violet-500/5 border-b">
+        <div className="flex items-center gap-2">
+          <Mail className="h-4 w-4 text-violet-600" />
+          <div>
+            <span className="font-semibold text-sm text-violet-700 dark:text-violet-300">E-Mail-Log</span>
+            <p className="text-xs text-muted-foreground">Kommunikations-Übersicht</p>
+          </div>
+        </div>
+        {emails.length > 0 && (
+          <Badge className="bg-violet-600 text-white">{emails.length}</Badge>
+        )}
+      </div>
+
       {/* Email List or Preview */}
       {selectedEmail ? (
         // Email Preview
         <div className="flex-1 flex flex-col">
-          <div className="flex items-center justify-between p-3 border-b bg-muted/50">
+          <div className="flex items-center justify-between p-2.5 border-b bg-muted/50">
             <div className="flex-1 min-w-0">
-              <p className="font-medium text-sm truncate">{selectedEmail.subject}</p>
+              <p className="font-medium text-xs truncate">{selectedEmail.subject}</p>
               <p className="text-xs text-muted-foreground truncate">
                 An: {selectedEmail.recipient_email}
               </p>
@@ -165,10 +183,10 @@ export function LiveDemoEmailPanel({ soundEnabled }: LiveDemoEmailPanelProps) {
             <Button
               variant="ghost"
               size="icon"
-              className="shrink-0"
+              className="shrink-0 h-6 w-6"
               onClick={() => setSelectedEmail(null)}
             >
-              <X className="h-4 w-4" />
+              <X className="h-3.5 w-3.5" />
             </Button>
           </div>
           <div className="flex-1 overflow-hidden">
@@ -188,18 +206,16 @@ export function LiveDemoEmailPanel({ soundEnabled }: LiveDemoEmailPanelProps) {
         </div>
       ) : (
         // Email List
-        <ScrollArea className="flex-1 p-4">
-          {emails.length === 0 ? (
-            <div className="flex items-center justify-center h-full text-muted-foreground">
-              <div className="text-center">
-                <Mail className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                <p>Keine E-Mails</p>
-                <p className="text-sm">E-Mails erscheinen hier sobald sie generiert werden</p>
+        <ScrollArea className="flex-1">
+          <div className="p-2 space-y-1.5">
+            {emails.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                <Mail className="h-10 w-10 mx-auto mb-2 opacity-30" />
+                <p className="text-sm font-medium">Keine E-Mails</p>
+                <p className="text-xs mt-1">E-Mails erscheinen sobald sie generiert werden</p>
               </div>
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {emails.map((email) => {
+            ) : (
+              emails.map((email) => {
                 const status = email.status || 'pending';
                 const config = statusConfig[status] || statusConfig.pending;
                 const StatusIcon = config.icon;
@@ -209,24 +225,24 @@ export function LiveDemoEmailPanel({ soundEnabled }: LiveDemoEmailPanelProps) {
                   <div
                     key={email.id}
                     className={cn(
-                      "p-3 rounded-lg border cursor-pointer transition-all hover:bg-accent/50",
+                      "p-2 rounded-md border cursor-pointer transition-all hover:bg-accent/50",
                       highlightedEmail === email.id && "ring-2 ring-violet-500 animate-pulse bg-violet-500/10",
                       selectedEmail?.id === email.id && "bg-accent"
                     )}
                     onClick={() => setSelectedEmail(email)}
                   >
-                    <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-start justify-between gap-1.5">
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <Badge variant="secondary" className="text-xs shrink-0">
+                        <div className="flex items-center gap-1 mb-0.5 flex-wrap">
+                          <Badge variant="secondary" className="text-xs h-4 px-1">
                             {typeLabel}
                           </Badge>
-                          <Badge className={cn("text-xs gap-1 shrink-0", config.color)}>
-                            <StatusIcon className="h-3 w-3" />
+                          <Badge className={cn("text-xs gap-0.5 h-4 px-1", config.color)}>
+                            <StatusIcon className="h-2.5 w-2.5" />
                             {config.label}
                           </Badge>
                         </div>
-                        <p className="text-sm font-medium truncate">{email.subject}</p>
+                        <p className="text-xs font-medium truncate">{email.subject}</p>
                         <p className="text-xs text-muted-foreground truncate">
                           {email.recipient_name || email.recipient_email}
                         </p>
@@ -236,35 +252,35 @@ export function LiveDemoEmailPanel({ soundEnabled }: LiveDemoEmailPanelProps) {
                           {format(new Date(email.created_at), 'HH:mm', { locale: de })}
                         </span>
                         {email.body_html && (
-                          <Eye className="h-3 w-3 text-muted-foreground mt-1" />
+                          <Eye className="h-3 w-3 text-muted-foreground mt-0.5" />
                         )}
                       </div>
                     </div>
                   </div>
                 );
-              })}
-            </div>
-          )}
+              })
+            )}
+          </div>
         </ScrollArea>
       )}
 
       {/* Summary Footer */}
-      <div className="border-t p-3 grid grid-cols-4 gap-2 text-center text-sm">
-        <div className="p-2 rounded bg-violet-500/10">
-          <p className="text-violet-600 font-bold">{emails.filter(e => e.status === 'simulated').length}</p>
-          <p className="text-xs text-muted-foreground">Simuliert</p>
+      <div className="border-t p-2 grid grid-cols-4 gap-1 text-center">
+        <div className="p-1 rounded bg-violet-500/10">
+          <p className="text-violet-600 font-bold text-xs">{simulatedCount}</p>
+          <p className="text-xs text-muted-foreground leading-tight">Sim.</p>
         </div>
-        <div className="p-2 rounded bg-green-500/10">
-          <p className="text-green-600 font-bold">{emails.filter(e => e.status === 'sent').length}</p>
-          <p className="text-xs text-muted-foreground">Gesendet</p>
+        <div className="p-1 rounded bg-green-500/10">
+          <p className="text-green-600 font-bold text-xs">{sentCount}</p>
+          <p className="text-xs text-muted-foreground leading-tight">Ges.</p>
         </div>
-        <div className="p-2 rounded bg-blue-500/10">
-          <p className="text-blue-600 font-bold">{emails.filter(e => e.confirmed_at).length}</p>
-          <p className="text-xs text-muted-foreground">Bestätigt</p>
+        <div className="p-1 rounded bg-blue-500/10">
+          <p className="text-blue-600 font-bold text-xs">{confirmedCount}</p>
+          <p className="text-xs text-muted-foreground leading-tight">Best.</p>
         </div>
-        <div className="p-2 rounded bg-red-500/10">
-          <p className="text-red-600 font-bold">{emails.filter(e => e.status === 'failed').length}</p>
-          <p className="text-xs text-muted-foreground">Fehler</p>
+        <div className="p-1 rounded bg-red-500/10">
+          <p className="text-red-600 font-bold text-xs">{failedCount}</p>
+          <p className="text-xs text-muted-foreground leading-tight">Fehl.</p>
         </div>
       </div>
     </div>
