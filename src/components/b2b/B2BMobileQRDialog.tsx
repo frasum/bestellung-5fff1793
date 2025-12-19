@@ -38,11 +38,13 @@ const B2BMobileQRDialog = ({ open, onOpenChange, accountId, supplierId }: B2BMob
         throw new Error(data?.error || 'Failed to create token');
       }
 
-      setMobileUrl(data.mobileUrl);
+      // Generate URL in frontend using current origin
+      const generatedUrl = `${window.location.origin}/b2b/mobile?token=${data.token}`;
+      setMobileUrl(generatedUrl);
       setExpiresAt(data.expiresAt);
 
       // Generate QR code
-      const qrDataUrl = await QRCode.toDataURL(data.mobileUrl, {
+      const qrDataUrl = await QRCode.toDataURL(generatedUrl, {
         width: 256,
         margin: 2,
         color: {

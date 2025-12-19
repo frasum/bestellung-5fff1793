@@ -116,17 +116,12 @@ serve(async (req) => {
       );
     }
 
-    // Build the mobile URL
-    const appUrl = Deno.env.get('APP_URL') || 'https://lclhwmxpbpmqtiwmgmgm.lovableproject.com';
-    const mobileUrl = `${appUrl}/b2b/mobile?token=${newToken.token}`;
-
     console.log(`Token created successfully: ${newToken.id}`);
 
     return new Response(
       JSON.stringify({
         success: true,
         token: newToken.token,
-        mobileUrl,
         expiresAt: newToken.expires_at,
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
