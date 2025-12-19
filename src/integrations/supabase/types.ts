@@ -2018,6 +2018,7 @@ export type Database = {
           name: string
           source_b2b_customer_id: string | null
           source_type: string | null
+          sponsored_features: Json | null
           sponsored_note: string | null
           subscription_tier: string
           test_email: string | null
@@ -2039,6 +2040,7 @@ export type Database = {
           name: string
           source_b2b_customer_id?: string | null
           source_type?: string | null
+          sponsored_features?: Json | null
           sponsored_note?: string | null
           subscription_tier?: string
           test_email?: string | null
@@ -2060,6 +2062,7 @@ export type Database = {
           name?: string
           source_b2b_customer_id?: string | null
           source_type?: string | null
+          sponsored_features?: Json | null
           sponsored_note?: string | null
           subscription_tier?: string
           test_email?: string | null

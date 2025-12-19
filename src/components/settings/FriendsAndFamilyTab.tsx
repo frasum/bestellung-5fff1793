@@ -4,10 +4,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Heart, Gift, Search, Check, X, Edit2, Building2, Users, Crown, Trash2, MoreHorizontal } from 'lucide-react';
+import { Loader2, Heart, Gift, Search, Check, X, Edit2, Building2, Users, Crown, Trash2, MoreHorizontal, UserPlus } from 'lucide-react';
 import { useSponsoredAccounts, useSponsoredAccountStats, useSetSponsored, useUpdateSponsoredNote, useDeleteOrganization, useUpdateOrganization, SponsoredAccount } from '@/hooks/useSponsoredAccounts';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Textarea } from '@/components/ui/textarea';
+import { InviteSponsoredDialog } from './InviteSponsoredDialog';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -56,6 +57,7 @@ export function FriendsAndFamilyTab() {
   const [deleteDialog, setDeleteDialog] = useState<SponsoredAccount | null>(null);
   const [editDialog, setEditDialog] = useState<SponsoredAccount | null>(null);
   const [editName, setEditName] = useState('');
+  const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
 
   if (isLoading) {
     return (
@@ -177,14 +179,23 @@ export function FriendsAndFamilyTab() {
 
       {/* Search and Table */}
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Gift className="h-5 w-5 text-pink-500" />
-            Friends & Family Accounts
-          </CardTitle>
-          <CardDescription>
-            Verwalte gesponserte Accounts mit kostenlosen Pro-Features
-          </CardDescription>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+          <div>
+            <CardTitle className="flex items-center gap-2">
+              <Gift className="h-5 w-5 text-pink-500" />
+              Friends & Family Accounts
+            </CardTitle>
+            <CardDescription>
+              Verwalte gesponserte Accounts mit kostenlosen Pro-Features
+            </CardDescription>
+          </div>
+          <Button 
+            onClick={() => setInviteDialogOpen(true)}
+            className="bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600"
+          >
+            <UserPlus className="h-4 w-4 mr-2" />
+            Einladen
+          </Button>
         </CardHeader>
         <CardContent>
           <div className="flex items-center gap-4 mb-4">
@@ -457,6 +468,12 @@ export function FriendsAndFamilyTab() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Invite Dialog */}
+      <InviteSponsoredDialog 
+        open={inviteDialogOpen} 
+        onOpenChange={setInviteDialogOpen} 
+      />
     </div>
   );
 }
