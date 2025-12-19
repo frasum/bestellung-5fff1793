@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import { 
   usePriceWatchSettings, 
   useUpdatePriceWatchSettings,
@@ -38,6 +39,7 @@ import { de } from 'date-fns/locale';
 
 export const PriceWatchSettingsTab = () => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const { data: settings, isLoading } = usePriceWatchSettings();
   const { data: organization } = useOrganization();
   const { data: results } = usePriceWatchResults();
@@ -136,13 +138,22 @@ export const PriceWatchSettingsTab = () => {
                   Preisüberwachung
                 </h3>
                 <p className="text-sm text-emerald-600 dark:text-emerald-400">
-                  {isEnabled ? 'Aktiv' : 'Deaktiviert'} • {activeResultsCount} Einsparmöglichkeiten
+                  {isEnabled ? 'Aktiv' : 'Deaktiviert'} •{' '}
+                  <span 
+                    className="cursor-pointer hover:underline"
+                    onClick={() => navigate('/reports?tab=pricewatch')}
+                  >
+                    {activeResultsCount} Einsparmöglichkeiten
+                  </span>
                 </p>
               </div>
             </div>
             <div className="flex items-center gap-3">
               {totalSavings > 0 && (
-                <Badge className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300 px-3 py-1 text-sm">
+                <Badge 
+                  className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300 px-3 py-1 text-sm cursor-pointer hover:bg-emerald-200 dark:hover:bg-emerald-900/70"
+                  onClick={() => navigate('/reports?tab=pricewatch')}
+                >
                   €{totalSavings.toFixed(2)} Einsparpotential
                 </Badge>
               )}
@@ -161,7 +172,11 @@ export const PriceWatchSettingsTab = () => {
                   Letzte Suche: {format(new Date(settings.last_search_at), 'dd.MM.yyyy HH:mm', { locale: de })}
                 </span>
                 {settings.last_search_results_count !== null && (
-                  <Badge variant="secondary" className="ml-2">
+                  <Badge 
+                    variant="secondary" 
+                    className="ml-2 cursor-pointer hover:bg-secondary/80"
+                    onClick={() => navigate('/reports?tab=pricewatch')}
+                  >
                     {settings.last_search_results_count} Ergebnisse
                   </Badge>
                 )}
