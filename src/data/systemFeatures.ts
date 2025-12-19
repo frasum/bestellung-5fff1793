@@ -103,18 +103,39 @@ export const SYSTEM_FEATURES: SystemFeatureCategory[] = [
       { key: 'order_statistics', labelDe: 'Bestellstatistiken', labelEn: 'Order Statistics' },
     ],
   },
-  {
+{
     key: 'settings',
     labelDe: 'Einstellungen',
     labelEn: 'Settings',
     features: [
+      // Profil
       { key: 'profile_settings', labelDe: 'Profil-Einstellungen', labelEn: 'Profile Settings' },
-      { key: 'organization_settings', labelDe: 'Organisations-Einstellungen', labelEn: 'Organization Settings' },
+      { key: 'theme_settings', labelDe: 'Theme-Einstellungen', labelEn: 'Theme Settings' },
+      // Organisation - Allgemein
+      { key: 'org_profile', labelDe: 'Organisations-Profil', labelEn: 'Organization Profile' },
+      { key: 'org_contact_info', labelDe: 'Kontaktinformationen', labelEn: 'Contact Information' },
+      { key: 'org_subscription', labelDe: 'Abonnement-Anzeige', labelEn: 'Subscription Display' },
+      { key: 'system_overview_pdf', labelDe: 'System-Übersicht PDF', labelEn: 'System Overview PDF' },
+      // Organisation - Team
       { key: 'team_management', labelDe: 'Team-Verwaltung', labelEn: 'Team Management' },
+      { key: 'team_invitations', labelDe: 'Team-Einladungen', labelEn: 'Team Invitations' },
+      { key: 'team_roles', labelDe: 'Team-Rollen', labelEn: 'Team Roles' },
+      // Organisation - Standorte
+      { key: 'location_management', labelDe: 'Standort-Verwaltung', labelEn: 'Location Management' },
+      { key: 'delivery_address_management', labelDe: 'Lieferadressen-Verwaltung', labelEn: 'Delivery Address Management' },
+      // Organisation - Einheiten & Kategorien
+      { key: 'unit_management', labelDe: 'Einheiten-Verwaltung', labelEn: 'Unit Management' },
+      { key: 'category_management', labelDe: 'Kategorie-Verwaltung', labelEn: 'Category Management' },
+      { key: 'order_unit_management', labelDe: 'Bestelleinheiten-Verwaltung', labelEn: 'Order Unit Management' },
+      { key: 'article_organization', labelDe: 'Artikel-Organisation', labelEn: 'Article Organization' },
+      // Kommunikation
       { key: 'notification_preferences', labelDe: 'Benachrichtigungs-Einstellungen', labelEn: 'Notification Preferences' },
       { key: 'email_templates', labelDe: 'E-Mail-Vorlagen', labelEn: 'Email Templates' },
       { key: 'supplier_portal_settings', labelDe: 'Lieferanten-Portal Einstellungen', labelEn: 'Supplier Portal Settings' },
+      { key: 'communication_log_view', labelDe: 'Kommunikations-Protokoll Ansicht', labelEn: 'Communication Log View' },
+      // Sonstiges
       { key: 'demo_accounts', labelDe: 'Demo-Konten', labelEn: 'Demo Accounts' },
+      { key: 'advanced_mode', labelDe: 'Erweiterter Modus', labelEn: 'Advanced Mode' },
     ],
   },
   {
