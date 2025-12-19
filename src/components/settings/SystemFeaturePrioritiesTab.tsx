@@ -7,7 +7,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
-import { FileJson, FileText, Circle, ChevronRight, MessageSquare } from 'lucide-react';
+import { FileJson, FileText, Circle, MessageSquare } from 'lucide-react';
 import { SYSTEM_FEATURES, getTotalFeatureCount } from '@/data/systemFeatures';
 import {
   useSystemFeaturePriorities,
@@ -285,8 +285,7 @@ export const SystemFeaturePrioritiesTab = () => {
                 className="border rounded-lg px-3"
               >
                 <AccordionTrigger className="hover:no-underline py-3">
-                  <div className="flex items-center gap-3 flex-1">
-                    <ChevronRight className="h-4 w-4 shrink-0 transition-transform duration-200" />
+                  <div className="flex items-center gap-2 flex-1">
                     <span className="font-medium text-sm">{categoryLabel}</span>
                     <Badge variant="secondary" className="ml-auto mr-2 text-xs">
                       {ratedCount}/{category.features.length}
