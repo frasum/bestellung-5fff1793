@@ -3141,6 +3141,117 @@ export type Database = {
           },
         ]
       }
+      supplier_own_purchase_order_items: {
+        Row: {
+          article_id: string | null
+          article_name: string
+          created_at: string
+          id: string
+          order_id: string
+          quantity: number
+          total_price: number | null
+          unit: string | null
+          unit_price: number | null
+        }
+        Insert: {
+          article_id?: string | null
+          article_name: string
+          created_at?: string
+          id?: string
+          order_id: string
+          quantity?: number
+          total_price?: number | null
+          unit?: string | null
+          unit_price?: number | null
+        }
+        Update: {
+          article_id?: string | null
+          article_name?: string
+          created_at?: string
+          id?: string
+          order_id?: string
+          quantity?: number
+          total_price?: number | null
+          unit?: string | null
+          unit_price?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supplier_own_purchase_order_items_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: false
+            referencedRelation: "supplier_own_articles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supplier_own_purchase_order_items_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "supplier_own_purchase_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      supplier_own_purchase_orders: {
+        Row: {
+          created_at: string
+          delivery_date: string | null
+          email_sent: boolean | null
+          email_sent_at: string | null
+          id: string
+          notes: string | null
+          order_number: string
+          status: string
+          supplier_id: string
+          total_amount: number | null
+          updated_at: string
+          vendor_id: string
+        }
+        Insert: {
+          created_at?: string
+          delivery_date?: string | null
+          email_sent?: boolean | null
+          email_sent_at?: string | null
+          id?: string
+          notes?: string | null
+          order_number?: string
+          status?: string
+          supplier_id: string
+          total_amount?: number | null
+          updated_at?: string
+          vendor_id: string
+        }
+        Update: {
+          created_at?: string
+          delivery_date?: string | null
+          email_sent?: boolean | null
+          email_sent_at?: string | null
+          id?: string
+          notes?: string | null
+          order_number?: string
+          status?: string
+          supplier_id?: string
+          total_amount?: number | null
+          updated_at?: string
+          vendor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supplier_own_purchase_orders_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supplier_own_purchase_orders_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "supplier_own_vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       supplier_own_vendors: {
         Row: {
           address: string | null

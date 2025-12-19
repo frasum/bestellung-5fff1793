@@ -9,7 +9,7 @@ const corsHeaders = {
 };
 
 interface ArticleUpdateRequest {
-  action: 'list' | 'update' | 'update-all' | 'get-settings' | 'get-units' | 'get-order-units' | 'create-unit' | 'get-categories' | 'create-category' | 'suggest-article' | 'save-draft' | 'get-draft' | 'delete-draft' | 'upload-image' | 'delete-image' | 'get-orders' | 'mark-order-seen' | 'confirm-order' | 'list-own-vendors' | 'create-own-vendor' | 'update-own-vendor' | 'delete-own-vendor' | 'list-own-articles' | 'create-own-article' | 'update-own-article' | 'delete-own-article' | 'list-own-inventory-sessions' | 'create-own-inventory-session' | 'get-own-inventory-session' | 'save-own-inventory-items' | 'complete-own-inventory-session' | 'delete-own-inventory-session';
+  action: 'list' | 'update' | 'update-all' | 'get-settings' | 'get-units' | 'get-order-units' | 'create-unit' | 'get-categories' | 'create-category' | 'suggest-article' | 'save-draft' | 'get-draft' | 'delete-draft' | 'upload-image' | 'delete-image' | 'get-orders' | 'mark-order-seen' | 'confirm-order' | 'list-own-vendors' | 'create-own-vendor' | 'update-own-vendor' | 'delete-own-vendor' | 'list-own-articles' | 'create-own-article' | 'update-own-article' | 'delete-own-article' | 'list-own-inventory-sessions' | 'create-own-inventory-session' | 'get-own-inventory-session' | 'save-own-inventory-items' | 'complete-own-inventory-session' | 'delete-own-inventory-session' | 'list-own-purchase-orders' | 'create-own-purchase-order';
   supplierId: string;
   organizationId: string;
   sessionToken: string;
@@ -1849,6 +1849,67 @@ serve(async (req) => {
 
       console.log(`Deleted own inventory session ${sessionId}`);
       return new Response(JSON.stringify({ success: true }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Purchase Orders
+    if (action === 'list-own-purchase-orders') {
+      const { data: orders, error } = await supabase
+        .from('supplier_own_purchase_orders')
+        .select('*')
+        .eq('supplier_id', supplierId)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      return new Response(JSON.stringify({ orders: orders || [] }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    if (action === 'create-own-purchase-order') {
+      const { orderData } = body;
+      if (!orderData?.vendor_id || !orderData?.items?.length) {
+        return new Response(JSON.stringify({ error: 'Missing order data' }), {
+          status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      const totalAmount = orderData.items.reduce((sum: number, item: any) => sum + (item.total_price || 0), 0);
+
+      const { data: order, error: orderError } = await supabase
+        .from('supplier_own_purchase_orders')
+        .insert({
+          supplier_id: supplierId,
+          vendor_id: orderData.vendor_id,
+          delivery_date: orderData.delivery_date,
+          notes: orderData.notes,
+          total_amount: totalAmount,
+          status: 'pending',
+        })
+        .select()
+        .single();
+
+      if (orderError) throw orderError;
+
+      const orderItems = orderData.items.map((item: any) => ({
+        order_id: order.id,
+        article_id: item.article_id,
+        article_name: item.article_name,
+        quantity: item.quantity,
+        unit: item.unit,
+        unit_price: item.unit_price,
+        total_price: item.total_price,
+      }));
+
+      const { error: itemsError } = await supabase
+        .from('supplier_own_purchase_order_items')
+        .insert(orderItems);
+
+      if (itemsError) throw itemsError;
+
+      console.log(`Created purchase order ${order.order_number}`);
+      return new Response(JSON.stringify({ order }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
