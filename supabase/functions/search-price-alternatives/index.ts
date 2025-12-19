@@ -89,8 +89,15 @@ serve(async (req) => {
     const address = addresses?.[0];
     const city = address?.city || "Deutschland";
     const postalCode = address?.postal_code || "";
+    const country = address?.country || "";
+    
+    // Detect if organization is in Austria (AT country code or Austrian postal code format 1xxx-9xxx)
+    const isAustria = country.toUpperCase() === "AT" || 
+                      country.toLowerCase().includes("österreich") ||
+                      country.toLowerCase().includes("austria") ||
+                      /^[1-9]\d{3}$/.test(postalCode);
 
-    console.log(`Search context: ${city} (${postalCode}), radius: ${searchRadiusKm}km`);
+    console.log(`Search context: ${city} (${postalCode}), country: ${country}, isAustria: ${isAustria}, radius: ${searchRadiusKm}km`);
 
     // Get articles to search for
     let query = supabase
@@ -155,10 +162,13 @@ serve(async (req) => {
                 content: `Du bist ein Preisrecherche-Assistent für Gastronomiebetriebe und Unternehmen.
                 Suche nach den günstigsten Preisen aus ALLEN verfügbaren Quellen:
                 
-                B2B-GROSSHANDEL: Metro, Selgros, Transgourmet, Chefs Culinar, Rungis Express, Getränkehändler, Weingroßhandel
-                SUPERMARKTKETTEN: Aldi, Lidl, Rewe, Edeka, Kaufland, Penny, Netto, Real
-                ONLINE-HÄNDLER: Amazon, eBay, Otto, idealo, geizhals.de, billiger.de
-                CASH & CARRY: Hamberger, Handelshof, Ratio
+                B2B-GROSSHANDEL DEUTSCHLAND: Metro, Selgros, Transgourmet, Chefs Culinar, Rungis Express
+                B2B-GROSSHANDEL ÖSTERREICH: Kröswang (kroeswang.at), Kastner, AGM, Wedl, PFEIFFER, C+C Pfeiffer
+                CASH & CARRY: Hamberger, Handelshof, Ratio, Metro Cash & Carry
+                SUPERMARKTKETTEN DEUTSCHLAND: Aldi, Lidl, Rewe, Edeka, Kaufland, Penny, Netto
+                SUPERMARKTKETTEN ÖSTERREICH: Hofer, Billa, Spar, Interspar, Merkur, Eurospar
+                ONLINE-HÄNDLER: Amazon, eBay, Otto, idealo, geizhals.at, geizhals.de, billiger.de
+                SPEZIALHÄNDLER: Getränkehändler, Weingroßhandel, Fleischgroßhändler
                 
                 Antworte NUR mit einem JSON-Objekt im Format:
                 {
@@ -174,9 +184,15 @@ serve(async (req) => {
               },
               {
                 role: "user",
-                content: `Finde den günstigsten Preis für: "${article.name}" (Einheit: ${article.unit})
+                content: isAustria 
+                  ? `Finde den günstigsten Preis für: "${article.name}" (Einheit: ${article.unit})
+                Region: ${city} ${postalCode} ÖSTERREICH
+                Suche PRIORITÄR in: Kröswang, Kastner, AGM, Wedl, PFEIFFER, C+C Pfeiffer, Metro Österreich
+                Auch suchen in: Hofer, Billa, Spar, Interspar UND Online-Händler (geizhals.at, Amazon.at)
+                Aktueller Einkaufspreis: ${article.price}€ pro ${article.unit}`
+                  : `Finde den günstigsten Preis für: "${article.name}" (Einheit: ${article.unit})
                 Region: ${city} ${postalCode}
-                Suche in: B2B-Großhandel, Supermarktketten (Aldi, Lidl, Rewe, Edeka, Kaufland) UND Online-Händler
+                Suche in: B2B-Großhandel (Metro, Selgros, Transgourmet), Supermarktketten (Aldi, Lidl, Rewe, Edeka, Kaufland) UND Online-Händler
                 Aktueller Einkaufspreis: ${article.price}€ pro ${article.unit}`
               }
             ],
