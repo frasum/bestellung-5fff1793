@@ -120,10 +120,18 @@ export function LiveDemoSupplierPanel({ soundEnabled }: LiveDemoSupplierPanelPro
     });
   };
 
+  // Vereinfachter 2-Stufen-Workflow für Demo
   const getNextStatus = (currentStatus: string): OrderStatus | null => {
-    const flow: OrderStatus[] = ['pending', 'confirmed', 'processing', 'shipped', 'delivered'];
-    const currentIndex = flow.indexOf(currentStatus as OrderStatus);
-    return currentIndex >= 0 && currentIndex < flow.length - 1 ? flow[currentIndex + 1] : null;
+    if (currentStatus === 'pending') return 'confirmed';
+    if (currentStatus === 'confirmed') return 'delivered';
+    return null;
+  };
+
+  // Dynamische Button-Beschriftung
+  const getActionLabel = (nextStatus: OrderStatus): string => {
+    if (nextStatus === 'confirmed') return 'Bestellung annehmen';
+    if (nextStatus === 'delivered') return 'Geliefert setzen';
+    return `${statusConfig[nextStatus].label} setzen`;
   };
 
   const handleUpdateStatus = async (orderId: string, newStatus: OrderStatus) => {
@@ -262,7 +270,7 @@ export function LiveDemoSupplierPanel({ soundEnabled }: LiveDemoSupplierPanelPro
                             {updateOrder.isPending && (
                               <Loader2 className="h-3 w-3 mr-1.5 animate-spin" />
                             )}
-                            {statusConfig[nextStatus].label} setzen
+                            {getActionLabel(nextStatus)}
                           </Button>
                         )}
                       </div>
