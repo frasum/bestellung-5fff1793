@@ -26,8 +26,8 @@ const defaultPositions: TilePosition[] = [
 const connections: Connection[] = [
   { from: 'restaurant', to: 'admin', label: '↔ Sync', color: '#3b82f6', bidirectional: true },
   { from: 'easyorder', to: 'admin', label: 'Entwurf', color: '#f97316' },
-  { from: 'admin', to: 'supplier', label: 'An Lieferant', color: '#22c55e' },
-  { from: 'supplier', to: 'email', label: 'E-Mail', color: '#8b5cf6' },
+  { from: 'admin', to: 'supplier', label: 'Bestellung', color: '#22c55e' },
+  { from: 'admin', to: 'email', label: 'E-Mail', color: '#8b5cf6' },
 ];
 
 const tileConfig = [
