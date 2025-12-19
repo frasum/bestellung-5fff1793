@@ -167,3 +167,6 @@ verify_jwt = true
 
 [functions.send-price-alerts]
 verify_jwt = true
+
+[functions.search-kroeswang-catalog]
+verify_jwt = true
