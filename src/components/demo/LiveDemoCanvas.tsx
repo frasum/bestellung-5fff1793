@@ -1,11 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Store, Smartphone, LayoutDashboard, Truck, Mail, RotateCcw } from 'lucide-react';
+import { Smartphone, Truck, Mail, RotateCcw, Utensils } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { DraggableTile, TilePosition } from './DraggableTile';
 import { ConnectionArrows, Connection } from './ConnectionArrows';
-import { LiveDemoRestaurantPanel } from './LiveDemoRestaurantPanel';
+import { LiveDemoGastroPanel } from './LiveDemoGastroPanel';
 import { LiveDemoEasyOrderPanel } from './LiveDemoEasyOrderPanel';
-import { LiveDemoAdminPanel } from './LiveDemoAdminPanel';
 import { LiveDemoSupplierPanel } from './LiveDemoSupplierPanel';
 import { LiveDemoEmailPanel } from './LiveDemoEmailPanel';
 
@@ -13,30 +12,28 @@ interface LiveDemoCanvasProps {
   soundEnabled: boolean;
 }
 
-const STORAGE_KEY = 'live-demo-tile-positions';
+const STORAGE_KEY = 'live-demo-tile-positions-v2';
 
 const defaultPositions: TilePosition[] = [
-  { id: 'restaurant', x: 20, y: 20, width: 300, height: 380 },
-  { id: 'easyorder', x: 20, y: 420, width: 300, height: 300 },
-  { id: 'admin', x: 380, y: 120, width: 340, height: 480 },
-  { id: 'supplier', x: 780, y: 20, width: 320, height: 380 },
-  { id: 'email', x: 780, y: 420, width: 320, height: 300 },
+  { id: 'gastro', x: 20, y: 20, width: 380, height: 520 },
+  { id: 'easyorder', x: 20, y: 560, width: 380, height: 280 },
+  { id: 'supplier', x: 460, y: 20, width: 340, height: 400 },
+  { id: 'email', x: 460, y: 440, width: 340, height: 400 },
 ];
 
 const connections: Connection[] = [
-  { from: 'restaurant', to: 'admin', label: '↔ Sync', color: '#3b82f6', bidirectional: true },
-  { from: 'easyorder', to: 'admin', label: 'Entwurf', color: '#f97316' },
-  { from: 'admin', to: 'supplier', label: 'Bestellung', color: '#22c55e' },
-  { from: 'admin', to: 'email', label: 'E-Mail', color: '#8b5cf6' },
+  { from: 'easyorder', to: 'gastro', label: 'Entwurf', color: '#f97316' },
+  { from: 'gastro', to: 'supplier', label: 'Bestellung', color: '#22c55e' },
+  { from: 'gastro', to: 'email', label: 'E-Mail', color: '#8b5cf6' },
 ];
 
 const tileConfig = [
   { 
-    id: 'restaurant', 
-    title: 'Restaurant', 
-    icon: <Store className="h-4 w-4 text-blue-500" />,
+    id: 'gastro', 
+    title: 'Gastro-System', 
+    icon: <Utensils className="h-4 w-4 text-blue-500" />,
     borderColor: 'bg-blue-500/10 border-b-blue-500/30',
-    Component: LiveDemoRestaurantPanel
+    Component: LiveDemoGastroPanel
   },
   { 
     id: 'easyorder', 
@@ -44,13 +41,6 @@ const tileConfig = [
     icon: <Smartphone className="h-4 w-4 text-orange-500" />,
     borderColor: 'bg-orange-500/10 border-b-orange-500/30',
     Component: LiveDemoEasyOrderPanel
-  },
-  { 
-    id: 'admin', 
-    title: 'Admin', 
-    icon: <LayoutDashboard className="h-4 w-4 text-blue-500" />,
-    borderColor: 'bg-blue-500/10 border-b-blue-500/30',
-    Component: LiveDemoAdminPanel
   },
   { 
     id: 'supplier', 
