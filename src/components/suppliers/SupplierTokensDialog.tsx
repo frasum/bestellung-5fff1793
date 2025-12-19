@@ -166,10 +166,10 @@ export const SupplierTokensDialog = ({ open, onOpenChange, supplier }: SupplierT
         .from('supplier_portal_tokens')
         .delete()
         .eq('supplier_id', supplier.id)
-        .or(`expires_at.lt.${new Date().toISOString()},is_active.eq.false`);
+        .or(`expires_at.lt.${new Date().toISOString()},is_active.eq.false,used_at.is.null`);
 
       if (error) throw error;
-      toast.success('Abgelaufene/widerrufene Tokens gelöscht');
+      toast.success('Abgelaufene, widerrufene und unbenutzte Tokens gelöscht');
       loadTokens();
     } catch (error: any) {
       console.error('Error deleting tokens:', error);
