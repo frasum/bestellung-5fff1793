@@ -47,6 +47,7 @@ const statusConfig: Record<string, { label: string; icon: typeof Clock; color: s
   sent: { label: 'Gesendet', icon: CheckCircle2, color: 'text-green-500 bg-green-500/10' },
   failed: { label: 'Fehlgeschlagen', icon: AlertCircle, color: 'text-red-500 bg-red-500/10' },
   confirmed: { label: 'Bestätigt', icon: CheckCircle2, color: 'text-blue-500 bg-blue-500/10' },
+  simulated: { label: 'Simuliert (Demo)', icon: Eye, color: 'text-violet-500 bg-violet-500/10' },
 };
 
 interface LiveDemoEmailPanelProps {
@@ -248,7 +249,11 @@ export function LiveDemoEmailPanel({ soundEnabled }: LiveDemoEmailPanelProps) {
       )}
 
       {/* Summary Footer */}
-      <div className="border-t p-3 grid grid-cols-3 gap-2 text-center text-sm">
+      <div className="border-t p-3 grid grid-cols-4 gap-2 text-center text-sm">
+        <div className="p-2 rounded bg-violet-500/10">
+          <p className="text-violet-600 font-bold">{emails.filter(e => e.status === 'simulated').length}</p>
+          <p className="text-xs text-muted-foreground">Simuliert</p>
+        </div>
         <div className="p-2 rounded bg-green-500/10">
           <p className="text-green-600 font-bold">{emails.filter(e => e.status === 'sent').length}</p>
           <p className="text-xs text-muted-foreground">Gesendet</p>
@@ -259,7 +264,7 @@ export function LiveDemoEmailPanel({ soundEnabled }: LiveDemoEmailPanelProps) {
         </div>
         <div className="p-2 rounded bg-red-500/10">
           <p className="text-red-600 font-bold">{emails.filter(e => e.status === 'failed').length}</p>
-          <p className="text-xs text-muted-foreground">Fehlgeschlagen</p>
+          <p className="text-xs text-muted-foreground">Fehler</p>
         </div>
       </div>
     </div>
