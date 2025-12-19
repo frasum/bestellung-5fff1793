@@ -4,7 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { startOfMonth, endOfMonth } from "date-fns";
 import { toast } from "sonner";
 
-export type SubscriptionTier = 'free' | 'basic' | 'pro' | 'enterprise';
+export type SubscriptionTier = 'free' | 'basic' | 'pro' | 'enterprise' | 'sponsored';
 
 interface SubscriptionLimits {
   ordersPerMonth: number | 'unlimited';
@@ -17,6 +17,7 @@ const TIER_LIMITS: Record<SubscriptionTier, SubscriptionLimits> = {
   basic: { ordersPerMonth: 50, suppliers: 10, users: 3 },
   pro: { ordersPerMonth: 'unlimited', suppliers: 'unlimited', users: 10 },
   enterprise: { ordersPerMonth: 'unlimited', suppliers: 'unlimited', users: 'unlimited' },
+  sponsored: { ordersPerMonth: 'unlimited', suppliers: 'unlimited', users: 3 },
 };
 
 interface Usage {
@@ -57,7 +58,7 @@ export function useSubscriptionLimits(): SubscriptionStatus {
       
       const { data: org } = await supabase
         .from('organizations')
-        .select('id, subscription_tier')
+        .select('id, subscription_tier, is_sponsored')
         .eq('id', profile.organization_id)
         .single();
       
@@ -108,7 +109,11 @@ export function useSubscriptionLimits(): SubscriptionStatus {
     staleTime: 1 * 60 * 1000, // Refresh every minute
   });
 
-  const tier = (organization?.subscription_tier as SubscriptionTier) || 'free';
+  // If organization is sponsored, use sponsored tier regardless of actual subscription_tier
+  const isSponsored = organization?.is_sponsored === true;
+  const tier: SubscriptionTier = isSponsored 
+    ? 'sponsored' 
+    : ((organization?.subscription_tier as SubscriptionTier) || 'free');
   const limits = TIER_LIMITS[tier];
   const currentUsage: Usage = usage || { ordersThisMonth: 0, suppliersCount: 0, usersCount: 0 };
 

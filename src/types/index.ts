@@ -15,7 +15,7 @@ export interface Organization {
   createdAt: Date;
 }
 
-export type SubscriptionTier = 'free' | 'basic' | 'pro' | 'enterprise';
+export type SubscriptionTier = 'free' | 'basic' | 'pro' | 'enterprise' | 'sponsored';
 
 export interface Supplier {
   id: string;
