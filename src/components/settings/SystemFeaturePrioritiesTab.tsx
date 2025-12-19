@@ -276,7 +276,9 @@ export const SystemFeaturePrioritiesTab = () => {
             const categoryPriorities = category.features.map((f) =>
               getPriorityForFeature(category.key, f.key)
             );
-            const ratedCount = categoryPriorities.filter((p) => p !== null).length;
+            const greenCount = categoryPriorities.filter((p) => p === 'green').length;
+            const yellowCount = categoryPriorities.filter((p) => p === 'yellow').length;
+            const redCount = categoryPriorities.filter((p) => p === 'red').length;
 
             return (
               <AccordionItem
@@ -287,9 +289,26 @@ export const SystemFeaturePrioritiesTab = () => {
                 <AccordionTrigger className="hover:no-underline py-3">
                   <div className="flex items-center gap-2 flex-1">
                     <span className="font-medium text-sm">{categoryLabel}</span>
-                    <Badge variant="secondary" className="ml-auto mr-2 text-xs">
-                      {ratedCount}/{category.features.length}
-                    </Badge>
+                    <div className="flex items-center gap-1 ml-auto mr-2">
+                      {greenCount > 0 && (
+                        <Badge className="bg-green-500 hover:bg-green-500 text-white text-xs px-1.5 py-0 min-w-[1.25rem] justify-center">
+                          {greenCount}
+                        </Badge>
+                      )}
+                      {yellowCount > 0 && (
+                        <Badge className="bg-yellow-500 hover:bg-yellow-500 text-white text-xs px-1.5 py-0 min-w-[1.25rem] justify-center">
+                          {yellowCount}
+                        </Badge>
+                      )}
+                      {redCount > 0 && (
+                        <Badge className="bg-red-500 hover:bg-red-500 text-white text-xs px-1.5 py-0 min-w-[1.25rem] justify-center">
+                          {redCount}
+                        </Badge>
+                      )}
+                      <Badge variant="outline" className="text-xs px-1.5 py-0 min-w-[1.5rem] justify-center">
+                        {category.features.length}
+                      </Badge>
+                    </div>
                   </div>
                 </AccordionTrigger>
                 <AccordionContent>
