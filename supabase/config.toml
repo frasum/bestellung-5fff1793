@@ -143,3 +143,9 @@ verify_jwt = false
 
 [functions.elevenlabs-industry-token]
 verify_jwt = false
+
+[functions.create-b2b-mobile-token]
+verify_jwt = true
+
+[functions.verify-b2b-mobile-token]
+verify_jwt = false

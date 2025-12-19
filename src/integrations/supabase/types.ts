@@ -610,6 +610,57 @@ export type Database = {
           },
         ]
       }
+      b2b_mobile_tokens: {
+        Row: {
+          account_id: string
+          created_at: string
+          created_by: string
+          expires_at: string
+          id: string
+          is_active: boolean
+          supplier_id: string | null
+          token: string
+          used_at: string | null
+        }
+        Insert: {
+          account_id: string
+          created_at?: string
+          created_by: string
+          expires_at?: string
+          id?: string
+          is_active?: boolean
+          supplier_id?: string | null
+          token?: string
+          used_at?: string | null
+        }
+        Update: {
+          account_id?: string
+          created_at?: string
+          created_by?: string
+          expires_at?: string
+          id?: string
+          is_active?: boolean
+          supplier_id?: string | null
+          token?: string
+          used_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "b2b_mobile_tokens_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "supplier_b2b_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "b2b_mobile_tokens_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "b2b_suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       b2b_supplier_purchase_order_items: {
         Row: {
           article_id: string | null
