@@ -108,15 +108,32 @@ const B2BSupplierLogin = () => {
       if (authError) throw authError;
 
       // Create B2B account
-      const { error: accountError } = await supabase
+      const { data: accountData, error: accountError } = await supabase
         .from('supplier_b2b_accounts')
         .insert({
           company_name: companyName,
           subdomain,
           email,
-        });
+        })
+        .select()
+        .single();
 
       if (accountError) throw accountError;
+
+      // Auto-create the single supplier for this account (1 Account = 1 Supplier)
+      const { error: supplierError } = await supabase
+        .from('b2b_suppliers')
+        .insert({
+          account_id: accountData.id,
+          name: companyName,
+          contact_email: email,
+          is_active: true,
+        });
+
+      if (supplierError) {
+        console.error('Error creating supplier:', supplierError);
+        // Don't fail registration, supplier can be created later
+      }
 
       toast.success('Registrierung erfolgreich! Bitte bestätigen Sie Ihre E-Mail.');
       setIsRegistering(false);
@@ -150,14 +167,17 @@ const B2BSupplierLogin = () => {
             {isRegistering && (
               <>
                 <div className="space-y-2">
-                  <Label htmlFor="companyName">Firmenname</Label>
+                  <Label htmlFor="companyName">Firmenname / Lieferantenname</Label>
                   <Input
                     id="companyName"
                     value={companyName}
                     onChange={(e) => setCompanyName(e.target.value)}
-                    placeholder="Ihre Firma GmbH"
+                    placeholder="z.B. Kao Großhandel"
                     required
                   />
+                  <p className="text-xs text-muted-foreground">
+                    Dies wird als Name Ihres Lieferanten-Portals angezeigt
+                  </p>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="subdomain">Subdomain</Label>
@@ -166,7 +186,7 @@ const B2BSupplierLogin = () => {
                       id="subdomain"
                       value={subdomain}
                       onChange={(e) => setSubdomain(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
-                      placeholder="ihre-firma"
+                      placeholder="kao"
                       className="flex-1"
                       required
                     />

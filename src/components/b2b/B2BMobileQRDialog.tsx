@@ -11,7 +11,6 @@ import QRCode from 'qrcode';
 // Helper to detect if we're in a preview environment
 const isPreviewEnvironment = (): boolean => {
   const hostname = window.location.hostname;
-  // Preview URLs contain '--' or are localhost
   return hostname.includes('--') || hostname === 'localhost' || hostname === '127.0.0.1';
 };
 
@@ -20,14 +19,11 @@ const getProductionUrl = (): string => {
   const hostname = window.location.hostname;
   const protocol = window.location.protocol;
   
-  // If already on production (no '--' and is lovable domain), use as-is
   if (!hostname.includes('--') && 
       (hostname.endsWith('.lovable.app') || hostname.endsWith('.lovableproject.com'))) {
     return window.location.origin;
   }
   
-  // Extract project ID from preview URL patterns:
-  // Pattern: "{projectId}--{suffix}.lovableproject.com"
   if (hostname.includes('--') && hostname.includes('lovableproject.com')) {
     const projectId = hostname.split('--')[0];
     if (projectId) {
@@ -35,7 +31,6 @@ const getProductionUrl = (): string => {
     }
   }
   
-  // Fallback: return current origin
   return window.location.origin;
 };
 
@@ -43,10 +38,9 @@ interface B2BMobileQRDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   accountId: string;
-  supplierId: string;
 }
 
-const B2BMobileQRDialog = ({ open, onOpenChange, accountId, supplierId }: B2BMobileQRDialogProps) => {
+const B2BMobileQRDialog = ({ open, onOpenChange, accountId }: B2BMobileQRDialogProps) => {
   const [loading, setLoading] = useState(false);
   const [mobileUrl, setMobileUrl] = useState<string | null>(null);
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string | null>(null);
@@ -63,22 +57,22 @@ const B2BMobileQRDialog = ({ open, onOpenChange, accountId, supplierId }: B2BMob
   const generateToken = async () => {
     setLoading(true);
     try {
+      // With 1 Account = 1 Supplier, we don't need to pass supplierId
+      // The edge function will find the supplier automatically
       const { data, error } = await supabase.functions.invoke('create-b2b-mobile-token', {
-        body: { accountId, supplierId }
+        body: { accountId }
       });
 
       if (error || !data?.success) {
         throw new Error(data?.error || 'Failed to create token');
       }
 
-      // Generate URL using production origin for QR code
       const productionOrigin = getProductionUrl();
       const generatedUrl = `${productionOrigin}/b2b/mobile?token=${data.token}`;
       setMobileUrl(generatedUrl);
       setExpiresAt(data.expiresAt);
       setIsPreview(isPreviewEnvironment());
 
-      // Generate QR code
       const qrDataUrl = await QRCode.toDataURL(generatedUrl, {
         width: 256,
         margin: 2,
@@ -143,8 +137,7 @@ const B2BMobileQRDialog = ({ open, onOpenChange, accountId, supplierId }: B2BMob
           <Alert variant="default" className="border-amber-500 bg-amber-50 dark:bg-amber-950/20">
             <AlertTriangle className="h-4 w-4 text-amber-600" />
             <AlertDescription className="text-amber-700 dark:text-amber-400">
-              Hinweis: Sie befinden sich in der Vorschau-Umgebung. Der QR-Code verweist auf die veröffentlichte App-URL. 
-              Stellen Sie sicher, dass die App veröffentlicht ist.
+              Hinweis: Sie befinden sich in der Vorschau-Umgebung. Der QR-Code verweist auf die veröffentlichte App-URL.
             </AlertDescription>
           </Alert>
         )}
