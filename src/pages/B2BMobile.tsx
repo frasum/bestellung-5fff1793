@@ -117,6 +117,7 @@ const B2BMobile = () => {
           <B2BMobileInventoryTab
             accountId={session.accountId}
             supplierId={session.supplierId}
+            token={token!}
           />
         </TabsContent>
       </Tabs>

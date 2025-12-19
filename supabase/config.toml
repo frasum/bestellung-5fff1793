@@ -149,3 +149,6 @@ verify_jwt = true
 
 [functions.verify-b2b-mobile-token]
 verify_jwt = false
+
+[functions.manage-b2b-mobile-inventory]
+verify_jwt = false
