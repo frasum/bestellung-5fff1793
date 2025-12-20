@@ -341,16 +341,23 @@ export function LiveDemoAdminPanel({ soundEnabled, onOrderCreated }: LiveDemoAdm
       return order;
     },
     onSuccess: () => {
+      // Invalidate all related queries for immediate updates
       queryClient.invalidateQueries({ queryKey: ['orders'] });
+      queryClient.invalidateQueries({ queryKey: ['orders', null] });
       queryClient.invalidateQueries({ queryKey: ['cart-drafts'] });
       queryClient.invalidateQueries({ queryKey: ['cart-drafts', 'easyorder'] });
       queryClient.invalidateQueries({ queryKey: ['communication-logs-demo'] });
       toast.success('Bestellung freigegeben! (Demo)');
       refetchDrafts();
       
-      // Trigger particle animations
-      onOrderCreated?.('gastro', 'supplier');
-      onOrderCreated?.('gastro', 'email');
+      // Trigger particle animations with delays for visibility
+      setTimeout(() => {
+        onOrderCreated?.('gastro', 'supplier');
+      }, 100);
+      
+      setTimeout(() => {
+        onOrderCreated?.('gastro', 'email');
+      }, 500);
     },
     onError: (error) => {
       console.error('Approve error:', error);
