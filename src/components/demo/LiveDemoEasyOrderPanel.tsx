@@ -241,7 +241,16 @@ export function LiveDemoEasyOrderPanel({ soundEnabled, onDirectOrderChange, onOr
   const totalItems = Object.values(quantities).reduce((sum, qty) => sum + qty, 0);
 
   const handleSubmitOrder = async () => {
-    if (!activeSupplier || totalItems === 0) return;
+    if (totalItems === 0) return;
+    
+    // Get the supplier - if no specific one selected, use the supplier of the first selected article
+    const supplierForOrder = activeSupplier || (() => {
+      const firstArticleId = Object.keys(quantities)[0];
+      const firstArticle = articles.find(a => a.id === firstArticleId);
+      return suppliers.find(s => s.id === firstArticle?.supplier_id);
+    })();
+    
+    if (!supplierForOrder) return;
 
     const orderItems = Object.entries(quantities)
       .filter(([_, qty]) => qty > 0)
@@ -254,10 +263,10 @@ export function LiveDemoEasyOrderPanel({ soundEnabled, onDirectOrderChange, onOr
       if (isDirectOrder) {
         // Direct order - skip admin approval
         await createDirectOrder.mutateAsync({
-          supplierId: activeSupplier.id,
+          supplierId: supplierForOrder.id,
           items: orderItems,
           employeeName,
-          supplierName: activeSupplier.name
+          supplierName: supplierForOrder.name
         });
 
         if (soundEnabled) {
@@ -275,10 +284,10 @@ export function LiveDemoEasyOrderPanel({ soundEnabled, onDirectOrderChange, onOr
       } else {
         // Normal flow - create draft for admin approval
         await createDemoDraft.mutateAsync({
-          supplierId: activeSupplier.id,
+          supplierId: supplierForOrder.id,
           items: orderItems,
           employeeName,
-          supplierName: activeSupplier.name
+          supplierName: supplierForOrder.name
         });
 
         if (soundEnabled) {
