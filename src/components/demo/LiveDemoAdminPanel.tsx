@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -6,11 +6,12 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Check, X, Clock, Package, Shield, ClipboardList } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { useQueryClient, useMutation } from '@tanstack/react-query';
+import { useQueryClient, useMutation, useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { LiveDemoOrdersList } from './LiveDemoOrdersList';
+
 interface CartDraft {
   id: string;
   name: string;
@@ -42,103 +43,111 @@ interface LiveDemoAdminPanelProps {
   onOrderCreated?: (from: string, to: string) => void;
 }
 
+// Fetch function for EasyOrder drafts
+const fetchEasyOrderDrafts = async (): Promise<CartDraft[]> => {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return [];
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('organization_id')
+    .eq('id', user.id)
+    .single();
+
+  if (!profile?.organization_id) return [];
+
+  const { data, error } = await supabase
+    .from('cart_drafts')
+    .select(`
+      id,
+      name,
+      notes,
+      created_at,
+      organization_id,
+      cart_draft_items (
+        id,
+        article_id,
+        quantity,
+        supplier_id,
+        articles:article_id (id, name, unit, price),
+        suppliers:supplier_id (id, name)
+      )
+    `)
+    .eq('organization_id', profile.organization_id)
+    .ilike('name', 'EasyOrder:%')
+    .order('created_at', { ascending: false });
+
+  if (error) throw error;
+
+  return (data || []).map(d => ({
+    ...d,
+    items: (d.cart_draft_items || []).map((item: any) => ({
+      id: item.id,
+      article_id: item.article_id,
+      quantity: item.quantity,
+      supplier_id: item.supplier_id,
+      article: item.articles,
+      supplier: item.suppliers
+    }))
+  }));
+};
+
+// Fetch function for orders count
+const fetchTestOrdersCount = async (): Promise<number> => {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return 0;
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('organization_id')
+    .eq('id', user.id)
+    .single();
+
+  if (!profile?.organization_id) return 0;
+
+  const { count } = await supabase
+    .from('orders')
+    .select('*', { count: 'exact', head: true })
+    .eq('organization_id', profile.organization_id)
+    .eq('is_test_order', true);
+
+  return count || 0;
+};
+
 export function LiveDemoAdminPanel({ soundEnabled, onOrderCreated }: LiveDemoAdminPanelProps) {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
-  const [drafts, setDrafts] = useState<CartDraft[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [ordersCount, setOrdersCount] = useState(0);
+  const lastDraftCountRef = useRef<number>(0);
 
-  // Fetch EasyOrder drafts
-  const fetchDrafts = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+  // Use React Query for drafts - this will be invalidated by useRealtimeNotifications
+  const { data: drafts = [], isLoading: loading, refetch: refetchDrafts } = useQuery({
+    queryKey: ['cart-drafts', 'easyorder'],
+    queryFn: fetchEasyOrderDrafts,
+    refetchInterval: 5000, // Fallback polling every 5 seconds
+  });
 
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('organization_id')
-        .eq('id', user.id)
-        .single();
+  // Use React Query for orders count
+  const { data: ordersCount = 0, refetch: refetchOrdersCount } = useQuery({
+    queryKey: ['orders', 'test-count'],
+    queryFn: fetchTestOrdersCount,
+    refetchInterval: 5000,
+  });
 
-      if (!profile?.organization_id) return;
-
-      const { data, error } = await supabase
-        .from('cart_drafts')
-        .select(`
-          id,
-          name,
-          notes,
-          created_at,
-          organization_id,
-          cart_draft_items (
-            id,
-            article_id,
-            quantity,
-            supplier_id,
-            articles:article_id (id, name, unit, price),
-            suppliers:supplier_id (id, name)
-          )
-        `)
-        .eq('organization_id', profile.organization_id)
-        .ilike('name', 'EasyOrder:%')
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-
-      const formattedDrafts = (data || []).map(d => ({
-        ...d,
-        items: (d.cart_draft_items || []).map((item: any) => ({
-          id: item.id,
-          article_id: item.article_id,
-          quantity: item.quantity,
-          supplier_id: item.supplier_id,
-          article: item.articles,
-          supplier: item.suppliers
-        }))
-      }));
-
-      setDrafts(formattedDrafts);
-    } catch (error) {
-      console.error('Error fetching drafts:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Fetch orders count
-  const fetchOrdersCount = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('organization_id')
-        .eq('id', user.id)
-        .single();
-
-      if (!profile?.organization_id) return;
-
-      const { count } = await supabase
-        .from('orders')
-        .select('*', { count: 'exact', head: true })
-        .eq('organization_id', profile.organization_id)
-        .eq('is_test_order', true);
-
-      setOrdersCount(count || 0);
-    } catch (error) {
-      console.error('Error fetching orders count:', error);
-    }
-  };
-
+  // Play sound when new drafts arrive
   useEffect(() => {
-    fetchDrafts();
-    fetchOrdersCount();
-    
-    // Realtime subscription for drafts - single consolidated subscription
+    if (drafts.length > lastDraftCountRef.current && lastDraftCountRef.current > 0) {
+      if (soundEnabled) {
+        const audio = new Audio('/notification.mp3');
+        audio.play().catch(() => {});
+      }
+    }
+    lastDraftCountRef.current = drafts.length;
+  }, [drafts.length, soundEnabled]);
+
+  // Additional realtime subscription for immediate updates and notifications
+  useEffect(() => {
     const channel = supabase
-      .channel('admin-drafts-realtime-' + Date.now())
+      .channel('admin-easyorder-realtime')
       .on('postgres_changes', {
         event: 'INSERT',
         schema: 'public',
@@ -146,56 +155,44 @@ export function LiveDemoAdminPanel({ soundEnabled, onOrderCreated }: LiveDemoAdm
       }, (payload) => {
         const newDraft = payload.new as any;
         if (newDraft.name?.startsWith('EasyOrder:')) {
-          // Immediately refetch to get full draft with items
-          fetchDrafts();
+          console.log('🔔 LiveDemoAdminPanel: New EasyOrder draft detected, refetching...');
+          refetchDrafts();
           
-          if (soundEnabled) {
-            const audio = new Audio('/notification.mp3');
-            audio.play().catch(() => {});
-          }
           toast.info('Neue Vorbestellung eingegangen!', {
             description: newDraft.name.replace('EasyOrder: ', '')
           });
         }
       })
       .on('postgres_changes', {
-        event: 'UPDATE',
-        schema: 'public',
-        table: 'cart_drafts'
-      }, () => {
-        fetchDrafts();
-      })
-      .on('postgres_changes', {
         event: 'DELETE',
         schema: 'public',
         table: 'cart_drafts'
       }, () => {
-        fetchDrafts();
+        console.log('🔔 LiveDemoAdminPanel: Draft deleted, refetching...');
+        refetchDrafts();
       })
       .on('postgres_changes', {
         event: '*',
         schema: 'public',
         table: 'cart_draft_items'
       }, () => {
-        // Also refetch when items change
-        fetchDrafts();
+        refetchDrafts();
       })
       .on('postgres_changes', {
         event: '*',
         schema: 'public',
         table: 'orders'
       }, () => {
-        // Refetch orders count when orders change
-        fetchOrdersCount();
+        refetchOrdersCount();
       })
       .subscribe((status) => {
-        console.log('Admin drafts realtime status:', status);
+        console.log('🔔 LiveDemoAdminPanel realtime status:', status);
       });
 
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [soundEnabled]);
+  }, [refetchDrafts, refetchOrdersCount]);
 
   // Generate simulated email HTML for demo (admin approval)
   const generateApprovalEmailHtml = (draft: CartDraft, orderNumber: string) => {
@@ -346,9 +343,10 @@ export function LiveDemoAdminPanel({ soundEnabled, onOrderCreated }: LiveDemoAdm
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['orders'] });
       queryClient.invalidateQueries({ queryKey: ['cart-drafts'] });
+      queryClient.invalidateQueries({ queryKey: ['cart-drafts', 'easyorder'] });
       queryClient.invalidateQueries({ queryKey: ['communication-logs-demo'] });
       toast.success('Bestellung freigegeben! (Demo)');
-      fetchDrafts();
+      refetchDrafts();
       
       // Trigger particle animations
       onOrderCreated?.('gastro', 'supplier');
@@ -368,8 +366,9 @@ export function LiveDemoAdminPanel({ soundEnabled, onOrderCreated }: LiveDemoAdm
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['cart-drafts'] });
+      queryClient.invalidateQueries({ queryKey: ['cart-drafts', 'easyorder'] });
       toast.success('Vorbestellung abgelehnt');
-      fetchDrafts();
+      refetchDrafts();
     },
     onError: (error) => {
       console.error('Reject error:', error);
