@@ -264,25 +264,6 @@ export function LiveDemoEmailPanel({ soundEnabled }: LiveDemoEmailPanelProps) {
         </ScrollArea>
       )}
 
-      {/* Summary Footer */}
-      <div className="border-t p-2 grid grid-cols-4 gap-1 text-center">
-        <div className="p-1 rounded bg-violet-500/10">
-          <p className="text-violet-600 font-bold text-xs">{simulatedCount}</p>
-          <p className="text-xs text-muted-foreground leading-tight">Sim.</p>
-        </div>
-        <div className="p-1 rounded bg-green-500/10">
-          <p className="text-green-600 font-bold text-xs">{sentCount}</p>
-          <p className="text-xs text-muted-foreground leading-tight">Ges.</p>
-        </div>
-        <div className="p-1 rounded bg-blue-500/10">
-          <p className="text-blue-600 font-bold text-xs">{confirmedCount}</p>
-          <p className="text-xs text-muted-foreground leading-tight">Best.</p>
-        </div>
-        <div className="p-1 rounded bg-red-500/10">
-          <p className="text-red-600 font-bold text-xs">{failedCount}</p>
-          <p className="text-xs text-muted-foreground leading-tight">Fehl.</p>
-        </div>
-      </div>
     </div>
   );
 }
