@@ -105,7 +105,8 @@ export function LiveDemoCanvas({ soundEnabled }: LiveDemoCanvasProps) {
           { from: 'easyorder', to: 'gastro', label: 'Entwurf', color: '#f97316' },
           { from: 'gastro', to: 'supplier', label: 'Bestellung', reverseLabel: 'Bestätigung', color: '#22c55e', bidirectional: true },
           { from: 'gastro', to: 'email', label: 'E-Mail', color: '#8b5cf6' },
-          // supplier → email ENTFERNT - Bestätigung geht an Gastro, nicht separat an E-Mail
+          // Bestätigungs-Info an Mitarbeiter (EasyOrder)
+          { from: 'supplier', to: 'easyorder', label: 'Mitarbeiter-Info', color: '#22c55e', dashed: true },
         ];
 
     // Add highlighted, animating state, and data package info to matching connections
