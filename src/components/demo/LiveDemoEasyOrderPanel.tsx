@@ -1,10 +1,12 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Search, Plus, Minus, Send, ClipboardList, User } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
+import { Search, Plus, Minus, Send, ClipboardList, User, Zap } from 'lucide-react';
 import { useArticles } from '@/hooks/useArticles';
 import { useSuppliers } from '@/hooks/useSuppliers';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -14,9 +16,10 @@ import { cn } from '@/lib/utils';
 
 interface LiveDemoEasyOrderPanelProps {
   soundEnabled?: boolean;
+  onDirectOrderChange?: (isDirectOrder: boolean) => void;
 }
 
-export function LiveDemoEasyOrderPanel({ soundEnabled }: LiveDemoEasyOrderPanelProps) {
+export function LiveDemoEasyOrderPanel({ soundEnabled, onDirectOrderChange }: LiveDemoEasyOrderPanelProps) {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const { data: articles = [] } = useArticles();
@@ -26,6 +29,12 @@ export function LiveDemoEasyOrderPanel({ soundEnabled }: LiveDemoEasyOrderPanelP
   const [search, setSearch] = useState('');
   const [quantities, setQuantities] = useState<Record<string, number>>({});
   const [selectedSupplierId, setSelectedSupplierId] = useState<string | null>(null);
+  const [isDirectOrder, setIsDirectOrder] = useState(false);
+
+  // Notify parent about direct order changes
+  useEffect(() => {
+    onDirectOrderChange?.(isDirectOrder);
+  }, [isDirectOrder, onDirectOrderChange]);
 
   // Create draft for admin approval instead of direct order
   const createDemoDraft = useMutation({
@@ -73,6 +82,94 @@ export function LiveDemoEasyOrderPanel({ soundEnabled }: LiveDemoEasyOrderPanelP
     },
   });
 
+  // Create direct order (skipping admin approval)
+  const createDirectOrder = useMutation({
+    mutationFn: async (orderData: { supplierId: string; items: { articleId: string; quantity: number }[]; employeeName: string; supplierName: string }) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('organization_id')
+        .eq('id', user.id)
+        .single();
+
+      if (!profile?.organization_id) throw new Error('No organization');
+
+      // Get article details for the order
+      const articleIds = orderData.items.map(i => i.articleId);
+      const { data: articleDetails } = await supabase
+        .from('articles')
+        .select('id, name, price, unit')
+        .in('id', articleIds);
+
+      const articleMap = new Map(articleDetails?.map(a => [a.id, a]) || []);
+      
+      // Calculate total
+      const orderItems = orderData.items.map(item => {
+        const article = articleMap.get(item.articleId);
+        return {
+          article_id: item.articleId,
+          article_name: article?.name || 'Unknown',
+          quantity: item.quantity,
+          unit_price: article?.price || 0,
+          unit: article?.unit || 'Stück',
+          total_price: (article?.price || 0) * item.quantity,
+        };
+      });
+
+      const totalAmount = orderItems.reduce((sum, item) => sum + item.total_price, 0);
+
+      // Create order directly
+      const orderNumber = `EO-${Date.now().toString(36).toUpperCase()}`;
+      const { data: order, error: orderError } = await supabase
+        .from('orders')
+        .insert({
+          order_number: orderNumber,
+          organization_id: profile.organization_id,
+          user_id: user.id,
+          supplier_id: orderData.supplierId,
+          status: 'pending',
+          total_amount: totalAmount,
+          delivery_address: 'Demo Adresse',
+          notes: `Direktbestellung von ${orderData.employeeName}`,
+          is_test_order: true,
+        })
+        .select()
+        .single();
+
+      if (orderError) throw orderError;
+
+      // Create order items
+      const orderItemsToInsert = orderItems.map(item => ({
+        order_id: order.id,
+        ...item,
+      }));
+
+      const { error: itemsError } = await supabase.from('order_items').insert(orderItemsToInsert);
+      if (itemsError) throw itemsError;
+
+      // Create communication log entry
+      await supabase.from('communication_logs').insert({
+        organization_id: profile.organization_id,
+        order_id: order.id,
+        supplier_id: orderData.supplierId,
+        email_type: 'order',
+        recipient_email: `${orderData.supplierName.toLowerCase().replace(/\s+/g, '')}@demo.local`,
+        recipient_name: orderData.supplierName,
+        subject: `Direktbestellung ${orderNumber}`,
+        status: 'sent',
+        direction: 'outgoing',
+      });
+
+      return order;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+      queryClient.invalidateQueries({ queryKey: ['communication-logs'] });
+    },
+  });
+
   // Get first active supplier if none selected
   const activeSupplier = useMemo(() => {
     if (selectedSupplierId) {
@@ -113,42 +210,102 @@ export function LiveDemoEasyOrderPanel({ soundEnabled }: LiveDemoEasyOrderPanelP
       }));
 
     try {
-      await createDemoDraft.mutateAsync({
-        supplierId: activeSupplier.id,
-        items: orderItems,
-        employeeName,
-        supplierName: activeSupplier.name
-      });
+      if (isDirectOrder) {
+        // Direct order - skip admin approval
+        await createDirectOrder.mutateAsync({
+          supplierId: activeSupplier.id,
+          items: orderItems,
+          employeeName,
+          supplierName: activeSupplier.name
+        });
 
-      if (soundEnabled) {
-        const audio = new Audio('/notification.mp3');
-        audio.play().catch(() => {});
+        if (soundEnabled) {
+          const audio = new Audio('/notification.mp3');
+          audio.play().catch(() => {});
+        }
+
+        toast.success('Direktbestellung gesendet!', {
+          description: 'Bestellung direkt an Lieferant übermittelt'
+        });
+      } else {
+        // Normal flow - create draft for admin approval
+        await createDemoDraft.mutateAsync({
+          supplierId: activeSupplier.id,
+          items: orderItems,
+          employeeName,
+          supplierName: activeSupplier.name
+        });
+
+        if (soundEnabled) {
+          const audio = new Audio('/notification.mp3');
+          audio.play().catch(() => {});
+        }
+
+        toast.success('Vorbestellung gesendet!', {
+          description: 'Warte auf Freigabe durch Admin'
+        });
       }
-
-      toast.success('Vorbestellung gesendet!', {
-        description: 'Warte auf Freigabe durch Admin'
-      });
       setQuantities({});
     } catch (error) {
-      console.error('Draft error:', error);
-      toast.error('Fehler beim Senden der Vorbestellung');
+      console.error('Order error:', error);
+      toast.error(isDirectOrder ? 'Fehler beim Senden der Direktbestellung' : 'Fehler beim Senden der Vorbestellung');
     }
   };
+
+  const isPending = isDirectOrder ? createDirectOrder.isPending : createDemoDraft.isPending;
 
   return (
     <div className="h-full flex flex-col bg-background">
       {/* Panel Header */}
-      <div className="flex items-center justify-between px-3 py-2.5 bg-orange-500/5 border-b">
+      <div className={cn(
+        "flex items-center justify-between px-3 py-2.5 border-b transition-colors",
+        isDirectOrder ? "bg-green-500/10" : "bg-orange-500/5"
+      )}>
         <div className="flex items-center gap-2">
-          <ClipboardList className="h-4 w-4 text-orange-600" />
+          {isDirectOrder ? (
+            <Zap className="h-4 w-4 text-green-600" />
+          ) : (
+            <ClipboardList className="h-4 w-4 text-orange-600" />
+          )}
           <div>
-            <span className="font-semibold text-sm text-orange-700 dark:text-orange-300">EasyOrder</span>
-            <p className="text-xs text-muted-foreground">Mitarbeiter-Bestellungen</p>
+            <span className={cn(
+              "font-semibold text-sm",
+              isDirectOrder ? "text-green-700 dark:text-green-300" : "text-orange-700 dark:text-orange-300"
+            )}>
+              EasyOrder
+            </span>
+            <p className="text-xs text-muted-foreground">
+              {isDirectOrder ? 'Direktbestellung' : 'Mitarbeiter-Bestellungen'}
+            </p>
           </div>
         </div>
         {totalItems > 0 && (
-          <Badge className="bg-orange-600 text-white">{totalItems}</Badge>
+          <Badge className={cn(
+            "text-white",
+            isDirectOrder ? "bg-green-600" : "bg-orange-600"
+          )}>
+            {totalItems}
+          </Badge>
         )}
+      </div>
+
+      {/* Direct Order Toggle */}
+      <div className="px-3 py-2 border-b bg-muted/30">
+        <div className="flex items-center justify-between">
+          <Label htmlFor="direct-order" className="text-xs flex items-center gap-1.5 cursor-pointer">
+            <Zap className={cn("h-3 w-3", isDirectOrder ? "text-green-600" : "text-muted-foreground")} />
+            Direktbestellung
+          </Label>
+          <Switch
+            id="direct-order"
+            checked={isDirectOrder}
+            onCheckedChange={setIsDirectOrder}
+            className="scale-75"
+          />
+        </div>
+        <p className="text-[10px] text-muted-foreground mt-0.5">
+          {isDirectOrder ? 'Bestellung geht direkt an Lieferant' : 'Bestellung benötigt Admin-Freigabe'}
+        </p>
       </div>
 
       {/* Employee Name Input */}
@@ -253,19 +410,30 @@ export function LiveDemoEasyOrderPanel({ soundEnabled }: LiveDemoEasyOrderPanelP
       {totalItems > 0 && (
         <div className="p-3 border-t bg-muted/30">
           <Button 
-            className="w-full h-8 text-sm gap-2" 
+            className={cn(
+              "w-full h-8 text-sm gap-2",
+              isDirectOrder && "bg-green-600 hover:bg-green-700"
+            )}
             onClick={handleSubmitOrder}
-            disabled={createDemoDraft.isPending}
+            disabled={isPending}
           >
-            <Send className="h-3.5 w-3.5" />
-            Vorbestellung senden ({totalItems})
+            {isDirectOrder ? <Zap className="h-3.5 w-3.5" /> : <Send className="h-3.5 w-3.5" />}
+            {isDirectOrder ? `Direkt bestellen (${totalItems})` : `Vorbestellung senden (${totalItems})`}
           </Button>
         </div>
       )}
 
       {/* Footer */}
-      <div className="p-2 border-t text-center">
-        <p className="text-xs text-muted-foreground">Mitarbeiter → Admin Freigabe</p>
+      <div className={cn(
+        "p-2 border-t text-center transition-colors",
+        isDirectOrder ? "bg-green-500/5" : ""
+      )}>
+        <p className={cn(
+          "text-xs",
+          isDirectOrder ? "text-green-600 dark:text-green-400 font-medium" : "text-muted-foreground"
+        )}>
+          {isDirectOrder ? '⚡ Mitarbeiter → Lieferant (direkt)' : 'Mitarbeiter → Admin Freigabe'}
+        </p>
       </div>
     </div>
   );

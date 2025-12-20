@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
-import { Smartphone, Truck, Mail, RotateCcw, Utensils } from 'lucide-react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { Smartphone, Truck, Mail, RotateCcw, Utensils, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { DraggableTile, TilePosition } from './DraggableTile';
 import { ConnectionArrows, Connection } from './ConnectionArrows';
@@ -16,15 +16,9 @@ const STORAGE_KEY = 'live-demo-tile-positions-v2';
 
 const defaultPositions: TilePosition[] = [
   { id: 'gastro', x: 20, y: 20, width: 380, height: 520 },
-  { id: 'easyorder', x: 20, y: 560, width: 380, height: 280 },
+  { id: 'easyorder', x: 20, y: 560, width: 380, height: 320 },
   { id: 'supplier', x: 460, y: 20, width: 340, height: 400 },
   { id: 'email', x: 460, y: 440, width: 340, height: 400 },
-];
-
-const connections: Connection[] = [
-  { from: 'easyorder', to: 'gastro', label: 'Entwurf', color: '#f97316' },
-  { from: 'gastro', to: 'supplier', label: 'Bestellung', color: '#22c55e' },
-  { from: 'gastro', to: 'email', label: 'E-Mail', color: '#8b5cf6' },
 ];
 
 const tileConfig = [
@@ -80,6 +74,26 @@ export function LiveDemoCanvas({ soundEnabled }: LiveDemoCanvasProps) {
     return defaultPositions;
   });
 
+  const [isDirectOrder, setIsDirectOrder] = useState(false);
+
+  // Dynamic connections based on direct order mode
+  const connections = useMemo((): Connection[] => {
+    if (isDirectOrder) {
+      return [
+        { from: 'easyorder', to: 'supplier', label: 'Direktbestellung', color: '#22c55e' },
+        { from: 'easyorder', to: 'email', label: 'E-Mail', color: '#8b5cf6' },
+        { from: 'easyorder', to: 'gastro', label: 'Entwurf', color: '#f97316', inactive: true, dashed: true },
+        { from: 'gastro', to: 'supplier', label: 'Bestellung', color: '#22c55e' },
+        { from: 'gastro', to: 'email', label: 'E-Mail', color: '#8b5cf6' },
+      ];
+    }
+    return [
+      { from: 'easyorder', to: 'gastro', label: 'Entwurf', color: '#f97316' },
+      { from: 'gastro', to: 'supplier', label: 'Bestellung', color: '#22c55e' },
+      { from: 'gastro', to: 'email', label: 'E-Mail', color: '#8b5cf6' },
+    ];
+  }, [isDirectOrder]);
+
   // Save positions to localStorage
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(positions));
@@ -105,6 +119,10 @@ export function LiveDemoCanvas({ soundEnabled }: LiveDemoCanvasProps) {
     setPositions(defaultPositions);
     localStorage.removeItem(STORAGE_KEY);
   };
+
+  const handleDirectOrderChange = useCallback((value: boolean) => {
+    setIsDirectOrder(value);
+  }, []);
 
   return (
     <div className="relative flex-1 bg-muted/30 overflow-hidden">
@@ -139,6 +157,14 @@ export function LiveDemoCanvas({ soundEnabled }: LiveDemoCanvasProps) {
         const position = positions.find(p => p.id === id);
         if (!position) return null;
 
+        // Override EasyOrder tile styling when direct order is active
+        const effectiveBorderColor = id === 'easyorder' && isDirectOrder 
+          ? 'bg-green-500/10 border-b-green-500/30'
+          : borderColor;
+        const effectiveIcon = id === 'easyorder' && isDirectOrder
+          ? <Zap className="h-4 w-4 text-green-500" />
+          : icon;
+
         return (
           <DraggableTile
             key={id}
@@ -146,33 +172,60 @@ export function LiveDemoCanvas({ soundEnabled }: LiveDemoCanvasProps) {
             position={position}
             onPositionChange={handlePositionChange}
             onSizeChange={handleSizeChange}
-            title={title}
-            icon={icon}
-            borderColor={borderColor}
+            title={id === 'easyorder' && isDirectOrder ? 'EasyOrder ⚡' : title}
+            icon={effectiveIcon}
+            borderColor={effectiveBorderColor}
           >
-            <Component soundEnabled={soundEnabled} />
+            {id === 'easyorder' ? (
+              <LiveDemoEasyOrderPanel soundEnabled={soundEnabled} onDirectOrderChange={handleDirectOrderChange} />
+            ) : (
+              <Component soundEnabled={soundEnabled} />
+            )}
           </DraggableTile>
         );
       })}
 
       {/* Workflow Legend */}
       <div className="absolute bottom-4 left-4 z-50 bg-card/90 backdrop-blur-sm rounded-lg p-3 border shadow-lg">
-        <div className="text-xs font-medium text-muted-foreground mb-2">Workflow</div>
+        <div className="text-xs font-medium text-muted-foreground mb-2">
+          Workflow {isDirectOrder && <span className="text-green-600">(Direktbestellung)</span>}
+        </div>
         <div className="flex flex-wrap gap-2 text-xs">
-          <div className="flex items-center gap-1.5">
-            <div className="w-2 h-2 rounded-full bg-blue-500" />
-            <span>Gastro-System</span>
-          </div>
-          <span className="text-muted-foreground">→</span>
-          <div className="flex items-center gap-1.5">
-            <div className="w-2 h-2 rounded-full bg-green-500" />
-            <span>Lieferant erhält</span>
-          </div>
-          <span className="text-muted-foreground">→</span>
-          <div className="flex items-center gap-1.5">
-            <div className="w-2 h-2 rounded-full bg-violet-500" />
-            <span>E-Mail gesendet</span>
-          </div>
+          {isDirectOrder ? (
+            <>
+              <div className="flex items-center gap-1.5">
+                <div className="w-2 h-2 rounded-full bg-orange-500" />
+                <span>EasyOrder</span>
+              </div>
+              <span className="text-green-600 font-medium">→ direkt →</span>
+              <div className="flex items-center gap-1.5">
+                <div className="w-2 h-2 rounded-full bg-green-500" />
+                <span>Lieferant erhält</span>
+              </div>
+              <span className="text-muted-foreground">+</span>
+              <div className="flex items-center gap-1.5">
+                <div className="w-2 h-2 rounded-full bg-violet-500" />
+                <span>E-Mail gesendet</span>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="flex items-center gap-1.5">
+                <div className="w-2 h-2 rounded-full bg-blue-500" />
+                <span>Gastro-System</span>
+              </div>
+              <span className="text-muted-foreground">→</span>
+              <div className="flex items-center gap-1.5">
+                <div className="w-2 h-2 rounded-full bg-green-500" />
+                <span>Lieferant erhält</span>
+              </div>
+              <span className="text-muted-foreground">→</span>
+              <div className="flex items-center gap-1.5">
+                <div className="w-2 h-2 rounded-full bg-violet-500" />
+                <span>E-Mail gesendet</span>
+              </div>
+            </>
+          )}
         </div>
       </div>
 

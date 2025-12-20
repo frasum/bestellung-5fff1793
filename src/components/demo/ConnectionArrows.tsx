@@ -7,6 +7,8 @@ export interface Connection {
   label?: string;
   color?: string;
   bidirectional?: boolean;
+  dashed?: boolean;
+  inactive?: boolean;
 }
 
 interface ConnectionArrowsProps {
@@ -171,12 +173,13 @@ export function ConnectionArrows({ connections, positions }: ConnectionArrowsPro
             d={path}
             fill="none"
             stroke={color}
-            strokeWidth={2.5}
+            strokeWidth={conn.inactive ? 1.5 : 2.5}
             strokeLinecap="round"
             className="connection-path"
+            opacity={conn.inactive ? 0.3 : 1}
             style={conn.bidirectional ? {} : {
-              strokeDasharray: '8, 4',
-              animation: 'dashFlow 0.8s linear infinite',
+              strokeDasharray: conn.dashed ? '4, 8' : '8, 4',
+              animation: conn.inactive ? 'none' : 'dashFlow 0.8s linear infinite',
             }}
           />
           
