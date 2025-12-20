@@ -88,20 +88,22 @@ export function LiveDemoCanvas({ soundEnabled }: LiveDemoCanvasProps) {
   const [particleConfig, setParticleConfig] = useState<ParticleConfig>(DEFAULT_PARTICLE_CONFIG);
 
   // Dynamic connections based on direct order mode
+  // Korrigiert um den echten Bestellfluss abzubilden:
+  // - Direktbestellung: EasyOrder → Lieferant (bidirectional für Bestätigung) + E-Mail
+  // - Freigabe-Modus: EasyOrder → Gastro, Gastro → Lieferant (bidirectional) + E-Mail
   const connections = useMemo((): Connection[] => {
     const baseConnections: Connection[] = isDirectOrder
       ? [
-          { from: 'easyorder', to: 'supplier', label: 'Direktbestellung', color: '#22c55e' },
+          // Direktbestellung: nur EasyOrder-Verbindungen, Gastro nicht involviert
+          { from: 'easyorder', to: 'supplier', label: 'Direktbestellung', reverseLabel: 'Bestätigung', color: '#22c55e', bidirectional: true },
           { from: 'easyorder', to: 'email', label: 'E-Mail', color: '#8b5cf6' },
-          { from: 'gastro', to: 'supplier', label: 'Bestellung', reverseLabel: 'Bestätigung', color: '#22c55e', bidirectional: true },
-          { from: 'gastro', to: 'email', label: 'E-Mail', color: '#8b5cf6' },
-          { from: 'supplier', to: 'email', label: 'Bestätigung', color: '#22c55e' },
         ]
       : [
+          // Freigabe-Modus: EasyOrder → Gastro → Lieferant
           { from: 'easyorder', to: 'gastro', label: 'Entwurf', color: '#f97316' },
           { from: 'gastro', to: 'supplier', label: 'Bestellung', reverseLabel: 'Bestätigung', color: '#22c55e', bidirectional: true },
           { from: 'gastro', to: 'email', label: 'E-Mail', color: '#8b5cf6' },
-          { from: 'supplier', to: 'email', label: 'Bestätigung', color: '#22c55e' },
+          // supplier → email ENTFERNT - Bestätigung geht an Gastro, nicht separat an E-Mail
         ];
 
     // Add highlighted, animating state, and data package info to matching connections
@@ -180,25 +182,29 @@ export function LiveDemoCanvas({ soundEnabled }: LiveDemoCanvasProps) {
   }, [particleConfig.duration]);
 
   // Step-by-step order sequence animation
+  // Korrigiert um den echten Bestellfluss abzubilden:
+  // - Direktbestellung: Bestätigung geht an EasyOrder zurück (nicht an E-Mail)
+  // - Freigabe-Modus: Bestätigung geht an Gastro zurück (nicht separat an E-Mail)
   const handleOrderSequence = useCallback((orderData: OrderData, source: 'easyorder' | 'gastro') => {
     const steps: (AnimationStep & { delay: number })[] = isDirectOrder && source === 'easyorder'
       ? [
-          // Direct order from EasyOrder
+          // Direktbestellung von EasyOrder - Gastro nicht involviert
           { from: 'easyorder', to: 'supplier', dataType: 'order', orderData, delay: 0 },
           { from: 'easyorder', to: 'email', dataType: 'email', orderData, delay: 600 },
-          { from: 'supplier', to: 'email', dataType: 'confirmation', orderData, delay: 2000 },
+          // Bestätigung geht an EasyOrder zurück (bidirectional), nicht an E-Mail
+          { from: 'supplier', to: 'easyorder', dataType: 'confirmation', orderData, delay: 2000, reverse: true },
         ]
       : source === 'easyorder'
       ? [
-          // EasyOrder creates draft for approval
+          // EasyOrder erstellt Entwurf zur Freigabe
           { from: 'easyorder', to: 'gastro', dataType: 'draft', orderData, delay: 0 },
         ]
       : [
-          // Gastro sends approved order
+          // Gastro sendet freigegebene Bestellung
           { from: 'gastro', to: 'supplier', dataType: 'order', orderData, delay: 0 },
           { from: 'gastro', to: 'email', dataType: 'email', orderData, delay: 400 },
+          // Bestätigung geht an Gastro zurück (bidirectional), nicht separat an E-Mail
           { from: 'supplier', to: 'gastro', dataType: 'confirmation', orderData, delay: 2200, reverse: true },
-          { from: 'supplier', to: 'email', dataType: 'confirmation', orderData, delay: 2600 },
         ];
 
     steps.forEach(step => {
