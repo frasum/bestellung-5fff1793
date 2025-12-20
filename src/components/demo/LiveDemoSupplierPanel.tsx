@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+
 import { 
   Clock, 
   CheckCircle2, 
@@ -59,7 +59,7 @@ export function LiveDemoSupplierPanel({ soundEnabled, onOrderCreated }: LiveDemo
     },
   });
   
-  const [selectedSupplier, setSelectedSupplier] = useState<string>('all');
+  
   const [expandedOrders, setExpandedOrders] = useState<Set<string>>(new Set());
   const [highlightedOrder, setHighlightedOrder] = useState<string | null>(null);
 
@@ -104,10 +104,7 @@ export function LiveDemoSupplierPanel({ soundEnabled, onOrderCreated }: LiveDemo
     };
   }, [queryClient, soundEnabled]);
 
-  const filteredOrders = orders.filter(order => 
-    (selectedSupplier === 'all' || order.supplier_id === selectedSupplier) &&
-    order.is_test_order === true
-  );
+  const filteredOrders = orders.filter(order => order.is_test_order === true);
 
   const toggleExpanded = (orderId: string) => {
     setExpandedOrders(prev => {
@@ -226,22 +223,6 @@ export function LiveDemoSupplierPanel({ soundEnabled, onOrderCreated }: LiveDemo
         )}
       </div>
 
-      {/* Supplier Filter */}
-      <div className="p-3 border-b">
-        <Select value={selectedSupplier} onValueChange={setSelectedSupplier}>
-          <SelectTrigger className="h-8 text-sm">
-            <SelectValue placeholder="Lieferant auswählen" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Alle Lieferanten</SelectItem>
-            {suppliers.map(supplier => (
-              <SelectItem key={supplier.id} value={supplier.id}>
-                {supplier.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
 
       {/* Orders List */}
       <ScrollArea className="flex-1">
