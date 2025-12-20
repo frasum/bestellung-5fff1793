@@ -206,6 +206,11 @@ export function LiveDemoCanvas({ soundEnabled }: LiveDemoCanvasProps) {
                 onDirectOrderChange={handleDirectOrderChange}
                 onOrderCreated={handleOrderCreated}
               />
+            ) : id === 'gastro' ? (
+              <LiveDemoGastroPanel 
+                soundEnabled={soundEnabled} 
+                onOrderCreated={handleOrderCreated}
+              />
             ) : (
               <Component soundEnabled={soundEnabled} />
             )}
