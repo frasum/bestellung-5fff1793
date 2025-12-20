@@ -85,7 +85,6 @@ export function LiveDemoCanvas({ soundEnabled }: LiveDemoCanvasProps) {
       ? [
           { from: 'easyorder', to: 'supplier', label: 'Direktbestellung', color: '#22c55e' },
           { from: 'easyorder', to: 'email', label: 'E-Mail', color: '#8b5cf6' },
-          { from: 'easyorder', to: 'gastro', label: 'Entwurf', color: '#f97316', inactive: true, dashed: true },
           // Bidirektionale Verbindung: Bestellung → / ← Bestätigung
           { from: 'gastro', to: 'supplier', label: 'Bestellung', reverseLabel: 'Bestätigung', color: '#22c55e', bidirectional: true },
           { from: 'gastro', to: 'email', label: 'E-Mail', color: '#8b5cf6' },
