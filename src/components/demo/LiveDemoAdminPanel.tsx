@@ -47,6 +47,7 @@ export function LiveDemoAdminPanel({ soundEnabled, onOrderCreated }: LiveDemoAdm
   const queryClient = useQueryClient();
   const [drafts, setDrafts] = useState<CartDraft[]>([]);
   const [loading, setLoading] = useState(true);
+  const [ordersCount, setOrdersCount] = useState(0);
 
   // Fetch EasyOrder drafts
   const fetchDrafts = async () => {
@@ -105,8 +106,34 @@ export function LiveDemoAdminPanel({ soundEnabled, onOrderCreated }: LiveDemoAdm
     }
   };
 
+  // Fetch orders count
+  const fetchOrdersCount = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('organization_id')
+        .eq('id', user.id)
+        .single();
+
+      if (!profile?.organization_id) return;
+
+      const { count } = await supabase
+        .from('orders')
+        .select('*', { count: 'exact', head: true })
+        .eq('organization_id', profile.organization_id);
+
+      setOrdersCount(count || 0);
+    } catch (error) {
+      console.error('Error fetching orders count:', error);
+    }
+  };
+
   useEffect(() => {
     fetchDrafts();
+    fetchOrdersCount();
     
     // Realtime subscription for drafts - single consolidated subscription
     const channel = supabase
@@ -139,6 +166,14 @@ export function LiveDemoAdminPanel({ soundEnabled, onOrderCreated }: LiveDemoAdm
       }, () => {
         // Also refetch when items change
         fetchDrafts();
+      })
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'orders'
+      }, () => {
+        // Refetch orders count when orders change
+        fetchOrdersCount();
       })
       .subscribe();
 
@@ -354,6 +389,11 @@ export function LiveDemoAdminPanel({ soundEnabled, onOrderCreated }: LiveDemoAdm
           <TabsTrigger value="orders" className="text-xs gap-1">
             <ClipboardList className="h-3 w-3" />
             Bestellungen
+            {ordersCount > 0 && (
+              <Badge variant="destructive" className="ml-1 h-4 min-w-4 px-1 flex items-center justify-center text-[10px]">
+                {ordersCount}
+              </Badge>
+            )}
           </TabsTrigger>
         </TabsList>
 
