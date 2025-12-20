@@ -166,8 +166,8 @@ export function ConnectionArrows({
       
       // Spotlight effect: dim non-active connections when something is animating
       const spotlightOpacity = hasActiveAnimation && !isAnimating ? 0.15 : 1;
-      const effectiveOpacity = conn.inactive ? 0.3 : spotlightOpacity;
-
+      // Keep "inactive" connections visible when they are highlighted/animating
+      const effectiveOpacity = conn.inactive && !isAnimating && !conn.highlighted ? 0.3 : spotlightOpacity;
       return (
         <g key={`${conn.from}-${conn.to}-${index}`}>
           {/* Glow filter for highlighted connections */}

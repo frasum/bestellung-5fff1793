@@ -99,6 +99,11 @@ export function LiveDemoCanvas({ soundEnabled }: LiveDemoCanvasProps) {
           { from: 'easyorder', to: 'email', label: 'E-Mail', color: '#8b5cf6' },
           // Info an Gastro, dass Bestellung aufgegeben wurde (passiv, gestrichelt)
           { from: 'easyorder', to: 'gastro', label: 'Info', color: '#64748b', dashed: true },
+
+          // Freigabe aus dem zentralen Bestellsystem (kann auch im Direktmodus vorkommen)
+          { from: 'gastro', to: 'supplier', label: 'Freigabe', reverseLabel: 'Bestätigung', color: '#22c55e', bidirectional: true, inactive: true },
+          { from: 'gastro', to: 'email', label: 'E-Mail', color: '#8b5cf6', inactive: true },
+
           // Bestätigungs-E-Mail vom Lieferanten
           { from: 'supplier', to: 'email', label: 'Bestätigung', color: '#22c55e', dashed: true },
         ]
