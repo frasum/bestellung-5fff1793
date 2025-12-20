@@ -6,7 +6,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { Plus, Minus, Send, ClipboardList, Zap, ShoppingCart, Package, Check, Clock } from 'lucide-react';
+import { Plus, Minus, Send, ClipboardList, Zap, ShoppingCart, Package, Check, Clock, Trash2 } from 'lucide-react';
 import { useArticles } from '@/hooks/useArticles';
 import { useSuppliers } from '@/hooks/useSuppliers';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -33,7 +33,7 @@ export function LiveDemoEasyOrderPanel({ soundEnabled, onDirectOrderChange, onOr
   const [quantities, setQuantities] = useState<Record<string, number>>({});
   const [selectedSupplierId, setSelectedSupplierId] = useState<string | null>(null);
   const [isDirectOrder, setIsDirectOrder] = useState(false);
-  const [activeTab, setActiveTab] = useState<'articles' | 'orders'>('articles');
+  const [activeTab, setActiveTab] = useState<'articles' | 'cart' | 'orders'>('articles');
   const [myOrders, setMyOrders] = useState<any[]>([]);
   const [ordersLoading, setOrdersLoading] = useState(false);
 
@@ -284,6 +284,15 @@ export function LiveDemoEasyOrderPanel({ soundEnabled, onDirectOrderChange, onOr
 
   const totalItems = Object.values(quantities).reduce((sum, qty) => sum + qty, 0);
 
+  const totalAmount = useMemo(() => {
+    return Object.entries(quantities)
+      .filter(([_, qty]) => qty > 0)
+      .reduce((sum, [articleId, qty]) => {
+        const article = articles.find(a => a.id === articleId);
+        return sum + (article?.price || 0) * qty;
+      }, 0);
+  }, [quantities, articles]);
+
   const handleSubmitOrder = async () => {
     if (totalItems === 0) return;
     
@@ -422,15 +431,24 @@ export function LiveDemoEasyOrderPanel({ soundEnabled, onDirectOrderChange, onOr
       </div>
 
       {/* Tabs */}
-      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'articles' | 'orders')} className="flex-1 flex flex-col">
-        <TabsList className="w-full grid grid-cols-2 h-9 rounded-none border-b bg-muted/30">
+      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'articles' | 'cart' | 'orders')} className="flex-1 flex flex-col">
+        <TabsList className="w-full grid grid-cols-3 h-9 rounded-none border-b bg-muted/30">
           <TabsTrigger value="articles" className="text-xs gap-1.5 data-[state=active]:bg-background">
-            <ShoppingCart className="h-3.5 w-3.5" />
+            <ClipboardList className="h-3.5 w-3.5" />
             Artikel
+          </TabsTrigger>
+          <TabsTrigger value="cart" className="text-xs gap-1.5 data-[state=active]:bg-background">
+            <ShoppingCart className="h-3.5 w-3.5" />
+            Warenkorb
+            {totalItems > 0 && (
+              <Badge variant="destructive" className="ml-1 h-4 px-1 text-[10px]">
+                {totalItems}
+              </Badge>
+            )}
           </TabsTrigger>
           <TabsTrigger value="orders" className="text-xs gap-1.5 data-[state=active]:bg-background">
             <Package className="h-3.5 w-3.5" />
-            Meine Bestellungen
+            Bestellungen
             {myOrders.length > 0 && (
               <Badge variant="secondary" className="ml-1 h-4 px-1 text-[10px]">
                 {myOrders.length}
@@ -535,6 +553,90 @@ export function LiveDemoEasyOrderPanel({ soundEnabled, onDirectOrderChange, onOr
               >
                 {isDirectOrder ? <Zap className="h-3.5 w-3.5" /> : <Send className="h-3.5 w-3.5" />}
                 {isDirectOrder ? `Direkt bestellen (${totalItems})` : `Vorbestellung senden (${totalItems})`}
+              </Button>
+            </div>
+          )}
+        </TabsContent>
+
+        {/* Cart Tab */}
+        <TabsContent value="cart" className="flex-1 flex flex-col mt-0 data-[state=inactive]:hidden">
+          <ScrollArea className="flex-1">
+            <div className="p-2 space-y-1">
+              {totalItems === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <ShoppingCart className="h-10 w-10 mx-auto mb-2 opacity-30" />
+                  <p className="text-sm">Warenkorb ist leer</p>
+                  <p className="text-xs mt-1">Artikel im Tab "Artikel" hinzufügen</p>
+                </div>
+              ) : (
+                Object.entries(quantities)
+                  .filter(([_, qty]) => qty > 0)
+                  .map(([articleId, qty]) => {
+                    const article = articles.find(a => a.id === articleId);
+                    if (!article) return null;
+                    const supplier = suppliers.find(s => s.id === article.supplier_id);
+                    return (
+                      <div key={articleId} className="flex items-center gap-2 p-2 rounded-md border bg-orange-500/5 border-orange-500/30">
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-sm truncate">{article.name}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {supplier?.name} • €{(article.price * qty).toFixed(2)}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Button 
+                            variant="outline" 
+                            size="icon" 
+                            className="h-6 w-6"
+                            onClick={() => updateQuantity(articleId, -1)}
+                          >
+                            <Minus className="h-3 w-3" />
+                          </Button>
+                          <span className="w-5 text-center font-medium text-sm">{qty}</span>
+                          <Button 
+                            variant="default" 
+                            size="icon" 
+                            className="h-6 w-6"
+                            onClick={() => updateQuantity(articleId, 1)}
+                          >
+                            <Plus className="h-3 w-3" />
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-6 w-6 text-destructive hover:text-destructive"
+                            onClick={() => setQuantities(prev => {
+                              const { [articleId]: _, ...rest } = prev;
+                              return rest;
+                            })}
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      </div>
+                    );
+                  })
+              )}
+            </div>
+          </ScrollArea>
+          
+          {/* Total + Submit Button */}
+          {totalItems > 0 && (
+            <div className="p-3 border-t bg-muted/30 space-y-2">
+              <div className="flex justify-between text-sm">
+                <span>Gesamt ({totalItems} Artikel):</span>
+                <span className="font-bold">€{totalAmount.toFixed(2)}</span>
+              </div>
+              <Button 
+                className={cn(
+                  "w-full h-8 text-sm gap-2",
+                  isDirectOrder && "bg-green-600 hover:bg-green-700"
+                )}
+                onClick={handleSubmitOrder}
+                disabled={isPending}
+              >
+                {isDirectOrder ? <Zap className="h-3.5 w-3.5" /> : <Send className="h-3.5 w-3.5" />}
+                {isDirectOrder ? 'Direkt bestellen' : 'Vorbestellung senden'}
               </Button>
             </div>
           )}
