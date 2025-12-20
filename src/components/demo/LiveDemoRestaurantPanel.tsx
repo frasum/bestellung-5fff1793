@@ -261,20 +261,6 @@ export function LiveDemoRestaurantPanel({ soundEnabled }: LiveDemoRestaurantPane
 
   return (
     <div className="h-full flex flex-col bg-background">
-      {/* Panel Header */}
-      <div className="flex items-center justify-between px-3 py-2.5 bg-blue-500/5 border-b">
-        <div className="flex items-center gap-2">
-          <ShoppingCart className="h-4 w-4 text-blue-600" />
-          <div>
-            <span className="font-semibold text-sm text-blue-700 dark:text-blue-300">Restaurant</span>
-            <p className="text-xs text-muted-foreground">Artikel auswählen & bestellen</p>
-          </div>
-        </div>
-        {cartItemCount > 0 && (
-          <Badge className="bg-blue-600 text-white">{cartItemCount}</Badge>
-        )}
-      </div>
-
       <Tabs defaultValue="articles" className="flex-1 flex flex-col">
         <TabsList className="mx-3 mt-2 h-8">
           <TabsTrigger value="articles" className="flex-1 text-xs h-7">
