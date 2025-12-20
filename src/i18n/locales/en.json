@@ -1014,7 +1014,8 @@
     "aiAnalysisFailed": "AI analysis failed",
     "aiAnalysisSuccess": "Article recognized!",
     "suggestedCategory": "Suggested category",
-    "changeSuppliers": "Switch supplier"
+    "changeSuppliers": "Switch supplier",
+    "orderConfirmedBySupplier": "Order confirmed!"
   },
   "suggestions": {
     "title": "Suggestions",

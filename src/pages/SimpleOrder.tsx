@@ -4,6 +4,9 @@ import { useTranslation } from 'react-i18next';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
+// Hooks
+import { useEmployeeOrderNotifications } from '@/hooks/useEmployeeOrderNotifications';
+
 // Extracted components
 import { SimpleOrderHeader } from '@/components/simple-order/SimpleOrderHeader';
 import { EmployeeInfoSection } from '@/components/simple-order/EmployeeInfoSection';
@@ -192,6 +195,12 @@ const SimpleOrder = () => {
   // Photo capture state
   const [articlesWithoutPhotos, setArticlesWithoutPhotos] = useState<Article[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+
+  // Subscribe to order confirmation notifications for this employee
+  useEmployeeOrderNotifications({
+    employeeId: tokenData?.employee_id || null,
+    enabled: !!tokenData?.employee_id,
+  });
 
   // Verify token and load articles
   useEffect(() => {

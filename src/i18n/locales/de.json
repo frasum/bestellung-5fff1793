@@ -1015,7 +1015,8 @@
     "aiAnalysisFailed": "KI-Analyse fehlgeschlagen",
     "aiAnalysisSuccess": "Artikel erkannt!",
     "suggestedCategory": "Vorgeschlagene Kategorie",
-    "changeSuppliers": "Lieferant wechseln"
+    "changeSuppliers": "Lieferant wechseln",
+    "orderConfirmedBySupplier": "Bestellung bestätigt!"
   },
   "suggestions": {
     "title": "Vorschläge",

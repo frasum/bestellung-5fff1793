@@ -1555,6 +1555,51 @@ export type Database = {
           },
         ]
       }
+      employee_notifications: {
+        Row: {
+          created_at: string
+          employee_id: string
+          id: string
+          is_read: boolean
+          message: string
+          order_id: string | null
+          type: string
+        }
+        Insert: {
+          created_at?: string
+          employee_id: string
+          id?: string
+          is_read?: boolean
+          message: string
+          order_id?: string | null
+          type?: string
+        }
+        Update: {
+          created_at?: string
+          employee_id?: string
+          id?: string
+          is_read?: boolean
+          message?: string
+          order_id?: string | null
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employee_notifications_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employee_notifications_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       employees: {
         Row: {
           auto_approve_orders: boolean
