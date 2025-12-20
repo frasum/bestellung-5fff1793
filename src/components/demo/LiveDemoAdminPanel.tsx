@@ -123,7 +123,8 @@ export function LiveDemoAdminPanel({ soundEnabled, onOrderCreated }: LiveDemoAdm
       const { count } = await supabase
         .from('orders')
         .select('*', { count: 'exact', head: true })
-        .eq('organization_id', profile.organization_id);
+        .eq('organization_id', profile.organization_id)
+        .eq('is_test_order', true);
 
       setOrdersCount(count || 0);
     } catch (error) {
