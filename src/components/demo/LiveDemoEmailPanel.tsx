@@ -133,6 +133,17 @@ export function LiveDemoEmailPanel({ soundEnabled }: LiveDemoEmailPanelProps) {
           queryClient.invalidateQueries({ queryKey: ['communication-logs-demo'] });
         }
       )
+      .on(
+        'postgres_changes',
+        {
+          event: 'DELETE',
+          schema: 'public',
+          table: 'communication_logs',
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ['communication-logs-demo'] });
+        }
+      )
       .subscribe();
 
     return () => {
