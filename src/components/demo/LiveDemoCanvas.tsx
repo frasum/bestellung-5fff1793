@@ -89,7 +89,6 @@ export function LiveDemoCanvas({ soundEnabled }: LiveDemoCanvasProps) {
           { from: 'gastro', to: 'supplier', label: 'Bestellung', reverseLabel: 'Bestätigung', color: '#22c55e', bidirectional: true },
           { from: 'gastro', to: 'email', label: 'E-Mail', color: '#8b5cf6' },
           { from: 'supplier', to: 'email', label: 'Bestätigung', color: '#22c55e' },
-          { from: 'supplier', to: 'easyorder', label: 'Bestätigung', color: '#22c55e' },
         ]
       : [
           { from: 'easyorder', to: 'gastro', label: 'Entwurf', color: '#f97316' },
@@ -97,7 +96,6 @@ export function LiveDemoCanvas({ soundEnabled }: LiveDemoCanvasProps) {
           { from: 'gastro', to: 'supplier', label: 'Bestellung', reverseLabel: 'Bestätigung', color: '#22c55e', bidirectional: true },
           { from: 'gastro', to: 'email', label: 'E-Mail', color: '#8b5cf6' },
           { from: 'supplier', to: 'email', label: 'Bestätigung', color: '#22c55e' },
-          { from: 'supplier', to: 'easyorder', label: 'Bestätigung', color: '#22c55e' },
         ];
 
     // Add highlighted and animating state to matching connections
