@@ -37,6 +37,46 @@ export function LiveDemoEasyOrderPanel({ soundEnabled, onDirectOrderChange, onOr
     onDirectOrderChange?.(isDirectOrder);
   }, [isDirectOrder, onDirectOrderChange]);
 
+  // Realtime subscription für Order-Bestätigungen
+  useEffect(() => {
+    const channel = supabase
+      .channel('demo-easyorder-confirmations')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'orders',
+          filter: 'is_test_order=eq.true',
+        },
+        (payload) => {
+          const oldOrder = payload.old as any;
+          const newOrder = payload.new as any;
+          
+          // Wenn Status von pending auf confirmed geändert wird
+          if (newOrder.status === 'confirmed' && oldOrder.status === 'pending') {
+            // Sound abspielen
+            if (soundEnabled) {
+              const audio = new Audio('/notification.mp3');
+              audio.volume = 0.6;
+              audio.play().catch(() => {});
+            }
+            
+            // Toast für den Mitarbeiter anzeigen
+            toast.success('Bestellung bestätigt! ✓', {
+              description: `${newOrder.order_number} wurde vom Lieferanten angenommen`,
+              icon: '📦',
+            });
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [soundEnabled]);
+
   // Create draft for admin approval instead of direct order
   const createDemoDraft = useMutation({
     mutationFn: async (draftData: { supplierId: string; items: { articleId: string; quantity: number }[]; employeeName: string; supplierName: string }) => {
