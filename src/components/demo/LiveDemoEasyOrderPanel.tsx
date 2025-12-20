@@ -211,12 +211,12 @@ export function LiveDemoEasyOrderPanel({ soundEnabled, onDirectOrderChange, onOr
     },
   });
 
-  // Get first active supplier if none selected
+  // Get selected supplier (null = all suppliers)
   const activeSupplier = useMemo(() => {
     if (selectedSupplierId) {
       return suppliers.find(s => s.id === selectedSupplierId);
     }
-    return suppliers.find(s => s.is_active);
+    return null; // null = alle Lieferanten anzeigen
   }, [suppliers, selectedSupplierId]);
 
   // Filter articles by supplier and search
@@ -358,12 +358,18 @@ export function LiveDemoEasyOrderPanel({ soundEnabled, onDirectOrderChange, onOr
 
       {/* Supplier Selection */}
       <div className="p-3 border-b">
-        {/* Supplier Selection */}
         <div className="flex gap-1.5 overflow-x-auto pb-1">
+          <Badge
+            variant={selectedSupplierId === null ? "default" : "outline"}
+            className="cursor-pointer text-xs"
+            onClick={() => setSelectedSupplierId(null)}
+          >
+            Alle
+          </Badge>
           {suppliers.filter(s => s.is_active).slice(0, 4).map(supplier => (
             <Badge
               key={supplier.id}
-              variant={activeSupplier?.id === supplier.id ? "default" : "outline"}
+              variant={selectedSupplierId === supplier.id ? "default" : "outline"}
               className="cursor-pointer whitespace-nowrap text-xs"
               onClick={() => setSelectedSupplierId(supplier.id)}
             >
