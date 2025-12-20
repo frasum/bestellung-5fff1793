@@ -337,21 +337,6 @@ export function LiveDemoSupplierPanel({ soundEnabled, onOrderCreated }: LiveDemo
         </div>
       </ScrollArea>
 
-      {/* Summary Footer */}
-      <div className="border-t p-2 grid grid-cols-3 gap-1.5 text-center">
-        <div className="p-1.5 rounded bg-orange-500/10">
-          <p className="text-orange-600 font-bold text-sm">{newCount}</p>
-          <p className="text-xs text-muted-foreground">Neu</p>
-        </div>
-        <div className="p-1.5 rounded bg-blue-500/10">
-          <p className="text-blue-600 font-bold text-sm">{inProgressCount}</p>
-          <p className="text-xs text-muted-foreground">In Arbeit</p>
-        </div>
-        <div className="p-1.5 rounded bg-green-500/10">
-          <p className="text-green-600 font-bold text-sm">{completedCount}</p>
-          <p className="text-xs text-muted-foreground">Fertig</p>
-        </div>
-      </div>
     </div>
   );
 }
