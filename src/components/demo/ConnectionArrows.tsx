@@ -185,20 +185,79 @@ export function ConnectionArrows({ connections, positions }: ConnectionArrowsPro
             }}
           />
 
-          {/* Animated particle - only when animating is true */}
+          {/* Animated particle with trail effect - only when animating is true */}
           {conn.animating && (
-            <circle r={10} fill={color} opacity={0.95}>
-              <animateMotion dur="1.2s" repeatCount="1" fill="freeze">
-                <mpath href={`#${pathId}`} />
-              </animateMotion>
-              <animate
-                attributeName="opacity"
-                values="0.95;0.95;0"
-                keyTimes="0;0.8;1"
-                dur="1.2s"
-                fill="freeze"
-              />
-            </circle>
+            <g>
+              {/* Glow filter for particle */}
+              <defs>
+                <filter id={`particle-glow-${pathId}`} x="-100%" y="-100%" width="300%" height="300%">
+                  <feGaussianBlur stdDeviation="8" result="coloredBlur"/>
+                  <feMerge>
+                    <feMergeNode in="coloredBlur"/>
+                    <feMergeNode in="coloredBlur"/>
+                    <feMergeNode in="SourceGraphic"/>
+                  </feMerge>
+                </filter>
+              </defs>
+              
+              {/* Trail particle 1 - smallest, most delayed */}
+              <circle r={8} fill={color} opacity={0.25}>
+                <animateMotion dur="1.2s" begin="0.18s" repeatCount="1" fill="freeze">
+                  <mpath href={`#${pathId}`} />
+                </animateMotion>
+                <animate
+                  attributeName="opacity"
+                  values="0.25;0.25;0"
+                  keyTimes="0;0.7;1"
+                  dur="1.2s"
+                  begin="0.18s"
+                  fill="freeze"
+                />
+              </circle>
+              
+              {/* Trail particle 2 - medium */}
+              <circle r={12} fill={color} opacity={0.45}>
+                <animateMotion dur="1.2s" begin="0.1s" repeatCount="1" fill="freeze">
+                  <mpath href={`#${pathId}`} />
+                </animateMotion>
+                <animate
+                  attributeName="opacity"
+                  values="0.45;0.45;0"
+                  keyTimes="0;0.75;1"
+                  dur="1.2s"
+                  begin="0.1s"
+                  fill="freeze"
+                />
+              </circle>
+              
+              {/* Main particle - large with white border and glow */}
+              <circle 
+                r={18} 
+                fill={color} 
+                stroke="white" 
+                strokeWidth={4}
+                filter={`url(#particle-glow-${pathId})`}
+              >
+                <animateMotion dur="1.2s" repeatCount="1" fill="freeze">
+                  <mpath href={`#${pathId}`} />
+                </animateMotion>
+                {/* Pulsating effect */}
+                <animate
+                  attributeName="r"
+                  values="16;22;16"
+                  dur="0.3s"
+                  repeatCount="4"
+                />
+                {/* Fade out at end */}
+                <animate
+                  attributeName="opacity"
+                  values="1;1;0"
+                  keyTimes="0;0.85;1"
+                  dur="1.2s"
+                  fill="freeze"
+                />
+              </circle>
+            </g>
           )}
           
           {/* Arrow head at destination */}
