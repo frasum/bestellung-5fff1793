@@ -26,7 +26,7 @@ const defaultPositions: TilePosition[] = [
 const tileConfig = [
   { 
     id: 'gastro', 
-    title: 'Betriebsleitung', 
+    title: 'Zentrales Bestellsystem', 
     icon: <Utensils className="h-4 w-4 text-blue-500" />,
     borderColor: 'bg-blue-500/10 border-b-blue-500/30',
     Component: LiveDemoGastroPanel
@@ -264,7 +264,7 @@ export function LiveDemoCanvas({ soundEnabled }: LiveDemoCanvasProps) {
             <>
               <div className="flex items-center gap-1.5">
                 <div className="w-2 h-2 rounded-full bg-blue-500" />
-                <span>Betriebsleitung</span>
+                <span>Zentrales Bestellsystem</span>
               </div>
               <span className="text-muted-foreground">→</span>
               <div className="flex items-center gap-1.5">
