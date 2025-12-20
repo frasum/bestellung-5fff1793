@@ -1,4 +1,4 @@
-export type DataPackageType = 'order' | 'confirmation' | 'email' | 'draft';
+export type DataPackageType = 'order' | 'confirmation' | 'email' | 'draft' | 'info';
 
 export interface OrderData {
   supplier?: string;
