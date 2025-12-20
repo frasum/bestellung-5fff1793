@@ -288,16 +288,6 @@ export function LiveDemoRestaurantPanel({ soundEnabled }: LiveDemoRestaurantPane
         </TabsList>
 
         <TabsContent value="articles" className="flex-1 flex flex-col m-0 p-3 pt-2">
-          {/* Search */}
-          <div className="relative mb-2">
-            <Search className="absolute left-2.5 top-1/2 transform -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-            <Input
-              placeholder="Artikel suchen..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-8 h-8 text-sm"
-            />
-          </div>
 
           {/* Supplier Filter */}
           <div className="flex gap-1.5 mb-2 flex-wrap">
