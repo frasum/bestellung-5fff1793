@@ -155,19 +155,6 @@ export function LiveDemoEmailPanel({ soundEnabled }: LiveDemoEmailPanelProps) {
 
   return (
     <div className="h-full flex flex-col bg-background">
-      {/* Panel Header */}
-      <div className="flex items-center justify-between px-3 py-2.5 bg-violet-500/5 border-b">
-        <div className="flex items-center gap-2">
-          <Mail className="h-4 w-4 text-violet-600" />
-          <div>
-            <span className="font-semibold text-sm text-violet-700 dark:text-violet-300">E-Mail-Log</span>
-            <p className="text-xs text-muted-foreground">Kommunikations-Übersicht</p>
-          </div>
-        </div>
-        {emails.length > 0 && (
-          <Badge className="bg-violet-600 text-white">{emails.length}</Badge>
-        )}
-      </div>
 
       {/* Email List or Preview */}
       {selectedEmail ? (
