@@ -8,7 +8,7 @@ import { LiveDemoEasyOrderPanel } from './LiveDemoEasyOrderPanel';
 import { LiveDemoSupplierPanel } from './LiveDemoSupplierPanel';
 import { LiveDemoEmailPanel } from './LiveDemoEmailPanel';
 import { ParticleConfigPanel } from './ParticleConfigPanel';
-import { ParticleConfig, DEFAULT_PARTICLE_CONFIG, DataPackageType, OrderData } from './particleConfig';
+import { ParticleConfig, PARTICLE_PRESETS, DataPackageType, OrderData } from './particleConfig';
 
 interface LiveDemoCanvasProps {
   soundEnabled: boolean;
@@ -85,7 +85,7 @@ export function LiveDemoCanvas({ soundEnabled }: LiveDemoCanvasProps) {
   const [isDirectOrder, setIsDirectOrder] = useState(false);
   const [highlightedConnection, setHighlightedConnection] = useState<string | null>(null);
   const [animatingConnections, setAnimatingConnections] = useState<Map<string, { dataType: DataPackageType; orderData?: OrderData; reverse?: boolean }>>(new Map());
-  const [particleConfig, setParticleConfig] = useState<ParticleConfig>(DEFAULT_PARTICLE_CONFIG);
+  const [particleConfig, setParticleConfig] = useState<ParticleConfig>(PARTICLE_PRESETS.slow);
 
   // Dynamic connections based on direct order mode
   // Korrigiert um den echten Bestellfluss abzubilden:
