@@ -59,7 +59,9 @@
       "deleteConfirmDescription": "Möchten Sie wirklich alle {{count}} Test-Bestellungen unwiderruflich löschen?",
       "badge": "TEST",
       "noTestOrders": "Keine Test-Bestellungen vorhanden"
-    }
+    },
+    "orderConfirmed": "Bestellung bestätigt",
+    "newDirectOrder": "Neue Direktbestellung eingegangen"
   },
   "common": {
     "save": "Speichern",

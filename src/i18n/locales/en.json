@@ -59,7 +59,9 @@
       "deleteConfirmDescription": "Are you sure you want to permanently delete all {{count}} test orders?",
       "badge": "TEST",
       "noTestOrders": "No test orders available"
-    }
+    },
+    "orderConfirmed": "Order confirmed",
+    "newDirectOrder": "New direct order received"
   },
   "common": {
     "save": "Save",

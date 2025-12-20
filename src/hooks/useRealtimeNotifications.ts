@@ -142,10 +142,45 @@ export const useRealtimeNotifications = () => {
         },
         (payload) => {
           if (!isActive) return;
+          console.log('🔔 New order INSERT received:', payload);
           // Invalidate orders queries to refresh the list
           queryClient.invalidateQueries({
             predicate: (query) => query.queryKey[0] === 'orders',
           });
+
+          // Check if this is a direct order from EasyOrder (has employee_id and notes contain "EasyOrder")
+          const newOrder = payload.new as {
+            order_number?: string;
+            notes?: string;
+            employee_id?: string;
+            id?: string;
+          };
+
+          if (newOrder.employee_id && newOrder.notes?.includes('EasyOrder')) {
+            toast.success(
+              t('orders.newDirectOrder', 'Neue Direktbestellung eingegangen'),
+              {
+                description: `${newOrder.order_number}`,
+                action: {
+                  label: t('common.view', 'Anzeigen'),
+                  onClick: () => {
+                    window.location.href = `/orders?orderId=${newOrder.id}`;
+                  },
+                },
+              }
+            );
+
+            // Show desktop notification if tab is not focused
+            if (document.hidden && permissionRef.current === 'granted') {
+              showNotificationRef.current?.(
+                t('orders.newDirectOrder', 'Neue Direktbestellung eingegangen'),
+                {
+                  body: newOrder.order_number || '',
+                  tag: `direct-order-${newOrder.id}`,
+                }
+              );
+            }
+          }
         }
       )
       .subscribe((status, err) => {
