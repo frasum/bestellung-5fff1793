@@ -243,65 +243,85 @@ export function LiveDemoEasyOrderPanel({ soundEnabled, onDirectOrderChange, onOr
   const handleSubmitOrder = async () => {
     if (totalItems === 0) return;
     
-    // Get the supplier - if no specific one selected, use the supplier of the first selected article
-    const supplierForOrder = activeSupplier || (() => {
-      const firstArticleId = Object.keys(quantities)[0];
-      const firstArticle = articles.find(a => a.id === firstArticleId);
-      return suppliers.find(s => s.id === firstArticle?.supplier_id);
-    })();
+    // Group selected articles by supplier
+    const itemsBySupplier = new Map<string, { supplier: typeof suppliers[0]; items: { articleId: string; quantity: number }[] }>();
     
-    if (!supplierForOrder) return;
-
-    const orderItems = Object.entries(quantities)
+    Object.entries(quantities)
       .filter(([_, qty]) => qty > 0)
-      .map(([articleId, quantity]) => ({
-        articleId,
-        quantity,
-      }));
+      .forEach(([articleId, quantity]) => {
+        const article = articles.find(a => a.id === articleId);
+        if (!article) return;
+        
+        const supplier = suppliers.find(s => s.id === article.supplier_id);
+        if (!supplier) return;
+        
+        if (!itemsBySupplier.has(supplier.id)) {
+          itemsBySupplier.set(supplier.id, { supplier, items: [] });
+        }
+        itemsBySupplier.get(supplier.id)!.items.push({ articleId, quantity });
+      });
+
+    if (itemsBySupplier.size === 0) return;
 
     try {
-      if (isDirectOrder) {
-        // Direct order - skip admin approval
-        await createDirectOrder.mutateAsync({
-          supplierId: supplierForOrder.id,
-          items: orderItems,
-          employeeName,
-          supplierName: supplierForOrder.name
-        });
-
-        if (soundEnabled) {
-          const audio = new Audio('/notification.mp3');
-          audio.play().catch(() => {});
+      const supplierCount = itemsBySupplier.size;
+      
+      // Create separate order for EACH supplier
+      for (const [_, { supplier, items }] of itemsBySupplier) {
+        if (isDirectOrder) {
+          // Direct order - skip admin approval
+          await createDirectOrder.mutateAsync({
+            supplierId: supplier.id,
+            items,
+            employeeName,
+            supplierName: supplier.name
+          });
+        } else {
+          // Normal flow - create draft for admin approval
+          await createDemoDraft.mutateAsync({
+            supplierId: supplier.id,
+            items,
+            employeeName,
+            supplierName: supplier.name
+          });
         }
+      }
 
-        // Trigger connection highlight
+      if (soundEnabled) {
+        const audio = new Audio('/notification.mp3');
+        audio.play().catch(() => {});
+      }
+
+      // Trigger connection highlights
+      if (isDirectOrder) {
         onOrderCreated?.('easyorder', 'supplier');
         onOrderCreated?.('easyorder', 'email');
-
-        toast.success('Direktbestellung gesendet!', {
-          description: 'Bestellung direkt an Lieferant übermittelt'
-        });
+        
+        toast.success(
+          supplierCount > 1 
+            ? `${supplierCount} Direktbestellungen gesendet!` 
+            : 'Direktbestellung gesendet!',
+          {
+            description: supplierCount > 1 
+              ? `An ${supplierCount} verschiedene Lieferanten übermittelt` 
+              : 'Bestellung direkt an Lieferant übermittelt'
+          }
+        );
       } else {
-        // Normal flow - create draft for admin approval
-        await createDemoDraft.mutateAsync({
-          supplierId: supplierForOrder.id,
-          items: orderItems,
-          employeeName,
-          supplierName: supplierForOrder.name
-        });
-
-        if (soundEnabled) {
-          const audio = new Audio('/notification.mp3');
-          audio.play().catch(() => {});
-        }
-
-        // Trigger connection highlight
         onOrderCreated?.('easyorder', 'gastro');
-
-        toast.success('Vorbestellung gesendet!', {
-          description: 'Warte auf Freigabe durch Admin'
-        });
+        
+        toast.success(
+          supplierCount > 1 
+            ? `${supplierCount} Vorbestellungen gesendet!` 
+            : 'Vorbestellung gesendet!',
+          {
+            description: supplierCount > 1 
+              ? `${supplierCount} Bestellungen warten auf Freigabe` 
+              : 'Warte auf Freigabe durch Admin'
+          }
+        );
       }
+      
       setQuantities({});
     } catch (error) {
       console.error('Order error:', error);
