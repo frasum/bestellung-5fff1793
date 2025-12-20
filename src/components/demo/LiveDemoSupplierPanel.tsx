@@ -183,8 +183,11 @@ export function LiveDemoSupplierPanel({ soundEnabled, onOrderCreated }: LiveDemo
         // Partikel-Animation: Supplier → Gastro (Rückmeldung)
         onOrderCreated?.('supplier', 'gastro');
         
+        // Partikel-Animation: Supplier → EasyOrder (Mitarbeiter-Benachrichtigung)
+        onOrderCreated?.('supplier', 'easyorder');
+        
         toast.success('Bestellung bestätigt!', {
-          description: 'Das Gastro-System wurde benachrichtigt',
+          description: 'Mitarbeiter und Gastro-System wurden benachrichtigt',
         });
       } else {
         toast.success(`Status auf "${statusConfig[newStatus].label}" geändert`);
