@@ -270,6 +270,14 @@ export function LiveDemoRestaurantPanel({ soundEnabled }: LiveDemoRestaurantPane
           <TabsTrigger value="cart" className="flex-1 text-xs h-7 relative">
             <ShoppingCart className="h-3 w-3 mr-1.5" />
             Warenkorb
+            {cartItemCount > 0 && (
+              <Badge 
+                variant="destructive" 
+                className="ml-1 h-4 min-w-4 px-1 flex items-center justify-center text-[10px]"
+              >
+                {cartItemCount}
+              </Badge>
+            )}
           </TabsTrigger>
         </TabsList>
 
