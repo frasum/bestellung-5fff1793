@@ -6,9 +6,10 @@ import { LiveDemoAdminPanel } from './LiveDemoAdminPanel';
 
 interface LiveDemoGastroPanelProps {
   soundEnabled: boolean;
+  onOrderCreated?: (from: string, to: string) => void;
 }
 
-export function LiveDemoGastroPanel({ soundEnabled }: LiveDemoGastroPanelProps) {
+export function LiveDemoGastroPanel({ soundEnabled, onOrderCreated }: LiveDemoGastroPanelProps) {
   const [activeTab, setActiveTab] = useState('restaurant');
 
   return (
@@ -30,7 +31,7 @@ export function LiveDemoGastroPanel({ soundEnabled }: LiveDemoGastroPanelProps) 
         </TabsContent>
         
         <TabsContent value="admin" className="flex-1 mt-2 overflow-hidden">
-          <LiveDemoAdminPanel soundEnabled={soundEnabled} />
+          <LiveDemoAdminPanel soundEnabled={soundEnabled} onOrderCreated={onOrderCreated} />
         </TabsContent>
       </Tabs>
     </div>

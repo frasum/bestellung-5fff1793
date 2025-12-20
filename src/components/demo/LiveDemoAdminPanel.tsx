@@ -38,9 +38,10 @@ interface CartDraftItem {
 
 interface LiveDemoAdminPanelProps {
   soundEnabled?: boolean;
+  onOrderCreated?: (from: string, to: string) => void;
 }
 
-export function LiveDemoAdminPanel({ soundEnabled }: LiveDemoAdminPanelProps) {
+export function LiveDemoAdminPanel({ soundEnabled, onOrderCreated }: LiveDemoAdminPanelProps) {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [drafts, setDrafts] = useState<CartDraft[]>([]);
@@ -290,6 +291,10 @@ export function LiveDemoAdminPanel({ soundEnabled }: LiveDemoAdminPanelProps) {
       queryClient.invalidateQueries({ queryKey: ['communication-logs-demo'] });
       toast.success('Bestellung freigegeben! (Demo)');
       fetchDrafts();
+      
+      // Trigger particle animations
+      onOrderCreated?.('gastro', 'supplier');
+      onOrderCreated?.('gastro', 'email');
     },
     onError: (error) => {
       console.error('Approve error:', error);
