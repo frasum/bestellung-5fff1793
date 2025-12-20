@@ -74,6 +74,7 @@ export function LiveDemoCanvas({ soundEnabled }: LiveDemoCanvasProps) {
 
   const [isDirectOrder, setIsDirectOrder] = useState(false);
   const [highlightedConnection, setHighlightedConnection] = useState<string | null>(null);
+  const [animatingConnections, setAnimatingConnections] = useState<Set<string>>(new Set());
 
   // Dynamic connections based on direct order mode
   const connections = useMemo((): Connection[] => {
@@ -91,12 +92,13 @@ export function LiveDemoCanvas({ soundEnabled }: LiveDemoCanvasProps) {
           { from: 'gastro', to: 'email', label: 'E-Mail', color: '#8b5cf6' },
         ];
 
-    // Add highlighted state to matching connections
+    // Add highlighted and animating state to matching connections
     return baseConnections.map(conn => ({
       ...conn,
       highlighted: highlightedConnection === `${conn.from}-${conn.to}`,
+      animating: animatingConnections.has(`${conn.from}-${conn.to}`),
     }));
-  }, [isDirectOrder, highlightedConnection]);
+  }, [isDirectOrder, highlightedConnection, animatingConnections]);
 
   // Save positions to localStorage
   useEffect(() => {
@@ -128,11 +130,23 @@ export function LiveDemoCanvas({ soundEnabled }: LiveDemoCanvasProps) {
     setIsDirectOrder(value);
   }, []);
 
-  // Trigger highlight when order is created
+  // Trigger highlight and animation when order is created
   const handleOrderCreated = useCallback((from: string, to: string) => {
     const connectionId = `${from}-${to}`;
+    
+    // Highlight the connection
     setHighlightedConnection(connectionId);
     setTimeout(() => setHighlightedConnection(null), 2400);
+    
+    // Start particle animation
+    setAnimatingConnections(prev => new Set(prev).add(connectionId));
+    setTimeout(() => {
+      setAnimatingConnections(prev => {
+        const next = new Set(prev);
+        next.delete(connectionId);
+        return next;
+      });
+    }, 1200);
   }, []);
   return (
     <div className="relative flex-1 bg-muted/30 overflow-hidden">

@@ -10,6 +10,7 @@ export interface Connection {
   dashed?: boolean;
   inactive?: boolean;
   highlighted?: boolean;
+  animating?: boolean;
 }
 
 interface ConnectionArrowsProps {
@@ -184,21 +185,20 @@ export function ConnectionArrows({ connections, positions }: ConnectionArrowsPro
             }}
           />
 
-          {/* Animated particle along path (only for active connections) */}
-          {isActive && (
-            <>
-              <circle r={4} fill={color} opacity={0.9}>
-                <animateMotion dur="2s" repeatCount="indefinite">
-                  <mpath href={`#${pathId}`} />
-                </animateMotion>
-              </circle>
-              {/* Second particle offset */}
-              <circle r={3} fill={color} opacity={0.6}>
-                <animateMotion dur="2s" repeatCount="indefinite" begin="1s">
-                  <mpath href={`#${pathId}`} />
-                </animateMotion>
-              </circle>
-            </>
+          {/* Animated particle - only when animating is true */}
+          {conn.animating && (
+            <circle r={10} fill={color} opacity={0.95}>
+              <animateMotion dur="1.2s" repeatCount="1" fill="freeze">
+                <mpath href={`#${pathId}`} />
+              </animateMotion>
+              <animate
+                attributeName="opacity"
+                values="0.95;0.95;0"
+                keyTimes="0;0.8;1"
+                dur="1.2s"
+                fill="freeze"
+              />
+            </circle>
           )}
           
           {/* Arrow head at destination */}
