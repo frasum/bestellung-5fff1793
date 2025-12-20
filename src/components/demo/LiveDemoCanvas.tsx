@@ -40,7 +40,7 @@ const tileConfig = [
   },
   { 
     id: 'supplier', 
-    title: 'Lieferant', 
+    title: 'Lieferanten', 
     icon: <Truck className="h-4 w-4 text-green-500" />,
     borderColor: 'bg-green-500/10 border-b-green-500/30',
     Component: LiveDemoSupplierPanel
