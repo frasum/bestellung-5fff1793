@@ -304,39 +304,6 @@ export function LiveDemoEasyOrderPanel({ soundEnabled, onDirectOrderChange, onOr
 
   return (
     <div className="h-full flex flex-col bg-background">
-      {/* Panel Header */}
-      <div className={cn(
-        "flex items-center justify-between px-3 py-2.5 border-b transition-colors",
-        isDirectOrder ? "bg-green-500/10" : "bg-orange-500/5"
-      )}>
-        <div className="flex items-center gap-2">
-          {isDirectOrder ? (
-            <Zap className="h-4 w-4 text-green-600" />
-          ) : (
-            <ClipboardList className="h-4 w-4 text-orange-600" />
-          )}
-          <div>
-            <span className={cn(
-              "font-semibold text-sm",
-              isDirectOrder ? "text-green-700 dark:text-green-300" : "text-orange-700 dark:text-orange-300"
-            )}>
-              EasyOrder
-            </span>
-            <p className="text-xs text-muted-foreground">
-              {isDirectOrder ? 'Direktbestellung' : 'Mitarbeiter-Bestellungen'}
-            </p>
-          </div>
-        </div>
-        {totalItems > 0 && (
-          <Badge className={cn(
-            "text-white",
-            isDirectOrder ? "bg-green-600" : "bg-orange-600"
-          )}>
-            {totalItems}
-          </Badge>
-        )}
-      </div>
-
       {/* Direct Order Toggle */}
       <div className="px-3 py-2 border-b bg-muted/30">
         <div className="flex items-center justify-between">
