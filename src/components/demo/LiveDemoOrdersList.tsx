@@ -152,7 +152,7 @@ export function LiveDemoOrdersList() {
 
   return (
     <ScrollArea className="h-[calc(100%-2rem)]">
-      <div className="p-2 space-y-2">
+      <div className="p-1 space-y-1">
         {orders.map(order => {
           const isExpanded = expandedOrders.has(order.id);
           const itemCount = order.order_items?.length || 0;
@@ -172,52 +172,48 @@ export function LiveDemoOrdersList() {
               open={isExpanded} 
               onOpenChange={() => toggleExpanded(order.id)}
             >
-              <div className="rounded-lg border bg-card p-2.5 space-y-2">
-                {/* Header */}
-                <CollapsibleTrigger className="w-full text-left">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="font-mono text-xs text-muted-foreground">{order.order_number}</span>
-                        {getStatusBadge(order.status)}
-                      </div>
-                      <p className="font-medium text-sm mt-1 truncate">
+              <div className="rounded-md border bg-card overflow-hidden">
+                {/* Compact one-liner header */}
+                <CollapsibleTrigger className="w-full text-left px-2 py-1.5 hover:bg-muted/50 transition-colors">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 min-w-0 flex-1">
+                      <span className="font-mono text-[10px] text-muted-foreground shrink-0">
+                        {order.order_number}
+                      </span>
+                      <span className="text-xs font-medium truncate">
                         {order.supplier?.name || 'Unbekannt'}
-                      </p>
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
-                        <span>{format(new Date(order.created_at), 'dd.MM. HH:mm', { locale: de })}</span>
-                        {ordererName && (
-                          <>
-                            <span>•</span>
-                            <span className="flex items-center gap-1">
-                              <User className="h-3 w-3" />
-                              {ordererName}
-                            </span>
-                          </>
-                        )}
-                      </div>
+                      </span>
+                      {ordererName && (
+                        <span className="text-[10px] text-muted-foreground hidden sm:inline truncate">
+                          ({ordererName})
+                        </span>
+                      )}
                     </div>
-                    <div className="flex items-center gap-2">
-                      <div className="text-right">
-                        <p className="font-semibold text-sm">€{order.total_amount.toFixed(2)}</p>
-                        <p className="text-xs text-muted-foreground">{itemCount} Artikel</p>
-                      </div>
-                      <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      {getStatusBadge(order.status)}
+                      <span className="text-xs font-semibold">€{order.total_amount.toFixed(2)}</span>
+                      <ChevronDown className={`h-3 w-3 text-muted-foreground transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
                     </div>
                   </div>
                 </CollapsibleTrigger>
 
-                {/* Expanded Items */}
+                {/* Expanded Details Dropdown */}
                 <CollapsibleContent>
-                  <div className="pt-2 border-t mt-2 space-y-1">
-                    {order.order_items?.map(item => (
-                      <div key={item.id} className="flex justify-between text-xs">
-                        <span className="text-muted-foreground">
-                          {item.quantity}x {item.article_name}
-                        </span>
-                        <span>€{item.total_price.toFixed(2)}</span>
-                      </div>
-                    ))}
+                  <div className="px-2 pb-2 pt-1 border-t bg-muted/30 space-y-1.5">
+                    <div className="flex items-center justify-between text-[10px] text-muted-foreground">
+                      <span>{format(new Date(order.created_at), 'dd.MM.yyyy HH:mm', { locale: de })}</span>
+                      <span>{itemCount} Artikel</span>
+                    </div>
+                    <div className="space-y-0.5">
+                      {order.order_items?.map(item => (
+                        <div key={item.id} className="flex justify-between text-xs">
+                          <span className="text-muted-foreground truncate mr-2">
+                            {item.quantity}x {item.article_name}
+                          </span>
+                          <span className="shrink-0">€{item.total_price.toFixed(2)}</span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </CollapsibleContent>
               </div>
