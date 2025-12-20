@@ -52,6 +52,16 @@ export default function LiveDemo() {
             await supabase.from('cart_draft_items').delete().in('draft_id', draftIds);
             await supabase.from('cart_drafts').delete().in('id', draftIds);
           }
+
+          // Delete communication logs for demo
+          const { error: logsError } = await supabase
+            .from('communication_logs')
+            .delete()
+            .eq('organization_id', profile.organization_id);
+
+          if (logsError) {
+            console.error('Error deleting communication logs:', logsError);
+          }
         }
       }
       
