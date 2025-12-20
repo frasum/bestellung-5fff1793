@@ -42,7 +42,7 @@ interface LiveDemoSupplierPanelProps {
 export function LiveDemoSupplierPanel({ soundEnabled, onOrderCreated }: LiveDemoSupplierPanelProps) {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
-  const { data: orders = [], isLoading: ordersLoading } = useOrders();
+  const { data: orders = [], isLoading: ordersLoading, refetch } = useOrders();
   const { data: suppliers = [] } = useSuppliers();
   
   // Local update order mutation
@@ -75,8 +75,8 @@ export function LiveDemoSupplierPanel({ soundEnabled, onOrderCreated }: LiveDemo
           table: 'orders',
         },
         (payload) => {
-          // Invalidate orders query to refetch immediately
-          queryClient.invalidateQueries({ queryKey: ['orders'] });
+          // Refetch orders immediately instead of just invalidating
+          refetch();
           
           if (payload.eventType === 'INSERT') {
             const newOrder = payload.new as any;
@@ -98,8 +98,8 @@ export function LiveDemoSupplierPanel({ soundEnabled, onOrderCreated }: LiveDemo
               setTimeout(() => setHighlightedOrder(null), 3000);
             }
           } else if (payload.eventType === 'UPDATE') {
-            // Refetch to show status changes
-            queryClient.invalidateQueries({ queryKey: ['orders'] });
+            // Refetch to show status changes immediately
+            refetch();
           }
         }
       )
@@ -108,7 +108,7 @@ export function LiveDemoSupplierPanel({ soundEnabled, onOrderCreated }: LiveDemo
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [queryClient, soundEnabled]);
+  }, [refetch, soundEnabled]);
 
   const filteredOrders = orders.filter(order => order.is_test_order === true);
 

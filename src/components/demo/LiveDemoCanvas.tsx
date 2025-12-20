@@ -223,6 +223,16 @@ export function LiveDemoCanvas({ soundEnabled }: LiveDemoCanvasProps) {
 
   // Legacy handler for simple order created events
   const handleOrderCreated = useCallback((from: string, to: string) => {
+    // Check if connection exists before animating
+    const connectionExists = connections.some(
+      c => (c.from === from && c.to === to) || (c.bidirectional && c.from === to && c.to === from)
+    );
+    
+    if (!connectionExists) {
+      console.warn(`Animation skipped: No connection from ${from} to ${to}`);
+      return;
+    }
+    
     // Determine data type based on connection
     let dataType: DataPackageType = 'order';
     if (from === 'easyorder' && to === 'gastro') dataType = 'draft';
@@ -237,7 +247,7 @@ export function LiveDemoCanvas({ soundEnabled }: LiveDemoCanvasProps) {
     };
 
     startAnimation(from, to, dataType, sampleData);
-  }, [startAnimation]);
+  }, [startAnimation, connections]);
 
   return (
     <div className="relative flex-1 bg-muted/30 overflow-hidden">
