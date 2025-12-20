@@ -85,11 +85,15 @@ export function LiveDemoCanvas({ soundEnabled }: LiveDemoCanvasProps) {
           { from: 'easyorder', to: 'gastro', label: 'Entwurf', color: '#f97316', inactive: true, dashed: true },
           { from: 'gastro', to: 'supplier', label: 'Bestellung', color: '#22c55e' },
           { from: 'gastro', to: 'email', label: 'E-Mail', color: '#8b5cf6' },
+          { from: 'supplier', to: 'email', label: 'Bestätigung', color: '#22c55e' },
+          { from: 'supplier', to: 'gastro', label: 'Status-Update', color: '#22c55e' },
         ]
       : [
           { from: 'easyorder', to: 'gastro', label: 'Entwurf', color: '#f97316' },
           { from: 'gastro', to: 'supplier', label: 'Bestellung', color: '#22c55e' },
           { from: 'gastro', to: 'email', label: 'E-Mail', color: '#8b5cf6' },
+          { from: 'supplier', to: 'email', label: 'Bestätigung', color: '#22c55e' },
+          { from: 'supplier', to: 'gastro', label: 'Status-Update', color: '#22c55e' },
         ];
 
     // Add highlighted and animating state to matching connections
@@ -208,6 +212,11 @@ export function LiveDemoCanvas({ soundEnabled }: LiveDemoCanvasProps) {
               />
             ) : id === 'gastro' ? (
               <LiveDemoGastroPanel 
+                soundEnabled={soundEnabled} 
+                onOrderCreated={handleOrderCreated}
+              />
+            ) : id === 'supplier' ? (
+              <LiveDemoSupplierPanel 
                 soundEnabled={soundEnabled} 
                 onOrderCreated={handleOrderCreated}
               />
