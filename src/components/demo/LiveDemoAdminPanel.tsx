@@ -107,17 +107,16 @@ export function LiveDemoAdminPanel({ soundEnabled, onOrderCreated }: LiveDemoAdm
 
   useEffect(() => {
     fetchDrafts();
-  }, []);
-
-  // Realtime subscription for new drafts
-  useEffect(() => {
+    
+    // Realtime subscription for drafts - single consolidated subscription
     const channel = supabase
-      .channel('admin-drafts')
+      .channel('admin-drafts-realtime')
       .on('postgres_changes', {
         event: '*',
         schema: 'public',
         table: 'cart_drafts'
       }, (payload) => {
+        // Immediately refetch on any change
         fetchDrafts();
         
         if (payload.eventType === 'INSERT') {
@@ -132,6 +131,14 @@ export function LiveDemoAdminPanel({ soundEnabled, onOrderCreated }: LiveDemoAdm
             });
           }
         }
+      })
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'cart_draft_items'
+      }, () => {
+        // Also refetch when items change
+        fetchDrafts();
       })
       .subscribe();
 
