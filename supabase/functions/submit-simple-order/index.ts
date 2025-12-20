@@ -289,7 +289,7 @@ serve(async (req) => {
       }
 
       // Create branded order number with supplier name
-      const orderNumber = orderNumberData as string;
+      const orderNumber = (orderNumberData as string).replace('ORD', 'EO');
 
       // Fetch full article details for pricing
       const articleIds = items.map((item: OrderItem) => item.article_id);
