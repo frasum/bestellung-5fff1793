@@ -32,7 +32,7 @@ const iconConfig = {
   },
   draft: { 
     Icon: FileText, 
-    label: 'Entwurf', 
+    label: 'Vorbestellung', 
     bgColor: 'bg-orange-500',
     borderColor: 'border-orange-600'
   },
