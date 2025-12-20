@@ -7,6 +7,8 @@ import { LiveDemoGastroPanel } from './LiveDemoGastroPanel';
 import { LiveDemoEasyOrderPanel } from './LiveDemoEasyOrderPanel';
 import { LiveDemoSupplierPanel } from './LiveDemoSupplierPanel';
 import { LiveDemoEmailPanel } from './LiveDemoEmailPanel';
+import { ParticleConfigPanel } from './ParticleConfigPanel';
+import { ParticleConfig, DEFAULT_PARTICLE_CONFIG } from './particleConfig';
 
 interface LiveDemoCanvasProps {
   soundEnabled: boolean;
@@ -75,6 +77,7 @@ export function LiveDemoCanvas({ soundEnabled }: LiveDemoCanvasProps) {
   const [isDirectOrder, setIsDirectOrder] = useState(false);
   const [highlightedConnection, setHighlightedConnection] = useState<string | null>(null);
   const [animatingConnections, setAnimatingConnections] = useState<Set<string>>(new Set());
+  const [particleConfig, setParticleConfig] = useState<ParticleConfig>(DEFAULT_PARTICLE_CONFIG);
 
   // Dynamic connections based on direct order mode
   const connections = useMemo((): Connection[] => {
@@ -142,7 +145,7 @@ export function LiveDemoCanvas({ soundEnabled }: LiveDemoCanvasProps) {
     setHighlightedConnection(connectionId);
     setTimeout(() => setHighlightedConnection(null), 2400);
     
-    // Start particle animation
+    // Start particle animation - use current particleConfig duration
     setAnimatingConnections(prev => new Set(prev).add(connectionId));
     setTimeout(() => {
       setAnimatingConnections(prev => {
@@ -150,8 +153,8 @@ export function LiveDemoCanvas({ soundEnabled }: LiveDemoCanvasProps) {
         next.delete(connectionId);
         return next;
       });
-    }, 1200);
-  }, []);
+    }, particleConfig.duration + 100); // Add small buffer for animation completion
+  }, [particleConfig.duration]);
   return (
     <div className="relative flex-1 bg-muted/30 overflow-hidden">
       {/* Grid Pattern Background */}
@@ -177,8 +180,11 @@ export function LiveDemoCanvas({ soundEnabled }: LiveDemoCanvasProps) {
         Layout zurücksetzen
       </Button>
 
+      {/* Particle Configuration Panel */}
+      <ParticleConfigPanel config={particleConfig} onChange={setParticleConfig} />
+
       {/* Connection Arrows */}
-      <ConnectionArrows connections={connections} positions={positions} />
+      <ConnectionArrows connections={connections} positions={positions} particleConfig={particleConfig} />
 
       {/* Draggable Tiles */}
       {tileConfig.map(({ id, title, icon, borderColor, Component }) => {

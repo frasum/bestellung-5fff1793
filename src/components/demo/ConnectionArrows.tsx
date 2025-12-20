@@ -1,5 +1,6 @@
 import { useMemo, useState, useEffect } from 'react';
 import { TilePosition } from './DraggableTile';
+import { ParticleConfig, DEFAULT_PARTICLE_CONFIG } from './particleConfig';
 
 export interface Connection {
   from: string;
@@ -17,11 +18,11 @@ export interface Connection {
 function AnimatedParticle({ 
   pathId, 
   color, 
-  duration = 1200 
+  config = DEFAULT_PARTICLE_CONFIG
 }: { 
   pathId: string; 
   color: string; 
-  duration?: number;
+  config?: ParticleConfig;
 }) {
   const [position, setPosition] = useState<{ x: number; y: number } | null>(null);
   const [opacity, setOpacity] = useState(1);
@@ -52,7 +53,7 @@ function AnimatedParticle({
 
       function animate() {
         const elapsed = performance.now() - startTime;
-        const progress = Math.min(elapsed / duration, 1);
+        const progress = Math.min(elapsed / config.duration, 1);
         
         // Easing function for smoother animation
         const easedProgress = 1 - Math.pow(1 - progress, 3); // ease-out cubic
@@ -60,9 +61,9 @@ function AnimatedParticle({
         const point = path!.getPointAtLength(totalLength * easedProgress);
         setPosition({ x: point.x, y: point.y });
         
-        // Trail positions (delayed versions of current position)
-        const trail1Progress = Math.max(0, easedProgress - 0.08);
-        const trail2Progress = Math.max(0, easedProgress - 0.16);
+        // Trail positions (delayed versions of current position) - use config offsets
+        const trail1Progress = Math.max(0, easedProgress - config.trailOffset1);
+        const trail2Progress = Math.max(0, easedProgress - config.trailOffset2);
         const trail1 = path!.getPointAtLength(totalLength * trail1Progress);
         const trail2 = path!.getPointAtLength(totalLength * trail2Progress);
         setTrailPositions([
@@ -70,9 +71,9 @@ function AnimatedParticle({
           { x: trail1.x, y: trail1.y }
         ]);
         
-        // Pulsating scale effect
+        // Pulsating scale effect - use config pulse intensity
         const pulsePhase = (elapsed / 150) % (2 * Math.PI);
-        setScale(1 + 0.15 * Math.sin(pulsePhase));
+        setScale(1 + config.pulseIntensity * Math.sin(pulsePhase));
         
         // Fade out in the last 15%
         if (progress > 0.85) {
@@ -94,16 +95,16 @@ function AnimatedParticle({
     }, 50); // Small delay to ensure DOM is ready
 
     return () => clearTimeout(initTimeout);
-  }, [pathId, duration]);
+  }, [pathId, config]);
 
   if (!position) return null;
 
   return (
     <g style={{ opacity }}>
-      {/* Glow filter */}
+      {/* Glow filter - use config glow blur */}
       <defs>
         <filter id={`particle-glow-js-${pathId}`} x="-200%" y="-200%" width="500%" height="500%">
-          <feGaussianBlur stdDeviation="10" result="coloredBlur"/>
+          <feGaussianBlur stdDeviation={config.glowBlur} result="coloredBlur"/>
           <feMerge>
             <feMergeNode in="coloredBlur"/>
             <feMergeNode in="coloredBlur"/>
@@ -113,49 +114,49 @@ function AnimatedParticle({
         </filter>
       </defs>
 
-      {/* Trail particle 1 - smallest */}
+      {/* Trail particle 1 - smallest - use config sizes */}
       {trailPositions[0] && (
         <circle
           cx={trailPositions[0].x}
           cy={trailPositions[0].y}
-          r={10}
+          r={config.trail1Size}
           fill={color}
-          opacity={0.3}
+          opacity={config.trail1Opacity}
         />
       )}
       
-      {/* Trail particle 2 - medium */}
+      {/* Trail particle 2 - medium - use config sizes */}
       {trailPositions[1] && (
         <circle
           cx={trailPositions[1].x}
           cy={trailPositions[1].y}
-          r={16}
+          r={config.trail2Size}
           fill={color}
-          opacity={0.5}
+          opacity={config.trail2Opacity}
         />
       )}
 
-      {/* Main particle - large with white border and glow */}
+      {/* Main particle - large with white border and glow - use config sizes */}
       <circle
         cx={position.x}
         cy={position.y}
-        r={24 * scale}
+        r={config.mainParticleSize * scale}
         fill={color}
         stroke="white"
-        strokeWidth={5}
+        strokeWidth={config.strokeWidth}
         filter={`url(#particle-glow-js-${pathId})`}
         style={{ 
           filter: `url(#particle-glow-js-${pathId}) drop-shadow(0 0 20px ${color})` 
         }}
       />
       
-      {/* Inner bright core */}
+      {/* Inner bright core - use config sizes */}
       <circle
         cx={position.x}
         cy={position.y}
-        r={10 * scale}
+        r={config.coreSize * scale}
         fill="white"
-        opacity={0.8}
+        opacity={config.coreOpacity}
       />
     </g>
   );
@@ -164,6 +165,7 @@ function AnimatedParticle({
 interface ConnectionArrowsProps {
   connections: Connection[];
   positions: TilePosition[];
+  particleConfig?: ParticleConfig;
 }
 
 type Direction = 'right' | 'left' | 'down' | 'up';
@@ -265,7 +267,7 @@ function getOppositeDirection(direction: Direction): Direction {
   }
 }
 
-export function ConnectionArrows({ connections, positions }: ConnectionArrowsProps) {
+export function ConnectionArrows({ connections, positions, particleConfig = DEFAULT_PARTICLE_CONFIG }: ConnectionArrowsProps) {
   const positionMap = useMemo(() => {
     return positions.reduce((acc, pos) => {
       acc[pos.id] = pos;
@@ -333,9 +335,9 @@ export function ConnectionArrows({ connections, positions }: ConnectionArrowsPro
             }}
           />
 
-          {/* Animated particle using JavaScript animation */}
+          {/* Animated particle using JavaScript animation with config */}
           {conn.animating && (
-            <AnimatedParticle pathId={pathId} color={color} duration={1500} />
+            <AnimatedParticle pathId={pathId} color={color} config={particleConfig} />
           )}
           
           {/* Arrow head at destination */}
