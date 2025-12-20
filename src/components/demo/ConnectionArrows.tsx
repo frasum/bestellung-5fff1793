@@ -1,180 +1,32 @@
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo } from 'react';
 import { TilePosition } from './DraggableTile';
-import { ParticleConfig, DEFAULT_PARTICLE_CONFIG } from './particleConfig';
+import { ParticleConfig, DataPackageType, OrderData, DEFAULT_PARTICLE_CONFIG } from './particleConfig';
+import { AnimatedDataPackage } from './AnimatedDataPackage';
 
 export interface Connection {
   from: string;
   to: string;
   label?: string;
-  reverseLabel?: string;      // Label für Rückrichtung bei bidirektional
+  reverseLabel?: string;
   color?: string;
   bidirectional?: boolean;
   dashed?: boolean;
   inactive?: boolean;
   highlighted?: boolean;
   animating?: boolean;
-  reverseAnimating?: boolean; // Animation in Rückrichtung
-}
-
-// Animated particle component using JavaScript animation instead of SVG animateMotion
-function AnimatedParticle({ 
-  pathId, 
-  color, 
-  config = DEFAULT_PARTICLE_CONFIG,
-  reverse = false
-}: { 
-  pathId: string; 
-  color: string; 
-  config?: ParticleConfig;
-  reverse?: boolean;
-}) {
-  const [position, setPosition] = useState<{ x: number; y: number } | null>(null);
-  const [opacity, setOpacity] = useState(1);
-  const [scale, setScale] = useState(1);
-  const [trailPositions, setTrailPositions] = useState<{ x: number; y: number }[]>([]);
-
-  useEffect(() => {
-    // Small delay to ensure the path is rendered
-    const initTimeout = setTimeout(() => {
-      const pathElement = document.getElementById(pathId);
-      if (!pathElement || !(pathElement instanceof SVGPathElement)) {
-        console.warn('AnimatedParticle: Path not found or not SVGPathElement:', pathId);
-        return;
-      }
-      const path = pathElement;
-      if (!path) {
-        console.warn('AnimatedParticle: Path not found:', pathId);
-        return;
-      }
-
-      const totalLength = path.getTotalLength();
-      const startTime = performance.now();
-      let animationFrame: number;
-      
-      // Initialize position at start (or end if reverse)
-      const startPoint = path.getPointAtLength(reverse ? totalLength : 0);
-      setPosition({ x: startPoint.x, y: startPoint.y });
-
-      function animate() {
-        const elapsed = performance.now() - startTime;
-        const progress = Math.min(elapsed / config.duration, 1);
-        
-        // Easing function for smoother animation
-        const easedProgress = 1 - Math.pow(1 - progress, 3); // ease-out cubic
-        
-        // For reverse, go from end to start
-        const pathProgress = reverse ? (1 - easedProgress) : easedProgress;
-        
-        const point = path!.getPointAtLength(totalLength * pathProgress);
-        setPosition({ x: point.x, y: point.y });
-        
-        // Trail positions (delayed versions of current position) - use config offsets
-        const trail1Offset = reverse ? config.trailOffset1 : -config.trailOffset1;
-        const trail2Offset = reverse ? config.trailOffset2 : -config.trailOffset2;
-        const trail1Progress = Math.max(0, Math.min(1, pathProgress + trail1Offset));
-        const trail2Progress = Math.max(0, Math.min(1, pathProgress + trail2Offset));
-        const trail1 = path!.getPointAtLength(totalLength * trail1Progress);
-        const trail2 = path!.getPointAtLength(totalLength * trail2Progress);
-        setTrailPositions([
-          { x: trail2.x, y: trail2.y },
-          { x: trail1.x, y: trail1.y }
-        ]);
-        
-        // Pulsating scale effect - use config pulse intensity
-        const pulsePhase = (elapsed / 150) % (2 * Math.PI);
-        setScale(1 + config.pulseIntensity * Math.sin(pulsePhase));
-        
-        // Fade out in the last 15%
-        if (progress > 0.85) {
-          setOpacity(1 - ((progress - 0.85) / 0.15));
-        }
-        
-        if (progress < 1) {
-          animationFrame = requestAnimationFrame(animate);
-        }
-      }
-
-      animationFrame = requestAnimationFrame(animate);
-
-      return () => {
-        if (animationFrame) {
-          cancelAnimationFrame(animationFrame);
-        }
-      };
-    }, 50); // Small delay to ensure DOM is ready
-
-    return () => clearTimeout(initTimeout);
-  }, [pathId, config, reverse]);
-
-  if (!position) return null;
-
-  return (
-    <g style={{ opacity }}>
-      {/* Glow filter - use config glow blur */}
-      <defs>
-        <filter id={`particle-glow-js-${pathId}`} x="-200%" y="-200%" width="500%" height="500%">
-          <feGaussianBlur stdDeviation={config.glowBlur} result="coloredBlur"/>
-          <feMerge>
-            <feMergeNode in="coloredBlur"/>
-            <feMergeNode in="coloredBlur"/>
-            <feMergeNode in="coloredBlur"/>
-            <feMergeNode in="SourceGraphic"/>
-          </feMerge>
-        </filter>
-      </defs>
-
-      {/* Trail particle 1 - smallest - use config sizes */}
-      {trailPositions[0] && (
-        <circle
-          cx={trailPositions[0].x}
-          cy={trailPositions[0].y}
-          r={config.trail1Size}
-          fill={color}
-          opacity={config.trail1Opacity}
-        />
-      )}
-      
-      {/* Trail particle 2 - medium - use config sizes */}
-      {trailPositions[1] && (
-        <circle
-          cx={trailPositions[1].x}
-          cy={trailPositions[1].y}
-          r={config.trail2Size}
-          fill={color}
-          opacity={config.trail2Opacity}
-        />
-      )}
-
-      {/* Main particle - large with white border and glow - use config sizes */}
-      <circle
-        cx={position.x}
-        cy={position.y}
-        r={config.mainParticleSize * scale}
-        fill={color}
-        stroke="white"
-        strokeWidth={config.strokeWidth}
-        filter={`url(#particle-glow-js-${pathId})`}
-        style={{ 
-          filter: `url(#particle-glow-js-${pathId}) drop-shadow(0 0 20px ${color})` 
-        }}
-      />
-      
-      {/* Inner bright core - use config sizes */}
-      <circle
-        cx={position.x}
-        cy={position.y}
-        r={config.coreSize * scale}
-        fill="white"
-        opacity={config.coreOpacity}
-      />
-    </g>
-  );
+  reverseAnimating?: boolean;
+  // New: Data package properties
+  dataType?: DataPackageType;
+  orderData?: OrderData;
+  reverseDataType?: DataPackageType;
+  reverseOrderData?: OrderData;
 }
 
 interface ConnectionArrowsProps {
   connections: Connection[];
   positions: TilePosition[];
   particleConfig?: ParticleConfig;
+  activeStep?: string | null; // ID of active connection for spotlight effect
 }
 
 type Direction = 'right' | 'left' | 'down' | 'up';
@@ -276,13 +128,23 @@ function getOppositeDirection(direction: Direction): Direction {
   }
 }
 
-export function ConnectionArrows({ connections, positions, particleConfig = DEFAULT_PARTICLE_CONFIG }: ConnectionArrowsProps) {
+export function ConnectionArrows({ 
+  connections, 
+  positions, 
+  particleConfig = DEFAULT_PARTICLE_CONFIG,
+  activeStep = null
+}: ConnectionArrowsProps) {
   const positionMap = useMemo(() => {
     return positions.reduce((acc, pos) => {
       acc[pos.id] = pos;
       return acc;
     }, {} as Record<string, TilePosition>);
   }, [positions]);
+
+  // Check if any connection is currently animating (for spotlight effect)
+  const hasActiveAnimation = useMemo(() => {
+    return connections.some(c => c.animating || c.reverseAnimating);
+  }, [connections]);
 
   const arrows = useMemo(() => {
     return connections.map((conn, index) => {
@@ -300,7 +162,11 @@ export function ConnectionArrows({ connections, positions, particleConfig = DEFA
       const midY = (fromY + toY) / 2;
 
       const color = conn.color || '#10b981';
-      const isActive = !conn.inactive;
+      const isAnimating = conn.animating || conn.reverseAnimating;
+      
+      // Spotlight effect: dim non-active connections when something is animating
+      const spotlightOpacity = hasActiveAnimation && !isAnimating ? 0.15 : 1;
+      const effectiveOpacity = conn.inactive ? 0.3 : spotlightOpacity;
 
       return (
         <g key={`${conn.from}-${conn.to}-${index}`}>
@@ -325,6 +191,7 @@ export function ConnectionArrows({ connections, positions, particleConfig = DEFA
             strokeWidth={4}
             strokeLinecap="round"
             transform="translate(2, 2)"
+            opacity={effectiveOpacity}
           />
           
           {/* Main path */}
@@ -336,29 +203,42 @@ export function ConnectionArrows({ connections, positions, particleConfig = DEFA
             strokeWidth={conn.inactive ? 1.5 : conn.highlighted ? 3.5 : 2.5}
             strokeLinecap="round"
             className="connection-path"
-            opacity={conn.inactive ? 0.3 : 1}
+            opacity={effectiveOpacity}
             filter={conn.highlighted ? `url(#glow-${pathId})` : 'none'}
             style={conn.bidirectional ? {} : {
               strokeDasharray: conn.dashed ? '4, 8' : '8, 4',
-              animation: conn.inactive ? 'none' : 'dashFlow 0.8s linear infinite',
+              animation: conn.inactive || effectiveOpacity < 1 ? 'none' : 'dashFlow 0.8s linear infinite',
             }}
           />
 
-          {/* Animated particle using JavaScript animation with config */}
-          {conn.animating && (
-            <AnimatedParticle pathId={pathId} color={color} config={particleConfig} />
+          {/* Animated Data Package (new) - uses icons instead of particles */}
+          {conn.animating && particleConfig.showDataIcons && conn.dataType && (
+            <AnimatedDataPackage 
+              pathId={pathId} 
+              type={conn.dataType}
+              data={conn.orderData}
+              color={color} 
+              config={particleConfig} 
+            />
           )}
           
-          {/* Reverse animated particle for bidirectional connections */}
-          {conn.reverseAnimating && conn.bidirectional && (
-            <AnimatedParticle pathId={pathId} color={color} config={particleConfig} reverse />
+          {/* Reverse animated data package */}
+          {conn.reverseAnimating && conn.bidirectional && particleConfig.showDataIcons && (
+            <AnimatedDataPackage 
+              pathId={pathId} 
+              type={conn.reverseDataType || 'confirmation'}
+              data={conn.reverseOrderData}
+              color={color} 
+              config={particleConfig} 
+              reverse 
+            />
           )}
           
           {/* Arrow head at destination */}
           <polygon
             points={getArrowPoints(toX, toY, toDirection)}
             fill={color}
-            opacity={conn.inactive ? 0.3 : 1}
+            opacity={effectiveOpacity}
             className="drop-shadow-sm"
             filter={conn.highlighted ? `url(#glow-${pathId})` : 'none'}
           />
@@ -368,14 +248,13 @@ export function ConnectionArrows({ connections, positions, particleConfig = DEFA
             <polygon
               points={getArrowPoints(fromX, fromY, getOppositeDirection(fromDirection))}
               fill={color}
-              opacity={conn.inactive ? 0.3 : 1}
+              opacity={effectiveOpacity}
               className="drop-shadow-sm"
             />
           )}
           
-          {/* Connection label with dynamic content */}
-          {conn.label && (() => {
-            // For bidirectional connections, show dynamic label based on animation state
+          {/* Connection label - hide when spotlight dimmed */}
+          {conn.label && effectiveOpacity > 0.5 && (() => {
             let displayLabel: string;
             if (conn.bidirectional && conn.reverseLabel) {
               if (conn.animating) {
@@ -386,14 +265,12 @@ export function ConnectionArrows({ connections, positions, particleConfig = DEFA
                 displayLabel = `${conn.label} ↔ ${conn.reverseLabel}`;
               }
             } else {
-              // Check if there's a reverse connection that's currently animating
               const hasAnimatingReverse = connections.some(
                 other => other.from === conn.to && 
                          other.to === conn.from && 
                          other.animating
               );
               
-              // Don't show label if reverse connection is animating (it will show its own label)
               if (!conn.animating && hasAnimatingReverse) {
                 return null;
               }
@@ -413,13 +290,13 @@ export function ConnectionArrows({ connections, positions, particleConfig = DEFA
                   stroke={color}
                   strokeWidth={conn.highlighted ? 2 : 1.5}
                   className="drop-shadow"
-                  opacity={conn.inactive ? 0.5 : 1}
+                  opacity={effectiveOpacity}
                 />
                 <text
                   textAnchor="middle"
                   dominantBaseline="middle"
                   className="text-[10px] font-medium fill-foreground"
-                  opacity={conn.inactive ? 0.5 : 1}
+                  opacity={effectiveOpacity}
                 >
                   {displayLabel}
                 </text>
@@ -449,7 +326,7 @@ export function ConnectionArrows({ connections, positions, particleConfig = DEFA
         </g>
       );
     }).filter(Boolean);
-  }, [connections, positionMap]);
+  }, [connections, positionMap, particleConfig, hasActiveAnimation]);
 
   return (
     <svg 
