@@ -89,17 +89,16 @@ export function LiveDemoOrdersList() {
 
   useEffect(() => {
     fetchOrders();
-  }, []);
-
-  // Realtime updates for new orders
-  useEffect(() => {
+    
+    // Realtime updates for orders - single subscription
     const channel = supabase
-      .channel('admin-orders')
+      .channel('admin-orders-realtime')
       .on('postgres_changes', {
         event: '*',
         schema: 'public',
         table: 'orders'
       }, () => {
+        // Refetch immediately on any change
         fetchOrders();
       })
       .subscribe();

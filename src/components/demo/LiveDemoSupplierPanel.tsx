@@ -63,10 +63,10 @@ export function LiveDemoSupplierPanel({ soundEnabled, onOrderCreated }: LiveDemo
   const [expandedOrders, setExpandedOrders] = useState<Set<string>>(new Set());
   const [highlightedOrder, setHighlightedOrder] = useState<string | null>(null);
 
-  // Subscribe to realtime updates
+  // Subscribe to realtime updates for orders
   useEffect(() => {
     const channel = supabase
-      .channel('live-demo-orders')
+      .channel('live-demo-supplier-orders')
       .on(
         'postgres_changes',
         {
@@ -75,25 +75,31 @@ export function LiveDemoSupplierPanel({ soundEnabled, onOrderCreated }: LiveDemo
           table: 'orders',
         },
         (payload) => {
-          // Invalidate orders query to refetch
+          // Invalidate orders query to refetch immediately
           queryClient.invalidateQueries({ queryKey: ['orders'] });
           
           if (payload.eventType === 'INSERT') {
             const newOrder = payload.new as any;
-            setHighlightedOrder(newOrder.id);
-            setExpandedOrders(prev => new Set([...prev, newOrder.id]));
-            
-            if (soundEnabled) {
-              const audio = new Audio('/notification.mp3');
-              audio.volume = 0.5;
-              audio.play().catch(() => {});
+            // Only notify for test orders
+            if (newOrder.is_test_order) {
+              setHighlightedOrder(newOrder.id);
+              setExpandedOrders(prev => new Set([...prev, newOrder.id]));
+              
+              if (soundEnabled) {
+                const audio = new Audio('/notification.mp3');
+                audio.volume = 0.5;
+                audio.play().catch(() => {});
+              }
+              
+              toast.success('Neue Bestellung eingegangen!', {
+                description: `Bestellung ${newOrder.order_number}`,
+              });
+              
+              setTimeout(() => setHighlightedOrder(null), 3000);
             }
-            
-            toast.success('Neue Bestellung eingegangen!', {
-              description: `Bestellung ${newOrder.order_number}`,
-            });
-            
-            setTimeout(() => setHighlightedOrder(null), 3000);
+          } else if (payload.eventType === 'UPDATE') {
+            // Refetch to show status changes
+            queryClient.invalidateQueries({ queryKey: ['orders'] });
           }
         }
       )
