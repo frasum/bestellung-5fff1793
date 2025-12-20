@@ -8,11 +8,13 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { useQueryClient } from '@tanstack/react-query';
 
 export default function LiveDemo() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { user, loading } = useAuth();
+  const queryClient = useQueryClient();
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [isResetting, setIsResetting] = useState(false);
@@ -64,6 +66,9 @@ export default function LiveDemo() {
           }
         }
       }
+      
+      // Invalidate cache to refresh UI
+      queryClient.invalidateQueries({ queryKey: ['communication-logs-demo'] });
       
       toast.success('Demo-Daten zurückgesetzt');
     } catch (error) {
