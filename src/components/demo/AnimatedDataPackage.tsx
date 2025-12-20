@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Package, Check, Mail, FileText } from 'lucide-react';
+import { Package, Check, Mail, FileText, Info } from 'lucide-react';
 import { ParticleConfig, DataPackageType, OrderData, DEFAULT_PARTICLE_CONFIG } from './particleConfig';
 
 interface AnimatedDataPackageProps {
@@ -35,6 +35,12 @@ const iconConfig = {
     label: 'Vorbestellung', 
     bgColor: 'bg-orange-500',
     borderColor: 'border-orange-600'
+  },
+  info: { 
+    Icon: Info, 
+    label: 'Bestellinfo', 
+    bgColor: 'bg-slate-500',
+    borderColor: 'border-slate-600'
   },
 };
 

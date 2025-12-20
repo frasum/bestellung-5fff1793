@@ -196,8 +196,8 @@ export function LiveDemoCanvas({ soundEnabled }: LiveDemoCanvasProps) {
           // Direktbestellung von EasyOrder
           { from: 'easyorder', to: 'supplier', dataType: 'order', orderData, delay: 0 },
           { from: 'easyorder', to: 'email', dataType: 'email', orderData, delay: 600 },
-          // Info an Gastro (parallel zur E-Mail)
-          { from: 'easyorder', to: 'gastro', dataType: 'draft', orderData, delay: 800 },
+          // Info an Gastro (parallel zur E-Mail) - zeigt dass Bestellung aufgegeben wurde
+          { from: 'easyorder', to: 'gastro', dataType: 'info', orderData, delay: 800 },
           // Bestätigung geht an EasyOrder zurück
           { from: 'supplier', to: 'easyorder', dataType: 'confirmation', orderData, delay: 2000, reverse: true },
         ]
