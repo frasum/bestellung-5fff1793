@@ -86,26 +86,28 @@ export function LiveDemoCanvas({ soundEnabled }: LiveDemoCanvasProps) {
           { from: 'easyorder', to: 'supplier', label: 'Direktbestellung', color: '#22c55e' },
           { from: 'easyorder', to: 'email', label: 'E-Mail', color: '#8b5cf6' },
           { from: 'easyorder', to: 'gastro', label: 'Entwurf', color: '#f97316', inactive: true, dashed: true },
-          { from: 'gastro', to: 'supplier', label: 'Bestellung', color: '#22c55e' },
+          // Bidirektionale Verbindung: Bestellung → / ← Bestätigung
+          { from: 'gastro', to: 'supplier', label: 'Bestellung', reverseLabel: 'Bestätigung', color: '#22c55e', bidirectional: true },
           { from: 'gastro', to: 'email', label: 'E-Mail', color: '#8b5cf6' },
           { from: 'supplier', to: 'email', label: 'Bestätigung', color: '#22c55e' },
-          { from: 'supplier', to: 'gastro', label: 'Bestätigung', color: '#22c55e' },
           { from: 'supplier', to: 'easyorder', label: 'Bestätigung', color: '#22c55e' },
         ]
       : [
           { from: 'easyorder', to: 'gastro', label: 'Entwurf', color: '#f97316' },
-          { from: 'gastro', to: 'supplier', label: 'Bestellung', color: '#22c55e' },
+          // Bidirektionale Verbindung: Bestellung → / ← Bestätigung
+          { from: 'gastro', to: 'supplier', label: 'Bestellung', reverseLabel: 'Bestätigung', color: '#22c55e', bidirectional: true },
           { from: 'gastro', to: 'email', label: 'E-Mail', color: '#8b5cf6' },
           { from: 'supplier', to: 'email', label: 'Bestätigung', color: '#22c55e' },
-          { from: 'supplier', to: 'gastro', label: 'Bestätigung', color: '#22c55e' },
           { from: 'supplier', to: 'easyorder', label: 'Bestätigung', color: '#22c55e' },
         ];
 
     // Add highlighted and animating state to matching connections
     return baseConnections.map(conn => ({
       ...conn,
-      highlighted: highlightedConnection === `${conn.from}-${conn.to}`,
+      highlighted: highlightedConnection === `${conn.from}-${conn.to}` || 
+                   (conn.bidirectional && highlightedConnection === `${conn.to}-${conn.from}`),
       animating: animatingConnections.has(`${conn.from}-${conn.to}`),
+      reverseAnimating: conn.bidirectional && animatingConnections.has(`${conn.to}-${conn.from}`),
     }));
   }, [isDirectOrder, highlightedConnection, animatingConnections]);
 
