@@ -9,6 +9,7 @@ export interface Connection {
   bidirectional?: boolean;
   dashed?: boolean;
   inactive?: boolean;
+  highlighted?: boolean;
 }
 
 interface ConnectionArrowsProps {
@@ -28,24 +29,19 @@ interface ConnectionPoints {
 }
 
 function getConnectionPoints(from: TilePosition, to: TilePosition): ConnectionPoints {
-  // Calculate centers
   const fromCenterX = from.x + from.width / 2;
   const fromCenterY = from.y + from.height / 2;
   const toCenterX = to.x + to.width / 2;
   const toCenterY = to.y + to.height / 2;
 
-  // Calculate direction vector
   const dx = toCenterX - fromCenterX;
   const dy = toCenterY - fromCenterY;
 
   let fromX: number, fromY: number, toX: number, toY: number;
   let fromDirection: Direction, toDirection: Direction;
 
-  // Determine based on dominant direction
   if (Math.abs(dx) > Math.abs(dy)) {
-    // Horizontal dominant
     if (dx > 0) {
-      // Target is to the right → from right edge to left edge
       fromX = from.x + from.width;
       fromY = from.y + from.height / 2;
       toX = to.x;
@@ -53,7 +49,6 @@ function getConnectionPoints(from: TilePosition, to: TilePosition): ConnectionPo
       fromDirection = 'right';
       toDirection = 'left';
     } else {
-      // Target is to the left → from left edge to right edge
       fromX = from.x;
       fromY = from.y + from.height / 2;
       toX = to.x + to.width;
@@ -62,9 +57,7 @@ function getConnectionPoints(from: TilePosition, to: TilePosition): ConnectionPo
       toDirection = 'right';
     }
   } else {
-    // Vertical dominant
     if (dy > 0) {
-      // Target is below → from bottom edge to top edge
       fromX = from.x + from.width / 2;
       fromY = from.y + from.height;
       toX = to.x + to.width / 2;
@@ -72,7 +65,6 @@ function getConnectionPoints(from: TilePosition, to: TilePosition): ConnectionPo
       fromDirection = 'down';
       toDirection = 'up';
     } else {
-      // Target is above → from top edge to bottom edge
       fromX = from.x + from.width / 2;
       fromY = from.y;
       toX = to.x + to.width / 2;
@@ -87,34 +79,30 @@ function getConnectionPoints(from: TilePosition, to: TilePosition): ConnectionPo
 
 function createPath(points: ConnectionPoints): string {
   const { fromX, fromY, toX, toY, fromDirection } = points;
-  
-  // Calculate control points based on direction
   const isHorizontal = fromDirection === 'left' || fromDirection === 'right';
   
   if (isHorizontal) {
     const deltaX = toX - fromX;
     const controlOffset = Math.min(Math.abs(deltaX) * 0.4, 80);
     const sign = fromDirection === 'right' ? 1 : -1;
-    
     return `M ${fromX} ${fromY} C ${fromX + controlOffset * sign} ${fromY}, ${toX - controlOffset * sign} ${toY}, ${toX} ${toY}`;
   } else {
     const deltaY = toY - fromY;
     const controlOffset = Math.min(Math.abs(deltaY) * 0.4, 80);
     const sign = fromDirection === 'down' ? 1 : -1;
-    
     return `M ${fromX} ${fromY} C ${fromX} ${fromY + controlOffset * sign}, ${toX} ${toY - controlOffset * sign}, ${toX} ${toY}`;
   }
 }
 
 function getArrowPoints(x: number, y: number, direction: Direction, size: number = 8): string {
   switch (direction) {
-    case 'left': // Arrow pointing left (entering from right)
+    case 'left':
       return `${x + size},${y - size * 0.625} ${x},${y} ${x + size},${y + size * 0.625}`;
-    case 'right': // Arrow pointing right (entering from left)
+    case 'right':
       return `${x - size},${y - size * 0.625} ${x},${y} ${x - size},${y + size * 0.625}`;
-    case 'up': // Arrow pointing up (entering from below)
+    case 'up':
       return `${x - size * 0.625},${y + size} ${x},${y} ${x + size * 0.625},${y + size}`;
-    case 'down': // Arrow pointing down (entering from above)
+    case 'down':
       return `${x - size * 0.625},${y - size} ${x},${y} ${x + size * 0.625},${y - size}`;
   }
 }
@@ -143,21 +131,32 @@ export function ConnectionArrows({ connections, positions }: ConnectionArrowsPro
       
       if (!fromPos || !toPos) return null;
 
-      // Get dynamic connection points
       const points = getConnectionPoints(fromPos, toPos);
       const { fromX, fromY, toX, toY, fromDirection, toDirection } = points;
-      
-      // Create curved path
       const path = createPath(points);
+      const pathId = `path-${conn.from}-${conn.to}-${index}`;
       
-      // Calculate midpoint for label
       const midX = (fromX + toX) / 2;
       const midY = (fromY + toY) / 2;
 
       const color = conn.color || '#10b981';
+      const isActive = !conn.inactive;
 
       return (
         <g key={`${conn.from}-${conn.to}-${index}`}>
+          {/* Glow filter for highlighted connections */}
+          {conn.highlighted && (
+            <defs>
+              <filter id={`glow-${pathId}`} x="-50%" y="-50%" width="200%" height="200%">
+                <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
+                <feMerge>
+                  <feMergeNode in="coloredBlur"/>
+                  <feMergeNode in="SourceGraphic"/>
+                </feMerge>
+              </filter>
+            </defs>
+          )}
+
           {/* Shadow path for depth */}
           <path
             d={path}
@@ -168,26 +167,47 @@ export function ConnectionArrows({ connections, positions }: ConnectionArrowsPro
             transform="translate(2, 2)"
           />
           
-          {/* Main path with gradient */}
+          {/* Main path */}
           <path
+            id={pathId}
             d={path}
             fill="none"
             stroke={color}
-            strokeWidth={conn.inactive ? 1.5 : 2.5}
+            strokeWidth={conn.inactive ? 1.5 : conn.highlighted ? 3.5 : 2.5}
             strokeLinecap="round"
             className="connection-path"
             opacity={conn.inactive ? 0.3 : 1}
+            filter={conn.highlighted ? `url(#glow-${pathId})` : 'none'}
             style={conn.bidirectional ? {} : {
               strokeDasharray: conn.dashed ? '4, 8' : '8, 4',
               animation: conn.inactive ? 'none' : 'dashFlow 0.8s linear infinite',
             }}
           />
+
+          {/* Animated particle along path (only for active connections) */}
+          {isActive && (
+            <>
+              <circle r={4} fill={color} opacity={0.9}>
+                <animateMotion dur="2s" repeatCount="indefinite">
+                  <mpath href={`#${pathId}`} />
+                </animateMotion>
+              </circle>
+              {/* Second particle offset */}
+              <circle r={3} fill={color} opacity={0.6}>
+                <animateMotion dur="2s" repeatCount="indefinite" begin="1s">
+                  <mpath href={`#${pathId}`} />
+                </animateMotion>
+              </circle>
+            </>
+          )}
           
           {/* Arrow head at destination */}
           <polygon
             points={getArrowPoints(toX, toY, toDirection)}
             fill={color}
+            opacity={conn.inactive ? 0.3 : 1}
             className="drop-shadow-sm"
+            filter={conn.highlighted ? `url(#glow-${pathId})` : 'none'}
           />
           
           {/* Arrow head at source (for bidirectional) */}
@@ -195,6 +215,7 @@ export function ConnectionArrows({ connections, positions }: ConnectionArrowsPro
             <polygon
               points={getArrowPoints(fromX, fromY, getOppositeDirection(fromDirection))}
               fill={color}
+              opacity={conn.inactive ? 0.3 : 1}
               className="drop-shadow-sm"
             />
           )}
@@ -210,17 +231,39 @@ export function ConnectionArrows({ connections, positions }: ConnectionArrowsPro
                 rx={10}
                 fill="hsl(var(--card))"
                 stroke={color}
-                strokeWidth={1.5}
+                strokeWidth={conn.highlighted ? 2 : 1.5}
                 className="drop-shadow"
+                opacity={conn.inactive ? 0.5 : 1}
               />
               <text
                 textAnchor="middle"
                 dominantBaseline="middle"
                 className="text-[10px] font-medium fill-foreground"
+                opacity={conn.inactive ? 0.5 : 1}
               >
                 {conn.label}
               </text>
             </g>
+          )}
+
+          {/* Pulse effect for highlighted connections */}
+          {conn.highlighted && (
+            <circle cx={toX} cy={toY} r={12} fill={color} opacity={0}>
+              <animate
+                attributeName="r"
+                from="8"
+                to="24"
+                dur="0.8s"
+                repeatCount="3"
+              />
+              <animate
+                attributeName="opacity"
+                from="0.6"
+                to="0"
+                dur="0.8s"
+                repeatCount="3"
+              />
+            </circle>
           )}
         </g>
       );

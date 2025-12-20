@@ -17,9 +17,10 @@ import { cn } from '@/lib/utils';
 interface LiveDemoEasyOrderPanelProps {
   soundEnabled?: boolean;
   onDirectOrderChange?: (isDirectOrder: boolean) => void;
+  onOrderCreated?: (from: string, to: string) => void;
 }
 
-export function LiveDemoEasyOrderPanel({ soundEnabled, onDirectOrderChange }: LiveDemoEasyOrderPanelProps) {
+export function LiveDemoEasyOrderPanel({ soundEnabled, onDirectOrderChange, onOrderCreated }: LiveDemoEasyOrderPanelProps) {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const { data: articles = [] } = useArticles();
@@ -224,6 +225,10 @@ export function LiveDemoEasyOrderPanel({ soundEnabled, onDirectOrderChange }: Li
           audio.play().catch(() => {});
         }
 
+        // Trigger connection highlight
+        onOrderCreated?.('easyorder', 'supplier');
+        onOrderCreated?.('easyorder', 'email');
+
         toast.success('Direktbestellung gesendet!', {
           description: 'Bestellung direkt an Lieferant übermittelt'
         });
@@ -240,6 +245,9 @@ export function LiveDemoEasyOrderPanel({ soundEnabled, onDirectOrderChange }: Li
           const audio = new Audio('/notification.mp3');
           audio.play().catch(() => {});
         }
+
+        // Trigger connection highlight
+        onOrderCreated?.('easyorder', 'gastro');
 
         toast.success('Vorbestellung gesendet!', {
           description: 'Warte auf Freigabe durch Admin'

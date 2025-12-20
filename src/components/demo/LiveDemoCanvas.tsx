@@ -58,14 +58,12 @@ export function LiveDemoCanvas({ soundEnabled }: LiveDemoCanvasProps) {
     if (saved) {
       try {
         const parsed = JSON.parse(saved) as TilePosition[];
-        // Validate that all required tile IDs exist
         const requiredIds = defaultPositions.map(p => p.id);
         const savedIds = parsed.map(p => p.id);
         const allIdsPresent = requiredIds.every(id => savedIds.includes(id));
         if (allIdsPresent) {
           return parsed;
         }
-        // If IDs don't match (e.g. after restructure), use defaults
         return defaultPositions;
       } catch {
         return defaultPositions;
@@ -75,24 +73,30 @@ export function LiveDemoCanvas({ soundEnabled }: LiveDemoCanvasProps) {
   });
 
   const [isDirectOrder, setIsDirectOrder] = useState(false);
+  const [highlightedConnection, setHighlightedConnection] = useState<string | null>(null);
 
   // Dynamic connections based on direct order mode
   const connections = useMemo((): Connection[] => {
-    if (isDirectOrder) {
-      return [
-        { from: 'easyorder', to: 'supplier', label: 'Direktbestellung', color: '#22c55e' },
-        { from: 'easyorder', to: 'email', label: 'E-Mail', color: '#8b5cf6' },
-        { from: 'easyorder', to: 'gastro', label: 'Entwurf', color: '#f97316', inactive: true, dashed: true },
-        { from: 'gastro', to: 'supplier', label: 'Bestellung', color: '#22c55e' },
-        { from: 'gastro', to: 'email', label: 'E-Mail', color: '#8b5cf6' },
-      ];
-    }
-    return [
-      { from: 'easyorder', to: 'gastro', label: 'Entwurf', color: '#f97316' },
-      { from: 'gastro', to: 'supplier', label: 'Bestellung', color: '#22c55e' },
-      { from: 'gastro', to: 'email', label: 'E-Mail', color: '#8b5cf6' },
-    ];
-  }, [isDirectOrder]);
+    const baseConnections: Connection[] = isDirectOrder
+      ? [
+          { from: 'easyorder', to: 'supplier', label: 'Direktbestellung', color: '#22c55e' },
+          { from: 'easyorder', to: 'email', label: 'E-Mail', color: '#8b5cf6' },
+          { from: 'easyorder', to: 'gastro', label: 'Entwurf', color: '#f97316', inactive: true, dashed: true },
+          { from: 'gastro', to: 'supplier', label: 'Bestellung', color: '#22c55e' },
+          { from: 'gastro', to: 'email', label: 'E-Mail', color: '#8b5cf6' },
+        ]
+      : [
+          { from: 'easyorder', to: 'gastro', label: 'Entwurf', color: '#f97316' },
+          { from: 'gastro', to: 'supplier', label: 'Bestellung', color: '#22c55e' },
+          { from: 'gastro', to: 'email', label: 'E-Mail', color: '#8b5cf6' },
+        ];
+
+    // Add highlighted state to matching connections
+    return baseConnections.map(conn => ({
+      ...conn,
+      highlighted: highlightedConnection === `${conn.from}-${conn.to}`,
+    }));
+  }, [isDirectOrder, highlightedConnection]);
 
   // Save positions to localStorage
   useEffect(() => {
@@ -124,6 +128,12 @@ export function LiveDemoCanvas({ soundEnabled }: LiveDemoCanvasProps) {
     setIsDirectOrder(value);
   }, []);
 
+  // Trigger highlight when order is created
+  const handleOrderCreated = useCallback((from: string, to: string) => {
+    const connectionId = `${from}-${to}`;
+    setHighlightedConnection(connectionId);
+    setTimeout(() => setHighlightedConnection(null), 2400);
+  }, []);
   return (
     <div className="relative flex-1 bg-muted/30 overflow-hidden">
       {/* Grid Pattern Background */}
@@ -177,7 +187,11 @@ export function LiveDemoCanvas({ soundEnabled }: LiveDemoCanvasProps) {
             borderColor={effectiveBorderColor}
           >
             {id === 'easyorder' ? (
-              <LiveDemoEasyOrderPanel soundEnabled={soundEnabled} onDirectOrderChange={handleDirectOrderChange} />
+              <LiveDemoEasyOrderPanel 
+                soundEnabled={soundEnabled} 
+                onDirectOrderChange={handleDirectOrderChange}
+                onOrderCreated={handleOrderCreated}
+              />
             ) : (
               <Component soundEnabled={soundEnabled} />
             )}
