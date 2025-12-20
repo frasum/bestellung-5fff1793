@@ -103,8 +103,13 @@ export function LiveDemoEmailPanel({ soundEnabled }: LiveDemoEmailPanelProps) {
         (payload) => {
           const newEmail = payload.new as CommunicationLog;
           
-          // Invalidate query to refetch
-          queryClient.invalidateQueries({ queryKey: ['communication-logs-demo'] });
+          // Immediately add new email to the cache
+          queryClient.setQueryData(['communication-logs-demo'], (oldData: CommunicationLog[] | undefined) => {
+            if (!oldData) return [newEmail];
+            // Add to beginning and avoid duplicates
+            if (oldData.some(e => e.id === newEmail.id)) return oldData;
+            return [newEmail, ...oldData];
+          });
           
           // Highlight new email
           setHighlightedEmail(newEmail.id);
@@ -129,8 +134,12 @@ export function LiveDemoEmailPanel({ soundEnabled }: LiveDemoEmailPanelProps) {
           schema: 'public',
           table: 'communication_logs',
         },
-        () => {
-          queryClient.invalidateQueries({ queryKey: ['communication-logs-demo'] });
+        (payload) => {
+          const updatedEmail = payload.new as CommunicationLog;
+          queryClient.setQueryData(['communication-logs-demo'], (oldData: CommunicationLog[] | undefined) => {
+            if (!oldData) return oldData;
+            return oldData.map(e => e.id === updatedEmail.id ? updatedEmail : e);
+          });
         }
       )
       .on(
@@ -140,8 +149,12 @@ export function LiveDemoEmailPanel({ soundEnabled }: LiveDemoEmailPanelProps) {
           schema: 'public',
           table: 'communication_logs',
         },
-        () => {
-          queryClient.invalidateQueries({ queryKey: ['communication-logs-demo'] });
+        (payload) => {
+          const deletedId = (payload.old as any).id;
+          queryClient.setQueryData(['communication-logs-demo'], (oldData: CommunicationLog[] | undefined) => {
+            if (!oldData) return oldData;
+            return oldData.filter(e => e.id !== deletedId);
+          });
         }
       )
       .subscribe();
