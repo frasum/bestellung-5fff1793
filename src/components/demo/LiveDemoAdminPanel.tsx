@@ -332,20 +332,6 @@ export function LiveDemoAdminPanel({ soundEnabled, onOrderCreated }: LiveDemoAdm
 
   return (
     <div className="h-full flex flex-col bg-background">
-      {/* Panel Header */}
-      <div className="flex items-center justify-between px-3 py-2.5 bg-pink-500/5 border-b">
-        <div className="flex items-center gap-2">
-          <Shield className="h-4 w-4 text-pink-600" />
-          <div>
-            <span className="font-semibold text-sm text-pink-700 dark:text-pink-300">Admin</span>
-            <p className="text-xs text-muted-foreground">Freigabe & Kontrolle</p>
-          </div>
-        </div>
-        {pendingCount > 0 && (
-          <Badge variant="destructive" className="animate-pulse">{pendingCount}</Badge>
-        )}
-      </div>
-
       {/* Tabs */}
       <Tabs defaultValue="drafts" className="flex-1 flex flex-col overflow-hidden">
         <TabsList className="grid w-full grid-cols-2 mx-2 mt-2" style={{ width: 'calc(100% - 1rem)' }}>
