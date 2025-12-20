@@ -8,7 +8,7 @@ import { LiveDemoEasyOrderPanel } from './LiveDemoEasyOrderPanel';
 import { LiveDemoSupplierPanel } from './LiveDemoSupplierPanel';
 import { LiveDemoEmailPanel } from './LiveDemoEmailPanel';
 import { ParticleConfigPanel } from './ParticleConfigPanel';
-import { ParticleConfig, DEFAULT_PARTICLE_CONFIG } from './particleConfig';
+import { ParticleConfig, DEFAULT_PARTICLE_CONFIG, DataPackageType, OrderData } from './particleConfig';
 
 interface LiveDemoCanvasProps {
   soundEnabled: boolean;
@@ -54,6 +54,14 @@ const tileConfig = [
   },
 ];
 
+interface AnimationStep {
+  from: string;
+  to: string;
+  dataType: DataPackageType;
+  orderData?: OrderData;
+  reverse?: boolean;
+}
+
 export function LiveDemoCanvas({ soundEnabled }: LiveDemoCanvasProps) {
   const [positions, setPositions] = useState<TilePosition[]>(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
@@ -76,7 +84,7 @@ export function LiveDemoCanvas({ soundEnabled }: LiveDemoCanvasProps) {
 
   const [isDirectOrder, setIsDirectOrder] = useState(false);
   const [highlightedConnection, setHighlightedConnection] = useState<string | null>(null);
-  const [animatingConnections, setAnimatingConnections] = useState<Set<string>>(new Set());
+  const [animatingConnections, setAnimatingConnections] = useState<Map<string, { dataType: DataPackageType; orderData?: OrderData; reverse?: boolean }>>(new Map());
   const [particleConfig, setParticleConfig] = useState<ParticleConfig>(DEFAULT_PARTICLE_CONFIG);
 
   // Dynamic connections based on direct order mode
@@ -85,27 +93,36 @@ export function LiveDemoCanvas({ soundEnabled }: LiveDemoCanvasProps) {
       ? [
           { from: 'easyorder', to: 'supplier', label: 'Direktbestellung', color: '#22c55e' },
           { from: 'easyorder', to: 'email', label: 'E-Mail', color: '#8b5cf6' },
-          // Bidirektionale Verbindung: Bestellung → / ← Bestätigung
           { from: 'gastro', to: 'supplier', label: 'Bestellung', reverseLabel: 'Bestätigung', color: '#22c55e', bidirectional: true },
           { from: 'gastro', to: 'email', label: 'E-Mail', color: '#8b5cf6' },
           { from: 'supplier', to: 'email', label: 'Bestätigung', color: '#22c55e' },
         ]
       : [
           { from: 'easyorder', to: 'gastro', label: 'Entwurf', color: '#f97316' },
-          // Bidirektionale Verbindung: Bestellung → / ← Bestätigung
           { from: 'gastro', to: 'supplier', label: 'Bestellung', reverseLabel: 'Bestätigung', color: '#22c55e', bidirectional: true },
           { from: 'gastro', to: 'email', label: 'E-Mail', color: '#8b5cf6' },
           { from: 'supplier', to: 'email', label: 'Bestätigung', color: '#22c55e' },
         ];
 
-    // Add highlighted and animating state to matching connections
-    return baseConnections.map(conn => ({
-      ...conn,
-      highlighted: highlightedConnection === `${conn.from}-${conn.to}` || 
-                   (conn.bidirectional && highlightedConnection === `${conn.to}-${conn.from}`),
-      animating: animatingConnections.has(`${conn.from}-${conn.to}`),
-      reverseAnimating: conn.bidirectional && animatingConnections.has(`${conn.to}-${conn.from}`),
-    }));
+    // Add highlighted, animating state, and data package info to matching connections
+    return baseConnections.map(conn => {
+      const forwardKey = `${conn.from}-${conn.to}`;
+      const reverseKey = `${conn.to}-${conn.from}`;
+      const forwardAnim = animatingConnections.get(forwardKey);
+      const reverseAnim = animatingConnections.get(reverseKey);
+
+      return {
+        ...conn,
+        highlighted: highlightedConnection === forwardKey || 
+                     (conn.bidirectional && highlightedConnection === reverseKey),
+        animating: !!forwardAnim,
+        reverseAnimating: conn.bidirectional && !!reverseAnim,
+        dataType: forwardAnim?.dataType,
+        orderData: forwardAnim?.orderData,
+        reverseDataType: reverseAnim?.dataType,
+        reverseOrderData: reverseAnim?.orderData,
+      };
+    });
   }, [isDirectOrder, highlightedConnection, animatingConnections]);
 
   // Save positions to localStorage
@@ -138,24 +155,77 @@ export function LiveDemoCanvas({ soundEnabled }: LiveDemoCanvasProps) {
     setIsDirectOrder(value);
   }, []);
 
-  // Trigger highlight and animation when order is created
-  const handleOrderCreated = useCallback((from: string, to: string) => {
+  // Start animation for a single connection with data
+  const startAnimation = useCallback((from: string, to: string, dataType: DataPackageType, orderData?: OrderData, reverse?: boolean) => {
     const connectionId = `${from}-${to}`;
     
     // Highlight the connection
     setHighlightedConnection(connectionId);
-    setTimeout(() => setHighlightedConnection(null), 2400);
+    setTimeout(() => setHighlightedConnection(null), particleConfig.duration + 200);
     
-    // Start particle animation - use current particleConfig duration
-    setAnimatingConnections(prev => new Set(prev).add(connectionId));
+    // Start data package animation
+    setAnimatingConnections(prev => {
+      const next = new Map(prev);
+      next.set(connectionId, { dataType, orderData, reverse });
+      return next;
+    });
+    
     setTimeout(() => {
       setAnimatingConnections(prev => {
-        const next = new Set(prev);
+        const next = new Map(prev);
         next.delete(connectionId);
         return next;
       });
-    }, particleConfig.duration + 100); // Add small buffer for animation completion
+    }, particleConfig.duration + 100);
   }, [particleConfig.duration]);
+
+  // Step-by-step order sequence animation
+  const handleOrderSequence = useCallback((orderData: OrderData, source: 'easyorder' | 'gastro') => {
+    const steps: (AnimationStep & { delay: number })[] = isDirectOrder && source === 'easyorder'
+      ? [
+          // Direct order from EasyOrder
+          { from: 'easyorder', to: 'supplier', dataType: 'order', orderData, delay: 0 },
+          { from: 'easyorder', to: 'email', dataType: 'email', orderData, delay: 600 },
+          { from: 'supplier', to: 'email', dataType: 'confirmation', orderData, delay: 2000 },
+        ]
+      : source === 'easyorder'
+      ? [
+          // EasyOrder creates draft for approval
+          { from: 'easyorder', to: 'gastro', dataType: 'draft', orderData, delay: 0 },
+        ]
+      : [
+          // Gastro sends approved order
+          { from: 'gastro', to: 'supplier', dataType: 'order', orderData, delay: 0 },
+          { from: 'gastro', to: 'email', dataType: 'email', orderData, delay: 400 },
+          { from: 'supplier', to: 'gastro', dataType: 'confirmation', orderData, delay: 2200, reverse: true },
+          { from: 'supplier', to: 'email', dataType: 'confirmation', orderData, delay: 2600 },
+        ];
+
+    steps.forEach(step => {
+      setTimeout(() => {
+        startAnimation(step.from, step.to, step.dataType, step.orderData, step.reverse);
+      }, step.delay);
+    });
+  }, [isDirectOrder, startAnimation]);
+
+  // Legacy handler for simple order created events
+  const handleOrderCreated = useCallback((from: string, to: string) => {
+    // Determine data type based on connection
+    let dataType: DataPackageType = 'order';
+    if (from === 'easyorder' && to === 'gastro') dataType = 'draft';
+    else if (to === 'email') dataType = 'email';
+    else if (from === 'supplier') dataType = 'confirmation';
+    
+    // Create sample order data
+    const sampleData: OrderData = {
+      supplier: from === 'easyorder' ? 'Diverse' : 'Lieferant',
+      itemCount: Math.floor(Math.random() * 5) + 1,
+      total: `€${(Math.random() * 100 + 20).toFixed(2)}`,
+    };
+
+    startAnimation(from, to, dataType, sampleData);
+  }, [startAnimation]);
+
   return (
     <div className="relative flex-1 bg-muted/30 overflow-hidden">
       {/* Grid Pattern Background */}
@@ -192,7 +262,6 @@ export function LiveDemoCanvas({ soundEnabled }: LiveDemoCanvasProps) {
         const position = positions.find(p => p.id === id);
         if (!position) return null;
 
-        // Override EasyOrder tile styling when direct order is active
         const effectiveBorderColor = id === 'easyorder' && isDirectOrder 
           ? 'bg-green-500/10 border-b-green-500/30'
           : borderColor;

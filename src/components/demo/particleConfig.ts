@@ -1,3 +1,11 @@
+export type DataPackageType = 'order' | 'confirmation' | 'email' | 'draft';
+
+export interface OrderData {
+  supplier?: string;
+  itemCount?: number;
+  total?: string;
+}
+
 export interface ParticleConfig {
   // Animation
   duration: number;           // ms - Geschwindigkeit der Animation
@@ -21,6 +29,12 @@ export interface ParticleConfig {
   trail1Opacity: number;      // 0-1 - Transparenz Trail 1
   trail2Opacity: number;      // 0-1 - Transparenz Trail 2
   coreOpacity: number;        // 0-1 - Transparenz des Kerns
+
+  // Data Package (new)
+  showDataIcons: boolean;     // Zeige Daten-Icons statt Partikel
+  iconSize: number;           // px - Größe der Icons
+  showInfoPopup: boolean;     // Zeige Info-Popup beim Icon
+  popupWidth: number;         // px - Breite des Popups
 }
 
 export const DEFAULT_PARTICLE_CONFIG: ParticleConfig = {
@@ -37,6 +51,11 @@ export const DEFAULT_PARTICLE_CONFIG: ParticleConfig = {
   trail1Opacity: 0.3,
   trail2Opacity: 0.5,
   coreOpacity: 0.8,
+  // Data Package defaults
+  showDataIcons: true,
+  iconSize: 40,
+  showInfoPopup: true,
+  popupWidth: 140,
 };
 
 // Preset configurations for different effects
@@ -59,6 +78,7 @@ export const PARTICLE_PRESETS = {
     trail1Size: 14,
     trail2Size: 22,
     strokeWidth: 6,
+    iconSize: 48,
   },
   subtle: {
     ...DEFAULT_PARTICLE_CONFIG,
@@ -69,5 +89,7 @@ export const PARTICLE_PRESETS = {
     strokeWidth: 3,
     glowBlur: 5,
     pulseIntensity: 0.08,
+    iconSize: 32,
+    showInfoPopup: false,
   },
 } as const;
