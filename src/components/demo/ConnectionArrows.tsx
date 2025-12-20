@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { TilePosition } from './DraggableTile';
 
 export interface Connection {
@@ -11,6 +11,154 @@ export interface Connection {
   inactive?: boolean;
   highlighted?: boolean;
   animating?: boolean;
+}
+
+// Animated particle component using JavaScript animation instead of SVG animateMotion
+function AnimatedParticle({ 
+  pathId, 
+  color, 
+  duration = 1200 
+}: { 
+  pathId: string; 
+  color: string; 
+  duration?: number;
+}) {
+  const [position, setPosition] = useState<{ x: number; y: number } | null>(null);
+  const [opacity, setOpacity] = useState(1);
+  const [scale, setScale] = useState(1);
+  const [trailPositions, setTrailPositions] = useState<{ x: number; y: number }[]>([]);
+
+  useEffect(() => {
+    // Small delay to ensure the path is rendered
+    const initTimeout = setTimeout(() => {
+      const pathElement = document.getElementById(pathId);
+      if (!pathElement || !(pathElement instanceof SVGPathElement)) {
+        console.warn('AnimatedParticle: Path not found or not SVGPathElement:', pathId);
+        return;
+      }
+      const path = pathElement;
+      if (!path) {
+        console.warn('AnimatedParticle: Path not found:', pathId);
+        return;
+      }
+
+      const totalLength = path.getTotalLength();
+      const startTime = performance.now();
+      let animationFrame: number;
+      
+      // Initialize position at start
+      const startPoint = path.getPointAtLength(0);
+      setPosition({ x: startPoint.x, y: startPoint.y });
+
+      function animate() {
+        const elapsed = performance.now() - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        
+        // Easing function for smoother animation
+        const easedProgress = 1 - Math.pow(1 - progress, 3); // ease-out cubic
+        
+        const point = path!.getPointAtLength(totalLength * easedProgress);
+        setPosition({ x: point.x, y: point.y });
+        
+        // Trail positions (delayed versions of current position)
+        const trail1Progress = Math.max(0, easedProgress - 0.08);
+        const trail2Progress = Math.max(0, easedProgress - 0.16);
+        const trail1 = path!.getPointAtLength(totalLength * trail1Progress);
+        const trail2 = path!.getPointAtLength(totalLength * trail2Progress);
+        setTrailPositions([
+          { x: trail2.x, y: trail2.y },
+          { x: trail1.x, y: trail1.y }
+        ]);
+        
+        // Pulsating scale effect
+        const pulsePhase = (elapsed / 150) % (2 * Math.PI);
+        setScale(1 + 0.15 * Math.sin(pulsePhase));
+        
+        // Fade out in the last 15%
+        if (progress > 0.85) {
+          setOpacity(1 - ((progress - 0.85) / 0.15));
+        }
+        
+        if (progress < 1) {
+          animationFrame = requestAnimationFrame(animate);
+        }
+      }
+
+      animationFrame = requestAnimationFrame(animate);
+
+      return () => {
+        if (animationFrame) {
+          cancelAnimationFrame(animationFrame);
+        }
+      };
+    }, 50); // Small delay to ensure DOM is ready
+
+    return () => clearTimeout(initTimeout);
+  }, [pathId, duration]);
+
+  if (!position) return null;
+
+  return (
+    <g style={{ opacity }}>
+      {/* Glow filter */}
+      <defs>
+        <filter id={`particle-glow-js-${pathId}`} x="-200%" y="-200%" width="500%" height="500%">
+          <feGaussianBlur stdDeviation="10" result="coloredBlur"/>
+          <feMerge>
+            <feMergeNode in="coloredBlur"/>
+            <feMergeNode in="coloredBlur"/>
+            <feMergeNode in="coloredBlur"/>
+            <feMergeNode in="SourceGraphic"/>
+          </feMerge>
+        </filter>
+      </defs>
+
+      {/* Trail particle 1 - smallest */}
+      {trailPositions[0] && (
+        <circle
+          cx={trailPositions[0].x}
+          cy={trailPositions[0].y}
+          r={10}
+          fill={color}
+          opacity={0.3}
+        />
+      )}
+      
+      {/* Trail particle 2 - medium */}
+      {trailPositions[1] && (
+        <circle
+          cx={trailPositions[1].x}
+          cy={trailPositions[1].y}
+          r={16}
+          fill={color}
+          opacity={0.5}
+        />
+      )}
+
+      {/* Main particle - large with white border and glow */}
+      <circle
+        cx={position.x}
+        cy={position.y}
+        r={24 * scale}
+        fill={color}
+        stroke="white"
+        strokeWidth={5}
+        filter={`url(#particle-glow-js-${pathId})`}
+        style={{ 
+          filter: `url(#particle-glow-js-${pathId}) drop-shadow(0 0 20px ${color})` 
+        }}
+      />
+      
+      {/* Inner bright core */}
+      <circle
+        cx={position.x}
+        cy={position.y}
+        r={10 * scale}
+        fill="white"
+        opacity={0.8}
+      />
+    </g>
+  );
 }
 
 interface ConnectionArrowsProps {
@@ -185,79 +333,9 @@ export function ConnectionArrows({ connections, positions }: ConnectionArrowsPro
             }}
           />
 
-          {/* Animated particle with trail effect - only when animating is true */}
+          {/* Animated particle using JavaScript animation */}
           {conn.animating && (
-            <g>
-              {/* Glow filter for particle */}
-              <defs>
-                <filter id={`particle-glow-${pathId}`} x="-100%" y="-100%" width="300%" height="300%">
-                  <feGaussianBlur stdDeviation="8" result="coloredBlur"/>
-                  <feMerge>
-                    <feMergeNode in="coloredBlur"/>
-                    <feMergeNode in="coloredBlur"/>
-                    <feMergeNode in="SourceGraphic"/>
-                  </feMerge>
-                </filter>
-              </defs>
-              
-              {/* Trail particle 1 - smallest, most delayed */}
-              <circle r={8} fill={color} opacity={0.25}>
-                <animateMotion dur="1.2s" begin="0.18s" repeatCount="1" fill="freeze">
-                  <mpath href={`#${pathId}`} />
-                </animateMotion>
-                <animate
-                  attributeName="opacity"
-                  values="0.25;0.25;0"
-                  keyTimes="0;0.7;1"
-                  dur="1.2s"
-                  begin="0.18s"
-                  fill="freeze"
-                />
-              </circle>
-              
-              {/* Trail particle 2 - medium */}
-              <circle r={12} fill={color} opacity={0.45}>
-                <animateMotion dur="1.2s" begin="0.1s" repeatCount="1" fill="freeze">
-                  <mpath href={`#${pathId}`} />
-                </animateMotion>
-                <animate
-                  attributeName="opacity"
-                  values="0.45;0.45;0"
-                  keyTimes="0;0.75;1"
-                  dur="1.2s"
-                  begin="0.1s"
-                  fill="freeze"
-                />
-              </circle>
-              
-              {/* Main particle - large with white border and glow */}
-              <circle 
-                r={18} 
-                fill={color} 
-                stroke="white" 
-                strokeWidth={4}
-                filter={`url(#particle-glow-${pathId})`}
-              >
-                <animateMotion dur="1.2s" repeatCount="1" fill="freeze">
-                  <mpath href={`#${pathId}`} />
-                </animateMotion>
-                {/* Pulsating effect */}
-                <animate
-                  attributeName="r"
-                  values="16;22;16"
-                  dur="0.3s"
-                  repeatCount="4"
-                />
-                {/* Fade out at end */}
-                <animate
-                  attributeName="opacity"
-                  values="1;1;0"
-                  keyTimes="0;0.85;1"
-                  dur="1.2s"
-                  fill="freeze"
-                />
-              </circle>
-            </g>
+            <AnimatedParticle pathId={pathId} color={color} duration={1500} />
           )}
           
           {/* Arrow head at destination */}
