@@ -138,27 +138,39 @@ export function LiveDemoAdminPanel({ soundEnabled, onOrderCreated }: LiveDemoAdm
     
     // Realtime subscription for drafts - single consolidated subscription
     const channel = supabase
-      .channel('admin-drafts-realtime')
+      .channel('admin-drafts-realtime-' + Date.now())
       .on('postgres_changes', {
-        event: '*',
+        event: 'INSERT',
         schema: 'public',
         table: 'cart_drafts'
       }, (payload) => {
-        // Immediately refetch on any change
-        fetchDrafts();
-        
-        if (payload.eventType === 'INSERT') {
-          const newDraft = payload.new as any;
-          if (newDraft.name?.startsWith('EasyOrder:')) {
-            if (soundEnabled) {
-              const audio = new Audio('/notification.mp3');
-              audio.play().catch(() => {});
-            }
-            toast.info('Neue Vorbestellung eingegangen!', {
-              description: newDraft.name.replace('EasyOrder: ', '')
-            });
+        const newDraft = payload.new as any;
+        if (newDraft.name?.startsWith('EasyOrder:')) {
+          // Immediately refetch to get full draft with items
+          fetchDrafts();
+          
+          if (soundEnabled) {
+            const audio = new Audio('/notification.mp3');
+            audio.play().catch(() => {});
           }
+          toast.info('Neue Vorbestellung eingegangen!', {
+            description: newDraft.name.replace('EasyOrder: ', '')
+          });
         }
+      })
+      .on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'cart_drafts'
+      }, () => {
+        fetchDrafts();
+      })
+      .on('postgres_changes', {
+        event: 'DELETE',
+        schema: 'public',
+        table: 'cart_drafts'
+      }, () => {
+        fetchDrafts();
       })
       .on('postgres_changes', {
         event: '*',
@@ -176,7 +188,9 @@ export function LiveDemoAdminPanel({ soundEnabled, onOrderCreated }: LiveDemoAdm
         // Refetch orders count when orders change
         fetchOrdersCount();
       })
-      .subscribe();
+      .subscribe((status) => {
+        console.log('Admin drafts realtime status:', status);
+      });
 
     return () => {
       supabase.removeChannel(channel);
