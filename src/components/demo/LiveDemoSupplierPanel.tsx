@@ -36,9 +36,10 @@ const statusConfig: Record<string, { label: string; icon: typeof Clock; color: s
 
 interface LiveDemoSupplierPanelProps {
   soundEnabled: boolean;
+  onOrderCreated?: (from: string, to: string) => void;
 }
 
-export function LiveDemoSupplierPanel({ soundEnabled }: LiveDemoSupplierPanelProps) {
+export function LiveDemoSupplierPanel({ soundEnabled, onOrderCreated }: LiveDemoSupplierPanelProps) {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const { data: orders = [], isLoading: ordersLoading } = useOrders();
@@ -120,24 +121,74 @@ export function LiveDemoSupplierPanel({ soundEnabled }: LiveDemoSupplierPanelPro
     });
   };
 
-  // Vereinfachter 2-Stufen-Workflow für Demo
+  // Vereinfachter 1-Stufen-Workflow für Demo: Nur Bestätigen
   const getNextStatus = (currentStatus: string): OrderStatus | null => {
     if (currentStatus === 'pending') return 'confirmed';
-    if (currentStatus === 'confirmed') return 'delivered';
-    return null;
+    return null; // Nach Bestätigung kein weiterer Schritt
   };
 
   // Dynamische Button-Beschriftung
   const getActionLabel = (nextStatus: OrderStatus): string => {
-    if (nextStatus === 'confirmed') return 'Bestellung annehmen';
-    if (nextStatus === 'delivered') return 'Geliefert setzen';
+    if (nextStatus === 'confirmed') return 'Bestellung bestätigen';
     return `${statusConfig[nextStatus].label} setzen`;
   };
 
-  const handleUpdateStatus = async (orderId: string, newStatus: OrderStatus) => {
+  // Bestätigungs-E-Mail HTML generieren
+  const generateConfirmationEmailHtml = (order: any, supplier: any) => {
+    return `
+      <!DOCTYPE html>
+      <html>
+      <head><meta charset="utf-8"></head>
+      <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <div style="background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%); color: white; padding: 20px; border-radius: 8px 8px 0 0;">
+          <h1 style="margin: 0; font-size: 24px;">✓ Bestellung bestätigt</h1>
+          <p style="margin: 5px 0 0 0; opacity: 0.9;">${order.order_number}</p>
+        </div>
+        <div style="background: #f9fafb; padding: 20px; border: 1px solid #e5e7eb; border-radius: 0 0 8px 8px;">
+          <p style="margin: 0 0 10px 0;">Der Lieferant <strong>${supplier?.name || 'Lieferant'}</strong> hat Ihre Bestellung bestätigt.</p>
+          <p style="margin: 0;">Die Lieferung erfolgt zum vereinbarten Termin.</p>
+        </div>
+      </body>
+      </html>
+    `;
+  };
+
+  const handleUpdateStatus = async (orderId: string, newStatus: OrderStatus, order: any) => {
     try {
       await updateOrder.mutateAsync({ id: orderId, status: newStatus });
-      toast.success(`Status auf "${statusConfig[newStatus].label}" geändert`);
+      
+      if (newStatus === 'confirmed') {
+        const supplier = suppliers.find(s => s.id === order.supplier_id);
+        
+        // Bestätigungs-E-Mail in communication_logs einfügen
+        await supabase.from('communication_logs').insert({
+          organization_id: order.organization_id,
+          order_id: orderId,
+          supplier_id: order.supplier_id,
+          email_type: 'order_confirmed',
+          direction: 'incoming',
+          recipient_email: 'restaurant@demo.com',
+          recipient_name: 'Live-Demo Restaurant',
+          subject: `Bestellung ${order.order_number} bestätigt - ${supplier?.name || 'Lieferant'}`,
+          status: 'simulated',
+          body_html: generateConfirmationEmailHtml(order, supplier),
+        });
+        
+        // Query invalidieren damit E-Mail-Panel aktualisiert
+        queryClient.invalidateQueries({ queryKey: ['communication-logs-demo'] });
+        
+        // Partikel-Animation: Supplier → Email
+        onOrderCreated?.('supplier', 'email');
+        
+        // Partikel-Animation: Supplier → Gastro (Rückmeldung)
+        onOrderCreated?.('supplier', 'gastro');
+        
+        toast.success('Bestellung bestätigt!', {
+          description: 'Das Gastro-System wurde benachrichtigt',
+        });
+      } else {
+        toast.success(`Status auf "${statusConfig[newStatus].label}" geändert`);
+      }
     } catch (error) {
       console.error('Status update error:', error);
       toast.error('Fehler beim Aktualisieren des Status');
@@ -263,7 +314,7 @@ export function LiveDemoSupplierPanel({ soundEnabled }: LiveDemoSupplierPanelPro
                             size="sm"
                             onClick={(e) => {
                               e.stopPropagation();
-                              handleUpdateStatus(order.id, nextStatus);
+                              handleUpdateStatus(order.id, nextStatus, order);
                             }}
                             disabled={updateOrder.isPending}
                           >
