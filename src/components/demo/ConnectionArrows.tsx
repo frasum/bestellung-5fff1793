@@ -359,31 +359,34 @@ export function ConnectionArrows({ connections, positions, particleConfig = DEFA
             />
           )}
           
-          {/* Connection label */}
-          {conn.label && (
-            <g transform={`translate(${midX}, ${midY - 12})`}>
-              <rect
-                x={-conn.label.length * 4 - 8}
-                y={-10}
-                width={conn.label.length * 8 + 16}
-                height={20}
-                rx={10}
-                fill="hsl(var(--card))"
-                stroke={color}
-                strokeWidth={conn.highlighted ? 2 : 1.5}
-                className="drop-shadow"
-                opacity={conn.inactive ? 0.5 : 1}
-              />
-              <text
-                textAnchor="middle"
-                dominantBaseline="middle"
-                className="text-[10px] font-medium fill-foreground"
-                opacity={conn.inactive ? 0.5 : 1}
-              >
-                {conn.label}
-              </text>
-            </g>
-          )}
+          {/* Connection label with dynamic arrow when animating */}
+          {conn.label && (() => {
+            const displayLabel = conn.animating ? `${conn.label} →` : conn.label;
+            return (
+              <g transform={`translate(${midX}, ${midY - 12})`}>
+                <rect
+                  x={-displayLabel.length * 4 - 8}
+                  y={-10}
+                  width={displayLabel.length * 8 + 16}
+                  height={20}
+                  rx={10}
+                  fill="hsl(var(--card))"
+                  stroke={color}
+                  strokeWidth={conn.highlighted ? 2 : 1.5}
+                  className="drop-shadow"
+                  opacity={conn.inactive ? 0.5 : 1}
+                />
+                <text
+                  textAnchor="middle"
+                  dominantBaseline="middle"
+                  className="text-[10px] font-medium fill-foreground"
+                  opacity={conn.inactive ? 0.5 : 1}
+                >
+                  {displayLabel}
+                </text>
+              </g>
+            );
+          })()}
 
           {/* Pulse effect for highlighted connections */}
           {conn.highlighted && (
