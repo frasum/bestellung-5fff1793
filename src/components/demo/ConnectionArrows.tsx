@@ -361,6 +361,18 @@ export function ConnectionArrows({ connections, positions, particleConfig = DEFA
           
           {/* Connection label with dynamic arrow when animating */}
           {conn.label && (() => {
+            // Check if there's a reverse connection that's currently animating
+            const hasAnimatingReverse = connections.some(
+              other => other.from === conn.to && 
+                       other.to === conn.from && 
+                       other.animating
+            );
+            
+            // Don't show label if reverse connection is animating (it will show its own label)
+            if (!conn.animating && hasAnimatingReverse) {
+              return null;
+            }
+            
             const displayLabel = conn.animating ? `${conn.label} →` : conn.label;
             return (
               <g transform={`translate(${midX}, ${midY - 12})`}>
