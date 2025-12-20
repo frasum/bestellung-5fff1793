@@ -6,23 +6,27 @@ export interface Connection {
   from: string;
   to: string;
   label?: string;
+  reverseLabel?: string;      // Label für Rückrichtung bei bidirektional
   color?: string;
   bidirectional?: boolean;
   dashed?: boolean;
   inactive?: boolean;
   highlighted?: boolean;
   animating?: boolean;
+  reverseAnimating?: boolean; // Animation in Rückrichtung
 }
 
 // Animated particle component using JavaScript animation instead of SVG animateMotion
 function AnimatedParticle({ 
   pathId, 
   color, 
-  config = DEFAULT_PARTICLE_CONFIG
+  config = DEFAULT_PARTICLE_CONFIG,
+  reverse = false
 }: { 
   pathId: string; 
   color: string; 
   config?: ParticleConfig;
+  reverse?: boolean;
 }) {
   const [position, setPosition] = useState<{ x: number; y: number } | null>(null);
   const [opacity, setOpacity] = useState(1);
@@ -47,8 +51,8 @@ function AnimatedParticle({
       const startTime = performance.now();
       let animationFrame: number;
       
-      // Initialize position at start
-      const startPoint = path.getPointAtLength(0);
+      // Initialize position at start (or end if reverse)
+      const startPoint = path.getPointAtLength(reverse ? totalLength : 0);
       setPosition({ x: startPoint.x, y: startPoint.y });
 
       function animate() {
@@ -58,12 +62,17 @@ function AnimatedParticle({
         // Easing function for smoother animation
         const easedProgress = 1 - Math.pow(1 - progress, 3); // ease-out cubic
         
-        const point = path!.getPointAtLength(totalLength * easedProgress);
+        // For reverse, go from end to start
+        const pathProgress = reverse ? (1 - easedProgress) : easedProgress;
+        
+        const point = path!.getPointAtLength(totalLength * pathProgress);
         setPosition({ x: point.x, y: point.y });
         
         // Trail positions (delayed versions of current position) - use config offsets
-        const trail1Progress = Math.max(0, easedProgress - config.trailOffset1);
-        const trail2Progress = Math.max(0, easedProgress - config.trailOffset2);
+        const trail1Offset = reverse ? config.trailOffset1 : -config.trailOffset1;
+        const trail2Offset = reverse ? config.trailOffset2 : -config.trailOffset2;
+        const trail1Progress = Math.max(0, Math.min(1, pathProgress + trail1Offset));
+        const trail2Progress = Math.max(0, Math.min(1, pathProgress + trail2Offset));
         const trail1 = path!.getPointAtLength(totalLength * trail1Progress);
         const trail2 = path!.getPointAtLength(totalLength * trail2Progress);
         setTrailPositions([
@@ -95,7 +104,7 @@ function AnimatedParticle({
     }, 50); // Small delay to ensure DOM is ready
 
     return () => clearTimeout(initTimeout);
-  }, [pathId, config]);
+  }, [pathId, config, reverse]);
 
   if (!position) return null;
 
@@ -340,6 +349,11 @@ export function ConnectionArrows({ connections, positions, particleConfig = DEFA
             <AnimatedParticle pathId={pathId} color={color} config={particleConfig} />
           )}
           
+          {/* Reverse animated particle for bidirectional connections */}
+          {conn.reverseAnimating && conn.bidirectional && (
+            <AnimatedParticle pathId={pathId} color={color} config={particleConfig} reverse />
+          )}
+          
           {/* Arrow head at destination */}
           <polygon
             points={getArrowPoints(toX, toY, toDirection)}
@@ -359,21 +373,34 @@ export function ConnectionArrows({ connections, positions, particleConfig = DEFA
             />
           )}
           
-          {/* Connection label with dynamic arrow when animating */}
+          {/* Connection label with dynamic content */}
           {conn.label && (() => {
-            // Check if there's a reverse connection that's currently animating
-            const hasAnimatingReverse = connections.some(
-              other => other.from === conn.to && 
-                       other.to === conn.from && 
-                       other.animating
-            );
-            
-            // Don't show label if reverse connection is animating (it will show its own label)
-            if (!conn.animating && hasAnimatingReverse) {
-              return null;
+            // For bidirectional connections, show dynamic label based on animation state
+            let displayLabel: string;
+            if (conn.bidirectional && conn.reverseLabel) {
+              if (conn.animating) {
+                displayLabel = `${conn.label} →`;
+              } else if (conn.reverseAnimating) {
+                displayLabel = `← ${conn.reverseLabel}`;
+              } else {
+                displayLabel = `${conn.label} ↔ ${conn.reverseLabel}`;
+              }
+            } else {
+              // Check if there's a reverse connection that's currently animating
+              const hasAnimatingReverse = connections.some(
+                other => other.from === conn.to && 
+                         other.to === conn.from && 
+                         other.animating
+              );
+              
+              // Don't show label if reverse connection is animating (it will show its own label)
+              if (!conn.animating && hasAnimatingReverse) {
+                return null;
+              }
+              
+              displayLabel = conn.animating ? `${conn.label} →` : conn.label;
             }
-            
-            const displayLabel = conn.animating ? `${conn.label} →` : conn.label;
+
             return (
               <g transform={`translate(${midX}, ${midY - 12})`}>
                 <rect
