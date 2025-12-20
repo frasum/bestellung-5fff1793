@@ -47,6 +47,8 @@ export const useRealtimeNotifications = () => {
           queryClient.invalidateQueries({
             predicate: (query) => query.queryKey[0] === 'cart-drafts',
           });
+          // Also invalidate the specific easyorder query key used in LiveDemoAdminPanel
+          queryClient.invalidateQueries({ queryKey: ['cart-drafts', 'easyorder'] });
 
           // Show toast notification for new EasyOrder
           const newDraft = payload.new as { name?: string; id?: string };
