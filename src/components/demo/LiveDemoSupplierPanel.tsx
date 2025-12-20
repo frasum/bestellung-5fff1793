@@ -209,21 +209,6 @@ export function LiveDemoSupplierPanel({ soundEnabled, onOrderCreated }: LiveDemo
 
   return (
     <div className="h-full flex flex-col bg-background">
-      {/* Panel Header */}
-      <div className="flex items-center justify-between px-3 py-2.5 bg-green-500/5 border-b">
-        <div className="flex items-center gap-2">
-          <Truck className="h-4 w-4 text-green-600" />
-          <div>
-            <span className="font-semibold text-sm text-green-700 dark:text-green-300">Lieferant</span>
-            <p className="text-xs text-muted-foreground">Bestellungs-Verwaltung</p>
-          </div>
-        </div>
-        {newCount > 0 && (
-          <Badge variant="destructive" className="animate-pulse">{newCount} neu</Badge>
-        )}
-      </div>
-
-
       {/* Orders List */}
       <ScrollArea className="flex-1">
         <div className="p-2 space-y-2">
