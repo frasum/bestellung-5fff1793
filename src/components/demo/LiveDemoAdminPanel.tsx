@@ -3,13 +3,14 @@ import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Check, X, Clock, Package, Shield } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Check, X, Clock, Package, Shield, ClipboardList } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient, useMutation } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
-
+import { LiveDemoOrdersList } from './LiveDemoOrdersList';
 interface CartDraft {
   id: string;
   name: string;
@@ -345,89 +346,113 @@ export function LiveDemoAdminPanel({ soundEnabled, onOrderCreated }: LiveDemoAdm
         )}
       </div>
 
-      {/* Drafts List */}
-      <ScrollArea className="flex-1">
-        <div className="p-2 space-y-2">
-          {drafts.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              <Clock className="h-10 w-10 mx-auto mb-2 opacity-30" />
-              <p className="text-sm font-medium">Keine Vorbestellungen</p>
-              <p className="text-xs mt-1">Warten auf EasyOrder...</p>
-            </div>
-          ) : (
-            drafts.map(draft => {
-              const employeeName = draft.name.replace('EasyOrder: ', '').split(' (')[0];
-              const supplierName = draft.items[0]?.supplier?.name || 'Unbekannt';
-              const totalItems = draft.items.reduce((sum, item) => sum + item.quantity, 0);
-              const totalAmount = draft.items.reduce((sum, item) => 
-                sum + (item.article?.price || 0) * item.quantity, 0
-              );
+      {/* Tabs */}
+      <Tabs defaultValue="drafts" className="flex-1 flex flex-col overflow-hidden">
+        <TabsList className="grid w-full grid-cols-2 mx-2 mt-2" style={{ width: 'calc(100% - 1rem)' }}>
+          <TabsTrigger value="drafts" className="text-xs gap-1">
+            <Clock className="h-3 w-3" />
+            Vorbestellungen
+            {pendingCount > 0 && (
+              <Badge variant="destructive" className="ml-1 h-4 w-4 p-0 flex items-center justify-center text-[10px]">
+                {pendingCount}
+              </Badge>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="orders" className="text-xs gap-1">
+            <ClipboardList className="h-3 w-3" />
+            Bestellungen
+          </TabsTrigger>
+        </TabsList>
 
-              return (
-                <div key={draft.id} className="rounded-lg border border-orange-200 dark:border-orange-800 bg-orange-50/50 dark:bg-orange-950/20 p-2.5 space-y-2">
-                  {/* Header */}
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <p className="font-medium text-sm">{employeeName}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {format(new Date(draft.created_at), 'HH:mm', { locale: de })} • {supplierName}
-                      </p>
-                    </div>
-                    <Badge variant="outline" className="text-xs">
-                      <Package className="h-3 w-3 mr-1" />
-                      {totalItems}
-                    </Badge>
-                  </div>
-
-                  {/* Items Preview */}
-                  <div className="text-xs text-muted-foreground space-y-0.5 max-h-14 overflow-y-auto">
-                    {draft.items.slice(0, 3).map(item => (
-                      <div key={item.id} className="flex justify-between">
-                        <span className="truncate">{item.quantity}x {item.article?.name || 'Unbekannt'}</span>
-                        <span>€{((item.article?.price || 0) * item.quantity).toFixed(2)}</span>
-                      </div>
-                    ))}
-                    {draft.items.length > 3 && (
-                      <div className="text-muted-foreground/70">
-                        +{draft.items.length - 3} weitere...
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Total */}
-                  <div className="flex justify-between text-sm font-medium pt-1 border-t">
-                    <span>Gesamt</span>
-                    <span>€{totalAmount.toFixed(2)}</span>
-                  </div>
-
-                  {/* Actions */}
-                  <div className="flex gap-2 pt-1">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="flex-1 h-7 text-xs text-destructive hover:text-destructive"
-                      onClick={() => rejectDraft.mutate(draft.id)}
-                      disabled={rejectDraft.isPending}
-                    >
-                      <X className="h-3 w-3 mr-1" />
-                      Ablehnen
-                    </Button>
-                    <Button
-                      size="sm"
-                      className="flex-1 h-7 text-xs"
-                      onClick={() => approveDraft.mutate(draft)}
-                      disabled={approveDraft.isPending}
-                    >
-                      <Check className="h-3 w-3 mr-1" />
-                      Freigeben
-                    </Button>
-                  </div>
+        <TabsContent value="drafts" className="flex-1 overflow-hidden m-0">
+          <ScrollArea className="h-full">
+            <div className="p-2 space-y-2">
+              {drafts.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Clock className="h-10 w-10 mx-auto mb-2 opacity-30" />
+                  <p className="text-sm font-medium">Keine Vorbestellungen</p>
+                  <p className="text-xs mt-1">Warten auf EasyOrder...</p>
                 </div>
-              );
-            })
-          )}
-        </div>
-      </ScrollArea>
+              ) : (
+                drafts.map(draft => {
+                  const employeeName = draft.name.replace('EasyOrder: ', '').split(' (')[0];
+                  const supplierName = draft.items[0]?.supplier?.name || 'Unbekannt';
+                  const totalItems = draft.items.reduce((sum, item) => sum + item.quantity, 0);
+                  const totalAmount = draft.items.reduce((sum, item) => 
+                    sum + (item.article?.price || 0) * item.quantity, 0
+                  );
+
+                  return (
+                    <div key={draft.id} className="rounded-lg border border-orange-200 dark:border-orange-800 bg-orange-50/50 dark:bg-orange-950/20 p-2.5 space-y-2">
+                      {/* Header */}
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <p className="font-medium text-sm">{employeeName}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {format(new Date(draft.created_at), 'HH:mm', { locale: de })} • {supplierName}
+                          </p>
+                        </div>
+                        <Badge variant="outline" className="text-xs">
+                          <Package className="h-3 w-3 mr-1" />
+                          {totalItems}
+                        </Badge>
+                      </div>
+
+                      {/* Items Preview */}
+                      <div className="text-xs text-muted-foreground space-y-0.5 max-h-14 overflow-y-auto">
+                        {draft.items.slice(0, 3).map(item => (
+                          <div key={item.id} className="flex justify-between">
+                            <span className="truncate">{item.quantity}x {item.article?.name || 'Unbekannt'}</span>
+                            <span>€{((item.article?.price || 0) * item.quantity).toFixed(2)}</span>
+                          </div>
+                        ))}
+                        {draft.items.length > 3 && (
+                          <div className="text-muted-foreground/70">
+                            +{draft.items.length - 3} weitere...
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Total */}
+                      <div className="flex justify-between text-sm font-medium pt-1 border-t">
+                        <span>Gesamt</span>
+                        <span>€{totalAmount.toFixed(2)}</span>
+                      </div>
+
+                      {/* Actions */}
+                      <div className="flex gap-2 pt-1">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="flex-1 h-7 text-xs text-destructive hover:text-destructive"
+                          onClick={() => rejectDraft.mutate(draft.id)}
+                          disabled={rejectDraft.isPending}
+                        >
+                          <X className="h-3 w-3 mr-1" />
+                          Ablehnen
+                        </Button>
+                        <Button
+                          size="sm"
+                          className="flex-1 h-7 text-xs"
+                          onClick={() => approveDraft.mutate(draft)}
+                          disabled={approveDraft.isPending}
+                        >
+                          <Check className="h-3 w-3 mr-1" />
+                          Freigeben
+                        </Button>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </ScrollArea>
+        </TabsContent>
+
+        <TabsContent value="orders" className="flex-1 overflow-hidden m-0">
+          <LiveDemoOrdersList />
+        </TabsContent>
+      </Tabs>
 
       {/* Footer */}
       <div className="p-2 border-t bg-muted/30 text-center">
