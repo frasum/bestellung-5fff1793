@@ -356,18 +356,8 @@ export function LiveDemoEasyOrderPanel({ soundEnabled, onDirectOrderChange, onOr
         </p>
       </div>
 
-      {/* Employee Name Input */}
-      <div className="p-3 border-b space-y-2">
-        <div className="relative">
-          <User className="absolute left-2.5 top-1/2 transform -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-          <Input
-            value={employeeName}
-            onChange={(e) => setEmployeeName(e.target.value)}
-            placeholder="Mitarbeiter-Name"
-            className="pl-8 h-8 text-sm"
-          />
-        </div>
-        
+      {/* Supplier Selection */}
+      <div className="p-3 border-b">
         {/* Supplier Selection */}
         <div className="flex gap-1.5 overflow-x-auto pb-1">
           {suppliers.filter(s => s.is_active).slice(0, 4).map(supplier => (
