@@ -431,7 +431,7 @@ export function SupplierOrderScreen({
               {articlesBySupplier.map(({ supplier, articles: supplierArticles }) => (
                 <div key={supplier.id} className="border rounded-lg overflow-hidden bg-card">
                   {/* Supplier Header */}
-                  <div className="bg-muted/50 px-4 py-3 border-b sticky top-[73px] z-[5]">
+                  <div className="bg-muted/50 px-4 py-3 border-b">
                     <h2 className="text-lg font-semibold">{supplier.name}</h2>
                     <p className="text-sm text-muted-foreground">{supplierArticles.length} Artikel</p>
                   </div>
