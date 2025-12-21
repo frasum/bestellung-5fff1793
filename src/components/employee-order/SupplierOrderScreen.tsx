@@ -313,7 +313,7 @@ export function SupplierOrderScreen({
                                 <div className="flex-1 min-w-0">
                                   <p className="font-medium truncate">{item.articleName}</p>
                                   <p className="text-sm text-muted-foreground">
-                                    {item.price.toFixed(2)} € / {item.unit}
+                                    {item.unit}
                                   </p>
                                 </div>
                                 <div className="flex items-center gap-2">
@@ -593,7 +593,7 @@ export function SupplierOrderScreen({
                           <div className="flex-1 min-w-0">
                             <p className="font-medium truncate">{item.articleName}</p>
                             <p className="text-sm text-muted-foreground">
-                              {item.price.toFixed(2)} € / {item.unit}
+                              {item.unit}
                             </p>
                           </div>
                           <div className="flex items-center gap-2">
