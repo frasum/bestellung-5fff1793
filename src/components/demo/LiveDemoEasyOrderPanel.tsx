@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -38,7 +38,7 @@ export function LiveDemoEasyOrderPanel({ soundEnabled, onDirectOrderChange, onOr
   const [ordersLoading, setOrdersLoading] = useState(false);
 
   // Fetch my orders (EasyOrder demo orders)
-  const fetchMyOrders = async () => {
+  const fetchMyOrders = useCallback(async () => {
     setOrdersLoading(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -70,12 +70,19 @@ export function LiveDemoEasyOrderPanel({ soundEnabled, onDirectOrderChange, onOr
     } finally {
       setOrdersLoading(false);
     }
-  };
+  }, []);
 
   // Notify parent about direct order changes
   useEffect(() => {
     onDirectOrderChange?.(isDirectOrder);
   }, [isDirectOrder, onDirectOrderChange]);
+
+  // Reload orders when switching to orders tab
+  useEffect(() => {
+    if (activeTab === 'orders') {
+      fetchMyOrders();
+    }
+  }, [activeTab, fetchMyOrders]);
 
   // Initial fetch and realtime subscription
   useEffect(() => {
