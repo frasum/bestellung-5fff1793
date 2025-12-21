@@ -22,8 +22,12 @@ import {
   Loader2,
   Send,
   Calendar as CalendarIcon,
-  Clock
+  Clock,
+  ClipboardList,
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import type { EmployeeSession, CartItem } from '@/pages/EmployeeOrder';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -78,6 +82,12 @@ export function SupplierOrderScreen({
   const [timeWindow, setTimeWindow] = useState('');
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [mobileCalendarOpen, setMobileCalendarOpen] = useState(false);
+  
+  // Order history state
+  const [showOrderHistory, setShowOrderHistory] = useState(false);
+  const [employeeOrders, setEmployeeOrders] = useState<any[]>([]);
+  const [isLoadingOrders, setIsLoadingOrders] = useState(false);
+  const [expandedOrders, setExpandedOrders] = useState<Set<string>>(new Set());
 
   const timeWindowOptions = [
     { value: 'morning', label: '10-12 Uhr' },
@@ -261,6 +271,59 @@ export function SupplierOrderScreen({
     }
   };
 
+  // Load employee orders
+  const loadEmployeeOrders = async () => {
+    setIsLoadingOrders(true);
+    try {
+      const { data, error } = await supabase
+        .from('orders')
+        .select(`
+          id, order_number, status, total_amount, delivery_address, notes, created_at,
+          supplier:suppliers(id, name),
+          location:locations(id, name, short_code),
+          items:order_items(id, article_name, quantity, unit, unit_price, total_price)
+        `)
+        .eq('employee_id', session.employee.id)
+        .order('created_at', { ascending: false })
+        .limit(20);
+
+      if (!error) {
+        setEmployeeOrders(data || []);
+      }
+    } catch (error) {
+      console.error('Error loading orders:', error);
+    } finally {
+      setIsLoadingOrders(false);
+    }
+  };
+
+  const toggleOrderExpanded = (orderId: string) => {
+    setExpandedOrders(prev => {
+      const next = new Set(prev);
+      if (next.has(orderId)) {
+        next.delete(orderId);
+      } else {
+        next.add(orderId);
+      }
+      return next;
+    });
+  };
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'sent':
+        return <Badge variant="default">Gesendet</Badge>;
+      case 'confirmed':
+        return <Badge className="bg-green-500">Bestätigt</Badge>;
+      case 'draft':
+        return <Badge variant="secondary">Entwurf</Badge>;
+      case 'cancelled':
+        return <Badge variant="destructive">Storniert</Badge>;
+      default:
+        return <Badge variant="outline">{status}</Badge>;
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -285,6 +348,98 @@ export function SupplierOrderScreen({
           </div>
 
           <div className="flex items-center gap-2">
+            {/* Greeting */}
+            <span className="hidden md:block text-sm font-medium text-muted-foreground mr-2">
+              Hallo, <span className="text-foreground font-semibold">{session.employee.name.split(' ')[0]}</span>!
+            </span>
+
+            {/* Order History Sheet */}
+            <Sheet open={showOrderHistory} onOpenChange={setShowOrderHistory}>
+              <SheetTrigger asChild>
+                <Button 
+                  variant="outline" 
+                  className="gap-2"
+                  onClick={() => {
+                    if (!showOrderHistory) loadEmployeeOrders();
+                  }}
+                >
+                  <ClipboardList className="w-4 h-4" />
+                  <span className="hidden sm:inline">Meine Bestellungen</span>
+                </Button>
+              </SheetTrigger>
+              <SheetContent className="w-full sm:max-w-lg flex flex-col">
+                <SheetHeader>
+                  <SheetTitle className="flex items-center gap-2">
+                    <ClipboardList className="w-5 h-5" />
+                    Meine Bestellungen
+                  </SheetTitle>
+                </SheetHeader>
+
+                <ScrollArea className="flex-1 -mx-6 px-6">
+                  {isLoadingOrders ? (
+                    <div className="py-12 flex items-center justify-center">
+                      <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                    </div>
+                  ) : employeeOrders.length === 0 ? (
+                    <div className="py-12 text-center text-muted-foreground">
+                      <Package className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                      <p>Noch keine Bestellungen</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3 py-4">
+                      {employeeOrders.map((order) => (
+                        <Card key={order.id} className="overflow-hidden">
+                          <Collapsible 
+                            open={expandedOrders.has(order.id)}
+                            onOpenChange={() => toggleOrderExpanded(order.id)}
+                          >
+                            <CollapsibleTrigger asChild>
+                              <CardHeader className="py-3 px-4 cursor-pointer hover:bg-muted/50 transition-colors">
+                                <div className="flex items-center justify-between">
+                                  <div className="space-y-1">
+                                    <div className="flex items-center gap-2">
+                                      <span className="font-semibold text-sm">#{order.order_number}</span>
+                                      {getStatusBadge(order.status)}
+                                    </div>
+                                    <p className="text-sm text-muted-foreground">
+                                      {order.supplier?.name} • {order.location?.name}
+                                    </p>
+                                    <p className="text-xs text-muted-foreground">
+                                      {format(new Date(order.created_at), "dd.MM.yyyy 'um' HH:mm", { locale: de })}
+                                    </p>
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    {expandedOrders.has(order.id) ? (
+                                      <ChevronUp className="w-4 h-4 text-muted-foreground" />
+                                    ) : (
+                                      <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                                    )}
+                                  </div>
+                                </div>
+                              </CardHeader>
+                            </CollapsibleTrigger>
+                            <CollapsibleContent>
+                              <CardContent className="py-3 px-4 border-t bg-muted/30">
+                                <p className="text-xs font-medium text-muted-foreground mb-2">Artikel:</p>
+                                <div className="space-y-1">
+                                  {order.items?.map((item: any) => (
+                                    <div key={item.id} className="flex justify-between text-sm">
+                                      <span>{item.quantity}x {item.article_name}</span>
+                                      <span className="text-muted-foreground">{item.unit}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </CardContent>
+                            </CollapsibleContent>
+                          </Collapsible>
+                        </Card>
+                      ))}
+                    </div>
+                  )}
+                </ScrollArea>
+              </SheetContent>
+            </Sheet>
+
             {/* Cart Sheet */}
             <Sheet>
               <SheetTrigger asChild>
