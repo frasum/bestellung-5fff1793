@@ -32,6 +32,7 @@ export interface CartItem {
   articleName: string;
   quantity: number;
   unit: string;
+  orderUnit: string | null;
   supplierId: string;
   supplierName: string;
   price: number;
