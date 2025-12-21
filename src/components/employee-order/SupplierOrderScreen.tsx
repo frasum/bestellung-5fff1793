@@ -320,7 +320,18 @@ export function SupplierOrderScreen({
                                   >
                                     {item.quantity === 1 ? <Trash2 className="w-3 h-3" /> : <Minus className="w-3 h-3" />}
                                   </Button>
-                                  <span className="w-8 text-center font-semibold">{item.quantity}</span>
+                                  <Input
+                                    type="number"
+                                    value={item.quantity}
+                                    className="w-14 h-8 text-center font-semibold p-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                    min={0}
+                                    onClick={(e) => e.currentTarget.select()}
+                                    onFocus={(e) => e.target.select()}
+                                    onChange={(e) => {
+                                      const val = parseInt(e.target.value) || 0;
+                                      onUpdateCartItem(item.articleId, val);
+                                    }}
+                                  />
                                   <Button
                                     variant="outline"
                                     size="icon"
