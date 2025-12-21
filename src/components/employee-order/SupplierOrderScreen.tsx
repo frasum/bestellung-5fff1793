@@ -397,14 +397,7 @@ export function SupplierOrderScreen({
                       </Popover>
                     </div>
 
-                    <Separator />
-
-                    <div className="flex justify-between text-lg font-semibold">
-                      <span>Gesamt:</span>
-                      <span>{cartTotal.toFixed(2)} €</span>
-                    </div>
-
-                    <Button 
+                    <Button
                       className="w-full h-12 text-lg gap-2" 
                       onClick={handleSubmitOrder}
                       disabled={isSubmitting || !deliveryDate}
@@ -569,7 +562,7 @@ export function SupplierOrderScreen({
               size="lg"
             >
               <ShoppingCart className="w-5 h-5" />
-              {cartItemCount} Artikel • {cartTotal.toFixed(2)} €
+              {cartItemCount} Artikel
             </Button>
           </SheetTrigger>
           <SheetContent className="w-full sm:max-w-lg flex flex-col">
