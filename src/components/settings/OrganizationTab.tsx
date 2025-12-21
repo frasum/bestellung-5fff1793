@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Building2, Users, Store, Ruler, Tag, FolderTree, Package, FileText, Download, Loader2, Phone } from 'lucide-react';
+import { Building2, Users, Store, Ruler, Tag, FolderTree, Package, FileText, Download, Loader2, Phone, Languages } from 'lucide-react';
 import { useOrganization, useUpdateOrganization } from '@/hooks/useSettings';
 import { TeamTab } from './TeamTab';
 import { LocationsWithAddressesTab } from './LocationsWithAddressesTab';
@@ -15,6 +15,7 @@ import { UnitsTab } from './UnitsTab';
 import { CategoriesTab } from './CategoriesTab';
 import { OrderUnitsTab } from './OrderUnitsTab';
 import { ArticleOrganizationTab } from './ArticleOrganizationTab';
+import { TranslationsTab } from './TranslationsTab';
 import { generateSystemOverviewPdf } from '@/lib/systemOverviewPdf';
 import { toast } from 'sonner';
 
@@ -288,6 +289,11 @@ export const OrganizationTab = ({ activeSubTab, onSubTabChange }: OrganizationTa
                   <span className="hidden sm:inline">{t('settings.orderUnits')}</span>
                   <span className="sm:hidden">{t('settings.orderUnitsShort')}</span>
                 </TabsTrigger>
+                <TabsTrigger value="translations" className="gap-1.5 text-xs sm:text-sm data-[state=active]:bg-background data-[state=active]:shadow-sm">
+                  <Languages className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                  <span className="hidden sm:inline">{t('settings.translations')}</span>
+                  <span className="sm:hidden">{t('settings.translationsShort')}</span>
+                </TabsTrigger>
                 {advancedEnabled && (
                   <TabsTrigger value="article-organization" className="gap-1.5 text-xs sm:text-sm data-[state=active]:bg-background data-[state=active]:shadow-sm">
                     <FolderTree className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
@@ -308,6 +314,10 @@ export const OrganizationTab = ({ activeSubTab, onSubTabChange }: OrganizationTa
 
               <TabsContent value="order-units" className="mt-4 animate-in fade-in-50 slide-in-from-right-2 duration-200">
                 <OrderUnitsTab />
+              </TabsContent>
+
+              <TabsContent value="translations" className="mt-4 animate-in fade-in-50 slide-in-from-right-2 duration-200">
+                <TranslationsTab />
               </TabsContent>
 
               {advancedEnabled && (
