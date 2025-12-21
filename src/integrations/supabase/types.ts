@@ -3922,6 +3922,50 @@ export type Database = {
           },
         ]
       }
+      translation_overrides: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          language_code: string
+          organization_id: string
+          original_value: string | null
+          override_value: string
+          translation_key: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          language_code: string
+          organization_id: string
+          original_value?: string | null
+          override_value: string
+          translation_key: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          language_code?: string
+          organization_id?: string
+          original_value?: string | null
+          override_value?: string
+          translation_key?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "translation_overrides_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       units: {
         Row: {
           created_at: string
