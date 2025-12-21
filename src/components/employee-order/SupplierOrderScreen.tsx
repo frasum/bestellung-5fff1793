@@ -8,6 +8,8 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { 
   ArrowLeft, 
   LogOut, 
@@ -19,11 +21,12 @@ import {
   Package,
   Loader2,
   Send,
-  Calendar
+  Calendar as CalendarIcon
 } from 'lucide-react';
 import type { EmployeeSession, CartItem } from '@/pages/EmployeeOrder';
-import { format, addDays } from 'date-fns';
+import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
+import { cn } from '@/lib/utils';
 
 interface SupplierOrderScreenProps {
   session: EmployeeSession;
@@ -70,7 +73,9 @@ export function SupplierOrderScreen({
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [deliveryDate, setDeliveryDate] = useState(format(addDays(new Date(), 1), 'yyyy-MM-dd'));
+  const [deliveryDate, setDeliveryDate] = useState('');
+  const [calendarOpen, setCalendarOpen] = useState(false);
+  const [mobileCalendarOpen, setMobileCalendarOpen] = useState(false);
 
   // Get supplier IDs assigned to this location for this employee
   const assignedSupplierIds = useMemo(() => {
@@ -354,15 +359,41 @@ export function SupplierOrderScreen({
                   <div className="border-t pt-4 space-y-4">
                     <div className="space-y-2">
                       <label className="text-sm font-medium flex items-center gap-2">
-                        <Calendar className="w-4 h-4" />
+                        <CalendarIcon className="w-4 h-4" />
                         Lieferdatum
                       </label>
-                      <Input
-                        type="date"
-                        value={deliveryDate}
-                        onChange={(e) => setDeliveryDate(e.target.value)}
-                        min={format(new Date(), 'yyyy-MM-dd')}
-                      />
+                      <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            className={cn(
+                              "w-full justify-start text-left font-normal",
+                              !deliveryDate && "text-muted-foreground"
+                            )}
+                          >
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {deliveryDate 
+                              ? format(new Date(deliveryDate), "PPP", { locale: de }) 
+                              : "Bitte Datum wählen"}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <CalendarComponent
+                            mode="single"
+                            selected={deliveryDate ? new Date(deliveryDate) : undefined}
+                            onSelect={(date) => {
+                              if (date) {
+                                setDeliveryDate(format(date, 'yyyy-MM-dd'));
+                                setCalendarOpen(false);
+                              }
+                            }}
+                            disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
+                            initialFocus
+                            className="pointer-events-auto"
+                            locale={de}
+                          />
+                        </PopoverContent>
+                      </Popover>
                     </div>
 
                     <Separator />
@@ -375,7 +406,7 @@ export function SupplierOrderScreen({
                     <Button 
                       className="w-full h-12 text-lg gap-2" 
                       onClick={handleSubmitOrder}
-                      disabled={isSubmitting}
+                      disabled={isSubmitting || !deliveryDate}
                     >
                       {isSubmitting ? (
                         <>
@@ -606,15 +637,41 @@ export function SupplierOrderScreen({
             <div className="border-t pt-4 space-y-4">
               <div className="space-y-2">
                 <label className="text-sm font-medium flex items-center gap-2">
-                  <Calendar className="w-4 h-4" />
+                  <CalendarIcon className="w-4 h-4" />
                   Lieferdatum
                 </label>
-                <Input
-                  type="date"
-                  value={deliveryDate}
-                  onChange={(e) => setDeliveryDate(e.target.value)}
-                  min={format(new Date(), 'yyyy-MM-dd')}
-                />
+                <Popover open={mobileCalendarOpen} onOpenChange={setMobileCalendarOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full justify-start text-left font-normal",
+                        !deliveryDate && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {deliveryDate 
+                        ? format(new Date(deliveryDate), "PPP", { locale: de }) 
+                        : "Bitte Datum wählen"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <CalendarComponent
+                      mode="single"
+                      selected={deliveryDate ? new Date(deliveryDate) : undefined}
+                      onSelect={(date) => {
+                        if (date) {
+                          setDeliveryDate(format(date, 'yyyy-MM-dd'));
+                          setMobileCalendarOpen(false);
+                        }
+                      }}
+                      disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
+                      initialFocus
+                      className="pointer-events-auto"
+                      locale={de}
+                    />
+                  </PopoverContent>
+                </Popover>
               </div>
 
               <Separator />
@@ -627,7 +684,7 @@ export function SupplierOrderScreen({
               <Button 
                 className="w-full h-12 text-lg gap-2" 
                 onClick={handleSubmitOrder}
-                disabled={isSubmitting}
+                disabled={isSubmitting || !deliveryDate}
               >
                 {isSubmitting ? (
                   <>
