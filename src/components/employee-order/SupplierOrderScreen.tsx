@@ -479,7 +479,18 @@ export function SupplierOrderScreen({
                               >
                                 {cartQty === 1 ? <Trash2 className="w-4 h-4" /> : <Minus className="w-4 h-4" />}
                               </Button>
-                              <span className="w-8 text-center font-bold text-lg">{cartQty}</span>
+                              <Input
+                                type="number"
+                                value={cartQty}
+                                className="w-14 h-9 text-center font-bold text-lg p-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                min={0}
+                                onClick={(e) => e.currentTarget.select()}
+                                onFocus={(e) => e.target.select()}
+                                onChange={(e) => {
+                                  const val = parseInt(e.target.value) || 0;
+                                  onUpdateCartItem(article.id, val);
+                                }}
+                              />
                               <Button
                                 variant="outline"
                                 size="icon"
@@ -552,7 +563,18 @@ export function SupplierOrderScreen({
                             >
                               {item.quantity === 1 ? <Trash2 className="w-3 h-3" /> : <Minus className="w-3 h-3" />}
                             </Button>
-                            <span className="w-8 text-center font-semibold">{item.quantity}</span>
+                            <Input
+                              type="number"
+                              value={item.quantity}
+                              className="w-14 h-8 text-center font-semibold p-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                              min={0}
+                              onClick={(e) => e.currentTarget.select()}
+                              onFocus={(e) => e.target.select()}
+                              onChange={(e) => {
+                                const val = parseInt(e.target.value) || 0;
+                                onUpdateCartItem(item.articleId, val);
+                              }}
+                            />
                             <Button
                               variant="outline"
                               size="icon"
