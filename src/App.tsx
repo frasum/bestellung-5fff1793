@@ -55,6 +55,7 @@ const DemoCart = lazy(() => import("./pages/DemoCart"));
 const DemoOrders = lazy(() => import("./pages/DemoOrders"));
 const DemoShowcase = lazy(() => import("./pages/DemoShowcase"));
 const LiveDemo = lazy(() => import("./pages/LiveDemo"));
+const EmployeeOrder = lazy(() => import("./pages/EmployeeOrder"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient();
@@ -131,6 +132,8 @@ const AppContent = () => {
           <Route path="/b2b/portal" element={<B2BCustomerPortal />} />
           <Route path="/b2b/portal/:subdomain" element={<B2BCustomerPortal />} />
           <Route path="/b2b/mobile" element={<B2BMobile />} />
+          {/* Employee Order Portal */}
+          <Route path="/employee-order" element={<EmployeeOrder />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

@@ -1600,6 +1600,38 @@ export type Database = {
           },
         ]
       }
+      employee_sessions: {
+        Row: {
+          created_at: string
+          employee_id: string
+          expires_at: string
+          id: string
+          token: string
+        }
+        Insert: {
+          created_at?: string
+          employee_id: string
+          expires_at?: string
+          id?: string
+          token?: string
+        }
+        Update: {
+          created_at?: string
+          employee_id?: string
+          expires_at?: string
+          id?: string
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employee_sessions_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       employees: {
         Row: {
           auto_approve_orders: boolean
@@ -4038,6 +4070,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      cleanup_expired_employee_sessions: { Args: never; Returns: undefined }
       cleanup_old_magic_link_rate_limits: { Args: never; Returns: undefined }
       cleanup_old_rate_limits: { Args: never; Returns: undefined }
       cleanup_pin_verification_rate_limits: { Args: never; Returns: undefined }
