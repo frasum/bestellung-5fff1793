@@ -132,18 +132,20 @@ export function SupplierOrderScreen({
     });
   }, [articles, selectedSupplier, searchQuery]);
 
-  // Group articles by category
-  const articlesByCategory = useMemo(() => {
-    const grouped: Record<string, Article[]> = {};
+  // Group articles by supplier
+  const articlesBySupplier = useMemo(() => {
+    const grouped: Record<string, { supplier: Supplier; articles: Article[] }> = {};
     filteredArticles.forEach(article => {
-      const category = article.category || 'Sonstige';
-      if (!grouped[category]) {
-        grouped[category] = [];
+      const supplier = suppliers.find(s => s.id === article.supplier_id);
+      if (!supplier) return;
+      if (!grouped[supplier.id]) {
+        grouped[supplier.id] = { supplier, articles: [] };
       }
-      grouped[category].push(article);
+      grouped[supplier.id].articles.push(article);
     });
-    return grouped;
-  }, [filteredArticles]);
+    // Sort by supplier name
+    return Object.values(grouped).sort((a, b) => a.supplier.name.localeCompare(b.supplier.name));
+  }, [filteredArticles, suppliers]);
 
   // Cart calculations
   const cartItemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
@@ -418,73 +420,68 @@ export function SupplierOrderScreen({
             })}
           </div>
 
-          {/* Articles */}
-          {filteredArticles.length === 0 ? (
+          {/* Articles - List View by Supplier */}
+          {articlesBySupplier.length === 0 ? (
             <Card className="p-8 text-center">
               <Package className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
               <p className="text-lg text-muted-foreground">Keine Artikel gefunden</p>
             </Card>
           ) : (
             <div className="space-y-6">
-              {Object.entries(articlesByCategory).map(([category, categoryArticles]) => (
-                <div key={category}>
-                  <h2 className="text-lg font-semibold mb-3 sticky top-[73px] bg-gradient-to-r from-background to-background/80 backdrop-blur py-2 z-[5]">
-                    {category}
-                  </h2>
-                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                    {categoryArticles.map(article => {
+              {articlesBySupplier.map(({ supplier, articles: supplierArticles }) => (
+                <div key={supplier.id} className="border rounded-lg overflow-hidden bg-card">
+                  {/* Supplier Header */}
+                  <div className="bg-muted/50 px-4 py-3 border-b sticky top-[73px] z-[5]">
+                    <h2 className="text-lg font-semibold">{supplier.name}</h2>
+                    <p className="text-sm text-muted-foreground">{supplierArticles.length} Artikel</p>
+                  </div>
+                  
+                  {/* Articles List */}
+                  <div className="divide-y">
+                    {supplierArticles.map(article => {
                       const cartQty = getCartQuantity(article.id);
-                      const supplier = suppliers.find(s => s.id === article.supplier_id);
 
                       return (
-                        <Card key={article.id} className="overflow-hidden">
-                          <CardContent className="p-4">
-                            <div className="flex justify-between items-start gap-2 mb-2">
-                              <div className="min-w-0">
-                                <h3 className="font-semibold truncate">{article.name}</h3>
-                                <p className="text-sm text-muted-foreground">
-                                  {supplier?.name}
-                                </p>
-                              </div>
-                              <Badge variant="secondary" className="shrink-0">
+                        <div key={article.id} className="flex items-center justify-between px-4 py-3 hover:bg-muted/30 transition-colors">
+                          <div className="flex-1 min-w-0 mr-4">
+                            <div className="flex items-center gap-2">
+                              <h3 className="font-medium truncate">{article.name}</h3>
+                              <Badge variant="secondary" className="shrink-0 text-xs">
                                 {article.unit}
                               </Badge>
                             </div>
-                            
-                            <div className="flex items-center justify-between mt-3">
-                              <span className="text-lg font-bold">
-                                {article.price.toFixed(2)} €
-                              </span>
-                              
-                              {cartQty > 0 ? (
-                                <div className="flex items-center gap-2">
-                                  <Button
-                                    variant="outline"
-                                    size="icon"
-                                    className="h-9 w-9"
-                                    onClick={() => onUpdateCartItem(article.id, cartQty - 1)}
-                                  >
-                                    {cartQty === 1 ? <Trash2 className="w-4 h-4" /> : <Minus className="w-4 h-4" />}
-                                  </Button>
-                                  <span className="w-8 text-center font-bold text-lg">{cartQty}</span>
-                                  <Button
-                                    variant="outline"
-                                    size="icon"
-                                    className="h-9 w-9"
-                                    onClick={() => onUpdateCartItem(article.id, cartQty + 1)}
-                                  >
-                                    <Plus className="w-4 h-4" />
-                                  </Button>
-                                </div>
-                              ) : (
-                                <Button onClick={() => handleAddArticle(article)} className="gap-2">
-                                  <Plus className="w-4 h-4" />
-                                  Hinzufügen
-                                </Button>
-                              )}
+                            <p className="text-lg font-semibold text-primary mt-0.5">
+                              {article.price.toFixed(2)} €
+                            </p>
+                          </div>
+                          
+                          {cartQty > 0 ? (
+                            <div className="flex items-center gap-2">
+                              <Button
+                                variant="outline"
+                                size="icon"
+                                className="h-9 w-9"
+                                onClick={() => onUpdateCartItem(article.id, cartQty - 1)}
+                              >
+                                {cartQty === 1 ? <Trash2 className="w-4 h-4" /> : <Minus className="w-4 h-4" />}
+                              </Button>
+                              <span className="w-8 text-center font-bold text-lg">{cartQty}</span>
+                              <Button
+                                variant="outline"
+                                size="icon"
+                                className="h-9 w-9"
+                                onClick={() => onUpdateCartItem(article.id, cartQty + 1)}
+                              >
+                                <Plus className="w-4 h-4" />
+                              </Button>
                             </div>
-                          </CardContent>
-                        </Card>
+                          ) : (
+                            <Button onClick={() => handleAddArticle(article)} className="gap-2 shrink-0">
+                              <Plus className="w-4 h-4" />
+                              Hinzufügen
+                            </Button>
+                          )}
+                        </div>
                       );
                     })}
                   </div>
