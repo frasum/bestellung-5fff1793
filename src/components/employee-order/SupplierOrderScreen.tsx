@@ -21,7 +21,8 @@ import {
   Package,
   Loader2,
   Send,
-  Calendar as CalendarIcon
+  Calendar as CalendarIcon,
+  Clock
 } from 'lucide-react';
 import type { EmployeeSession, CartItem } from '@/pages/EmployeeOrder';
 import { format } from 'date-fns';
@@ -74,8 +75,15 @@ export function SupplierOrderScreen({
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [deliveryDate, setDeliveryDate] = useState('');
+  const [timeWindow, setTimeWindow] = useState('');
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [mobileCalendarOpen, setMobileCalendarOpen] = useState(false);
+
+  const timeWindowOptions = [
+    { value: 'morning', label: '10-12 Uhr' },
+    { value: 'afternoon', label: '12-15 Uhr' },
+    { value: 'flexible', label: 'Flexibel' },
+  ];
 
   // Get supplier IDs assigned to this location for this employee
   const assignedSupplierIds = useMemo(() => {
@@ -221,6 +229,7 @@ export function SupplierOrderScreen({
             locationId: selectedLocation.id,
             supplierId,
             deliveryDate,
+            timeWindow,
             items: items.map(item => ({
               articleId: item.articleId,
               quantity: item.quantity,
@@ -397,10 +406,34 @@ export function SupplierOrderScreen({
                       </Popover>
                     </div>
 
+                    {/* Zeitfenster */}
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium flex items-center gap-2">
+                        <Clock className="w-4 h-4" />
+                        Zeitfenster
+                      </label>
+                      <div className="grid grid-cols-3 gap-2">
+                        {timeWindowOptions.map((option) => (
+                          <Button
+                            key={option.value}
+                            type="button"
+                            variant={timeWindow === option.value ? "default" : "outline"}
+                            className={cn(
+                              "h-10",
+                              timeWindow === option.value && "ring-2 ring-primary ring-offset-2"
+                            )}
+                            onClick={() => setTimeWindow(option.value)}
+                          >
+                            {option.label}
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+
                     <Button
                       className="w-full h-12 text-lg gap-2" 
                       onClick={handleSubmitOrder}
-                      disabled={isSubmitting || !deliveryDate}
+                      disabled={isSubmitting || !deliveryDate || !timeWindow}
                     >
                       {isSubmitting ? (
                         <>
@@ -668,17 +701,34 @@ export function SupplierOrderScreen({
                 </Popover>
               </div>
 
-              <Separator />
-
-              <div className="flex justify-between text-lg font-semibold">
-                <span>Gesamt:</span>
-                <span>{cartTotal.toFixed(2)} €</span>
+              {/* Zeitfenster */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium flex items-center gap-2">
+                  <Clock className="w-4 h-4" />
+                  Zeitfenster
+                </label>
+                <div className="grid grid-cols-3 gap-2">
+                  {timeWindowOptions.map((option) => (
+                    <Button
+                      key={option.value}
+                      type="button"
+                      variant={timeWindow === option.value ? "default" : "outline"}
+                      className={cn(
+                        "h-10",
+                        timeWindow === option.value && "ring-2 ring-primary ring-offset-2"
+                      )}
+                      onClick={() => setTimeWindow(option.value)}
+                    >
+                      {option.label}
+                    </Button>
+                  ))}
+                </div>
               </div>
 
               <Button 
                 className="w-full h-12 text-lg gap-2" 
                 onClick={handleSubmitOrder}
-                disabled={isSubmitting || !deliveryDate}
+                disabled={isSubmitting || !deliveryDate || !timeWindow}
               >
                 {isSubmitting ? (
                   <>
