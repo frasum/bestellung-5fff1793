@@ -225,16 +225,18 @@ export function SupplierOrderScreen({
         
         const { error } = await supabase.functions.invoke('submit-simple-order', {
           body: {
-            employeeId: session.employee.id,
-            locationId: selectedLocation.id,
-            supplierId,
-            deliveryDate,
-            timeWindow,
+            token: session.sessionToken,
+            employee_name: session.employee.name,
+            location_id: selectedLocation.id,
+            supplier_id: supplierId,
+            delivery_date: deliveryDate,
+            time_window: timeWindow,
             items: items.map(item => ({
-              articleId: item.articleId,
+              article_id: item.articleId,
+              article_name: item.articleName,
               quantity: item.quantity,
+              unit: item.unit,
             })),
-            autoApprove: session.employee.autoApproveOrders,
           },
         });
 
