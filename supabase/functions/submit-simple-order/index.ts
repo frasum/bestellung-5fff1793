@@ -177,8 +177,14 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Verify token
-    const { data: tokenData, error: tokenError } = await supabase
+    // Verify token (supports both SimpleOrder link tokens and Employee Portal session tokens)
+    type TokenSource = 'simple_order_token' | 'employee_session';
+    let tokenSource: TokenSource = 'simple_order_token';
+
+    let tokenData: any = null;
+
+    // 1) Try SimpleOrder token (used by QR/magic-link flow)
+    const { data: simpleToken, error: simpleTokenError } = await supabase
       .from('simple_order_tokens')
       .select(`
         *,
@@ -186,18 +192,69 @@ serve(async (req) => {
       `)
       .eq('token', token)
       .eq('is_active', true)
-      .single();
+      .maybeSingle();
 
-    if (tokenError || !tokenData) {
-      console.log('Invalid token:', tokenError?.message);
-      return new Response(
-        JSON.stringify({ error: 'Invalid token' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+    if (simpleTokenError) {
+      console.log('SimpleOrder token lookup error:', simpleTokenError.message);
     }
 
-    // Check expiration
-    if (tokenData.expires_at && new Date(tokenData.expires_at) < new Date()) {
+    if (simpleToken) {
+      tokenData = simpleToken;
+    } else {
+      // 2) Fallback: Employee Portal session token
+      tokenSource = 'employee_session';
+
+      const { data: employeeSession, error: employeeSessionError } = await supabase
+        .from('employee_sessions')
+        .select('employee_id, expires_at')
+        .eq('token', token)
+        .maybeSingle();
+
+      if (employeeSessionError || !employeeSession) {
+        console.log('Invalid token (no session):', employeeSessionError?.message);
+        return new Response(
+          JSON.stringify({ error: 'Invalid token' }),
+          { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Check expiration (session token)
+      if (employeeSession.expires_at && new Date(employeeSession.expires_at) < new Date()) {
+        return new Response(
+          JSON.stringify({ error: 'Token has expired' }),
+          { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Load employee to determine organization context
+      const { data: employee, error: employeeError } = await supabase
+        .from('employees')
+        .select('id, organization_id, is_active')
+        .eq('id', employeeSession.employee_id)
+        .maybeSingle();
+
+      if (employeeError || !employee || !employee.is_active) {
+        console.log('Invalid token (employee):', employeeError?.message);
+        return new Response(
+          JSON.stringify({ error: 'Invalid token' }),
+          { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Normalize to the same shape used below
+      tokenData = {
+        token,
+        organization_id: employee.organization_id,
+        employee_id: employee.id,
+        supplier_id: null,
+        expires_at: employeeSession.expires_at,
+        supplier: null,
+        __token_source: tokenSource,
+      };
+    }
+
+    // Check expiration (SimpleOrder token)
+    if (tokenData?.expires_at && new Date(tokenData.expires_at) < new Date()) {
       return new Response(
         JSON.stringify({ error: 'Token has expired' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -221,6 +278,54 @@ serve(async (req) => {
     }
 
     const supplierId = requestSupplierId || tokenData.supplier_id;
+
+    // If this is an Employee Portal session token, enforce location/supplier permissions
+    // (prevents using a valid session token to order for arbitrary locations/suppliers)
+    if ((tokenData as any)?.__token_source === 'employee_session') {
+      if (!requestSupplierId) {
+        return new Response(
+          JSON.stringify({ error: 'supplier_id is required for employee sessions' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      const employeeId = tokenData.employee_id as string | null;
+      if (!employeeId) {
+        return new Response(
+          JSON.stringify({ error: 'Invalid token' }),
+          { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      const { data: employeeLocation } = await supabase
+        .from('employee_locations')
+        .select('id')
+        .eq('employee_id', employeeId)
+        .eq('location_id', location_id)
+        .maybeSingle();
+
+      if (!employeeLocation) {
+        return new Response(
+          JSON.stringify({ error: 'Not allowed for this location' }),
+          { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      const { data: employeeSupplier } = await supabase
+        .from('employee_location_suppliers')
+        .select('id')
+        .eq('employee_id', employeeId)
+        .eq('location_id', location_id)
+        .eq('supplier_id', requestSupplierId)
+        .maybeSingle();
+
+      if (!employeeSupplier) {
+        return new Response(
+          JSON.stringify({ error: 'Not allowed for this supplier' }),
+          { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    }
 
     // Fetch supplier details
     let supplierData: { id: string; name: string; email: string } | null = null;
