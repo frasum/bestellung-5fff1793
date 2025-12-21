@@ -141,7 +141,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    const pinValid = await bcrypt.compare(pin, employee.pin_code);
+    const pinValid = bcrypt.compareSync(pin, employee.pin_code);
     if (!pinValid) {
       console.log('Invalid PIN for employee:', employee.id);
       return new Response(
