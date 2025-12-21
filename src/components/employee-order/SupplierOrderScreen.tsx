@@ -49,6 +49,7 @@ interface Article {
   price: number;
   category: string | null;
   supplier_id: string;
+  order_unit_name: string | null;
 }
 
 export function SupplierOrderScreen({
@@ -98,14 +99,25 @@ export function SupplierOrderScreen({
           // Load articles for all assigned suppliers
           const { data: articlesData, error: articlesError } = await supabase
             .from('articles')
-            .select('id, name, unit, price, category, supplier_id')
+            .select('id, name, unit, price, category, supplier_id, order_units(name)')
             .in('supplier_id', assignedSupplierIds)
             .eq('is_active', true)
             .order('sort_order')
             .order('name');
 
           if (articlesError) throw articlesError;
-          setArticles(articlesData || []);
+          
+          // Map the data to flatten order_unit_name
+          const mappedArticles = (articlesData || []).map(article => ({
+            id: article.id,
+            name: article.name,
+            unit: article.unit,
+            price: article.price,
+            category: article.category,
+            supplier_id: article.supplier_id,
+            order_unit_name: article.order_units?.name || null,
+          }));
+          setArticles(mappedArticles);
         }
       } catch (error) {
         console.error('Error loading data:', error);
@@ -450,9 +462,11 @@ export function SupplierOrderScreen({
                                 {article.unit}
                               </Badge>
                             </div>
-                            <p className="text-lg font-semibold text-primary mt-0.5">
-                              {article.price.toFixed(2)} €
-                            </p>
+                            {article.order_unit_name && (
+                              <p className="text-sm text-muted-foreground mt-0.5">
+                                Bestelleinheit: {article.order_unit_name}
+                              </p>
+                            )}
                           </div>
                           
                           {cartQty > 0 ? (
