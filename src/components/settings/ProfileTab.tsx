@@ -150,14 +150,17 @@ const TestModeContent = () => {
   const { t } = useTranslation();
   const { data: organization } = useOrganization();
   const updateOrganization = useUpdateOrganization();
-  const [testEmail, setTestEmail] = useState('');
-  const [testEmailError, setTestEmailError] = useState('');
+  const [testEmails, setTestEmails] = useState<string[]>([]);
+  const [newEmail, setNewEmail] = useState('');
+  const [emailError, setEmailError] = useState('');
 
   useEffect(() => {
-    if (organization?.test_email) {
-      setTestEmail(organization.test_email);
+    if (organization?.test_emails && organization.test_emails.length > 0) {
+      setTestEmails(organization.test_emails);
+    } else if (organization?.test_email) {
+      setTestEmails([organization.test_email]);
     }
-  }, [organization?.test_email]);
+  }, [organization?.test_emails, organization?.test_email]);
 
   const validateEmail = (email: string): boolean => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -167,40 +170,65 @@ const TestModeContent = () => {
   const handleTestModeToggle = (enabled: boolean) => {
     if (!organization) return;
     
-    if (enabled && !testEmail) {
-      setTestEmailError(t('settings.testEmailError'));
-      return;
-    }
-
-    if (enabled && testEmail && !validateEmail(testEmail)) {
-      setTestEmailError(t('settings.testEmailInvalid'));
+    if (enabled && testEmails.length === 0) {
+      setEmailError(t('settings.testEmailError'));
       return;
     }
 
     updateOrganization.mutate({
       id: organization.id,
       test_mode_enabled: enabled,
-      test_email: testEmail || organization.test_email,
+      test_emails: testEmails,
+      test_email: testEmails[0] || organization.test_email,
     });
   };
 
-  const handleTestEmailSave = () => {
-    if (!organization) return;
-    
-    if (!testEmail) {
-      setTestEmailError(t('settings.testEmailRequired'));
+  const handleAddEmail = () => {
+    if (!newEmail) {
+      setEmailError(t('settings.testEmailRequired'));
       return;
     }
 
-    if (!validateEmail(testEmail)) {
-      setTestEmailError(t('settings.testEmailInvalid'));
+    if (!validateEmail(newEmail)) {
+      setEmailError(t('settings.testEmailInvalid'));
       return;
     }
 
-    updateOrganization.mutate({
-      id: organization.id,
-      test_email: testEmail,
-    });
+    if (testEmails.includes(newEmail)) {
+      setEmailError(t('settings.testEmailDuplicate'));
+      return;
+    }
+
+    if (testEmails.length >= 5) {
+      setEmailError(t('settings.maxTestEmails'));
+      return;
+    }
+
+    const updatedEmails = [...testEmails, newEmail];
+    setTestEmails(updatedEmails);
+    setNewEmail('');
+    setEmailError('');
+
+    if (organization) {
+      updateOrganization.mutate({
+        id: organization.id,
+        test_emails: updatedEmails,
+        test_email: updatedEmails[0],
+      });
+    }
+  };
+
+  const handleRemoveEmail = (emailToRemove: string) => {
+    const updatedEmails = testEmails.filter(e => e !== emailToRemove);
+    setTestEmails(updatedEmails);
+
+    if (organization) {
+      updateOrganization.mutate({
+        id: organization.id,
+        test_emails: updatedEmails,
+        test_email: updatedEmails[0] || null,
+      });
+    }
   };
 
   return (
@@ -223,7 +251,7 @@ const TestModeContent = () => {
                 : 'text-muted-foreground'
             }`}>
               {organization?.test_mode_enabled 
-                ? t('settings.testModeActiveDesc', { email: organization.test_email || '—' })
+                ? t('settings.testModeActiveDesc', { count: testEmails.length })
                 : t('settings.testModeEnabledDesc')
               }
             </p>
@@ -236,35 +264,73 @@ const TestModeContent = () => {
         </div>
       )}
 
-      <div className="space-y-2">
-        <Label htmlFor="test-email">{t('settings.testEmailAddress')}</Label>
-        <div className="flex gap-2">
-          <Input
-            id="test-email"
-            type="email"
-            value={testEmail}
-            onChange={(e) => {
-              setTestEmail(e.target.value);
-              setTestEmailError('');
-            }}
-            placeholder={t('settings.testEmailPlaceholder')}
-            className="flex-1"
-            disabled={organization?.is_demo}
-          />
-          {!organization?.is_demo && (
+      <div className="space-y-3">
+        <Label>{t('settings.testEmailAddresses')}</Label>
+        
+        {/* List of existing emails */}
+        {testEmails.length > 0 && (
+          <div className="space-y-2">
+            {testEmails.map((email, index) => (
+              <div key={index} className="flex items-center gap-2">
+                <Input
+                  value={email}
+                  disabled
+                  className="flex-1 bg-muted h-9"
+                />
+                {!organization?.is_demo && (
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={() => handleRemoveEmail(email)}
+                    className="h-9 px-2 text-destructive hover:text-destructive hover:bg-destructive/10"
+                  >
+                    ×
+                  </Button>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Add new email */}
+        {!organization?.is_demo && testEmails.length < 5 && (
+          <div className="flex gap-2">
+            <Input
+              type="email"
+              value={newEmail}
+              onChange={(e) => {
+                setNewEmail(e.target.value);
+                setEmailError('');
+              }}
+              placeholder={t('settings.testEmailPlaceholder')}
+              className="flex-1 h-9"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  handleAddEmail();
+                }
+              }}
+            />
             <Button 
-              onClick={handleTestEmailSave} 
-              disabled={updateOrganization.isPending || !testEmail}
+              onClick={handleAddEmail} 
+              disabled={updateOrganization.isPending || !newEmail}
               variant="outline"
               size="sm"
+              className="h-9"
             >
-              {t('common.save')}
+              {t('settings.addTestEmail')}
             </Button>
-          )}
-        </div>
-        {testEmailError && (
-          <p className="text-sm text-destructive">{testEmailError}</p>
+          </div>
         )}
+
+        {emailError && (
+          <p className="text-sm text-destructive">{emailError}</p>
+        )}
+        
+        <p className="text-xs text-muted-foreground">
+          {t('settings.testEmailsDesc')}
+        </p>
+
         {organization?.is_demo && (
           <p className="text-sm text-muted-foreground">
             {t('settings.demoModeNote')}

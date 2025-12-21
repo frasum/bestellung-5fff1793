@@ -39,20 +39,27 @@ serve(async (req: Request): Promise<Response> => {
     console.log(`Creating magic link for supplier: ${supplierName} (${supplierEmail})`);
 
     // Check if test mode is enabled for this organization
-    let actualRecipient = supplierEmail;
+    let actualRecipients: string[] = [supplierEmail];
     let isTestMode = false;
     
     if (organizationId) {
       const { data: orgData } = await supabase
         .from("organizations")
-        .select("test_mode_enabled, test_email")
+        .select("test_mode_enabled, test_email, test_emails")
         .eq("id", organizationId)
         .single();
       
-      if (orgData?.test_mode_enabled && orgData?.test_email) {
-        isTestMode = true;
-        actualRecipient = orgData.test_email;
-        console.log(`Test mode enabled - redirecting email from ${supplierEmail} to ${actualRecipient}`);
+      if (orgData?.test_mode_enabled) {
+        // Use test_emails array if available, fallback to test_email
+        const testEmails = orgData.test_emails?.length > 0 
+          ? orgData.test_emails 
+          : (orgData.test_email ? [orgData.test_email] : null);
+        
+        if (testEmails && testEmails.length > 0) {
+          isTestMode = true;
+          actualRecipients = testEmails;
+          console.log(`Test mode enabled - redirecting email from ${supplierEmail} to ${actualRecipients.join(', ')}`);
+        }
       }
     }
 
@@ -93,7 +100,7 @@ serve(async (req: Request): Promise<Response> => {
       },
       body: JSON.stringify({
         from: "Bestellung.pro <noreply@bestellung.pro>",
-        to: [actualRecipient],
+        to: actualRecipients,
         subject: `${subjectPrefix}Zugang zum Lieferantenportal - ${organizationName}`,
         html: `
           <!DOCTYPE html>
@@ -168,10 +175,10 @@ Falls Sie diesen Link nicht angefordert haben, können Sie diese E-Mail ignorier
       JSON.stringify({ 
         success: true, 
         message: isTestMode 
-          ? `Magic link sent to test email (${actualRecipient})` 
+          ? `Magic link sent to test emails (${actualRecipients.join(', ')})` 
           : "Magic link sent successfully",
         isTestMode,
-        actualRecipient
+        actualRecipients
       }),
       {
         status: 200,

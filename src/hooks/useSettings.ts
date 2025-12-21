@@ -35,6 +35,7 @@ export interface Organization {
   trial_ends_at: string | null;
   test_mode_enabled: boolean;
   test_email: string | null;
+  test_emails: string[] | null;
   is_demo: boolean;
   demo_expires_at: string | null;
   contact_email: string | null;
@@ -81,6 +82,7 @@ export const useUpdateOrganization = () => {
       name?: string; 
       test_mode_enabled?: boolean; 
       test_email?: string | null;
+      test_emails?: string[] | null;
       contact_email?: string | null;
       contact_phone?: string | null;
       website?: string | null;

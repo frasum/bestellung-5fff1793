@@ -2126,6 +2126,7 @@ export type Database = {
           sponsored_note: string | null
           subscription_tier: string
           test_email: string | null
+          test_emails: string[] | null
           test_mode_enabled: boolean
           trial_ends_at: string | null
           updated_at: string
@@ -2148,6 +2149,7 @@ export type Database = {
           sponsored_note?: string | null
           subscription_tier?: string
           test_email?: string | null
+          test_emails?: string[] | null
           test_mode_enabled?: boolean
           trial_ends_at?: string | null
           updated_at?: string
@@ -2170,6 +2172,7 @@ export type Database = {
           sponsored_note?: string | null
           subscription_tier?: string
           test_email?: string | null
+          test_emails?: string[] | null
           test_mode_enabled?: boolean
           trial_ends_at?: string | null
           updated_at?: string
