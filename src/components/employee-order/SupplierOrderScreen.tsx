@@ -191,6 +191,7 @@ export function SupplierOrderScreen({
       articleName: article.name,
       quantity: 1,
       unit: article.unit,
+      orderUnit: article.order_unit_name,
       supplierId: article.supplier_id,
       supplierName: supplier?.name || '',
       price: article.price,
@@ -313,7 +314,7 @@ export function SupplierOrderScreen({
                                 <div className="flex-1 min-w-0">
                                   <p className="font-medium truncate">{item.articleName}</p>
                                   <p className="text-sm text-muted-foreground">
-                                    {item.unit}
+                                    {item.orderUnit || item.unit}
                                   </p>
                                 </div>
                                 <div className="flex items-center gap-2">
@@ -593,7 +594,7 @@ export function SupplierOrderScreen({
                           <div className="flex-1 min-w-0">
                             <p className="font-medium truncate">{item.articleName}</p>
                             <p className="text-sm text-muted-foreground">
-                              {item.unit}
+                              {item.orderUnit || item.unit}
                             </p>
                           </div>
                           <div className="flex items-center gap-2">
