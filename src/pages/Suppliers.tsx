@@ -1,7 +1,6 @@
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { useCart } from '@/contexts/CartContext';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { useSuppliers, useCreateSupplier, useUpdateSupplier, useDeleteSupplier, Supplier, SupplierInput } from '@/hooks/useSuppliers';
@@ -50,12 +49,6 @@ const Suppliers = () => {
   } = useAuth();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const {
-    addItem,
-    updateQuantity,
-    items: cartItems,
-    getItemsBySupplier
-  } = useCart();
 
   // Tab state from URL
   const activeTab = searchParams.get('tab') || 'suppliers';
@@ -360,10 +353,6 @@ const Suppliers = () => {
       }
     });
     setSelectedArticles(new Set());
-  };
-  const getCartQuantity = (articleId: string) => {
-    const item = cartItems.find(i => i.article.id === articleId);
-    return item?.quantity || 0;
   };
   useEffect(() => {
     if (!authLoading && !user) {
@@ -681,7 +670,7 @@ const Suppliers = () => {
           }} onEditArticle={article => {
             setEditingArticle(article);
             setIsArticleDialogOpen(true);
-          }} onDeleteArticle={setDeletingArticle} invitingSupplierId={invitingSupplierId} sendingInvitation={sendingInvitation} getCartQuantity={getCartQuantity} onAddToCart={addItem} onUpdateQuantity={updateQuantity} />}
+          }} onDeleteArticle={setDeletingArticle} invitingSupplierId={invitingSupplierId} sendingInvitation={sendingInvitation} />}
           </TabsContent>
 
           {/* Wines Tab */}

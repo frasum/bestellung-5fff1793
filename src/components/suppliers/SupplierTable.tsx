@@ -1,7 +1,6 @@
 import { Fragment } from 'react';
-import { ChevronDown, ChevronRight, Pencil, Trash2, FileText, Send, Bell, Store, Loader2, Plus, Minus, QrCode, ExternalLink, Key } from 'lucide-react';
+import { ChevronDown, ChevronRight, Pencil, Trash2, FileText, Send, Bell, Store, Loader2, QrCode, ExternalLink, Key } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -38,9 +37,6 @@ interface SupplierTableProps {
   onDeleteArticle: (article: Article) => void;
   invitingSupplierId: string | null;
   sendingInvitation: boolean;
-  getCartQuantity: (articleId: string) => number;
-  onAddToCart: (article: Article, quantity: number) => void;
-  onUpdateQuantity: (articleId: string, quantity: number) => void;
 }
 
 export const SupplierTable = ({
@@ -69,10 +65,7 @@ export const SupplierTable = ({
   onEditArticle,
   onDeleteArticle,
   invitingSupplierId,
-  sendingInvitation,
-  getCartQuantity,
-  onAddToCart,
-  onUpdateQuantity
+  sendingInvitation
 }: SupplierTableProps) => {
   const suppliersWithArticles = suppliers?.filter(s => (articlesBySupplier[s.id]?.length || 0) > 0) || [];
 
@@ -203,7 +196,6 @@ export const SupplierTable = ({
                         <Table>
                           <TableHeader>
                             <TableRow className="hover:bg-transparent border-b border-border/50">
-                              <TableHead className="h-8 text-xs text-center w-[80px]">Menge</TableHead>
                               <TableHead className="h-8 text-xs">Artikel</TableHead>
                               <TableHead className="h-8 text-xs hidden md:table-cell">Beschreibung</TableHead>
                               <TableHead className="h-8 text-xs">Einheit</TableHead>
@@ -213,48 +205,8 @@ export const SupplierTable = ({
                           </TableHeader>
                           <TableBody>
                             {supplierArticles.map(article => {
-                              const cartQty = getCartQuantity(article.id);
                               return (
-                                <TableRow key={article.id} className={cn("group/article border-b border-border/30 hover:bg-muted/50", cartQty > 0 && "bg-destructive/10 text-destructive")}>
-                                  <TableCell className="py-1.5">
-                                    <div className="flex items-center justify-center gap-1 md:gap-1.5">
-                                      <Button 
-                                        size="icon" 
-                                        variant="outline" 
-                                        className="h-8 w-8 md:h-10 md:w-10" 
-                                        onClick={() => onUpdateQuantity(article.id, cartQty - 1)} 
-                                        disabled={cartQty === 0}
-                                      >
-                                        <Minus className="w-3 h-3 md:w-4 md:h-4" />
-                                      </Button>
-                                      <Input
-                                        type="text"
-                                        inputMode="numeric"
-                                        value={cartQty || ''}
-                                        onChange={(e) => {
-                                          const val = parseInt(e.target.value) || 0;
-                                          if (val === 0) {
-                                            onUpdateQuantity(article.id, 0);
-                                          } else if (cartQty === 0) {
-                                            onAddToCart(article, val);
-                                          } else {
-                                            onUpdateQuantity(article.id, val);
-                                          }
-                                        }}
-                                        onFocus={(e) => e.target.select()}
-                                        className={cn("w-12 h-8 md:w-14 md:h-10 text-center text-sm md:text-base", cartQty > 0 && "border-destructive bg-destructive/10 text-destructive font-medium")}
-                                        placeholder="0"
-                                      />
-                                      <Button 
-                                        size="icon" 
-                                        variant="outline" 
-                                        className="h-8 w-8 md:h-10 md:w-10" 
-                                        onClick={() => cartQty === 0 ? onAddToCart(article, 1) : onUpdateQuantity(article.id, cartQty + 1)}
-                                      >
-                                        <Plus className="w-3 h-3 md:w-4 md:h-4" />
-                                      </Button>
-                                    </div>
-                                  </TableCell>
+                                <TableRow key={article.id} className="group/article border-b border-border/30 hover:bg-muted/50">
                                   <TableCell className="py-1.5">
                                     <div className="flex items-center gap-2">
                                       <p 

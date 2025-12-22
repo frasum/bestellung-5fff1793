@@ -1,5 +1,5 @@
 import { memo } from 'react';
-import { Pencil, Trash2, Plus, Minus, Package } from 'lucide-react';
+import { Pencil, Trash2, Package } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -11,12 +11,9 @@ import { format } from 'date-fns';
 
 interface ArticleCardProps {
   article: Article;
-  cartQty: number;
   hasPendingChanges?: boolean;
   lastOrder?: LastOrderInfo;
   orderUnits?: OrderUnit[];
-  onUpdateQuantity: (articleId: string, quantity: number) => void;
-  onAddToCart: (article: Article, quantity: number) => void;
   onEdit: (article: Article) => void;
   onDelete: (article: Article) => void;
   onPendingClick?: () => void;
@@ -24,12 +21,9 @@ interface ArticleCardProps {
 
 export const ArticleCard = memo(({
   article,
-  cartQty,
   hasPendingChanges = false,
   lastOrder,
   orderUnits = [],
-  onUpdateQuantity,
-  onAddToCart,
   onEdit,
   onDelete,
   onPendingClick
@@ -38,10 +32,7 @@ export const ArticleCard = memo(({
     ? orderUnits.find(u => u.id === article.order_unit_id)
     : null;
   return (
-    <Card className={cn(
-      "p-2 md:p-3",
-      cartQty > 0 && "ring-2 ring-destructive/50 bg-destructive/5"
-    )}>
+    <Card className="p-2 md:p-3">
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
@@ -96,69 +87,24 @@ export const ArticleCard = memo(({
         </div>
       </div>
       
-      <div className="flex items-center justify-between mt-4 gap-2">
-        {/* Quantity Controls */}
-        <div className="flex items-center gap-2 md:gap-3">
-          <Button
-            size="icon"
-            variant="outline"
-            className="h-9 w-9 md:h-11 md:w-11"
-            onClick={() => onUpdateQuantity(article.id, cartQty - 1)}
-            disabled={cartQty === 0}
-          >
-            <Minus className="w-4 h-4" />
-          </Button>
-          <input
-            type="text"
-            inputMode="numeric"
-            value={cartQty}
-            onChange={(e) => {
-              const val = parseInt(e.target.value, 10);
-              if (!isNaN(val) && val >= 0) {
-                onUpdateQuantity(article.id, val);
-              } else if (e.target.value === '') {
-                onUpdateQuantity(article.id, 0);
-              }
-            }}
-            onFocus={(e) => {
-              const target = e.target;
-              setTimeout(() => target.select(), 0);
-            }}
-            className={cn(
-              "w-12 h-9 md:w-14 md:h-11 text-center font-medium rounded-md border border-input bg-background text-base",
-              "focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1",
-              cartQty > 0 ? "text-destructive" : "text-foreground"
-            )}
-          />
-          <Button
-            size="icon"
-            variant="outline"
-            className="h-9 w-9 md:h-11 md:w-11"
-            onClick={() => onAddToCart(article, 1)}
-          >
-            <Plus className="w-4 h-4" />
-          </Button>
-        </div>
-
-        {/* Actions */}
-        <div className="flex gap-1 md:gap-2">
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className="h-10 w-10 md:h-11 md:w-11" 
-            onClick={() => onEdit(article)}
-          >
-            <Pencil className="w-4 h-4 md:w-5 md:h-5" />
-          </Button>
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className="h-10 w-10 md:h-11 md:w-11 text-destructive hover:text-destructive" 
-            onClick={() => onDelete(article)}
-          >
-            <Trash2 className="w-4 h-4 md:w-5 md:h-5" />
-          </Button>
-        </div>
+      {/* Actions */}
+      <div className="flex justify-end gap-1 md:gap-2 mt-4">
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          className="h-10 w-10 md:h-11 md:w-11" 
+          onClick={() => onEdit(article)}
+        >
+          <Pencil className="w-4 h-4 md:w-5 md:h-5" />
+        </Button>
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          className="h-10 w-10 md:h-11 md:w-11 text-destructive hover:text-destructive" 
+          onClick={() => onDelete(article)}
+        >
+          <Trash2 className="w-4 h-4 md:w-5 md:h-5" />
+        </Button>
       </div>
     </Card>
   );
