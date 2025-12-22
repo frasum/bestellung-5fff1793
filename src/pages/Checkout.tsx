@@ -345,6 +345,7 @@ const Checkout = () => {
           isTestOrder: preview.isTestMode || false,
           locationId: draftLocationId || activeLocation?.id,
           employeeId: draftEmployeeId,
+          customerNumber: preview.customerNumber,
         });
         orderNumbers.push({ orderNumber: result.orderNumber, supplierName: preview.supplierName });
       }
