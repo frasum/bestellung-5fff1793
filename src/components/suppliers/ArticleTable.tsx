@@ -1,5 +1,5 @@
 import { Fragment, useCallback } from 'react';
-import { ChevronRight, Pencil, Trash2, Plus, Minus, Bell, Package } from 'lucide-react';
+import { ChevronRight, Pencil, Trash2, Bell, Package } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
@@ -25,8 +25,6 @@ interface ArticleTableProps {
   openSuppliers: Set<string>;
   selectedArticles: Set<string>;
   advancedViewEnabled: boolean;
-  getCartQuantity: (articleId: string) => number;
-  getItemsBySupplier: () => Map<string, unknown>;
   pendingChangesBySupplier?: Record<string, number>;
   pendingArticleIds?: Set<string>;
   recentlyActiveSuppliers?: Map<string, SupplierActivityInfo>;
@@ -34,8 +32,6 @@ interface ArticleTableProps {
   orderUnits?: OrderUnit[];
   onToggleSupplier: (supplierId: string) => void;
   onToggleArticle: (articleId: string) => void;
-  onAddToCart: (article: Article, quantity: number) => void;
-  onUpdateQuantity: (articleId: string, quantity: number) => void;
   onEdit: (article: Article) => void;
   onDelete: (article: Article) => void;
   onShowChanges?: (supplierId: string) => void;
@@ -47,8 +43,6 @@ export const ArticleTable = ({
   openSuppliers,
   selectedArticles,
   advancedViewEnabled,
-  getCartQuantity,
-  getItemsBySupplier,
   pendingChangesBySupplier = {},
   pendingArticleIds = new Set(),
   recentlyActiveSuppliers = new Map(),
@@ -56,21 +50,11 @@ export const ArticleTable = ({
   orderUnits = [],
   onToggleSupplier,
   onToggleArticle,
-  onAddToCart,
-  onUpdateQuantity,
   onEdit,
   onDelete,
   onShowChanges,
   onArticleChangeClick
 }: ArticleTableProps) => {
-  // Stable callback wrappers for ArticleCard to prevent unnecessary re-renders
-  const handleUpdateQuantity = useCallback((articleId: string, quantity: number) => {
-    onUpdateQuantity(articleId, quantity);
-  }, [onUpdateQuantity]);
-
-  const handleAddToCart = useCallback((article: Article, quantity: number) => {
-    onAddToCart(article, quantity);
-  }, [onAddToCart]);
 
   const handleEdit = useCallback((article: Article) => {
     onEdit(article);
@@ -91,19 +75,13 @@ export const ArticleTable = ({
             onOpenChange={() => onToggleSupplier(group.supplier.id)}
           >
             <CollapsibleTrigger className="w-full">
-              <div className={cn(
-                "flex items-center justify-between p-2 md:p-3 rounded-lg bg-card border border-border",
-                getItemsBySupplier().has(group.supplier.id) && "bg-destructive/10 border-destructive/30"
-              )}>
+              <div className="flex items-center justify-between p-2 md:p-3 rounded-lg bg-card border border-border">
                 <div className="flex items-center gap-2">
                   <ChevronRight className={cn(
                     "h-5 w-5 md:h-6 md:w-6 transition-transform text-muted-foreground",
                     openSuppliers.has(group.supplier.id) && "rotate-90"
                   )} />
-                  <span className={cn(
-                    "font-semibold md:text-lg",
-                    getItemsBySupplier().has(group.supplier.id) ? "text-destructive" : "text-foreground"
-                  )}>
+                  <span className="font-semibold md:text-lg text-foreground">
                     {group.supplier.name}
                   </span>
                   {recentlyActiveSuppliers.has(group.supplier.id) && (() => {
@@ -163,12 +141,9 @@ export const ArticleTable = ({
                   <ArticleCard
                     key={article.id}
                     article={article}
-                    cartQty={getCartQuantity(article.id)}
                     hasPendingChanges={pendingArticleIds.has(article.id)}
                     lastOrder={lastOrderMap[article.id]}
                     orderUnits={orderUnits}
-                    onUpdateQuantity={handleUpdateQuantity}
-                    onAddToCart={handleAddToCart}
                     onEdit={handleEdit}
                     onDelete={handleDelete}
                     onPendingClick={() => onArticleChangeClick?.(article, group.supplier.id, group.supplier.name)}
@@ -188,17 +163,11 @@ export const ArticleTable = ({
             <Collapsible key={group.supplier.id} open={openSuppliers.has(group.supplier.id)} onOpenChange={() => onToggleSupplier(group.supplier.id)} asChild>
               <Fragment>
                 <CollapsibleTrigger asChild>
-                  <TableRow className={cn(
-                    "bg-muted/50 cursor-pointer",
-                    getItemsBySupplier().has(group.supplier.id) && "bg-destructive/20"
-                  )}>
-                    <TableCell colSpan={advancedViewEnabled ? 6 : 5} className="py-2 px-4">
+                  <TableRow className="bg-muted/50 cursor-pointer">
+                    <TableCell colSpan={advancedViewEnabled ? 5 : 4} className="py-2 px-4">
                       <div className="flex items-center gap-2">
                         <ChevronRight className={cn("h-4 w-4 transition-transform", openSuppliers.has(group.supplier.id) && "rotate-90")} />
-                        <span className={cn(
-                          "font-semibold text-sm",
-                          getItemsBySupplier().has(group.supplier.id) ? "text-destructive" : "text-foreground"
-                        )}>{group.supplier.name}</span>
+                        <span className="font-semibold text-sm text-foreground">{group.supplier.name}</span>
                         {recentlyActiveSuppliers.has(group.supplier.id) && (() => {
                           const activity = recentlyActiveSuppliers.get(group.supplier.id)!;
                           const fieldLabels: Record<string, string> = {
@@ -251,46 +220,13 @@ export const ArticleTable = ({
                 <CollapsibleContent asChild>
                   <Fragment>
                     {group.articles?.map((article) => {
-                      const cartQty = getCartQuantity(article.id);
                       return (
-                        <TableRow key={article.id} className={cn("group h-10", cartQty > 0 && "bg-destructive/10")}>
+                        <TableRow key={article.id} className="group h-10">
                           {advancedViewEnabled && (
                             <TableCell className="py-2">
                               <Checkbox checked={selectedArticles.has(article.id)} onCheckedChange={() => onToggleArticle(article.id)} />
                             </TableCell>
                           )}
-                          <TableCell className="py-2">
-                            <div className="flex items-center justify-center gap-1">
-                              <Button size="icon" variant="outline" className="h-8 w-8" onClick={() => onUpdateQuantity(article.id, cartQty - 1)} disabled={cartQty === 0}>
-                                <Minus className="w-3 h-3" />
-                              </Button>
-                              <input
-                                type="text"
-                                inputMode="numeric"
-                                value={cartQty}
-                                onChange={(e) => {
-                                  const val = parseInt(e.target.value, 10);
-                                  if (!isNaN(val) && val >= 0) {
-                                    onUpdateQuantity(article.id, val);
-                                  } else if (e.target.value === '') {
-                                    onUpdateQuantity(article.id, 0);
-                                  }
-                                }}
-                                onFocus={(e) => {
-                                  const target = e.target;
-                                  setTimeout(() => target.select(), 0);
-                                }}
-                                className={cn(
-                                  "w-12 h-8 text-center font-medium rounded-md border border-input bg-background",
-                                  "focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1",
-                                  cartQty > 0 ? "text-destructive" : "text-foreground"
-                                )}
-                              />
-                              <Button size="icon" variant="outline" className="h-8 w-8" onClick={() => onAddToCart(article, 1)}>
-                                <Plus className="w-3 h-3" />
-                              </Button>
-                            </div>
-                          </TableCell>
                           <TableCell className="py-2">
                             <div className="flex items-center gap-3">
                               <div className="min-w-0 flex-1">
