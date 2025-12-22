@@ -588,6 +588,28 @@ const Suppliers = () => {
                   <span className="hidden sm:inline">Schnell-Erfassung</span>
                 </Button>
                 {advancedSettingsEnabled && <ExportMenu filename="suppliers" title="Lieferanten" headers={['Name', 'Email', 'Telefon', 'Adresse', 'Ansprechpartner', 'Kundennummer', 'Status']} getData={() => suppliers?.map(s => [s.name, s.email, s.phone || '', s.address || '', s.contact_person || '', s.customer_number || '', s.is_active ? 'Aktiv' : 'Inaktiv']) || []} disabled={!suppliers?.length} />}
+                {advancedSettingsEnabled && <ExportMenu filename="articles" title="Artikel" headers={['Artikelname', 'SKU', 'Beschreibung', 'Lieferant', 'Kategorie', 'Oberkategorie', 'Einheit', 'VPE', 'Einkaufspreis', 'Verkaufspreis', 'Ref.-Preis', 'Ref.-Einheit', 'Herkunftsland', 'Rebsorte', 'Geschmacksprofil', 'Speiseempfehlung', 'Status']} getData={() => allArticles?.map(a => {
+                  const supplier = suppliers?.find(s => s.id === a.supplier_id);
+                  return [
+                    a.name,
+                    a.sku || '',
+                    a.description || '',
+                    supplier?.name || '',
+                    a.category || '',
+                    a.top_category || '',
+                    a.unit,
+                    a.packaging_unit?.toString() || '',
+                    a.price.toFixed(2).replace('.', ','),
+                    a.selling_price?.toFixed(2).replace('.', ',') || '',
+                    a.reference_price?.toFixed(2).replace('.', ',') || '',
+                    a.reference_unit || '',
+                    a.origin_country || '',
+                    a.grape_variety || '',
+                    a.flavor_profile || '',
+                    a.food_pairings || '',
+                    a.is_active ? 'Aktiv' : 'Inaktiv'
+                  ];
+                }) || []} disabled={!allArticles?.length} />}
                 {advancedSettingsEnabled && <Button variant="outline" className="h-10 sm:h-9" onClick={() => setIsSupplierImportOpen(true)}>
                     <Upload className="w-4 h-4 sm:mr-2" />
                     <span className="hidden sm:inline">Importieren</span>
