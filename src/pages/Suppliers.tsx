@@ -575,9 +575,8 @@ const Suppliers = () => {
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-4 max-w-lg md:max-w-xl">
+          <TabsList className="grid w-full grid-cols-3 max-w-md">
             <TabsTrigger value="suppliers">Lieferanten</TabsTrigger>
-            <TabsTrigger value="articles">Alle Artikel</TabsTrigger>
             <TabsTrigger value="wines" className="gap-1">
               <span className="hidden sm:inline">🍷</span> Weine
             </TabsTrigger>
@@ -683,72 +682,6 @@ const Suppliers = () => {
             setEditingArticle(article);
             setIsArticleDialogOpen(true);
           }} onDeleteArticle={setDeletingArticle} invitingSupplierId={invitingSupplierId} sendingInvitation={sendingInvitation} getCartQuantity={getCartQuantity} onAddToCart={addItem} onUpdateQuantity={updateQuantity} />}
-          </TabsContent>
-
-          {/* Articles Tab */}
-          <TabsContent value="articles" className="space-y-4">
-            {/* Combined Filter + Actions Row */}
-            <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-              <ArticleFilters searchQuery={articleSearchQuery} onSearchChange={setArticleSearchQuery} selectedSuppliers={selectedArticleSuppliers} onSupplierChange={setSelectedArticleSuppliers} suppliers={suppliers || []} supplierPopoverOpen={supplierPopoverOpen} onSupplierPopoverChange={setSupplierPopoverOpen} selectedCategory={selectedCategory} onCategoryChange={setSelectedCategory} articleCategories={articleCategoriesForFilter} advancedViewEnabled={articleAdvancedViewEnabled} onAdvancedViewChange={setArticleAdvancedViewEnabled} hasFilters={articleSearchQuery !== '' || selectedArticleSuppliers.length > 0 || selectedCategory !== 'all'} showAdvancedToggle={advancedSettingsEnabled} recentlyActiveSuppliers={recentlyActiveSuppliers || new Map()} onClearFilters={() => {
-              setArticleSearchQuery('');
-              setSelectedArticleSuppliers([]);
-              setSelectedCategory('all');
-            }} />
-              <div className="flex flex-wrap gap-2 shrink-0">
-                {advancedSettingsEnabled && <ExportMenu filename="articles" title="Artikel" headers={['Name', 'Lieferant', 'Preis', 'Einheit', 'SKU', 'Kategorie', 'Status', 'Referenzpreis', 'Referenzeinheit']} getData={() => allArticles?.map(a => [a.name, a.suppliers?.name || '', `€${Number(a.price).toFixed(2)}`, a.unit, a.sku || '', a.category || '', a.is_active ? 'Aktiv' : 'Inaktiv', a.reference_price ? `€${Number(a.reference_price).toFixed(2)}` : '', a.reference_unit || '']) || []} disabled={!allArticles?.length} />}
-                {advancedSettingsEnabled && <Button variant="outline" className="h-10 sm:h-9" onClick={() => setIsArticleImportOpen(true)}>
-                    <Upload className="w-4 h-4 sm:mr-2" />
-                    <span className="hidden sm:inline">Importieren</span>
-                  </Button>}
-                <Button className="h-10 sm:h-9" onClick={() => {
-                setEditingArticle(null);
-                setIsArticleDialogOpen(true);
-              }}>
-                  <Plus className="w-4 h-4 sm:mr-2" />
-                  <span className="hidden sm:inline">Artikel hinzufügen</span>
-                </Button>
-              </div>
-            </div>
-
-            {/* Article Form Dialog moved outside Tabs for global availability */}
-
-            <CsvImportDialog open={isArticleImportOpen} onOpenChange={setIsArticleImportOpen} title="Artikel importieren" fields={ARTICLE_IMPORT_FIELDS} onImport={async (data, defaultSupplierId) => {
-            await importArticles.mutateAsync({
-              articles: data,
-              defaultSupplierId
-            });
-          }} templateFileName="articles_template.csv" suppliers={suppliers?.map(s => ({
-            id: s.id,
-            name: s.name
-          }))} showSupplierSelect={true} />
-
-            {/* Selection Toolbar */}
-            {articleAdvancedViewEnabled && selectedArticles.size > 0 && <BulkCategoryToolbar selectedCount={selectedArticles.size} categories={allArticleCategories} orderUnits={orderUnits || []} onAssignCategory={handleBulkCategoryAssign} onAssignOrderUnit={handleBulkOrderUnitAssign} onClearSelection={() => setSelectedArticles(new Set())} />}
-
-            {/* Articles List */}
-            {articlesLoading ? <div className="flex items-center justify-center py-12">
-                <Loader2 className="w-8 h-8 animate-spin text-primary" />
-              </div> : sortedArticles?.length === 0 ? <div className="text-center py-12 bg-card border border-border rounded-xl">
-                <Package className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-                <p className="text-muted-foreground">
-                  {articleSearchQuery || selectedArticleSuppliers.length > 0 || selectedCategory !== 'all' ? 'Keine Artikel gefunden' : 'Noch keine Artikel. Fügen Sie Ihren ersten Artikel hinzu.'}
-                </p>
-              </div> : <ArticleTable groupedBySupplier={groupedBySupplier} openSuppliers={openArticleSuppliers} selectedArticles={selectedArticles} advancedViewEnabled={articleAdvancedViewEnabled} getCartQuantity={getCartQuantity} getItemsBySupplier={getItemsBySupplier} pendingChangesBySupplier={pendingChangesBySupplier || {}} pendingArticleIds={pendingArticleIds || new Set()} recentlyActiveSuppliers={recentlyActiveSuppliers || new Map()} lastOrderMap={lastOrderMap || {}} orderUnits={orderUnits || []} onToggleSupplier={toggleArticleSupplier} onToggleArticle={toggleArticleSelected} onAddToCart={addItem} onUpdateQuantity={updateQuantity} onEdit={article => {
-            setEditingArticle(article);
-            setIsArticleDialogOpen(true);
-          }} onDelete={setDeletingArticle} onShowChanges={supplierId => {
-            const supplier = suppliers?.find(s => s.id === supplierId);
-            if (supplier) setChangesDialogSupplier(supplier);
-          }} onArticleChangeClick={(article, supplierId, supplierName) => {
-            const supplier = suppliers?.find(s => s.id === supplierId);
-            if (supplier) {
-              setChangesDialogSupplier(supplier);
-              setChangesDialogArticle({
-                id: article.id,
-                name: article.name
-              });
-            }
-          }} />}
           </TabsContent>
 
           {/* Wines Tab */}
