@@ -6,7 +6,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, Package, Mail, Globe, Send } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Loader2, Package, Mail, Globe, Send, MapPin } from 'lucide-react';
 import { Supplier, SupplierInput, OrderDeliveryMethod } from '@/hooks/useSuppliers';
 import { supplierSchema, SupplierFormData } from './schemas';
 
@@ -31,7 +32,7 @@ export const SupplierFormDialog = ({
     resolver: zodResolver(supplierSchema),
     defaultValues: {
       name: '', email: '', phone: '', address: '', contact_person: '',
-      customer_number: '', minimum_order_value: '', order_delivery_method: 'email'
+      order_delivery_method: 'email'
     }
   });
 
@@ -43,14 +44,12 @@ export const SupplierFormDialog = ({
         phone: editingSupplier.phone || '',
         address: editingSupplier.address || '',
         contact_person: editingSupplier.contact_person || '',
-        customer_number: editingSupplier.customer_number || '',
-        minimum_order_value: editingSupplier.minimum_order_value?.toString() || '',
         order_delivery_method: editingSupplier.order_delivery_method || 'email',
       });
     } else {
       form.reset({
         name: '', email: '', phone: '', address: '', contact_person: '',
-        customer_number: '', minimum_order_value: '', order_delivery_method: 'email'
+        order_delivery_method: 'email'
       });
     }
   }, [editingSupplier, form]);
@@ -62,8 +61,6 @@ export const SupplierFormDialog = ({
       phone: data.phone || undefined,
       address: data.address || undefined,
       contact_person: data.contact_person || undefined,
-      customer_number: data.customer_number || undefined,
-      minimum_order_value: data.minimum_order_value ? parseFloat(data.minimum_order_value) : undefined,
       order_delivery_method: data.order_delivery_method,
     };
     await onSubmit(input);
@@ -99,14 +96,13 @@ export const SupplierFormDialog = ({
             <Label htmlFor="contact_person">Ansprechpartner</Label>
             <Input id="contact_person" {...form.register('contact_person')} placeholder="Marco Rossi" />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="customer_number">Kundennummer</Label>
-            <Input id="customer_number" {...form.register('customer_number')} placeholder="KD-12345" />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="minimum_order_value">Mindestbestellwert (€)</Label>
-            <Input id="minimum_order_value" type="number" step="0.01" min="0" {...form.register('minimum_order_value')} placeholder="50.00" onFocus={(e) => e.target.select()} />
-          </div>
+          <Alert className="bg-muted/50 border-muted">
+            <MapPin className="h-4 w-4" />
+            <AlertDescription className="text-sm">
+              Kundennummern und Mindestbestellwerte werden <strong>pro Standort</strong> konfiguriert. 
+              Nutzen Sie das Standort-Icon in der Lieferantenliste.
+            </AlertDescription>
+          </Alert>
 
           <div className="space-y-2">
             <Label htmlFor="order_delivery_method">Bestellungs-Zustellung</Label>
