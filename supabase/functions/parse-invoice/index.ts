@@ -97,10 +97,21 @@ serve(async (req) => {
     } else {
       // User auth call - get organization from user profile
       const token = authHeader!.replace('Bearer ', '');
-      const supabaseAuth = createClient(supabaseUrl, token);
-      const { data: { user }, error: authError } = await supabaseAuth.auth.getUser(token);
-      
+      const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
+
+      // Verify user JWT correctly (do NOT use the JWT as the client key)
+      const supabaseAuth = createClient(supabaseUrl, supabaseAnonKey, {
+        global: {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      });
+
+      const { data: { user }, error: authError } = await supabaseAuth.auth.getUser();
+
       if (authError || !user) {
+        console.error('User auth failed:', authError?.message);
         return new Response(JSON.stringify({ error: 'Invalid authentication' }), {
           status: 401,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
