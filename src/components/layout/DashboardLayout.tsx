@@ -4,7 +4,15 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { LayoutDashboard, Users, Package, ShoppingCart, BarChart3, Settings, LogOut, Menu, X, FlaskConical, Search, Sparkles, Bell, Settings2, Gift, ChevronRight, ChevronLeft } from 'lucide-react';
+import { LayoutDashboard, Users, Package, ShoppingCart, BarChart3, Settings, LogOut, Menu, X, FlaskConical, Search, Sparkles, Bell, Settings2, Gift, ChevronRight, ChevronLeft, User, ChevronUp } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { GlobalSearch } from '@/components/GlobalSearch';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import { LocationSwitcher } from '@/components/LocationSwitcher';
@@ -393,24 +401,54 @@ export const DashboardLayout = ({
 
           {/* User section */}
           <div className="p-4 border-t border-sidebar-border">
-            <div className="flex items-center gap-3 mb-3 px-2">
-              <div className="w-8 h-8 rounded-full bg-accent/20 flex items-center justify-center">
-                <span className="text-sm font-medium text-accent">
-                  {user?.email?.charAt(0).toUpperCase()}
-                </span>
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-sidebar-foreground truncate">{user?.email}</p>
-              </div>
-            </div>
-            <div className="xl:hidden mb-2 flex items-center gap-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="w-full flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-sidebar-accent/50 transition-colors">
+                  <div className="w-8 h-8 rounded-full bg-accent/20 flex items-center justify-center">
+                    <span className="text-sm font-medium text-accent">
+                      {user?.email?.charAt(0).toUpperCase()}
+                    </span>
+                  </div>
+                  <div className="flex-1 min-w-0 text-left">
+                    <p className="text-sm font-medium text-sidebar-foreground truncate">
+                      {user?.email}
+                    </p>
+                  </div>
+                  <ChevronUp className="w-4 h-4 text-sidebar-foreground/50" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent 
+                className="w-56 bg-popover" 
+                align="start" 
+                side="top" 
+                sideOffset={8}
+              >
+                <DropdownMenuLabel>{t('settings.profile.title', 'Mein Konto')}</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => navigate('/settings?tab=profile')}>
+                  <User className="w-4 h-4 mr-2" />
+                  {t('settings.tabs.profile', 'Profil')}
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate('/settings')}>
+                  <Settings className="w-4 h-4 mr-2" />
+                  {t('nav.settings', 'Einstellungen')}
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem 
+                  onClick={handleSignOut}
+                  className="text-destructive focus:text-destructive focus:bg-destructive/10"
+                >
+                  <LogOut className="w-4 h-4 mr-2" />
+                  {t('nav.signOut', 'Abmelden')}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            
+            {/* Language/Theme nur auf Mobile */}
+            <div className="xl:hidden mt-2 flex items-center gap-2">
               <LanguageSwitcher variant="full" />
               <ThemeToggle />
             </div>
-            <Button variant="ghost" className="w-full justify-start text-sidebar-foreground/70 hover:text-accent hover:bg-sidebar-accent/50" onClick={handleSignOut}>
-              <LogOut className="w-4 h-4 mr-2" />
-              {t('nav.signOut')}
-            </Button>
           </div>
         </div>
 
