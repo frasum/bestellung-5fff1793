@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDropzone } from 'react-dropzone';
 import { format } from 'date-fns';
+import { toast } from 'sonner';
 import { de, enUS } from 'date-fns/locale';
 import {
   Upload,
@@ -87,6 +88,8 @@ export function InvoiceVerificationTab() {
   const [selectedInvoiceId, setSelectedInvoiceId] = useState<string | null>(null);
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
   const [pdfDialogUrl, setPdfDialogUrl] = useState<string | null>(null);
+  const [pdfBlobUrl, setPdfBlobUrl] = useState<string | null>(null);
+  const [pdfLoading, setPdfLoading] = useState(false);
 
   const locale = i18n.language === 'de' ? de : enUS;
 
@@ -103,6 +106,31 @@ export function InvoiceVerificationTab() {
     accept: { 'application/pdf': ['.pdf'] },
     multiple: true,
   });
+
+  const openPdfViewer = async (pdfUrl: string) => {
+    setPdfDialogUrl(pdfUrl);
+    setPdfLoading(true);
+    
+    try {
+      const response = await fetch(pdfUrl);
+      const blob = await response.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      setPdfBlobUrl(blobUrl);
+    } catch (error) {
+      console.error('Failed to load PDF:', error);
+      toast.error(t('invoices.pdfLoadError', 'PDF konnte nicht geladen werden'));
+    } finally {
+      setPdfLoading(false);
+    }
+  };
+
+  const closePdfDialog = () => {
+    if (pdfBlobUrl) {
+      URL.revokeObjectURL(pdfBlobUrl);
+      setPdfBlobUrl(null);
+    }
+    setPdfDialogUrl(null);
+  };
 
   const toggleExpanded = (id: string) => {
     setExpandedInvoices(prev => {
@@ -393,7 +421,7 @@ export function InvoiceVerificationTab() {
                               <Button 
                                 variant="outline" 
                                 size="sm" 
-                                onClick={() => setPdfDialogUrl(invoice.pdf_url)}
+                                onClick={() => openPdfViewer(invoice.pdf_url!)}
                               >
                                 <Eye className="h-4 w-4 mr-2" />
                                 {t('invoices.viewPdf', 'PDF anzeigen')}
@@ -462,7 +490,7 @@ export function InvoiceVerificationTab() {
       />
 
       {/* PDF Viewer Dialog */}
-      <Dialog open={!!pdfDialogUrl} onOpenChange={() => setPdfDialogUrl(null)}>
+      <Dialog open={!!pdfDialogUrl} onOpenChange={closePdfDialog}>
         <DialogContent className="max-w-5xl h-[85vh] flex flex-col p-0">
           <DialogHeader className="p-4 pb-2 border-b">
             <DialogTitle className="flex items-center justify-between">
@@ -478,13 +506,18 @@ export function InvoiceVerificationTab() {
             </DialogTitle>
           </DialogHeader>
           <div className="flex-1 min-h-0">
-            {pdfDialogUrl && (
+            {pdfLoading ? (
+              <div className="flex items-center justify-center h-full">
+                <RefreshCw className="h-8 w-8 animate-spin text-muted-foreground" />
+                <span className="ml-2 text-muted-foreground">{t('invoices.loadingPdf', 'PDF wird geladen...')}</span>
+              </div>
+            ) : pdfBlobUrl ? (
               <iframe
-                src={pdfDialogUrl}
+                src={pdfBlobUrl}
                 className="w-full h-full border-0"
                 title="PDF Vorschau"
               />
-            )}
+            ) : null}
           </div>
         </DialogContent>
       </Dialog>
