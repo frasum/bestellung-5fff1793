@@ -144,6 +144,15 @@ export function useDeleteOrganization() {
 
   return useMutation({
     mutationFn: async (orgId: string) => {
+      // First disconnect all profiles from this organization
+      const { error: profilesError } = await supabase
+        .from('profiles')
+        .update({ organization_id: null })
+        .eq('organization_id', orgId);
+
+      if (profilesError) throw profilesError;
+
+      // Then delete the organization
       const { error } = await supabase
         .from('organizations')
         .delete()
