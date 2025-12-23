@@ -59,7 +59,8 @@
       "deleteConfirmDescription": "Êtes-vous sûr de vouloir supprimer définitivement les {{count}} commandes test ?",
       "badge": "TEST",
       "noTestOrders": "Aucune commande test disponible"
-    }
+    },
+    "easyOrderTab": "Easy Order"
   },
   "common": {
     "save": "Enregistrer",

@@ -59,7 +59,8 @@
       "deleteConfirmDescription": "Bạn có chắc muốn xóa vĩnh viễn {{count}} đơn hàng thử nghiệm?",
       "badge": "THỬ NGHIỆM",
       "noTestOrders": "Không có đơn hàng thử nghiệm"
-    }
+    },
+    "easyOrderTab": "Easy Order"
   },
   "common": {
     "save": "Lưu",

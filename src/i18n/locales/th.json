@@ -59,7 +59,8 @@
       "deleteConfirmDescription": "คุณต้องการลบคำสั่งซื้อทดสอบ {{count}} รายการอย่างถาวรหรือไม่?",
       "badge": "ทดสอบ",
       "noTestOrders": "ไม่มีคำสั่งซื้อทดสอบ"
-    }
+    },
+    "easyOrderTab": "Easy Order"
   },
   "common": {
     "save": "บันทึก",
