@@ -111,7 +111,7 @@ const OrganizationGeneralContent = () => {
                   variant="enterprise"
                   size="sm" 
                   onClick={() => navigate('/pricing')}
-                  className="gap-1.5 px-4"
+                  className="gap-1.5 px-4 rounded-full"
                 >
                   <Crown className="h-4 w-4" />
                   Enterprise
