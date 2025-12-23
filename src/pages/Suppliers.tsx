@@ -585,10 +585,6 @@ const Suppliers = () => {
             <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
               <SupplierFilters searchQuery={searchQuery} onSearchChange={setSearchQuery} topCategoryFilter={topCategoryFilter} onTopCategoryChange={setTopCategoryFilter} categoryFilter={categoryFilter} onCategoryChange={setCategoryFilter} articleCategories={articleCategoriesForSupplierFilter} multiSelectEnabled={supplierMultiSelectEnabled} onMultiSelectChange={setSupplierMultiSelectEnabled} selectedCount={selectedSuppliers.size} onPrintCombined={handlePrintCombined} showMultiSelectToggle={advancedSettingsEnabled} />
               <div className="flex flex-wrap gap-2 shrink-0">
-                <Button variant="outline" className="h-10 sm:h-9 bg-primary/5 border-primary/30 text-primary hover:bg-primary/10" onClick={() => setIsQuickCaptureOpen(true)}>
-                  <Package className="w-4 h-4 sm:mr-2" />
-                  <span className="hidden sm:inline">Schnell-Erfassung</span>
-                </Button>
                 {advancedSettingsEnabled && <ExportMenu filename="suppliers" title="Lieferanten" headers={['Name', 'Email', 'Telefon', 'Adresse', 'Ansprechpartner', 'Kundennummer', 'Status']} getData={() => suppliers?.map(s => [s.name, s.email, s.phone || '', s.address || '', s.contact_person || '', s.customer_number || '', s.is_active ? 'Aktiv' : 'Inaktiv']) || []} disabled={!suppliers?.length} />}
                 {advancedSettingsEnabled && <ExportMenu filename="articles" title="Artikel" headers={['Artikelname', 'SKU', 'Beschreibung', 'Lieferant', 'Kategorie', 'Oberkategorie', 'Einheit', 'VPE', 'Einkaufspreis', 'Verkaufspreis', 'Ref.-Preis', 'Ref.-Einheit', 'Herkunftsland', 'Rebsorte', 'Geschmacksprofil', 'Speiseempfehlung', 'Status']} getData={() => allArticles?.map(a => {
                   const supplier = suppliers?.find(s => s.id === a.supplier_id);
