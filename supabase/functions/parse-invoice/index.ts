@@ -480,7 +480,7 @@ Important:
     // Determine initial status based on parsing success
     const hasSupplier = matchedSupplierId !== null;
     const hasItems = invoiceData.items && invoiceData.items.length > 0;
-    const initialStatus = hasSupplier && hasItems ? 'recognized' : 'pending';
+    const initialStatus = hasSupplier && hasItems ? 'matched' : 'pending';
     
     console.log(`Setting initial status to '${initialStatus}' - Supplier: ${hasSupplier}, Items: ${hasItems}`);
 
