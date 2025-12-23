@@ -11,10 +11,19 @@ import {
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb';
 
+interface SubTabConfig {
+  [key: string]: string; // subtab key -> translation key
+}
+
+interface TabConfig {
+  labelKey: string;
+  subTabs?: SubTabConfig;
+}
+
 interface RouteConfig {
   labelKey: string;
   parent: string | null;
-  tabs?: Record<string, string>;
+  tabs?: Record<string, TabConfig | string>; // string for backward compat (no subtabs)
 }
 
 const routeConfig: Record<string, RouteConfig> = {
@@ -46,22 +55,28 @@ const routeConfig: Record<string, RouteConfig> = {
     parent: null,
     tabs: {
       profile: 'settings.profile',
-      organization: 'settings.organization',
-      communication: 'settings.communication',
-      employees: 'settings.employees',
-      locations: 'settings.locations',
-      categories: 'settings.categories',
-      units: 'settings.units',
-      'order-units': 'settings.orderUnits',
-      notifications: 'settings.notifications',
-      'easy-order': 'settings.simpleOrder',
-      'article-organization': 'settings.articleOrganization',
-      team: 'settings.team',
-      'price-watch': 'settings.priceWatch',
+      organization: {
+        labelKey: 'settings.organization',
+        subTabs: {
+          general: 'settings.general',
+          team: 'settings.team',
+          locations: 'locations.title',
+          'units-categories': 'settings.unitsAndCategories',
+        },
+      },
+      communication: {
+        labelKey: 'settings.communication',
+        subTabs: {
+          notifications: 'settings.notifications',
+          'email-templates': 'settings.emailTemplates',
+          'supplier-portal': 'settings.supplierPortal',
+        },
+      },
       'demo-accounts': 'settings.demoAccounts',
       'b2b-portal': 'settings.b2bPortal',
-      'developer-checklist': 'settings.developerChecklist',
       'friends-family': 'settings.friendsAndFamily',
+      'price-watch': 'settings.priceWatch',
+      'developer-checklist': 'settings.developerChecklist',
     },
   },
   '/reports': {
@@ -75,10 +90,17 @@ const routeConfig: Record<string, RouteConfig> = {
   },
 };
 
+// Default sub-tabs (same as Settings.tsx)
+const DEFAULT_SUB_TABS: Record<string, string> = {
+  organization: 'general',
+  communication: 'notifications',
+};
+
 interface PageHeaderProps {
   title: string;
   description?: string;
   activeTab?: string;
+  activeSubTab?: string | null;
   sidebarCollapsed: boolean;
   onToggleSidebar: () => void;
   children?: React.ReactNode;
@@ -88,6 +110,7 @@ export const PageHeader = ({
   title,
   description,
   activeTab,
+  activeSubTab,
   sidebarCollapsed,
   onToggleSidebar,
   children,
@@ -98,7 +121,7 @@ export const PageHeader = ({
 
   const config = routeConfig[currentPath];
 
-  // Build breadcrumb path
+  // Build breadcrumb path with up to 3 levels
   const buildBreadcrumbs = () => {
     const crumbs: { label: string; path: string | null }[] = [];
 
@@ -113,20 +136,40 @@ export const PageHeader = ({
       }
     }
 
-    // Add current page - always clickable if there's an active tab (links to base page)
+    // Get tab config
+    const tabConfig = activeTab && config?.tabs ? config.tabs[activeTab] : null;
+    const isTabWithSubTabs = tabConfig && typeof tabConfig === 'object' && 'subTabs' in tabConfig;
+    const hasActiveSubTab = isTabWithSubTabs && activeSubTab && activeSubTab !== DEFAULT_SUB_TABS[activeTab];
+
+    // Level 1: Current page (e.g., "Einstellungen")
     if (config) {
+      const isClickable = !!activeTab; // Clickable if we're on a tab (not default view)
       crumbs.push({
         label: t(config.labelKey),
-        path: activeTab ? currentPath : null, // Clickable when tab is active, not clickable when on base page
+        path: isClickable ? currentPath : null,
       });
     }
 
-    // Add active tab - not clickable (current location)
-    if (activeTab && config?.tabs && config.tabs[activeTab]) {
+    // Level 2: Tab (e.g., "Organisation")
+    if (activeTab && tabConfig) {
+      const tabLabelKey = typeof tabConfig === 'string' ? tabConfig : tabConfig.labelKey;
+      const isClickable = hasActiveSubTab; // Clickable if there's an active sub-tab
+      
       crumbs.push({
-        label: t(config.tabs[activeTab]),
-        path: null,
+        label: t(tabLabelKey),
+        path: isClickable ? `${currentPath}?tab=${activeTab}` : null,
       });
+    }
+
+    // Level 3: Sub-tab (e.g., "Team")
+    if (hasActiveSubTab && isTabWithSubTabs) {
+      const subTabConfig = (tabConfig as TabConfig).subTabs;
+      if (subTabConfig && subTabConfig[activeSubTab]) {
+        crumbs.push({
+          label: t(subTabConfig[activeSubTab]),
+          path: null, // Current location - not clickable
+        });
+      }
     }
 
     return crumbs;

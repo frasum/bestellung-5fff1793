@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useSearchParams } from 'react-router-dom';
 import { DashboardLayout, useSidebarContext } from '@/components/layout/DashboardLayout';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -17,48 +18,110 @@ import { B2BPortalOverviewTab } from '@/components/settings/B2BPortalOverviewTab
 import { SystemFeaturePrioritiesTab } from '@/components/settings/SystemFeaturePrioritiesTab';
 import { FriendsAndFamilyTab } from '@/components/settings/FriendsAndFamilyTab';
 import { PriceWatchSettingsTab } from '@/components/settings/PriceWatchSettingsTab';
-import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
+
+// Default sub-tabs for each main tab (won't be shown in URL)
+const DEFAULT_SUB_TABS: Record<string, string> = {
+  organization: 'general',
+  communication: 'notifications',
+};
+
+// Sub-tabs configuration for each main tab
+const SUB_TABS_CONFIG: Record<string, string[]> = {
+  organization: ['general', 'team', 'locations', 'units-categories'],
+  communication: ['notifications', 'email-templates', 'supplier-portal'],
+};
 
 const Settings = () => {
   const { t } = useTranslation();
   const { data: userRole } = useUserRole();
   const { data: isSuperAdmin } = useIsSuperAdmin();
   const isAdmin = userRole === 'admin';
+  const [searchParams, setSearchParams] = useSearchParams();
 
-  const [activeTab, setActiveTab] = useState('profile');
   const [advancedMode, setAdvancedMode] = useState(() => 
     localStorage.getItem('advanced-settings-enabled') === 'true'
   );
-  const [activeSubTabs, setActiveSubTabs] = useState({
-    'organization': 'general',
-    'communication': 'notifications',
-  });
+
+  // Build list of allowed tabs based on user role and advanced mode
+  const allowedTabs = useMemo(() => {
+    const tabs = ['profile', 'organization', 'communication'];
+    if (isAdmin && advancedMode) tabs.push('demo-accounts');
+    if (isSuperAdmin) tabs.push('b2b-portal', 'friends-family');
+    if (isAdmin) tabs.push('price-watch');
+    if (isAdmin && advancedMode) tabs.push('developer-checklist');
+    return tabs;
+  }, [isAdmin, isSuperAdmin, advancedMode]);
+
+  // Read tab/subtab from URL with validation
+  const rawTab = searchParams.get('tab');
+  const rawSubTab = searchParams.get('subtab');
+
+  // Validate and normalize tab
+  const activeTab = useMemo(() => {
+    if (!rawTab) return 'profile';
+    if (allowedTabs.includes(rawTab)) return rawTab;
+    return 'profile';
+  }, [rawTab, allowedTabs]);
+
+  // Validate and normalize subtab
+  const activeSubTab = useMemo(() => {
+    const subTabs = SUB_TABS_CONFIG[activeTab];
+    if (!subTabs) return null;
+    if (!rawSubTab) return DEFAULT_SUB_TABS[activeTab] || subTabs[0];
+    if (subTabs.includes(rawSubTab)) return rawSubTab;
+    return DEFAULT_SUB_TABS[activeTab] || subTabs[0];
+  }, [activeTab, rawSubTab]);
+
+  // Clean up URL if tab/subtab was invalid
+  useEffect(() => {
+    const needsCleanup = 
+      (rawTab && rawTab !== activeTab) || 
+      (rawSubTab && rawSubTab !== activeSubTab);
+    
+    if (needsCleanup) {
+      const newParams: Record<string, string> = {};
+      if (activeTab !== 'profile') {
+        newParams.tab = activeTab;
+      }
+      if (activeSubTab && activeSubTab !== DEFAULT_SUB_TABS[activeTab]) {
+        newParams.subtab = activeSubTab;
+      }
+      setSearchParams(newParams, { replace: true });
+    }
+  }, [rawTab, rawSubTab, activeTab, activeSubTab, setSearchParams]);
 
   useEffect(() => {
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === 'advanced-settings-enabled') {
         const newValue = e.newValue === 'true';
         setAdvancedMode(newValue);
-        // Reset to profile tab if demo-accounts tab is hidden
-        if (!newValue && activeTab === 'demo-accounts') {
-          setActiveTab('profile');
-        }
       }
     };
     window.addEventListener('storage', handleStorageChange);
     return () => window.removeEventListener('storage', handleStorageChange);
-  }, [activeTab]);
+  }, []);
 
-  const handleAdvancedModeToggle = (checked: boolean) => {
-    setAdvancedMode(checked);
-    localStorage.setItem('advanced-settings-enabled', checked.toString());
-    window.dispatchEvent(new StorageEvent('storage', { 
-      key: 'advanced-settings-enabled', 
-      newValue: checked.toString() 
-    }));
-    if (!checked && activeTab === 'demo-accounts') {
-      setActiveTab('profile');
+  // Handle tab change - updates URL
+  const handleTabChange = (tab: string) => {
+    if (tab === 'profile') {
+      setSearchParams({});
+    } else {
+      setSearchParams({ tab });
+    }
+  };
+
+  // Handle sub-tab change - updates URL
+  const handleSubTabChange = (subtab: string) => {
+    const defaultSubTab = DEFAULT_SUB_TABS[activeTab];
+    if (subtab === defaultSubTab) {
+      // Default sub-tab: don't show in URL
+      if (activeTab === 'profile') {
+        setSearchParams({});
+      } else {
+        setSearchParams({ tab: activeTab });
+      }
+    } else {
+      setSearchParams({ tab: activeTab, subtab });
     }
   };
 
@@ -71,11 +134,12 @@ const Settings = () => {
           title={t('settings.title')}
           description={t('settings.description')}
           activeTab={activeTab}
+          activeSubTab={activeSubTab}
           sidebarCollapsed={sidebarCollapsed}
           onToggleSidebar={toggleSidebar}
         />
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
               <TabsList className="inline-flex w-max sm:w-auto sm:flex-wrap gap-1 bg-muted/50 border border-border rounded-md">
@@ -136,16 +200,16 @@ const Settings = () => {
 
           <TabsContent value="organization" className="animate-in fade-in-50 slide-in-from-bottom-2 duration-200">
             <OrganizationTab 
-              activeSubTab={activeSubTabs['organization']} 
-              onSubTabChange={(value) => setActiveSubTabs(prev => ({ ...prev, organization: value }))}
+              activeSubTab={activeSubTab || 'general'} 
+              onSubTabChange={handleSubTabChange}
             />
           </TabsContent>
 
 
           <TabsContent value="communication" className="animate-in fade-in-50 slide-in-from-right-2 duration-200">
             <CommunicationTab
-              activeSubTab={activeSubTabs['communication']}
-              onSubTabChange={(value) => setActiveSubTabs(prev => ({ ...prev, communication: value }))}
+              activeSubTab={activeSubTab || 'notifications'}
+              onSubTabChange={handleSubTabChange}
               NotificationsContent={NotificationsTab}
               EmailTemplatesContent={EmailTemplateTab}
               SupplierPortalContent={SupplierPortalTab}
