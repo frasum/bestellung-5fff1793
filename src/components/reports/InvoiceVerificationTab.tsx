@@ -23,6 +23,7 @@ import {
   Mail,
   RefreshCw,
   Download,
+  ExternalLink,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -88,8 +89,7 @@ export function InvoiceVerificationTab() {
   const [selectedInvoiceId, setSelectedInvoiceId] = useState<string | null>(null);
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
   const [pdfDialogUrl, setPdfDialogUrl] = useState<string | null>(null);
-  const [pdfBlobUrl, setPdfBlobUrl] = useState<string | null>(null);
-  const [pdfLoading, setPdfLoading] = useState(false);
+  const [pdfBlobUrl, setPdfBlobUrl] = useState<string | null>(null); // Keep for cleanup compatibility
 
   const locale = i18n.language === 'de' ? de : enUS;
 
@@ -107,21 +107,10 @@ export function InvoiceVerificationTab() {
     multiple: true,
   });
 
-  const openPdfViewer = async (pdfUrl: string) => {
+  const openPdfViewer = (pdfUrl: string) => {
+    // Directly set the URL - no fetch/blob conversion needed
     setPdfDialogUrl(pdfUrl);
-    setPdfLoading(true);
-    
-    try {
-      const response = await fetch(pdfUrl);
-      const blob = await response.blob();
-      const blobUrl = URL.createObjectURL(blob);
-      setPdfBlobUrl(blobUrl);
-    } catch (error) {
-      console.error('Failed to load PDF:', error);
-      toast.error(t('invoices.pdfLoadError', 'PDF konnte nicht geladen werden'));
-    } finally {
-      setPdfLoading(false);
-    }
+    setPdfBlobUrl(null); // Clear any old blob URL
   };
 
   const closePdfDialog = () => {
@@ -496,28 +485,62 @@ export function InvoiceVerificationTab() {
             <DialogTitle className="flex items-center justify-between">
               <span>{t('invoices.pdfPreview', 'PDF Vorschau')}</span>
               {pdfDialogUrl && (
-                <Button variant="outline" size="sm" asChild className="mr-8">
-                  <a href={pdfDialogUrl} download>
-                    <Download className="h-4 w-4 mr-2" />
-                    {t('invoices.download', 'Download')}
-                  </a>
-                </Button>
+                <div className="flex items-center gap-2 mr-8">
+                  <Button variant="outline" size="sm" asChild>
+                    <a href={pdfDialogUrl} target="_blank" rel="noopener noreferrer">
+                      <ExternalLink className="h-4 w-4 mr-2" />
+                      {t('invoices.openInNewTab', 'Neuer Tab')}
+                    </a>
+                  </Button>
+                  <Button variant="outline" size="sm" asChild>
+                    <a href={pdfDialogUrl} download>
+                      <Download className="h-4 w-4 mr-2" />
+                      {t('invoices.download', 'Download')}
+                    </a>
+                  </Button>
+                </div>
               )}
             </DialogTitle>
           </DialogHeader>
-          <div className="flex-1 min-h-0">
-            {pdfLoading ? (
-              <div className="flex items-center justify-center h-full">
-                <RefreshCw className="h-8 w-8 animate-spin text-muted-foreground" />
-                <span className="ml-2 text-muted-foreground">{t('invoices.loadingPdf', 'PDF wird geladen...')}</span>
-              </div>
-            ) : pdfBlobUrl ? (
-              <iframe
-                src={pdfBlobUrl}
-                className="w-full h-full border-0"
-                title="PDF Vorschau"
-              />
-            ) : null}
+          <div className="flex-1 min-h-0 bg-muted/30">
+            {pdfDialogUrl && (
+              <object
+                data={pdfDialogUrl}
+                type="application/pdf"
+                className="w-full h-full"
+              >
+                {/* Fallback if object tag doesn't work */}
+                <iframe
+                  src={pdfDialogUrl}
+                  className="w-full h-full border-0"
+                  title="PDF Vorschau"
+                />
+                {/* Final fallback message */}
+                <div className="flex flex-col items-center justify-center h-full p-8 text-center">
+                  <FileText className="h-16 w-16 text-muted-foreground mb-4" />
+                  <p className="text-lg font-medium mb-2">
+                    {t('invoices.pdfNotSupported', 'PDF-Vorschau nicht verfügbar')}
+                  </p>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    {t('invoices.pdfNotSupportedDesc', 'Dein Browser unterstützt keine Inline-PDF-Anzeige.')}
+                  </p>
+                  <div className="flex gap-2">
+                    <Button asChild>
+                      <a href={pdfDialogUrl} target="_blank" rel="noopener noreferrer">
+                        <ExternalLink className="h-4 w-4 mr-2" />
+                        {t('invoices.openInNewTab', 'Neuer Tab')}
+                      </a>
+                    </Button>
+                    <Button variant="outline" asChild>
+                      <a href={pdfDialogUrl} download>
+                        <Download className="h-4 w-4 mr-2" />
+                        {t('invoices.download', 'Download')}
+                      </a>
+                    </Button>
+                  </div>
+                </div>
+              </object>
+            )}
           </div>
         </DialogContent>
       </Dialog>
