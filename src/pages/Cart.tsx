@@ -193,10 +193,6 @@ const Cart = () => {
       <div className="space-y-2 md:space-y-5 xl:space-y-6">
         {/* Header with Breadcrumb */}
         <PageHeader 
-          title={t('cart.title')}
-          description={(items.length + freeItems.length) === 0 
-            ? t('cart.empty')
-            : t('cart.itemCount', { count: items.length + freeItems.length })}
           sidebarCollapsed={sidebarCollapsed}
           onToggleSidebar={toggleSidebar}
         >

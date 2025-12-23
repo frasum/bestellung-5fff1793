@@ -476,8 +476,6 @@ const Reports = () => {
       <div className="space-y-2 md:space-y-5 xl:space-y-6">
         {/* Header */}
         <PageHeader 
-          title={t('reports.title')}
-          description={t('reports.description')}
           activeTab={activeTab === 'overview' ? undefined : activeTab}
           sidebarCollapsed={sidebarCollapsed}
           onToggleSidebar={toggleSidebar}
