@@ -173,3 +173,6 @@ verify_jwt = true
 
 [functions.verify-employee-login]
 verify_jwt = false
+
+[functions.parse-invoice]
+verify_jwt = true
