@@ -97,7 +97,7 @@ const DEFAULT_SUB_TABS: Record<string, string> = {
 };
 
 interface PageHeaderProps {
-  title: string;
+  title?: string;
   description?: string;
   activeTab?: string;
   activeSubTab?: string | null;

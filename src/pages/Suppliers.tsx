@@ -559,8 +559,6 @@ const Suppliers = () => {
       <div className="space-y-2 md:space-y-5 xl:space-y-6">
         {/* Header with Breadcrumb */}
         <PageHeader 
-          title="Katalog"
-          description="Verwalten Sie Ihre Lieferanten, Artikel und die Weinkarte"
           activeTab={activeTab}
           sidebarCollapsed={sidebarCollapsed}
           onToggleSidebar={toggleSidebar}
