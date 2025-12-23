@@ -79,6 +79,7 @@ const Suppliers = () => {
   const [isArticleDialogOpen, setIsArticleDialogOpen] = useState(false);
   const [isArticleImportOpen, setIsArticleImportOpen] = useState(false);
   const [editingArticle, setEditingArticle] = useState<Article | null>(null);
+  const [preselectedSupplierId, setPreselectedSupplierId] = useState<string | null>(null);
   const [deletingArticle, setDeletingArticle] = useState<Article | null>(null);
   const [selectedArticles, setSelectedArticles] = useState<Set<string>>(new Set());
   const [openArticleSuppliers, setOpenArticleSuppliers] = useState<Set<string>>(new Set());
@@ -689,8 +690,13 @@ const Suppliers = () => {
             });
           }} onEditArticle={article => {
             setEditingArticle(article);
+            setPreselectedSupplierId(null);
             setIsArticleDialogOpen(true);
-          }} onDeleteArticle={setDeletingArticle} invitingSupplierId={invitingSupplierId} sendingInvitation={sendingInvitation} />}
+          }} onDeleteArticle={setDeletingArticle} onAddArticle={supplier => {
+            setEditingArticle(null);
+            setPreselectedSupplierId(supplier.id);
+            setIsArticleDialogOpen(true);
+          }} invitingSupplierId={invitingSupplierId} sendingInvitation={sendingInvitation} />}
           </TabsContent>
 
           {/* Wines Tab */}
@@ -713,9 +719,13 @@ const Suppliers = () => {
         open={isArticleDialogOpen} 
         onOpenChange={open => {
           setIsArticleDialogOpen(open);
-          if (!open) setEditingArticle(null);
+          if (!open) {
+            setEditingArticle(null);
+            setPreselectedSupplierId(null);
+          }
         }} 
-        editingArticle={editingArticle} 
+        editingArticle={editingArticle}
+        preselectedSupplierId={preselectedSupplierId}
         suppliers={suppliers || []} 
         categories={allArticleCategories} 
         units={existingUnits} 

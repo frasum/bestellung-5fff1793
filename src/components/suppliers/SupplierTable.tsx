@@ -1,5 +1,5 @@
 import { Fragment } from 'react';
-import { ChevronDown, ChevronRight, Pencil, Trash2, FileText, Send, Bell, Store, Loader2, QrCode, ExternalLink, Key } from 'lucide-react';
+import { ChevronDown, ChevronRight, Pencil, Trash2, FileText, Send, Bell, Store, Loader2, QrCode, ExternalLink, Key, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
@@ -35,6 +35,7 @@ interface SupplierTableProps {
   onArticleChangeClick?: (article: Article, supplier: Supplier) => void;
   onEditArticle: (article: Article) => void;
   onDeleteArticle: (article: Article) => void;
+  onAddArticle?: (supplier: Supplier) => void;
   invitingSupplierId: string | null;
   sendingInvitation: boolean;
 }
@@ -64,6 +65,7 @@ export const SupplierTable = ({
   onArticleChangeClick,
   onEditArticle,
   onDeleteArticle,
+  onAddArticle,
   invitingSupplierId,
   sendingInvitation
 }: SupplierTableProps) => {
@@ -270,6 +272,18 @@ export const SupplierTable = ({
                             })}
                           </TableBody>
                         </Table>
+                        {onAddArticle && (
+                          <div className="mt-3 pt-3 border-t border-border/50">
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              onClick={() => onAddArticle(supplier)}
+                            >
+                              <Plus className="w-4 h-4 mr-1" />
+                              Artikel hinzufügen
+                            </Button>
+                          </div>
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>
