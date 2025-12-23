@@ -112,7 +112,7 @@ export const SupplierTable = ({
                     <div className="flex items-center gap-2">
                       <div>
                         <p 
-                          className="font-medium text-foreground cursor-pointer hover:underline hover:text-primary transition-colors"
+                          className="font-medium text-foreground cursor-pointer hover:underline hover:text-accent transition-colors"
                           onClick={(e) => {
                             e.stopPropagation();
                             onEdit(supplier);
@@ -240,7 +240,7 @@ export const SupplierTable = ({
                                   <TableCell className="py-1.5">
                                     <div className="flex items-center gap-2">
                                       <p 
-                                        className="text-sm font-medium cursor-pointer hover:underline hover:text-primary transition-colors"
+                                        className="text-sm font-medium cursor-pointer hover:underline hover:text-accent transition-colors"
                                         onClick={(e) => {
                                           e.stopPropagation();
                                           onEditArticle(article);
