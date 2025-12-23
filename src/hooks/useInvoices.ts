@@ -247,6 +247,41 @@ export function useResolveDiscrepancy() {
   });
 }
 
+export function useCheckInvoiceEmails() {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async () => {
+      const { data, error } = await supabase.functions.invoke('check-invoice-emails');
+
+      if (error) throw error;
+      return data as {
+        success: boolean;
+        newInvoices: number;
+        skipped: number;
+        errors: number;
+        message: string;
+      };
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['invoices'] });
+      toast({
+        title: data.newInvoices > 0 ? 'Neue Rechnungen gefunden' : 'E-Mails geprüft',
+        description: data.message,
+      });
+    },
+    onError: (error: Error) => {
+      console.error('Email check error:', error);
+      toast({
+        title: 'Fehler beim E-Mail-Abruf',
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
+  });
+}
+
 async function fileToBase64(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
