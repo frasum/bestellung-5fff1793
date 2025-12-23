@@ -119,14 +119,8 @@ const OrganizationGeneralContent = () => {
             </div>
           </div>
 
-          {/* Separator */}
-          <div className="border-t pt-6">
-            <div className="flex items-center gap-2 text-primary mb-4">
-              <Phone className="h-5 w-5" />
-              <h3 className="font-semibold">{t('settings.contactInfo')}</h3>
-            </div>
-
-            <div className="space-y-4">
+          {/* Contact Fields */}
+          <div className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="contact-email">{t('settings.contactEmail')}</Label>
@@ -159,19 +153,16 @@ const OrganizationGeneralContent = () => {
                   placeholder="https://example.com"
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="address">{t('settings.address')}</Label>
-                <Input
-                  id="address"
-                  value={address}
-                  onChange={(e) => setAddress(e.target.value)}
-                  placeholder={t('settings.addressPlaceholder')}
-                />
-              </div>
+            <div className="space-y-2">
+              <Label htmlFor="address">{t('settings.address')}</Label>
+              <Input
+                id="address"
+                value={address}
+                onChange={(e) => setAddress(e.target.value)}
+                placeholder={t('settings.addressPlaceholder')}
+              />
             </div>
           </div>
-
-          {/* Save Button */}
           <div className="pt-2">
             <Button onClick={handleSave} disabled={updateOrganization.isPending}>
               {updateOrganization.isPending ? t('settings.savingProfile') : t('settings.saveChanges')}
