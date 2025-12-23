@@ -107,24 +107,6 @@ export const SupplierFilters = ({
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input placeholder="Lieferanten suchen..." value={searchQuery} onChange={e => onSearchChange(e.target.value)} className="pl-10" />
         </div>
-        <Select value={topCategoryFilter} onValueChange={onTopCategoryChange}>
-          <SelectTrigger className="w-[180px] bg-card">
-            <SelectValue placeholder="Oberkategorie" />
-          </SelectTrigger>
-          <SelectContent className="bg-card border border-border z-50">
-            <SelectItem value="all">Alle Oberkategorien</SelectItem>
-            {TOP_CATEGORIES.map(cat => <SelectItem key={cat} value={cat}>{cat}</SelectItem>)}
-          </SelectContent>
-        </Select>
-        <Select value={categoryFilter} onValueChange={onCategoryChange}>
-          <SelectTrigger className="w-[180px] bg-card">
-            <SelectValue placeholder="Hauptkategorie" />
-          </SelectTrigger>
-          <SelectContent className="bg-card border border-border z-50">
-            <SelectItem value="all">Alle Kategorien</SelectItem>
-            {articleCategories.map(cat => <SelectItem key={cat} value={cat}>{cat}</SelectItem>)}
-          </SelectContent>
-        </Select>
         {showMultiSelectToggle && (
           <div className="flex items-center gap-2">
             <Switch id="multi-select" checked={multiSelectEnabled} onCheckedChange={onMultiSelectChange} />
