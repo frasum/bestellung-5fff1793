@@ -15,6 +15,7 @@ import { useTranslation } from 'react-i18next';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useCartDrafts } from '@/hooks/useCartDrafts';
+import { useLocationContext } from '@/contexts/LocationContext';
 
 const mainNavItems = [
   { href: '/suppliers', label: 'Katalog', icon: Users },
@@ -32,7 +33,8 @@ export const MobileBottomNav = () => {
   const { t } = useTranslation();
   const [sheetOpen, setSheetOpen] = useState(false);
   const itemCount = getItemCount();
-  const { data: drafts } = useCartDrafts(undefined, true);
+  const { activeLocation } = useLocationContext();
+  const { data: drafts } = useCartDrafts(activeLocation?.id, false);
   const openDraftsCount = drafts?.length || 0;
 
   const moreNavItems = [
