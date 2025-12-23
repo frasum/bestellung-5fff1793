@@ -9,6 +9,7 @@ const corsHeaders = {
 interface InvoiceData {
   supplierName: string;
   supplierAddress?: string;
+  customerNumber?: string;
   invoiceNumber: string;
   invoiceDate: string;
   deliveryDate?: string;
@@ -238,7 +239,7 @@ serve(async (req) => {
       });
     }
 
-    // Call Lovable AI to extract invoice data
+    // Call Lovable AI to extract invoice data - NOW INCLUDING customerNumber
     const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -258,6 +259,7 @@ Extract the following information and return as JSON:
 {
   "supplierName": "Supplier/vendor company name",
   "supplierAddress": "Full supplier address if visible",
+  "customerNumber": "Customer number if visible (look for 'Kunden-Nr.', 'Kundennummer', 'Kd.-Nr.', 'Kd.Nr.', 'Customer No.', 'Kundenkonto', 'Debitor-Nr.')",
   "invoiceNumber": "Invoice/bill number",
   "invoiceDate": "Invoice date in YYYY-MM-DD format",
   "deliveryDate": "Delivery date in YYYY-MM-DD format if shown",
@@ -284,7 +286,8 @@ Important:
 - Use numeric values without currency symbols
 - If a value is unclear or missing, use null
 - Parse German date formats (DD.MM.YYYY) to YYYY-MM-DD
-- Common units: Stk (piece), kg, g, l, ml, Fl (bottle), Pck (package), Krt (carton)`
+- Common units: Stk (piece), kg, g, l, ml, Fl (bottle), Pck (package), Krt (carton)
+- Look carefully for customer number - it identifies which location this invoice belongs to`
           },
           {
             role: 'user',
@@ -359,6 +362,8 @@ Important:
       });
     }
 
+    console.log('Extracted customer number:', invoiceData.customerNumber);
+
     // Find matching supplier by name with improved fuzzy matching
     const { data: suppliers } = await supabaseClient
       .from('suppliers')
@@ -398,6 +403,8 @@ Important:
     };
 
     let matchedSupplierId: string | null = null;
+    let supplierAutoCreated = false;
+    
     if (suppliers && invoiceData.supplierName) {
       const invoiceSupplierName = invoiceData.supplierName;
       const invoiceNormalized1 = normalizeGerman(invoiceSupplierName);
@@ -477,6 +484,145 @@ Important:
       }
     }
 
+    // AUTO-CREATE SUPPLIER if no match found
+    if (!matchedSupplierId && invoiceData.supplierName) {
+      console.log('Auto-creating supplier:', invoiceData.supplierName);
+      
+      const { data: newSupplier, error: supplierError } = await supabaseClient
+        .from('suppliers')
+        .insert({
+          organization_id: organizationId,
+          name: invoiceData.supplierName,
+          email: 'rechnung@unbekannt.de', // Placeholder email since it's required
+          address: invoiceData.supplierAddress || null,
+          is_active: true,
+        })
+        .select('id')
+        .single();
+      
+      if (supplierError) {
+        console.error('Failed to auto-create supplier:', supplierError);
+      } else if (newSupplier) {
+        matchedSupplierId = newSupplier.id;
+        supplierAutoCreated = true;
+        console.log('Auto-created supplier with ID:', matchedSupplierId);
+      }
+    }
+
+    // LOCATION ASSIGNMENT via customer number
+    let matchedLocationId: string | null = null;
+    
+    if (matchedSupplierId && invoiceData.customerNumber) {
+      console.log('Looking for location with customer number:', invoiceData.customerNumber);
+      
+      // Search in supplier_locations for matching customer_number
+      const { data: supplierLocation } = await supabaseClient
+        .from('supplier_locations')
+        .select('location_id')
+        .eq('supplier_id', matchedSupplierId)
+        .eq('customer_number', invoiceData.customerNumber)
+        .single();
+      
+      if (supplierLocation?.location_id) {
+        matchedLocationId = supplierLocation.location_id;
+        console.log('Found location via customer number:', matchedLocationId);
+      }
+    }
+    
+    // Fallback: If only one location exists, use it
+    if (!matchedLocationId) {
+      const { data: locations } = await supabaseClient
+        .from('locations')
+        .select('id')
+        .eq('organization_id', organizationId);
+      
+      if (locations && locations.length === 1) {
+        matchedLocationId = locations[0].id;
+        console.log('Using single location as fallback:', matchedLocationId);
+      }
+    }
+
+    // AUTO-CREATE ARTICLES if they don't exist
+    let articlesCreated = 0;
+    let articlesUpdated = 0;
+    
+    if (matchedSupplierId && invoiceData.items && invoiceData.items.length > 0) {
+      console.log('Checking/creating articles for', invoiceData.items.length, 'items');
+      
+      // Get existing articles for this supplier
+      const { data: existingArticles } = await supabaseClient
+        .from('articles')
+        .select('id, name, sku, price')
+        .eq('organization_id', organizationId)
+        .eq('supplier_id', matchedSupplierId);
+      
+      type ArticleRef = { id: string; name: string; sku: string | null; price: number };
+      const existingByName = new Map<string, ArticleRef>();
+      const existingBySku = new Map<string, ArticleRef>();
+      
+      if (existingArticles) {
+        for (const art of existingArticles) {
+          existingByName.set(normalizeSimple(art.name), art);
+          if (art.sku) {
+            existingBySku.set(art.sku.toLowerCase(), art);
+          }
+        }
+      }
+      
+      for (const item of invoiceData.items) {
+        if (!item.articleName) continue;
+        
+        // Try to find existing article by SKU first, then by name
+        let existingArticle: ArticleRef | undefined;
+        
+        if (item.articleSku) {
+          existingArticle = existingBySku.get(item.articleSku.toLowerCase());
+        }
+        
+        if (!existingArticle) {
+          existingArticle = existingByName.get(normalizeSimple(item.articleName));
+        }
+        
+        if (existingArticle) {
+          // Article exists - optionally update price if different
+          if (item.unitPrice && Math.abs(Number(existingArticle.price) - item.unitPrice) > 0.01) {
+            console.log(`Updating price for "${item.articleName}": ${existingArticle.price} -> ${item.unitPrice}`);
+            await supabaseClient
+              .from('articles')
+              .update({ price: item.unitPrice })
+              .eq('id', existingArticle.id);
+            articlesUpdated++;
+          }
+        } else {
+          // Create new article
+          console.log(`Creating new article: "${item.articleName}"`);
+          const { error: articleError } = await supabaseClient
+            .from('articles')
+            .insert({
+              organization_id: organizationId,
+              supplier_id: matchedSupplierId,
+              name: item.articleName,
+              sku: item.articleSku || null,
+              unit: item.unit || 'Stk',
+              price: item.unitPrice || 0,
+              is_active: true,
+            });
+          
+          if (articleError) {
+            console.error('Failed to create article:', articleError);
+          } else {
+            articlesCreated++;
+            // Add to maps for subsequent checks
+            existingByName.set(normalizeSimple(item.articleName), { 
+              id: '', name: item.articleName, sku: item.articleSku || null, price: item.unitPrice || 0 
+            });
+          }
+        }
+      }
+      
+      console.log(`Articles: ${articlesCreated} created, ${articlesUpdated} updated`);
+    }
+
     // Determine initial status based on parsing success
     const hasSupplier = matchedSupplierId !== null;
     const hasItems = invoiceData.items && invoiceData.items.length > 0;
@@ -484,11 +630,22 @@ Important:
     
     console.log(`Setting initial status to '${initialStatus}' - Supplier: ${hasSupplier}, Items: ${hasItems}`);
 
+    // Build notes for auto-created entities
+    const notes: string[] = [];
+    if (supplierAutoCreated) {
+      notes.push('Lieferant wurde automatisch erstellt - bitte E-Mail-Adresse ergänzen');
+    }
+    if (articlesCreated > 0) {
+      notes.push(`${articlesCreated} Artikel wurden automatisch erstellt`);
+    }
+
     // Update invoice with parsed data
     const { error: updateError } = await supabaseClient
       .from('invoices')
       .update({
         supplier_id: matchedSupplierId,
+        location_id: matchedLocationId,
+        customer_number: invoiceData.customerNumber || null,
         invoice_number: invoiceData.invoiceNumber,
         invoice_date: invoiceData.invoiceDate || null,
         delivery_date: invoiceData.deliveryDate || null,
@@ -499,6 +656,7 @@ Important:
         currency: invoiceData.currency || 'EUR',
         parsed_data: invoiceData,
         status: initialStatus,
+        notes: notes.length > 0 ? notes.join('; ') : null,
       })
       .eq('id', invoiceId);
 
@@ -552,6 +710,7 @@ Important:
       .select(`
         *,
         suppliers (name),
+        locations (name),
         invoice_items (*),
         invoice_discrepancies (*)
       `)
@@ -561,7 +720,12 @@ Important:
     return new Response(JSON.stringify({ 
       success: true, 
       invoice: finalInvoice,
-      parsed: invoiceData 
+      parsed: invoiceData,
+      autoCreated: {
+        supplier: supplierAutoCreated,
+        articlesCreated,
+        articlesUpdated,
+      }
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
