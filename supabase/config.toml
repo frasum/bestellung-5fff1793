@@ -175,7 +175,7 @@ verify_jwt = true
 verify_jwt = false
 
 [functions.parse-invoice]
-verify_jwt = true
+verify_jwt = false
 
 [functions.check-invoice-emails]
 verify_jwt = true

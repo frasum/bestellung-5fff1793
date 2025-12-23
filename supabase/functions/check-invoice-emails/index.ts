@@ -727,23 +727,49 @@ serve(async (req) => {
           throw new Error(`Invoice creation failed: ${invoiceError.message}`);
         }
 
-        // Log successful processing
-        await serviceClient.from("invoice_email_log").insert({
+        // Log email as "created" - will update to "processed" after successful parsing
+        const { data: emailLog } = await serviceClient.from("invoice_email_log").insert({
           organization_id: organizationId,
           message_id: messageId,
           email_from: from,
           email_subject: subject,
-          status: "processed",
+          status: "created",
           invoice_id: invoice.id,
-        });
+        }).select().single();
 
         // Trigger parse-invoice function
         try {
-          await serviceClient.functions.invoke("parse-invoice", {
+          console.info(`Triggering parse-invoice for invoice ${invoice.id}...`);
+          const parseResult = await serviceClient.functions.invoke("parse-invoice", {
             body: { invoiceId: invoice.id },
           });
+          
+          if (parseResult.error) {
+            console.error("parse-invoice returned error:", parseResult.error);
+            // Update email log to failed
+            if (emailLog) {
+              await serviceClient.from("invoice_email_log")
+                .update({ status: "parse_failed", error_message: parseResult.error.message || 'Unknown error' })
+                .eq("id", emailLog.id);
+            }
+          } else {
+            console.info("parse-invoice completed successfully");
+            // Update email log to processed
+            if (emailLog) {
+              await serviceClient.from("invoice_email_log")
+                .update({ status: "processed" })
+                .eq("id", emailLog.id);
+            }
+          }
         } catch (parseError: unknown) {
-          console.error("Failed to trigger parse-invoice:", parseError);
+          const errMsg = parseError instanceof Error ? parseError.message : String(parseError);
+          console.error("Failed to trigger parse-invoice:", errMsg);
+          // Update email log to failed
+          if (emailLog) {
+            await serviceClient.from("invoice_email_log")
+              .update({ status: "parse_failed", error_message: errMsg })
+              .eq("id", emailLog.id);
+          }
         }
 
         console.info(`Successfully created invoice ${invoice.id} from ${from}`);

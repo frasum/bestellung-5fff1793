@@ -52,6 +52,7 @@ import {
   useUpdateInvoiceStatus,
   useResolveDiscrepancy,
   useCheckInvoiceEmails,
+  useReanalyzeInvoice,
   Invoice,
   InvoiceDiscrepancy,
 } from '@/hooks/useInvoices';
@@ -80,6 +81,7 @@ export function InvoiceVerificationTab() {
   const uploadInvoice = useUploadInvoice();
   const updateStatus = useUpdateInvoiceStatus();
   const checkEmails = useCheckInvoiceEmails();
+  const reanalyzeInvoice = useReanalyzeInvoice();
   const [expandedInvoices, setExpandedInvoices] = useState<Set<string>>(new Set());
   const [selectedInvoiceId, setSelectedInvoiceId] = useState<string | null>(null);
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
@@ -118,6 +120,10 @@ export function InvoiceVerificationTab() {
 
   const handleReject = (invoiceId: string) => {
     updateStatus.mutate({ invoiceId, status: 'rejected' });
+  };
+
+  const handleReanalyze = (invoiceId: string) => {
+    reanalyzeInvoice.mutate(invoiceId);
   };
 
   const openDetails = (invoiceId: string) => {
@@ -386,6 +392,21 @@ export function InvoiceVerificationTab() {
                                 <Eye className="h-4 w-4 mr-2" />
                                 PDF
                               </a>
+                            </Button>
+                          )}
+                          {invoice.status === 'pending' && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleReanalyze(invoice.id)}
+                              disabled={reanalyzeInvoice.isPending}
+                            >
+                              {reanalyzeInvoice.isPending ? (
+                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                              ) : (
+                                <RefreshCw className="h-4 w-4 mr-2" />
+                              )}
+                              {t('invoices.reanalyze', 'Erneut analysieren')}
                             </Button>
                           )}
                           {(invoice.status === 'matched' || invoice.status === 'discrepancy') && (

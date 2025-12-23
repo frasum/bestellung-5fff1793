@@ -137,21 +137,69 @@ serve(async (req) => {
 
     console.log('Processing invoice:', invoiceId);
 
+    // Get PDF URL or base64 - if not provided, fetch from database
+    let finalPdfUrl = pdfUrl;
+    let finalPdfBase64 = pdfBase64;
+    
+    if (!finalPdfUrl && !finalPdfBase64) {
+      console.log('No pdfUrl or pdfBase64 provided, fetching from invoice record');
+      const { data: invoiceRecord, error: fetchError } = await supabaseClient
+        .from('invoices')
+        .select('pdf_url')
+        .eq('id', invoiceId)
+        .single();
+      
+      if (fetchError || !invoiceRecord?.pdf_url) {
+        console.error('Failed to fetch invoice PDF URL:', fetchError);
+        await supabaseClient
+          .from('invoices')
+          .update({ status: 'pending', notes: 'PDF URL nicht gefunden' })
+          .eq('id', invoiceId);
+        return new Response(JSON.stringify({ error: 'Invoice has no PDF URL and none was provided' }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      finalPdfUrl = invoiceRecord.pdf_url;
+      console.log('Using PDF URL from database:', finalPdfUrl);
+    }
+
+    // Clean up existing data before re-parsing (to avoid duplicates)
+    console.log('Cleaning up existing invoice data before parsing...');
+    
+    // Delete existing discrepancies
+    await supabaseClient
+      .from('invoice_discrepancies')
+      .delete()
+      .eq('invoice_id', invoiceId);
+    
+    // Delete existing items
+    await supabaseClient
+      .from('invoice_items')
+      .delete()
+      .eq('invoice_id', invoiceId);
+    
+    // Reset matched order
+    await supabaseClient
+      .from('invoices')
+      .update({ matched_order_id: null })
+      .eq('id', invoiceId);
+
     // Prepare content for AI - support both URL and base64
     let pdfContent: { type: string; image_url?: { url: string }; text?: string }[];
     
-    if (pdfBase64) {
+    if (finalPdfBase64) {
       pdfContent = [
         {
           type: "image_url",
-          image_url: { url: `data:application/pdf;base64,${pdfBase64}` }
+          image_url: { url: `data:application/pdf;base64,${finalPdfBase64}` }
         }
       ];
-    } else if (pdfUrl) {
+    } else if (finalPdfUrl) {
       pdfContent = [
         {
           type: "image_url",
-          image_url: { url: pdfUrl }
+          image_url: { url: finalPdfUrl }
         }
       ];
     } else {

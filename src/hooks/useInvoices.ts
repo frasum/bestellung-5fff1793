@@ -282,6 +282,37 @@ export function useCheckInvoiceEmails() {
   });
 }
 
+export function useReanalyzeInvoice() {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (invoiceId: string) => {
+      const { data, error } = await supabase.functions.invoke('parse-invoice', {
+        body: { invoiceId },
+      });
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['invoices'] });
+      toast({
+        title: 'Analyse gestartet',
+        description: 'Die Rechnung wird erneut analysiert...',
+      });
+    },
+    onError: (error: Error) => {
+      console.error('Reanalyze error:', error);
+      toast({
+        title: 'Analyse fehlgeschlagen',
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
+  });
+}
+
 async function fileToBase64(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
