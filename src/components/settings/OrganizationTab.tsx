@@ -87,36 +87,33 @@ const OrganizationGeneralContent = () => {
     <div className="space-y-4">
       <Card>
         <CardContent className="p-6 space-y-6">
-          {/* Organization Name & Subscription */}
-          <div className="space-y-4">
+          {/* Organization Header with Subscription Badge */}
+          <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 text-primary">
               <Building2 className="h-5 w-5" />
               <h3 className="font-semibold">{t('settings.orgProfile')}</h3>
             </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="org-name">{t('settings.orgName')}</Label>
-              <Input
-                id="org-name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder={t('settings.orgNamePlaceholder')}
-              />
+            <div className="flex items-center gap-2">
+              <Badge variant="secondary" className="capitalize">
+                {organization?.subscription_tier || 'free'}
+              </Badge>
+              {organization?.trial_ends_at && (
+                <span className="text-xs text-muted-foreground">
+                  {t('settings.trialEnds')}: {new Date(organization.trial_ends_at).toLocaleDateString()}
+                </span>
+              )}
             </div>
+          </div>
 
-            <div className="space-y-2">
-              <Label>{t('settings.subscription')}</Label>
-              <div className="flex items-center gap-2">
-                <Badge variant="secondary" className="capitalize">
-                  {organization?.subscription_tier || 'free'}
-                </Badge>
-                {organization?.trial_ends_at && (
-                  <span className="text-sm text-muted-foreground">
-                    {t('settings.trialEnds')}: {new Date(organization.trial_ends_at).toLocaleDateString()}
-                  </span>
-                )}
-              </div>
-            </div>
+          {/* Organization Name */}
+          <div className="space-y-2">
+            <Label htmlFor="org-name">{t('settings.orgName')}</Label>
+            <Input
+              id="org-name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder={t('settings.orgNamePlaceholder')}
+            />
           </div>
 
           {/* Contact Fields */}
