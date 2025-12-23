@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { LayoutDashboard, Users, Package, ShoppingCart, BarChart3, Settings, LogOut, Menu, X, FlaskConical, Search, Sparkles, Bell, Settings2, Gift, ChevronRight } from 'lucide-react';
+import { LayoutDashboard, Users, Package, ShoppingCart, BarChart3, Settings, LogOut, Menu, X, FlaskConical, Search, Sparkles, Bell, Settings2, Gift, ChevronRight, ChevronLeft } from 'lucide-react';
 import { GlobalSearch } from '@/components/GlobalSearch';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import { LocationSwitcher } from '@/components/LocationSwitcher';
@@ -413,19 +413,31 @@ export const DashboardLayout = ({
             </Button>
           </div>
         </div>
+
+        {/* Sidebar Toggle Button - Edge of sidebar (Desktop only) */}
+        <button
+          onClick={toggleSidebar}
+          className="hidden xl:flex absolute -right-3 top-1/2 -translate-y-1/2 z-50 
+                     h-6 w-6 items-center justify-center rounded-full 
+                     bg-sidebar-border hover:bg-accent text-sidebar-foreground hover:text-accent-foreground
+                     border border-border shadow-sm transition-all duration-200 hover:scale-110"
+          title={t('common.hideSidebar')}
+        >
+          <ChevronLeft className="h-4 w-4" />
+        </button>
       </aside>
 
-      {/* Floating Sidebar Toggle - Always visible when sidebar is collapsed */}
+      {/* Floating Sidebar Toggle - Visible when sidebar is collapsed (Desktop only) */}
       {sidebarCollapsed && (
         <button
           onClick={toggleSidebar}
-          className="hidden xl:flex fixed left-3 top-1/2 -translate-y-1/2 z-50 
-                     h-10 w-10 items-center justify-center rounded-full 
-                     bg-accent hover:bg-accent/90 text-accent-foreground
-                     shadow-lg transition-all duration-200 hover:scale-105"
+          className="hidden xl:flex fixed left-0 top-1/2 -translate-y-1/2 z-50 
+                     h-6 w-6 items-center justify-center rounded-r-full 
+                     bg-sidebar-border hover:bg-accent text-sidebar-foreground hover:text-accent-foreground
+                     border border-l-0 border-border shadow-sm transition-all duration-200 hover:scale-110"
           title={t('common.showSidebar')}
         >
-          <ChevronRight className="h-5 w-5" />
+          <ChevronRight className="h-4 w-4" />
         </button>
       )}
 
