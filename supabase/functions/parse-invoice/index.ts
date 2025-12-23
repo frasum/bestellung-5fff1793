@@ -477,6 +477,13 @@ Important:
       }
     }
 
+    // Determine initial status based on parsing success
+    const hasSupplier = matchedSupplierId !== null;
+    const hasItems = invoiceData.items && invoiceData.items.length > 0;
+    const initialStatus = hasSupplier && hasItems ? 'recognized' : 'pending';
+    
+    console.log(`Setting initial status to '${initialStatus}' - Supplier: ${hasSupplier}, Items: ${hasItems}`);
+
     // Update invoice with parsed data
     const { error: updateError } = await supabaseClient
       .from('invoices')
@@ -491,7 +498,7 @@ Important:
         gross_amount: invoiceData.grossAmount,
         currency: invoiceData.currency || 'EUR',
         parsed_data: invoiceData,
-        status: 'pending', // Will be updated after matching
+        status: initialStatus,
       })
       .eq('id', invoiceId);
 
