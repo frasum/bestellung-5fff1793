@@ -23,6 +23,7 @@ const routeConfig: Record<string, RouteConfig> = {
     parent: null,
     tabs: {
       suppliers: 'suppliers.title',
+      articles: 'suppliers.articlesTab',
       wines: 'suppliers.winesTab',
       suggestions: 'suppliers.suggestionsTab',
     },
@@ -31,8 +32,9 @@ const routeConfig: Record<string, RouteConfig> = {
     labelKey: 'nav.orders',
     parent: null,
     tabs: {
-      all: 'orders.allOrders',
+      orders: 'orders.allOrders',
       drafts: 'orders.drafts',
+      'simple-order': 'orders.easyOrderTab',
     },
   },
   '/cart': {
@@ -50,15 +52,16 @@ const routeConfig: Record<string, RouteConfig> = {
       locations: 'settings.locations',
       categories: 'settings.categories',
       units: 'settings.units',
-      orderUnits: 'settings.orderUnits',
+      'order-units': 'settings.orderUnits',
       notifications: 'settings.notifications',
-      easyOrder: 'settings.simpleOrder',
-      articleOrganization: 'settings.articleOrganization',
+      'easy-order': 'settings.simpleOrder',
+      'article-organization': 'settings.articleOrganization',
       team: 'settings.team',
-      priceWatch: 'settings.priceWatch',
-      demoAccounts: 'settings.demoAccounts',
-      b2bPortal: 'settings.b2bPortal',
-      developerChecklist: 'settings.developerChecklist',
+      'price-watch': 'settings.priceWatch',
+      'demo-accounts': 'settings.demoAccounts',
+      'b2b-portal': 'settings.b2bPortal',
+      'developer-checklist': 'settings.developerChecklist',
+      'friends-family': 'settings.friendsAndFamily',
     },
   },
   '/reports': {
@@ -66,8 +69,8 @@ const routeConfig: Record<string, RouteConfig> = {
     parent: null,
     tabs: {
       overview: 'reports.overview',
-      inventory: 'reports.inventory',
-      priceWatch: 'reports.priceWatch',
+      inventur: 'reports.inventory',
+      pricewatch: 'reports.priceWatch',
     },
   },
 };
