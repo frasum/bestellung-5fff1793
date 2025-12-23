@@ -103,7 +103,9 @@
     "done": "Fertig",
     "keyboardShortcuts": "Tastaturkürzel",
     "help": "Hilfe",
-    "unknown": "Unbekannt"
+    "unknown": "Unbekannt",
+    "showSidebar": "Navigation einblenden",
+    "hideSidebar": "Navigation ausblenden"
   },
 "nav": {
     "dashboard": "Dashboard",

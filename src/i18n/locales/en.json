@@ -102,7 +102,9 @@
     "you": "You",
     "done": "Done",
     "keyboardShortcuts": "Keyboard Shortcuts",
-    "help": "Help"
+    "help": "Help",
+    "showSidebar": "Show sidebar",
+    "hideSidebar": "Hide sidebar"
   },
   "nav": {
     "dashboard": "Dashboard",

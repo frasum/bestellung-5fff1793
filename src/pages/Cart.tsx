@@ -7,7 +7,8 @@ import { useCart, FreeCartItem } from '@/contexts/CartContext';
 import { useCreateCartDraft } from '@/hooks/useCartDrafts';
 import { useSupplierLocations } from '@/hooks/useSupplierLocations';
 import { useOrderUnits } from '@/hooks/useOrderUnits';
-import { DashboardLayout } from '@/components/layout/DashboardLayout';
+import { DashboardLayout, useSidebarContext } from '@/components/layout/DashboardLayout';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -185,19 +186,20 @@ const Cart = () => {
     });
   };
 
+  const { sidebarCollapsed, toggleSidebar } = useSidebarContext();
+  
   return (
     <DashboardLayout>
       <div className="space-y-2 md:space-y-5 xl:space-y-6">
-        {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 md:gap-4">
-          <div>
-            <h1 className="text-xl font-semibold text-foreground">{t('cart.title')}</h1>
-            <p className="text-sm text-muted-foreground mt-0.5">
-              {(items.length + freeItems.length) === 0 
-                ? t('cart.empty')
-                : t('cart.itemCount', { count: items.length + freeItems.length })}
-            </p>
-          </div>
+        {/* Header with Breadcrumb */}
+        <PageHeader 
+          title={t('cart.title')}
+          description={(items.length + freeItems.length) === 0 
+            ? t('cart.empty')
+            : t('cart.itemCount', { count: items.length + freeItems.length })}
+          sidebarCollapsed={sidebarCollapsed}
+          onToggleSidebar={toggleSidebar}
+        >
           <div className="flex gap-2">
             <Button variant="ghost" onClick={() => setScanDialogOpen(true)} className="h-9">
               <Camera className="w-4 h-4 sm:mr-2" />
@@ -210,7 +212,7 @@ const Cart = () => {
               </Button>
             )}
           </div>
-        </div>
+        </PageHeader>
 
         {/* Draft delivery info from EasyOrder */}
         {(draftDeliveryDate || draftTimeWindow) && (

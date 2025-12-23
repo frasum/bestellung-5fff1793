@@ -2,7 +2,8 @@ import { useEffect, useState, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
-import { DashboardLayout } from '@/components/layout/DashboardLayout';
+import { DashboardLayout, useSidebarContext } from '@/components/layout/DashboardLayout';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { useOrders } from '@/hooks/useOrders';
 import { useSupplierAnnualRevenue } from '@/hooks/useSupplierAnnualRevenue';
 import { useSuppliers } from '@/hooks/useSuppliers';
@@ -468,16 +469,19 @@ const Reports = () => {
     );
   }
 
+  const { sidebarCollapsed, toggleSidebar } = useSidebarContext();
+  
   return (
     <DashboardLayout>
       <div className="space-y-2 md:space-y-5 xl:space-y-6">
         {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 md:gap-4 pb-4 border-b border-border">
-          <div>
-            <h1 className="text-xl font-semibold text-foreground">{t('reports.title')}</h1>
-            <p className="text-sm text-muted-foreground mt-0.5">{t('reports.description')}</p>
-          </div>
-        </div>
+        <PageHeader 
+          title={t('reports.title')}
+          description={t('reports.description')}
+          activeTab={activeTab === 'overview' ? undefined : activeTab}
+          sidebarCollapsed={sidebarCollapsed}
+          onToggleSidebar={toggleSidebar}
+        />
 
         {/* Main Tabs */}
         <Tabs value={activeTab} onValueChange={handleTabChange}>

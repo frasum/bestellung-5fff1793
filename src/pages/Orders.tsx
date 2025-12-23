@@ -3,7 +3,8 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLocationContext } from '@/contexts/LocationContext';
 import { useCart } from '@/contexts/CartContext';
-import { DashboardLayout } from '@/components/layout/DashboardLayout';
+import { DashboardLayout, useSidebarContext } from '@/components/layout/DashboardLayout';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { useOrders, useUpdateOrderStatus, useDeleteTestOrders, useUpdateOrderLocation, useResendOrderEmail, Order } from '@/hooks/useOrders';
 import { useCartDrafts, useDeleteCartDraft, CartDraft } from '@/hooks/useCartDrafts';
 import { useLocations } from '@/hooks/useLocations';
@@ -578,19 +579,23 @@ const Orders = () => {
     );
   }
 
+  const { sidebarCollapsed, toggleSidebar } = useSidebarContext();
+  
   return (
     <DashboardLayout>
       <div className="space-y-2 md:space-y-5 xl:space-y-6">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 md:gap-4">
-          <div>
-            <h1 className="text-xl font-semibold text-foreground">{t('orders.title')}</h1>
-            <p className="text-sm text-muted-foreground mt-0.5">{t('orders.subtitle')}</p>
-          </div>
+        <PageHeader 
+          title={t('orders.title')}
+          description={t('orders.subtitle')}
+          activeTab={activeTab === 'orders' ? undefined : activeTab}
+          sidebarCollapsed={sidebarCollapsed}
+          onToggleSidebar={toggleSidebar}
+        >
           <Button onClick={() => navigate('/suppliers?tab=articles')} className="h-9">
             <Package className="w-4 h-4 sm:mr-2" />
             <span className="hidden sm:inline">{t('orders.newOrder')}</span>
           </Button>
-        </div>
+        </PageHeader>
 
         {/* Warning for orders without location */}
         {ordersWithoutLocation.length > 0 && locations && locations.length > 1 && (

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { DashboardLayout } from '@/components/layout/DashboardLayout';
+import { DashboardLayout, useSidebarContext } from '@/components/layout/DashboardLayout';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Building2, User, FlaskConical, MessageSquare, Store, ClipboardCheck, Gift, TrendingDown } from 'lucide-react';
 import { useUserRole } from '@/hooks/useTeam';
@@ -61,13 +62,18 @@ const Settings = () => {
     }
   };
 
+  const { sidebarCollapsed, toggleSidebar } = useSidebarContext();
+  
   return (
     <DashboardLayout>
       <div className="space-y-2 md:space-y-5 xl:space-y-6">
-        <div>
-          <h1 className="text-xl font-semibold text-foreground">{t('settings.title')}</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">{t('settings.description')}</p>
-        </div>
+        <PageHeader 
+          title={t('settings.title')}
+          description={t('settings.description')}
+          activeTab={activeTab}
+          sidebarCollapsed={sidebarCollapsed}
+          onToggleSidebar={toggleSidebar}
+        />
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
