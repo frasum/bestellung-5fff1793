@@ -49,45 +49,71 @@ export const useSuppliers = () => {
   });
 };
 
+// Extended supplier type with location assignment info
+export interface SupplierWithAssignment extends Supplier {
+  isUnassigned?: boolean;
+}
+
 // Fetch suppliers that are assigned to a specific location via supplier_locations
+// Also includes unassigned suppliers (those with no location assignments at all)
 export const useSuppliersByLocation = (locationId?: string) => {
   return useQuery({
     queryKey: ['suppliers-by-location', locationId],
     enabled: !!locationId,
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
-    queryFn: async () => {
-      // Get supplier IDs for this location
-      const { data: supplierLocations, error: slError } = await supabase
+    queryFn: async (): Promise<SupplierWithAssignment[]> => {
+      // 1. Get all suppliers
+      const { data: allSuppliers, error: suppliersError } = await supabase
+        .from('suppliers')
+        .select('*')
+        .order('name');
+
+      if (suppliersError) throw suppliersError;
+      if (!allSuppliers || allSuppliers.length === 0) return [];
+
+      // 2. Get supplier IDs assigned to THIS location
+      const { data: locationAssignments, error: laError } = await supabase
         .from('supplier_locations')
         .select('supplier_id')
         .eq('location_id', locationId)
         .eq('is_active', true);
 
-      if (slError) throw slError;
+      if (laError) throw laError;
 
-      // If no supplier_locations exist for this location, return all suppliers (fallback)
-      if (!supplierLocations || supplierLocations.length === 0) {
-        const { data, error } = await supabase
-          .from('suppliers')
-          .select('*')
-          .order('name');
+      const assignedToThisLocation = new Set(
+        (locationAssignments || []).map(sl => sl.supplier_id)
+      );
 
-        if (error) throw error;
-        return data as Supplier[];
+      // 3. Get ALL supplier_locations to find which suppliers have ANY assignment
+      const supplierIds = allSuppliers.map(s => s.id);
+      const { data: allAssignments, error: aaError } = await supabase
+        .from('supplier_locations')
+        .select('supplier_id')
+        .in('supplier_id', supplierIds);
+
+      if (aaError) throw aaError;
+
+      const hasAnyAssignment = new Set(
+        (allAssignments || []).map(sl => sl.supplier_id)
+      );
+
+      // 4. Build result: assigned to this location + completely unassigned
+      const result: SupplierWithAssignment[] = [];
+
+      for (const supplier of allSuppliers) {
+        const typedSupplier = supplier as Supplier;
+        if (assignedToThisLocation.has(supplier.id)) {
+          // Supplier is assigned to this location
+          result.push({ ...typedSupplier, isUnassigned: false });
+        } else if (!hasAnyAssignment.has(supplier.id)) {
+          // Supplier has NO location assignments at all - show as unassigned
+          result.push({ ...typedSupplier, isUnassigned: true });
+        }
+        // Suppliers assigned to OTHER locations only are skipped
       }
 
-      const supplierIds = supplierLocations.map(sl => sl.supplier_id);
-
-      // Get the actual suppliers
-      const { data: suppliers, error } = await supabase
-        .from('suppliers')
-        .select('*')
-        .in('id', supplierIds)
-        .order('name');
-
-      if (error) throw error;
-      return suppliers as Supplier[];
+      return result;
     },
   });
 };
