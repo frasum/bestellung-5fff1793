@@ -104,7 +104,7 @@ export const BulkCategoryToolbar = ({
                   </CommandItem>
                   {sortedOrderUnits.map((unit) => (
                     <CommandItem key={unit.id} value={unit.name} onSelect={() => handleAssignOrderUnit(unit.id)}>
-                      {unit.quantity}× {unit.name}
+                      {unit.name}
                     </CommandItem>
                   ))}
                 </CommandGroup>

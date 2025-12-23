@@ -311,7 +311,7 @@ export const ArticleTable = ({
                                     )}
                                     <Badge variant="outline" className="text-xs gap-1 font-normal">
                                       <Package className="h-3 w-3" />
-                                      {multiplier}× {displayUnitName}
+                                      {displayUnitName}
                                     </Badge>
                                   </>
                                 );

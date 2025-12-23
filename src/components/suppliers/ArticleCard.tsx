@@ -77,7 +77,7 @@ export const ArticleCard = memo(({
           {/* Immer Bestelleinheit anzeigen: order_unit falls vorhanden, sonst unit als Fallback */}
           <Badge variant="outline" className="text-xs gap-1 font-normal mt-1">
             <Package className="h-3 w-3" />
-            {orderUnit ? `${orderUnit.quantity}× ${orderUnit.name}` : `1× ${article.unit}`}
+            {orderUnit ? orderUnit.name : article.unit}
           </Badge>
           {article.reference_price && article.reference_unit && (
             <p className="text-xs text-muted-foreground/70 italic">
