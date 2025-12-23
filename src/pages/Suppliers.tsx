@@ -1,4 +1,5 @@
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { DashboardLayout, useSidebarContext } from '@/components/layout/DashboardLayout';
@@ -43,7 +44,9 @@ import { QuickCaptureWizard } from '@/components/suppliers/QuickCaptureWizard';
 import { WinesTab } from '@/components/suppliers/WinesTab';
 import { SupplierQRCodeDialog } from '@/components/suppliers/SupplierQRCodeDialog';
 import { SupplierTokensDialog } from '@/components/suppliers/SupplierTokensDialog';
+
 const Suppliers = () => {
+  const { t } = useTranslation();
   const {
     user,
     loading: authLoading
@@ -564,7 +567,7 @@ const Suppliers = () => {
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="grid w-full grid-cols-3 max-w-md">
-            <TabsTrigger value="suppliers">Lieferanten</TabsTrigger>
+            <TabsTrigger value="suppliers">{t('nav.suppliers')}</TabsTrigger>
             <TabsTrigger value="wines" className="gap-1">
               <span className="hidden sm:inline">🍷</span> Weine
             </TabsTrigger>
