@@ -182,10 +182,21 @@ export const SupplierTable = ({
                           <FileText className="w-4 h-4" />
                         </Button>
                       )}
-                      <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground hover:text-foreground" onClick={() => onEdit(supplier)}>
+                      <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground hover:text-foreground" onClick={() => onEdit(supplier)} title="Bearbeiten">
                         <Pencil className="w-4 h-4" />
                       </Button>
-                      <Button variant="ghost" size="icon" className="h-9 w-9 text-destructive hover:text-destructive" onClick={() => onDelete(supplier)}>
+                      {onAddArticle && (
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-9 w-9 text-muted-foreground hover:text-foreground" 
+                          onClick={() => onAddArticle(supplier)}
+                          title="Artikel hinzufügen"
+                        >
+                          <Plus className="w-4 h-4" />
+                        </Button>
+                      )}
+                      <Button variant="ghost" size="icon" className="h-9 w-9 text-destructive hover:text-destructive" onClick={() => onDelete(supplier)} title="Löschen">
                         <Trash2 className="w-4 h-4" />
                       </Button>
                     </div>
@@ -272,18 +283,6 @@ export const SupplierTable = ({
                             })}
                           </TableBody>
                         </Table>
-                        {onAddArticle && (
-                          <div className="mt-3 pt-3 border-t border-border/50">
-                            <Button 
-                              variant="outline" 
-                              size="sm" 
-                              onClick={() => onAddArticle(supplier)}
-                            >
-                              <Plus className="w-4 h-4 mr-1" />
-                              Artikel hinzufügen
-                            </Button>
-                          </div>
-                        )}
                       </div>
                     </TableCell>
                   </TableRow>
