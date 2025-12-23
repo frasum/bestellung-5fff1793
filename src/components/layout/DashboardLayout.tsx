@@ -225,7 +225,8 @@ export const DashboardLayout = ({
 
       {/* Desktop Top Bar */}
       <div className={cn(
-        "hidden xl:flex fixed top-0 right-0 z-30 h-14 bg-card/80 backdrop-blur-sm border-b border-border items-center justify-between px-6 transition-all duration-300",
+        "hidden xl:flex fixed top-0 right-0 z-30 h-14 bg-card/80 backdrop-blur-sm border-b border-border items-center justify-between px-6",
+        "transition-[left] duration-700 ease-in-out motion-reduce:transition-none",
         sidebarCollapsed ? 'left-0' : 'left-64'
       )}>
         <div className="flex items-center gap-4">
@@ -337,16 +338,14 @@ export const DashboardLayout = ({
 
       {/* Sidebar */}
       <aside className={cn(
-        'fixed top-0 left-0 z-40 h-full bg-background border-r border-border transition-all duration-300',
-        sidebarCollapsed ? 'xl:w-0 xl:border-r-0' : 'xl:w-64',
-        'w-64',
-        'xl:translate-x-0',
+        'fixed top-0 left-0 z-40 h-full w-64 bg-background border-r border-border',
+        'transition-transform duration-700 ease-in-out motion-reduce:transition-none',
+        // Desktop: slide out to left when collapsed
+        sidebarCollapsed ? 'xl:-translate-x-full' : 'xl:translate-x-0',
+        // Mobile: controlled by sidebarOpen
         sidebarOpen ? 'translate-x-0' : '-translate-x-full'
       )}>
-        <div className={cn(
-          "flex flex-col h-full transition-opacity duration-300",
-          sidebarCollapsed ? 'xl:opacity-0 xl:pointer-events-none' : 'xl:opacity-100'
-        )}>
+        <div className="flex flex-col h-full">
           {/* Logo */}
           <div className="h-16 flex items-center justify-between px-6 border-b border-border">
             <div className="flex items-center gap-2">
@@ -420,7 +419,8 @@ export const DashboardLayout = ({
       {/* Main Content */}
       <SidebarContext.Provider value={{ sidebarCollapsed, toggleSidebar }}>
         <main className={cn(
-          "pt-14 pb-20 xl:pb-0 min-h-screen transition-all duration-300",
+          "pt-14 pb-20 xl:pb-0 min-h-screen",
+          "transition-[margin-left] duration-700 ease-in-out motion-reduce:transition-none",
           sidebarCollapsed ? 'xl:ml-0' : 'xl:ml-64'
         )}>
           <div className="px-4 pt-0 pb-4 md:px-5 md:pt-4 md:pb-5 xl:p-8">{children}</div>
