@@ -769,7 +769,7 @@ Important:
         } else {
           // Create new article
           console.log(`Creating new article: "${item.articleName}"`);
-          const { error: articleError } = await supabaseClient
+          const { data: newArticle, error: articleError } = await supabaseClient
             .from('articles')
             .insert({
               organization_id: organizationId,
@@ -779,7 +779,9 @@ Important:
               unit: item.unit || 'Stk',
               price: item.unitPrice || 0,
               is_active: true,
-            });
+            })
+            .select('id')
+            .single();
           
           if (articleError) {
             console.error('Failed to create article:', articleError);
@@ -787,8 +789,30 @@ Important:
             articlesCreated++;
             // Add to maps for subsequent checks
             existingByName.set(normalizeSimple(item.articleName), { 
-              id: '', name: item.articleName, sku: item.articleSku || null, price: item.unitPrice || 0 
+              id: newArticle.id, name: item.articleName, sku: item.articleSku || null, price: item.unitPrice || 0 
             });
+            
+            // Auto-assign new article to all organization locations
+            const { data: orgLocations } = await supabaseClient
+              .from('locations')
+              .select('id')
+              .eq('organization_id', organizationId);
+            
+            if (orgLocations && orgLocations.length > 0) {
+              const { error: locError } = await supabaseClient
+                .from('article_locations')
+                .insert(orgLocations.map(loc => ({
+                  article_id: newArticle.id,
+                  location_id: loc.id,
+                  is_active: true
+                })));
+              
+              if (locError) {
+                console.error('Failed to assign article to locations:', locError);
+              } else {
+                console.log(`Assigned article "${item.articleName}" to ${orgLocations.length} locations`);
+              }
+            }
           }
         }
       }
