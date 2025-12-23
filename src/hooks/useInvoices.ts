@@ -81,6 +81,12 @@ export function useInvoices() {
       return data as Invoice[];
     },
     enabled: !!user,
+    // Auto-refresh every 5 seconds if any invoice is still processing
+    refetchInterval: (query) => {
+      const data = query.state.data as Invoice[] | undefined;
+      const hasProcessing = data?.some(inv => inv.status === 'processing');
+      return hasProcessing ? 5000 : false;
+    },
   });
 }
 
@@ -182,6 +188,8 @@ export function useUploadInvoice() {
     },
     onError: (error: Error) => {
       console.error('Upload error:', error);
+      // Also invalidate queries on error to refresh status
+      queryClient.invalidateQueries({ queryKey: ['invoices'] });
       toast({
         title: 'Fehler beim Hochladen',
         description: error.message,

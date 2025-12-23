@@ -299,7 +299,7 @@ Important:
         ],
         temperature: 0.1,
         // Increase token budget to avoid truncated JSON for invoices with many line items
-        max_tokens: 12000,
+        max_tokens: 16000,
       }),
     });
 
@@ -348,18 +348,154 @@ Important:
       }
 
       console.log('Cleaned JSON content (first 500 chars):', jsonContent.substring(0, 500));
-      invoiceData = JSON.parse(jsonContent.trim());
-    } catch (parseError) {
-      console.error('Failed to parse AI response:', parseError);
-      await supabaseClient
-        .from('invoices')
-        .update({ status: 'pending', notes: 'Failed to parse AI response', parsed_data: { raw: aiContent } })
-        .eq('id', invoiceId);
       
-      return new Response(JSON.stringify({ error: 'Failed to parse invoice data' }), {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+      // Try to parse the JSON, with repair fallback for truncated responses
+      try {
+        invoiceData = JSON.parse(jsonContent.trim());
+      } catch (initialParseError) {
+        console.log('Initial parse failed, attempting JSON repair...');
+        
+        // Try to repair truncated JSON (common when items array is cut off)
+        let repairedJson = jsonContent.trim();
+        
+        // Remove trailing commas before ] or }
+        repairedJson = repairedJson.replace(/,\s*([\]}])/g, '$1');
+        
+        // Count open/close braces and brackets
+        const openBraces = (repairedJson.match(/{/g) || []).length;
+        const closeBraces = (repairedJson.match(/}/g) || []).length;
+        const openBrackets = (repairedJson.match(/\[/g) || []).length;
+        const closeBrackets = (repairedJson.match(/]/g) || []).length;
+        
+        // If we're inside an incomplete object in an array, remove it
+        if (openBraces > closeBraces || openBrackets > closeBrackets) {
+          // Find the last complete object in items array
+          const itemsMatch = repairedJson.match(/"items"\s*:\s*\[/);
+          if (itemsMatch) {
+            const itemsStart = repairedJson.indexOf(itemsMatch[0]);
+            const afterItems = repairedJson.substring(itemsStart + itemsMatch[0].length);
+            
+            // Find all complete objects {...}
+            let depth = 0;
+            let lastCompleteEnd = -1;
+            let inString = false;
+            let escape = false;
+            
+            for (let i = 0; i < afterItems.length; i++) {
+              const char = afterItems[i];
+              
+              if (escape) {
+                escape = false;
+                continue;
+              }
+              
+              if (char === '\\') {
+                escape = true;
+                continue;
+              }
+              
+              if (char === '"' && !escape) {
+                inString = !inString;
+                continue;
+              }
+              
+              if (inString) continue;
+              
+              if (char === '{') {
+                depth++;
+              } else if (char === '}') {
+                depth--;
+                if (depth === 0) {
+                  lastCompleteEnd = i;
+                }
+              }
+            }
+            
+            if (lastCompleteEnd >= 0) {
+              // Rebuild JSON with only complete items
+              const completeItems = afterItems.substring(0, lastCompleteEnd + 1);
+              repairedJson = repairedJson.substring(0, itemsStart + itemsMatch[0].length) + completeItems + ']}';
+              console.log('Repaired JSON by closing items array after last complete item');
+            }
+          }
+        }
+        
+        // Add missing closing brackets/braces
+        const newOpenBrackets = (repairedJson.match(/\[/g) || []).length;
+        const newCloseBrackets = (repairedJson.match(/]/g) || []).length;
+        const newOpenBraces = (repairedJson.match(/{/g) || []).length;
+        const newCloseBraces = (repairedJson.match(/}/g) || []).length;
+        
+        for (let i = 0; i < newOpenBrackets - newCloseBrackets; i++) {
+          repairedJson += ']';
+        }
+        for (let i = 0; i < newOpenBraces - newCloseBraces; i++) {
+          repairedJson += '}';
+        }
+        
+        // Remove any trailing commas again after repair
+        repairedJson = repairedJson.replace(/,\s*([\]}])/g, '$1');
+        
+        console.log('Attempting to parse repaired JSON (last 200 chars):', repairedJson.slice(-200));
+        invoiceData = JSON.parse(repairedJson);
+        console.log('JSON repair successful!');
+      }
+    } catch (parseError) {
+      console.error('Failed to parse AI response even after repair:', parseError);
+      
+      // Fallback: Try to extract at least header data
+      let headerData: Partial<InvoiceData> = {};
+      const rawContent = aiContent ?? '';
+      
+      // Try to extract key fields with regex
+      const supplierMatch = rawContent.match(/"supplierName"\s*:\s*"([^"]+)"/);
+      const invoiceNumMatch = rawContent.match(/"invoiceNumber"\s*:\s*"([^"]+)"/);
+      const customerNumMatch = rawContent.match(/"customerNumber"\s*:\s*"([^"]+)"/);
+      const grossMatch = rawContent.match(/"grossAmount"\s*:\s*([\d.]+)/);
+      const netMatch = rawContent.match(/"netAmount"\s*:\s*([\d.]+)/);
+      const vatMatch = rawContent.match(/"vatAmount"\s*:\s*([\d.]+)/);
+      const dateMatch = rawContent.match(/"invoiceDate"\s*:\s*"([^"]+)"/);
+      
+      if (supplierMatch) headerData.supplierName = supplierMatch[1];
+      if (invoiceNumMatch) headerData.invoiceNumber = invoiceNumMatch[1];
+      if (customerNumMatch) headerData.customerNumber = customerNumMatch[1];
+      if (grossMatch) headerData.grossAmount = parseFloat(grossMatch[1]);
+      if (netMatch) headerData.netAmount = parseFloat(netMatch[1]);
+      if (vatMatch) headerData.vatAmount = parseFloat(vatMatch[1]);
+      if (dateMatch) headerData.invoiceDate = dateMatch[1];
+      headerData.items = []; // Empty items since we couldn't parse them
+      headerData.currency = 'EUR';
+      
+      const hasMinimumData = headerData.supplierName && (headerData.invoiceNumber || headerData.grossAmount);
+      
+      if (hasMinimumData) {
+        console.log('Fallback: Extracted header data:', headerData);
+        invoiceData = headerData as InvoiceData;
+        
+        // Add note about partial parsing
+        await supabaseClient
+          .from('invoices')
+          .update({ 
+            notes: 'Teilweise geparst - Artikelpositionen konnten nicht vollständig gelesen werden',
+            parsed_data: { raw: rawContent, extracted: headerData }
+          })
+          .eq('id', invoiceId);
+      } else {
+        console.error('Could not extract minimum header data');
+        await supabaseClient
+          .from('invoices')
+          .update({ 
+            status: 'pending', 
+            notes: 'Parsing fehlgeschlagen - bitte manuell prüfen', 
+            parsed_data: { raw: rawContent } 
+          })
+          .eq('id', invoiceId);
+        
+        return new Response(JSON.stringify({ error: 'Failed to parse invoice data' }), {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
     }
 
     console.log('Extracted customer number:', invoiceData.customerNumber);
@@ -733,6 +869,28 @@ Important:
   } catch (error) {
     console.error('Error in parse-invoice:', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    
+    // CRITICAL: Never leave invoice stuck in 'processing' - always update to pending with error
+    try {
+      const { invoiceId } = await req.clone().json().catch(() => ({}));
+      if (invoiceId) {
+        const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+        const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+        const supabaseClient = createClient(supabaseUrl, supabaseServiceKey);
+        
+        await supabaseClient
+          .from('invoices')
+          .update({ 
+            status: 'pending', 
+            notes: `Verarbeitung fehlgeschlagen: ${errorMessage}` 
+          })
+          .eq('id', invoiceId);
+        console.log('Updated invoice status to pending after error');
+      }
+    } catch (updateError) {
+      console.error('Failed to update invoice status after error:', updateError);
+    }
+    
     return new Response(JSON.stringify({ error: errorMessage }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
