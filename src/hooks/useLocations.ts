@@ -24,9 +24,23 @@ export const useLocations = () => {
   return useQuery({
     queryKey: ['locations'],
     queryFn: async () => {
+      // Get the user's organization_id first
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return [];
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('organization_id')
+        .eq('id', user.id)
+        .single();
+
+      if (!profile?.organization_id) return [];
+
+      // Only fetch locations for the user's organization
       const { data, error } = await supabase
         .from('locations')
         .select('*')
+        .eq('organization_id', profile.organization_id)
         .order('is_default', { ascending: false })
         .order('name');
 
