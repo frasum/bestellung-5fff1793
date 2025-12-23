@@ -10,6 +10,7 @@ import { useSuppliers } from '@/hooks/useSuppliers';
 import { useArticles } from '@/hooks/useArticles';
 import { useInventorySessions, useInventoryItems } from '@/hooks/useInventory';
 import { useLocations } from '@/hooks/useLocations';
+import { useLocationContext } from '@/contexts/LocationContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -61,7 +62,8 @@ const COLORS = ['hsl(var(--primary))', 'hsl(var(--accent))', 'hsl(142, 76%, 36%)
 const RecentOrdersCard = () => {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
-  const { data: orders, isLoading } = useOrders();
+  const { activeLocation } = useLocationContext();
+  const { data: orders, isLoading } = useOrders(activeLocation?.id);
   const { data: locations } = useLocations();
   const [openOrders, setOpenOrders] = useState<Set<string>>(new Set());
   
@@ -207,9 +209,10 @@ const RecentOrdersCard = () => {
 const QuickOverviewKPIs = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const { activeLocation } = useLocationContext();
   const { data: suppliers, isLoading: suppliersLoading } = useSuppliers();
   const { data: articles, isLoading: articlesLoading } = useArticles();
-  const { data: orders, isLoading: ordersLoading } = useOrders();
+  const { data: orders, isLoading: ordersLoading } = useOrders(activeLocation?.id);
   const { data: sessions, isLoading: sessionsLoading } = useInventorySessions();
   
   // Find last completed inventory session
@@ -318,7 +321,8 @@ const Reports = () => {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { data: orders, isLoading } = useOrders();
+  const { activeLocation } = useLocationContext();
+  const { data: orders, isLoading } = useOrders(activeLocation?.id);
   const { data: annualRevenue, isLoading: revenueLoading } = useSupplierAnnualRevenue();
   const [timeRange, setTimeRange] = useState('6');
 
