@@ -475,11 +475,7 @@ const Reports = () => {
     <DashboardLayout>
       <div className="space-y-2 md:space-y-5 xl:space-y-6">
         {/* Header */}
-        <PageHeader 
-          activeTab={activeTab === 'overview' ? undefined : activeTab}
-          sidebarCollapsed={sidebarCollapsed}
-          onToggleSidebar={toggleSidebar}
-        />
+        <PageHeader activeTab={activeTab === 'overview' ? undefined : activeTab} />
 
         {/* Main Tabs */}
         <Tabs value={activeTab} onValueChange={handleTabChange}>

@@ -584,11 +584,7 @@ const Orders = () => {
   return (
     <DashboardLayout>
       <div className="space-y-2 md:space-y-5 xl:space-y-6">
-        <PageHeader 
-          activeTab={activeTab === 'orders' ? undefined : activeTab}
-          sidebarCollapsed={sidebarCollapsed}
-          onToggleSidebar={toggleSidebar}
-        >
+        <PageHeader activeTab={activeTab === 'orders' ? undefined : activeTab}>
           <Button onClick={() => navigate('/suppliers?tab=articles')} className="h-9">
             <Package className="w-4 h-4 sm:mr-2" />
             <span className="hidden sm:inline">{t('orders.newOrder')}</span>
