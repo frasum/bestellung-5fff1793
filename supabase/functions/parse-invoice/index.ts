@@ -606,8 +606,8 @@ Important:
                   matchedTokens.push(invToken);
                 }
               }
-              // Token contains the other (only for longer tokens)
-              else if (invToken.length >= 5 && supToken.length >= 5) {
+              // Token contains the other (only for longer tokens - stricter: min 7 chars)
+              else if (invToken.length >= 7 && supToken.length >= 7) {
                 if (invToken.includes(supToken) || supToken.includes(invToken)) {
                   if (!matchedTokens.includes(invToken)) {
                     matchedTokens.push(invToken);
@@ -623,12 +623,16 @@ Important:
             score = 90;
             matchDetails = `${matchedTokens.length} tokens match: [${matchedTokens.join(', ')}]`;
           } else if (matchedTokens.length === 1) {
-            // Single token match - only give high score if it's very characteristic
+            // Single token match - stricter scoring to avoid false positives
             const matchedToken = matchedTokens[0];
-            if (matchedToken.length >= 6) {
-              // Long, characteristic token - moderate score
-              score = 65;
-              matchDetails = `single characteristic token match: "${matchedToken}"`;
+            if (matchedToken.length >= 8) {
+              // Very long, characteristic token - high score
+              score = 70;
+              matchDetails = `single very characteristic token match: "${matchedToken}"`;
+            } else if (matchedToken.length >= 6) {
+              // Medium token - below threshold to force new supplier creation
+              score = 55;
+              matchDetails = `single medium token match: "${matchedToken}" (below threshold)`;
             } else {
               // Short token - low score, likely false positive
               score = 40;
