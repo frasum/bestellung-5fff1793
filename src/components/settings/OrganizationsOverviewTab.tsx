@@ -9,10 +9,12 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Skeleton } from '@/components/ui/skeleton';
 import { 
   Building2, Users, MapPin, Store, Search, Trash2, ArrowRightLeft, 
-  Crown, Gift, FlaskConical, Loader2, Mail, Shield
+  Crown, Gift, FlaskConical, Loader2, Mail, Shield, MoreHorizontal,
+  CalendarPlus, RefreshCw, Eraser, Clock, AlertTriangle
 } from 'lucide-react';
 import { 
   useSuperAdminOrganizations, 
@@ -22,6 +24,9 @@ import {
   OrganizationOverview,
   OrganizationUser
 } from '@/hooks/useSuperAdminOrganizations';
+import { useExtendDemo, useConvertDemo, useClearCatalog, useDemoAccountStats } from '@/hooks/useDemoAccounts';
+import { format } from 'date-fns';
+import { de } from 'date-fns/locale';
 
 type FilterType = 'all' | 'demo' | 'sponsored' | 'enterprise' | 'free';
 
@@ -29,14 +34,20 @@ export function OrganizationsOverviewTab() {
   const { t } = useTranslation();
   const { data: organizations, isLoading } = useSuperAdminOrganizations();
   const stats = useSuperAdminStats();
+  const demoStats = useDemoAccountStats();
   const deleteOrganization = useDeleteOrganization();
   const moveUser = useMoveUserToOrganization();
+  const extendDemo = useExtendDemo();
+  const convertDemo = useConvertDemo();
+  const clearCatalog = useClearCatalog();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [filter, setFilter] = useState<FilterType>('all');
   const [moveDialogOpen, setMoveDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<{ user: OrganizationUser; fromOrg: OrganizationOverview } | null>(null);
   const [targetOrgId, setTargetOrgId] = useState('');
+  const [confirmConvertOrg, setConfirmConvertOrg] = useState<OrganizationOverview | null>(null);
+  const [confirmClearOrg, setConfirmClearOrg] = useState<OrganizationOverview | null>(null);
 
   const filteredOrganizations = useMemo(() => {
     if (!organizations) return [];
@@ -144,6 +155,21 @@ export function OrganizationsOverviewTab() {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Demo Status</CardTitle>
+            <FlaskConical className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{demoStats.active}</div>
+            <p className="text-xs text-muted-foreground">
+              <span className="text-destructive">{demoStats.expired} abgelaufen</span>
+              {demoStats.expiringIn7Days > 0 && (
+                <span className="text-amber-500 ml-2">• {demoStats.expiringIn7Days} läuft bald ab</span>
+              )}
+            </p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Benutzer</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
@@ -156,25 +182,13 @@ export function OrganizationsOverviewTab() {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Standorte</CardTitle>
+            <CardTitle className="text-sm font-medium">Standorte & Lieferanten</CardTitle>
             <MapPin className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.totalLocations}</div>
             <p className="text-xs text-muted-foreground">
-              Aktive Standorte
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Lieferanten</CardTitle>
-            <Store className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.totalSuppliers}</div>
-            <p className="text-xs text-muted-foreground">
-              Konfigurierte Lieferanten
+              {stats.totalSuppliers} Lieferanten
             </p>
           </CardContent>
         </Card>
@@ -322,50 +336,82 @@ export function OrganizationsOverviewTab() {
                       <TableCell className="text-center">{org.locations.length}</TableCell>
                       <TableCell className="text-center">{org.suppliers.length}</TableCell>
                       <TableCell className="text-right">
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button 
-                              variant="ghost" 
-                              size="sm"
-                              className="text-destructive hover:text-destructive"
-                              disabled={deleteOrganization.isPending}
-                            >
-                              {deleteOrganization.isPending ? (
-                                <Loader2 className="h-4 w-4 animate-spin" />
-                              ) : (
-                                <Trash2 className="h-4 w-4" />
-                              )}
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="sm">
+                              <MoreHorizontal className="h-4 w-4" />
                             </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Organisation löschen?</AlertDialogTitle>
-                              <AlertDialogDescription className="space-y-2">
-                                <span>
-                                  Möchten Sie die Organisation "{org.name}" wirklich löschen? 
-                                  Diese Aktion kann nicht rückgängig gemacht werden.
-                                </span>
-                                {org.users.length > 0 && (
-                                  <span className="block text-amber-600 dark:text-amber-400 font-medium">
-                                    ⚠️ {org.users.length} Benutzer werden von dieser Organisation getrennt.
-                                  </span>
-                                )}
-                                <span className="block">
-                                  Alle zugehörigen Standorte und Lieferanten werden ebenfalls gelöscht.
-                                </span>
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Abbrechen</AlertDialogCancel>
-                              <AlertDialogAction
-                                onClick={() => handleDeleteOrganization(org.id)}
-                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                              >
-                                Löschen
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            {org.is_demo && (
+                              <>
+                                <DropdownMenuItem 
+                                  onClick={() => extendDemo.mutate({ organizationId: org.id, days: 7 })}
+                                  disabled={extendDemo.isPending}
+                                >
+                                  <CalendarPlus className="mr-2 h-4 w-4" />
+                                  +7 Tage verlängern
+                                </DropdownMenuItem>
+                                <DropdownMenuItem 
+                                  onClick={() => extendDemo.mutate({ organizationId: org.id, days: 30 })}
+                                  disabled={extendDemo.isPending}
+                                >
+                                  <CalendarPlus className="mr-2 h-4 w-4" />
+                                  +30 Tage verlängern
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => setConfirmConvertOrg(org)}>
+                                  <RefreshCw className="mr-2 h-4 w-4" />
+                                  Zu echtem Account konvertieren
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                              </>
+                            )}
+                            <DropdownMenuItem onClick={() => setConfirmClearOrg(org)}>
+                              <Eraser className="mr-2 h-4 w-4" />
+                              Katalog leeren
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <DropdownMenuItem 
+                                  className="text-destructive focus:text-destructive"
+                                  onSelect={(e) => e.preventDefault()}
+                                >
+                                  <Trash2 className="mr-2 h-4 w-4" />
+                                  Löschen
+                                </DropdownMenuItem>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Organisation löschen?</AlertDialogTitle>
+                                  <AlertDialogDescription className="space-y-2">
+                                    <span>
+                                      Möchten Sie die Organisation "{org.name}" wirklich löschen? 
+                                      Diese Aktion kann nicht rückgängig gemacht werden.
+                                    </span>
+                                    {org.users.length > 0 && (
+                                      <span className="block text-amber-600 dark:text-amber-400 font-medium">
+                                        ⚠️ {org.users.length} Benutzer werden von dieser Organisation getrennt.
+                                      </span>
+                                    )}
+                                    <span className="block">
+                                      Alle zugehörigen Standorte und Lieferanten werden ebenfalls gelöscht.
+                                    </span>
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={() => handleDeleteOrganization(org.id)}
+                                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                  >
+                                    Löschen
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </TableCell>
                     </TableRow>
                   ))
@@ -416,6 +462,63 @@ export function OrganizationsOverviewTab() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Convert Demo Dialog */}
+      <AlertDialog open={!!confirmConvertOrg} onOpenChange={() => setConfirmConvertOrg(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Zu echtem Account konvertieren?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Die Organisation "{confirmConvertOrg?.name}" wird zu einem echten Account konvertiert. 
+              Der Demo-Zeitraum wird entfernt und der Account läuft nicht mehr ab.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (confirmConvertOrg) {
+                  convertDemo.mutate(confirmConvertOrg.id);
+                  setConfirmConvertOrg(null);
+                }
+              }}
+            >
+              Konvertieren
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Clear Catalog Dialog */}
+      <AlertDialog open={!!confirmClearOrg} onOpenChange={() => setConfirmClearOrg(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Katalog leeren?</AlertDialogTitle>
+            <AlertDialogDescription className="space-y-2">
+              <span>
+                Alle Artikel, Lieferanten und Kategorien von "{confirmClearOrg?.name}" werden gelöscht.
+              </span>
+              <span className="block text-amber-600 dark:text-amber-400 font-medium">
+                ⚠️ Diese Aktion kann nicht rückgängig gemacht werden!
+              </span>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (confirmClearOrg) {
+                  clearCatalog.mutate(confirmClearOrg.id);
+                  setConfirmClearOrg(null);
+                }
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Katalog leeren
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
