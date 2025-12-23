@@ -467,6 +467,9 @@
       "customizedCount": "{{count}} angepasst"
     },
     "communication": "Kommunikation",
+    "communicationShort": "Komm.",
+    "system": "System",
+    "systemDesc": "Erweiterte Einstellungen und Entwickler-Tools verwalten",
     "communicationLog": {
       "title": "Kommunikations-Verlauf",
       "description": "Übersicht aller gesendeten E-Mails und Bestätigungen",

@@ -466,6 +466,9 @@
       "customizedCount": "{{count}} customized"
     },
     "communication": "Communication",
+    "communicationShort": "Comm.",
+    "system": "System",
+    "systemDesc": "Manage advanced settings and developer tools",
     "communicationLog": {
       "title": "Communication Log",
       "description": "Overview of all sent emails and confirmations",

@@ -4,7 +4,7 @@ import { useSearchParams } from 'react-router-dom';
 import { DashboardLayout, useSidebarContext } from '@/components/layout/DashboardLayout';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Building2, MessageSquare, Store, ClipboardCheck, Gift, TrendingDown, Shield } from 'lucide-react';
+import { Building2, MessageSquare, Store, ClipboardCheck, Gift, TrendingDown, Shield, Settings2 } from 'lucide-react';
 import { useUserRole } from '@/hooks/useTeam';
 import { useIsSuperAdmin } from '@/hooks/useIsSuperAdmin';
 import { CommunicationTab } from '@/components/settings/CommunicationTab';
@@ -18,6 +18,7 @@ import { SystemFeaturePrioritiesTab } from '@/components/settings/SystemFeatureP
 import { FriendsAndFamilyTab } from '@/components/settings/FriendsAndFamilyTab';
 import { PriceWatchSettingsTab } from '@/components/settings/PriceWatchSettingsTab';
 import { OrganizationsOverviewTab } from '@/components/settings/OrganizationsOverviewTab';
+import { SystemTab } from '@/components/settings/SystemTab';
 
 // Default sub-tabs for each main tab (won't be shown in URL)
 const DEFAULT_SUB_TABS: Record<string, string> = {
@@ -44,7 +45,7 @@ const Settings = () => {
 
   // Build list of allowed tabs based on user role and advanced mode
   const allowedTabs = useMemo(() => {
-    const tabs = ['organization', 'communication'];
+    const tabs = ['organization', 'communication', 'system'];
     if (isSuperAdmin) tabs.push('b2b-portal', 'friends-family', 'organizations');
     if (isAdmin) tabs.push('price-watch');
     if (isAdmin && advancedMode) tabs.push('developer-checklist');
@@ -147,6 +148,10 @@ const Settings = () => {
                   <span className="hidden sm:inline">{t('settings.communication')}</span>
                   <span className="sm:hidden">{t('settings.communicationShort')}</span>
                 </TabsTrigger>
+                <TabsTrigger value="system" className="gap-1.5 text-xs sm:text-sm whitespace-nowrap">
+                  <Settings2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                  <span>{t('settings.system')}</span>
+                </TabsTrigger>
                 {isSuperAdmin && (
                   <TabsTrigger value="b2b-portal" className="gap-1.5 text-xs sm:text-sm whitespace-nowrap">
                     <Store className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
@@ -203,6 +208,9 @@ const Settings = () => {
             />
           </TabsContent>
 
+          <TabsContent value="system" className="animate-in fade-in-50 slide-in-from-right-2 duration-200">
+            <SystemTab />
+          </TabsContent>
 
           {isSuperAdmin && (
             <TabsContent value="b2b-portal" className="animate-in fade-in-50 slide-in-from-right-2 duration-200">
