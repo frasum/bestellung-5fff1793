@@ -26,6 +26,7 @@ const Checkout = lazy(() => import("./pages/Checkout"));
 const Orders = lazy(() => import("./pages/Orders"));
 const Reports = lazy(() => import("./pages/Reports"));
 const Settings = lazy(() => import("./pages/Settings"));
+const Profile = lazy(() => import("./pages/Profile"));
 const SupplierLogin = lazy(() => import("./pages/SupplierLogin"));
 const SupplierAuth = lazy(() => import("./pages/SupplierAuth"));
 const SupplierPortal = lazy(() => import("./pages/SupplierPortal"));
@@ -97,6 +98,7 @@ const AppContent = () => {
           <Route path="/reports" element={<Reports />} />
           <Route path="/inventory" element={<Navigate to="/reports?tab=inventur" replace />} />
           <Route path="/settings" element={<Settings />} />
+          <Route path="/profile" element={<Profile />} />
           <Route path="/supplier-login" element={<SupplierLogin />} />
           <Route path="/supplier-auth" element={<SupplierAuth />} />
           <Route path="/supplier-portal" element={<SupplierPortal />} />
