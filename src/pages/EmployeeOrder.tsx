@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useForceLightTheme } from '@/hooks/useForceLightTheme';
 import { EmployeeLoginScreen } from '@/components/employee-order/EmployeeLoginScreen';
 import { LocationSelectionScreen } from '@/components/employee-order/LocationSelectionScreen';
 import { SupplierOrderScreen } from '@/components/employee-order/SupplierOrderScreen';
@@ -41,6 +42,7 @@ export interface CartItem {
 type Screen = 'login' | 'location' | 'order' | 'confirmation';
 
 const EmployeeOrder = () => {
+  useForceLightTheme();
   const { t } = useTranslation();
   const { toast } = useToast();
   
