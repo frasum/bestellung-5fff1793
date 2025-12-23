@@ -270,25 +270,44 @@ export const DashboardLayout = ({
           {!organization?.is_demo && (
             <Popover>
               <PopoverTrigger asChild>
-                <Badge 
-                  variant={organization?.test_mode_enabled ? "warning" : "outline"}
+                <Button 
+                  variant="ghost" 
+                  size="sm"
                   className={cn(
-                    "cursor-pointer",
-                    organization?.test_mode_enabled 
-                      ? "opacity-80" 
-                      : "bg-muted/50 text-muted-foreground border-border hover:bg-muted"
+                    "h-8 gap-2 text-xs font-medium rounded-full px-3",
+                    (organization?.test_mode_enabled || advancedSettingsEnabled)
+                      ? "border border-amber-500/50 text-amber-600 dark:text-amber-400 hover:bg-amber-500/10"
+                      : "text-muted-foreground hover:text-foreground"
                   )}
                 >
-                  <FlaskConical className="w-3 h-3 mr-1" />
-                  {organization?.test_mode_enabled ? t('testMode.enabled') : t('testMode.disabled')}
-                </Badge>
+                  <Settings2 className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">
+                    {organization?.test_mode_enabled ? 'Test' : 'Live'}
+                    {advancedSettingsEnabled && ' • Erweitert'}
+                  </span>
+                  {(organization?.test_mode_enabled || advancedSettingsEnabled) && (
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                  )}
+                </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-72 p-3" align="end">
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="test-mode-toggle-desktop" className="text-sm font-medium">
-                      {t('testMode.title')}
-                    </Label>
+              <PopoverContent className="w-80 p-4" align="end">
+                <div className="space-y-4">
+                  <h4 className="font-medium text-sm">{t('settings.system')}</h4>
+                  
+                  {/* Test Mode Section */}
+                  <div className="flex items-start justify-between gap-3 pb-3 border-b border-border">
+                    <div className="space-y-0.5">
+                      <Label htmlFor="test-mode-toggle-desktop" className="text-sm font-medium flex items-center gap-2">
+                        <FlaskConical className="w-3.5 h-3.5 text-muted-foreground" />
+                        {t('testMode.title')}
+                      </Label>
+                      <p className="text-xs text-muted-foreground">
+                        {organization?.test_mode_enabled 
+                          ? t('settings.testModeActiveDesc', { email: organization.test_email || '—' })
+                          : t('settings.testModeEnabledDesc')
+                        }
+                      </p>
+                    </div>
                     <Switch
                       id="test-mode-toggle-desktop"
                       checked={organization?.test_mode_enabled || false}
@@ -296,47 +315,26 @@ export const DashboardLayout = ({
                       disabled={updateOrganization.isPending}
                     />
                   </div>
-                  <p className="text-xs text-muted-foreground">
-                    {organization?.test_mode_enabled 
-                      ? t('settings.testModeActiveDesc', { email: organization.test_email || '—' })
-                      : t('settings.testModeEnabledDesc')
-                    }
-                  </p>
-                </div>
-              </PopoverContent>
-            </Popover>
-          )}
-          {isAdmin && (
-            <Popover>
-              <PopoverTrigger asChild>
-                <Badge 
-                  variant={advancedSettingsEnabled ? "default" : "outline"}
-                  className={cn(
-                    "cursor-pointer",
-                    advancedSettingsEnabled 
-                      ? "bg-primary text-primary-foreground" 
-                      : "bg-muted/50 text-muted-foreground border-border hover:bg-muted"
+                  
+                  {/* Advanced Settings Section */}
+                  {isAdmin && (
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="space-y-0.5">
+                        <Label htmlFor="advanced-settings-toggle-desktop" className="text-sm font-medium flex items-center gap-2">
+                          <Settings2 className="w-3.5 h-3.5 text-muted-foreground" />
+                          {t('settings.advancedSettings')}
+                        </Label>
+                        <p className="text-xs text-muted-foreground">
+                          {t('settings.advancedSettingsDesc')}
+                        </p>
+                      </div>
+                      <Switch
+                        id="advanced-settings-toggle-desktop"
+                        checked={advancedSettingsEnabled}
+                        onCheckedChange={handleAdvancedSettingsToggle}
+                      />
+                    </div>
                   )}
-                >
-                  <Settings2 className="w-3 h-3 mr-1" />
-                  {advancedSettingsEnabled ? t('settings.advancedMode') : t('settings.standardMode')}
-                </Badge>
-              </PopoverTrigger>
-              <PopoverContent className="w-72 p-3" align="end">
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="advanced-settings-toggle-desktop" className="text-sm font-medium">
-                      {t('settings.advancedSettings')}
-                    </Label>
-                    <Switch
-                      id="advanced-settings-toggle-desktop"
-                      checked={advancedSettingsEnabled}
-                      onCheckedChange={handleAdvancedSettingsToggle}
-                    />
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    {t('settings.advancedSettingsDesc')}
-                  </p>
                 </div>
               </PopoverContent>
             </Popover>
