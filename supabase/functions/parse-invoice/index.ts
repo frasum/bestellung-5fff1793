@@ -34,20 +34,31 @@ serve(async (req) => {
   }
 
   try {
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
-      return new Response(JSON.stringify({ error: 'Authorization required' }), {
-        status: 401,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const lovableApiKey = Deno.env.get('LOVABLE_API_KEY');
 
     if (!lovableApiKey) {
       throw new Error('LOVABLE_API_KEY is not configured');
+    }
+
+    // Check both Authorization header and apikey header
+    const authHeader = req.headers.get('Authorization');
+    const apiKeyHeader = req.headers.get('apikey');
+    
+    // Service-role call: apikey header contains service-role-key (from functions.invoke())
+    // OR: Authorization header contains service-role-key
+    const isServiceRoleViaApiKey = apiKeyHeader === supabaseServiceKey;
+    const isServiceRoleViaAuth = authHeader && authHeader.replace('Bearer ', '') === supabaseServiceKey;
+    const isServiceRoleCall = isServiceRoleViaApiKey || isServiceRoleViaAuth;
+    
+    // If no auth header and not a service-role call, reject
+    if (!authHeader && !isServiceRoleCall) {
+      console.log('No authorization - authHeader:', !!authHeader, 'apiKeyHeader:', !!apiKeyHeader);
+      return new Response(JSON.stringify({ error: 'Authorization required' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     const supabaseClient = createClient(supabaseUrl, supabaseServiceKey);
@@ -64,10 +75,6 @@ serve(async (req) => {
 
     // Determine organization_id - either from user auth or from invoice
     let organizationId: string;
-    const token = authHeader.replace('Bearer ', '');
-    
-    // Check if this is a service-role call or user auth
-    const isServiceRoleCall = token === supabaseServiceKey;
     
     if (isServiceRoleCall) {
       // Service-role call (from check-invoice-emails) - get organization from invoice
@@ -89,6 +96,7 @@ serve(async (req) => {
       console.log('Got organization from invoice:', organizationId);
     } else {
       // User auth call - get organization from user profile
+      const token = authHeader!.replace('Bearer ', '');
       const supabaseAuth = createClient(supabaseUrl, token);
       const { data: { user }, error: authError } = await supabaseAuth.auth.getUser(token);
       
