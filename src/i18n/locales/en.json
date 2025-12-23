@@ -62,7 +62,8 @@
     },
     "orderConfirmed": "Order confirmed",
     "newDirectOrder": "New direct order received",
-    "easyOrderTab": "Easy Order"
+    "easyOrderTab": "Easy Order",
+    "noLocation": "No location"
   },
   "common": {
     "save": "Save",

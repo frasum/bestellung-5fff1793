@@ -60,7 +60,8 @@
       "badge": "THỬ NGHIỆM",
       "noTestOrders": "Không có đơn hàng thử nghiệm"
     },
-    "easyOrderTab": "Easy Order"
+    "easyOrderTab": "Easy Order",
+    "noLocation": "Không có địa điểm"
   },
   "common": {
     "save": "Lưu",
