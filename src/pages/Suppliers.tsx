@@ -12,14 +12,14 @@ import { useSubscriptionLimits } from '@/hooks/useSubscriptionLimits';
 import { UpgradeDialog } from '@/components/subscription/UpgradeDialog';
 import { useArticles, useCreateArticle, useUpdateArticle, useDeleteArticle, useBulkUpdateArticles, Article, ArticleInput } from '@/hooks/useArticles';
 import { useArticleLocationsByLocation } from '@/hooks/useArticleLocations';
-import { Plus, Loader2, Download, Package } from 'lucide-react';
+import { Plus, Loader2, Package } from 'lucide-react';
 import { useArticleImageUpload } from '@/hooks/useArticleImageUpload';
 import { useSendSupplierInvitation } from '@/hooks/useSupplierPortal';
 import { generateOrderListPdf, generateCombinedOrderListPdf } from '@/lib/orderListPdf';
 import { CsvImportDialog } from '@/components/CsvImportDialog';
 import { useImportSuppliers, useImportArticles } from '@/hooks/useImport';
 import { supabase } from '@/integrations/supabase/client';
-import { ExportMenu } from '@/components/ExportMenu';
+
 import { useSupplierPendingChanges, useCombinedPendingBySupplier, usePendingArticleIds, useRecentlyActiveSuppliers } from '@/hooks/useSupplierChanges';
 import { useLastOrderByArticle } from '@/hooks/useLastOrderByArticle';
 import { SupplierChangesDialog } from '@/components/suppliers/SupplierChangesDialog';
@@ -630,33 +630,6 @@ const Suppliers = () => {
             <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
               <SupplierFilters searchQuery={searchQuery} onSearchChange={setSearchQuery} topCategoryFilter={topCategoryFilter} onTopCategoryChange={setTopCategoryFilter} categoryFilter={categoryFilter} onCategoryChange={setCategoryFilter} articleCategories={articleCategoriesForSupplierFilter} multiSelectEnabled={supplierMultiSelectEnabled} onMultiSelectChange={setSupplierMultiSelectEnabled} selectedCount={selectedSuppliers.size} onPrintCombined={handlePrintCombined} showMultiSelectToggle={advancedSettingsEnabled} />
               <div className="flex flex-wrap gap-2 shrink-0">
-                {advancedSettingsEnabled && <ExportMenu filename="suppliers" title="Lieferanten" headers={['Name', 'Email', 'Telefon', 'Adresse', 'Ansprechpartner', 'Kundennummer', 'Status']} getData={() => suppliers?.map(s => [s.name, s.email, s.phone || '', s.address || '', s.contact_person || '', getLocationCustomerNumber(s.id) || s.customer_number || '', s.is_active ? 'Aktiv' : 'Inaktiv']) || []} disabled={!suppliers?.length} />}
-                {advancedSettingsEnabled && <ExportMenu filename="articles" title="Artikel" headers={['Artikelname', 'SKU', 'Beschreibung', 'Lieferant', 'Kategorie', 'Oberkategorie', 'Einheit', 'VPE', 'Einkaufspreis', 'Verkaufspreis', 'Ref.-Preis', 'Ref.-Einheit', 'Herkunftsland', 'Rebsorte', 'Geschmacksprofil', 'Speiseempfehlung', 'Status']} getData={() => allArticles?.map(a => {
-                  const supplier = suppliers?.find(s => s.id === a.supplier_id);
-                  return [
-                    a.name,
-                    a.sku || '',
-                    a.description || '',
-                    supplier?.name || '',
-                    a.category || '',
-                    a.top_category || '',
-                    a.unit,
-                    a.packaging_unit?.toString() || '',
-                    a.price.toFixed(2).replace('.', ','),
-                    a.selling_price?.toFixed(2).replace('.', ',') || '',
-                    a.reference_price?.toFixed(2).replace('.', ',') || '',
-                    a.reference_unit || '',
-                    a.origin_country || '',
-                    a.grape_variety || '',
-                    a.flavor_profile || '',
-                    a.food_pairings || '',
-                    a.is_active ? 'Aktiv' : 'Inaktiv'
-                  ];
-                }) || []} disabled={!allArticles?.length} />}
-                {advancedSettingsEnabled && <Button variant="outline" className="h-10 sm:h-9" onClick={() => setIsSupplierImportOpen(true)}>
-                    <Download className="w-4 h-4 sm:mr-2" />
-                    <span className="hidden sm:inline">Importieren</span>
-                  </Button>}
                 <Button className="h-10 sm:h-9" onClick={handleOpenSupplierDialog}>
                   <Plus className="w-4 h-4 sm:mr-2" />
                   <span className="hidden sm:inline">Lieferant hinzufügen</span>
