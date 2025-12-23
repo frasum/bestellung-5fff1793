@@ -6,11 +6,12 @@ import { useLocationContext } from '@/contexts/LocationContext';
 import { DashboardLayout, useSidebarContext } from '@/components/layout/DashboardLayout';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/button';
-import { useSuppliers, useCreateSupplier, useUpdateSupplier, useDeleteSupplier, Supplier, SupplierInput } from '@/hooks/useSuppliers';
+import { useSuppliers, useSuppliersByLocation, useCreateSupplier, useUpdateSupplier, useDeleteSupplier, Supplier, SupplierInput } from '@/hooks/useSuppliers';
 import { useSupplierLocations } from '@/hooks/useSupplierLocations';
 import { useSubscriptionLimits } from '@/hooks/useSubscriptionLimits';
 import { UpgradeDialog } from '@/components/subscription/UpgradeDialog';
 import { useArticles, useCreateArticle, useUpdateArticle, useDeleteArticle, useBulkUpdateArticles, Article, ArticleInput } from '@/hooks/useArticles';
+import { useArticleLocationsByLocation } from '@/hooks/useArticleLocations';
 import { Plus, Loader2, Upload, Package } from 'lucide-react';
 import { useArticleImageUpload } from '@/hooks/useArticleImageUpload';
 import { useSendSupplierInvitation } from '@/hooks/useSupplierPortal';
@@ -102,15 +103,36 @@ const Suppliers = () => {
     return locationLink?.customer_number || null;
   }, [activeLocation, supplierLocations]);
 
-  // Shared data
+  // Shared data - all suppliers for reference (e.g., for dropdown, etc.)
   const {
-    data: suppliers,
+    data: allSuppliers,
     isLoading: suppliersLoading
   } = useSuppliers();
+  
+  // Location-filtered suppliers - show only suppliers assigned to active location
+  const {
+    data: locationSuppliers
+  } = useSuppliersByLocation(activeLocation?.id);
+  
+  // Use location-filtered suppliers as primary, fallback to all suppliers
+  const suppliers = locationSuppliers ?? allSuppliers;
+  
   const {
     data: allArticles,
     isLoading: articlesLoading
   } = useArticles();
+  
+  // Article locations for filtering by active location
+  const {
+    data: articleLocations
+  } = useArticleLocationsByLocation(activeLocation?.id);
+  
+  // Filter articles to only those available at active location
+  const locationArticleIds = useMemo(() => {
+    if (!articleLocations) return null;
+    return new Set(articleLocations.map(al => al.article_id));
+  }, [articleLocations]);
+  
   const {
     data: dbCategories
   } = useCategories();
@@ -265,11 +287,19 @@ const Suppliers = () => {
     }
   };
 
-  // Extract article categories for supplier filter
-  const articleCategoriesForSupplierFilter = [...new Set(allArticles?.map(a => a.category).filter(Boolean) as string[])].sort();
+  // Filter articles by location (only show articles available at active location)
+  const locationFilteredArticles = useMemo(() => {
+    if (!allArticles) return [];
+    // If no locationArticleIds, show all articles (no filtering)
+    if (!locationArticleIds) return allArticles;
+    return allArticles.filter(article => locationArticleIds.has(article.id));
+  }, [allArticles, locationArticleIds]);
 
-  // Group articles by supplier
-  const articlesBySupplier = allArticles?.reduce((acc, article) => {
+  // Extract article categories for supplier filter (from location-filtered articles)
+  const articleCategoriesForSupplierFilter = [...new Set(locationFilteredArticles?.map(a => a.category).filter(Boolean) as string[])].sort();
+
+  // Group articles by supplier (from location-filtered articles)
+  const articlesBySupplier = locationFilteredArticles?.reduce((acc, article) => {
     if (!acc[article.supplier_id]) {
       acc[article.supplier_id] = [];
     }
@@ -277,13 +307,13 @@ const Suppliers = () => {
     return acc;
   }, {} as Record<string, Article[]>) || {};
 
-  // Extract categories from articles
-  const articleDerivedCategories = allArticles?.map(a => a.category).filter(Boolean) as string[] || [];
+  // Extract categories from articles (location-filtered)
+  const articleDerivedCategories = locationFilteredArticles?.map(a => a.category).filter(Boolean) as string[] || [];
   const dbCategoryNames = dbCategories?.map(c => c.name) || [];
   const allArticleCategories = [...new Set([...articleDerivedCategories, ...dbCategoryNames])].sort();
 
-  // Extract unique units from articles + defaults
-  const existingUnits = [...new Set([...DEFAULT_UNITS, ...(allArticles?.map(a => a.unit).filter(Boolean) as string[] || [])])].sort();
+  // Extract unique units from articles + defaults (location-filtered)
+  const existingUnits = [...new Set([...DEFAULT_UNITS, ...(locationFilteredArticles?.map(a => a.unit).filter(Boolean) as string[] || [])])].sort();
 
   // Supplier functions
   const toggleSupplierExpanded = (supplierId: string) => {
@@ -502,8 +532,8 @@ const Suppliers = () => {
     return matchesSearch && matchesTopCategory && matchesCategory;
   });
 
-  // Filtered articles
-  const filteredArticles = allArticles?.filter(article => {
+  // Filtered articles (use location-filtered articles as base)
+  const filteredArticles = locationFilteredArticles?.filter(article => {
     const matchesSearch = article.name.toLowerCase().includes(debouncedArticleSearchQuery.toLowerCase()) || article.description?.toLowerCase().includes(debouncedArticleSearchQuery.toLowerCase());
     const matchesSupplier = selectedArticleSuppliers.length === 0 || selectedArticleSuppliers.includes(article.supplier_id);
     const matchesCategory = selectedCategory === 'all' || article.category === selectedCategory;
@@ -566,7 +596,7 @@ const Suppliers = () => {
     }
     // If search was already empty: do nothing (allow manual toggle)
   }, [debouncedArticleSearchQuery, groupedBySupplier]);
-  const articleCategoriesForFilter = (allArticles?.map(a => a.category).filter(Boolean) || []) as string[];
+  const articleCategoriesForFilter = (locationFilteredArticles?.map(a => a.category).filter(Boolean) || []) as string[];
   if (authLoading || !user) {
     return <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />

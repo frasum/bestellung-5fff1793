@@ -49,6 +49,49 @@ export const useSuppliers = () => {
   });
 };
 
+// Fetch suppliers that are assigned to a specific location via supplier_locations
+export const useSuppliersByLocation = (locationId?: string) => {
+  return useQuery({
+    queryKey: ['suppliers-by-location', locationId],
+    enabled: !!locationId,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    queryFn: async () => {
+      // Get supplier IDs for this location
+      const { data: supplierLocations, error: slError } = await supabase
+        .from('supplier_locations')
+        .select('supplier_id')
+        .eq('location_id', locationId)
+        .eq('is_active', true);
+
+      if (slError) throw slError;
+
+      // If no supplier_locations exist for this location, return all suppliers (fallback)
+      if (!supplierLocations || supplierLocations.length === 0) {
+        const { data, error } = await supabase
+          .from('suppliers')
+          .select('*')
+          .order('name');
+
+        if (error) throw error;
+        return data as Supplier[];
+      }
+
+      const supplierIds = supplierLocations.map(sl => sl.supplier_id);
+
+      // Get the actual suppliers
+      const { data: suppliers, error } = await supabase
+        .from('suppliers')
+        .select('*')
+        .in('id', supplierIds)
+        .order('name');
+
+      if (error) throw error;
+      return suppliers as Supplier[];
+    },
+  });
+};
+
 export const useCreateSupplier = () => {
   const queryClient = useQueryClient();
 
