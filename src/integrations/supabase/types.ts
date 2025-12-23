@@ -2116,6 +2116,7 @@ export type Database = {
           contact_phone: string | null
           created_at: string
           demo_expires_at: string | null
+          developer_checklist_notes: string | null
           id: string
           is_demo: boolean | null
           is_sponsored: boolean
@@ -2139,6 +2140,7 @@ export type Database = {
           contact_phone?: string | null
           created_at?: string
           demo_expires_at?: string | null
+          developer_checklist_notes?: string | null
           id?: string
           is_demo?: boolean | null
           is_sponsored?: boolean
@@ -2162,6 +2164,7 @@ export type Database = {
           contact_phone?: string | null
           created_at?: string
           demo_expires_at?: string | null
+          developer_checklist_notes?: string | null
           id?: string
           is_demo?: boolean | null
           is_sponsored?: boolean
