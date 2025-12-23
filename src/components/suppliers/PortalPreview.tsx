@@ -37,12 +37,12 @@ const getCellValue = (article: typeof SAMPLE_ARTICLES[0], column: PortalColumnKe
   switch (column) {
     case 'image':
       return (
-        <div className="w-8 h-8 bg-muted rounded flex items-center justify-center">
-          <Camera className="h-3 w-3 text-muted-foreground" />
+        <div className="w-8 h-8 bg-gray-100 rounded flex items-center justify-center">
+          <Camera className="h-3 w-3 text-gray-400" />
         </div>
       );
     case 'sku':
-      return <span className="text-muted-foreground text-xs">{article.sku}</span>;
+      return <span className="text-gray-500 text-xs">{article.sku}</span>;
     case 'description':
       // Description is now shown under name, so return null here
       return null;
@@ -95,11 +95,35 @@ export const PortalPreview = ({
   const displayColumns: PortalColumnKey[] = visibleColumns.filter(col => col !== 'description');
   const showDescription = visibleColumns.includes('description');
 
+  // Light mode styles for preview (isolated from global theme)
+  const lightModeStyles: React.CSSProperties = {
+    '--background': '0 0% 98%',
+    '--foreground': '224 71% 4%',
+    '--card': '0 0% 100%',
+    '--card-foreground': '224 71% 4%',
+    '--popover': '0 0% 100%',
+    '--popover-foreground': '224 71% 4%',
+    '--primary': '174 100% 29%',
+    '--primary-foreground': '0 0% 100%',
+    '--secondary': '220 14% 96%',
+    '--secondary-foreground': '220 9% 46%',
+    '--muted': '220 14% 96%',
+    '--muted-foreground': '220 9% 46%',
+    '--accent': '220 14% 96%',
+    '--accent-foreground': '224 71% 4%',
+    '--destructive': '0 84% 60%',
+    '--destructive-foreground': '0 0% 100%',
+    '--border': '220 13% 91%',
+    '--input': '220 13% 91%',
+    '--ring': '174 100% 29%',
+    colorScheme: 'light',
+  } as React.CSSProperties;
+
   return (
-    <div className="border rounded-lg overflow-hidden bg-background shadow-sm">
+    <div className="border rounded-lg overflow-hidden bg-white shadow-sm">
       {/* Header with toggle */}
-      <div className="bg-muted/50 px-3 py-2 text-xs text-muted-foreground border-b flex items-center justify-between">
-        <span className="font-medium">Live-Vorschau</span>
+      <div className="bg-gray-100 px-3 py-2 text-xs text-gray-600 border-b border-gray-200 flex items-center justify-between">
+        <span className="font-medium text-gray-700">Live-Vorschau</span>
         <div className="flex items-center gap-3">
           <ToggleGroup 
             type="single" 
@@ -122,19 +146,20 @@ export const PortalPreview = ({
       
       {/* Preview container */}
       <div 
-        className="flex justify-center bg-muted/20 p-4 overflow-hidden"
+        className="flex justify-center bg-gray-50 p-4 overflow-hidden"
         style={{ height: previewHeight }}
       >
         <div 
-          className={`origin-top overflow-hidden border rounded-lg shadow-md bg-background ${isDesktop ? 'w-full' : ''}`}
+          className={`origin-top overflow-hidden border border-gray-200 rounded-lg shadow-md bg-gray-50 ${isDesktop ? 'w-full' : ''}`}
           style={{ 
+            ...lightModeStyles,
             transform: `scale(${scale})`,
             width: isDesktop ? containerWidth : previewWidth,
             minHeight: isDesktop ? '700px' : '812px',
           }}
         >
           {/* Header */}
-          <header className="border-b bg-card">
+          <header className="border-b border-gray-200 bg-white">
             <div className={`mx-auto px-4 py-4 flex items-center justify-between ${isDesktop ? 'container' : ''}`}>
               <div className="flex items-center gap-3">
                 <img 
@@ -143,17 +168,17 @@ export const PortalPreview = ({
                   className={logoUrl ? "h-10 max-w-[120px] object-contain" : "h-10 w-10"} 
                 />
                 <div>
-                  <h1 className={`font-semibold ${isDesktop ? '' : 'text-sm'}`}>{portalTitle || 'Lieferantenportal'}</h1>
-                  <p className={`text-muted-foreground ${isDesktop ? 'text-sm' : 'text-xs'}`}>Beispiel-Lieferant GmbH</p>
+                  <h1 className={`font-semibold text-gray-900 ${isDesktop ? '' : 'text-sm'}`}>{portalTitle || 'Lieferantenportal'}</h1>
+                  <p className={`text-gray-500 ${isDesktop ? 'text-sm' : 'text-xs'}`}>Beispiel-Lieferant GmbH</p>
                 </div>
               </div>
               {isDesktop ? (
-                <Button variant="outline" size="sm" disabled>
+                <Button variant="outline" size="sm" disabled className="border-gray-200 text-gray-600">
                   <LogOut className="h-4 w-4 mr-2" />
                   Abmelden
                 </Button>
               ) : (
-                <Button variant="outline" size="icon" className="h-8 w-8" disabled>
+                <Button variant="outline" size="icon" className="h-8 w-8 border-gray-200 text-gray-600" disabled>
                   <LogOut className="h-4 w-4" />
                 </Button>
               )}
@@ -164,7 +189,7 @@ export const PortalPreview = ({
           <main className={`px-4 py-6 ${isDesktop ? 'container mx-auto' : ''}`}>
             {/* Welcome Message */}
             {welcomeMessage && (
-              <div className={`mb-4 p-4 bg-muted/50 rounded-lg prose dark:prose-invert max-w-none ${isDesktop ? 'prose-sm' : 'prose-xs'}`}>
+              <div className={`mb-4 p-4 bg-white border border-gray-100 rounded-lg prose max-w-none ${isDesktop ? 'prose-sm' : 'prose-xs'}`}>
                 <ReactMarkdown components={markdownComponents}>
                   {welcomeMessage}
                 </ReactMarkdown>
@@ -173,31 +198,31 @@ export const PortalPreview = ({
 
             {/* Info Text */}
             {infoText && (
-              <div className={`mb-4 p-4 bg-primary/10 border border-primary/20 rounded-lg prose dark:prose-invert max-w-none ${isDesktop ? 'prose-sm' : 'prose-xs'}`}>
+              <div className={`mb-4 p-4 bg-teal-50 border border-teal-100 rounded-lg prose max-w-none ${isDesktop ? 'prose-sm' : 'prose-xs'}`}>
                 <ReactMarkdown components={markdownComponents}>
                   {infoText}
                 </ReactMarkdown>
               </div>
             )}
 
-            <Card>
+            <Card className="bg-white border-gray-200 shadow-sm">
               <CardHeader className={isDesktop ? 'pb-3' : 'pb-2 px-3'}>
                 <div className={`flex ${isDesktop ? 'items-center justify-between' : 'flex-col gap-2'}`}>
                   <div>
-                    <CardTitle className={`flex items-center gap-2 ${isDesktop ? 'text-base' : 'text-sm'}`}>
-                      <Package className={isDesktop ? 'h-4 w-4' : 'h-3.5 w-3.5'} />
+                    <CardTitle className={`flex items-center gap-2 text-gray-900 ${isDesktop ? 'text-base' : 'text-sm'}`}>
+                      <Package className={`text-teal-600 ${isDesktop ? 'h-4 w-4' : 'h-3.5 w-3.5'}`} />
                       {cardTitle || 'Meine Artikel'}
                     </CardTitle>
-                    <CardDescription className={isDesktop ? 'text-xs' : 'text-[10px]'}>
+                    <CardDescription className={`text-gray-500 ${isDesktop ? 'text-xs' : 'text-[10px]'}`}>
                       {cardDescription || 'Änderungen werden zur Genehmigung eingereicht.'}
                     </CardDescription>
                   </div>
                   <div className={`flex items-center gap-3 ${isDesktop ? '' : 'justify-between'}`}>
-                    <Badge variant="secondary" className={`flex items-center gap-1 ${isDesktop ? 'text-[10px]' : 'text-[9px]'}`}>
+                    <Badge variant="secondary" className={`flex items-center gap-1 bg-gray-100 text-gray-700 ${isDesktop ? 'text-[10px]' : 'text-[9px]'}`}>
                       <Clock className={isDesktop ? 'h-2.5 w-2.5' : 'h-2 w-2'} />
                       2 ausstehend
                     </Badge>
-                    <span className={`text-muted-foreground ${isDesktop ? 'text-xs' : 'text-[10px]'}`}>12 Artikel</span>
+                    <span className={`text-gray-500 ${isDesktop ? 'text-xs' : 'text-[10px]'}`}>12 Artikel</span>
                   </div>
                 </div>
               </CardHeader>
@@ -205,10 +230,10 @@ export const PortalPreview = ({
                 {/* Search */}
                 <div className="mb-4">
                   <div className={`relative ${isDesktop ? 'max-w-xs' : 'w-full'}`}>
-                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
                     <Input
                       placeholder="Artikel suchen..."
-                      className={`pl-8 ${isDesktop ? 'h-8 text-sm' : 'h-9 text-xs'}`}
+                      className={`pl-8 bg-white border-gray-200 text-gray-900 ${isDesktop ? 'h-8 text-sm' : 'h-9 text-xs'}`}
                       disabled
                     />
                   </div>
@@ -216,13 +241,13 @@ export const PortalPreview = ({
 
                 {/* Sample articles - Dynamic columns */}
                 {isDesktop ? (
-                  <div className="border rounded-md overflow-hidden">
+                  <div className="border border-gray-200 rounded-md overflow-hidden">
                     <Table>
                       <TableHeader>
-                        <TableRow className="bg-muted/30">
-                          <TableHead className="text-xs font-medium py-2">Name</TableHead>
+                        <TableRow className="bg-gray-50 border-b border-gray-200">
+                          <TableHead className="text-xs font-medium py-2 text-gray-700">Name</TableHead>
                           {displayColumns.map((col) => (
-                            <TableHead key={col} className="text-xs font-medium py-2">
+                            <TableHead key={col} className="text-xs font-medium py-2 text-gray-700">
                               {getColumnLabel(col)}
                             </TableHead>
                           ))}
@@ -230,19 +255,19 @@ export const PortalPreview = ({
                       </TableHeader>
                       <TableBody>
                         {SAMPLE_ARTICLES.map((article, i) => (
-                          <TableRow key={i}>
+                          <TableRow key={i} className="bg-white border-b border-gray-100 hover:bg-gray-50">
                             <TableCell className="py-2 max-w-[200px]">
                               <div>
-                                <span className="text-sm font-medium">{article.name}</span>
+                                <span className="text-sm font-medium text-gray-900">{article.name}</span>
                                 {showDescription && article.description && (
-                                  <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5">
+                                  <p className="text-xs text-gray-500 line-clamp-2 mt-0.5">
                                     {article.description}
                                   </p>
                                 )}
                               </div>
                             </TableCell>
                             {displayColumns.map((col) => (
-                              <TableCell key={col} className="text-sm py-2">
+                              <TableCell key={col} className="text-sm py-2 text-gray-700">
                                 {getCellValue(article, col)}
                               </TableCell>
                             ))}
@@ -254,22 +279,22 @@ export const PortalPreview = ({
                 ) : (
                   <div className="space-y-2">
                     {SAMPLE_ARTICLES.slice(0, 2).map((article, i) => (
-                      <div key={i} className="border rounded-md p-3">
+                      <div key={i} className="border border-gray-200 rounded-md p-3 bg-white">
                         <div className="flex items-start gap-2">
                           {displayColumns.includes('image') && (
-                            <div className="w-10 h-10 bg-muted rounded flex items-center justify-center flex-shrink-0">
-                              <Camera className="h-4 w-4 text-muted-foreground" />
+                            <div className="w-10 h-10 bg-gray-100 rounded flex items-center justify-center flex-shrink-0">
+                              <Camera className="h-4 w-4 text-gray-400" />
                             </div>
                           )}
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center justify-between">
-                              <span className="font-medium text-xs">{article.name}</span>
+                              <span className="font-medium text-xs text-gray-900">{article.name}</span>
                               {displayColumns.includes('price') && (
-                                <span className="text-muted-foreground text-xs">€{article.price.toFixed(2)}</span>
+                                <span className="text-gray-600 text-xs">€{article.price.toFixed(2)}</span>
                               )}
                             </div>
                             {displayColumns.includes('description') && (
-                              <p className="text-[10px] text-muted-foreground truncate">{article.description}</p>
+                              <p className="text-[10px] text-gray-500 truncate">{article.description}</p>
                             )}
                           </div>
                         </div>
@@ -282,7 +307,7 @@ export const PortalPreview = ({
 
             {/* Footer */}
             {footerText && (
-              <div className={`mt-6 pt-4 border-t text-center prose dark:prose-invert max-w-none ${isDesktop ? 'prose-sm' : 'prose-xs'}`}>
+              <div className={`mt-6 pt-4 border-t border-gray-200 text-center prose max-w-none text-gray-600 ${isDesktop ? 'prose-sm' : 'prose-xs'}`}>
                 <ReactMarkdown components={markdownComponents}>
                   {footerText}
                 </ReactMarkdown>
