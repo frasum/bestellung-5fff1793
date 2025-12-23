@@ -922,14 +922,9 @@ export function EmployeesTab() {
                               />
                               <label
                                 htmlFor={`location-${location.id}`}
-                                className="text-sm font-medium cursor-pointer"
+                                className="text-base font-semibold cursor-pointer"
                               >
-                              {location.short_code || location.name}
-                                {location.short_code && (
-                                  <span className="text-muted-foreground ml-1">
-                                    ({location.name})
-                                  </span>
-                                )}
+                                {location.short_code || location.name}
                               </label>
                               {isEnabled && (
                                 <Badge variant="secondary" className="text-xs">
