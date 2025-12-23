@@ -1907,6 +1907,57 @@ export type Database = {
           },
         ]
       }
+      invoice_email_log: {
+        Row: {
+          email_from: string
+          email_subject: string | null
+          error_message: string | null
+          id: string
+          invoice_id: string | null
+          message_id: string
+          organization_id: string
+          processed_at: string
+          status: string
+        }
+        Insert: {
+          email_from: string
+          email_subject?: string | null
+          error_message?: string | null
+          id?: string
+          invoice_id?: string | null
+          message_id: string
+          organization_id: string
+          processed_at?: string
+          status?: string
+        }
+        Update: {
+          email_from?: string
+          email_subject?: string | null
+          error_message?: string | null
+          id?: string
+          invoice_id?: string | null
+          message_id?: string
+          organization_id?: string
+          processed_at?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoice_email_log_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoice_email_log_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       invoice_items: {
         Row: {
           article_name: string
@@ -1980,6 +2031,10 @@ export type Database = {
           currency: string | null
           delivery_date: string | null
           due_date: string | null
+          email_from: string | null
+          email_message_id: string | null
+          email_received_at: string | null
+          email_subject: string | null
           gross_amount: number | null
           id: string
           invoice_date: string | null
@@ -2000,6 +2055,10 @@ export type Database = {
           currency?: string | null
           delivery_date?: string | null
           due_date?: string | null
+          email_from?: string | null
+          email_message_id?: string | null
+          email_received_at?: string | null
+          email_subject?: string | null
           gross_amount?: number | null
           id?: string
           invoice_date?: string | null
@@ -2020,6 +2079,10 @@ export type Database = {
           currency?: string | null
           delivery_date?: string | null
           due_date?: string | null
+          email_from?: string | null
+          email_message_id?: string | null
+          email_received_at?: string | null
+          email_subject?: string | null
           gross_amount?: number | null
           id?: string
           invoice_date?: string | null
@@ -2390,6 +2453,7 @@ export type Database = {
           id: string
           is_demo: boolean | null
           is_sponsored: boolean
+          last_invoice_email_check: string | null
           name: string
           source_b2b_customer_id: string | null
           source_type: string | null
@@ -2414,6 +2478,7 @@ export type Database = {
           id?: string
           is_demo?: boolean | null
           is_sponsored?: boolean
+          last_invoice_email_check?: string | null
           name: string
           source_b2b_customer_id?: string | null
           source_type?: string | null
@@ -2438,6 +2503,7 @@ export type Database = {
           id?: string
           is_demo?: boolean | null
           is_sponsored?: boolean
+          last_invoice_email_check?: string | null
           name?: string
           source_b2b_customer_id?: string | null
           source_type?: string | null
@@ -4065,6 +4131,7 @@ export type Database = {
           customer_number: string | null
           email: string
           id: string
+          invoice_email: string | null
           is_active: boolean
           minimum_order_value: number | null
           name: string
@@ -4080,6 +4147,7 @@ export type Database = {
           customer_number?: string | null
           email: string
           id?: string
+          invoice_email?: string | null
           is_active?: boolean
           minimum_order_value?: number | null
           name: string
@@ -4095,6 +4163,7 @@ export type Database = {
           customer_number?: string | null
           email?: string
           id?: string
+          invoice_email?: string | null
           is_active?: boolean
           minimum_order_value?: number | null
           name?: string
