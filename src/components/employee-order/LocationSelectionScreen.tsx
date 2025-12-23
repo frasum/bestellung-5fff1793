@@ -75,12 +75,9 @@ export function LocationSelectionScreen({
                       <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
                         <MapPin className="w-8 h-8 text-primary" />
                       </div>
-                      <h2 className="text-2xl font-bold mb-1">{location.name}</h2>
-                      {location.short_code && (
-                        <p className="text-sm text-muted-foreground mb-3">
-                          {location.short_code}
-                        </p>
-                      )}
+                      <h2 className="text-2xl font-bold mb-3">
+                        {location.short_code || location.name}
+                      </h2>
                       <p className="text-sm text-muted-foreground">
                         {supplierCount} Lieferant{supplierCount !== 1 ? 'en' : ''} verfügbar
                       </p>
