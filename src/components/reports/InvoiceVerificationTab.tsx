@@ -24,6 +24,7 @@ import {
   RefreshCw,
   Download,
   ExternalLink,
+  Plus,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -56,6 +57,7 @@ import {
   useResolveDiscrepancy,
   useCheckInvoiceEmails,
   useReanalyzeInvoice,
+  useCreateArticlesFromInvoice,
   Invoice,
   InvoiceDiscrepancy,
 } from '@/hooks/useInvoices';
@@ -85,6 +87,7 @@ export function InvoiceVerificationTab() {
   const updateStatus = useUpdateInvoiceStatus();
   const checkEmails = useCheckInvoiceEmails();
   const reanalyzeInvoice = useReanalyzeInvoice();
+  const createArticlesFromInvoice = useCreateArticlesFromInvoice();
   const [expandedInvoices, setExpandedInvoices] = useState<Set<string>>(new Set());
   const [selectedInvoiceId, setSelectedInvoiceId] = useState<string | null>(null);
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
@@ -404,7 +407,7 @@ export function InvoiceVerificationTab() {
                         )}
 
                         {/* Actions */}
-                        <div className="flex items-center gap-2 pt-2">
+                        <div className="flex items-center gap-2 pt-2 flex-wrap">
                           {invoice.pdf_url && (
                             <>
                               <Button 
@@ -422,6 +425,25 @@ export function InvoiceVerificationTab() {
                                 </a>
                               </Button>
                             </>
+                          )}
+                          {/* Add Articles to Catalog Button */}
+                          {invoice.supplier_id && invoice.invoice_items && invoice.invoice_items.length > 0 && (
+                            <Button
+                              variant="secondary"
+                              size="sm"
+                              onClick={() => createArticlesFromInvoice.mutate({ 
+                                invoiceId: invoice.id, 
+                                supplierId: invoice.supplier_id! 
+                              })}
+                              disabled={createArticlesFromInvoice.isPending}
+                            >
+                              {createArticlesFromInvoice.isPending ? (
+                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                              ) : (
+                                <Plus className="h-4 w-4 mr-2" />
+                              )}
+                              {t('invoices.addArticlesToCatalog', 'Artikel übernehmen')}
+                            </Button>
                           )}
                           {invoice.status === 'pending' && (
                             <Button

@@ -323,6 +323,111 @@ export function useReanalyzeInvoice() {
   });
 }
 
+export function useCreateArticlesFromInvoice() {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ invoiceId, supplierId }: { invoiceId: string; supplierId: string }) => {
+      // Fetch invoice items
+      const { data: invoiceItems, error: fetchError } = await supabase
+        .from('invoice_items')
+        .select('*')
+        .eq('invoice_id', invoiceId);
+
+      if (fetchError) throw fetchError;
+      if (!invoiceItems || invoiceItems.length === 0) {
+        throw new Error('Keine Rechnungspositionen gefunden');
+      }
+
+      // Get organization ID
+      const { data: { user } } = await supabase.auth.getUser();
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('organization_id')
+        .eq('id', user?.id)
+        .single();
+
+      if (!profile?.organization_id) {
+        throw new Error('Keine Organisation gefunden');
+      }
+
+      // Get existing articles for this supplier to avoid duplicates
+      const { data: existingArticles } = await supabase
+        .from('articles')
+        .select('name, sku')
+        .eq('supplier_id', supplierId);
+
+      const existingNames = new Set(existingArticles?.map(a => a.name.toLowerCase()) || []);
+      const existingSkus = new Set(existingArticles?.filter(a => a.sku).map(a => a.sku?.toLowerCase()) || []);
+
+      // Filter out items that already exist
+      const newItems = invoiceItems.filter(item => {
+        const nameExists = existingNames.has(item.article_name.toLowerCase());
+        const skuExists = item.article_sku && existingSkus.has(item.article_sku.toLowerCase());
+        return !nameExists && !skuExists;
+      });
+
+      if (newItems.length === 0) {
+        return { created: 0, skipped: invoiceItems.length };
+      }
+
+      // Create new articles
+      const articlesToCreate = newItems.map(item => ({
+        organization_id: profile.organization_id,
+        supplier_id: supplierId,
+        name: item.article_name,
+        sku: item.article_sku,
+        price: item.unit_price || 0,
+        unit: item.unit || 'Stk',
+        is_active: true,
+      }));
+
+      const { data: createdArticles, error: createError } = await supabase
+        .from('articles')
+        .insert(articlesToCreate)
+        .select();
+
+      if (createError) throw createError;
+
+      // Link invoice items to newly created articles
+      for (const created of createdArticles || []) {
+        const matchingItem = newItems.find(
+          item => item.article_name === created.name && 
+                  (item.article_sku === created.sku || (!item.article_sku && !created.sku))
+        );
+        
+        if (matchingItem) {
+          await supabase
+            .from('invoice_items')
+            .update({ matched_article_id: created.id })
+            .eq('id', matchingItem.id);
+        }
+      }
+
+      return { 
+        created: createdArticles?.length || 0, 
+        skipped: invoiceItems.length - newItems.length 
+      };
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['invoices'] });
+      queryClient.invalidateQueries({ queryKey: ['articles'] });
+      toast({
+        title: 'Artikel übernommen',
+        description: `${data.created} neue Artikel erstellt${data.skipped > 0 ? `, ${data.skipped} bereits vorhanden` : ''}`,
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: 'Fehler',
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
+  });
+}
+
 async function fileToBase64(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
