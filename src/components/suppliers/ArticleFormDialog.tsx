@@ -442,7 +442,7 @@ export const ArticleFormDialog = ({
                 onFocus={(e) => e.target.select()}
               />
               <p className="text-xs text-muted-foreground">
-                Wie viele {form.watch('unit') || 'Stück'} pro Bestelleinheit?
+                Wie viele Einheiten pro Bestelleinheit?
               </p>
             </div>
             {/* Berechneter BE-Preis */}
