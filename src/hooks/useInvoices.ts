@@ -305,6 +305,8 @@ export function useReanalyzeInvoice() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['invoices'] });
+      queryClient.invalidateQueries({ queryKey: ['suppliers'] });
+      queryClient.invalidateQueries({ queryKey: ['articles'] });
       toast({
         title: 'Analyse gestartet',
         description: 'Die Rechnung wird erneut analysiert...',
