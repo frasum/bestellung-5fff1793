@@ -443,10 +443,7 @@ const LocationItem = ({
         <Store className="h-4 w-4 text-primary shrink-0" />
         <div className="min-w-0">
           <div className="flex items-center gap-2">
-            <span className="font-medium">{location.short_code || location.name}</span>
-            {location.short_code && (
-              <span className="text-sm text-muted-foreground ml-1">({location.name})</span>
-            )}
+            <span className="text-lg font-semibold">{location.short_code || location.name}</span>
             {location.is_default && (
               <Star className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400" />
             )}
