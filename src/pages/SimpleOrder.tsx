@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 
 // Hooks
 import { useEmployeeOrderNotifications } from '@/hooks/useEmployeeOrderNotifications';
+import { useForceLightTheme } from '@/hooks/useForceLightTheme';
 
 // Extracted components
 import { SimpleOrderHeader } from '@/components/simple-order/SimpleOrderHeader';
@@ -152,6 +153,7 @@ interface CompletedOrder {
 type OrderStatus = 'loading' | 'pin-entry' | 'location-date' | 'ready' | 'confirming' | 'submitting' | 'success' | 'error' | 'viewing-history' | 'editing' | 'voice-mode' | 'photo-capture' | 'wine-catalog';
 
 const SimpleOrder = () => {
+  useForceLightTheme();
   const { token } = useParams<{ token: string }>();
   const { t, i18n } = useTranslation();
   
