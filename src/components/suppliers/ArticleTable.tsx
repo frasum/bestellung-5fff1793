@@ -232,11 +232,8 @@ export const ArticleTable = ({
                               <div className="min-w-0 flex-1">
                                 <div className="flex items-center gap-2">
                                   <p 
-                                    className={cn(
-                                      "font-medium text-foreground break-words line-clamp-2",
-                                      pendingArticleIds.has(article.id) && "cursor-pointer hover:underline"
-                                    )}
-                                    onClick={() => pendingArticleIds.has(article.id) && onArticleChangeClick?.(article, group.supplier.id, group.supplier.name)}
+                                    className="font-medium text-foreground break-words line-clamp-2 cursor-pointer hover:underline hover:text-primary transition-colors"
+                                    onClick={() => onEdit(article)}
                                   >
                                     {article.name}
                                   </p>

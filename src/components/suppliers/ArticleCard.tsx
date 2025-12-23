@@ -37,11 +37,8 @@ export const ArticleCard = memo(({
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
             <p 
-              className={cn(
-                "font-medium text-foreground",
-                hasPendingChanges && "cursor-pointer hover:underline"
-              )}
-              onClick={() => hasPendingChanges && onPendingClick?.()}
+              className="font-medium text-foreground cursor-pointer hover:underline hover:text-primary transition-colors"
+              onClick={() => onEdit(article)}
             >
               {article.name}
             </p>

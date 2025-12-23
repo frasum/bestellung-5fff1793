@@ -111,7 +111,15 @@ export const SupplierTable = ({
                   <TableCell className="py-2">
                     <div className="flex items-center gap-2">
                       <div>
-                        <p className="font-medium text-foreground">{supplier.name}</p>
+                        <p 
+                          className="font-medium text-foreground cursor-pointer hover:underline hover:text-primary transition-colors"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onEdit(supplier);
+                          }}
+                        >
+                          {supplier.name}
+                        </p>
                         <p className="text-xs text-muted-foreground">{supplier.phone || '-'}</p>
                       </div>
                       {recentlyActiveSuppliers.has(supplier.id) && (() => {
@@ -154,7 +162,16 @@ export const SupplierTable = ({
                     </div>
                   </TableCell>
                   <TableCell className="hidden lg:table-cell py-2">
-                    <Badge variant="secondary">{supplierArticles.length} Artikel</Badge>
+                    <Badge 
+                      variant="secondary" 
+                      className="cursor-pointer hover:bg-secondary/80 transition-colors"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onToggleExpand(supplier.id);
+                      }}
+                    >
+                      {supplierArticles.length} Artikel
+                    </Badge>
                   </TableCell>
                   <TableCell className="text-right py-2">
                     <div className="flex justify-end gap-0.5 sm:gap-1 md:gap-1.5 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
@@ -223,11 +240,11 @@ export const SupplierTable = ({
                                   <TableCell className="py-1.5">
                                     <div className="flex items-center gap-2">
                                       <p 
-                                        className={cn(
-                                          "text-sm font-medium",
-                                          pendingArticleIds.has(article.id) && "cursor-pointer hover:underline"
-                                        )}
-                                        onClick={() => pendingArticleIds.has(article.id) && onArticleChangeClick?.(article, supplier)}
+                                        className="text-sm font-medium cursor-pointer hover:underline hover:text-primary transition-colors"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          onEditArticle(article);
+                                        }}
                                       >
                                         {article.name}
                                       </p>
