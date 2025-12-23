@@ -108,13 +108,12 @@ const OrganizationGeneralContent = () => {
               )}
               {!isEnterprise && (
                 <Button 
-                  variant="outline" 
                   size="sm" 
                   onClick={() => navigate('/pricing')}
-                  className="gap-1"
+                  className="gap-1.5 bg-amber-500 hover:bg-amber-600 text-white rounded-full px-4 shadow-sm"
                 >
-                  <Crown className="h-3.5 w-3.5" />
-                  {t('settings.upgrade')}
+                  <Crown className="h-4 w-4" />
+                  Enterprise
                 </Button>
               )}
             </div>
