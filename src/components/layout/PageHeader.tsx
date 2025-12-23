@@ -20,7 +20,7 @@ interface RouteConfig {
 const routeConfig: Record<string, RouteConfig> = {
   '/suppliers': {
     labelKey: 'nav.catalog',
-    parent: '/reports',
+    parent: null,
     tabs: {
       suppliers: 'suppliers.title',
       wines: 'suppliers.winesTab',
@@ -29,7 +29,7 @@ const routeConfig: Record<string, RouteConfig> = {
   },
   '/orders': {
     labelKey: 'nav.orders',
-    parent: '/reports',
+    parent: null,
     tabs: {
       all: 'orders.allOrders',
       drafts: 'orders.drafts',
@@ -37,11 +37,11 @@ const routeConfig: Record<string, RouteConfig> = {
   },
   '/cart': {
     labelKey: 'cart.title',
-    parent: '/reports',
+    parent: null,
   },
   '/settings': {
     labelKey: 'nav.settings',
-    parent: '/reports',
+    parent: null,
     tabs: {
       profile: 'settings.profile',
       organization: 'settings.organization',
