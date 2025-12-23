@@ -321,8 +321,22 @@ Important:
     let invoiceData: InvoiceData;
     try {
       // Extract JSON from potential markdown code blocks
-      const jsonMatch = aiContent.match(/```(?:json)?\s*([\s\S]*?)```/) || [null, aiContent];
-      invoiceData = JSON.parse(jsonMatch[1].trim());
+      let jsonContent = aiContent;
+      
+      // Remove markdown code block wrapper if present
+      if (jsonContent.includes('```')) {
+        // Match content between ```json or ``` and closing ```
+        const codeBlockMatch = jsonContent.match(/```(?:json)?\s*\n?([\s\S]*?)\n?```/);
+        if (codeBlockMatch && codeBlockMatch[1]) {
+          jsonContent = codeBlockMatch[1];
+        } else {
+          // Fallback: just strip the backticks and json marker
+          jsonContent = jsonContent.replace(/```json\s*/g, '').replace(/```/g, '');
+        }
+      }
+      
+      console.log('Cleaned JSON content (first 500 chars):', jsonContent.substring(0, 500));
+      invoiceData = JSON.parse(jsonContent.trim());
     } catch (parseError) {
       console.error('Failed to parse AI response:', parseError);
       await supabaseClient
