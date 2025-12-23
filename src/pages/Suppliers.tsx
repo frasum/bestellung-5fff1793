@@ -12,7 +12,7 @@ import { useSubscriptionLimits } from '@/hooks/useSubscriptionLimits';
 import { UpgradeDialog } from '@/components/subscription/UpgradeDialog';
 import { useArticles, useCreateArticle, useUpdateArticle, useDeleteArticle, useBulkUpdateArticles, Article, ArticleInput } from '@/hooks/useArticles';
 import { useArticleLocationsByLocation } from '@/hooks/useArticleLocations';
-import { Plus, Loader2, Upload, Package } from 'lucide-react';
+import { Plus, Loader2, Download, Package } from 'lucide-react';
 import { useArticleImageUpload } from '@/hooks/useArticleImageUpload';
 import { useSendSupplierInvitation } from '@/hooks/useSupplierPortal';
 import { generateOrderListPdf, generateCombinedOrderListPdf } from '@/lib/orderListPdf';
@@ -654,7 +654,7 @@ const Suppliers = () => {
                   ];
                 }) || []} disabled={!allArticles?.length} />}
                 {advancedSettingsEnabled && <Button variant="outline" className="h-10 sm:h-9" onClick={() => setIsSupplierImportOpen(true)}>
-                    <Upload className="w-4 h-4 sm:mr-2" />
+                    <Download className="w-4 h-4 sm:mr-2" />
                     <span className="hidden sm:inline">Importieren</span>
                   </Button>}
                 <Button className="h-10 sm:h-9" onClick={handleOpenSupplierDialog}>

@@ -5,7 +5,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Download, FileSpreadsheet, FileText, File } from 'lucide-react';
+import { Upload, FileSpreadsheet, FileText, File } from 'lucide-react';
 import { ExportFormat, exportData } from '@/lib/export';
 import { toast } from 'sonner';
 
@@ -36,7 +36,7 @@ export const ExportMenu = ({ filename, title, headers, getData, disabled }: Expo
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="outline" disabled={disabled}>
-          <Download className="w-4 h-4 mr-2" />
+          <Upload className="w-4 h-4 mr-2" />
           Export
         </Button>
       </DropdownMenuTrigger>
