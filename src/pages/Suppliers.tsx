@@ -630,9 +630,14 @@ const Suppliers = () => {
             <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
               <SupplierFilters searchQuery={searchQuery} onSearchChange={setSearchQuery} topCategoryFilter={topCategoryFilter} onTopCategoryChange={setTopCategoryFilter} categoryFilter={categoryFilter} onCategoryChange={setCategoryFilter} articleCategories={articleCategoriesForSupplierFilter} multiSelectEnabled={supplierMultiSelectEnabled} onMultiSelectChange={setSupplierMultiSelectEnabled} selectedCount={selectedSuppliers.size} onPrintCombined={handlePrintCombined} showMultiSelectToggle={advancedSettingsEnabled} />
               <div className="flex flex-wrap gap-2 shrink-0">
-                <Button className="h-10 sm:h-9" onClick={handleOpenSupplierDialog}>
-                  <Plus className="w-4 h-4 sm:mr-2" />
-                  <span className="hidden sm:inline">Lieferant hinzufügen</span>
+                <Button 
+                  variant="default" 
+                  size="icon" 
+                  className="h-11 w-11 rounded-full" 
+                  onClick={handleOpenSupplierDialog}
+                  title="Lieferant hinzufügen"
+                >
+                  <Plus className="w-6 h-6" />
                 </Button>
               </div>
             </div>
