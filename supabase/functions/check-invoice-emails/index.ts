@@ -11,175 +11,141 @@ class SimpleImapClient {
   private conn: Deno.TlsConn | null = null;
   private encoder = new TextEncoder();
   private decoder = new TextDecoder();
-  private commandCounter = 0;
+  private tagCounter = 0;
+  private buffer = "";
 
   constructor(
     private host: string,
     private port: number,
     private user: string,
-    private password: string
+    private pass: string
   ) {}
 
-  private async sendCommand(command: string): Promise<string> {
-    if (!this.conn) throw new Error("Not connected");
-    
-    const tag = `A${++this.commandCounter}`;
-    const fullCommand = `${tag} ${command}\r\n`;
-    
-    console.log(`> ${tag} ${command.includes("LOGIN") ? "LOGIN ***" : command}`);
-    
-    await this.conn.write(this.encoder.encode(fullCommand));
-    
-    let response = "";
-    const buffer = new Uint8Array(8192);
-    
-    // Read until we get the tagged response
-    while (true) {
-      const bytesRead = await this.conn.read(buffer);
-      if (bytesRead === null) break;
-      
-      response += this.decoder.decode(buffer.subarray(0, bytesRead));
-      
-      if (response.includes(`${tag} OK`) || response.includes(`${tag} NO`) || response.includes(`${tag} BAD`)) {
-        break;
-      }
-    }
-    
-    return response;
+  private getTag(): string {
+    return `A${++this.tagCounter}`;
   }
 
-  private async readInitialResponse(): Promise<string> {
+  private async readLine(): Promise<string> {
     if (!this.conn) throw new Error("Not connected");
-    
-    const buffer = new Uint8Array(4096);
-    const bytesRead = await this.conn.read(buffer);
-    if (bytesRead === null) return "";
-    
-    return this.decoder.decode(buffer.subarray(0, bytesRead));
+
+    while (!this.buffer.includes("\r\n")) {
+      const chunk = new Uint8Array(4096);
+      const bytesRead = await this.conn.read(chunk);
+      if (bytesRead === null) break;
+      this.buffer += this.decoder.decode(chunk.subarray(0, bytesRead));
+    }
+
+    const lineEnd = this.buffer.indexOf("\r\n");
+    if (lineEnd === -1) return this.buffer;
+
+    const line = this.buffer.substring(0, lineEnd);
+    this.buffer = this.buffer.substring(lineEnd + 2);
+    return line;
+  }
+
+  private async readUntilTag(tag: string): Promise<string[]> {
+    const lines: string[] = [];
+    while (true) {
+      const line = await this.readLine();
+      lines.push(line);
+      if (line.startsWith(tag + " ")) break;
+    }
+    return lines;
+  }
+
+  private async sendCommand(command: string): Promise<string[]> {
+    if (!this.conn) throw new Error("Not connected");
+
+    const tag = this.getTag();
+    const fullCommand = `${tag} ${command}\r\n`;
+
+    // Mask password in logs
+    const logCommand = command.startsWith("LOGIN") 
+      ? "LOGIN ***" 
+      : command;
+    console.info(`> ${tag} ${logCommand}`);
+
+    await this.conn.write(this.encoder.encode(fullCommand));
+    return await this.readUntilTag(tag);
   }
 
   async connect(): Promise<void> {
-    console.log(`Connecting to ${this.host}:${this.port}...`);
-    
+    console.info(`Connecting to ${this.host}:${this.port}...`);
     this.conn = await Deno.connectTls({
       hostname: this.host,
       port: this.port,
     });
-    
+
     // Read greeting
-    const greeting = await this.readInitialResponse();
-    console.log(`Server greeting received`);
-    
+    const greeting = await this.readLine();
+    console.info("Server greeting received:", greeting.substring(0, 100));
+
     // Login
-    const loginResponse = await this.sendCommand(`LOGIN "${this.user}" "${this.password}"`);
-    if (!loginResponse.includes("OK")) {
-      throw new Error("Login failed");
+    const loginResp = await this.sendCommand(`LOGIN "${this.user}" "${this.pass}"`);
+    const loginResult = loginResp[loginResp.length - 1];
+    if (!loginResult.includes("OK")) {
+      throw new Error("Login failed: " + loginResult);
     }
-    console.log("Logged in successfully");
+    console.info("Logged in successfully");
   }
 
-  async selectMailbox(mailbox: string): Promise<{ exists: number }> {
-    const response = await this.sendCommand(`SELECT "${mailbox}"`);
-    
-    const existsMatch = response.match(/\* (\d+) EXISTS/);
-    const exists = existsMatch ? parseInt(existsMatch[1]) : 0;
-    
-    return { exists };
+  async selectMailbox(mailbox: string): Promise<number> {
+    const resp = await this.sendCommand(`SELECT "${mailbox}"`);
+    let messageCount = 0;
+    for (const line of resp) {
+      const match = line.match(/\*\s+(\d+)\s+EXISTS/i);
+      if (match) {
+        messageCount = parseInt(match[1], 10);
+      }
+    }
+    console.info(`Mailbox opened: ${messageCount} messages`);
+    return messageCount;
   }
 
   async searchUnseen(): Promise<number[]> {
-    const response = await this.sendCommand("SEARCH UNSEEN");
+    const resp = await this.sendCommand("SEARCH UNSEEN");
+    console.info("SEARCH response:", JSON.stringify(resp));
     
-    const searchLine = response.split("\r\n").find(line => line.startsWith("* SEARCH"));
-    if (!searchLine) return [];
+    const seqNumbers: number[] = [];
     
-    const uids = searchLine
-      .replace("* SEARCH ", "")
-      .trim()
-      .split(" ")
-      .filter(s => s)
-      .map(s => parseInt(s));
-    
-    return uids;
-  }
-
-  async fetchMessage(seqNum: number): Promise<{
-    from: string;
-    subject: string;
-    date: string;
-    messageId: string;
-    hasAttachments: boolean;
-    bodyStructure: string;
-  }> {
-    const response = await this.sendCommand(`FETCH ${seqNum} (ENVELOPE BODYSTRUCTURE)`);
-    
-    // Parse envelope
-    const envelopeMatch = response.match(/ENVELOPE \(([^)]+(?:\([^)]*\))*[^)]*)\)/);
-    let from = "unknown";
-    let subject = "No Subject";
-    let date = new Date().toISOString();
-    let messageId = `msg-${seqNum}-${Date.now()}`;
-    
-    if (envelopeMatch) {
-      const envelopeParts = envelopeMatch[1];
-      
-      // Extract subject (second quoted string after date)
-      const subjectMatch = envelopeParts.match(/"([^"]*)" "([^"]*)"/);
-      if (subjectMatch) {
-        subject = subjectMatch[2] || "No Subject";
-      }
-      
-      // Extract from address
-      const fromMatch = envelopeParts.match(/NIL NIL \(\((?:NIL|"[^"]*") (?:NIL|"[^"]*") "([^"]*)" "([^"]*)"\)\)/);
-      if (fromMatch) {
-        from = `${fromMatch[1]}@${fromMatch[2]}`;
-      }
-      
-      // Extract message-id
-      const msgIdMatch = envelopeParts.match(/<([^>]+)>/);
-      if (msgIdMatch) {
-        messageId = msgIdMatch[1];
+    for (const line of resp) {
+      // Look for lines like "* SEARCH 1 2 3" or "* SEARCH"
+      if (line.startsWith("* SEARCH")) {
+        const numbersStr = line.substring("* SEARCH".length).trim();
+        if (numbersStr) {
+          // Split by whitespace and parse each number
+          const parts = numbersStr.split(/\s+/);
+          for (const part of parts) {
+            const num = parseInt(part, 10);
+            if (!isNaN(num) && num > 0) {
+              seqNumbers.push(num);
+            }
+          }
+        }
       }
     }
     
-    // Check for PDF attachments in body structure
-    const hasAttachments = response.toLowerCase().includes('"application" "pdf"') ||
-                          response.toLowerCase().includes('"application" "octet-stream"');
-    
-    return {
-      from,
-      subject: decodeImapString(subject),
-      date,
-      messageId,
-      hasAttachments,
-      bodyStructure: response,
-    };
+    console.info(`Found ${seqNumbers.length} unread messages: [${seqNumbers.join(", ")}]`);
+    return seqNumbers;
   }
 
-  async fetchAttachment(seqNum: number, partNum: string): Promise<Uint8Array | null> {
-    const response = await this.sendCommand(`FETCH ${seqNum} BODY[${partNum}]`);
+  async fetchMessage(seqNum: number): Promise<{ envelope: string; bodystructure: string }> {
+    const resp = await this.sendCommand(`FETCH ${seqNum} (ENVELOPE BODYSTRUCTURE)`);
+    console.info(`FETCH ${seqNum} response lines: ${resp.length}`);
     
-    // Extract base64 content
-    const bodyMatch = response.match(/\{(\d+)\}\r\n([\s\S]+?)\r\n[A-Z]/);
-    if (!bodyMatch) return null;
-    
-    const base64Content = bodyMatch[2].replace(/\r\n/g, "");
-    
-    try {
-      const binaryStr = atob(base64Content);
-      const bytes = new Uint8Array(binaryStr.length);
-      for (let i = 0; i < binaryStr.length; i++) {
-        bytes[i] = binaryStr.charCodeAt(i);
-      }
-      return bytes;
-    } catch {
-      return null;
-    }
+    const fullResp = resp.join("\n");
+    return { envelope: fullResp, bodystructure: fullResp };
+  }
+
+  async fetchBodyPart(seqNum: number, part: string): Promise<string> {
+    const resp = await this.sendCommand(`FETCH ${seqNum} BODY[${part}]`);
+    console.info(`FETCH BODY[${part}] response lines: ${resp.length}`);
+    return resp.join("\n");
   }
 
   async fetchFullMessage(seqNum: number): Promise<string> {
-    const response = await this.sendCommand(`FETCH ${seqNum} BODY[]`);
-    return response;
+    const resp = await this.sendCommand(`FETCH ${seqNum} BODY[]`);
+    return resp.join("\n");
   }
 
   async markAsSeen(seqNum: number): Promise<void> {
@@ -187,105 +153,413 @@ class SimpleImapClient {
   }
 
   async logout(): Promise<void> {
+    try {
+      await this.sendCommand("LOGOUT");
+    } catch (e: unknown) {
+      // Ignore logout errors
+    }
     if (this.conn) {
       try {
-        await this.sendCommand("LOGOUT");
-      } catch {
-        // Ignore logout errors
+        this.conn.close();
+      } catch (e: unknown) {
+        // Ignore close errors
       }
-      this.conn.close();
-      this.conn = null;
     }
+    console.info("Disconnected from IMAP server");
   }
 }
 
-// Helper to decode IMAP encoded strings
+// Decode IMAP encoded strings (=?UTF-8?Q?...?= or =?UTF-8?B?...?=)
 function decodeImapString(str: string): string {
-  // Handle =?UTF-8?Q?...?= or =?UTF-8?B?...?= encoding
-  const matches = str.matchAll(/=\?([^?]+)\?([BQ])\?([^?]+)\?=/gi);
-  let decoded = str;
+  if (!str) return "";
   
-  for (const match of matches) {
-    const charset = match[1];
-    const encoding = match[2].toUpperCase();
-    const content = match[3];
+  // Handle multiple encoded parts
+  const encodedPartRegex = /=\?([^?]+)\?([BQ])\?([^?]*)\?=/gi;
+  
+  let result = str;
+  let match;
+  
+  while ((match = encodedPartRegex.exec(str)) !== null) {
+    const [fullMatch, _charset, encoding, content] = match;
+    let decoded = "";
     
     try {
-      if (encoding === "B") {
-        decoded = decoded.replace(match[0], atob(content));
-      } else if (encoding === "Q") {
-        decoded = decoded.replace(
-          match[0],
-          content.replace(/_/g, " ").replace(/=([0-9A-F]{2})/gi, (_, hex) =>
+      if (encoding.toUpperCase() === "B") {
+        // Base64 encoding
+        decoded = atob(content);
+        // Try to decode as UTF-8
+        try {
+          decoded = decodeURIComponent(escape(decoded));
+        } catch {
+          // Keep as-is if decoding fails
+        }
+      } else if (encoding.toUpperCase() === "Q") {
+        // Quoted-printable encoding
+        decoded = content
+          .replace(/_/g, " ")
+          .replace(/=([0-9A-Fa-f]{2})/g, (_, hex) => 
             String.fromCharCode(parseInt(hex, 16))
-          )
-        );
+          );
+        // Try to decode as UTF-8
+        try {
+          decoded = decodeURIComponent(escape(decoded));
+        } catch {
+          // Keep as-is if decoding fails
+        }
       }
-    } catch {
-      // Keep original if decoding fails
+      
+      result = result.replace(fullMatch, decoded);
+    } catch (e) {
+      console.error("Decoding error for:", fullMatch, e);
     }
   }
   
-  return decoded;
+  return result.trim();
 }
 
-// Extract PDF parts from body structure
-function extractPdfParts(bodyStructure: string): { part: string; filename: string }[] {
-  const parts: { part: string; filename: string }[] = [];
+// Parse envelope to extract subject, from, message-id
+function parseEnvelope(envelopeResp: string): { subject: string; from: string; messageId: string } {
+  let subject = "";
+  let from = "";
+  let messageId = "";
   
-  // Look for PDF type in structure
-  const pdfMatches = bodyStructure.matchAll(/"application" "pdf"[^)]*\("name" "([^"]+)"\)/gi);
-  let partIndex = 1;
+  console.info("Parsing envelope, length:", envelopeResp.length);
+  console.info("Envelope preview:", envelopeResp.substring(0, 500));
   
-  for (const match of pdfMatches) {
-    parts.push({
-      part: `${partIndex}`,
-      filename: match[1] || `attachment-${partIndex}.pdf`,
-    });
-    partIndex++;
+  // Extract ENVELOPE content - look for ENVELOPE followed by parentheses
+  const envelopeMatch = envelopeResp.match(/ENVELOPE\s*\((.+)\)/is);
+  if (envelopeMatch) {
+    const envelopeContent = envelopeMatch[1];
+    console.info("Envelope content found, length:", envelopeContent.length);
+    
+    // ENVELOPE format: (date subject from sender reply-to to cc bcc in-reply-to message-id)
+    // Try to extract the subject - it's typically the first or second quoted string
+    
+    // Find all quoted strings
+    const quotedStrings: string[] = [];
+    let inQuote = false;
+    let currentQuote = "";
+    let escapeNext = false;
+    
+    for (let i = 0; i < envelopeContent.length; i++) {
+      const char = envelopeContent[i];
+      
+      if (escapeNext) {
+        currentQuote += char;
+        escapeNext = false;
+        continue;
+      }
+      
+      if (char === '\\') {
+        escapeNext = true;
+        currentQuote += char;
+        continue;
+      }
+      
+      if (char === '"') {
+        if (inQuote) {
+          quotedStrings.push(currentQuote);
+          currentQuote = "";
+          inQuote = false;
+        } else {
+          inQuote = true;
+        }
+        continue;
+      }
+      
+      if (inQuote) {
+        currentQuote += char;
+      }
+    }
+    
+    console.info("Found quoted strings:", quotedStrings.length, quotedStrings.slice(0, 5));
+    
+    // The subject is typically the second quoted string (after date)
+    if (quotedStrings.length >= 2) {
+      subject = decodeImapString(quotedStrings[1]);
+    } else if (quotedStrings.length >= 1) {
+      // Sometimes it's the first
+      subject = decodeImapString(quotedStrings[0]);
+    }
+    
+    // Extract email address from the FROM field
+    // Look for pattern like: "mailbox" "host" in the address structure
+    const emailPattern = /"([a-zA-Z0-9._%+-]+)"\s+"([a-zA-Z0-9.-]+)"/g;
+    let emailMatch;
+    while ((emailMatch = emailPattern.exec(envelopeContent)) !== null) {
+      // Skip if it looks like encoded content
+      if (!emailMatch[1].includes("=") && emailMatch[2].includes(".")) {
+        from = `${emailMatch[1]}@${emailMatch[2]}`;
+        console.info("Found email:", from);
+        break;
+      }
+    }
   }
   
-  // Also check for octet-stream with .pdf extension
-  const octetMatches = bodyStructure.matchAll(/"application" "octet-stream"[^)]*\("name" "([^"]+\.pdf)"\)/gi);
-  for (const match of octetMatches) {
-    parts.push({
-      part: `${partIndex}`,
-      filename: match[1],
-    });
-    partIndex++;
+  // Try to find message-id with angle brackets
+  const msgIdMatch = envelopeResp.match(/<([^>]+@[^>]+)>/);
+  if (msgIdMatch) {
+    messageId = msgIdMatch[1];
   }
   
-  return parts;
+  // Fallback subject extraction - look for common patterns
+  if (!subject) {
+    // Try to find subject after "NIL" or date pattern
+    const subjectPatterns = [
+      /"([^"]{3,})"\s+NIL\s+NIL/,  // Subject before NIL NIL (from)
+      /\d{4}\s+"([^"]+)"/,  // After year in date
+      /"Re:\s*([^"]+)"/i,
+      /"Fwd:\s*([^"]+)"/i,
+      /"([^"]*[Rr]echnung[^"]*)"/,  // German invoice
+      /"([^"]*[Ii]nvoice[^"]*)"/,   // English invoice
+    ];
+    
+    for (const pattern of subjectPatterns) {
+      const match = envelopeResp.match(pattern);
+      if (match && match[1]) {
+        subject = decodeImapString(match[1]);
+        console.info("Found subject via pattern:", subject);
+        break;
+      }
+    }
+  }
+  
+  // Generate message ID if not found
+  if (!messageId) {
+    messageId = `generated-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  }
+  
+  console.info("Parsed - Subject:", subject || "(empty)", "From:", from || "(empty)", "MessageId:", messageId);
+  
+  return { 
+    subject: subject || "No Subject", 
+    from: from || "unknown", 
+    messageId
+  };
+}
+
+// Check if message has PDF attachments
+function hasPdfAttachment(bodystructure: string): boolean {
+  const lowerStructure = bodystructure.toLowerCase();
+  return lowerStructure.includes('"application" "pdf"') ||
+         lowerStructure.includes('"application"  "pdf"') ||
+         (lowerStructure.includes('"application"') && lowerStructure.includes('.pdf'));
+}
+
+// Extract PDF from MIME message
+function extractPdfFromMime(mimeMessage: string): Uint8Array | null {
+  console.info("Extracting PDF from MIME, message length:", mimeMessage.length);
+  
+  // Find all boundaries in the message (there might be nested ones)
+  const boundaryMatches = mimeMessage.matchAll(/boundary="?([^"\s\r\n;]+)"?/gi);
+  const boundaries: string[] = [];
+  for (const match of boundaryMatches) {
+    boundaries.push(match[1]);
+  }
+  console.info("Found boundaries:", boundaries.length, boundaries);
+  
+  // Try to extract PDF using each boundary
+  for (const boundary of boundaries) {
+    const result = extractPdfWithBoundary(mimeMessage, boundary);
+    if (result) {
+      return result;
+    }
+  }
+  
+  // Fallback: try to find base64-encoded PDF content directly
+  console.info("No PDF found with boundaries, trying direct extraction...");
+  return extractBase64PdfDirect(mimeMessage);
+}
+
+function extractPdfWithBoundary(mimeMessage: string, boundary: string): Uint8Array | null {
+  console.info("Trying boundary:", boundary);
+  
+  // Escape special regex characters in boundary
+  const escapedBoundary = boundary.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  
+  // Split by boundary
+  const parts = mimeMessage.split(new RegExp(`--${escapedBoundary}`, 'g'));
+  console.info(`Split into ${parts.length} parts`);
+  
+  for (let i = 0; i < parts.length; i++) {
+    const part = parts[i];
+    
+    // Check if this part contains a PDF
+    const lowerPart = part.toLowerCase();
+    const isPdf = (lowerPart.includes('content-type:') || lowerPart.includes('content-type :')) &&
+                  (lowerPart.includes('application/pdf') || 
+                   (lowerPart.includes('application/octet-stream') && lowerPart.includes('.pdf')) ||
+                   lowerPart.includes('name="') && lowerPart.includes('.pdf'));
+    
+    if (isPdf) {
+      console.info(`Part ${i} appears to be PDF`);
+      
+      // Check for nested boundary (forwarded messages)
+      const nestedBoundaryMatch = part.match(/boundary="?([^"\s\r\n;]+)"?/i);
+      if (nestedBoundaryMatch && nestedBoundaryMatch[1] !== boundary) {
+        console.info("Found nested boundary, recursing...");
+        const result = extractPdfWithBoundary(part, nestedBoundaryMatch[1]);
+        if (result) return result;
+      }
+      
+      // Try to extract base64 content from this part
+      const pdfContent = extractBase64FromPart(part);
+      if (pdfContent) {
+        return pdfContent;
+      }
+    }
+    
+    // Check for nested multipart
+    if (lowerPart.includes('content-type:') && 
+        (lowerPart.includes('multipart/mixed') || 
+         lowerPart.includes('multipart/related') ||
+         lowerPart.includes('multipart/alternative'))) {
+      const nestedBoundaryMatch = part.match(/boundary="?([^"\s\r\n;]+)"?/i);
+      if (nestedBoundaryMatch && nestedBoundaryMatch[1] !== boundary) {
+        console.info(`Part ${i} is nested multipart, recursing...`);
+        const result = extractPdfWithBoundary(part, nestedBoundaryMatch[1]);
+        if (result) return result;
+      }
+    }
+  }
+  
+  return null;
+}
+
+function extractBase64FromPart(part: string): Uint8Array | null {
+  // Check transfer encoding
+  const isBase64 = /content-transfer-encoding:\s*base64/i.test(part);
+  
+  if (!isBase64) {
+    console.info("Part is not base64 encoded");
+    return null;
+  }
+  
+  // Split headers from body (double CRLF or double LF)
+  const headerBodySplit = part.split(/\r?\n\r?\n/);
+  if (headerBodySplit.length < 2) {
+    console.info("Could not split headers from body");
+    return null;
+  }
+  
+  // Body is everything after headers
+  let body = headerBodySplit.slice(1).join("\n\n");
+  
+  // Clean up the body - remove any trailing boundary markers or IMAP artifacts
+  body = body
+    .replace(/--[\w\-]+=?-?-?\s*$/gm, '') // Remove trailing boundaries
+    .replace(/\)\s*$/g, '') // Remove trailing IMAP artifacts
+    .replace(/^\s+|\s+$/g, ''); // Trim
+  
+  // Remove all whitespace for base64
+  const cleanBase64 = body.replace(/[\s\r\n]/g, '');
+  console.info("Base64 content length after cleaning:", cleanBase64.length);
+  
+  if (cleanBase64.length < 100) {
+    console.info("Base64 content too short, likely not valid");
+    return null;
+  }
+  
+  return decodeBase64(cleanBase64);
+}
+
+function extractBase64PdfDirect(mimeMessage: string): Uint8Array | null {
+  // Look for PDF header in base64: JVBERi0 = %PDF-
+  const pdfBase64Start = "JVBERi0";
+  
+  const startIndex = mimeMessage.indexOf(pdfBase64Start);
+  if (startIndex === -1) {
+    console.info("No PDF base64 header found");
+    return null;
+  }
+  
+  console.info("Found PDF base64 header at position:", startIndex);
+  
+  // Find a reasonable end point - look for boundary or significant whitespace pattern
+  let endIndex = mimeMessage.length;
+  
+  // Look for common end markers
+  const endMarkers = ["\n--", "\r\n--", "\n\n", "\r\n\r\n", ")\r\n", ")\n"];
+  for (const marker of endMarkers) {
+    const idx = mimeMessage.indexOf(marker, startIndex + 100);
+    if (idx !== -1 && idx < endIndex) {
+      endIndex = idx;
+    }
+  }
+  
+  let base64Content = mimeMessage.substring(startIndex, endIndex);
+  base64Content = base64Content.replace(/[\s\r\n]/g, '');
+  
+  // Validate it contains mostly base64 characters
+  const validChars = base64Content.replace(/[^A-Za-z0-9+/=]/g, '');
+  if (validChars.length < base64Content.length * 0.9) {
+    console.info("Content contains too many invalid base64 characters");
+    return null;
+  }
+  
+  console.info("Extracted direct base64 content, length:", validChars.length);
+  return decodeBase64(validChars);
+}
+
+// Safely decode base64
+function decodeBase64(base64String: string): Uint8Array | null {
+  try {
+    // Ensure proper padding
+    let padded = base64String;
+    const remainder = padded.length % 4;
+    if (remainder === 2) {
+      padded += '==';
+    } else if (remainder === 3) {
+      padded += '=';
+    }
+    
+    const binaryString = atob(padded);
+    const bytes = new Uint8Array(binaryString.length);
+    for (let i = 0; i < binaryString.length; i++) {
+      bytes[i] = binaryString.charCodeAt(i);
+    }
+    
+    // Verify it looks like a PDF (starts with %PDF)
+    if (bytes.length > 4) {
+      const header = String.fromCharCode(bytes[0], bytes[1], bytes[2], bytes[3]);
+      if (header === "%PDF") {
+        console.info("Valid PDF header detected, size:", bytes.length);
+        return bytes;
+      } else {
+        console.info("Decoded content doesn't have PDF header, got:", header);
+        // Still return it - might be a valid PDF with BOM or other prefix
+        if (bytes.length > 1000) {
+          return bytes;
+        }
+      }
+    }
+    
+    return null;
+  } catch (e: unknown) {
+    const error = e instanceof Error ? e : new Error(String(e));
+    console.error("Base64 decode error:", error.message);
+    return null;
+  }
 }
 
 serve(async (req) => {
-  // Handle CORS preflight
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    // Get auth header
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
-      return new Response(JSON.stringify({ error: "Missing authorization header" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    const supabaseClient = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+      {
+        global: {
+          headers: { Authorization: req.headers.get("Authorization")! },
+        },
+      }
+    );
 
-    // Initialize Supabase clients
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
-
-    const supabaseAuth = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY")!, {
-      global: { headers: { Authorization: authHeader } },
-    });
-    
-    const { data: { user }, error: userError } = await supabaseAuth.auth.getUser();
-    if (userError || !user) {
-      console.error("Auth error:", userError);
+    const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
+    if (authError || !user) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -293,15 +567,14 @@ serve(async (req) => {
     }
 
     // Get user's organization
-    const { data: profile, error: profileError } = await supabase
+    const { data: profile } = await supabaseClient
       .from("profiles")
       .select("organization_id")
       .eq("id", user.id)
       .single();
 
-    if (profileError || !profile?.organization_id) {
-      console.error("Profile error:", profileError);
-      return new Response(JSON.stringify({ error: "Organization not found" }), {
+    if (!profile?.organization_id) {
+      return new Response(JSON.stringify({ error: "No organization found" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -309,273 +582,209 @@ serve(async (req) => {
 
     const organizationId = profile.organization_id;
 
-    // Get IMAP credentials
+    // Get IMAP credentials from environment
     const imapHost = Deno.env.get("INVOICE_IMAP_HOST");
     const imapPort = parseInt(Deno.env.get("INVOICE_IMAP_PORT") || "993");
     const imapUser = Deno.env.get("INVOICE_IMAP_USER");
-    const imapPassword = Deno.env.get("INVOICE_IMAP_PASSWORD");
+    const imapPass = Deno.env.get("INVOICE_IMAP_PASSWORD");
 
-    if (!imapHost || !imapUser || !imapPassword) {
+    if (!imapHost || !imapUser || !imapPass) {
       return new Response(JSON.stringify({ error: "IMAP credentials not configured" }), {
-        status: 500,
+        status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    console.log(`Connecting to IMAP server ${imapHost}:${imapPort}...`);
+    console.info(`Connecting to IMAP server ${imapHost}:${imapPort}...`);
 
-    const client = new SimpleImapClient(imapHost, imapPort, imapUser, imapPassword);
+    const imap = new SimpleImapClient(imapHost, imapPort, imapUser, imapPass);
+    await imap.connect();
+    await imap.selectMailbox("INBOX");
+
+    const unseenSeqNums = await imap.searchUnseen();
     
-    try {
-      await client.connect();
-    } catch (connError: unknown) {
-      console.error("IMAP connection error:", connError);
-      const errorMessage = connError instanceof Error ? connError.message : "Unknown error";
-      return new Response(JSON.stringify({ 
-        error: "Could not connect to mail server",
-        details: errorMessage 
-      }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    // Select INBOX
-    const mailbox = await client.selectMailbox("INBOX");
-    console.log(`Mailbox opened: ${mailbox.exists} messages`);
-
-    // Search for unread messages
-    const unreadSeqNums = await client.searchUnseen();
-    console.log(`Found ${unreadSeqNums.length} unread messages`);
-
+    let processedCount = 0;
     let newInvoicesCount = 0;
     let skippedCount = 0;
-    let errorCount = 0;
-    const processedEmails: string[] = [];
+    const errors: string[] = [];
 
-    for (const seqNum of unreadSeqNums) {
+    const serviceClient = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+    );
+
+    for (const seqNum of unseenSeqNums) {
       try {
-        const message = await client.fetchMessage(seqNum);
-        console.log(`Processing email: ${message.subject} from ${message.from}`);
+        const { envelope, bodystructure } = await imap.fetchMessage(seqNum);
+        const { subject, from, messageId } = parseEnvelope(envelope);
+
+        console.info(`Processing email #${seqNum}: "${subject}" from ${from}`);
 
         // Check if already processed
-        const { data: existingLog } = await supabase
+        const { data: existingLog } = await serviceClient
           .from("invoice_email_log")
           .select("id")
+          .eq("message_id", messageId)
           .eq("organization_id", organizationId)
-          .eq("message_id", message.messageId)
           .maybeSingle();
 
         if (existingLog) {
-          console.log(`Email ${message.messageId} already processed, skipping`);
+          console.info(`Email ${messageId} already processed, skipping`);
           skippedCount++;
+          await imap.markAsSeen(seqNum);
           continue;
         }
 
-        if (!message.hasAttachments) {
-          // Log email without PDF
-          await supabase.from("invoice_email_log").insert({
-            organization_id: organizationId,
-            message_id: message.messageId,
-            email_from: message.from,
-            email_subject: message.subject,
-            status: "no_pdf",
-          });
+        // Check for PDF attachments
+        if (!hasPdfAttachment(bodystructure)) {
+          console.info("No PDF attachments found in email");
           
-          await client.markAsSeen(seqNum);
-          skippedCount++;
+          // Log as processed without invoice
+          await serviceClient.from("invoice_email_log").insert({
+            organization_id: organizationId,
+            message_id: messageId,
+            email_from: from,
+            email_subject: subject,
+            status: "no_attachment",
+          });
+
+          await imap.markAsSeen(seqNum);
+          processedCount++;
           continue;
         }
-
-        // Try to match supplier by email
-        const { data: supplier } = await supabase
-          .from("suppliers")
-          .select("id, name")
-          .eq("organization_id", organizationId)
-          .or(`email.eq.${message.from},invoice_email.eq.${message.from}`)
-          .maybeSingle();
 
         // Fetch full message to extract PDF
-        const fullMessage = await client.fetchFullMessage(seqNum);
+        console.info("Fetching full message for PDF extraction...");
+        const fullMessage = await imap.fetchFullMessage(seqNum);
+        console.info("Full message length:", fullMessage.length);
         
-        // Extract PDF content from MIME message
         const pdfContent = extractPdfFromMime(fullMessage);
-        
-        if (pdfContent) {
-          // Upload PDF to storage
-          const fileName = `${organizationId}/${Date.now()}-invoice.pdf`;
-          const { error: uploadError } = await supabase.storage
-            .from("invoices")
-            .upload(fileName, pdfContent, {
-              contentType: "application/pdf",
-            });
 
-          if (uploadError) {
-            console.error("Upload error:", uploadError);
-            errorCount++;
-            continue;
-          }
+        if (!pdfContent || pdfContent.length < 1000) {
+          console.error("Could not extract PDF content or content too small");
+          
+          await serviceClient.from("invoice_email_log").insert({
+            organization_id: organizationId,
+            message_id: messageId,
+            email_from: from,
+            email_subject: subject,
+            status: "extraction_failed",
+            error_message: "Could not extract PDF content from email",
+          });
+          errors.push(`Failed to extract PDF from: ${subject}`);
+          
+          await imap.markAsSeen(seqNum);
+          processedCount++;
+          continue;
+        }
 
-          // Get public URL
-          const { data: urlData } = supabase.storage
-            .from("invoices")
-            .getPublicUrl(fileName);
+        console.info("PDF extracted successfully, size:", pdfContent.length);
 
-          // Create invoice record
-          const { data: invoice, error: invoiceError } = await supabase
-            .from("invoices")
-            .insert({
-              organization_id: organizationId,
-              supplier_id: supplier?.id || null,
-              pdf_url: urlData.publicUrl,
-              status: "pending",
-              email_subject: message.subject,
-              email_from: message.from,
-              email_received_at: new Date().toISOString(),
-              email_message_id: message.messageId,
-            })
-            .select()
-            .single();
+        // Upload to storage
+        const filename = `invoice-${Date.now()}.pdf`;
+        const filePath = `${organizationId}/${filename}`;
 
-          if (invoiceError) {
-            console.error("Invoice creation error:", invoiceError);
-            errorCount++;
-            continue;
-          }
+        const { error: uploadError } = await serviceClient.storage
+          .from("invoices")
+          .upload(filePath, pdfContent, {
+            contentType: "application/pdf",
+            upsert: false,
+          });
 
-          console.log(`Created invoice ${invoice.id}`);
+        if (uploadError) {
+          throw new Error(`Upload failed: ${uploadError.message}`);
+        }
 
-          // Trigger parse-invoice function
-          try {
-            const parseResponse = await fetch(`${supabaseUrl}/functions/v1/parse-invoice`, {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${supabaseServiceKey}`,
-              },
-              body: JSON.stringify({
-                invoiceId: invoice.id,
-                pdfUrl: urlData.publicUrl,
-              }),
-            });
+        const { data: publicUrl } = serviceClient.storage
+          .from("invoices")
+          .getPublicUrl(filePath);
 
-            if (!parseResponse.ok) {
-              console.error("Parse invoice error:", await parseResponse.text());
-            }
-          } catch (parseError) {
-            console.error("Parse invoke error:", parseError);
-          }
+        // Find matching supplier by email
+        const { data: supplier } = await serviceClient
+          .from("suppliers")
+          .select("id")
+          .eq("organization_id", organizationId)
+          .or(`email.eq.${from},invoice_email.eq.${from}`)
+          .maybeSingle();
 
-          newInvoicesCount++;
-          processedEmails.push(message.subject);
+        // Create invoice record
+        const { data: invoice, error: invoiceError } = await serviceClient
+          .from("invoices")
+          .insert({
+            organization_id: organizationId,
+            pdf_url: publicUrl.publicUrl,
+            status: "pending",
+            email_from: from,
+            email_subject: subject,
+            email_message_id: messageId,
+            email_received_at: new Date().toISOString(),
+            supplier_id: supplier?.id || null,
+          })
+          .select()
+          .single();
+
+        if (invoiceError) {
+          throw new Error(`Invoice creation failed: ${invoiceError.message}`);
         }
 
         // Log successful processing
-        await supabase.from("invoice_email_log").insert({
+        await serviceClient.from("invoice_email_log").insert({
           organization_id: organizationId,
-          message_id: message.messageId,
-          email_from: message.from,
-          email_subject: message.subject,
-          status: pdfContent ? "processed" : "no_pdf",
+          message_id: messageId,
+          email_from: from,
+          email_subject: subject,
+          status: "processed",
+          invoice_id: invoice.id,
         });
 
-        // Mark email as read
-        await client.markAsSeen(seqNum);
+        // Trigger parse-invoice function
+        try {
+          await serviceClient.functions.invoke("parse-invoice", {
+            body: { invoiceId: invoice.id },
+          });
+        } catch (parseError: unknown) {
+          console.error("Failed to trigger parse-invoice:", parseError);
+        }
 
-      } catch (messageError) {
-        console.error(`Error processing message ${seqNum}:`, messageError);
-        errorCount++;
+        console.info(`Successfully created invoice ${invoice.id} from ${from}`);
+        newInvoicesCount++;
+        await imap.markAsSeen(seqNum);
+        processedCount++;
+
+      } catch (emailError: unknown) {
+        const error = emailError instanceof Error ? emailError : new Error(String(emailError));
+        console.error(`Error processing email ${seqNum}:`, error.message);
+        errors.push(`Error processing email: ${error.message}`);
+        await imap.markAsSeen(seqNum);
+        processedCount++;
       }
     }
 
+    await imap.logout();
+
     // Update last check timestamp
-    await supabase
+    await serviceClient
       .from("organizations")
       .update({ last_invoice_email_check: new Date().toISOString() })
       .eq("id", organizationId);
 
-    // Disconnect from IMAP
-    await client.logout();
-    console.log("Disconnected from IMAP server");
-
     return new Response(
       JSON.stringify({
         success: true,
-        processed: processedEmails.length,
+        processed: processedCount,
         newInvoices: newInvoicesCount,
         skipped: skippedCount,
-        errors: errorCount,
-        emails: processedEmails,
-        message: newInvoicesCount > 0 
-          ? `${newInvoicesCount} neue Rechnungen importiert`
-          : "Keine neuen Rechnungen gefunden",
+        errors: errors.length > 0 ? errors : undefined,
       }),
-      {
-        status: 200,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      }
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
+
   } catch (error: unknown) {
-    console.error("Error in check-invoice-emails:", error);
-    const errorMessage = error instanceof Error ? error.message : "Internal server error";
-    return new Response(
-      JSON.stringify({ error: errorMessage }),
-      {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      }
-    );
+    const err = error instanceof Error ? error : new Error(String(error));
+    console.error("check-invoice-emails error:", err);
+    return new Response(JSON.stringify({ error: err.message }), {
+      status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   }
 });
-
-// Extract PDF content from a MIME message
-function extractPdfFromMime(mimeMessage: string): Uint8Array | null {
-  // Look for PDF boundary
-  const boundaryMatch = mimeMessage.match(/boundary="?([^"\r\n]+)"?/i);
-  if (!boundaryMatch) {
-    // Try to find inline base64 PDF
-    const base64Match = mimeMessage.match(/Content-Type:\s*application\/pdf[\s\S]*?Content-Transfer-Encoding:\s*base64[\s\S]*?\r\n\r\n([\s\S]+?)(?:\r\n--|\r\n[A-Z])/i);
-    if (base64Match) {
-      return decodeBase64(base64Match[1]);
-    }
-    return null;
-  }
-
-  const boundary = boundaryMatch[1];
-  const parts = mimeMessage.split(`--${boundary}`);
-
-  for (const part of parts) {
-    // Check if this part is a PDF
-    if (part.toLowerCase().includes("application/pdf") || 
-        (part.toLowerCase().includes("application/octet-stream") && part.toLowerCase().includes(".pdf"))) {
-      
-      // Check for base64 encoding
-      if (part.toLowerCase().includes("base64")) {
-        // Extract the base64 content after headers
-        const headerEnd = part.indexOf("\r\n\r\n");
-        if (headerEnd === -1) continue;
-        
-        const base64Content = part.substring(headerEnd + 4).trim();
-        return decodeBase64(base64Content);
-      }
-    }
-  }
-
-  return null;
-}
-
-function decodeBase64(base64String: string): Uint8Array | null {
-  try {
-    // Clean up the base64 string
-    const cleaned = base64String.replace(/[\r\n\s]/g, "");
-    const binaryStr = atob(cleaned);
-    const bytes = new Uint8Array(binaryStr.length);
-    for (let i = 0; i < binaryStr.length; i++) {
-      bytes[i] = binaryStr.charCodeAt(i);
-    }
-    return bytes;
-  } catch (e) {
-    console.error("Base64 decode error:", e);
-    return null;
-  }
-}
