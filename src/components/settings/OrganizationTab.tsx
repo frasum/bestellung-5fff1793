@@ -84,57 +84,49 @@ const OrganizationGeneralContent = () => {
   }
 
   return (
-    <Card>
-      <Accordion type="multiple">
-        <AccordionItem value="org-profile" className="border-b">
-          <AccordionTrigger className="group px-4 py-3 hover:no-underline hover:bg-muted/50 data-[state=open]:bg-primary/5">
-            <div className="flex items-center gap-2">
-              <Building2 className="h-4 w-4 group-data-[state=open]:text-primary transition-colors" />
-              <span className="group-data-[state=open]:text-primary transition-colors font-medium">
-                {t('settings.orgProfile')}
-              </span>
+    <div className="space-y-4">
+      <Card>
+        <CardContent className="p-6 space-y-6">
+          {/* Organization Name & Subscription */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 text-primary">
+              <Building2 className="h-5 w-5" />
+              <h3 className="font-semibold">{t('settings.orgProfile')}</h3>
             </div>
-          </AccordionTrigger>
-          <AccordionContent className="px-4 pb-4 bg-primary/5">
-            <div className="space-y-4 pt-2">
-              <div className="space-y-2">
-                <Label htmlFor="org-name">{t('settings.orgName')}</Label>
-                <Input
-                  id="org-name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder={t('settings.orgNamePlaceholder')}
-                />
-              </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="org-name">{t('settings.orgName')}</Label>
+              <Input
+                id="org-name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder={t('settings.orgNamePlaceholder')}
+              />
+            </div>
 
-              <div className="space-y-2">
-                <Label>{t('settings.subscription')}</Label>
-                <div className="flex items-center gap-2">
-                  <Badge variant="secondary" className="capitalize">
-                    {organization?.subscription_tier || 'free'}
-                  </Badge>
-                  {organization?.trial_ends_at && (
-                    <span className="text-sm text-muted-foreground">
-                      {t('settings.trialEnds')}: {new Date(organization.trial_ends_at).toLocaleDateString()}
-                    </span>
-                  )}
-                </div>
+            <div className="space-y-2">
+              <Label>{t('settings.subscription')}</Label>
+              <div className="flex items-center gap-2">
+                <Badge variant="secondary" className="capitalize">
+                  {organization?.subscription_tier || 'free'}
+                </Badge>
+                {organization?.trial_ends_at && (
+                  <span className="text-sm text-muted-foreground">
+                    {t('settings.trialEnds')}: {new Date(organization.trial_ends_at).toLocaleDateString()}
+                  </span>
+                )}
               </div>
             </div>
-          </AccordionContent>
-        </AccordionItem>
+          </div>
 
-        <AccordionItem value="contact" className="border-b">
-          <AccordionTrigger className="group px-4 py-3 hover:no-underline hover:bg-muted/50 data-[state=open]:bg-primary/5">
-            <div className="flex items-center gap-2">
-              <Phone className="h-4 w-4 group-data-[state=open]:text-primary transition-colors" />
-              <span className="group-data-[state=open]:text-primary transition-colors font-medium">
-                {t('settings.contactInfo')}
-              </span>
+          {/* Separator */}
+          <div className="border-t pt-6">
+            <div className="flex items-center gap-2 text-primary mb-4">
+              <Phone className="h-5 w-5" />
+              <h3 className="font-semibold">{t('settings.contactInfo')}</h3>
             </div>
-          </AccordionTrigger>
-          <AccordionContent className="px-4 pb-4 bg-primary/5">
-            <div className="space-y-4 pt-2">
+
+            <div className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="contact-email">{t('settings.contactEmail')}</Label>
@@ -176,44 +168,52 @@ const OrganizationGeneralContent = () => {
                   placeholder={t('settings.addressPlaceholder')}
                 />
               </div>
+            </div>
+          </div>
 
-              <Button onClick={handleSave} disabled={updateOrganization.isPending}>
-                {updateOrganization.isPending ? t('settings.savingProfile') : t('settings.saveChanges')}
-              </Button>
-            </div>
-          </AccordionContent>
-        </AccordionItem>
+          {/* Save Button */}
+          <div className="pt-2">
+            <Button onClick={handleSave} disabled={updateOrganization.isPending}>
+              {updateOrganization.isPending ? t('settings.savingProfile') : t('settings.saveChanges')}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
-        <AccordionItem value="system-pdf">
-          <AccordionTrigger className="group px-4 py-3 hover:no-underline hover:bg-muted/50 data-[state=open]:bg-primary/5">
-            <div className="flex items-center gap-2">
-              <FileText className="h-4 w-4 group-data-[state=open]:text-primary transition-colors" />
-              <span className="group-data-[state=open]:text-primary transition-colors font-medium">
-                {t('settings.systemOverviewPdf')}
-              </span>
-            </div>
-          </AccordionTrigger>
-          <AccordionContent className="px-4 pb-4 bg-primary/5">
-            <div className="pt-2">
-              <p className="text-sm text-muted-foreground mb-4">{t('settings.systemOverviewPdfDesc')}</p>
-              <Button onClick={handleDownloadPdf} disabled={isGeneratingPdf}>
-                {isGeneratingPdf ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    {t('common.loading')}
-                  </>
-                ) : (
-                  <>
-                    <Download className="h-4 w-4 mr-2" />
-                    {t('settings.downloadPdf')}
-                  </>
-                )}
-              </Button>
-            </div>
-          </AccordionContent>
-        </AccordionItem>
-      </Accordion>
-    </Card>
+      {/* PDF Export as separate Accordion */}
+      <Card>
+        <Accordion type="single" collapsible>
+          <AccordionItem value="system-pdf" className="border-0">
+            <AccordionTrigger className="group px-4 py-3 hover:no-underline hover:bg-muted/50 data-[state=open]:bg-primary/5">
+              <div className="flex items-center gap-2">
+                <FileText className="h-4 w-4 group-data-[state=open]:text-primary transition-colors" />
+                <span className="group-data-[state=open]:text-primary transition-colors font-medium">
+                  {t('settings.systemOverviewPdf')}
+                </span>
+              </div>
+            </AccordionTrigger>
+            <AccordionContent className="px-4 pb-4 bg-primary/5">
+              <div className="pt-2">
+                <p className="text-sm text-muted-foreground mb-4">{t('settings.systemOverviewPdfDesc')}</p>
+                <Button onClick={handleDownloadPdf} disabled={isGeneratingPdf}>
+                  {isGeneratingPdf ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      {t('common.loading')}
+                    </>
+                  ) : (
+                    <>
+                      <Download className="h-4 w-4 mr-2" />
+                      {t('settings.downloadPdf')}
+                    </>
+                  )}
+                </Button>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
+      </Card>
+    </div>
   );
 };
 
