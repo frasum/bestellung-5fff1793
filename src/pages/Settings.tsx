@@ -133,8 +133,6 @@ const Settings = () => {
         <PageHeader 
           activeTab={activeTab}
           activeSubTab={activeSubTab}
-          sidebarCollapsed={sidebarCollapsed}
-          onToggleSidebar={toggleSidebar}
         />
 
         <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">

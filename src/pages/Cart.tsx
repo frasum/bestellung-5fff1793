@@ -192,10 +192,7 @@ const Cart = () => {
     <DashboardLayout>
       <div className="space-y-2 md:space-y-5 xl:space-y-6">
         {/* Header with Breadcrumb */}
-        <PageHeader 
-          sidebarCollapsed={sidebarCollapsed}
-          onToggleSidebar={toggleSidebar}
-        >
+        <PageHeader>
           <div className="flex gap-2">
             <Button variant="ghost" onClick={() => setScanDialogOpen(true)} className="h-9">
               <Camera className="w-4 h-4 sm:mr-2" />

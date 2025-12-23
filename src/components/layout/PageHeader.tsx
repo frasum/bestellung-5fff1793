@@ -1,7 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { cn } from '@/lib/utils';
-import sidebarToggleIcon from '@/assets/sidebar-toggle-icon.png';
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -101,8 +99,6 @@ interface PageHeaderProps {
   description?: string;
   activeTab?: string;
   activeSubTab?: string | null;
-  sidebarCollapsed: boolean;
-  onToggleSidebar: () => void;
   children?: React.ReactNode;
 }
 
@@ -111,8 +107,6 @@ export const PageHeader = ({
   description,
   activeTab,
   activeSubTab,
-  sidebarCollapsed,
-  onToggleSidebar,
   children,
 }: PageHeaderProps) => {
   const location = useLocation();
@@ -179,24 +173,9 @@ export const PageHeader = ({
 
   return (
     <div className="space-y-1 mb-4 md:mb-6">
-      {/* Breadcrumb row with sidebar toggle */}
-      <div className="flex items-center gap-2">
-        <button
-          onClick={onToggleSidebar}
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#4DB8A8] hover:bg-[#3EA89A] transition-colors"
-          title={sidebarCollapsed ? t('common.showSidebar') : t('common.hideSidebar')}
-        >
-          <img 
-            src={sidebarToggleIcon} 
-            alt="Toggle Sidebar" 
-            className={cn(
-              "h-5 w-5 transition-transform duration-300",
-              sidebarCollapsed && "rotate-180"
-            )}
-          />
-        </button>
-
-        {breadcrumbs.length > 0 && (
+      {/* Breadcrumb row */}
+      {breadcrumbs.length > 0 && (
+        <div className="flex items-center gap-2">
           <Breadcrumb>
             <BreadcrumbList>
               {breadcrumbs.map((crumb, index) => (
@@ -213,8 +192,8 @@ export const PageHeader = ({
               ))}
             </BreadcrumbList>
           </Breadcrumb>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Title and description row */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 md:gap-4">
