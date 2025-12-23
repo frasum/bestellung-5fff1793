@@ -2,10 +2,12 @@ import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'rea
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLocationContext } from '@/contexts/LocationContext';
 import { DashboardLayout, useSidebarContext } from '@/components/layout/DashboardLayout';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/button';
 import { useSuppliers, useCreateSupplier, useUpdateSupplier, useDeleteSupplier, Supplier, SupplierInput } from '@/hooks/useSuppliers';
+import { useSupplierLocations } from '@/hooks/useSupplierLocations';
 import { useSubscriptionLimits } from '@/hooks/useSubscriptionLimits';
 import { UpgradeDialog } from '@/components/subscription/UpgradeDialog';
 import { useArticles, useCreateArticle, useUpdateArticle, useDeleteArticle, useBulkUpdateArticles, Article, ArticleInput } from '@/hooks/useArticles';
@@ -86,6 +88,19 @@ const Suppliers = () => {
   const [deletingArticle, setDeletingArticle] = useState<Article | null>(null);
   const [selectedArticles, setSelectedArticles] = useState<Set<string>>(new Set());
   const [openArticleSuppliers, setOpenArticleSuppliers] = useState<Set<string>>(new Set());
+
+  // Location context for location-specific customer numbers
+  const { activeLocation } = useLocationContext();
+  const { data: supplierLocations } = useSupplierLocations();
+
+  // Helper function to get location-specific customer number
+  const getLocationCustomerNumber = useCallback((supplierId: string) => {
+    if (!activeLocation || !supplierLocations) return null;
+    const locationLink = supplierLocations.find(
+      sl => sl.supplier_id === supplierId && sl.location_id === activeLocation.id
+    );
+    return locationLink?.customer_number || null;
+  }, [activeLocation, supplierLocations]);
 
   // Shared data
   const {
@@ -585,7 +600,7 @@ const Suppliers = () => {
             <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
               <SupplierFilters searchQuery={searchQuery} onSearchChange={setSearchQuery} topCategoryFilter={topCategoryFilter} onTopCategoryChange={setTopCategoryFilter} categoryFilter={categoryFilter} onCategoryChange={setCategoryFilter} articleCategories={articleCategoriesForSupplierFilter} multiSelectEnabled={supplierMultiSelectEnabled} onMultiSelectChange={setSupplierMultiSelectEnabled} selectedCount={selectedSuppliers.size} onPrintCombined={handlePrintCombined} showMultiSelectToggle={advancedSettingsEnabled} />
               <div className="flex flex-wrap gap-2 shrink-0">
-                {advancedSettingsEnabled && <ExportMenu filename="suppliers" title="Lieferanten" headers={['Name', 'Email', 'Telefon', 'Adresse', 'Ansprechpartner', 'Kundennummer', 'Status']} getData={() => suppliers?.map(s => [s.name, s.email, s.phone || '', s.address || '', s.contact_person || '', s.customer_number || '', s.is_active ? 'Aktiv' : 'Inaktiv']) || []} disabled={!suppliers?.length} />}
+                {advancedSettingsEnabled && <ExportMenu filename="suppliers" title="Lieferanten" headers={['Name', 'Email', 'Telefon', 'Adresse', 'Ansprechpartner', 'Kundennummer', 'Status']} getData={() => suppliers?.map(s => [s.name, s.email, s.phone || '', s.address || '', s.contact_person || '', getLocationCustomerNumber(s.id) || s.customer_number || '', s.is_active ? 'Aktiv' : 'Inaktiv']) || []} disabled={!suppliers?.length} />}
                 {advancedSettingsEnabled && <ExportMenu filename="articles" title="Artikel" headers={['Artikelname', 'SKU', 'Beschreibung', 'Lieferant', 'Kategorie', 'Oberkategorie', 'Einheit', 'VPE', 'Einkaufspreis', 'Verkaufspreis', 'Ref.-Preis', 'Ref.-Einheit', 'Herkunftsland', 'Rebsorte', 'Geschmacksprofil', 'Speiseempfehlung', 'Status']} getData={() => allArticles?.map(a => {
                   const supplier = suppliers?.find(s => s.id === a.supplier_id);
                   return [
