@@ -30,6 +30,7 @@ export interface EmailPreviewData {
   supplierName: string;
   supplierEmail: string;
   restaurantName: string;
+  locationEmail?: string;
   deliveryAddress: string;
   items: OrderItem[];
   totalAmount: number;

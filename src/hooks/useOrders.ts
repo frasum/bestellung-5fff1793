@@ -62,6 +62,7 @@ interface CreateOrderInput {
   deliveryAddress: string;
   notes?: string;
   restaurantName: string;
+  locationEmail?: string;
   isTestOrder?: boolean;
   locationId?: string;
   employeeId?: string | null;
@@ -211,6 +212,7 @@ export const useCreateOrder = () => {
             supplierEmail: input.supplierEmail,
             supplierName: input.supplierName,
             restaurantName: input.restaurantName,
+            locationEmail: input.locationEmail,
             deliveryAddress: input.deliveryAddress,
             customerNumber: input.customerNumber,
             items: input.items.map(item => ({
@@ -360,7 +362,18 @@ export const useResendOrderEmail = () => {
         .eq('id', user.id)
         .single();
 
-      const restaurantName = (profile?.organizations as { name: string } | null)?.name || 'Restaurant';
+      // Get location email if order has a location
+      let locationEmail: string | undefined;
+      if (order.location_id) {
+        const { data: location } = await supabase
+          .from('locations')
+          .select('name, email')
+          .eq('id', order.location_id)
+          .single();
+        locationEmail = location?.email || undefined;
+      }
+
+      const restaurantName = order.locations?.name || (profile?.organizations as { name: string } | null)?.name || 'Restaurant';
 
       // Get article SKUs and order_unit_id for items
       const articleIds = order.order_items?.map(item => item.article_id) || [];
@@ -410,6 +423,7 @@ export const useResendOrderEmail = () => {
           supplierEmail: order.suppliers?.email,
           supplierName: order.suppliers?.name,
           restaurantName,
+          locationEmail,
           deliveryAddress: order.delivery_address,
           items: order.order_items?.map(item => {
             const article = articleMap.get(item.article_id);

@@ -245,7 +245,9 @@ const Checkout = () => {
         .eq('id', user!.id)
         .single();
 
-      const restaurantName = (profile?.organizations as any)?.name || 'Restaurant';
+      // Use location name as restaurant name if available, fallback to organization name
+      const restaurantName = activeLocation?.name || (profile?.organizations as any)?.name || 'Restaurant';
+      const locationEmail = activeLocation?.email || undefined;
       const isTestMode = (profile?.organizations as any)?.test_mode_enabled || false;
 
       // Format delivery info for notes
@@ -291,6 +293,7 @@ const Checkout = () => {
           supplierName: supplier.supplierName,
           supplierEmail: data?.email || '',
           restaurantName,
+          locationEmail,
           deliveryAddress: formattedAddress,
           items: [...regularItems, ...freeItemsForEmail],
           totalAmount: supplier.total,
@@ -342,6 +345,7 @@ const Checkout = () => {
           deliveryAddress: preview.deliveryAddress,
           notes: preview.notes,
           restaurantName: preview.restaurantName,
+          locationEmail: preview.locationEmail,
           isTestOrder: preview.isTestMode || false,
           locationId: draftLocationId || activeLocation?.id,
           employeeId: draftEmployeeId,

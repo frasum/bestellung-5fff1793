@@ -26,6 +26,7 @@ interface OrderEmailRequest {
   supplierEmail: string;
   supplierName: string;
   restaurantName: string;
+  locationEmail?: string;
   deliveryAddress: string;
   items: OrderItem[];
   totalAmount: number;
@@ -526,6 +527,7 @@ serve(async (req) => {
     const emailResponse = await resend.emails.send({
       from: "Bestellung.pro <bestellung@bestellung.pro>",
       to: [recipientEmail],
+      reply_to: data.locationEmail || undefined,
       subject: subject,
       html: emailHtml,
       text: emailText,
