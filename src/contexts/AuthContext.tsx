@@ -38,8 +38,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           localStorage.removeItem('activeLocationId');
         }
         
-        // Invalidate all queries on login to fetch fresh data
+        // Invalidate all queries on login to fetch fresh data for new user
         if (event === 'SIGNED_IN') {
+          // Clear old location to force reload for new user
+          localStorage.removeItem('activeLocationId');
           queryClient.invalidateQueries();
         }
         
