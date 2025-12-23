@@ -1,5 +1,5 @@
 import { Fragment } from 'react';
-import { Trash2, FileText, Send, Bell, Store, Loader2, QrCode, ExternalLink, Key, Plus } from 'lucide-react';
+import { Trash2, FileText, Send, Bell, Loader2, QrCode, ExternalLink, Key, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
@@ -30,7 +30,7 @@ interface SupplierTableProps {
   onShowTokens?: (supplier: Supplier) => void;
   onOpenPortal?: (supplier: Supplier) => void;
   onShowChanges: (supplier: Supplier) => void;
-  onShowLocations: (supplier: Supplier) => void;
+  
   onPrintOrderList: (supplier: Supplier, articles: Article[]) => void;
   onArticleChangeClick?: (article: Article, supplier: Supplier) => void;
   onEditArticle: (article: Article) => void;
@@ -60,7 +60,6 @@ export const SupplierTable = ({
   onShowTokens,
   onOpenPortal,
   onShowChanges,
-  onShowLocations,
   onPrintOrderList,
   onArticleChangeClick,
   onEditArticle,
@@ -159,7 +158,7 @@ export const SupplierTable = ({
                   <TableCell className="hidden lg:table-cell py-2">
                     <Badge 
                       variant="secondary" 
-                      className="cursor-pointer hover:bg-secondary/80 transition-colors"
+                      className="cursor-pointer hover:bg-primary hover:text-primary-foreground hover:scale-105 transition-all"
                       onClick={(e) => {
                         e.stopPropagation();
                         onToggleExpand(supplier.id);
@@ -170,9 +169,6 @@ export const SupplierTable = ({
                   </TableCell>
                   <TableCell className="text-right py-2">
                     <div className="flex justify-end gap-0.5 sm:gap-1 md:gap-1.5 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
-                      <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground hover:text-foreground" onClick={() => onShowLocations(supplier)} title="Standort-Zuordnungen">
-                        <Store className="w-4 h-4" />
-                      </Button>
                       <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground hover:text-foreground" onClick={() => onSendInvitation(supplier)} disabled={invitingSupplierId === supplier.id || sendingInvitation} title="Einladung zum Lieferantenportal senden">
                         {invitingSupplierId === supplier.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
                       </Button>

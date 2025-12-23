@@ -697,7 +697,7 @@ const Suppliers = () => {
                </div> : <SupplierTable suppliers={filteredSuppliers || []} articlesBySupplier={articlesBySupplier} expandedSuppliers={expandedSuppliers} selectedSuppliers={selectedSuppliers} multiSelectEnabled={supplierMultiSelectEnabled} pendingChangesBySupplier={pendingChangesBySupplier || {}} pendingArticleIds={pendingArticleIds || new Set()} recentlyActiveSuppliers={recentlyActiveSuppliers || new Map()} advancedSettingsEnabled={advancedSettingsEnabled} onToggleExpand={toggleSupplierExpanded} onToggleSelect={toggleSupplierSelected} onSelectAll={selectAllSuppliers} onEdit={supplier => {
             setEditingSupplier(supplier);
             setIsSupplierDialogOpen(true);
-          }} onDelete={setDeletingSupplier} onSendInvitation={handleSendInvitation} onShowQRCode={setQrCodeSupplier} onShowTokens={setTokensDialogSupplier} onOpenPortal={handleOpenPortal} onShowChanges={setChangesDialogSupplier} onShowLocations={setLocationsDialogSupplier} onPrintOrderList={async (supplier, articles) => await generateOrderListPdf(supplier, articles.map(a => ({
+          }} onDelete={setDeletingSupplier} onSendInvitation={handleSendInvitation} onShowQRCode={setQrCodeSupplier} onShowTokens={setTokensDialogSupplier} onOpenPortal={handleOpenPortal} onShowChanges={setChangesDialogSupplier} onPrintOrderList={async (supplier, articles) => await generateOrderListPdf(supplier, articles.map(a => ({
             name: a.name,
             unit: a.unit,
             sku: a.sku,
