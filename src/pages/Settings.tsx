@@ -131,8 +131,6 @@ const Settings = () => {
     <DashboardLayout>
       <div className="space-y-2 md:space-y-5 xl:space-y-6">
         <PageHeader 
-          title={t('settings.title')}
-          description={t('settings.description')}
           activeTab={activeTab}
           activeSubTab={activeSubTab}
           sidebarCollapsed={sidebarCollapsed}

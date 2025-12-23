@@ -585,8 +585,6 @@ const Orders = () => {
     <DashboardLayout>
       <div className="space-y-2 md:space-y-5 xl:space-y-6">
         <PageHeader 
-          title={t('orders.title')}
-          description={t('orders.subtitle')}
           activeTab={activeTab === 'orders' ? undefined : activeTab}
           sidebarCollapsed={sidebarCollapsed}
           onToggleSidebar={toggleSidebar}
