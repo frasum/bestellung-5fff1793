@@ -26,7 +26,7 @@ export const LocationSwitcher = ({ className, showIcon = true }: LocationSwitche
     return (
       <div className={cn(
         "flex items-center gap-2 px-5 py-3",
-        "bg-primary/10 text-primary rounded-md font-semibold text-base",
+        "bg-accent/10 text-accent rounded-md font-semibold text-base",
         "animate-pulse-glow",
         className
       )}>
@@ -44,19 +44,19 @@ export const LocationSwitcher = ({ className, showIcon = true }: LocationSwitche
           size="lg" 
           className={cn(
             "gap-2",
-            "bg-primary text-primary-foreground",
-            "border-primary/50",
-            "hover:bg-primary/90",
+            "bg-accent text-accent-foreground",
+            "border-accent/50",
+            "hover:bg-accent/90",
             "font-semibold text-base",
             "animate-pulse-glow",
             className
           )}
         >
-          {showIcon && <MapPin className="h-5 w-5 text-primary-foreground" />}
+          {showIcon && <MapPin className="h-5 w-5 text-accent-foreground" />}
           <span className="max-w-[200px] truncate">
             {activeLocation?.short_code || activeLocation?.name || 'Standort'}
           </span>
-          <ChevronDown className="h-4 w-4 text-primary-foreground/70" />
+          <ChevronDown className="h-4 w-4 text-accent-foreground/70" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-48">
