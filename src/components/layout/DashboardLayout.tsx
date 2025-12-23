@@ -370,11 +370,13 @@ export const DashboardLayout = ({
                   to={showDraftsBadge ? '/orders?tab=drafts' : item.href} 
                   onClick={() => setSidebarOpen(false)}
                   className={cn(
-                    'flex items-center gap-3 px-3 py-2.5 rounded-md transition-colors',
-                    isActive ? 'bg-muted text-foreground font-medium' : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                    'flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200',
+                    isActive 
+                      ? 'bg-accent/10 text-accent font-medium border-l-2 border-accent' 
+                      : 'text-muted-foreground hover:text-accent hover:bg-accent/5'
                   )}
                 >
-                  <item.icon className="w-4 h-4" />
+                  <item.icon className={cn("w-4 h-4", isActive && "text-accent")} />
                   <span className="flex-1">{item.label}</span>
                   {showDraftsBadge && (
                     <div className="flex items-center gap-1">
@@ -392,8 +394,8 @@ export const DashboardLayout = ({
           {/* User section */}
           <div className="p-4 border-t border-border">
             <div className="flex items-center gap-3 mb-3 px-2">
-              <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
-                <span className="text-sm font-medium text-primary">
+              <div className="w-8 h-8 rounded-full bg-accent/20 flex items-center justify-center">
+                <span className="text-sm font-medium text-accent">
                   {user?.email?.charAt(0).toUpperCase()}
                 </span>
               </div>

@@ -67,6 +67,10 @@ export default {
           "0%, 100%": { boxShadow: "0 0 0 0 hsl(var(--primary) / 0.4)" },
           "50%": { boxShadow: "0 0 0 8px hsl(var(--primary) / 0)" },
         },
+        "glow-accent": {
+          "0%, 100%": { boxShadow: "0 0 0 0 hsl(var(--accent) / 0.4)" },
+          "50%": { boxShadow: "0 0 0 8px hsl(var(--accent) / 0)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -77,6 +81,7 @@ export default {
         "scale-in": "scale-in 0.3s ease-out",
         "slide-up": "slide-up 0.4s ease-out",
         "pulse-glow": "pulse-glow 2s ease-in-out infinite",
+        "glow-accent": "glow-accent 2s ease-in-out infinite",
       },
     },
   },

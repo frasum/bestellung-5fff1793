@@ -406,23 +406,23 @@ const Auth = () => {
         {/* Card */}
         <div className="bg-card border border-border rounded-2xl shadow-lg p-8">
           {/* Tabs */}
-          <div className="flex gap-4 mb-8">
+          <div className="flex gap-2 mb-8 p-1 bg-muted rounded-lg">
             <button
               onClick={() => setIsLogin(true)}
-              className={`flex-1 py-2 text-center font-medium rounded-lg transition-colors ${
+              className={`flex-1 py-2.5 text-center font-medium rounded-md transition-all duration-200 ${
                 isLogin
-                  ? 'bg-primary text-primary-foreground'
-                  : 'text-muted-foreground hover:text-foreground'
+                  ? 'bg-accent text-accent-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-accent'
               }`}
             >
               {t('auth.signIn')}
             </button>
             <button
               onClick={() => setIsLogin(false)}
-              className={`flex-1 py-2 text-center font-medium rounded-lg transition-colors ${
+              className={`flex-1 py-2.5 text-center font-medium rounded-md transition-all duration-200 ${
                 !isLogin
-                  ? 'bg-primary text-primary-foreground'
-                  : 'text-muted-foreground hover:text-foreground'
+                  ? 'bg-accent text-accent-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-accent'
               }`}
             >
               {t('auth.signUp')}
