@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -6,10 +6,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Switch } from '@/components/ui/switch';
+import { Separator } from '@/components/ui/separator';
 import { Loader2, Package, Mail, Globe, Send, MapPin } from 'lucide-react';
 import { Supplier, SupplierInput, OrderDeliveryMethod } from '@/hooks/useSuppliers';
 import { supplierSchema, SupplierFormData } from './schemas';
+import { useLocations } from '@/hooks/useLocations';
+import { useSupplierLocations, useUpsertSupplierLocation } from '@/hooks/useSupplierLocations';
 
 interface SupplierFormDialogProps {
   open: boolean;
@@ -18,6 +21,12 @@ interface SupplierFormDialogProps {
   onSubmit: (data: SupplierInput) => Promise<void>;
   onImportArticles?: (supplierId: string) => void;
   isPending: boolean;
+}
+
+interface LocationFormData {
+  is_active: boolean;
+  customer_number: string;
+  minimum_order_value: string;
 }
 
 export const SupplierFormDialog = ({
@@ -36,6 +45,13 @@ export const SupplierFormDialog = ({
     }
   });
 
+  const { data: locations = [] } = useLocations();
+  const { data: supplierLocations = [] } = useSupplierLocations(editingSupplier?.id);
+  const upsertLocation = useUpsertSupplierLocation();
+  
+  const [locationData, setLocationData] = useState<Record<string, LocationFormData>>({});
+
+  // Initialize form with supplier data
   useEffect(() => {
     if (editingSupplier) {
       form.reset({
@@ -54,6 +70,32 @@ export const SupplierFormDialog = ({
     }
   }, [editingSupplier, form]);
 
+  // Initialize location data when supplier locations are loaded
+  useEffect(() => {
+    if (locations.length > 0) {
+      const initial: Record<string, LocationFormData> = {};
+      locations.forEach(loc => {
+        const existing = supplierLocations.find(sl => sl.location_id === loc.id);
+        initial[loc.id] = {
+          is_active: existing?.is_active ?? false,
+          customer_number: existing?.customer_number || '',
+          minimum_order_value: existing?.minimum_order_value?.toString() || '',
+        };
+      });
+      setLocationData(initial);
+    }
+  }, [locations, supplierLocations]);
+
+  const updateLocationField = (locationId: string, field: keyof LocationFormData, value: string | boolean) => {
+    setLocationData(prev => ({
+      ...prev,
+      [locationId]: {
+        ...prev[locationId],
+        [field]: value
+      }
+    }));
+  };
+
   const handleSubmit = async (data: SupplierFormData & { order_delivery_method: OrderDeliveryMethod }) => {
     const input: SupplierInput = {
       name: data.name,
@@ -64,6 +106,23 @@ export const SupplierFormDialog = ({
       order_delivery_method: data.order_delivery_method,
     };
     await onSubmit(input);
+    
+    // Save location assignments if editing
+    if (editingSupplier) {
+      for (const location of locations) {
+        const locData = locationData[location.id];
+        if (locData) {
+          await upsertLocation.mutateAsync({
+            supplier_id: editingSupplier.id,
+            location_id: location.id,
+            is_active: locData.is_active,
+            customer_number: locData.customer_number || undefined,
+            minimum_order_value: locData.minimum_order_value ? parseFloat(locData.minimum_order_value) : undefined,
+          });
+        }
+      }
+    }
+    
     form.reset();
   };
 
@@ -96,13 +155,6 @@ export const SupplierFormDialog = ({
             <Label htmlFor="contact_person">Ansprechpartner</Label>
             <Input id="contact_person" {...form.register('contact_person')} placeholder="Marco Rossi" />
           </div>
-          <Alert className="bg-muted/50 border-muted">
-            <MapPin className="h-4 w-4" />
-            <AlertDescription className="text-sm">
-              Kundennummern und Mindestbestellwerte werden <strong>pro Standort</strong> konfiguriert. 
-              Nutzen Sie das Standort-Icon in der Lieferantenliste.
-            </AlertDescription>
-          </Alert>
 
           <div className="space-y-2">
             <Label htmlFor="order_delivery_method">Bestellungs-Zustellung</Label>
@@ -140,6 +192,69 @@ export const SupplierFormDialog = ({
               {form.watch('order_delivery_method') === 'both' && 'Bestellungen werden per E-Mail gesendet und im Portal angezeigt'}
             </p>
           </div>
+
+          {/* Location assignments - only when editing */}
+          {editingSupplier && locations.length > 0 && (
+            <>
+              <Separator className="my-4" />
+              <div className="space-y-3">
+                <Label className="flex items-center gap-2">
+                  <MapPin className="h-4 w-4" />
+                  Standort-Zuordnungen
+                </Label>
+                {locations.map(location => {
+                  const locData = locationData[location.id] || { is_active: false, customer_number: '', minimum_order_value: '' };
+                  return (
+                    <div key={location.id} className="p-3 border rounded-lg space-y-3 bg-muted/30">
+                      <div className="flex items-center justify-between">
+                        <span className="font-medium">
+                          {location.short_code || location.name}
+                        </span>
+                        <div className="flex items-center gap-2">
+                          <Label htmlFor={`active-${location.id}`} className="text-sm text-muted-foreground">
+                            Aktiv
+                          </Label>
+                          <Switch
+                            id={`active-${location.id}`}
+                            checked={locData.is_active}
+                            onCheckedChange={(checked) => updateLocationField(location.id, 'is_active', checked)}
+                          />
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-1">
+                          <Label htmlFor={`customer-${location.id}`} className="text-xs text-muted-foreground">
+                            Kundennummer
+                          </Label>
+                          <Input
+                            id={`customer-${location.id}`}
+                            value={locData.customer_number}
+                            onChange={(e) => updateLocationField(location.id, 'customer_number', e.target.value)}
+                            placeholder="z.B. 12345"
+                            className="h-9"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <Label htmlFor={`min-order-${location.id}`} className="text-xs text-muted-foreground">
+                            Mindestbestellwert (€)
+                          </Label>
+                          <Input
+                            id={`min-order-${location.id}`}
+                            type="number"
+                            step="0.01"
+                            value={locData.minimum_order_value}
+                            onChange={(e) => updateLocationField(location.id, 'minimum_order_value', e.target.value)}
+                            placeholder="0.00"
+                            className="h-9"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </>
+          )}
           
           {editingSupplier && onImportArticles && (
             <div className="pt-2">
@@ -154,8 +269,8 @@ export const SupplierFormDialog = ({
             <Button type="button" variant="outline" className="flex-1 h-10 sm:h-9" onClick={() => onOpenChange(false)}>
               Abbrechen
             </Button>
-            <Button type="submit" className="flex-1 h-10 sm:h-9" disabled={isPending}>
-              {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : editingSupplier ? 'Speichern' : 'Erstellen'}
+            <Button type="submit" className="flex-1 h-10 sm:h-9" disabled={isPending || upsertLocation.isPending}>
+              {(isPending || upsertLocation.isPending) ? <Loader2 className="w-4 h-4 animate-spin" /> : editingSupplier ? 'Speichern' : 'Erstellen'}
             </Button>
           </div>
         </form>
