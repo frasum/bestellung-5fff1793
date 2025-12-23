@@ -51,31 +51,68 @@ serve(async (req) => {
     }
 
     const supabaseClient = createClient(supabaseUrl, supabaseServiceKey);
-    const supabaseAuth = createClient(supabaseUrl, authHeader.replace('Bearer ', ''));
+    
+    // Parse request body first to get invoiceId
+    const { invoiceId, pdfUrl, pdfBase64 } = await req.json();
 
-    const { data: { user }, error: authError } = await supabaseAuth.auth.getUser(authHeader.replace('Bearer ', ''));
-    if (authError || !user) {
-      return new Response(JSON.stringify({ error: 'Invalid authentication' }), {
-        status: 401,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-
-    // Get user's organization
-    const { data: profile } = await supabaseClient
-      .from('profiles')
-      .select('organization_id')
-      .eq('id', user.id)
-      .single();
-
-    if (!profile?.organization_id) {
-      return new Response(JSON.stringify({ error: 'No organization found' }), {
+    if (!invoiceId) {
+      return new Response(JSON.stringify({ error: 'invoiceId is required' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    const { invoiceId, pdfUrl, pdfBase64 } = await req.json();
+    // Determine organization_id - either from user auth or from invoice
+    let organizationId: string;
+    const token = authHeader.replace('Bearer ', '');
+    
+    // Check if this is a service-role call or user auth
+    const isServiceRoleCall = token === supabaseServiceKey;
+    
+    if (isServiceRoleCall) {
+      // Service-role call (from check-invoice-emails) - get organization from invoice
+      console.log('Service-role call detected, getting organization from invoice');
+      const { data: invoice, error: invoiceError } = await supabaseClient
+        .from('invoices')
+        .select('organization_id')
+        .eq('id', invoiceId)
+        .single();
+      
+      if (invoiceError || !invoice?.organization_id) {
+        console.error('Failed to get invoice organization:', invoiceError);
+        return new Response(JSON.stringify({ error: 'Invoice not found or has no organization' }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      organizationId = invoice.organization_id;
+      console.log('Got organization from invoice:', organizationId);
+    } else {
+      // User auth call - get organization from user profile
+      const supabaseAuth = createClient(supabaseUrl, token);
+      const { data: { user }, error: authError } = await supabaseAuth.auth.getUser(token);
+      
+      if (authError || !user) {
+        return new Response(JSON.stringify({ error: 'Invalid authentication' }), {
+          status: 401,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      const { data: profile } = await supabaseClient
+        .from('profiles')
+        .select('organization_id')
+        .eq('id', user.id)
+        .single();
+
+      if (!profile?.organization_id) {
+        return new Response(JSON.stringify({ error: 'No organization found' }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      organizationId = profile.organization_id;
+    }
 
     if (!invoiceId) {
       return new Response(JSON.stringify({ error: 'invoiceId is required' }), {
@@ -218,7 +255,7 @@ Important:
     const { data: suppliers } = await supabaseClient
       .from('suppliers')
       .select('id, name')
-      .eq('organization_id', profile.organization_id)
+      .eq('organization_id', organizationId)
       .eq('is_active', true);
 
     let matchedSupplierId: string | null = null;
@@ -285,7 +322,7 @@ Important:
         supabaseClient,
         invoiceId,
         matchedSupplierId,
-        profile.organization_id,
+        organizationId,
         invoiceData
       );
     } else {
