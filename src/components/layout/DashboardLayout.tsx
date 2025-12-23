@@ -24,6 +24,7 @@ import { MobileBottomNav } from '@/components/layout/MobileBottomNav';
 import { FloatingCartButton } from '@/components/FloatingCartButton';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { useCartDrafts } from '@/hooks/useCartDrafts';
+import { useLocationContext } from '@/contexts/LocationContext';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
@@ -71,7 +72,8 @@ export const DashboardLayout = ({
   
   const { data: organization } = useOrganization();
   const updateOrganization = useUpdateOrganization();
-  const { data: drafts } = useCartDrafts(undefined, true);
+  const { activeLocation } = useLocationContext();
+  const { data: drafts } = useCartDrafts(activeLocation?.id, false);
   const openDraftsCount = drafts?.length || 0;
   const { hasRole: isAdmin } = useHasRole(['admin']);
   
