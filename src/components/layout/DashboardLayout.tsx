@@ -145,7 +145,6 @@ export const DashboardLayout = ({
     { href: '/suppliers', label: t('nav.catalog'), icon: Users },
     { href: '/orders', label: t('nav.orders'), icon: ShoppingCart },
     { href: '/reports', label: t('nav.reports'), icon: BarChart3 },
-    { href: '/settings', label: t('nav.settings'), icon: Settings },
   ];
   const handleSignOut = async () => {
     await signOut();
