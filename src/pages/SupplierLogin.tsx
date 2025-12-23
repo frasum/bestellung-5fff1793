@@ -2,9 +2,10 @@ import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Mail } from 'lucide-react';
+import { useForceLightTheme } from '@/hooks/useForceLightTheme';
 import logo from '@/assets/logo.png';
 
-// Force light mode CSS variables
+// Force light mode CSS variables (kept as fallback)
 const lightModeStyles: React.CSSProperties = {
   '--background': '0 0% 98%',
   '--foreground': '224 71% 4%',
@@ -30,6 +31,9 @@ const lightModeStyles: React.CSSProperties = {
 
 const SupplierLogin = () => {
   const navigate = useNavigate();
+  
+  // Force light theme for supplier portal pages
+  useForceLightTheme();
 
   useEffect(() => {
     // Check if already logged in

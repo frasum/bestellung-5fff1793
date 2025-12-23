@@ -5,9 +5,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, CheckCircle, XCircle, Mail, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/hooks/use-toast';
+import { useForceLightTheme } from '@/hooks/useForceLightTheme';
 import logo from '@/assets/logo.png';
 
 const SupplierAuth = () => {
+  // Force light theme for supplier portal pages
+  useForceLightTheme();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const [status, setStatus] = useState<'verifying' | 'success' | 'error' | 'expired'>('verifying');
@@ -115,17 +118,17 @@ const SupplierAuth = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <Card className="w-full max-w-md">
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+      <Card className="w-full max-w-md bg-white shadow-lg border-gray-100">
         <CardHeader className="text-center">
           <img src={logo} alt="Bestellung.pro" className="h-16 w-16 mx-auto mb-4" />
-          <CardTitle>Lieferantenportal</CardTitle>
+          <CardTitle className="text-gray-900">Lieferantenportal</CardTitle>
         </CardHeader>
         <CardContent className="text-center">
           {status === 'verifying' && (
             <div className="space-y-4">
               <Loader2 className="h-12 w-12 animate-spin mx-auto text-primary" />
-              <p className="text-muted-foreground">Link wird überprüft...</p>
+              <p className="text-gray-500">Link wird überprüft...</p>
             </div>
           )}
           
@@ -133,7 +136,7 @@ const SupplierAuth = () => {
             <div className="space-y-4">
               <CheckCircle className="h-12 w-12 mx-auto text-green-500" />
               <p className="text-green-600 font-medium">Erfolgreich angemeldet!</p>
-              <p className="text-muted-foreground">Sie werden weitergeleitet...</p>
+              <p className="text-gray-500">Sie werden weitergeleitet...</p>
             </div>
           )}
           
@@ -141,7 +144,7 @@ const SupplierAuth = () => {
             <div className="space-y-4">
               <Clock className="h-12 w-12 mx-auto text-amber-500" />
               <p className="text-amber-600 font-medium">{errorMessage}</p>
-              <p className="text-muted-foreground text-sm">
+              <p className="text-gray-500 text-sm">
                 Fordern Sie einen neuen Zugangslink an:
               </p>
               {expiredSupplierId ? (
@@ -150,7 +153,7 @@ const SupplierAuth = () => {
                   Neuen Link anfordern
                 </Button>
               ) : (
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-gray-500">
                   Bitte kontaktieren Sie Ihren Ansprechpartner für einen neuen Link.
                 </p>
               )}
@@ -161,7 +164,7 @@ const SupplierAuth = () => {
             <div className="space-y-4">
               <CheckCircle className="h-12 w-12 mx-auto text-green-500" />
               <p className="text-green-600 font-medium">Link gesendet!</p>
-              <p className="text-muted-foreground text-sm">
+              <p className="text-gray-500 text-sm">
                 Bitte überprüfen Sie Ihr E-Mail-Postfach und klicken Sie auf den neuen Link.
               </p>
             </div>
@@ -169,9 +172,9 @@ const SupplierAuth = () => {
           
           {status === 'error' && (
             <div className="space-y-4">
-              <XCircle className="h-12 w-12 mx-auto text-destructive" />
-              <p className="text-destructive font-medium">{errorMessage}</p>
-              <Button variant="outline" onClick={() => navigate('/')}>
+              <XCircle className="h-12 w-12 mx-auto text-red-500" />
+              <p className="text-red-600 font-medium">{errorMessage}</p>
+              <Button variant="outline" onClick={() => navigate('/')} className="border-gray-200 text-gray-700 hover:bg-gray-50">
                 Zur Startseite
               </Button>
             </div>

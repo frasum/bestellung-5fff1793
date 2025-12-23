@@ -5,6 +5,7 @@ import { format, differenceInHours } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
+import { useForceLightTheme } from '@/hooks/useForceLightTheme';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -100,6 +101,10 @@ interface DraftData {
 
 const SupplierPortal = () => {
   const navigate = useNavigate();
+  
+  // Force light theme for supplier portal pages
+  useForceLightTheme();
+  
   const [session, setSession] = useState<SupplierSession | null>(null);
   const [articles, setArticles] = useState<Article[]>([]);
   const [pendingChanges, setPendingChanges] = useState<PendingChange[]>([]);
