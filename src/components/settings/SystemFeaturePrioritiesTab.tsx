@@ -3,11 +3,13 @@ import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
-import { FileJson, FileText, Circle, MessageSquare, Check, Plus } from 'lucide-react';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { FileJson, FileText, Circle, MessageSquare, Check, Plus, ChevronDown, StickyNote, Loader2 } from 'lucide-react';
 import { SYSTEM_FEATURES, getTotalFeatureCount, SystemFeatureCategory } from '@/data/systemFeatures';
 import {
   useSystemFeaturePriorities,
@@ -19,7 +21,7 @@ import {
 } from '@/hooks/useSystemFeaturePriorities';
 import { useEdgeFunctionRegistry } from '@/hooks/useEdgeFunctionRegistry';
 import { exportPrioritiesToPdf, exportPrioritiesToJson } from '@/lib/systemPrioritiesExport';
-import { useOrganization } from '@/hooks/useSettings';
+import { useOrganization, useUpdateChecklistNotes } from '@/hooks/useSettings';
 import { cn } from '@/lib/utils';
 import {
   Dialog,
@@ -32,7 +34,7 @@ import {
 import { Label } from '@/components/ui/label';
 import { useIsSuperAdmin } from '@/hooks/useIsSuperAdmin';
 import { useAddEdgeFunction } from '@/hooks/useEdgeFunctionRegistry';
-
+import { toast } from 'sonner';
 const PriorityButton = ({
   priority,
   currentPriority,
@@ -296,8 +298,27 @@ export const SystemFeaturePrioritiesTab = () => {
   const { data: edgeFunctions, isLoading: edgeFunctionsLoading } = useEdgeFunctionRegistry();
   const { data: organization } = useOrganization();
   const bulkMutation = useBulkSetCategoryPriority();
+  const notesMutation = useUpdateChecklistNotes();
   const isSuperAdmin = useIsSuperAdmin();
   const [activeFilter, setActiveFilter] = useState<FeaturePriority | 'unrated' | 'worked_on' | 'not_worked_on' | null>(null);
+  const [notesOpen, setNotesOpen] = useState(false);
+  const [globalNotes, setGlobalNotes] = useState('');
+
+  // Sync global notes when organization loads
+  useEffect(() => {
+    if (organization?.developer_checklist_notes !== undefined) {
+      setGlobalNotes(organization.developer_checklist_notes || '');
+    }
+  }, [organization?.developer_checklist_notes]);
+
+  const handleGlobalNotesBlur = () => {
+    if (organization && globalNotes !== (organization.developer_checklist_notes || '')) {
+      notesMutation.mutate(
+        { id: organization.id, notes: globalNotes },
+        { onSuccess: () => toast.success(i18n.language === 'de' ? 'Notizen gespeichert' : 'Notes saved') }
+      );
+    }
+  };
 
   // Combine static features with dynamic edge functions
   const allFeatures = useMemo((): SystemFeatureCategory[] => {
@@ -441,6 +462,38 @@ export const SystemFeaturePrioritiesTab = () => {
             </Button>
           </div>
         </div>
+
+        {/* Global Notes */}
+        <Collapsible open={notesOpen} onOpenChange={setNotesOpen} className="mt-4">
+          <CollapsibleTrigger asChild>
+            <Button variant="outline" className="w-full justify-between">
+              <span className="flex items-center gap-2">
+                <StickyNote className="h-4 w-4" />
+                {i18n.language === 'de' ? 'Allgemeine Notizen' : 'General Notes'}
+                {globalNotes && <Badge variant="secondary" className="ml-2 text-xs">!</Badge>}
+              </span>
+              <ChevronDown className={cn("h-4 w-4 transition-transform", notesOpen && "rotate-180")} />
+            </Button>
+          </CollapsibleTrigger>
+          <CollapsibleContent className="mt-2">
+            <div className="relative">
+              <Textarea
+                placeholder={i18n.language === 'de' 
+                  ? 'Allgemeine Notizen für die Entwicklung...' 
+                  : 'General notes for development...'}
+                value={globalNotes}
+                onChange={(e) => setGlobalNotes(e.target.value)}
+                onBlur={handleGlobalNotesBlur}
+                className="min-h-[100px] resize-y"
+              />
+              {notesMutation.isPending && (
+                <div className="absolute top-2 right-2">
+                  <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                </div>
+              )}
+            </div>
+          </CollapsibleContent>
+        </Collapsible>
 
         {/* Stats */}
         <div className="mt-4 space-y-3">

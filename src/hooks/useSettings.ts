@@ -44,6 +44,7 @@ export interface Organization {
   address: string | null;
   is_sponsored: boolean;
   sponsored_note: string | null;
+  developer_checklist_notes: string | null;
 }
 
 export const useOrganization = () => {
@@ -101,6 +102,25 @@ export const useUpdateOrganization = () => {
       toast.success('Organization updated');
     },
     onError: () => toast.error('Failed to update organization'),
+  });
+};
+
+export const useUpdateChecklistNotes = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, notes }: { id: string; notes: string }) => {
+      const { error } = await supabase
+        .from('organizations')
+        .update({ developer_checklist_notes: notes })
+        .eq('id', id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['organization'] });
+    },
+    onError: () => toast.error('Failed to save notes'),
   });
 };
 
