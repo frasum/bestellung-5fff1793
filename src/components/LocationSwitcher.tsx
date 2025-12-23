@@ -27,7 +27,7 @@ export const LocationSwitcher = ({ className, showIcon = true }: LocationSwitche
       <div className={cn(
         "flex items-center gap-2 px-5 py-3",
         "bg-accent/10 text-accent rounded-md font-semibold text-base",
-        "animate-pulse-glow",
+        "transition-all duration-200",
         className
       )}>
         {showIcon && <MapPin className="h-5 w-5" />}
@@ -46,9 +46,9 @@ export const LocationSwitcher = ({ className, showIcon = true }: LocationSwitche
             "gap-2",
             "bg-accent text-accent-foreground",
             "border-accent/50",
-            "hover:bg-accent/90",
+            "hover:bg-accent/90 hover:shadow-md",
             "font-semibold text-base",
-            "animate-pulse-glow",
+            "transition-all duration-200",
             className
           )}
         >
