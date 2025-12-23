@@ -4,7 +4,7 @@ import { useSearchParams } from 'react-router-dom';
 import { DashboardLayout, useSidebarContext } from '@/components/layout/DashboardLayout';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Building2, FlaskConical, MessageSquare, Store, ClipboardCheck, Gift, TrendingDown } from 'lucide-react';
+import { Building2, FlaskConical, MessageSquare, Store, ClipboardCheck, Gift, TrendingDown, Shield } from 'lucide-react';
 import { useUserRole } from '@/hooks/useTeam';
 import { useIsSuperAdmin } from '@/hooks/useIsSuperAdmin';
 import { DemoAccountsTab } from '@/components/settings/DemoAccountsTab';
@@ -18,6 +18,7 @@ import { B2BPortalOverviewTab } from '@/components/settings/B2BPortalOverviewTab
 import { SystemFeaturePrioritiesTab } from '@/components/settings/SystemFeaturePrioritiesTab';
 import { FriendsAndFamilyTab } from '@/components/settings/FriendsAndFamilyTab';
 import { PriceWatchSettingsTab } from '@/components/settings/PriceWatchSettingsTab';
+import { OrganizationsOverviewTab } from '@/components/settings/OrganizationsOverviewTab';
 
 // Default sub-tabs for each main tab (won't be shown in URL)
 const DEFAULT_SUB_TABS: Record<string, string> = {
@@ -46,7 +47,7 @@ const Settings = () => {
   const allowedTabs = useMemo(() => {
     const tabs = ['organization', 'communication'];
     if (isAdmin && advancedMode) tabs.push('demo-accounts');
-    if (isSuperAdmin) tabs.push('b2b-portal', 'friends-family');
+    if (isSuperAdmin) tabs.push('b2b-portal', 'friends-family', 'organizations');
     if (isAdmin) tabs.push('price-watch');
     if (isAdmin && advancedMode) tabs.push('developer-checklist');
     return tabs;
@@ -168,6 +169,13 @@ const Settings = () => {
                     <span className="sm:hidden">F&F</span>
                   </TabsTrigger>
                 )}
+                {isSuperAdmin && (
+                  <TabsTrigger value="organizations" className="gap-1.5 text-xs sm:text-sm whitespace-nowrap">
+                    <Shield className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                    <span className="hidden sm:inline">Organisationen</span>
+                    <span className="sm:hidden">Orgs</span>
+                  </TabsTrigger>
+                )}
                 {isAdmin && (
                   <TabsTrigger value="price-watch" className="gap-1.5 text-xs sm:text-sm whitespace-nowrap">
                     <TrendingDown className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
@@ -219,6 +227,12 @@ const Settings = () => {
           {isSuperAdmin && (
             <TabsContent value="friends-family" className="animate-in fade-in-50 slide-in-from-right-2 duration-200">
               <FriendsAndFamilyTab />
+            </TabsContent>
+          )}
+
+          {isSuperAdmin && (
+            <TabsContent value="organizations" className="animate-in fade-in-50 slide-in-from-right-2 duration-200">
+              <OrganizationsOverviewTab />
             </TabsContent>
           )}
 
