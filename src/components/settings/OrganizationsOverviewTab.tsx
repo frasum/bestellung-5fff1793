@@ -328,7 +328,7 @@ export function OrganizationsOverviewTab() {
                               variant="ghost" 
                               size="sm"
                               className="text-destructive hover:text-destructive"
-                              disabled={org.users.length > 0 || deleteOrganization.isPending}
+                              disabled={deleteOrganization.isPending}
                             >
                               {deleteOrganization.isPending ? (
                                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -340,10 +340,19 @@ export function OrganizationsOverviewTab() {
                           <AlertDialogContent>
                             <AlertDialogHeader>
                               <AlertDialogTitle>Organisation löschen?</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                Möchten Sie die Organisation "{org.name}" wirklich löschen? 
-                                Diese Aktion kann nicht rückgängig gemacht werden.
-                                Alle zugehörigen Standorte und Lieferanten werden ebenfalls gelöscht.
+                              <AlertDialogDescription className="space-y-2">
+                                <span>
+                                  Möchten Sie die Organisation "{org.name}" wirklich löschen? 
+                                  Diese Aktion kann nicht rückgängig gemacht werden.
+                                </span>
+                                {org.users.length > 0 && (
+                                  <span className="block text-amber-600 dark:text-amber-400 font-medium">
+                                    ⚠️ {org.users.length} Benutzer werden von dieser Organisation getrennt.
+                                  </span>
+                                )}
+                                <span className="block">
+                                  Alle zugehörigen Standorte und Lieferanten werden ebenfalls gelöscht.
+                                </span>
                               </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
