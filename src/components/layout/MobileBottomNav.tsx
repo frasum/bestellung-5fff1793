@@ -61,14 +61,14 @@ export const MobileBottomNav = () => {
               to={item.href}
               className={cn(
                 'flex flex-col items-center justify-center flex-1 h-full py-2 relative',
-                'transition-colors touch-manipulation',
+                'transition-all duration-200 touch-manipulation',
                 isActive 
-                  ? 'text-primary' 
-                  : 'text-muted-foreground active:text-primary'
+                  ? 'text-accent' 
+                  : 'text-muted-foreground active:text-accent'
               )}
             >
               <div className="relative">
-                <Icon className="w-5 h-5 md:w-6 md:h-6" />
+                <Icon className={cn("w-5 h-5 md:w-6 md:h-6 transition-transform duration-200", isActive && "scale-110")} />
                 {item.showBadge && itemCount > 0 && (
                   <Badge 
                     variant="destructive" 
@@ -80,7 +80,7 @@ export const MobileBottomNav = () => {
               </div>
               <span className="text-[10px] md:text-xs mt-1 font-medium">{item.label}</span>
               {isActive && (
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-8 md:w-10 h-0.5 bg-primary rounded-full" />
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-8 md:w-10 h-1 bg-accent rounded-full" />
               )}
             </Link>
           );
@@ -124,10 +124,10 @@ export const MobileBottomNav = () => {
                     to={showDraftsBadge ? '/orders?tab=drafts' : item.href}
                     onClick={handleNavClick}
                     className={cn(
-                      'flex items-center gap-3 p-4 md:p-5 min-h-[52px] md:min-h-[60px] rounded-md transition-colors relative',
+                      'flex items-center gap-3 p-4 md:p-5 min-h-[52px] md:min-h-[60px] rounded-lg transition-all duration-200 relative',
                       isActive 
-                        ? 'bg-primary text-primary-foreground' 
-                        : 'bg-muted hover:bg-muted/50'
+                        ? 'bg-accent text-accent-foreground shadow-sm' 
+                        : 'bg-muted hover:bg-accent/10 hover:text-accent'
                     )}
                   >
                     <Icon className="w-5 h-5 md:w-6 md:h-6" />
