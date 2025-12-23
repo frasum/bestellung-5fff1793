@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent } from '@/components/ui/card';
@@ -7,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Building2, Users, Store, Ruler, Tag, FolderTree, Package, FileText, Download, Loader2, Phone, Languages } from 'lucide-react';
+import { Building2, Users, Store, Ruler, Tag, FolderTree, Package, FileText, Download, Loader2, Phone, Languages, Crown } from 'lucide-react';
 import { useOrganization, useUpdateOrganization } from '@/hooks/useSettings';
 import { TeamTab } from './TeamTab';
 import { LocationsWithAddressesTab } from './LocationsWithAddressesTab';
@@ -26,6 +27,7 @@ interface OrganizationTabProps {
 
 const OrganizationGeneralContent = () => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const { data: organization, isLoading } = useOrganization();
   const updateOrganization = useUpdateOrganization();
   const [name, setName] = useState('');
@@ -34,6 +36,8 @@ const OrganizationGeneralContent = () => {
   const [website, setWebsite] = useState('');
   const [address, setAddress] = useState('');
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+  
+  const isEnterprise = organization?.subscription_tier === 'enterprise';
 
   useEffect(() => {
     if (organization) {
@@ -101,6 +105,17 @@ const OrganizationGeneralContent = () => {
                 <span className="text-xs text-muted-foreground">
                   {t('settings.trialEnds')}: {new Date(organization.trial_ends_at).toLocaleDateString()}
                 </span>
+              )}
+              {!isEnterprise && (
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => navigate('/pricing')}
+                  className="gap-1"
+                >
+                  <Crown className="h-3.5 w-3.5" />
+                  {t('settings.upgrade')}
+                </Button>
               )}
             </div>
           </div>
