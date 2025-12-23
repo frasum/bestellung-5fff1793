@@ -257,7 +257,7 @@ export const SupplierPortalOwnArticlesTab = ({ session }: Props) => {
               {articles.length} Artikel von {vendors.length} Lieferanten
             </CardDescription>
           </div>
-          <Button onClick={() => handleOpenDialog()}>
+          <Button variant="accent" onClick={() => handleOpenDialog()}>
             <Plus className="h-4 w-4 mr-2" />
             Neu
           </Button>

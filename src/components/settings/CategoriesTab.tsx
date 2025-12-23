@@ -147,7 +147,7 @@ export const CategoriesTab = () => {
                       onKeyDown={(e) => e.key === 'Enter' && handleAddCategory()}
                       className="h-11 sm:h-9"
                     />
-                    <Button onClick={handleAddCategory} disabled={createCategory.isPending || !newCategoryName.trim()} className="h-10 sm:h-9 w-full sm:w-auto">
+                    <Button variant="accent" onClick={handleAddCategory} disabled={createCategory.isPending || !newCategoryName.trim()} className="h-10 sm:h-9 w-full sm:w-auto">
                       <Plus className="h-4 w-4 mr-2" />
                       {t('common.add')}
                     </Button>

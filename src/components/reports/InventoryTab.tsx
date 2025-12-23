@@ -530,7 +530,7 @@ export const InventoryTab = () => {
             <History className="w-4 h-4 lg:mr-2" />
             <span className="hidden lg:inline">{t('inventory.history')}</span>
           </Button>
-          <Button size="sm" onClick={() => setShowNewSessionDialog(true)} className="h-9">
+          <Button variant="accent" size="sm" onClick={() => setShowNewSessionDialog(true)} className="h-9">
             <Plus className="w-4 h-4 lg:mr-2" />
             <span className="hidden lg:inline">{t('inventory.newSession')}</span>
             <span className="lg:hidden">{t('inventory.new')}</span>
@@ -828,7 +828,7 @@ export const InventoryTab = () => {
                 <p className="text-muted-foreground mb-4">
                   {t('inventory.startNewOrLoadHistory')}
                 </p>
-                <Button onClick={() => setShowNewSessionDialog(true)}>
+                <Button variant="accent" onClick={() => setShowNewSessionDialog(true)}>
                   <Plus className="w-4 h-4 mr-2" />
                   {t('inventory.startSession')}
                 </Button>

@@ -137,7 +137,7 @@ export const UnitsTab = () => {
                     onKeyDown={(e) => e.key === 'Enter' && handleAddUnit()}
                     className="h-11 sm:h-9"
                   />
-                  <Button onClick={() => handleAddUnit()} disabled={createUnit.isPending || !newUnitName.trim()} className="h-10 sm:h-9 w-full sm:w-auto">
+                  <Button variant="accent" onClick={() => handleAddUnit()} disabled={createUnit.isPending || !newUnitName.trim()} className="h-10 sm:h-9 w-full sm:w-auto">
                     <Plus className="h-4 w-4 mr-2" />
                     {t('common.add')}
                   </Button>

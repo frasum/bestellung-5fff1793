@@ -154,7 +154,7 @@ const B2BSuppliersTab = ({ accountId, onStatsChange }: B2BSuppliersTabProps) => 
             className="pl-10"
           />
         </div>
-        <Button onClick={() => { setEditingSupplier(null); setDialogOpen(true); }}>
+        <Button variant="accent" onClick={() => { setEditingSupplier(null); setDialogOpen(true); }}>
           <Plus className="h-4 w-4 mr-2" />
           Lieferant hinzufügen
         </Button>
@@ -182,7 +182,7 @@ const B2BSuppliersTab = ({ accountId, onStatsChange }: B2BSuppliersTabProps) => 
               {search ? 'Versuchen Sie einen anderen Suchbegriff' : 'Fügen Sie Ihren ersten Lieferanten hinzu'}
             </p>
             {!search && (
-              <Button onClick={() => { setEditingSupplier(null); setDialogOpen(true); }}>
+              <Button variant="accent" onClick={() => { setEditingSupplier(null); setDialogOpen(true); }}>
                 <Plus className="h-4 w-4 mr-2" />
                 Ersten Lieferanten hinzufügen
               </Button>
