@@ -1260,6 +1260,9 @@
     "priceDecrease": "Price Decrease",
     "quantityMismatch": "Quantity Mismatch",
     "missingItem": "Missing Item",
-    "extraItem": "Extra Item"
+    "extraItem": "Extra Item",
+    "checkEmails": "Check Emails",
+    "checkEmailsDesc": "Fetch new invoices from mailbox",
+    "fromEmail": "Received via email"
   }
 }

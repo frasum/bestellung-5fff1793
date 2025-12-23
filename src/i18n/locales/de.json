@@ -1293,6 +1293,9 @@
     "priceDecrease": "Preissenkung",
     "quantityMismatch": "Mengendifferenz",
     "missingItem": "Fehlender Artikel",
-    "extraItem": "Zusätzlicher Artikel"
+    "extraItem": "Zusätzlicher Artikel",
+    "checkEmails": "E-Mails prüfen",
+    "checkEmailsDesc": "Neue Rechnungen aus Postfach abrufen",
+    "fromEmail": "Per E-Mail empfangen"
   }
 }

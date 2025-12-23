@@ -19,6 +19,8 @@ import {
   Eye,
   Check,
   X,
+  Mail,
+  RefreshCw,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -49,6 +51,7 @@ import {
   useUploadInvoice,
   useUpdateInvoiceStatus,
   useResolveDiscrepancy,
+  useCheckInvoiceEmails,
   Invoice,
   InvoiceDiscrepancy,
 } from '@/hooks/useInvoices';
@@ -76,6 +79,7 @@ export function InvoiceVerificationTab() {
   const { data: invoices, isLoading } = useInvoices();
   const uploadInvoice = useUploadInvoice();
   const updateStatus = useUpdateInvoiceStatus();
+  const checkEmails = useCheckInvoiceEmails();
   const [expandedInvoices, setExpandedInvoices] = useState<Set<string>>(new Set());
   const [selectedInvoiceId, setSelectedInvoiceId] = useState<string | null>(null);
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
@@ -159,38 +163,59 @@ export function InvoiceVerificationTab() {
         </Card>
       </div>
 
-      {/* Upload Area */}
+      {/* Email Check + Upload Area */}
       <Card>
         <CardContent className="p-6">
-          <div
-            {...getRootProps()}
-            className={cn(
-              'border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors',
-              isDragActive ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50',
-              uploadInvoice.isPending && 'opacity-50 pointer-events-none'
-            )}
-          >
-            <input {...getInputProps()} />
-            {uploadInvoice.isPending ? (
-              <div className="flex flex-col items-center gap-2">
-                <Loader2 className="h-10 w-10 text-primary animate-spin" />
-                <p className="text-sm text-muted-foreground">
-                  {t('invoices.uploading', 'Rechnung wird hochgeladen und analysiert...')}
-                </p>
+          <div className="flex flex-col sm:flex-row gap-4">
+            {/* Email Check Button */}
+            <Button
+              variant="outline"
+              size="lg"
+              className="flex-1 h-auto py-4"
+              onClick={() => checkEmails.mutate()}
+              disabled={checkEmails.isPending}
+            >
+              {checkEmails.isPending ? (
+                <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+              ) : (
+                <Mail className="h-5 w-5 mr-2" />
+              )}
+              <div className="text-left">
+                <div className="font-medium">{t('invoices.checkEmails', 'E-Mails prüfen')}</div>
+                <div className="text-xs text-muted-foreground">
+                  {t('invoices.checkEmailsDesc', 'Neue Rechnungen aus Postfach abrufen')}
+                </div>
               </div>
-            ) : (
-              <>
-                <Upload className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
-                <p className="text-sm font-medium">
-                  {isDragActive
-                    ? t('invoices.dropHere', 'PDF hier ablegen')
-                    : t('invoices.dragOrClick', 'PDF hierher ziehen oder klicken zum Auswählen')}
-                </p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {t('invoices.pdfOnly', 'Nur PDF-Dateien werden akzeptiert')}
-                </p>
-              </>
-            )}
+            </Button>
+
+            {/* Upload Area */}
+            <div
+              {...getRootProps()}
+              className={cn(
+                'flex-1 border-2 border-dashed rounded-lg p-4 text-center cursor-pointer transition-colors',
+                isDragActive ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50',
+                uploadInvoice.isPending && 'opacity-50 pointer-events-none'
+              )}
+            >
+              <input {...getInputProps()} />
+              {uploadInvoice.isPending ? (
+                <div className="flex items-center justify-center gap-2">
+                  <Loader2 className="h-5 w-5 text-primary animate-spin" />
+                  <span className="text-sm text-muted-foreground">
+                    {t('invoices.uploading', 'Wird analysiert...')}
+                  </span>
+                </div>
+              ) : (
+                <div className="flex items-center justify-center gap-2">
+                  <Upload className="h-5 w-5 text-muted-foreground" />
+                  <span className="text-sm">
+                    {isDragActive
+                      ? t('invoices.dropHere', 'PDF hier ablegen')
+                      : t('invoices.dragOrClick', 'PDF hochladen')}
+                  </span>
+                </div>
+              )}
+            </div>
           </div>
         </CardContent>
       </Card>
