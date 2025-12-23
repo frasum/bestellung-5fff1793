@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { LayoutDashboard, Users, Package, ShoppingCart, BarChart3, Settings, LogOut, Menu, X, FlaskConical, Search, Sparkles, Bell, Settings2, Gift } from 'lucide-react';
+import { LayoutDashboard, Users, Package, ShoppingCart, BarChart3, Settings, LogOut, Menu, X, FlaskConical, Search, Sparkles, Bell, Settings2, Gift, ChevronRight } from 'lucide-react';
 import { GlobalSearch } from '@/components/GlobalSearch';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import { LocationSwitcher } from '@/components/LocationSwitcher';
@@ -414,6 +414,20 @@ export const DashboardLayout = ({
           </div>
         </div>
       </aside>
+
+      {/* Floating Sidebar Toggle - Always visible when sidebar is collapsed */}
+      {sidebarCollapsed && (
+        <button
+          onClick={toggleSidebar}
+          className="hidden xl:flex fixed left-3 top-1/2 -translate-y-1/2 z-50 
+                     h-10 w-10 items-center justify-center rounded-full 
+                     bg-accent hover:bg-accent/90 text-accent-foreground
+                     shadow-lg transition-all duration-200 hover:scale-105"
+          title={t('common.showSidebar')}
+        >
+          <ChevronRight className="h-5 w-5" />
+        </button>
+      )}
 
       {/* Overlay */}
       {sidebarOpen && <div className="fixed inset-0 bg-background/80 z-30 xl:hidden" onClick={() => setSidebarOpen(false)} />}
