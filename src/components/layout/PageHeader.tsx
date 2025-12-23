@@ -1,7 +1,7 @@
 import { Link, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { PanelLeftClose, PanelLeft } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
+import sidebarToggleIcon from '@/assets/sidebar-toggle-icon.png';
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -138,19 +138,20 @@ export const PageHeader = ({
     <div className="space-y-1 mb-4 md:mb-6">
       {/* Breadcrumb row with sidebar toggle */}
       <div className="flex items-center gap-2">
-        <Button
-          variant="ghost"
-          size="icon"
+        <button
           onClick={onToggleSidebar}
-          className="hidden xl:flex h-8 w-8 shrink-0"
+          className="hidden xl:flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#4DB8A8] hover:bg-[#3EA89A] transition-colors"
           title={sidebarCollapsed ? t('common.showSidebar') : t('common.hideSidebar')}
         >
-          {sidebarCollapsed ? (
-            <PanelLeft className="h-4 w-4" />
-          ) : (
-            <PanelLeftClose className="h-4 w-4" />
-          )}
-        </Button>
+          <img 
+            src={sidebarToggleIcon} 
+            alt="Toggle Sidebar" 
+            className={cn(
+              "h-5 w-5 transition-transform duration-300",
+              sidebarCollapsed && "rotate-180"
+            )}
+          />
+        </button>
 
         {breadcrumbs.length > 0 && (
           <Breadcrumb>
