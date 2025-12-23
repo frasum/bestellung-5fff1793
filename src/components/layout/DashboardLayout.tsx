@@ -336,9 +336,9 @@ export const DashboardLayout = ({
         </TooltipProvider>
       </div>
 
-      {/* Sidebar */}
+      {/* Sidebar - Dark Theme */}
       <aside className={cn(
-        'fixed top-0 left-0 z-40 h-full w-64 bg-background border-r border-border',
+        'fixed top-0 left-0 z-40 h-full w-64 bg-sidebar border-r border-sidebar-border',
         'transition-transform duration-700 ease-in-out motion-reduce:transition-none',
         // Desktop: slide out to left when collapsed
         sidebarCollapsed ? 'xl:-translate-x-full' : 'xl:translate-x-0',
@@ -347,10 +347,10 @@ export const DashboardLayout = ({
       )}>
         <div className="flex flex-col h-full">
           {/* Logo */}
-          <div className="h-16 flex items-center justify-between px-6 border-b border-border">
+          <div className="h-16 flex items-center justify-between px-6 border-b border-sidebar-border">
             <div className="flex items-center gap-2">
               <img src={logoImage} alt="Bestellung.pro" className="w-9 h-9 rounded-lg object-cover" />
-              <span className="font-bold text-xl text-foreground">Bestellung.pro</span>
+              <span className="font-bold text-xl text-sidebar-foreground">Bestellung.pro</span>
             </div>
           </div>
 
@@ -372,8 +372,8 @@ export const DashboardLayout = ({
                   className={cn(
                     'flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200',
                     isActive 
-                      ? 'bg-accent/10 text-accent font-medium border-l-2 border-accent' 
-                      : 'text-muted-foreground hover:text-accent hover:bg-accent/5'
+                      ? 'bg-sidebar-accent text-accent font-medium border-l-2 border-accent' 
+                      : 'text-sidebar-foreground/70 hover:text-accent hover:bg-sidebar-accent/50'
                   )}
                 >
                   <item.icon className={cn("w-4 h-4", isActive && "text-accent")} />
@@ -392,7 +392,7 @@ export const DashboardLayout = ({
           </nav>
 
           {/* User section */}
-          <div className="p-4 border-t border-border">
+          <div className="p-4 border-t border-sidebar-border">
             <div className="flex items-center gap-3 mb-3 px-2">
               <div className="w-8 h-8 rounded-full bg-accent/20 flex items-center justify-center">
                 <span className="text-sm font-medium text-accent">
@@ -400,14 +400,14 @@ export const DashboardLayout = ({
                 </span>
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-foreground truncate">{user?.email}</p>
+                <p className="text-sm font-medium text-sidebar-foreground truncate">{user?.email}</p>
               </div>
             </div>
             <div className="xl:hidden mb-2 flex items-center gap-2">
               <LanguageSwitcher variant="full" />
               <ThemeToggle />
             </div>
-            <Button variant="ghost" className="w-full justify-start" onClick={handleSignOut}>
+            <Button variant="ghost" className="w-full justify-start text-sidebar-foreground/70 hover:text-accent hover:bg-sidebar-accent/50" onClick={handleSignOut}>
               <LogOut className="w-4 h-4 mr-2" />
               {t('nav.signOut')}
             </Button>
