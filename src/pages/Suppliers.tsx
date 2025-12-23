@@ -21,6 +21,7 @@ import { useImportSuppliers, useImportArticles } from '@/hooks/useImport';
 import { supabase } from '@/integrations/supabase/client';
 
 import { useSupplierPendingChanges, useCombinedPendingBySupplier, usePendingArticleIds, useRecentlyActiveSuppliers } from '@/hooks/useSupplierChanges';
+import { useSuppliersRealtime } from '@/hooks/useSuppliersRealtime';
 import { useLastOrderByArticle } from '@/hooks/useLastOrderByArticle';
 import { SupplierChangesDialog } from '@/components/suppliers/SupplierChangesDialog';
 import { SupplierLocationsDialog } from '@/components/suppliers/SupplierLocationsDialog';
@@ -102,6 +103,9 @@ const Suppliers = () => {
     );
     return locationLink?.customer_number || null;
   }, [activeLocation, supplierLocations]);
+
+  // Realtime subscription for suppliers
+  useSuppliersRealtime();
 
   // Shared data - all suppliers for reference (e.g., for dropdown, etc.)
   const {
