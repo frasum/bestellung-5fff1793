@@ -754,16 +754,40 @@ const SupplierPortal = () => {
     ? new Date(session.priceEditExpiresAt) > new Date() 
     : true; // Default to true for backwards compatibility
 
+  // Force light mode CSS variables
+  const lightModeStyles: React.CSSProperties = {
+    '--background': '0 0% 98%',
+    '--foreground': '224 71% 4%',
+    '--card': '0 0% 100%',
+    '--card-foreground': '224 71% 4%',
+    '--popover': '0 0% 100%',
+    '--popover-foreground': '224 71% 4%',
+    '--primary': '174 100% 29%',
+    '--primary-foreground': '0 0% 100%',
+    '--secondary': '220 14% 96%',
+    '--secondary-foreground': '220 9% 46%',
+    '--muted': '220 14% 96%',
+    '--muted-foreground': '220 9% 46%',
+    '--accent': '220 14% 96%',
+    '--accent-foreground': '224 71% 4%',
+    '--destructive': '0 84% 60%',
+    '--destructive-foreground': '0 0% 100%',
+    '--border': '220 13% 91%',
+    '--input': '220 13% 91%',
+    '--ring': '174 100% 29%',
+    colorScheme: 'light',
+  } as React.CSSProperties;
+
   if (!session) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center light">
+      <div style={lightModeStyles} className="min-h-screen bg-gray-50 flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100/50 light">
+    <div style={lightModeStyles} className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100/50">
       {/* Header - Modern, bright with subtle shadow */}
       <header className="bg-white border-b border-gray-100 shadow-sm sticky top-0 z-10">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
