@@ -24,16 +24,26 @@ export const LocationProvider = ({ children }: { children: ReactNode }) => {
 
   // Load active location from localStorage or set default
   useEffect(() => {
-    if (locations.length > 0 && !activeLocation) {
+    if (locations.length > 0) {
       const savedLocationId = localStorage.getItem('activeLocationId');
       const savedLocation = savedLocationId 
         ? locations.find(l => l.id === savedLocationId)
         : null;
       
+      // Wenn gespeicherte Location nicht in den erlaubten Locations ist, 
+      // localStorage bereinigen
+      if (savedLocationId && !savedLocation) {
+        localStorage.removeItem('activeLocationId');
+      }
+      
       const defaultLocation = savedLocation || locations.find(l => l.is_default) || locations[0];
-      setActiveLocationState(defaultLocation);
+      
+      // Immer aktualisieren wenn sich die Locations ändern oder aktive Location ungültig ist
+      if (!activeLocation || !locations.find(l => l.id === activeLocation.id)) {
+        setActiveLocationState(defaultLocation);
+      }
     }
-  }, [locations, activeLocation]);
+  }, [locations]);
 
   const setActiveLocation = (location: Location) => {
     setActiveLocationState(location);
