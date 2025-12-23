@@ -82,8 +82,8 @@ const Orders = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const { t, i18n } = useTranslation();
   
-  // Location filter state: 'all' = all locations (default), 'active' = current location, or specific location id
-  const [locationFilter, setLocationFilter] = useState<string>('all');
+  // Location filter state: 'active' = current location (default), 'all' = all locations, or specific location id
+  const [locationFilter, setLocationFilter] = useState<string>('active');
   
   // Compute locationId for query based on filter
   const queryLocationId = useMemo(() => {
@@ -103,11 +103,21 @@ const Orders = () => {
   const locale = localeMap[i18n.language] || de;
   const highlightedOrderRef = useRef<HTMLDivElement>(null);
   
-  // Drafts state
-  const [draftsLocationFilter, setDraftsLocationFilter] = useState<string>('all'); // 'all' or specific location id
+  // Drafts state - default to active location
+  const [draftsLocationFilter, setDraftsLocationFilter] = useState<string>('active');
   const showAllDraftLocations = draftsLocationFilter === 'all';
-  const draftsQueryLocationId = draftsLocationFilter === 'all' ? undefined : draftsLocationFilter;
+  const draftsQueryLocationId = useMemo(() => {
+    if (draftsLocationFilter === 'all') return undefined;
+    if (draftsLocationFilter === 'active') return activeLocation?.id;
+    return draftsLocationFilter;
+  }, [draftsLocationFilter, activeLocation?.id]);
   const { data: drafts, isLoading: draftsLoading } = useCartDrafts(draftsQueryLocationId, showAllDraftLocations);
+  
+  // Reset filters when active location changes
+  useEffect(() => {
+    setLocationFilter('active');
+    setDraftsLocationFilter('active');
+  }, [activeLocation?.id]);
   const deleteDraft = useDeleteCartDraft();
   const { loadFromDraft, items: cartItems } = useCart();
   const [draftsSearchQuery, setDraftsSearchQuery] = useState('');
