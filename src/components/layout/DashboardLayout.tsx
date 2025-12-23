@@ -1,4 +1,4 @@
-import { ReactNode, useState, useRef, useEffect } from 'react';
+import { ReactNode, useState, useRef, useEffect, createContext, useContext } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
@@ -23,6 +23,19 @@ import { toast } from 'sonner';
 import logoImage from '@/assets/logo.png';
 import { useHasRole } from '@/hooks/useUserRole';
 
+// Context for sidebar state
+interface SidebarContextType {
+  sidebarCollapsed: boolean;
+  toggleSidebar: () => void;
+}
+
+const SidebarContext = createContext<SidebarContextType>({
+  sidebarCollapsed: false,
+  toggleSidebar: () => {},
+});
+
+export const useSidebarContext = () => useContext(SidebarContext);
+
 interface DashboardLayoutProps {
   children: ReactNode;
 }
@@ -31,6 +44,9 @@ export const DashboardLayout = ({
   children
 }: DashboardLayoutProps) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => 
+    localStorage.getItem('sidebar-collapsed') === 'true'
+  );
   const {
     user,
     signOut
@@ -110,6 +126,12 @@ export const DashboardLayout = ({
   };
   
   const demoDaysRemaining = getDemoDaysRemaining();
+
+  const toggleSidebar = () => {
+    const newValue = !sidebarCollapsed;
+    setSidebarCollapsed(newValue);
+    localStorage.setItem('sidebar-collapsed', newValue.toString());
+  };
   
   const navItems = [
     { href: '/suppliers', label: t('nav.catalog'), icon: Users },
@@ -202,7 +224,10 @@ export const DashboardLayout = ({
       </header>
 
       {/* Desktop Top Bar */}
-      <div className="hidden xl:flex fixed top-0 left-64 right-0 z-30 h-14 bg-card/80 backdrop-blur-sm border-b border-border items-center justify-between px-6">
+      <div className={cn(
+        "hidden xl:flex fixed top-0 right-0 z-30 h-14 bg-card/80 backdrop-blur-sm border-b border-border items-center justify-between px-6 transition-all duration-300",
+        sidebarCollapsed ? 'left-0' : 'left-64'
+      )}>
         <div className="flex items-center gap-4">
           <GlobalSearch />
         </div>
@@ -311,8 +336,17 @@ export const DashboardLayout = ({
       </div>
 
       {/* Sidebar */}
-      <aside className={cn('fixed top-0 left-0 z-40 h-full w-64 bg-background border-r border-border transition-transform duration-300', 'xl:translate-x-0', sidebarOpen ? 'translate-x-0' : '-translate-x-full')}>
-        <div className="flex flex-col h-full">
+      <aside className={cn(
+        'fixed top-0 left-0 z-40 h-full bg-background border-r border-border transition-all duration-300',
+        sidebarCollapsed ? 'xl:w-0 xl:border-r-0' : 'xl:w-64',
+        'w-64',
+        'xl:translate-x-0',
+        sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+      )}>
+        <div className={cn(
+          "flex flex-col h-full transition-opacity duration-300",
+          sidebarCollapsed ? 'xl:opacity-0 xl:pointer-events-none' : 'xl:opacity-100'
+        )}>
           {/* Logo */}
           <div className="h-16 flex items-center justify-between px-6 border-b border-border">
             <div className="flex items-center gap-2">
@@ -384,9 +418,14 @@ export const DashboardLayout = ({
       {sidebarOpen && <div className="fixed inset-0 bg-background/80 z-30 xl:hidden" onClick={() => setSidebarOpen(false)} />}
 
       {/* Main Content */}
-      <main className="xl:ml-64 pt-14 pb-20 xl:pb-0 min-h-screen">
-        <div className="px-4 pt-0 pb-4 md:px-5 md:pt-4 md:pb-5 xl:p-8">{children}</div>
-      </main>
+      <SidebarContext.Provider value={{ sidebarCollapsed, toggleSidebar }}>
+        <main className={cn(
+          "pt-14 pb-20 xl:pb-0 min-h-screen transition-all duration-300",
+          sidebarCollapsed ? 'xl:ml-0' : 'xl:ml-64'
+        )}>
+          <div className="px-4 pt-0 pb-4 md:px-5 md:pt-4 md:pb-5 xl:p-8">{children}</div>
+        </main>
+      </SidebarContext.Provider>
 
       {/* Floating Cart Button (Desktop) */}
       <FloatingCartButton />

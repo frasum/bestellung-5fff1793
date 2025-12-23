@@ -1,7 +1,8 @@
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { DashboardLayout } from '@/components/layout/DashboardLayout';
+import { DashboardLayout, useSidebarContext } from '@/components/layout/DashboardLayout';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/button';
 import { useSuppliers, useCreateSupplier, useUpdateSupplier, useDeleteSupplier, Supplier, SupplierInput } from '@/hooks/useSuppliers';
 import { useSubscriptionLimits } from '@/hooks/useSubscriptionLimits';
@@ -552,15 +553,18 @@ const Suppliers = () => {
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>;
   }
+  const { sidebarCollapsed, toggleSidebar } = useSidebarContext();
+  
   return <DashboardLayout>
       <div className="space-y-2 md:space-y-5 xl:space-y-6">
-        {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 md:gap-4">
-          <div>
-            <h1 className="text-2xl md:text-3xl font-bold text-foreground">Katalog</h1>
-            <p className="text-sm md:text-base text-muted-foreground mt-0.5 md:mt-1">Verwalten Sie Ihre Lieferanten, Artikel und die Weinkarte </p>
-          </div>
-        </div>
+        {/* Header with Breadcrumb */}
+        <PageHeader 
+          title="Katalog"
+          description="Verwalten Sie Ihre Lieferanten, Artikel und die Weinkarte"
+          activeTab={activeTab}
+          sidebarCollapsed={sidebarCollapsed}
+          onToggleSidebar={toggleSidebar}
+        />
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
