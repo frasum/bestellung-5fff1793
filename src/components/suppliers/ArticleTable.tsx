@@ -1,5 +1,5 @@
 import { Fragment, useCallback } from 'react';
-import { ChevronRight, Pencil, Trash2, Bell, Package } from 'lucide-react';
+import { ChevronRight, Trash2, Bell, Package } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
@@ -260,9 +260,6 @@ export const ArticleTable = ({
                                 </div>
                               </div>
                               <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onEdit(article)}>
-                                  <Pencil className="w-3 h-3" />
-                                </Button>
                                 <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => onDelete(article)}>
                                   <Trash2 className="w-3 h-3" />
                                 </Button>
