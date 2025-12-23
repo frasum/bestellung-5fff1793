@@ -21,6 +21,7 @@ import {
   X,
   Mail,
   RefreshCw,
+  Download,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -85,6 +86,7 @@ export function InvoiceVerificationTab() {
   const [expandedInvoices, setExpandedInvoices] = useState<Set<string>>(new Set());
   const [selectedInvoiceId, setSelectedInvoiceId] = useState<string | null>(null);
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
+  const [pdfDialogUrl, setPdfDialogUrl] = useState<string | null>(null);
 
   const locale = i18n.language === 'de' ? de : enUS;
 
@@ -387,12 +389,22 @@ export function InvoiceVerificationTab() {
                         {/* Actions */}
                         <div className="flex items-center gap-2 pt-2">
                           {invoice.pdf_url && (
-                            <Button variant="outline" size="sm" asChild>
-                              <a href={invoice.pdf_url} target="_blank" rel="noopener noreferrer">
+                            <>
+                              <Button 
+                                variant="outline" 
+                                size="sm" 
+                                onClick={() => setPdfDialogUrl(invoice.pdf_url)}
+                              >
                                 <Eye className="h-4 w-4 mr-2" />
-                                PDF
-                              </a>
-                            </Button>
+                                {t('invoices.viewPdf', 'PDF anzeigen')}
+                              </Button>
+                              <Button variant="ghost" size="sm" asChild>
+                                <a href={invoice.pdf_url} download>
+                                  <Download className="h-4 w-4 mr-2" />
+                                  {t('invoices.download', 'Download')}
+                                </a>
+                              </Button>
+                            </>
                           )}
                           {invoice.status === 'pending' && (
                             <Button
@@ -448,6 +460,34 @@ export function InvoiceVerificationTab() {
         open={showDetailsDialog}
         onOpenChange={setShowDetailsDialog}
       />
+
+      {/* PDF Viewer Dialog */}
+      <Dialog open={!!pdfDialogUrl} onOpenChange={() => setPdfDialogUrl(null)}>
+        <DialogContent className="max-w-5xl h-[85vh] flex flex-col p-0">
+          <DialogHeader className="p-4 pb-2 border-b">
+            <DialogTitle className="flex items-center justify-between">
+              <span>{t('invoices.pdfPreview', 'PDF Vorschau')}</span>
+              {pdfDialogUrl && (
+                <Button variant="outline" size="sm" asChild className="mr-8">
+                  <a href={pdfDialogUrl} download>
+                    <Download className="h-4 w-4 mr-2" />
+                    {t('invoices.download', 'Download')}
+                  </a>
+                </Button>
+              )}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="flex-1 min-h-0">
+            {pdfDialogUrl && (
+              <iframe
+                src={pdfDialogUrl}
+                className="w-full h-full border-0"
+                title="PDF Vorschau"
+              />
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
