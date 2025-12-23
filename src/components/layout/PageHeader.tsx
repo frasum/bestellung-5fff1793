@@ -102,7 +102,7 @@ export const PageHeader = ({
   const buildBreadcrumbs = () => {
     const crumbs: { label: string; path: string | null }[] = [];
 
-    // Add parent (Dashboard/Reports)
+    // Add parent if exists
     if (config?.parent) {
       const parentConfig = routeConfig[config.parent];
       if (parentConfig) {
@@ -113,15 +113,15 @@ export const PageHeader = ({
       }
     }
 
-    // Add current page
+    // Add current page - always clickable if there's an active tab (links to base page)
     if (config) {
       crumbs.push({
         label: t(config.labelKey),
-        path: activeTab ? currentPath : null,
+        path: activeTab ? currentPath : null, // Clickable when tab is active, not clickable when on base page
       });
     }
 
-    // Add active tab if present
+    // Add active tab - not clickable (current location)
     if (activeTab && config?.tabs && config.tabs[activeTab]) {
       crumbs.push({
         label: t(config.tabs[activeTab]),
