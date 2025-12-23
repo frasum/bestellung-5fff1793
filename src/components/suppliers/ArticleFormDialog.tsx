@@ -25,6 +25,7 @@ interface ArticleFormDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   editingArticle: Article | null;
+  preselectedSupplierId?: string | null;
   suppliers: Supplier[];
   categories: string[];
   units: string[];
@@ -37,6 +38,7 @@ export const ArticleFormDialog = ({
   open,
   onOpenChange,
   editingArticle,
+  preselectedSupplierId,
   suppliers,
   categories,
   units,
@@ -174,7 +176,7 @@ export const ArticleFormDialog = ({
       setCapturedImage((editingArticle as any).image_url || null);
     } else {
       form.reset({ 
-        supplier_id: '', name: '', description: '', sku: '', unit: 'pcs', price: '', category: '', 
+        supplier_id: preselectedSupplierId || '', name: '', description: '', sku: '', unit: 'pcs', price: '', category: '', 
         origin_country: '', packaging_unit: '', order_unit_id: '', reference_price: '', reference_unit: '', 
         selling_price: '', grape_variety: '', flavor_profile: '', food_pairings: '',
         description_en: '', grape_variety_en: '', flavor_profile_en: '', food_pairings_en: '', origin_country_en: '',
@@ -185,7 +187,7 @@ export const ArticleFormDialog = ({
     }
     setImageCleared(false);
     setTranslationsOpen(false);
-  }, [editingArticle, form]);
+  }, [editingArticle, preselectedSupplierId, form]);
 
   const handleSubmit = async (data: ArticleFormData) => {
     await onSubmit(data, capturedImage || undefined, imageCleared);
