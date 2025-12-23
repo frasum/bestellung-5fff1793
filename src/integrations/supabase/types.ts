@@ -2029,6 +2029,7 @@ export type Database = {
         Row: {
           created_at: string
           currency: string | null
+          customer_number: string | null
           delivery_date: string | null
           due_date: string | null
           email_from: string | null
@@ -2039,6 +2040,7 @@ export type Database = {
           id: string
           invoice_date: string | null
           invoice_number: string | null
+          location_id: string | null
           matched_order_id: string | null
           net_amount: number | null
           notes: string | null
@@ -2053,6 +2055,7 @@ export type Database = {
         Insert: {
           created_at?: string
           currency?: string | null
+          customer_number?: string | null
           delivery_date?: string | null
           due_date?: string | null
           email_from?: string | null
@@ -2063,6 +2066,7 @@ export type Database = {
           id?: string
           invoice_date?: string | null
           invoice_number?: string | null
+          location_id?: string | null
           matched_order_id?: string | null
           net_amount?: number | null
           notes?: string | null
@@ -2077,6 +2081,7 @@ export type Database = {
         Update: {
           created_at?: string
           currency?: string | null
+          customer_number?: string | null
           delivery_date?: string | null
           due_date?: string | null
           email_from?: string | null
@@ -2087,6 +2092,7 @@ export type Database = {
           id?: string
           invoice_date?: string | null
           invoice_number?: string | null
+          location_id?: string | null
           matched_order_id?: string | null
           net_amount?: number | null
           notes?: string | null
@@ -2099,6 +2105,13 @@ export type Database = {
           vat_amount?: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "invoices_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "invoices_matched_order_id_fkey"
             columns: ["matched_order_id"]
