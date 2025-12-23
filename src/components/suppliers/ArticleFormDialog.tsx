@@ -457,7 +457,7 @@ export const ArticleFormDialog = ({
                           {selectedUnit ? (
                             <span className="flex items-center gap-2">
                               <Package className="h-3.5 w-3.5 text-muted-foreground" />
-                              {selectedUnit.quantity}× {selectedUnit.name}
+                              {selectedUnit.name}
                             </span>
                           ) : (
                             <span className="text-muted-foreground">Auswählen</span>
@@ -532,7 +532,7 @@ export const ArticleFormDialog = ({
                                 >
                                   <Check className={cn("mr-2 h-4 w-4", field.value === unit.id ? "opacity-100" : "opacity-0")} />
                                   <Package className="mr-2 h-4 w-4 text-muted-foreground" />
-                                  <span>{unit.quantity}× {unit.name}</span>
+                                  <span>{unit.name}</span>
                                 </CommandItem>
                               ))}
                             </CommandGroup>

@@ -314,7 +314,7 @@ export const ArticleOrganizationTab = () => {
   const formatOrderUnit = (unitId: string | null) => {
     if (!unitId) return null;
     const unit = orderUnits.find(u => u.id === unitId);
-    return unit ? `${unit.quantity}× ${unit.name}` : null;
+    return unit ? unit.name : null;
   };
 
   // Handle article edit submission
@@ -589,7 +589,7 @@ export const ArticleOrganizationTab = () => {
               <SelectContent>
                 {orderUnits.map(unit => (
                   <SelectItem key={unit.id} value={unit.id}>
-                    {unit.quantity}× {unit.name}
+                    {unit.name}
                   </SelectItem>
                 ))}
               </SelectContent>
