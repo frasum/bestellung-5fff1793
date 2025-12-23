@@ -11,7 +11,8 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Badge } from '@/components/ui/badge';
-import { Check, ChevronsUpDown, Loader2, Plus, Package, Save, Globe, ChevronDown, Sparkles, Trash2 } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Check, ChevronsUpDown, Loader2, Plus, Package, Save, Globe, ChevronDown, Sparkles, Trash2, MapPin } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Article } from '@/hooks/useArticles';
 import { Supplier } from '@/hooks/useSuppliers';
@@ -20,6 +21,8 @@ import { useOrderUnits, useCreateOrderUnit } from '@/hooks/useOrderUnits';
 import { ArticlePhotoCapture } from './ArticlePhotoCapture';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useLocations } from '@/hooks/useLocations';
+import { useArticleLocations, useUpdateArticleLocations } from '@/hooks/useArticleLocations';
 
 interface ArticleFormDialogProps {
   open: boolean;
@@ -60,9 +63,13 @@ export const ArticleFormDialog = ({
   const [isTranslatingEn, setIsTranslatingEn] = useState(false);
   const [isTranslatingTh, setIsTranslatingTh] = useState(false);
   const [isTranslatingFr, setIsTranslatingFr] = useState(false);
+  const [selectedLocationIds, setSelectedLocationIds] = useState<string[]>([]);
   
   const { data: orderUnits = [] } = useOrderUnits();
   const createOrderUnit = useCreateOrderUnit();
+  const { data: locations = [] } = useLocations();
+  const { data: articleLocations = [] } = useArticleLocations(editingArticle?.id);
+  const updateArticleLocations = useUpdateArticleLocations();
 
   // Fetch organization ID
   useEffect(() => {
@@ -189,8 +196,32 @@ export const ArticleFormDialog = ({
     setTranslationsOpen(false);
   }, [editingArticle, preselectedSupplierId, form]);
 
+  // Initialize selected locations when editing or for new articles
+  useEffect(() => {
+    if (editingArticle && articleLocations.length > 0) {
+      // When editing, use existing article locations
+      setSelectedLocationIds(articleLocations.filter(al => al.is_active).map(al => al.location_id));
+    } else if (!editingArticle && locations.length > 0) {
+      // For new articles, select all locations by default
+      setSelectedLocationIds(locations.map(l => l.id));
+    }
+  }, [editingArticle, articleLocations, locations]);
+
   const handleSubmit = async (data: ArticleFormData) => {
     await onSubmit(data, capturedImage || undefined, imageCleared);
+    
+    // Update article locations if editing and there are multiple locations
+    if (editingArticle && locations.length > 1) {
+      try {
+        await updateArticleLocations.mutateAsync({
+          articleId: editingArticle.id,
+          locationIds: selectedLocationIds,
+        });
+      } catch (error) {
+        console.error('Failed to update article locations:', error);
+      }
+    }
+    
     form.reset();
     setCapturedImage(null);
     setImageCleared(false);
@@ -931,6 +962,46 @@ export const ArticleFormDialog = ({
           <p className="text-xs text-muted-foreground">
             Referenzpreis ist optional und dient zum Preisvergleich (z.B. €/kg)
           </p>
+
+          {/* Location Assignment Section - only show if more than 1 location exists */}
+          {locations.length > 1 && (
+            <div className="space-y-2 pt-2 border-t">
+              <Label className="flex items-center gap-2">
+                <MapPin className="h-4 w-4 text-muted-foreground" />
+                Verfügbar an Standorten
+              </Label>
+              <div className="grid grid-cols-2 gap-2 p-3 border rounded-lg bg-muted/30">
+                {locations.map(location => (
+                  <div key={location.id} className="flex items-center gap-2">
+                    <Checkbox
+                      id={`loc-${location.id}`}
+                      checked={selectedLocationIds.includes(location.id)}
+                      onCheckedChange={(checked) => {
+                        if (checked) {
+                          setSelectedLocationIds(prev => [...prev, location.id]);
+                        } else {
+                          setSelectedLocationIds(prev => prev.filter(id => id !== location.id));
+                        }
+                      }}
+                    />
+                    <label 
+                      htmlFor={`loc-${location.id}`} 
+                      className="text-sm cursor-pointer flex items-center gap-1"
+                    >
+                      {location.name}
+                      {location.short_code && (
+                        <span className="text-xs text-muted-foreground">({location.short_code})</span>
+                      )}
+                    </label>
+                  </div>
+                ))}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Wähle die Standorte, an denen dieser Artikel verfügbar sein soll
+              </p>
+            </div>
+          )}
+
           <div className="flex gap-3 pt-4">
             {editingArticle && onDelete && (
               <Button 
