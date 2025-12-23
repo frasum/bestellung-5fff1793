@@ -168,6 +168,38 @@ serve(async (req) => {
       console.log('Using PDF URL from database:', finalPdfUrl);
     }
 
+    // If we have a URL but no base64, download the PDF and convert to base64
+    // (Gemini doesn't support PDF URLs directly, only base64)
+    if (finalPdfUrl && !finalPdfBase64) {
+      console.log('Downloading PDF from URL to convert to base64...');
+      try {
+        const pdfResponse = await fetch(finalPdfUrl);
+        if (!pdfResponse.ok) {
+          throw new Error(`Failed to download PDF: ${pdfResponse.status}`);
+        }
+        const pdfBuffer = await pdfResponse.arrayBuffer();
+        const uint8Array = new Uint8Array(pdfBuffer);
+        
+        // Convert to base64
+        let binary = '';
+        for (let i = 0; i < uint8Array.length; i++) {
+          binary += String.fromCharCode(uint8Array[i]);
+        }
+        finalPdfBase64 = btoa(binary);
+        console.log('PDF converted to base64, length:', finalPdfBase64.length);
+      } catch (downloadError) {
+        console.error('Failed to download PDF:', downloadError);
+        await supabaseClient
+          .from('invoices')
+          .update({ status: 'pending', notes: 'PDF konnte nicht heruntergeladen werden' })
+          .eq('id', invoiceId);
+        return new Response(JSON.stringify({ error: 'Failed to download PDF for processing' }), {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+    }
+
     // Clean up existing data before re-parsing (to avoid duplicates)
     console.log('Cleaning up existing invoice data before parsing...');
     
@@ -189,7 +221,7 @@ serve(async (req) => {
       .update({ matched_order_id: null })
       .eq('id', invoiceId);
 
-    // Prepare content for AI - support both URL and base64
+    // Prepare content for AI - always use base64 for PDFs (Gemini doesn't support PDF URLs)
     let pdfContent: { type: string; image_url?: { url: string }; text?: string }[];
     
     if (finalPdfBase64) {
@@ -197,13 +229,6 @@ serve(async (req) => {
         {
           type: "image_url",
           image_url: { url: `data:application/pdf;base64,${finalPdfBase64}` }
-        }
-      ];
-    } else if (finalPdfUrl) {
-      pdfContent = [
-        {
-          type: "image_url",
-          image_url: { url: finalPdfUrl }
         }
       ];
     } else {
