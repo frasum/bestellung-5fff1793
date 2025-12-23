@@ -251,7 +251,9 @@ serve(async (req) => {
           {
             role: 'system',
             content: `You are an expert invoice parser. Extract structured data from invoice PDFs/images.
-            
+
+Return ONLY valid JSON (no markdown fences, no commentary, no backticks).
+
 Extract the following information and return as JSON:
 {
   "supplierName": "Supplier/vendor company name",
@@ -293,7 +295,8 @@ Important:
           }
         ],
         temperature: 0.1,
-        max_tokens: 4000,
+        // Increase token budget to avoid truncated JSON for invoices with many line items
+        max_tokens: 12000,
       }),
     });
 
@@ -314,18 +317,17 @@ Important:
 
     const aiData = await aiResponse.json();
     const aiContent = aiData.choices?.[0]?.message?.content;
-    
-    console.log('AI response:', aiContent);
+
+    console.log('AI response received (first 500 chars):', (aiContent ?? '').substring(0, 500));
 
     // Parse the JSON from AI response
     let invoiceData: InvoiceData;
     try {
       // Extract JSON from potential markdown code blocks
-      let jsonContent = aiContent;
-      
+      let jsonContent = aiContent ?? '';
+
       // Remove markdown code block wrapper if present
       if (jsonContent.includes('```')) {
-        // Match content between ```json or ``` and closing ```
         const codeBlockMatch = jsonContent.match(/```(?:json)?\s*\n?([\s\S]*?)\n?```/);
         if (codeBlockMatch && codeBlockMatch[1]) {
           jsonContent = codeBlockMatch[1];
@@ -334,7 +336,14 @@ Important:
           jsonContent = jsonContent.replace(/```json\s*/g, '').replace(/```/g, '');
         }
       }
-      
+
+      // If the model added any leading/trailing text, keep only the outermost JSON object
+      const firstBrace = jsonContent.indexOf('{');
+      const lastBrace = jsonContent.lastIndexOf('}');
+      if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+        jsonContent = jsonContent.slice(firstBrace, lastBrace + 1);
+      }
+
       console.log('Cleaned JSON content (first 500 chars):', jsonContent.substring(0, 500));
       invoiceData = JSON.parse(jsonContent.trim());
     } catch (parseError) {
