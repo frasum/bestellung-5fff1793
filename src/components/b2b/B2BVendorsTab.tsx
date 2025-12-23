@@ -131,7 +131,7 @@ const B2BVendorsTab = ({ accountId, supplierId, onVendorChange }: B2BVendorsTabP
             className="pl-10"
           />
         </div>
-        <Button onClick={() => { setEditingVendor(null); setDialogOpen(true); }}>
+        <Button variant="accent" onClick={() => { setEditingVendor(null); setDialogOpen(true); }}>
           <Plus className="h-4 w-4 mr-2" />
           Lieferant hinzufügen
         </Button>
@@ -160,7 +160,7 @@ const B2BVendorsTab = ({ accountId, supplierId, onVendorChange }: B2BVendorsTabP
                 : 'Fügen Sie Ihren ersten Lieferanten hinzu'}
             </p>
             {!search && (
-              <Button onClick={() => { setEditingVendor(null); setDialogOpen(true); }}>
+              <Button variant="accent" onClick={() => { setEditingVendor(null); setDialogOpen(true); }}>
                 <Plus className="h-4 w-4 mr-2" />
                 Ersten Lieferanten hinzufügen
               </Button>

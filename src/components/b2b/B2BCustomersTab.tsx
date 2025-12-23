@@ -229,7 +229,7 @@ const B2BCustomersTab = ({
             className="pl-10"
           />
         </div>
-        <Button onClick={() => { setEditingCustomer(null); setDialogOpen(true); }}>
+        <Button variant="accent" onClick={() => { setEditingCustomer(null); setDialogOpen(true); }}>
           <Plus className="h-4 w-4 mr-2" />
           Kunden einladen
         </Button>
@@ -260,7 +260,7 @@ const B2BCustomersTab = ({
                   : 'Laden Sie Ihren ersten Kunden ein'}
             </p>
             {!search && (
-              <Button onClick={() => { setEditingCustomer(null); setDialogOpen(true); }}>
+              <Button variant="accent" onClick={() => { setEditingCustomer(null); setDialogOpen(true); }}>
                 <Plus className="h-4 w-4 mr-2" />
                 Ersten Kunden einladen
               </Button>

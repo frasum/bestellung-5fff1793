@@ -178,7 +178,7 @@ const B2BArticlesTab = ({ accountId, linkedSupplierId, selectedSupplierId = 'all
             <Download className="h-4 w-4 mr-2" />
             Von Bestellung.pro importieren
           </Button>
-          <Button onClick={() => { setEditingArticle(null); setDialogOpen(true); }}>
+          <Button variant="accent" onClick={() => { setEditingArticle(null); setDialogOpen(true); }}>
             <Plus className="h-4 w-4 mr-2" />
             Artikel hinzufügen
           </Button>
@@ -207,7 +207,7 @@ const B2BArticlesTab = ({ accountId, linkedSupplierId, selectedSupplierId = 'all
               {search ? 'Versuchen Sie einen anderen Suchbegriff' : 'Fügen Sie Ihren ersten Artikel hinzu'}
             </p>
             {!search && (
-              <Button onClick={() => { setEditingArticle(null); setDialogOpen(true); }}>
+              <Button variant="accent" onClick={() => { setEditingArticle(null); setDialogOpen(true); }}>
                 <Plus className="h-4 w-4 mr-2" />
                 Ersten Artikel hinzufügen
               </Button>

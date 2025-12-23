@@ -185,7 +185,7 @@ export const SupplierPortalOwnVendorsTab = ({ session }: Props) => {
               Verwalten Sie Ihre eigenen Lieferanten (Weingüter, Großhändler, etc.)
             </CardDescription>
           </div>
-          <Button onClick={() => handleOpenDialog()}>
+          <Button variant="accent" onClick={() => handleOpenDialog()}>
             <Plus className="h-4 w-4 mr-2" />
             Neu
           </Button>

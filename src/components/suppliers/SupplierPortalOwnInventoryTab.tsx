@@ -433,7 +433,7 @@ export const SupplierPortalOwnInventoryTab = ({ session }: Props) => {
             <div className="flex gap-2 flex-wrap">
               {!activeSession ? (
                 <>
-                  <Button onClick={() => setCreateDialogOpen(true)}>
+                  <Button variant="accent" onClick={() => setCreateDialogOpen(true)}>
                     <Plus className="h-4 w-4 mr-2" />
                     Neue Inventur
                   </Button>
