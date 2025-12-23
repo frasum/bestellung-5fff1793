@@ -1834,6 +1834,231 @@ export type Database = {
           },
         ]
       }
+      invoice_discrepancies: {
+        Row: {
+          actual_value: string | null
+          created_at: string
+          difference_amount: number | null
+          difference_percent: number | null
+          discrepancy_type: string
+          expected_value: string | null
+          id: string
+          invoice_id: string
+          invoice_item_id: string | null
+          is_resolved: boolean
+          order_item_id: string | null
+          resolution_notes: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+        }
+        Insert: {
+          actual_value?: string | null
+          created_at?: string
+          difference_amount?: number | null
+          difference_percent?: number | null
+          discrepancy_type: string
+          expected_value?: string | null
+          id?: string
+          invoice_id: string
+          invoice_item_id?: string | null
+          is_resolved?: boolean
+          order_item_id?: string | null
+          resolution_notes?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+        }
+        Update: {
+          actual_value?: string | null
+          created_at?: string
+          difference_amount?: number | null
+          difference_percent?: number | null
+          discrepancy_type?: string
+          expected_value?: string | null
+          id?: string
+          invoice_id?: string
+          invoice_item_id?: string | null
+          is_resolved?: boolean
+          order_item_id?: string | null
+          resolution_notes?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoice_discrepancies_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoice_discrepancies_invoice_item_id_fkey"
+            columns: ["invoice_item_id"]
+            isOneToOne: false
+            referencedRelation: "invoice_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoice_discrepancies_order_item_id_fkey"
+            columns: ["order_item_id"]
+            isOneToOne: false
+            referencedRelation: "order_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      invoice_items: {
+        Row: {
+          article_name: string
+          article_sku: string | null
+          created_at: string
+          id: string
+          invoice_id: string
+          matched_article_id: string | null
+          matched_order_item_id: string | null
+          position_number: number | null
+          quantity: number
+          total_price: number | null
+          unit: string | null
+          unit_price: number | null
+        }
+        Insert: {
+          article_name: string
+          article_sku?: string | null
+          created_at?: string
+          id?: string
+          invoice_id: string
+          matched_article_id?: string | null
+          matched_order_item_id?: string | null
+          position_number?: number | null
+          quantity: number
+          total_price?: number | null
+          unit?: string | null
+          unit_price?: number | null
+        }
+        Update: {
+          article_name?: string
+          article_sku?: string | null
+          created_at?: string
+          id?: string
+          invoice_id?: string
+          matched_article_id?: string | null
+          matched_order_item_id?: string | null
+          position_number?: number | null
+          quantity?: number
+          total_price?: number | null
+          unit?: string | null
+          unit_price?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoice_items_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoice_items_matched_article_id_fkey"
+            columns: ["matched_article_id"]
+            isOneToOne: false
+            referencedRelation: "articles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoice_items_matched_order_item_id_fkey"
+            columns: ["matched_order_item_id"]
+            isOneToOne: false
+            referencedRelation: "order_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      invoices: {
+        Row: {
+          created_at: string
+          currency: string | null
+          delivery_date: string | null
+          due_date: string | null
+          gross_amount: number | null
+          id: string
+          invoice_date: string | null
+          invoice_number: string | null
+          matched_order_id: string | null
+          net_amount: number | null
+          notes: string | null
+          organization_id: string
+          parsed_data: Json | null
+          pdf_url: string | null
+          status: string
+          supplier_id: string | null
+          updated_at: string
+          vat_amount: number | null
+        }
+        Insert: {
+          created_at?: string
+          currency?: string | null
+          delivery_date?: string | null
+          due_date?: string | null
+          gross_amount?: number | null
+          id?: string
+          invoice_date?: string | null
+          invoice_number?: string | null
+          matched_order_id?: string | null
+          net_amount?: number | null
+          notes?: string | null
+          organization_id: string
+          parsed_data?: Json | null
+          pdf_url?: string | null
+          status?: string
+          supplier_id?: string | null
+          updated_at?: string
+          vat_amount?: number | null
+        }
+        Update: {
+          created_at?: string
+          currency?: string | null
+          delivery_date?: string | null
+          due_date?: string | null
+          gross_amount?: number | null
+          id?: string
+          invoice_date?: string | null
+          invoice_number?: string | null
+          matched_order_id?: string | null
+          net_amount?: number | null
+          notes?: string | null
+          organization_id?: string
+          parsed_data?: Json | null
+          pdf_url?: string | null
+          status?: string
+          supplier_id?: string | null
+          updated_at?: string
+          vat_amount?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoices_matched_order_id_fkey"
+            columns: ["matched_order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       locations: {
         Row: {
           created_at: string
