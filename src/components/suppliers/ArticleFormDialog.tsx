@@ -986,12 +986,9 @@ export const ArticleFormDialog = ({
                     />
                     <label 
                       htmlFor={`loc-${location.id}`} 
-                      className="text-sm cursor-pointer flex items-center gap-1"
+                      className="text-base font-semibold cursor-pointer"
                     >
-                      {location.name}
-                      {location.short_code && (
-                        <span className="text-xs text-muted-foreground">({location.short_code})</span>
-                      )}
+                      {location.short_code || location.name}
                     </label>
                   </div>
                 ))}
