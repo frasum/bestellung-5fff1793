@@ -962,6 +962,11 @@ const Reports = () => {
           <TabsContent value="pricewatch" className="mt-4">
             <PriceWatchTab />
           </TabsContent>
+
+          {/* Invoice Verification Tab */}
+          <TabsContent value="invoices" className="mt-4">
+            <InvoiceVerificationTab />
+          </TabsContent>
         </Tabs>
       </div>
     </DashboardLayout>
