@@ -507,6 +507,14 @@ Important:
       .eq('organization_id', organizationId)
       .eq('is_active', true);
 
+    // Stop words - legal entity designators that should be ignored during matching
+    const stopWords = new Set([
+      'gmbh', 'ag', 'kg', 'ohg', 'gbr', 'ltd', 'inc', 'co', 'se', 'ug', 'mbh',
+      'e.v', 'ev', 'und', 'and', 'the', 'der', 'die', 'das', 'handels', 'handel',
+      'vertriebs', 'vertrieb', 'import', 'export', 'international', 'deutschland',
+      'germany', 'europe', 'europa'
+    ]);
+
     // Helper function to normalize German umlauts and special characters
     const normalizeGerman = (str: string): string => {
       return str
@@ -533,9 +541,16 @@ Important:
         .trim();
     };
 
-    // Extract tokens (words) from a string
+    // Extract tokens (words) from a string, filtering out stop words
     const getTokens = (str: string): string[] => {
-      return str.split(' ').filter(t => t.length >= 3);
+      return str.split(' ')
+        .filter(t => t.length >= 3)
+        .filter(t => !stopWords.has(t));
+    };
+
+    // Get characteristic tokens (longer, more unique words)
+    const getCharacteristicTokens = (tokens: string[]): string[] => {
+      return tokens.filter(t => t.length >= 5);
     };
 
     let matchedSupplierId: string | null = null;
@@ -547,76 +562,98 @@ Important:
       const invoiceNormalized2 = normalizeSimple(invoiceSupplierName);
       const invoiceTokens1 = getTokens(invoiceNormalized1);
       const invoiceTokens2 = getTokens(invoiceNormalized2);
+      const allInvoiceTokens = [...new Set([...invoiceTokens1, ...invoiceTokens2])];
+      const characteristicInvoiceTokens = getCharacteristicTokens(allInvoiceTokens);
 
       console.log('Matching supplier:', invoiceSupplierName);
-      console.log('Normalized tokens (ae):', invoiceTokens1);
-      console.log('Normalized tokens (a):', invoiceTokens2);
+      console.log('Normalized tokens (filtered):', allInvoiceTokens);
+      console.log('Characteristic tokens (>=5 chars):', characteristicInvoiceTokens);
 
       // Try to find best match
-      let bestMatch: { supplier: typeof suppliers[0]; score: number } | null = null;
+      let bestMatch: { supplier: typeof suppliers[0]; score: number; matchDetails: string } | null = null;
 
       for (const supplier of suppliers) {
         const supplierNormalized1 = normalizeGerman(supplier.name);
         const supplierNormalized2 = normalizeSimple(supplier.name);
         const supplierTokens1 = getTokens(supplierNormalized1);
         const supplierTokens2 = getTokens(supplierNormalized2);
+        const allSupplierTokens = [...new Set([...supplierTokens1, ...supplierTokens2])];
 
         let score = 0;
+        let matchDetails = '';
 
-        // Check 1: Direct substring match (normalized)
-        if (supplierNormalized1.includes(invoiceNormalized1) || invoiceNormalized1.includes(supplierNormalized1)) {
-          score = 100;
-        } else if (supplierNormalized2.includes(invoiceNormalized2) || invoiceNormalized2.includes(supplierNormalized2)) {
-          score = 100;
+        // Check 1: Direct substring match (normalized) - only for substantial strings
+        if (invoiceNormalized1.length >= 10 && supplierNormalized1.length >= 10) {
+          if (supplierNormalized1.includes(invoiceNormalized1) || invoiceNormalized1.includes(supplierNormalized1)) {
+            score = 100;
+            matchDetails = 'direct substring match';
+          } else if (supplierNormalized2.includes(invoiceNormalized2) || invoiceNormalized2.includes(supplierNormalized2)) {
+            score = 100;
+            matchDetails = 'direct substring match (simple)';
+          }
         }
 
-        // Check 2: Token-based matching
+        // Check 2: Token-based matching with improved logic
         if (score === 0) {
-          // Check if any invoice token matches any supplier token
-          for (const invToken of [...invoiceTokens1, ...invoiceTokens2]) {
-            if (invToken.length < 4) continue; // Skip short tokens
-            
-            for (const supToken of [...supplierTokens1, ...supplierTokens2]) {
-              if (supToken.length < 3) continue;
-              
+          // Count matching tokens
+          const matchedTokens: string[] = [];
+          
+          for (const invToken of allInvoiceTokens) {
+            for (const supToken of allSupplierTokens) {
               // Exact token match
               if (invToken === supToken) {
-                score = Math.max(score, 80);
-              }
-              // Token contains the other
-              else if (invToken.includes(supToken) || supToken.includes(invToken)) {
-                score = Math.max(score, 70);
-              }
-              // Check if tokens share significant prefix (>=4 chars)
-              else if (invToken.length >= 4 && supToken.length >= 4) {
-                const minLen = Math.min(invToken.length, supToken.length);
-                let commonPrefix = 0;
-                for (let i = 0; i < minLen; i++) {
-                  if (invToken[i] === supToken[i]) commonPrefix++;
-                  else break;
+                if (!matchedTokens.includes(invToken)) {
+                  matchedTokens.push(invToken);
                 }
-                if (commonPrefix >= 4) {
-                  score = Math.max(score, 60);
+              }
+              // Token contains the other (only for longer tokens)
+              else if (invToken.length >= 5 && supToken.length >= 5) {
+                if (invToken.includes(supToken) || supToken.includes(invToken)) {
+                  if (!matchedTokens.includes(invToken)) {
+                    matchedTokens.push(invToken);
+                  }
                 }
               }
             }
           }
+
+          // Calculate score based on number of matched tokens
+          if (matchedTokens.length >= 2) {
+            // At least 2 tokens match - high confidence
+            score = 90;
+            matchDetails = `${matchedTokens.length} tokens match: [${matchedTokens.join(', ')}]`;
+          } else if (matchedTokens.length === 1) {
+            // Single token match - only give high score if it's very characteristic
+            const matchedToken = matchedTokens[0];
+            if (matchedToken.length >= 6) {
+              // Long, characteristic token - moderate score
+              score = 65;
+              matchDetails = `single characteristic token match: "${matchedToken}"`;
+            } else {
+              // Short token - low score, likely false positive
+              score = 40;
+              matchDetails = `single short token match: "${matchedToken}" (below threshold)`;
+            }
+          }
         }
 
-        if (score > 0) {
-          console.log(`Supplier "${supplier.name}" score: ${score}`);
+        if (score >= 40) {
+          console.log(`Supplier "${supplier.name}" score: ${score} (${matchDetails})`);
         }
 
         if (score > 0 && (!bestMatch || score > bestMatch.score)) {
-          bestMatch = { supplier, score };
+          bestMatch = { supplier, score, matchDetails };
         }
       }
 
       if (bestMatch && bestMatch.score >= 60) {
         matchedSupplierId = bestMatch.supplier.id;
-        console.log('Matched supplier:', bestMatch.supplier.name, 'with score:', bestMatch.score);
+        console.log('✅ Matched supplier:', bestMatch.supplier.name, 'with score:', bestMatch.score, '-', bestMatch.matchDetails);
+      } else if (bestMatch) {
+        console.log('❌ Best match below threshold:', bestMatch.supplier.name, 'with score:', bestMatch.score, '-', bestMatch.matchDetails);
+        console.log('Will create new supplier instead');
       } else {
-        console.log('No supplier match found with sufficient score');
+        console.log('No supplier match found');
       }
     }
 
