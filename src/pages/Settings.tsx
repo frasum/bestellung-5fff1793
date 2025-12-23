@@ -4,12 +4,12 @@ import { useSearchParams } from 'react-router-dom';
 import { DashboardLayout, useSidebarContext } from '@/components/layout/DashboardLayout';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Building2, User, FlaskConical, MessageSquare, Store, ClipboardCheck, Gift, TrendingDown } from 'lucide-react';
+import { Building2, FlaskConical, MessageSquare, Store, ClipboardCheck, Gift, TrendingDown } from 'lucide-react';
 import { useUserRole } from '@/hooks/useTeam';
 import { useIsSuperAdmin } from '@/hooks/useIsSuperAdmin';
 import { DemoAccountsTab } from '@/components/settings/DemoAccountsTab';
 import { CommunicationTab } from '@/components/settings/CommunicationTab';
-import { ProfileTab } from '@/components/settings/ProfileTab';
+
 import { OrganizationTab } from '@/components/settings/OrganizationTab';
 import { NotificationsTab } from '@/components/settings/NotificationsTab';
 import { EmailTemplateTab } from '@/components/settings/EmailTemplateTab';
@@ -44,7 +44,7 @@ const Settings = () => {
 
   // Build list of allowed tabs based on user role and advanced mode
   const allowedTabs = useMemo(() => {
-    const tabs = ['profile', 'organization', 'communication'];
+    const tabs = ['organization', 'communication'];
     if (isAdmin && advancedMode) tabs.push('demo-accounts');
     if (isSuperAdmin) tabs.push('b2b-portal', 'friends-family');
     if (isAdmin) tabs.push('price-watch');
@@ -58,9 +58,9 @@ const Settings = () => {
 
   // Validate and normalize tab
   const activeTab = useMemo(() => {
-    if (!rawTab) return 'profile';
+    if (!rawTab) return 'organization';
     if (allowedTabs.includes(rawTab)) return rawTab;
-    return 'profile';
+    return 'organization';
   }, [rawTab, allowedTabs]);
 
   // Validate and normalize subtab
@@ -80,7 +80,7 @@ const Settings = () => {
     
     if (needsCleanup) {
       const newParams: Record<string, string> = {};
-      if (activeTab !== 'profile') {
+      if (activeTab !== 'organization') {
         newParams.tab = activeTab;
       }
       if (activeSubTab && activeSubTab !== DEFAULT_SUB_TABS[activeTab]) {
@@ -103,7 +103,7 @@ const Settings = () => {
 
   // Handle tab change - updates URL
   const handleTabChange = (tab: string) => {
-    if (tab === 'profile') {
+    if (tab === 'organization') {
       setSearchParams({});
     } else {
       setSearchParams({ tab });
@@ -115,7 +115,7 @@ const Settings = () => {
     const defaultSubTab = DEFAULT_SUB_TABS[activeTab];
     if (subtab === defaultSubTab) {
       // Default sub-tab: don't show in URL
-      if (activeTab === 'profile') {
+      if (activeTab === 'organization') {
         setSearchParams({});
       } else {
         setSearchParams({ tab: activeTab });
@@ -139,10 +139,6 @@ const Settings = () => {
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
               <TabsList className="inline-flex w-max sm:w-auto sm:flex-wrap gap-1 bg-muted/50 border border-border rounded-md">
-                <TabsTrigger value="profile" className="gap-1.5 text-xs sm:text-sm whitespace-nowrap">
-                  <User className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                  <span>{t('settings.profile')}</span>
-                </TabsTrigger>
                 <TabsTrigger value="organization" className="gap-1.5 text-xs sm:text-sm whitespace-nowrap">
                   <Building2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                   <span>{t('settings.organization')}</span>
@@ -189,10 +185,6 @@ const Settings = () => {
               </TabsList>
             </div>
           </div>
-
-          <TabsContent value="profile" className="animate-in fade-in-50 slide-in-from-left-2 duration-200">
-            <ProfileTab />
-          </TabsContent>
 
           <TabsContent value="organization" className="animate-in fade-in-50 slide-in-from-bottom-2 duration-200">
             <OrganizationTab 

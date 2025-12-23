@@ -424,7 +424,7 @@ export const DashboardLayout = ({
               >
                 <DropdownMenuLabel>{t('settings.profile.title', 'Mein Konto')}</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => navigate('/settings?tab=profile')}>
+                <DropdownMenuItem onClick={() => navigate('/profile')}>
                   <User className="w-4 h-4 mr-2" />
                   {t('settings.tabs.profile', 'Profil')}
                 </DropdownMenuItem>
