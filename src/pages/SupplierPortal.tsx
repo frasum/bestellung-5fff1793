@@ -756,49 +756,52 @@ const SupplierPortal = () => {
 
   if (!session) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin" />
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center light">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b bg-card">
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100/50 light">
+      {/* Header - Modern, bright with subtle shadow */}
+      <header className="bg-white border-b border-gray-100 shadow-sm sticky top-0 z-10">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            {/* Dev Mode Badge */}
-            <Badge variant="outline" className="text-purple-600 bg-purple-100 border-0 hidden sm:flex">
-              🟣 Supplier Portal
-            </Badge>
+          <div className="flex items-center gap-4">
             <img 
               src={portalSettings.logo_url || logo} 
               alt="Portal Logo" 
-              className={portalSettings.logo_url ? "h-10 max-w-[120px] object-contain" : "h-10 w-10"} 
+              className={cn(
+                "object-contain",
+                portalSettings.logo_url ? "h-10 max-w-[120px]" : "h-10 w-10"
+              )} 
             />
             <div>
-              <h1 className="font-semibold">{portalSettings.portal_title}</h1>
-              <p className="text-sm text-muted-foreground">{session.supplierName}</p>
+              <h1 className="text-lg font-semibold text-gray-900">{portalSettings.portal_title}</h1>
+              <p className="text-sm text-gray-500">{session.supplierName}</p>
             </div>
           </div>
           <div className="flex items-center gap-4">
             {/* Expiry display */}
             {session.expiresAt && (
-              <div className="hidden sm:flex items-center gap-2">
+              <div className="hidden sm:flex items-center gap-3">
                 {differenceInHours(new Date(session.expiresAt), new Date()) <= 24 ? (
-                  <Badge variant="outline" className="border-amber-500 text-amber-600 gap-1">
+                  <Badge className="bg-amber-50 text-amber-700 border border-amber-200 gap-1.5 font-normal">
                     <AlertTriangle className="h-3 w-3" />
                     Läuft bald ab
                   </Badge>
                 ) : null}
-                <div className="text-xs text-muted-foreground flex items-center gap-1">
+                <div className="text-xs text-gray-500 flex items-center gap-1.5 bg-gray-50 px-2.5 py-1.5 rounded-full">
                   <Clock className="h-3 w-3" />
                   Zugang bis: {format(new Date(session.expiresAt), 'dd.MM.yyyy', { locale: de })}
                 </div>
               </div>
             )}
-            <Button variant="outline" onClick={handleLogout}>
+            <Button 
+              variant="outline" 
+              onClick={handleLogout}
+              className="border-gray-200 text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+            >
               <LogOut className="h-4 w-4 mr-2" />
               Abmelden
             </Button>
@@ -808,26 +811,31 @@ const SupplierPortal = () => {
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8">
-        {/* Draft Alert */}
+        {/* Draft Alert - Modern light style */}
         {hasDraft && (
-          <Alert className="mb-6 border-primary/50 bg-primary/10">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription className="flex items-center justify-between">
+          <Alert className="mb-6 bg-white border border-primary/30 shadow-sm rounded-xl">
+            <AlertCircle className="h-4 w-4 text-primary" />
+            <AlertDescription className="flex items-center justify-between text-gray-700">
               <span>Sie haben einen gespeicherten Entwurf. Ihre letzten Änderungen wurden wiederhergestellt.</span>
-              <Button variant="ghost" size="sm" onClick={handleDeleteDraft}>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={handleDeleteDraft}
+                className="text-gray-500 hover:text-gray-700 hover:bg-gray-100"
+              >
                 Entwurf verwerfen
               </Button>
             </AlertDescription>
           </Alert>
         )}
 
-        {/* Welcome Message */}
+        {/* Welcome Message - Clean white card */}
         {portalSettings.welcome_message && (
-          <div className="mb-6 p-4 bg-muted/50 rounded-lg prose prose-sm dark:prose-invert max-w-none">
+          <div className="mb-6 p-5 bg-white rounded-xl shadow-sm border border-gray-100 prose prose-sm max-w-none prose-gray">
             <ReactMarkdown
               components={{
                 a: ({ href, children }) => (
-                  <a href={href} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                  <a href={href} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-medium">
                     {children}
                   </a>
                 ),
@@ -838,13 +846,13 @@ const SupplierPortal = () => {
           </div>
         )}
 
-        {/* Info Text */}
+        {/* Info Text - Subtle primary tint */}
         {portalSettings.info_text && (
-          <div className="mb-6 p-4 bg-primary/10 border border-primary/20 rounded-lg prose prose-sm dark:prose-invert max-w-none">
+          <div className="mb-6 p-5 bg-primary/5 border border-primary/15 rounded-xl prose prose-sm max-w-none prose-gray">
             <ReactMarkdown
               components={{
                 a: ({ href, children }) => (
-                  <a href={href} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                  <a href={href} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-medium">
                     {children}
                   </a>
                 ),
@@ -855,11 +863,11 @@ const SupplierPortal = () => {
           </div>
         )}
 
-        {/* Price Edit Expired Alert */}
+        {/* Price Edit Expired Alert - Modern amber style */}
         {session?.priceEditExpiresAt && new Date(session.priceEditExpiresAt) < new Date() && (
-          <Alert className="mb-6 border-amber-500/50 bg-amber-50 dark:bg-amber-950/20">
+          <Alert className="mb-6 bg-amber-50 border border-amber-200 rounded-xl">
             <Clock className="h-4 w-4 text-amber-600" />
-            <AlertDescription className="text-amber-700 dark:text-amber-400">
+            <AlertDescription className="text-amber-700">
               Die Bearbeitungsfrist für Preise ist am {format(new Date(session.priceEditExpiresAt), 'dd.MM.yyyy', { locale: de })} abgelaufen. 
               Sie können weiterhin Bestellungen einsehen. Für einen neuen Zugangslink kontaktieren Sie bitte Ihren Ansprechpartner.
             </AlertDescription>
@@ -868,57 +876,67 @@ const SupplierPortal = () => {
 
 
         <Tabs defaultValue="articles" className="space-y-6">
-          <TabsList>
-            <TabsTrigger value="articles" className="gap-2">
+          {/* Modern pill-style tabs */}
+          <TabsList className="bg-white border border-gray-200 shadow-sm p-1 rounded-xl">
+            <TabsTrigger 
+              value="articles" 
+              className="gap-2 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-sm"
+            >
               <Package className="h-4 w-4" />
               Artikel
             </TabsTrigger>
-            <TabsTrigger value="orders" className="gap-2">
+            <TabsTrigger 
+              value="orders" 
+              className="gap-2 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-sm"
+            >
               <ShoppingCart className="h-4 w-4" />
               Bestellungen
             </TabsTrigger>
-            <TabsTrigger value="purchasing" className="gap-2">
+            <TabsTrigger 
+              value="purchasing" 
+              className="gap-2 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-sm"
+            >
               <Building2 className="h-4 w-4" />
               Mein Einkauf
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="articles">
-            <Card>
-          <CardHeader>
+            <Card className="bg-white border-gray-100 shadow-sm rounded-xl">
+          <CardHeader className="border-b border-gray-100 bg-gray-50/50 rounded-t-xl">
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle className="flex items-center gap-2">
-                  <Package className="h-5 w-5" />
+                <CardTitle className="flex items-center gap-2 text-gray-900">
+                  <Package className="h-5 w-5 text-primary" />
                   {portalSettings.card_title}
                 </CardTitle>
-                <CardDescription>
+                <CardDescription className="text-gray-500">
                   {portalSettings.card_description}
                 </CardDescription>
               </div>
               <div className="flex items-center gap-4">
                 {pendingChanges.filter(c => c.status === 'pending').length > 0 && (
-                  <Badge variant="secondary" className="flex items-center gap-1">
+                  <Badge className="bg-amber-50 text-amber-700 border border-amber-200 flex items-center gap-1.5 font-normal">
                     <Clock className="h-3 w-3" />
                     {pendingChanges.filter(c => c.status === 'pending').length} ausstehend
                   </Badge>
                 )}
-                <span className="text-sm text-muted-foreground">
+                <span className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
                   {articles.length} Artikel
                 </span>
               </div>
             </div>
           </CardHeader>
-          <CardContent>
-            {/* Search and Action Buttons */}
+          <CardContent className="p-6">
+            {/* Search and Action Buttons - Modern styling */}
             <div className="mb-6 flex flex-col sm:flex-row gap-4 sm:items-center sm:justify-between">
               <div className="relative max-w-sm flex-1">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <Input
                   placeholder="Artikel suchen..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
+                  className="pl-10 bg-white border-gray-200 focus:border-primary focus:ring-primary/20"
                 />
               </div>
               <div className="flex gap-2 flex-wrap">
@@ -926,6 +944,7 @@ const SupplierPortal = () => {
                   variant="outline" 
                   onClick={handleSaveDraft} 
                   disabled={!hasAnyChanges() || savingDraft || savingAll}
+                  className="border-gray-200 text-gray-600 hover:bg-gray-50 hover:text-gray-900"
                 >
                   {savingDraft ? (
                     <Loader2 className="h-4 w-4 animate-spin mr-2" />
@@ -937,7 +956,7 @@ const SupplierPortal = () => {
                 <Button 
                   onClick={handleSaveAll} 
                   disabled={!hasAnyChanges() || savingAll || savingDraft}
-                  className="bg-primary"
+                  className="bg-primary hover:bg-primary/90 shadow-sm"
                 >
                   {savingAll ? (
                     <Loader2 className="h-4 w-4 animate-spin mr-2" />
@@ -946,7 +965,11 @@ const SupplierPortal = () => {
                   )}
                   Alle einreichen {hasAnyChanges() && `(${getChangedArticleCount()})`}
                 </Button>
-                <Button onClick={() => setSuggestDialogOpen(true)} className="shrink-0" variant="outline">
+                <Button 
+                  onClick={() => setSuggestDialogOpen(true)} 
+                  className="shrink-0 border-gray-200 text-gray-600 hover:bg-gray-50 hover:text-gray-900" 
+                  variant="outline"
+                >
                   <Plus className="h-4 w-4 mr-2" />
                   Neuen Artikel vorschlagen
                 </Button>
@@ -955,35 +978,35 @@ const SupplierPortal = () => {
 
             {loading ? (
               <div className="flex items-center justify-center py-12">
-                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
               </div>
             ) : filteredArticles.length === 0 ? (
-              <div className="text-center py-12 text-muted-foreground">
+              <div className="text-center py-12 text-gray-500">
                 {searchTerm ? 'Keine Artikel gefunden' : 'Noch keine Artikel vorhanden'}
               </div>
             ) : (
               <>
-                {/* Desktop: Table */}
-                <div className="hidden lg:block border rounded-lg overflow-x-auto">
+                {/* Desktop: Table - Modern light style */}
+                <div className="hidden lg:block border border-gray-100 rounded-xl overflow-hidden">
                   <Table>
                     <TableHeader>
-                      <TableRow>
-                        {isColumnVisible('image') && <TableHead className="w-[70px]">Foto</TableHead>}
-                        <TableHead className="min-w-[280px]">Artikelname</TableHead>
-                        {isColumnVisible('sku') && <TableHead className="w-[120px]">SKU</TableHead>}
-                        {isColumnVisible('unit') && <TableHead className="w-[70px]">Einheit</TableHead>}
-                        {isColumnVisible('packaging_unit') && <TableHead className="w-[120px]">BE</TableHead>}
-                        {isColumnVisible('price') && <TableHead className="w-[110px]">Preis (€)</TableHead>}
-                        {isColumnVisible('annual_order_value') && <TableHead className="w-[120px]">Bestellwert (365T)</TableHead>}
-                        {isColumnVisible('reference_price') && <TableHead className="w-[110px]">Ref.-Preis (€)</TableHead>}
-                        {isColumnVisible('reference_unit') && <TableHead className="w-[60px]">Ref.-Einheit</TableHead>}
+                      <TableRow className="bg-gray-50 border-b border-gray-100">
+                        {isColumnVisible('image') && <TableHead className="w-[70px] text-gray-600 font-medium">Foto</TableHead>}
+                        <TableHead className="min-w-[280px] text-gray-600 font-medium">Artikelname</TableHead>
+                        {isColumnVisible('sku') && <TableHead className="w-[120px] text-gray-600 font-medium">SKU</TableHead>}
+                        {isColumnVisible('unit') && <TableHead className="w-[70px] text-gray-600 font-medium">Einheit</TableHead>}
+                        {isColumnVisible('packaging_unit') && <TableHead className="w-[120px] text-gray-600 font-medium">BE</TableHead>}
+                        {isColumnVisible('price') && <TableHead className="w-[110px] text-gray-600 font-medium">Preis (€)</TableHead>}
+                        {isColumnVisible('annual_order_value') && <TableHead className="w-[120px] text-gray-600 font-medium">Bestellwert (365T)</TableHead>}
+                        {isColumnVisible('reference_price') && <TableHead className="w-[110px] text-gray-600 font-medium">Ref.-Preis (€)</TableHead>}
+                        {isColumnVisible('reference_unit') && <TableHead className="w-[60px] text-gray-600 font-medium">Ref.-Einheit</TableHead>}
                         <TableHead className="w-[80px]"></TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {filteredArticles.map((article) => {
                         return (
-                          <TableRow key={article.id}>
+                          <TableRow key={article.id} className="border-b border-gray-50 hover:bg-gray-50/50">
                             {isColumnVisible('image') && (
                               <TableCell className="py-2">
                                 <div className="relative group">
@@ -1360,16 +1383,25 @@ const SupplierPortal = () => {
 
           <TabsContent value="purchasing">
             <Tabs defaultValue="vendors" className="space-y-4">
-              <TabsList>
-                <TabsTrigger value="vendors" className="gap-2">
+              <TabsList className="bg-white border border-gray-200 shadow-sm p-1 rounded-xl">
+                <TabsTrigger 
+                  value="vendors" 
+                  className="gap-2 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-sm"
+                >
                   <Building2 className="h-4 w-4" />
                   Lieferanten
                 </TabsTrigger>
-                <TabsTrigger value="own-articles" className="gap-2">
+                <TabsTrigger 
+                  value="own-articles" 
+                  className="gap-2 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-sm"
+                >
                   <Package className="h-4 w-4" />
                   Artikelkatalog
                 </TabsTrigger>
-                <TabsTrigger value="inventory" className="gap-2">
+                <TabsTrigger 
+                  value="inventory" 
+                  className="gap-2 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-sm"
+                >
                   <ClipboardList className="h-4 w-4" />
                   Inventur
                 </TabsTrigger>
@@ -1388,13 +1420,13 @@ const SupplierPortal = () => {
           </TabsContent>
         </Tabs>
 
-        {/* Footer Text */}
+        {/* Footer Text - Modern style */}
         {portalSettings.footer_text && (
-          <div className="mt-8 text-center text-sm text-muted-foreground prose prose-sm dark:prose-invert max-w-none mx-auto">
+          <div className="mt-8 text-center text-sm text-gray-500 prose prose-sm max-w-none mx-auto">
             <ReactMarkdown
               components={{
                 a: ({ href, children }) => (
-                  <a href={href} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                  <a href={href} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-medium">
                     {children}
                   </a>
                 ),
