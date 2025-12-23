@@ -1,5 +1,5 @@
 import { Fragment } from 'react';
-import { ChevronDown, ChevronRight, Pencil, Trash2, FileText, Send, Bell, Store, Loader2, QrCode, ExternalLink, Key, Plus } from 'lucide-react';
+import { Trash2, FileText, Send, Bell, Store, Loader2, QrCode, ExternalLink, Key, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
@@ -84,7 +84,7 @@ export const SupplierTable = ({
                 />
               </TableHead>
             )}
-            <TableHead className="w-8"></TableHead>
+            
             <TableHead>Lieferant</TableHead>
             <TableHead className="hidden lg:table-cell">Artikel</TableHead>
             <TableHead className="text-right">Aktionen</TableHead>
@@ -103,11 +103,6 @@ export const SupplierTable = ({
                       {hasArticles && <Checkbox checked={selectedSuppliers.has(supplier.id)} onCheckedChange={() => onToggleSelect(supplier.id)} />}
                     </TableCell>
                   )}
-                  <TableCell className="py-2">
-                    <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => onToggleExpand(supplier.id)} disabled={supplierArticles.length === 0}>
-                      {supplierArticles.length > 0 ? isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" /> : <span className="w-4 h-4" />}
-                    </Button>
-                  </TableCell>
                   <TableCell className="py-2">
                     <div className="flex items-center gap-2">
                       <div>
@@ -199,9 +194,6 @@ export const SupplierTable = ({
                           <FileText className="w-4 h-4" />
                         </Button>
                       )}
-                      <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground hover:text-foreground" onClick={() => onEdit(supplier)} title="Bearbeiten">
-                        <Pencil className="w-4 h-4" />
-                      </Button>
                       {onAddArticle && (
                         <Button 
                           variant="ghost" 
@@ -269,31 +261,17 @@ export const SupplierTable = ({
                                     {Number(article.price).toFixed(2)}
                                   </TableCell>
                                   <TableCell className="py-1.5 text-right">
-                                    <div className="flex justify-end gap-0.5">
-                                      <Button 
-                                        variant="ghost" 
-                                        size="icon" 
-                                        className="h-7 w-7" 
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          console.log('Edit article clicked:', article.id, article.name);
-                                          onEditArticle(article);
-                                        }}
-                                      >
-                                        <Pencil className="w-3 h-3" />
-                                      </Button>
-                                      <Button 
-                                        variant="ghost" 
-                                        size="icon" 
-                                        className="h-7 w-7 text-destructive hover:text-destructive" 
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          onDeleteArticle(article);
-                                        }}
-                                      >
-                                        <Trash2 className="w-3 h-3" />
-                                      </Button>
-                                    </div>
+                                    <Button 
+                                      variant="ghost" 
+                                      size="icon" 
+                                      className="h-7 w-7 text-destructive hover:text-destructive" 
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        onDeleteArticle(article);
+                                      }}
+                                    >
+                                      <Trash2 className="w-3 h-3" />
+                                    </Button>
                                   </TableCell>
                                 </TableRow>
                               );
