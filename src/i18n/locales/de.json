@@ -61,7 +61,8 @@
       "noTestOrders": "Keine Test-Bestellungen vorhanden"
     },
     "orderConfirmed": "Bestellung bestätigt",
-    "newDirectOrder": "Neue Direktbestellung eingegangen"
+    "newDirectOrder": "Neue Direktbestellung eingegangen",
+    "easyOrderTab": "Easy Order"
   },
   "common": {
     "save": "Speichern",

@@ -61,7 +61,8 @@
       "noTestOrders": "No test orders available"
     },
     "orderConfirmed": "Order confirmed",
-    "newDirectOrder": "New direct order received"
+    "newDirectOrder": "New direct order received",
+    "easyOrderTab": "Easy Order"
   },
   "common": {
     "save": "Save",

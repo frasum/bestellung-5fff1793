@@ -59,7 +59,8 @@
       "deleteConfirmDescription": "Vuoi davvero eliminare tutti i {{count}} ordini di test in modo irreversibile?",
       "badge": "TEST",
       "noTestOrders": "Nessun ordine di test presente"
-    }
+    },
+    "easyOrderTab": "Easy Order"
   },
   "common": {
     "save": "Salva",
