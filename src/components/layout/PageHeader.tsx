@@ -183,7 +183,7 @@ export const PageHeader = ({
       <div className="flex items-center gap-2">
         <button
           onClick={onToggleSidebar}
-          className="hidden xl:flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#4DB8A8] hover:bg-[#3EA89A] transition-colors"
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#4DB8A8] hover:bg-[#3EA89A] transition-colors"
           title={sidebarCollapsed ? t('common.showSidebar') : t('common.hideSidebar')}
         >
           <img 
