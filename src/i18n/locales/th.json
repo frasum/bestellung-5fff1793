@@ -60,7 +60,8 @@
       "badge": "ทดสอบ",
       "noTestOrders": "ไม่มีคำสั่งซื้อทดสอบ"
     },
-    "easyOrderTab": "Easy Order"
+    "easyOrderTab": "Easy Order",
+    "noLocation": "ไม่มีสถานที่"
   },
   "common": {
     "save": "บันทึก",

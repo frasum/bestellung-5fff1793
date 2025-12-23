@@ -60,7 +60,8 @@
       "badge": "TEST",
       "noTestOrders": "Nessun ordine di test presente"
     },
-    "easyOrderTab": "Easy Order"
+    "easyOrderTab": "Easy Order",
+    "noLocation": "Nessuna sede"
   },
   "common": {
     "save": "Salva",

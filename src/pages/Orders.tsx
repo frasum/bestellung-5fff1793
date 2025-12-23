@@ -928,6 +928,9 @@ const Orders = () => {
                                 {order.is_test_order && (
                                   <FlaskConical className="w-3.5 h-3.5 text-warning shrink-0" />
                                 )}
+                                {!order.location_id && (
+                                  <MapPin className="w-3.5 h-3.5 text-warning shrink-0" />
+                                )}
                                 <span className="text-xs text-muted-foreground shrink-0">
                                   {format(new Date(order.created_at), 'd. MMM', { locale })}
                                 </span>
@@ -968,6 +971,12 @@ const Orders = () => {
                                     </span>
                                   ) : null;
                                 })()}
+                                {!order.location_id && (
+                                  <span className="flex items-center gap-1 text-sm text-warning" title={t('orders.noLocationAssigned')}>
+                                    <MapPin className="w-3.5 h-3.5" />
+                                    <span className="text-xs">{t('orders.noLocation')}</span>
+                                  </span>
+                                )}
                                 <span className="text-sm text-muted-foreground">
                                   {order.order_items?.length || 0} {t('orders.items')}
                                 </span>
