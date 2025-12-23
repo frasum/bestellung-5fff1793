@@ -359,23 +359,121 @@ Important:
       });
     }
 
-    // Find matching supplier by name
+    // Find matching supplier by name with improved fuzzy matching
     const { data: suppliers } = await supabaseClient
       .from('suppliers')
       .select('id, name')
       .eq('organization_id', organizationId)
       .eq('is_active', true);
 
+    // Helper function to normalize German umlauts and special characters
+    const normalizeGerman = (str: string): string => {
+      return str
+        .toLowerCase()
+        .replace(/ä/g, 'ae').replace(/ö/g, 'oe').replace(/ü/g, 'ue')
+        .replace(/ß/g, 'ss')
+        .replace(/é/g, 'e').replace(/è/g, 'e').replace(/ê/g, 'e')
+        .replace(/á/g, 'a').replace(/à/g, 'a').replace(/â/g, 'a')
+        .replace(/[^a-z0-9]/g, ' ') // Replace special chars with spaces
+        .replace(/\s+/g, ' ')       // Collapse multiple spaces
+        .trim();
+    };
+
+    // Alternative normalization (umlaut to single char)
+    const normalizeSimple = (str: string): string => {
+      return str
+        .toLowerCase()
+        .replace(/ä/g, 'a').replace(/ö/g, 'o').replace(/ü/g, 'u')
+        .replace(/ß/g, 'ss')
+        .replace(/é/g, 'e').replace(/è/g, 'e').replace(/ê/g, 'e')
+        .replace(/á/g, 'a').replace(/à/g, 'a').replace(/â/g, 'a')
+        .replace(/[^a-z0-9]/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+    };
+
+    // Extract tokens (words) from a string
+    const getTokens = (str: string): string[] => {
+      return str.split(' ').filter(t => t.length >= 3);
+    };
+
     let matchedSupplierId: string | null = null;
     if (suppliers && invoiceData.supplierName) {
-      const supplierNameLower = invoiceData.supplierName.toLowerCase();
-      const matchedSupplier = suppliers.find(s => 
-        s.name.toLowerCase().includes(supplierNameLower) || 
-        supplierNameLower.includes(s.name.toLowerCase())
-      );
-      if (matchedSupplier) {
-        matchedSupplierId = matchedSupplier.id;
-        console.log('Matched supplier:', matchedSupplier.name);
+      const invoiceSupplierName = invoiceData.supplierName;
+      const invoiceNormalized1 = normalizeGerman(invoiceSupplierName);
+      const invoiceNormalized2 = normalizeSimple(invoiceSupplierName);
+      const invoiceTokens1 = getTokens(invoiceNormalized1);
+      const invoiceTokens2 = getTokens(invoiceNormalized2);
+
+      console.log('Matching supplier:', invoiceSupplierName);
+      console.log('Normalized tokens (ae):', invoiceTokens1);
+      console.log('Normalized tokens (a):', invoiceTokens2);
+
+      // Try to find best match
+      let bestMatch: { supplier: typeof suppliers[0]; score: number } | null = null;
+
+      for (const supplier of suppliers) {
+        const supplierNormalized1 = normalizeGerman(supplier.name);
+        const supplierNormalized2 = normalizeSimple(supplier.name);
+        const supplierTokens1 = getTokens(supplierNormalized1);
+        const supplierTokens2 = getTokens(supplierNormalized2);
+
+        let score = 0;
+
+        // Check 1: Direct substring match (normalized)
+        if (supplierNormalized1.includes(invoiceNormalized1) || invoiceNormalized1.includes(supplierNormalized1)) {
+          score = 100;
+        } else if (supplierNormalized2.includes(invoiceNormalized2) || invoiceNormalized2.includes(supplierNormalized2)) {
+          score = 100;
+        }
+
+        // Check 2: Token-based matching
+        if (score === 0) {
+          // Check if any invoice token matches any supplier token
+          for (const invToken of [...invoiceTokens1, ...invoiceTokens2]) {
+            if (invToken.length < 4) continue; // Skip short tokens
+            
+            for (const supToken of [...supplierTokens1, ...supplierTokens2]) {
+              if (supToken.length < 3) continue;
+              
+              // Exact token match
+              if (invToken === supToken) {
+                score = Math.max(score, 80);
+              }
+              // Token contains the other
+              else if (invToken.includes(supToken) || supToken.includes(invToken)) {
+                score = Math.max(score, 70);
+              }
+              // Check if tokens share significant prefix (>=4 chars)
+              else if (invToken.length >= 4 && supToken.length >= 4) {
+                const minLen = Math.min(invToken.length, supToken.length);
+                let commonPrefix = 0;
+                for (let i = 0; i < minLen; i++) {
+                  if (invToken[i] === supToken[i]) commonPrefix++;
+                  else break;
+                }
+                if (commonPrefix >= 4) {
+                  score = Math.max(score, 60);
+                }
+              }
+            }
+          }
+        }
+
+        if (score > 0) {
+          console.log(`Supplier "${supplier.name}" score: ${score}`);
+        }
+
+        if (score > 0 && (!bestMatch || score > bestMatch.score)) {
+          bestMatch = { supplier, score };
+        }
+      }
+
+      if (bestMatch && bestMatch.score >= 60) {
+        matchedSupplierId = bestMatch.supplier.id;
+        console.log('Matched supplier:', bestMatch.supplier.name, 'with score:', bestMatch.score);
+      } else {
+        console.log('No supplier match found with sufficient score');
       }
     }
 
