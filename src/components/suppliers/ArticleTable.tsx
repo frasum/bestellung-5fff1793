@@ -173,7 +173,7 @@ export const ArticleTable = ({
               <Fragment>
                 <CollapsibleTrigger asChild>
                   <TableRow className="bg-muted/50 cursor-pointer">
-                    <TableCell colSpan={advancedViewEnabled ? 5 : 4} className="py-2 px-4">
+                    <TableCell colSpan={advancedViewEnabled ? 6 : 5} className="py-2 px-4">
                       <div className="flex items-center gap-2">
                         <ChevronRight className={cn("h-4 w-4 transition-transform", openSuppliers.has(group.supplier.id) && "rotate-90")} />
                         <span className="font-semibold text-sm text-foreground">{group.supplier.name}</span>
@@ -231,6 +231,48 @@ export const ArticleTable = ({
                     {group.articles?.map((article) => {
                       return (
                         <TableRow key={article.id} className="group h-10">
+                          {/* Cart Controls - Left Side */}
+                          <TableCell className="py-2 w-24">
+                            {onAddToCart && (() => {
+                              const qty = cartItemsByArticle.get(article.id) || 0;
+                              return (
+                                <div className="flex items-center justify-start gap-1">
+                                  {qty > 0 ? (
+                                    <>
+                                      <Button
+                                        variant="outline"
+                                        size="icon"
+                                        className="h-7 w-7"
+                                        onClick={() => onRemoveFromCart?.(article)}
+                                      >
+                                        <Minus className="w-3 h-3" />
+                                      </Button>
+                                      <span className="w-6 text-center font-semibold text-sm">
+                                        {qty}
+                                      </span>
+                                      <Button
+                                        variant="outline"
+                                        size="icon"
+                                        className="h-7 w-7"
+                                        onClick={() => onAddToCart(article)}
+                                      >
+                                        <Plus className="w-3 h-3" />
+                                      </Button>
+                                    </>
+                                  ) : (
+                                    <Button
+                                      variant="default"
+                                      size="icon"
+                                      className="h-7 w-7 rounded-full"
+                                      onClick={() => onAddToCart(article)}
+                                    >
+                                      <ShoppingCart className="w-3 h-3" />
+                                    </Button>
+                                  )}
+                                </div>
+                              );
+                            })()}
+                          </TableCell>
                           {advancedViewEnabled && (
                             <TableCell className="py-2">
                               <Checkbox checked={selectedArticles.has(article.id)} onCheckedChange={() => onToggleArticle(article.id)} />
@@ -325,48 +367,6 @@ export const ArticleTable = ({
                                 </span>
                               )}
                             </div>
-                          </TableCell>
-                          {/* Cart Controls */}
-                          <TableCell className="py-2 w-32">
-                            {onAddToCart && (() => {
-                              const qty = cartItemsByArticle.get(article.id) || 0;
-                              return (
-                                <div className="flex items-center justify-end gap-1">
-                                  {qty > 0 ? (
-                                    <>
-                                      <Button
-                                        variant="outline"
-                                        size="icon"
-                                        className="h-7 w-7"
-                                        onClick={() => onRemoveFromCart?.(article)}
-                                      >
-                                        <Minus className="w-3 h-3" />
-                                      </Button>
-                                      <span className="w-8 text-center font-semibold text-sm">
-                                        {qty}
-                                      </span>
-                                      <Button
-                                        variant="outline"
-                                        size="icon"
-                                        className="h-7 w-7"
-                                        onClick={() => onAddToCart(article)}
-                                      >
-                                        <Plus className="w-3 h-3" />
-                                      </Button>
-                                    </>
-                                  ) : (
-                                    <Button
-                                      variant="default"
-                                      size="icon"
-                                      className="h-7 w-7 rounded-full"
-                                      onClick={() => onAddToCart(article)}
-                                    >
-                                      <ShoppingCart className="w-3 h-3" />
-                                    </Button>
-                                  )}
-                                </div>
-                              );
-                            })()}
                           </TableCell>
                         </TableRow>
                       );
