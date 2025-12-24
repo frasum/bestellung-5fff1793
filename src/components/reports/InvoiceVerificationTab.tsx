@@ -25,6 +25,7 @@ import {
   Download,
   ExternalLink,
   Plus,
+  Trash2,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -43,6 +44,16 @@ import {
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import {
   Dialog,
   DialogContent,
   DialogHeader,
@@ -58,6 +69,7 @@ import {
   useCheckInvoiceEmails,
   useReanalyzeInvoice,
   useCreateArticlesFromInvoice,
+  useDeleteInvoice,
   Invoice,
   InvoiceDiscrepancy,
 } from '@/hooks/useInvoices';
@@ -88,11 +100,13 @@ export function InvoiceVerificationTab() {
   const checkEmails = useCheckInvoiceEmails();
   const reanalyzeInvoice = useReanalyzeInvoice();
   const createArticlesFromInvoice = useCreateArticlesFromInvoice();
+  const deleteInvoice = useDeleteInvoice();
   const [expandedInvoices, setExpandedInvoices] = useState<Set<string>>(new Set());
   const [selectedInvoiceId, setSelectedInvoiceId] = useState<string | null>(null);
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
   const [pdfDialogUrl, setPdfDialogUrl] = useState<string | null>(null);
   const [pdfBlobUrl, setPdfBlobUrl] = useState<string | null>(null); // Keep for cleanup compatibility
+  const [deletingInvoice, setDeletingInvoice] = useState<Invoice | null>(null);
 
   const locale = i18n.language === 'de' ? de : enUS;
 
@@ -482,6 +496,19 @@ export function InvoiceVerificationTab() {
                               </Button>
                             </>
                           )}
+                          {/* Delete Button */}
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setDeletingInvoice(invoice);
+                            }}
+                            className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                          >
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            {t('common.delete', 'Löschen')}
+                          </Button>
                         </div>
                       </div>
                     </CollapsibleContent>
@@ -566,6 +593,39 @@ export function InvoiceVerificationTab() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!deletingInvoice} onOpenChange={(open) => !open && setDeletingInvoice(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('invoices.deleteInvoice', 'Rechnung löschen?')}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t(
+                'invoices.deleteInvoiceConfirm',
+                'Die Rechnung "{{number}}" und die zugehörige PDF-Datei werden unwiderruflich gelöscht.',
+                { number: deletingInvoice?.invoice_number || t('invoices.unknown', 'Unbekannt') }
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t('common.cancel', 'Abbrechen')}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (deletingInvoice) {
+                  deleteInvoice.mutate({
+                    id: deletingInvoice.id,
+                    pdf_url: deletingInvoice.pdf_url,
+                  });
+                  setDeletingInvoice(null);
+                }
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {t('common.delete', 'Löschen')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
