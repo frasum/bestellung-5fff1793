@@ -95,7 +95,7 @@ export const SupplierTable = ({
             )}
             
             <TableHead className="w-12"></TableHead>
-            <TableHead className="hidden lg:table-cell">Artikel</TableHead>
+            <TableHead className="hidden lg:table-cell w-24">Artikel</TableHead>
             <TableHead>Lieferant</TableHead>
             <TableHead className="text-right">Aktionen</TableHead>
           </TableRow>
@@ -133,7 +133,7 @@ export const SupplierTable = ({
                     )}
                   </TableCell>
                   {/* Article count - Second column */}
-                  <TableCell className="hidden lg:table-cell py-2">
+                  <TableCell className="hidden lg:table-cell py-2 w-24">
                     <Badge 
                       variant="secondary" 
                       className="cursor-pointer hover:bg-primary hover:text-primary-foreground hover:scale-105 transition-all"
