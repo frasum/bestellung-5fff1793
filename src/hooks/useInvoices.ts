@@ -428,6 +428,74 @@ export function useCreateArticlesFromInvoice() {
   });
 }
 
+export function useDeleteInvoice() {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (invoice: { id: string; pdf_url: string | null }) => {
+      // 1. Delete related discrepancies first (foreign key constraint)
+      const { error: discrepancyError } = await supabase
+        .from('invoice_discrepancies')
+        .delete()
+        .eq('invoice_id', invoice.id);
+
+      if (discrepancyError) {
+        console.warn('Error deleting discrepancies:', discrepancyError);
+      }
+
+      // 2. Delete related invoice items
+      const { error: itemsError } = await supabase
+        .from('invoice_items')
+        .delete()
+        .eq('invoice_id', invoice.id);
+
+      if (itemsError) {
+        console.warn('Error deleting invoice items:', itemsError);
+      }
+
+      // 3. Delete PDF from storage if exists
+      if (invoice.pdf_url) {
+        // URL format: .../storage/v1/object/public/invoices/{org_id}/{filename}
+        const urlParts = invoice.pdf_url.split('/storage/v1/object/public/invoices/');
+        if (urlParts.length === 2) {
+          const filePath = urlParts[1]; // e.g. "org-id/1234567890-rechnung.pdf"
+          const { error: storageError } = await supabase.storage
+            .from('invoices')
+            .remove([filePath]);
+
+          if (storageError) {
+            console.warn('PDF could not be deleted from storage:', storageError);
+            // Don't throw - we still want to delete the invoice record
+          }
+        }
+      }
+
+      // 4. Delete the invoice record itself
+      const { error } = await supabase
+        .from('invoices')
+        .delete()
+        .eq('id', invoice.id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['invoices'] });
+      toast({
+        title: 'Rechnung gelöscht',
+        description: 'Die Rechnung und die zugehörige PDF wurden entfernt.',
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: 'Fehler beim Löschen',
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
+  });
+}
+
 async function fileToBase64(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
