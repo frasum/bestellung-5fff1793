@@ -94,6 +94,7 @@ export const SupplierTable = ({
               </TableHead>
             )}
             
+            <TableHead className="w-12"></TableHead>
             <TableHead>Lieferant</TableHead>
             <TableHead className="hidden lg:table-cell">Artikel</TableHead>
             <TableHead className="text-right">Aktionen</TableHead>
@@ -112,6 +113,25 @@ export const SupplierTable = ({
                       {hasArticles && <Checkbox checked={selectedSuppliers.has(supplier.id)} onCheckedChange={() => onToggleSelect(supplier.id)} />}
                     </TableCell>
                   )}
+                  {/* Cart Button - First column */}
+                  <TableCell className="py-2">
+                    {onOrderClick && supplierArticles.length > 0 && (
+                      <Button 
+                        variant="default" 
+                        size="icon" 
+                        className="h-9 w-9 relative rounded-full"
+                        onClick={() => onOrderClick(supplier)}
+                        title="Artikel bestellen"
+                      >
+                        <ShoppingCart className="w-4 h-4" />
+                        {cartItemCountsBySupplier[supplier.id] > 0 && (
+                          <Badge variant="secondary" className="absolute -top-1 -right-1 h-5 min-w-5 px-1.5 text-xs">
+                            {cartItemCountsBySupplier[supplier.id]}
+                          </Badge>
+                        )}
+                      </Button>
+                    )}
+                  </TableCell>
                   <TableCell className="py-2">
                     <div className="flex items-center gap-2">
                       <div>
@@ -179,23 +199,6 @@ export const SupplierTable = ({
                   </TableCell>
                   <TableCell className="text-right py-2">
                     <div className="flex justify-end items-center gap-0.5 sm:gap-1 md:gap-1.5">
-                      {/* Order Button - Always visible primary action */}
-                      {onOrderClick && supplierArticles.length > 0 && (
-                        <Button 
-                          variant="default" 
-                          size="icon" 
-                          className="h-9 w-9 relative rounded-full"
-                          onClick={() => onOrderClick(supplier)}
-                          title="Artikel bestellen"
-                        >
-                          <ShoppingCart className="w-4 h-4" />
-                          {cartItemCountsBySupplier[supplier.id] > 0 && (
-                            <Badge variant="secondary" className="absolute -top-1 -right-1 h-5 min-w-5 px-1.5 text-xs">
-                              {cartItemCountsBySupplier[supplier.id]}
-                            </Badge>
-                          )}
-                        </Button>
-                      )}
                       {/* Secondary actions - visible on hover */}
                       <div className="flex gap-0.5 sm:gap-1 md:gap-1.5 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                       <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground hover:text-foreground" onClick={() => onSendInvitation(supplier)} disabled={invitingSupplierId === supplier.id || sendingInvitation} title="Einladung zum Lieferantenportal senden">
