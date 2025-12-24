@@ -123,7 +123,9 @@ export function InvoiceVerificationTab() {
   const [selectedInvoiceId, setSelectedInvoiceId] = useState<string | null>(null);
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
   const [pdfDialogUrl, setPdfDialogUrl] = useState<string | null>(null);
-  const [pdfBlobUrl, setPdfBlobUrl] = useState<string | null>(null); // Keep for cleanup compatibility
+  const [pdfBlobUrl, setPdfBlobUrl] = useState<string | null>(null);
+  const [pdfLoading, setPdfLoading] = useState(false);
+  const [pdfError, setPdfError] = useState<string | null>(null);
   const [deletingInvoice, setDeletingInvoice] = useState<Invoice | null>(null);
 
   const locale = i18n.language === 'de' ? de : enUS;
@@ -143,9 +145,11 @@ export function InvoiceVerificationTab() {
   });
 
   const openPdfViewer = (pdfUrl: string) => {
-    // Directly set the URL - no fetch/blob conversion needed
+    // Reset state and trigger fetch
     setPdfDialogUrl(pdfUrl);
-    setPdfBlobUrl(null); // Clear any old blob URL
+    setPdfBlobUrl(null);
+    setPdfLoading(true);
+    setPdfError(null);
   };
 
   const closePdfDialog = () => {
@@ -154,7 +158,41 @@ export function InvoiceVerificationTab() {
       setPdfBlobUrl(null);
     }
     setPdfDialogUrl(null);
+    setPdfLoading(false);
+    setPdfError(null);
   };
+
+  // Fetch PDF as blob when dialog opens (bypasses X-Frame-Options restrictions)
+  useEffect(() => {
+    if (!pdfDialogUrl) return;
+
+    const controller = new AbortController();
+    
+    const fetchPdf = async () => {
+      try {
+        const response = await fetch(pdfDialogUrl, { signal: controller.signal });
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+        const blob = await response.blob();
+        const blobUrl = URL.createObjectURL(blob);
+        setPdfBlobUrl(blobUrl);
+        setPdfError(null);
+      } catch (err: unknown) {
+        if ((err as Error).name === 'AbortError') return;
+        console.error('PDF fetch error:', err);
+        setPdfError((err as Error).message || 'Fehler beim Laden');
+      } finally {
+        setPdfLoading(false);
+      }
+    };
+
+    fetchPdf();
+
+    return () => {
+      controller.abort();
+    };
+  }, [pdfDialogUrl]);
 
   const toggleExpanded = (id: string) => {
     setExpandedInvoices(prev => {
@@ -584,43 +622,50 @@ export function InvoiceVerificationTab() {
             </DialogTitle>
           </DialogHeader>
           <div className="flex-1 min-h-0 bg-muted/30">
-            {pdfDialogUrl && (
-              <object
-                data={pdfDialogUrl}
-                type="application/pdf"
-                className="w-full h-full"
-              >
-                {/* Fallback if object tag doesn't work */}
-                <iframe
-                  src={pdfDialogUrl}
-                  className="w-full h-full border-0"
-                  title="PDF Vorschau"
-                />
-                {/* Final fallback message */}
-                <div className="flex flex-col items-center justify-center h-full p-8 text-center">
-                  <FileText className="h-16 w-16 text-muted-foreground mb-4" />
-                  <p className="text-lg font-medium mb-2">
-                    {t('invoices.pdfNotSupported', 'PDF-Vorschau nicht verfügbar')}
-                  </p>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    {t('invoices.pdfNotSupportedDesc', 'Dein Browser unterstützt keine Inline-PDF-Anzeige.')}
-                  </p>
-                  <div className="flex gap-2">
-                    <Button asChild>
-                      <a href={pdfDialogUrl} target="_blank" rel="noopener noreferrer">
-                        <ExternalLink className="h-4 w-4 mr-2" />
-                        {t('invoices.openInNewTab', 'Neuer Tab')}
-                      </a>
-                    </Button>
-                    <Button variant="outline" asChild>
-                      <a href={pdfDialogUrl} download>
-                        <Download className="h-4 w-4 mr-2" />
-                        {t('invoices.download', 'Download')}
-                      </a>
-                    </Button>
-                  </div>
+            {/* Loading state */}
+            {pdfLoading && (
+              <div className="flex flex-col items-center justify-center h-full p-8">
+                <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
+                <p className="text-muted-foreground">
+                  {t('invoices.loadingPdf', 'PDF wird geladen...')}
+                </p>
+              </div>
+            )}
+            
+            {/* PDF loaded successfully - use blob URL */}
+            {pdfBlobUrl && !pdfLoading && (
+              <iframe
+                src={pdfBlobUrl}
+                className="w-full h-full border-0"
+                title="PDF Vorschau"
+              />
+            )}
+            
+            {/* Error state or fallback */}
+            {pdfError && !pdfLoading && (
+              <div className="flex flex-col items-center justify-center h-full p-8 text-center">
+                <FileText className="h-16 w-16 text-muted-foreground mb-4" />
+                <p className="text-lg font-medium mb-2">
+                  {t('invoices.pdfNotSupported', 'PDF-Vorschau nicht verfügbar')}
+                </p>
+                <p className="text-sm text-muted-foreground mb-4">
+                  {pdfError}
+                </p>
+                <div className="flex gap-2">
+                  <Button asChild>
+                    <a href={pdfDialogUrl!} target="_blank" rel="noopener noreferrer">
+                      <ExternalLink className="h-4 w-4 mr-2" />
+                      {t('invoices.openInNewTab', 'Neuer Tab')}
+                    </a>
+                  </Button>
+                  <Button variant="outline" asChild>
+                    <a href={pdfDialogUrl!} download>
+                      <Download className="h-4 w-4 mr-2" />
+                      {t('invoices.download', 'Download')}
+                    </a>
+                  </Button>
                 </div>
-              </object>
+              </div>
             )}
           </div>
         </DialogContent>
