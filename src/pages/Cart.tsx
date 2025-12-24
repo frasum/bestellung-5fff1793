@@ -233,7 +233,7 @@ const Cart = () => {
             <ShoppingCart className="w-12 h-12 sm:w-16 sm:h-16 mx-auto text-muted-foreground/50 mb-4" />
             <h2 className="text-lg font-semibold text-foreground mb-2">{t('cart.empty')}</h2>
             <p className="text-sm text-muted-foreground mb-6 px-4">{t('cart.emptyDescription')}</p>
-            <Button onClick={() => navigate('/suppliers?tab=articles')}>
+            <Button onClick={() => navigate('/suppliers')}>
               {t('cart.browseArticles')}
             </Button>
           </div>

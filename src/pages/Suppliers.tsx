@@ -58,8 +58,17 @@ const Suppliers = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  // Tab state from URL
-  const activeTab = searchParams.get('tab') || 'suppliers';
+  // Tab state from URL - handle 'articles' as alias for 'suppliers' for backward compatibility
+  const tabParam = searchParams.get('tab');
+  const activeTab = tabParam === 'articles' ? 'suppliers' : (tabParam || 'suppliers');
+  
+  // Redirect 'articles' tab to 'suppliers' for cleaner URL
+  useEffect(() => {
+    if (tabParam === 'articles') {
+      setSearchParams({ tab: 'suppliers' }, { replace: true });
+    }
+  }, [tabParam, setSearchParams]);
+  
   const setActiveTab = (tab: string) => {
     setSearchParams({
       tab

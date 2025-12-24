@@ -59,7 +59,7 @@ export function GlobalSearch() {
   const pages = [
     { name: t('nav.dashboard'), href: '/dashboard', icon: LayoutDashboard },
     { name: t('nav.suppliers'), href: '/suppliers', icon: Users },
-    { name: t('nav.articles'), href: '/suppliers?tab=articles', icon: Package },
+    { name: t('nav.articles'), href: '/suppliers', icon: Package },
     { name: t('nav.orders'), href: '/orders', icon: ShoppingCart },
     { name: t('nav.drafts'), href: '/orders?tab=drafts', icon: FileText },
     { name: t('nav.reports'), href: '/reports', icon: BarChart3 },

@@ -403,7 +403,7 @@ const Checkout = () => {
             <Button variant="ghost" onClick={() => navigate('/orders')} className="h-9 w-full sm:w-auto">
               {t('nav.orders')}
             </Button>
-            <Button onClick={() => navigate('/articles')} className="h-9 w-full sm:w-auto">
+            <Button onClick={() => navigate('/suppliers')} className="h-9 w-full sm:w-auto">
               {t('orders.browseArticles')}
             </Button>
           </div>
