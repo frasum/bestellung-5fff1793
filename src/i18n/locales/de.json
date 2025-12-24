@@ -180,6 +180,9 @@
   },
   "suppliers": {
     "title": "Lieferanten",
+    "articlesTab": "Lieferanten & Artikel",
+    "winesTab": "Weine",
+    "suggestionsTab": "Vorschläge",
     "description": "Verwalten Sie Ihre Lieferanten",
     "addSupplier": "Lieferant hinzufügen",
     "editSupplier": "Lieferant bearbeiten",
