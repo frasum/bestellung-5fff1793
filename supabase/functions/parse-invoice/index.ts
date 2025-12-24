@@ -9,6 +9,7 @@ const corsHeaders = {
 interface InvoiceData {
   supplierName: string;
   supplierAddress?: string;
+  supplierEmail?: string; // NEW: Extract supplier email from invoice
   customerNumber?: string;
   invoiceNumber: string;
   invoiceDate: string;
@@ -26,7 +27,81 @@ interface InvoiceData {
     unit?: string;
     unitPrice: number;
     totalPrice: number;
+    suggestedCategory?: string; // NEW: AI-suggested category
   }>;
+}
+
+// Unit normalization mapping
+const UNIT_NORMALIZATIONS: Record<string, string> = {
+  // Stück variants
+  'stück': 'Stk', 'stueck': 'Stk', 'stk': 'Stk', 'st': 'Stk', 'stk.': 'Stk',
+  'pcs': 'Stk', 'pc': 'Stk', 'pieces': 'Stk', 'piece': 'Stk', 'each': 'Stk',
+  'einheit': 'Stk', 'eh': 'Stk',
+  // Kilogram variants
+  'kilogramm': 'kg', 'kilo': 'kg', 'kg': 'kg',
+  // Gram variants
+  'gramm': 'g', 'gr': 'g', 'g': 'g',
+  // Liter variants
+  'liter': 'l', 'lt': 'l', 'ltr': 'l', 'l': 'l',
+  // Milliliter variants
+  'milliliter': 'ml', 'ml': 'ml',
+  // Flasche variants
+  'flasche': 'Fl', 'fl': 'Fl', 'fla': 'Fl', 'flaschen': 'Fl', 'bottle': 'Fl', 'btl': 'Fl',
+  // Package variants
+  'packung': 'Pck', 'paket': 'Pck', 'pack': 'Pck', 'pck': 'Pck', 'pkg': 'Pck', 'pk': 'Pck',
+  // Karton variants
+  'karton': 'Krt', 'krt': 'Krt', 'ktn': 'Krt', 'carton': 'Krt', 'ctn': 'Krt', 'box': 'Krt',
+  // Dose variants
+  'dose': 'Ds', 'ds': 'Ds', 'can': 'Ds',
+  // Bund variants
+  'bund': 'Bd', 'bd': 'Bd', 'bunch': 'Bd',
+  // Portion variants
+  'portion': 'Por', 'por': 'Por',
+  // Meter variants
+  'meter': 'm', 'm': 'm',
+};
+
+function normalizeUnit(unit: string | undefined | null): string {
+  if (!unit) return 'Stk';
+  const normalized = UNIT_NORMALIZATIONS[unit.toLowerCase().trim()];
+  return normalized || unit; // Keep original if not found
+}
+
+// Fuzzy matching for article names to detect duplicates
+function normalizeArticleName(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/ä/g, 'ae').replace(/ö/g, 'oe').replace(/ü/g, 'ue').replace(/ß/g, 'ss')
+    .replace(/[^a-z0-9]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function getArticleTokens(name: string): string[] {
+  return normalizeArticleName(name)
+    .split(' ')
+    .filter(t => t.length >= 3);
+}
+
+function calculateArticleSimilarity(name1: string, name2: string): number {
+  const tokens1 = getArticleTokens(name1);
+  const tokens2 = getArticleTokens(name2);
+  
+  if (tokens1.length === 0 || tokens2.length === 0) return 0;
+  
+  let matches = 0;
+  for (const t1 of tokens1) {
+    for (const t2 of tokens2) {
+      if (t1 === t2 || (t1.length >= 5 && t2.length >= 5 && (t1.includes(t2) || t2.includes(t1)))) {
+        matches++;
+        break;
+      }
+    }
+  }
+  
+  // Calculate Jaccard-like similarity
+  const totalUniqueTokens = new Set([...tokens1, ...tokens2]).size;
+  return (matches / totalUniqueTokens) * 100;
 }
 
 serve(async (req) => {
@@ -259,6 +334,7 @@ Extract the following information and return as JSON:
 {
   "supplierName": "Supplier/vendor company name",
   "supplierAddress": "Full supplier address if visible",
+  "supplierEmail": "Supplier email address if visible (look in header, footer, contact info)",
   "customerNumber": "Customer number if visible (look for 'Kunden-Nr.', 'Kundennummer', 'Kd.-Nr.', 'Kd.Nr.', 'Customer No.', 'Kundenkonto', 'Debitor-Nr.')",
   "invoiceNumber": "Invoice/bill number",
   "invoiceDate": "Invoice date in YYYY-MM-DD format",
@@ -276,7 +352,8 @@ Extract the following information and return as JSON:
       "quantity": numeric quantity,
       "unit": "unit like Stk, kg, Fl, etc",
       "unitPrice": numeric unit price,
-      "totalPrice": numeric line total
+      "totalPrice": numeric line total,
+      "suggestedCategory": "Suggest a food/beverage category in German based on the article name. Categories: Fleisch, Fisch, Gemüse, Obst, Milchprodukte, Backwaren, Getränke, Wein, Bier, Spirituosen, Gewürze, Öle, Konserven, Tiefkühl, Trockenprodukte, Reinigung, Verbrauchsmaterial, Sonstiges"
     }
   ]
 }
@@ -286,8 +363,10 @@ Important:
 - Use numeric values without currency symbols
 - If a value is unclear or missing, use null
 - Parse German date formats (DD.MM.YYYY) to YYYY-MM-DD
-- Common units: Stk (piece), kg, g, l, ml, Fl (bottle), Pck (package), Krt (carton)
-- Look carefully for customer number - it identifies which location this invoice belongs to`
+- Normalize units to standard forms: Stk (piece), kg, g, l, ml, Fl (bottle), Pck (package), Krt (carton)
+- Look carefully for customer number - it identifies which location this invoice belongs to
+- Extract supplier email from the invoice header, footer, or contact section
+- Suggest a category for each item based on its name (use German category names)`
           },
           {
             role: 'user',
@@ -665,12 +744,19 @@ Important:
     if (!matchedSupplierId && invoiceData.supplierName) {
       console.log('Auto-creating supplier:', invoiceData.supplierName);
       
+      // Use extracted email or generate a placeholder
+      const supplierEmail = invoiceData.supplierEmail && invoiceData.supplierEmail.includes('@') 
+        ? invoiceData.supplierEmail 
+        : `rechnung@${invoiceData.supplierName.toLowerCase().replace(/[^a-z0-9]/g, '').substring(0, 20)}.auto`;
+      
+      console.log('Using supplier email:', supplierEmail);
+      
       const { data: newSupplier, error: supplierError } = await supabaseClient
         .from('suppliers')
         .insert({
           organization_id: organizationId,
           name: invoiceData.supplierName,
-          email: 'rechnung@unbekannt.de', // Placeholder email since it's required
+          email: supplierEmail,
           address: invoiceData.supplierAddress || null,
           is_active: true,
         })
@@ -719,9 +805,10 @@ Important:
       }
     }
 
-    // AUTO-CREATE ARTICLES if they don't exist
+    // AUTO-CREATE ARTICLES if they don't exist (with fuzzy duplicate detection)
     let articlesCreated = 0;
     let articlesUpdated = 0;
+    let articlesMerged = 0;
     
     if (matchedSupplierId && invoiceData.items && invoiceData.items.length > 0) {
       console.log('Checking/creating articles for', invoiceData.items.length, 'items');
@@ -729,17 +816,18 @@ Important:
       // Get existing articles for this supplier
       const { data: existingArticles } = await supabaseClient
         .from('articles')
-        .select('id, name, sku, price')
+        .select('id, name, sku, price, category')
         .eq('organization_id', organizationId)
         .eq('supplier_id', matchedSupplierId);
       
-      type ArticleRef = { id: string; name: string; sku: string | null; price: number };
+      type ArticleRef = { id: string; name: string; sku: string | null; price: number; category: string | null };
       const existingByName = new Map<string, ArticleRef>();
       const existingBySku = new Map<string, ArticleRef>();
+      const existingList: ArticleRef[] = existingArticles || [];
       
       if (existingArticles) {
         for (const art of existingArticles) {
-          existingByName.set(normalizeSimple(art.name), art);
+          existingByName.set(normalizeArticleName(art.name), art);
           if (art.sku) {
             existingBySku.set(art.sku.toLowerCase(), art);
           }
@@ -749,15 +837,37 @@ Important:
       for (const item of invoiceData.items) {
         if (!item.articleName) continue;
         
-        // Try to find existing article by SKU first, then by name
+        // Normalize the unit from the invoice
+        const normalizedUnit = normalizeUnit(item.unit);
+        
+        // Try to find existing article by SKU first
         let existingArticle: ArticleRef | undefined;
         
         if (item.articleSku) {
           existingArticle = existingBySku.get(item.articleSku.toLowerCase());
         }
         
+        // Try exact name match
         if (!existingArticle) {
-          existingArticle = existingByName.get(normalizeSimple(item.articleName));
+          existingArticle = existingByName.get(normalizeArticleName(item.articleName));
+        }
+        
+        // Try fuzzy matching to detect similar articles (avoid duplicates)
+        if (!existingArticle) {
+          let bestMatch: { article: ArticleRef; similarity: number } | null = null;
+          
+          for (const art of existingList) {
+            const similarity = calculateArticleSimilarity(item.articleName, art.name);
+            if (similarity >= 70 && (!bestMatch || similarity > bestMatch.similarity)) {
+              bestMatch = { article: art, similarity };
+            }
+          }
+          
+          if (bestMatch) {
+            console.log(`Fuzzy match: "${item.articleName}" -> "${bestMatch.article.name}" (${bestMatch.similarity.toFixed(0)}%)`);
+            existingArticle = bestMatch.article;
+            articlesMerged++;
+          }
         }
         
         if (existingArticle) {
@@ -770,9 +880,18 @@ Important:
               .eq('id', existingArticle.id);
             articlesUpdated++;
           }
+          
+          // Update category if not set and AI suggested one
+          if (!existingArticle.category && item.suggestedCategory) {
+            console.log(`Setting category for "${item.articleName}": ${item.suggestedCategory}`);
+            await supabaseClient
+              .from('articles')
+              .update({ category: item.suggestedCategory })
+              .eq('id', existingArticle.id);
+          }
         } else {
-          // Create new article
-          console.log(`Creating new article: "${item.articleName}"`);
+          // Create new article with normalized unit and AI-suggested category
+          console.log(`Creating new article: "${item.articleName}" (unit: ${normalizedUnit}, category: ${item.suggestedCategory || 'none'})`);
           const { data: newArticle, error: articleError } = await supabaseClient
             .from('articles')
             .insert({
@@ -780,8 +899,9 @@ Important:
               supplier_id: matchedSupplierId,
               name: item.articleName,
               sku: item.articleSku || null,
-              unit: item.unit || 'Stk',
+              unit: normalizedUnit,
               price: item.unitPrice || 0,
+              category: item.suggestedCategory || null,
               is_active: true,
             })
             .select('id')
@@ -792,9 +912,15 @@ Important:
           } else {
             articlesCreated++;
             // Add to maps for subsequent checks
-            existingByName.set(normalizeSimple(item.articleName), { 
-              id: newArticle.id, name: item.articleName, sku: item.articleSku || null, price: item.unitPrice || 0 
-            });
+            const newArtRef = { 
+              id: newArticle.id, 
+              name: item.articleName, 
+              sku: item.articleSku || null, 
+              price: item.unitPrice || 0,
+              category: item.suggestedCategory || null
+            };
+            existingByName.set(normalizeArticleName(item.articleName), newArtRef);
+            existingList.push(newArtRef);
             
             // Auto-assign new article to all organization locations
             const { data: orgLocations } = await supabaseClient
@@ -821,7 +947,7 @@ Important:
         }
       }
       
-      console.log(`Articles: ${articlesCreated} created, ${articlesUpdated} updated`);
+      console.log(`Articles: ${articlesCreated} created, ${articlesUpdated} updated, ${articlesMerged} merged via fuzzy matching`);
     }
 
     // Determine initial status based on parsing success
