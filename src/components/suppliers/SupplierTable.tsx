@@ -1,5 +1,5 @@
 import { Fragment } from 'react';
-import { Trash2, FileText, Send, Bell, Loader2, QrCode, ExternalLink, Key, Plus, ShoppingCart } from 'lucide-react';
+import { Trash2, FileText, Send, Bell, Loader2, QrCode, ExternalLink, Key, Plus, ShoppingCart, Minus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
@@ -21,6 +21,7 @@ interface SupplierTableProps {
   recentlyActiveSuppliers?: Map<string, SupplierActivityInfo>;
   advancedSettingsEnabled?: boolean;
   cartItemCountsBySupplier?: Record<string, number>;
+  cartItemsByArticle?: Map<string, number>;
   onToggleExpand: (supplierId: string) => void;
   onToggleSelect: (supplierId: string) => void;
   onSelectAll: () => void;
@@ -32,6 +33,8 @@ interface SupplierTableProps {
   onOpenPortal?: (supplier: Supplier) => void;
   onShowChanges: (supplier: Supplier) => void;
   onOrderClick?: (supplier: Supplier) => void;
+  onAddToCart?: (article: Article) => void;
+  onRemoveFromCart?: (article: Article) => void;
   
   onPrintOrderList: (supplier: Supplier, articles: Article[]) => void;
   onArticleChangeClick?: (article: Article, supplier: Supplier) => void;
@@ -53,6 +56,7 @@ export const SupplierTable = ({
   recentlyActiveSuppliers = new Map(),
   advancedSettingsEnabled = false,
   cartItemCountsBySupplier = {},
+  cartItemsByArticle = new Map(),
   onToggleExpand,
   onToggleSelect,
   onSelectAll,
@@ -64,6 +68,8 @@ export const SupplierTable = ({
   onOpenPortal,
   onShowChanges,
   onOrderClick,
+  onAddToCart,
+  onRemoveFromCart,
   onPrintOrderList,
   onArticleChangeClick,
   onEditArticle,
@@ -240,7 +246,8 @@ export const SupplierTable = ({
                               <TableHead className="h-8 text-xs hidden md:table-cell">Beschreibung</TableHead>
                               <TableHead className="h-8 text-xs">Einheit</TableHead>
                               <TableHead className="h-8 text-xs text-right">Preis (€)</TableHead>
-                              <TableHead className="h-8 text-xs text-right w-[80px]">Aktionen</TableHead>
+                              <TableHead className="h-8 text-xs text-center w-[120px]">Bestellen</TableHead>
+                              <TableHead className="h-8 text-xs text-right w-[60px]"></TableHead>
                             </TableRow>
                           </TableHeader>
                           <TableBody>
@@ -277,6 +284,57 @@ export const SupplierTable = ({
                                   </TableCell>
                                   <TableCell className="py-1.5 text-right text-sm">
                                     {Number(article.price).toFixed(2)}
+                                  </TableCell>
+                                  <TableCell className="py-1.5">
+                                    {onAddToCart && (() => {
+                                      const qty = cartItemsByArticle.get(article.id) || 0;
+                                      return (
+                                        <div className="flex items-center justify-center gap-1">
+                                          {qty > 0 ? (
+                                            <>
+                                              <Button
+                                                variant="outline"
+                                                size="icon"
+                                                className="h-7 w-7"
+                                                onClick={(e) => {
+                                                  e.stopPropagation();
+                                                  onRemoveFromCart?.(article);
+                                                }}
+                                              >
+                                                <Minus className="w-3 h-3" />
+                                              </Button>
+                                              <span className="w-8 text-center font-semibold text-sm">
+                                                {qty}
+                                              </span>
+                                              <Button
+                                                variant="outline"
+                                                size="icon"
+                                                className="h-7 w-7"
+                                                onClick={(e) => {
+                                                  e.stopPropagation();
+                                                  onAddToCart(article);
+                                                }}
+                                              >
+                                                <Plus className="w-3 h-3" />
+                                              </Button>
+                                            </>
+                                          ) : (
+                                            <Button
+                                              variant="default"
+                                              size="sm"
+                                              className="h-7 gap-1 text-xs"
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                onAddToCart(article);
+                                              }}
+                                            >
+                                              <ShoppingCart className="w-3 h-3" />
+                                              <span className="hidden sm:inline">Warenkorb</span>
+                                            </Button>
+                                          )}
+                                        </div>
+                                      );
+                                    })()}
                                   </TableCell>
                                   <TableCell className="py-1.5 text-right">
                                     <Button 

@@ -110,7 +110,7 @@ const Suppliers = () => {
   });
 
   // Cart context for order functionality
-  const { items: cartItems } = useCart();
+  const { items: cartItems, addItem, updateQuantity } = useCart();
 
   // Calculate cart item counts per supplier
   const cartItemCountsBySupplier = useMemo(() => {
@@ -121,6 +121,30 @@ const Suppliers = () => {
     });
     return counts;
   }, [cartItems]);
+
+  // Calculate cart item counts per article
+  const cartItemsByArticle = useMemo(() => {
+    const map = new Map<string, number>();
+    cartItems.forEach(item => {
+      map.set(item.article.id, item.quantity);
+    });
+    return map;
+  }, [cartItems]);
+
+  // Handler for adding article to cart
+  const handleAddToCart = useCallback((article: Article) => {
+    addItem(article, 1);
+  }, [addItem]);
+
+  // Handler for removing one item from cart (decrement)
+  const handleRemoveFromCart = useCallback((article: Article) => {
+    const currentQty = cartItemsByArticle.get(article.id) || 0;
+    if (currentQty > 1) {
+      updateQuantity(article.id, currentQty - 1);
+    } else {
+      updateQuantity(article.id, 0); // This will remove the item
+    }
+  }, [cartItemsByArticle, updateQuantity]);
 
   // Location context for location-specific customer numbers
   const { activeLocation } = useLocationContext();
@@ -729,7 +753,7 @@ const Suppliers = () => {
                 <p className="text-muted-foreground">
                   {searchQuery || topCategoryFilter !== 'all' || categoryFilter !== 'all' ? 'Keine Lieferanten gefunden' : 'Noch keine Lieferanten. Fügen Sie Ihren ersten Lieferanten hinzu.'}
                 </p>
-               </div> : <SupplierTable suppliers={filteredSuppliers || []} articlesBySupplier={articlesBySupplier} expandedSuppliers={expandedSuppliers} selectedSuppliers={selectedSuppliers} multiSelectEnabled={supplierMultiSelectEnabled} pendingChangesBySupplier={pendingChangesBySupplier || {}} pendingArticleIds={pendingArticleIds || new Set()} recentlyActiveSuppliers={recentlyActiveSuppliers || new Map()} advancedSettingsEnabled={advancedSettingsEnabled} cartItemCountsBySupplier={cartItemCountsBySupplier} onToggleExpand={toggleSupplierExpanded} onToggleSelect={toggleSupplierSelected} onSelectAll={selectAllSuppliers} onEdit={supplier => {
+               </div> : <SupplierTable suppliers={filteredSuppliers || []} articlesBySupplier={articlesBySupplier} expandedSuppliers={expandedSuppliers} selectedSuppliers={selectedSuppliers} multiSelectEnabled={supplierMultiSelectEnabled} pendingChangesBySupplier={pendingChangesBySupplier || {}} pendingArticleIds={pendingArticleIds || new Set()} recentlyActiveSuppliers={recentlyActiveSuppliers || new Map()} advancedSettingsEnabled={advancedSettingsEnabled} cartItemCountsBySupplier={cartItemCountsBySupplier} cartItemsByArticle={cartItemsByArticle} onToggleExpand={toggleSupplierExpanded} onToggleSelect={toggleSupplierSelected} onSelectAll={selectAllSuppliers} onEdit={supplier => {
             setEditingSupplier(supplier);
             setIsSupplierDialogOpen(true);
           }} onDelete={setDeletingSupplier} onSendInvitation={handleSendInvitation} onShowQRCode={setQrCodeSupplier} onShowTokens={setTokensDialogSupplier} onOpenPortal={handleOpenPortal} onShowChanges={setChangesDialogSupplier} onOrderClick={supplier => {
@@ -755,7 +779,7 @@ const Suppliers = () => {
             setEditingArticle(null);
             setPreselectedSupplierId(supplier.id);
             setIsArticleDialogOpen(true);
-          }} invitingSupplierId={invitingSupplierId} sendingInvitation={sendingInvitation} />}
+          }} onAddToCart={handleAddToCart} onRemoveFromCart={handleRemoveFromCart} invitingSupplierId={invitingSupplierId} sendingInvitation={sendingInvitation} />}
           </TabsContent>
 
           {/* Wines Tab */}

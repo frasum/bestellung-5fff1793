@@ -1,5 +1,5 @@
 import { Fragment, useCallback } from 'react';
-import { ChevronRight, Trash2, Bell, Package } from 'lucide-react';
+import { ChevronRight, Trash2, Bell, Package, Plus, Minus, ShoppingCart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
@@ -30,12 +30,15 @@ interface ArticleTableProps {
   recentlyActiveSuppliers?: Map<string, SupplierActivityInfo>;
   lastOrderMap?: Record<string, LastOrderInfo>;
   orderUnits?: OrderUnit[];
+  cartItemsByArticle?: Map<string, number>;
   onToggleSupplier: (supplierId: string) => void;
   onToggleArticle: (articleId: string) => void;
   onEdit: (article: Article) => void;
   onDelete: (article: Article) => void;
   onShowChanges?: (supplierId: string) => void;
   onArticleChangeClick?: (article: Article, supplierId: string, supplierName: string) => void;
+  onAddToCart?: (article: Article) => void;
+  onRemoveFromCart?: (article: Article) => void;
 }
 
 export const ArticleTable = ({
@@ -48,12 +51,15 @@ export const ArticleTable = ({
   recentlyActiveSuppliers = new Map(),
   lastOrderMap = {},
   orderUnits = [],
+  cartItemsByArticle = new Map(),
   onToggleSupplier,
   onToggleArticle,
   onEdit,
   onDelete,
   onShowChanges,
-  onArticleChangeClick
+  onArticleChangeClick,
+  onAddToCart,
+  onRemoveFromCart
 }: ArticleTableProps) => {
 
   const handleEdit = useCallback((article: Article) => {
@@ -144,9 +150,12 @@ export const ArticleTable = ({
                     hasPendingChanges={pendingArticleIds.has(article.id)}
                     lastOrder={lastOrderMap[article.id]}
                     orderUnits={orderUnits}
+                    cartQuantity={cartItemsByArticle.get(article.id) || 0}
                     onEdit={handleEdit}
                     onDelete={handleDelete}
                     onPendingClick={() => onArticleChangeClick?.(article, group.supplier.id, group.supplier.name)}
+                    onAddToCart={onAddToCart}
+                    onRemoveFromCart={onRemoveFromCart}
                   />
                 ))}
               </div>
@@ -316,6 +325,49 @@ export const ArticleTable = ({
                                 </span>
                               )}
                             </div>
+                          </TableCell>
+                          {/* Cart Controls */}
+                          <TableCell className="py-2 w-32">
+                            {onAddToCart && (() => {
+                              const qty = cartItemsByArticle.get(article.id) || 0;
+                              return (
+                                <div className="flex items-center justify-end gap-1">
+                                  {qty > 0 ? (
+                                    <>
+                                      <Button
+                                        variant="outline"
+                                        size="icon"
+                                        className="h-7 w-7"
+                                        onClick={() => onRemoveFromCart?.(article)}
+                                      >
+                                        <Minus className="w-3 h-3" />
+                                      </Button>
+                                      <span className="w-8 text-center font-semibold text-sm">
+                                        {qty}
+                                      </span>
+                                      <Button
+                                        variant="outline"
+                                        size="icon"
+                                        className="h-7 w-7"
+                                        onClick={() => onAddToCart(article)}
+                                      >
+                                        <Plus className="w-3 h-3" />
+                                      </Button>
+                                    </>
+                                  ) : (
+                                    <Button
+                                      variant="default"
+                                      size="sm"
+                                      className="h-7 gap-1 text-xs"
+                                      onClick={() => onAddToCart(article)}
+                                    >
+                                      <ShoppingCart className="w-3 h-3" />
+                                      Bestellen
+                                    </Button>
+                                  )}
+                                </div>
+                              );
+                            })()}
                           </TableCell>
                         </TableRow>
                       );
