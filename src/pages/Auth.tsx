@@ -56,11 +56,13 @@ type SignupFormData = z.infer<typeof signupSchema>;
 type SignupWithOrgFormData = z.infer<typeof signupWithOrgSchema>;
 type DemoFormData = z.infer<typeof demoSchema>;
 
+type AuthTab = 'login' | 'signup' | 'demo';
+
 const Auth = () => {
   const [searchParams] = useSearchParams();
   const inviteToken = searchParams.get('invite');
   
-  const [isLogin, setIsLogin] = useState(!inviteToken); // Default to signup if invite token present
+  const [activeTab, setActiveTab] = useState<AuthTab>(inviteToken ? 'signup' : 'login');
   const [isLoading, setIsLoading] = useState(false);
   const [showDemoDialog, setShowDemoDialog] = useState(false);
   const [showEmptyDemoDialog, setShowEmptyDemoDialog] = useState(false);
@@ -200,7 +202,7 @@ const Auth = () => {
       setIsLoading(false);
       if (error.message.includes('User already registered')) {
         toast.error('Ein Konto mit dieser E-Mail existiert bereits. Bitte melden Sie sich an.');
-        setIsLogin(true);
+        setActiveTab('login');
       } else {
         toast.error(error.message);
       }
@@ -396,7 +398,7 @@ const Auth = () => {
             <Users className="h-4 w-4" />
             <AlertDescription>
               Sie wurden eingeladen, einem Team beizutreten. 
-              {isLogin 
+              {activeTab === 'login' 
                 ? ' Melden Sie sich an oder erstellen Sie ein Konto, um die Einladung anzunehmen.'
                 : ' Erstellen Sie ein Konto, um die Einladung anzunehmen.'}
             </AlertDescription>
@@ -408,9 +410,9 @@ const Auth = () => {
           {/* Tabs */}
           <div className="flex gap-2 mb-8 p-1 bg-muted rounded-lg">
             <button
-              onClick={() => setIsLogin(true)}
+              onClick={() => setActiveTab('login')}
               className={`flex-1 py-2.5 text-center font-medium rounded-md transition-all duration-200 ${
-                isLogin
+                activeTab === 'login'
                   ? 'bg-accent text-accent-foreground shadow-sm'
                   : 'text-muted-foreground hover:text-accent'
               }`}
@@ -418,18 +420,30 @@ const Auth = () => {
               {t('auth.signIn')}
             </button>
             <button
-              onClick={() => setIsLogin(false)}
+              onClick={() => setActiveTab('signup')}
               className={`flex-1 py-2.5 text-center font-medium rounded-md transition-all duration-200 ${
-                !isLogin
+                activeTab === 'signup'
                   ? 'bg-accent text-accent-foreground shadow-sm'
                   : 'text-muted-foreground hover:text-accent'
               }`}
             >
               {t('auth.signUp')}
             </button>
+            {!inviteToken && (
+              <button
+                onClick={() => setActiveTab('demo')}
+                className={`flex-1 py-2.5 text-center font-medium rounded-md transition-all duration-200 ${
+                  activeTab === 'demo'
+                    ? 'bg-accent text-accent-foreground shadow-sm'
+                    : 'text-muted-foreground hover:text-accent'
+                }`}
+              >
+                Demo
+              </button>
+            )}
           </div>
 
-          {isLogin ? (
+          {activeTab === 'login' ? (
             /* Login Form */
             <form onSubmit={loginForm.handleSubmit(handleLogin)} className="space-y-4">
               <div className="space-y-2">
@@ -477,7 +491,7 @@ const Auth = () => {
                 )}
               </Button>
             </form>
-          ) : inviteToken ? (
+          ) : activeTab === 'signup' && inviteToken ? (
             /* Signup Form for Invited Users (no organization name) */
             <form onSubmit={signupForm.handleSubmit(handleSignup)} className="space-y-4">
               <div className="space-y-2">
@@ -559,7 +573,7 @@ const Auth = () => {
                 )}
               </Button>
             </form>
-          ) : (
+          ) : activeTab === 'signup' ? (
             /* Signup Form with Organization Name */
             <form onSubmit={signupWithOrgForm.handleSubmit(handleSignupWithOrg)} className="space-y-4">
               <div className="space-y-2">
@@ -658,11 +672,9 @@ const Auth = () => {
                 )}
               </Button>
             </form>
-          )}
-
-          {/* Demo Buttons - only show when no invite token */}
-          {!inviteToken && (
-            <div className="mt-6 pt-6 border-t border-border space-y-3">
+          ) : (
+            /* Demo Tab Content */
+            <div className="space-y-4">
               <Button 
                 variant="outline" 
                 className="w-full gap-2"
@@ -675,39 +687,39 @@ const Auth = () => {
                 7 Tage kostenlos testen mit Beispieldaten
               </p>
               
-              {advancedSettingsEnabled && (
-                <>
-                  <Button 
-                    variant="secondary" 
-                    className="w-full gap-2"
-                    onClick={() => setShowEmptyDemoDialog(true)}
-                  >
-                    <FlaskConical className="w-4 h-4" />
-                    Leere Demo (Onboarding testen)
-                  </Button>
+              <div className="border-t border-border pt-4 space-y-3">
+                <p className="text-sm font-medium text-center text-muted-foreground">Erweiterte Optionen</p>
+                
+                <Button 
+                  variant="secondary" 
+                  className="w-full gap-2"
+                  onClick={() => setShowEmptyDemoDialog(true)}
+                >
+                  <FlaskConical className="w-4 h-4" />
+                  Leere Demo (Onboarding testen)
+                </Button>
 
-                  <Button 
-                    variant="outline" 
-                    className="w-full gap-2 border-primary/50 text-primary hover:bg-primary/10"
-                    onClick={() => setShowVoiceOnboardingDialog(true)}
-                  >
-                    <Mic className="w-4 h-4" />
-                    Mit Sprach-Assistent starten
-                  </Button>
+                <Button 
+                  variant="outline" 
+                  className="w-full gap-2 border-primary/50 text-primary hover:bg-primary/10"
+                  onClick={() => setShowVoiceOnboardingDialog(true)}
+                >
+                  <Mic className="w-4 h-4" />
+                  Mit Sprach-Assistent starten
+                </Button>
 
-                  <Button 
-                    variant="outline" 
-                    className="w-full gap-2"
-                    onClick={() => navigate('/onboarding/questions')}
-                  >
-                    <ClipboardList className="w-4 h-4" />
-                    Mit Fragebogen starten
-                  </Button>
-                  <p className="text-xs text-muted-foreground text-center">
-                    Richten Sie Ihren Katalog Schritt für Schritt ein
-                  </p>
-                </>
-              )}
+                <Button 
+                  variant="outline" 
+                  className="w-full gap-2"
+                  onClick={() => setShowQuestionOnboardingDialog(true)}
+                >
+                  <ClipboardList className="w-4 h-4" />
+                  Mit Fragebogen starten
+                </Button>
+                <p className="text-xs text-muted-foreground text-center">
+                  Richten Sie Ihren Katalog Schritt für Schritt ein
+                </p>
+              </div>
             </div>
           )}
 
