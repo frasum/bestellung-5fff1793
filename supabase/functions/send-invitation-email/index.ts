@@ -1,12 +1,50 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { Resend } from "https://esm.sh/resend@2.0.0";
-
-const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { SMTPClient } from "https://deno.land/x/denomailer@1.6.0/mod.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
+
+// SMTP Configuration
+const smtpConfig = {
+  connection: {
+    hostname: Deno.env.get("SMTP_HOST") || "smtps.udag.de",
+    port: Number(Deno.env.get("SMTP_PORT")) || 465,
+    tls: true,
+    auth: {
+      username: Deno.env.get("SMTP_USERNAME") || "",
+      password: Deno.env.get("SMTP_PASSWORD") || "",
+    },
+  },
+};
+
+const smtpFrom = Deno.env.get("SMTP_FROM") || "yum@bestellung.pro";
+
+async function sendEmailViaSMTP(options: {
+  to: string[];
+  subject: string;
+  html: string;
+  text?: string;
+}): Promise<{ success: boolean; error?: string }> {
+  const client = new SMTPClient(smtpConfig);
+  try {
+    await client.send({
+      from: `Bestellung.pro <${smtpFrom}>`,
+      to: options.to,
+      subject: options.subject,
+      content: options.text || "",
+      html: options.html,
+    });
+    await client.close();
+    return { success: true };
+  } catch (error: any) {
+    console.error("SMTP send error:", error);
+    try { await client.close(); } catch {}
+    return { success: false, error: error.message };
+  }
+}
 
 interface InvitationEmailRequest {
   inviteeEmail: string;
@@ -157,7 +195,6 @@ const translations: Record<TranslationKey, {
 };
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
@@ -167,11 +204,9 @@ serve(async (req) => {
 
     console.log(`Sending invitation email to ${inviteeEmail} for organization ${organizationName} in language ${language}`);
 
-    // Get translations for the requested language, fallback to German
     const lang = (language && translations[language as TranslationKey]) ? language as TranslationKey : 'de';
     const t = translations[lang];
 
-    // Get the app URL from environment or use a default
     const appUrl = Deno.env.get("APP_URL") || "https://bestellung.pro";
     console.log(`APP_URL from env: ${Deno.env.get("APP_URL")}`);
     console.log(`Using appUrl: ${appUrl}`);
@@ -218,12 +253,7 @@ serve(async (req) => {
         </html>
       `;
 
-    const emailResponse = await resend.emails.send({
-      from: "Bestellung.pro <noreply@bestellung.pro>",
-      to: [inviteeEmail],
-      subject: t.subject(organizationName),
-      html: htmlContent,
-      text: `
+    const textContent = `
 ${t.header}
 
 ${t.greeting}
@@ -242,16 +272,25 @@ ${t.expires}
 ${t.footer}
 
 ${t.ignore}
-      `,
+    `;
+
+    const emailResult = await sendEmailViaSMTP({
+      to: [inviteeEmail],
+      subject: t.subject(organizationName),
+      html: htmlContent,
+      text: textContent,
     });
 
-    console.log("Invitation email sent successfully:", emailResponse);
+    if (!emailResult.success) {
+      throw new Error(`SMTP error: ${emailResult.error}`);
+    }
 
-    // Log to communication_logs - we need organization_id, get it from the invite token
+    console.log("Invitation email sent successfully via SMTP");
+
+    // Log to communication_logs
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     if (supabaseUrl && serviceRoleKey) {
-      const { createClient } = await import("https://esm.sh/@supabase/supabase-js@2");
       const supabase = createClient(supabaseUrl, serviceRoleKey);
       
       const { data: invitation } = await supabase
@@ -279,7 +318,7 @@ ${t.ignore}
       }
     }
 
-    return new Response(JSON.stringify({ success: true, emailResponse }), {
+    return new Response(JSON.stringify({ success: true }), {
       status: 200,
       headers: { "Content-Type": "application/json", ...corsHeaders },
     });
