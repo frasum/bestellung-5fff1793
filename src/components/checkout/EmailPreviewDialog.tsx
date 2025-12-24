@@ -596,56 +596,58 @@ ${signatureText}`;
         </div>
 
         {/* Footer - fixed at bottom with proper styling */}
-        <DialogFooter className="flex-col-reverse sm:flex-row gap-2 pt-4 border-t bg-background shrink-0">
+        <DialogFooter className="flex flex-col gap-3 pt-4 border-t bg-background shrink-0">
+          {/* Navigation - nur bei mehreren E-Mails */}
           {emailPreviews.length > 1 && (
-            <div className="flex gap-2 sm:mr-auto w-full sm:w-auto">
-              <Button variant="outline" size="sm" onClick={goPrev} disabled={currentIndex === 0} className="flex-1 sm:flex-none h-10 sm:h-9">
-                <ChevronLeft className="w-4 h-4 sm:mr-1" />
-                <span className="hidden sm:inline">Vorherige</span>
+            <div className="flex justify-between items-center w-full">
+              <Button variant="outline" size="sm" onClick={goPrev} disabled={currentIndex === 0}>
+                <ChevronLeft className="w-4 h-4 mr-1" />
+                Vorherige
               </Button>
-              <Button variant="outline" size="sm" onClick={goNext} disabled={currentIndex === emailPreviews.length - 1} className="flex-1 sm:flex-none h-10 sm:h-9">
-                <span className="hidden sm:inline">Nächste</span>
-                <ChevronRight className="w-4 h-4 sm:ml-1" />
+              <span className="text-sm text-muted-foreground font-medium">
+                {currentIndex + 1} von {emailPreviews.length}
+              </span>
+              <Button variant="outline" size="sm" onClick={goNext} disabled={currentIndex === emailPreviews.length - 1}>
+                Nächste
+                <ChevronRight className="w-4 h-4 ml-1" />
               </Button>
             </div>
           )}
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isSubmitting} className="w-full sm:w-auto h-11 sm:h-9">
-            Abbrechen
-          </Button>
-          <Button 
-            variant="secondary" 
-            onClick={emailPreviews.length > 1 ? handleOpenAllInEmailClient : handleOpenInEmailClient}
-            className="w-full sm:w-auto h-11 sm:h-9"
-          >
-            <ExternalLink className="w-4 h-4 sm:mr-2" />
-            <span className="hidden sm:inline">Per E-Mail-Programm</span>
-            <span className="sm:hidden">E-Mail</span>
-          </Button>
-          <Button 
-            onClick={onConfirm} 
-            disabled={isSubmitting || !allEmailsConfirmed}
-            title={!allEmailsConfirmed ? `Bitte alle ${emailPreviews.length} E-Mails prüfen` : undefined}
-            className="w-full sm:w-auto h-11 sm:h-9"
-          >
-            {isSubmitting ? (
-              <>
-                <Loader2 className="w-4 h-4 sm:mr-2 animate-spin" />
-                <span className="hidden sm:inline">Sende Bestellungen...</span>
-                <span className="sm:hidden">Senden...</span>
-              </>
-            ) : !allEmailsConfirmed ? (
-              <>
-                <Check className="w-4 h-4 sm:mr-2" />
-                {confirmedEmails.size}/{emailPreviews.length} geprüft
-              </>
-            ) : (
-              <>
-                <Send className="w-4 h-4 sm:mr-2" />
-                <span className="hidden sm:inline">{emailPreviews.length} Bestellung{emailPreviews.length > 1 ? 'en' : ''} absenden</span>
-                <span className="sm:hidden">Absenden</span>
-              </>
-            )}
-          </Button>
+          
+          {/* Aktions-Buttons */}
+          <div className="flex flex-col-reverse sm:flex-row gap-2 w-full">
+            <Button 
+              variant="outline" 
+              onClick={() => onOpenChange(false)} 
+              disabled={isSubmitting} 
+              className="flex-1"
+            >
+              Abbrechen
+            </Button>
+            <Button 
+              onClick={onConfirm} 
+              disabled={isSubmitting || !allEmailsConfirmed}
+              title={!allEmailsConfirmed ? `Bitte alle ${emailPreviews.length} E-Mails prüfen` : undefined}
+              className="flex-1"
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Sende Bestellungen...
+                </>
+              ) : !allEmailsConfirmed ? (
+                <>
+                  <Check className="w-4 h-4 mr-2" />
+                  {confirmedEmails.size}/{emailPreviews.length} geprüft
+                </>
+              ) : (
+                <>
+                  <Send className="w-4 h-4 mr-2" />
+                  {emailPreviews.length} Bestellung{emailPreviews.length > 1 ? 'en' : ''} absenden
+                </>
+              )}
+            </Button>
+          </div>
         </DialogFooter>
       </DialogContent>
 
