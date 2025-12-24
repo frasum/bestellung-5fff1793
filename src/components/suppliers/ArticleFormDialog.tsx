@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useMemo } from 'react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -198,16 +198,25 @@ export const ArticleFormDialog = ({
     setTranslationsOpen(false);
   }, [editingArticle, preselectedSupplierId, form]);
 
+  // Stable location IDs to prevent infinite loops
+  const locationIds = useMemo(() => locations.map(l => l.id), [locations]);
+  const articleLocationIds = useMemo(() => 
+    articleLocations.filter(al => al.is_active).map(al => al.location_id), 
+    [articleLocations]
+  );
+
   // Initialize selected locations when editing or for new articles
   useEffect(() => {
+    if (!open) return; // Only run when dialog is open
+    
     if (editingArticle && articleLocations.length > 0) {
       // When editing, use existing article locations
-      setSelectedLocationIds(articleLocations.filter(al => al.is_active).map(al => al.location_id));
+      setSelectedLocationIds(articleLocationIds);
     } else if (!editingArticle && locations.length > 0) {
       // For new articles, select all locations by default
-      setSelectedLocationIds(locations.map(l => l.id));
+      setSelectedLocationIds(locationIds);
     }
-  }, [editingArticle, articleLocations, locations]);
+  }, [open, editingArticle, articleLocationIds.join(','), locationIds.join(',')]);
 
   const handleSubmit = async (data: ArticleFormData) => {
     await onSubmit(data, capturedImage || undefined, imageCleared);

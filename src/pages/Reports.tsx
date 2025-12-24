@@ -259,7 +259,7 @@ const QuickOverviewKPIs = () => {
       value: kpis.activeArticles, 
       icon: Package,
       format: 'number',
-      href: '/suppliers?tab=articles'
+      href: '/suppliers'
     },
     { 
       label: t('reports.pendingOrders', 'Offene Bestellungen'), 

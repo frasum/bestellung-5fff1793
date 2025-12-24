@@ -90,7 +90,7 @@ const AppContent = () => {
           <Route path="/signup" element={<Auth />} />
           <Route path="/dashboard" element={<Navigate to="/reports" replace />} />
           <Route path="/suppliers" element={<Suppliers />} />
-          <Route path="/articles" element={<Navigate to="/suppliers?tab=articles" replace />} />
+          <Route path="/articles" element={<Navigate to="/suppliers" replace />} />
           <Route path="/cart" element={<Cart />} />
           <Route path="/checkout" element={<Checkout />} />
           <Route path="/orders" element={<Orders />} />

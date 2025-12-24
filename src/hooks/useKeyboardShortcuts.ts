@@ -35,7 +35,7 @@ export function useKeyboardShortcuts() {
     {
       key: 'a',
       alt: true,
-      action: () => navigate('/articles'),
+      action: () => navigate('/suppliers'),
       description: t('nav.articles'),
     },
     {
