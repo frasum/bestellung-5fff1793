@@ -178,8 +178,8 @@ export const SupplierTable = ({
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right py-2">
-                    <div className="flex justify-end gap-0.5 sm:gap-1 md:gap-1.5 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
-                      {/* Order Button - Primary action */}
+                    <div className="flex justify-end items-center gap-0.5 sm:gap-1 md:gap-1.5">
+                      {/* Order Button - Always visible primary action */}
                       {onOrderClick && supplierArticles.length > 0 && (
                         <Button 
                           variant="default" 
@@ -197,6 +197,8 @@ export const SupplierTable = ({
                           )}
                         </Button>
                       )}
+                      {/* Secondary actions - visible on hover */}
+                      <div className="flex gap-0.5 sm:gap-1 md:gap-1.5 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                       <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground hover:text-foreground" onClick={() => onSendInvitation(supplier)} disabled={invitingSupplierId === supplier.id || sendingInvitation} title="Einladung zum Lieferantenportal senden">
                         {invitingSupplierId === supplier.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
                       </Button>
@@ -232,6 +234,7 @@ export const SupplierTable = ({
                       <Button variant="ghost" size="icon" className="h-9 w-9 text-destructive hover:text-destructive" onClick={() => onDelete(supplier)} title="Löschen">
                         <Trash2 className="w-4 h-4" />
                       </Button>
+                      </div>
                     </div>
                   </TableCell>
                 </TableRow>
