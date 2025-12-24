@@ -45,7 +45,7 @@ export const SupplierFilters = ({
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input 
-            placeholder="Lieferanten suchen..." 
+            placeholder="Artikel suchen..."
             value={searchQuery} 
             onChange={e => onSearchChange(e.target.value)} 
             className="pl-10 h-11" 
@@ -105,7 +105,7 @@ export const SupplierFilters = ({
       <div className="hidden lg:flex flex-row gap-4">
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input placeholder="Lieferanten suchen..." value={searchQuery} onChange={e => onSearchChange(e.target.value)} className="pl-10" />
+          <Input placeholder="Artikel suchen..." value={searchQuery} onChange={e => onSearchChange(e.target.value)} className="pl-10" />
         </div>
         {showMultiSelectToggle && (
           <div className="flex items-center gap-2">

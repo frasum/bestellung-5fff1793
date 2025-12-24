@@ -22,6 +22,7 @@ interface SupplierTableProps {
   advancedSettingsEnabled?: boolean;
   cartItemCountsBySupplier?: Record<string, number>;
   cartItemsByArticle?: Map<string, number>;
+  highlightSearch?: string;
   onToggleExpand: (supplierId: string) => void;
   onToggleSelect: (supplierId: string) => void;
   onSelectAll: () => void;
@@ -57,6 +58,7 @@ export const SupplierTable = ({
   advancedSettingsEnabled = false,
   cartItemCountsBySupplier = {},
   cartItemsByArticle = new Map(),
+  highlightSearch = '',
   onToggleExpand,
   onToggleSelect,
   onSelectAll,
@@ -259,8 +261,15 @@ export const SupplierTable = ({
                           </TableHeader>
                           <TableBody>
                             {supplierArticles.map(article => {
+                              const isHighlighted = highlightSearch && (
+                                article.name.toLowerCase().includes(highlightSearch.toLowerCase()) ||
+                                article.sku?.toLowerCase().includes(highlightSearch.toLowerCase())
+                              );
                               return (
-                                <TableRow key={article.id} className="group/article border-b border-border/30 hover:bg-muted/50">
+                                <TableRow key={article.id} className={cn(
+                                  "group/article border-b border-border/30 hover:bg-muted/50",
+                                  isHighlighted && "bg-accent/20 ring-1 ring-accent/50"
+                                )}>
                                   {/* Cart Controls - Left Side */}
                                   <TableCell className="py-1.5">
                                     {onAddToCart && (() => {

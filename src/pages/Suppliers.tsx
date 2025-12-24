@@ -580,12 +580,23 @@ const Suppliers = () => {
   const debouncedSearchQuery = useDebouncedValue(searchQuery, 300);
   const debouncedArticleSearchQuery = useDebouncedValue(articleSearchQuery, 300);
 
-  // Filtered suppliers - now filter by article categories
+  // Filtered suppliers - search in articles (name + SKU) and supplier name
   const filteredSuppliers = suppliers?.filter(supplier => {
-    const matchesSearch = supplier.name.toLowerCase().includes(debouncedSearchQuery.toLowerCase()) || supplier.email.toLowerCase().includes(debouncedSearchQuery.toLowerCase());
-
-    // Filter by article categories instead of supplier categories
     const supplierArticles = articlesBySupplier[supplier.id] || [];
+    
+    // Search in articles of this supplier
+    const matchesArticleSearch = debouncedSearchQuery === '' || 
+      supplierArticles.some(article => 
+        article.name.toLowerCase().includes(debouncedSearchQuery.toLowerCase()) ||
+        article.sku?.toLowerCase().includes(debouncedSearchQuery.toLowerCase())
+      );
+    
+    // Also match supplier name as fallback
+    const matchesSupplierName = supplier.name.toLowerCase().includes(debouncedSearchQuery.toLowerCase());
+    
+    const matchesSearch = matchesArticleSearch || matchesSupplierName;
+
+    // Filter by article categories
     const matchesTopCategory = topCategoryFilter === 'all' || supplierArticles.some(a => a.top_category === topCategoryFilter);
     const matchesCategory = categoryFilter === 'all' || supplierArticles.some(a => a.category === categoryFilter);
     return matchesSearch && matchesTopCategory && matchesCategory;
@@ -655,6 +666,34 @@ const Suppliers = () => {
     }
     // If search was already empty: do nothing (allow manual toggle)
   }, [debouncedArticleSearchQuery, groupedBySupplier]);
+
+  // Track previous supplier search query to detect when search is cleared
+  const prevSupplierSearchRef = useRef(debouncedSearchQuery);
+
+  // Auto-expand suppliers when article search is active (Supplier Tab)
+  useEffect(() => {
+    const prevSearch = prevSupplierSearchRef.current;
+    prevSupplierSearchRef.current = debouncedSearchQuery;
+    
+    if (debouncedSearchQuery.trim() !== '') {
+      // Search active: open all suppliers that have matching articles
+      const matchingSupplierIds = filteredSuppliers
+        ?.filter(supplier => {
+          const supplierArticles = articlesBySupplier[supplier.id] || [];
+          return supplierArticles.some(article =>
+            article.name.toLowerCase().includes(debouncedSearchQuery.toLowerCase()) ||
+            article.sku?.toLowerCase().includes(debouncedSearchQuery.toLowerCase())
+          );
+        })
+        .map(s => s.id) || [];
+      setExpandedSuppliers(new Set(matchingSupplierIds));
+    } else if (prevSearch.trim() !== '') {
+      // Search was just cleared: close all
+      setExpandedSuppliers(new Set());
+    }
+    // If search was already empty: do nothing (allow manual toggle)
+  }, [debouncedSearchQuery, filteredSuppliers, articlesBySupplier]);
+
   const articleCategoriesForFilter = (locationFilteredArticles?.map(a => a.category).filter(Boolean) || []) as string[];
   if (authLoading || !user) {
     return <div className="min-h-screen flex items-center justify-center bg-background">
@@ -753,7 +792,7 @@ const Suppliers = () => {
                 <p className="text-muted-foreground">
                   {searchQuery || topCategoryFilter !== 'all' || categoryFilter !== 'all' ? 'Keine Lieferanten gefunden' : 'Noch keine Lieferanten. Fügen Sie Ihren ersten Lieferanten hinzu.'}
                 </p>
-               </div> : <SupplierTable suppliers={filteredSuppliers || []} articlesBySupplier={articlesBySupplier} expandedSuppliers={expandedSuppliers} selectedSuppliers={selectedSuppliers} multiSelectEnabled={supplierMultiSelectEnabled} pendingChangesBySupplier={pendingChangesBySupplier || {}} pendingArticleIds={pendingArticleIds || new Set()} recentlyActiveSuppliers={recentlyActiveSuppliers || new Map()} advancedSettingsEnabled={advancedSettingsEnabled} cartItemCountsBySupplier={cartItemCountsBySupplier} cartItemsByArticle={cartItemsByArticle} onToggleExpand={toggleSupplierExpanded} onToggleSelect={toggleSupplierSelected} onSelectAll={selectAllSuppliers} onEdit={supplier => {
+               </div> : <SupplierTable suppliers={filteredSuppliers || []} articlesBySupplier={articlesBySupplier} expandedSuppliers={expandedSuppliers} selectedSuppliers={selectedSuppliers} multiSelectEnabled={supplierMultiSelectEnabled} pendingChangesBySupplier={pendingChangesBySupplier || {}} pendingArticleIds={pendingArticleIds || new Set()} recentlyActiveSuppliers={recentlyActiveSuppliers || new Map()} advancedSettingsEnabled={advancedSettingsEnabled} cartItemCountsBySupplier={cartItemCountsBySupplier} cartItemsByArticle={cartItemsByArticle} highlightSearch={debouncedSearchQuery} onToggleExpand={toggleSupplierExpanded} onToggleSelect={toggleSupplierSelected} onSelectAll={selectAllSuppliers} onEdit={supplier => {
             setEditingSupplier(supplier);
             setIsSupplierDialogOpen(true);
           }} onDelete={setDeletingSupplier} onSendInvitation={handleSendInvitation} onShowQRCode={setQrCodeSupplier} onShowTokens={setTokensDialogSupplier} onOpenPortal={handleOpenPortal} onShowChanges={setChangesDialogSupplier} onOrderClick={supplier => {
