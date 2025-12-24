@@ -346,9 +346,11 @@ function hasPdfAttachment(bodystructure: string): boolean {
          (lowerStructure.includes('"application"') && lowerStructure.includes('.pdf'));
 }
 
-// Extract PDF from MIME message
-function extractPdfFromMime(mimeMessage: string): Uint8Array | null {
-  console.info("Extracting PDF from MIME, message length:", mimeMessage.length);
+// Extract ALL PDFs from MIME message (returns array of PDFs)
+function extractPdfFromMime(mimeMessage: string): Uint8Array[] {
+  console.info("Extracting PDFs from MIME, message length:", mimeMessage.length);
+  
+  const allPdfs: Uint8Array[] = [];
   
   // Find all boundaries in the message (there might be nested ones)
   const boundaryMatches = mimeMessage.matchAll(/boundary="?([^"\s\r\n;]+)"?/gi);
@@ -358,21 +360,35 @@ function extractPdfFromMime(mimeMessage: string): Uint8Array | null {
   }
   console.info("Found boundaries:", boundaries.length, boundaries);
   
-  // Try to extract PDF using each boundary
+  // Extract PDFs using each boundary
   for (const boundary of boundaries) {
-    const result = extractPdfWithBoundary(mimeMessage, boundary);
-    if (result) {
-      return result;
+    const results = extractPdfWithBoundary(mimeMessage, boundary);
+    for (const pdf of results) {
+      // Avoid duplicates by checking size
+      const isDuplicate = allPdfs.some(existing => existing.length === pdf.length);
+      if (!isDuplicate) {
+        allPdfs.push(pdf);
+      }
     }
   }
   
-  // Fallback: try to find base64-encoded PDF content directly
-  console.info("No PDF found with boundaries, trying direct extraction...");
-  return extractBase64PdfDirect(mimeMessage);
+  // Fallback: try to find base64-encoded PDF content directly if no PDFs found
+  if (allPdfs.length === 0) {
+    console.info("No PDF found with boundaries, trying direct extraction...");
+    const directPdf = extractBase64PdfDirect(mimeMessage);
+    if (directPdf) {
+      allPdfs.push(directPdf);
+    }
+  }
+  
+  console.info(`Total PDFs extracted: ${allPdfs.length}`);
+  return allPdfs;
 }
 
-function extractPdfWithBoundary(mimeMessage: string, boundary: string): Uint8Array | null {
+function extractPdfWithBoundary(mimeMessage: string, boundary: string): Uint8Array[] {
   console.info("Trying boundary:", boundary);
+  
+  const foundPdfs: Uint8Array[] = [];
   
   // Escape special regex characters in boundary
   const escapedBoundary = boundary.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -398,14 +414,14 @@ function extractPdfWithBoundary(mimeMessage: string, boundary: string): Uint8Arr
       const nestedBoundaryMatch = part.match(/boundary="?([^"\s\r\n;]+)"?/i);
       if (nestedBoundaryMatch && nestedBoundaryMatch[1] !== boundary) {
         console.info("Found nested boundary, recursing...");
-        const result = extractPdfWithBoundary(part, nestedBoundaryMatch[1]);
-        if (result) return result;
+        const nestedResults = extractPdfWithBoundary(part, nestedBoundaryMatch[1]);
+        foundPdfs.push(...nestedResults);
       }
       
       // Try to extract base64 content from this part
       const pdfContent = extractBase64FromPart(part);
       if (pdfContent) {
-        return pdfContent;
+        foundPdfs.push(pdfContent);
       }
     }
     
@@ -417,13 +433,13 @@ function extractPdfWithBoundary(mimeMessage: string, boundary: string): Uint8Arr
       const nestedBoundaryMatch = part.match(/boundary="?([^"\s\r\n;]+)"?/i);
       if (nestedBoundaryMatch && nestedBoundaryMatch[1] !== boundary) {
         console.info(`Part ${i} is nested multipart, recursing...`);
-        const result = extractPdfWithBoundary(part, nestedBoundaryMatch[1]);
-        if (result) return result;
+        const nestedResults = extractPdfWithBoundary(part, nestedBoundaryMatch[1]);
+        foundPdfs.push(...nestedResults);
       }
     }
   }
   
-  return null;
+  return foundPdfs;
 }
 
 function extractBase64FromPart(part: string): Uint8Array | null {
@@ -693,10 +709,10 @@ serve(async (req) => {
         const fullMessage = await imap.fetchFullMessage(seqNum);
         console.info("Full message length:", fullMessage.length);
         
-        const pdfContent = extractPdfFromMime(fullMessage);
+        const pdfContents = extractPdfFromMime(fullMessage);
 
-        if (!pdfContent || pdfContent.length < 1000) {
-          console.error("Could not extract PDF content or content too small");
+        if (pdfContents.length === 0) {
+          console.error("Could not extract any PDF content from email");
           
           await serviceClient.from("invoice_email_log").insert({
             organization_id: organizationId,
@@ -713,28 +729,9 @@ serve(async (req) => {
           continue;
         }
 
-        console.info("PDF extracted successfully, size:", pdfContent.length);
+        console.info(`Found ${pdfContents.length} PDF(s) in email`);
 
-        // Upload to storage
-        const filename = `invoice-${Date.now()}.pdf`;
-        const filePath = `${organizationId}/${filename}`;
-
-        const { error: uploadError } = await serviceClient.storage
-          .from("invoices")
-          .upload(filePath, pdfContent, {
-            contentType: "application/pdf",
-            upsert: false,
-          });
-
-        if (uploadError) {
-          throw new Error(`Upload failed: ${uploadError.message}`);
-        }
-
-        const { data: publicUrl } = serviceClient.storage
-          .from("invoices")
-          .getPublicUrl(filePath);
-
-        // Find matching supplier by email
+        // Find matching supplier by email (once per email, not per PDF)
         const { data: supplier } = await serviceClient
           .from("suppliers")
           .select("id")
@@ -742,73 +739,106 @@ serve(async (req) => {
           .or(`email.eq.${from},invoice_email.eq.${from}`)
           .maybeSingle();
 
-        // Create invoice record
-        const { data: invoice, error: invoiceError } = await serviceClient
-          .from("invoices")
-          .insert({
+        // Process each PDF separately
+        for (let pdfIndex = 0; pdfIndex < pdfContents.length; pdfIndex++) {
+          const pdfContent = pdfContents[pdfIndex];
+          
+          if (pdfContent.length < 1000) {
+            console.warn(`PDF ${pdfIndex + 1} is too small (${pdfContent.length} bytes), skipping`);
+            continue;
+          }
+
+          console.info(`Processing PDF ${pdfIndex + 1}/${pdfContents.length}, size: ${pdfContent.length}`);
+
+          // Upload to storage with unique filename
+          const filename = `invoice-${Date.now()}-${pdfIndex}.pdf`;
+          const filePath = `${organizationId}/${filename}`;
+
+          const { error: uploadError } = await serviceClient.storage
+            .from("invoices")
+            .upload(filePath, pdfContent, {
+              contentType: "application/pdf",
+              upsert: false,
+            });
+
+          if (uploadError) {
+            console.error(`Upload failed for PDF ${pdfIndex + 1}:`, uploadError.message);
+            errors.push(`Upload failed for PDF ${pdfIndex + 1} from: ${subject}`);
+            continue;
+          }
+
+          const { data: publicUrl } = serviceClient.storage
+            .from("invoices")
+            .getPublicUrl(filePath);
+
+          // Create invoice record
+          const { data: invoice, error: invoiceError } = await serviceClient
+            .from("invoices")
+            .insert({
+              organization_id: organizationId,
+              pdf_url: publicUrl.publicUrl,
+              status: "pending",
+              email_from: from,
+              email_subject: subject,
+              email_message_id: messageId,
+              email_received_at: new Date().toISOString(),
+              supplier_id: supplier?.id || null,
+            })
+            .select()
+            .single();
+
+          if (invoiceError) {
+            console.error(`Invoice creation failed for PDF ${pdfIndex + 1}:`, invoiceError.message);
+            errors.push(`Invoice creation failed for PDF ${pdfIndex + 1} from: ${subject}`);
+            continue;
+          }
+
+          // Log email as "created" - will update to "processed" after successful parsing
+          const { data: emailLog } = await serviceClient.from("invoice_email_log").insert({
             organization_id: organizationId,
-            pdf_url: publicUrl.publicUrl,
-            status: "pending",
+            message_id: `${messageId}-${pdfIndex}`, // Unique per PDF
             email_from: from,
             email_subject: subject,
-            email_message_id: messageId,
-            email_received_at: new Date().toISOString(),
-            supplier_id: supplier?.id || null,
-          })
-          .select()
-          .single();
+            status: "created",
+            invoice_id: invoice.id,
+          }).select().single();
 
-        if (invoiceError) {
-          throw new Error(`Invoice creation failed: ${invoiceError.message}`);
-        }
-
-        // Log email as "created" - will update to "processed" after successful parsing
-        const { data: emailLog } = await serviceClient.from("invoice_email_log").insert({
-          organization_id: organizationId,
-          message_id: messageId,
-          email_from: from,
-          email_subject: subject,
-          status: "created",
-          invoice_id: invoice.id,
-        }).select().single();
-
-        // Trigger parse-invoice function
-        try {
-          console.info(`Triggering parse-invoice for invoice ${invoice.id}...`);
-          const parseResult = await serviceClient.functions.invoke("parse-invoice", {
-            body: { invoiceId: invoice.id },
-          });
-          
-          if (parseResult.error) {
-            console.error("parse-invoice returned error:", parseResult.error);
-            // Update email log to failed
-            if (emailLog) {
-              await serviceClient.from("invoice_email_log")
-                .update({ status: "parse_failed", error_message: parseResult.error.message || 'Unknown error' })
-                .eq("id", emailLog.id);
+          // Trigger parse-invoice function
+          try {
+            console.info(`Triggering parse-invoice for invoice ${invoice.id}...`);
+            const parseResult = await serviceClient.functions.invoke("parse-invoice", {
+              body: { invoiceId: invoice.id },
+            });
+            
+            if (parseResult.error) {
+              console.error("parse-invoice returned error:", parseResult.error);
+              if (emailLog) {
+                await serviceClient.from("invoice_email_log")
+                  .update({ status: "parse_failed", error_message: parseResult.error.message || 'Unknown error' })
+                  .eq("id", emailLog.id);
+              }
+            } else {
+              console.info("parse-invoice completed successfully");
+              if (emailLog) {
+                await serviceClient.from("invoice_email_log")
+                  .update({ status: "processed" })
+                  .eq("id", emailLog.id);
+              }
             }
-          } else {
-            console.info("parse-invoice completed successfully");
-            // Update email log to processed
+          } catch (parseError: unknown) {
+            const errMsg = parseError instanceof Error ? parseError.message : String(parseError);
+            console.error("Failed to trigger parse-invoice:", errMsg);
             if (emailLog) {
               await serviceClient.from("invoice_email_log")
-                .update({ status: "processed" })
+                .update({ status: "parse_failed", error_message: errMsg })
                 .eq("id", emailLog.id);
             }
           }
-        } catch (parseError: unknown) {
-          const errMsg = parseError instanceof Error ? parseError.message : String(parseError);
-          console.error("Failed to trigger parse-invoice:", errMsg);
-          // Update email log to failed
-          if (emailLog) {
-            await serviceClient.from("invoice_email_log")
-              .update({ status: "parse_failed", error_message: errMsg })
-              .eq("id", emailLog.id);
-          }
+
+          console.info(`Successfully created invoice ${invoice.id} from ${from} (PDF ${pdfIndex + 1}/${pdfContents.length})`);
+          newInvoicesCount++;
         }
 
-        console.info(`Successfully created invoice ${invoice.id} from ${from}`);
-        newInvoicesCount++;
         await imap.markAsSeen(seqNum);
         processedCount++;
 
