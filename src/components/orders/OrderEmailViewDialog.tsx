@@ -62,7 +62,7 @@ export const OrderEmailViewDialog = ({
               </div>
               <div className="flex gap-2">
                 <span className="text-muted-foreground w-12">{t('orders.emailFrom')}:</span>
-                <span>Bestellung.pro &lt;onboarding@resend.dev&gt;</span>
+                <span>{restaurantName} &lt;yum@bestellung.pro&gt;</span>
               </div>
               <div className="flex gap-2">
                 <span className="text-muted-foreground w-12">{t('orders.emailSubject')}:</span>

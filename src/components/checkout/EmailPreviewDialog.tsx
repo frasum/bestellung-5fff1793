@@ -291,7 +291,7 @@ ${signatureText}`;
               </div>
               <div className="flex gap-2">
                 <span className="text-muted-foreground w-12">Von:</span>
-                <span>ProcureResto &lt;onboarding@resend.dev&gt;</span>
+                <span>{currentEmail.restaurantName} &lt;yum@bestellung.pro&gt;</span>
               </div>
               <div className="flex gap-2">
                 <span className="text-muted-foreground w-12">Betreff:</span>
