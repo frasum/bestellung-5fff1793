@@ -322,7 +322,11 @@ export const ArticleFormDialog = ({
         isWineCategory ? "sm:max-w-2xl" : "sm:max-w-md"
       )}>
         <DialogHeader>
-          <DialogTitle>{editingArticle ? 'Artikel bearbeiten' : 'Neuer Artikel'}</DialogTitle>
+          <DialogTitle>
+            {editingArticle 
+              ? `${suppliers?.find(s => s.id === editingArticle.supplier_id)?.name || ''} - Artikel bearbeiten`
+              : 'Neuer Artikel'}
+          </DialogTitle>
         </DialogHeader>
         <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
           {/* AI Photo Capture - only in advanced mode AND on mobile */}
@@ -342,28 +346,31 @@ export const ArticleFormDialog = ({
           )}
           
           {/* === BASISDATEN === */}
-          <div className="space-y-2">
-            <Label>Lieferant *</Label>
-            <Controller
-              name="supplier_id"
-              control={form.control}
-              render={({ field }) => (
-                <Select onValueChange={field.onChange} value={field.value}>
-                  <SelectTrigger className="bg-card">
-                    <SelectValue placeholder="Lieferant auswählen" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-card border border-border z-50">
-                    {suppliers?.map((supplier) => (
-                      <SelectItem key={supplier.id} value={supplier.id}>{supplier.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+          {/* Lieferant-Auswahl nur bei neuen Artikeln ohne preselectedSupplierId */}
+          {!editingArticle && !preselectedSupplierId && (
+            <div className="space-y-2">
+              <Label>Lieferant *</Label>
+              <Controller
+                name="supplier_id"
+                control={form.control}
+                render={({ field }) => (
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <SelectTrigger className="bg-card">
+                      <SelectValue placeholder="Lieferant auswählen" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-card border border-border z-50">
+                      {suppliers?.map((supplier) => (
+                        <SelectItem key={supplier.id} value={supplier.id}>{supplier.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+              {form.formState.errors.supplier_id && (
+                <p className="text-sm text-destructive">{form.formState.errors.supplier_id.message}</p>
               )}
-            />
-            {form.formState.errors.supplier_id && (
-              <p className="text-sm text-destructive">{form.formState.errors.supplier_id.message}</p>
-            )}
-          </div>
+            </div>
+          )}
           <div className="space-y-2">
             <Label htmlFor="article-name">Name *</Label>
             <Input id="article-name" {...form.register('name')} placeholder="San Marzano Tomatoes" />
