@@ -21,10 +21,11 @@ import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
 import { format, subMonths, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns';
-import { Download, TrendingUp, TrendingDown, Euro, ShoppingCart, Users, Loader2, Package, BarChart3, ClipboardList, ChevronRight, MapPin, Smartphone, User, Eye, FileCheck } from 'lucide-react';
+import { Download, TrendingUp, TrendingDown, Euro, ShoppingCart, Users, Loader2, Package, BarChart3, ClipboardList, ChevronRight, MapPin, Smartphone, User, Eye, FileCheck, History } from 'lucide-react';
 import { InventoryTab } from '@/components/reports/InventoryTab';
 import { PriceWatchTab } from '@/components/reports/PriceWatchTab';
 import { InvoiceVerificationTab } from '@/components/reports/InvoiceVerificationTab';
+import { PriceHistoryTab } from '@/components/reports/PriceHistoryTab';
 import { cn } from '@/lib/utils';
 const COLORS = ['hsl(var(--primary))', 'hsl(var(--accent))', 'hsl(142, 76%, 36%)', 'hsl(38, 92%, 50%)', 'hsl(0, 84%, 60%)', 'hsl(262, 83%, 58%)'];
 
@@ -453,6 +454,10 @@ const Reports = () => {
               <FileCheck className="w-4 h-4" />
               <span>{t('invoices.title', 'Rechnungsprüfung')}</span>
             </TabsTrigger>
+            <TabsTrigger value="pricehistory" className="flex-1 sm:flex-initial h-8 gap-2 px-4 text-sm font-medium data-[state=active]:bg-background">
+              <History className="w-4 h-4" />
+              <span>{t('reports.priceHistory', 'Preishistorie')}</span>
+            </TabsTrigger>
           </TabsList>
 
           {/* Overview Tab */}
@@ -854,6 +859,11 @@ const Reports = () => {
           {/* Invoice Verification Tab */}
           <TabsContent value="invoices" className="mt-4">
             <InvoiceVerificationTab />
+          </TabsContent>
+
+          {/* Price History Tab */}
+          <TabsContent value="pricehistory" className="mt-4">
+            <PriceHistoryTab />
           </TabsContent>
         </Tabs>
       </div>

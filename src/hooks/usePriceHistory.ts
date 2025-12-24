@@ -20,6 +20,18 @@ export interface PriceHistoryEntry {
   } | null;
 }
 
+export interface AllPriceHistoryEntry extends PriceHistoryEntry {
+  articles?: {
+    name: string;
+    sku: string | null;
+    category: string | null;
+    supplier_id: string;
+    suppliers?: {
+      name: string;
+    } | null;
+  } | null;
+}
+
 export const usePriceHistory = (articleId: string | null) => {
   return useQuery({
     queryKey: ['price-history', articleId],
@@ -41,6 +53,40 @@ export const usePriceHistory = (articleId: string | null) => {
       return data as PriceHistoryEntry[];
     },
     enabled: !!articleId,
+  });
+};
+
+export const useAllPriceHistory = () => {
+  return useQuery({
+    queryKey: ['price-history-all'],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return [];
+      
+      // Get user's organization via profiles
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('organization_id')
+        .eq('id', user.id)
+        .single();
+      
+      if (!profile?.organization_id) return [];
+
+      const { data, error } = await supabase
+        .from('article_price_history')
+        .select(`
+          *,
+          articles(name, sku, category, supplier_id, suppliers(name)),
+          invoices(invoice_number),
+          orders(order_number)
+        `)
+        .eq('organization_id', profile.organization_id)
+        .order('changed_at', { ascending: false })
+        .limit(500);
+
+      if (error) throw error;
+      return data as AllPriceHistoryEntry[];
+    },
   });
 };
 
