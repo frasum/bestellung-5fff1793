@@ -10,6 +10,14 @@ export interface PriceHistoryEntry {
   changed_at: string;
   changed_by: string | null;
   change_source: string;
+  invoice_id: string | null;
+  order_id: string | null;
+  invoices?: {
+    invoice_number: string;
+  } | null;
+  orders?: {
+    order_number: string;
+  } | null;
 }
 
 export const usePriceHistory = (articleId: string | null) => {
@@ -20,7 +28,11 @@ export const usePriceHistory = (articleId: string | null) => {
       
       const { data, error } = await supabase
         .from('article_price_history')
-        .select('*')
+        .select(`
+          *,
+          invoices(invoice_number),
+          orders(order_number)
+        `)
         .eq('article_id', articleId)
         .order('changed_at', { ascending: false })
         .limit(10);

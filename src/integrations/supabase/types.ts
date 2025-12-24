@@ -66,8 +66,10 @@ export type Database = {
           changed_at: string
           changed_by: string | null
           id: string
+          invoice_id: string | null
           new_price: number
           old_price: number
+          order_id: string | null
           organization_id: string
         }
         Insert: {
@@ -76,8 +78,10 @@ export type Database = {
           changed_at?: string
           changed_by?: string | null
           id?: string
+          invoice_id?: string | null
           new_price: number
           old_price: number
+          order_id?: string | null
           organization_id: string
         }
         Update: {
@@ -86,8 +90,10 @@ export type Database = {
           changed_at?: string
           changed_by?: string | null
           id?: string
+          invoice_id?: string | null
           new_price?: number
           old_price?: number
+          order_id?: string | null
           organization_id?: string
         }
         Relationships: [
@@ -96,6 +102,20 @@ export type Database = {
             columns: ["article_id"]
             isOneToOne: false
             referencedRelation: "articles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "article_price_history_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "article_price_history_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
             referencedColumns: ["id"]
           },
           {
