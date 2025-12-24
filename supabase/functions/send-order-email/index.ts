@@ -40,14 +40,18 @@ async function sendEmailViaSMTP(options: {
   html: string;
   text?: string;
   replyTo?: string;
+  fromName?: string;
 }): Promise<{ success: boolean; error?: string }> {
   const client = new SMTPClient(smtpConfig);
   try {
     // Clean HTML to minimize quoted-printable encoding issues
     const cleanedHtml = cleanHtmlContent(options.html);
     
+    // Use dynamic sender name (location name) or fallback to 'Bestellung.pro'
+    const senderName = options.fromName || 'Bestellung.pro';
+    
     await client.send({
-      from: `Bestellung.pro <${smtpFrom}>`,
+      from: `${senderName} <${smtpFrom}>`,
       to: options.to,
       subject: options.subject,
       content: options.text || "",
@@ -560,6 +564,7 @@ serve(async (req) => {
       html: emailHtml,
       text: emailText,
       replyTo: data.locationEmail,
+      fromName: data.restaurantName,
     });
 
     if (!emailResult.success) {
