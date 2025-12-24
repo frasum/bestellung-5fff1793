@@ -564,7 +564,6 @@ ${signatureText}`;
                   </p>
                 </div>
               </div>
-              </div>
             </div>
 
             {/* Confirmation Checkbox - at the bottom after email content */}
@@ -594,8 +593,10 @@ ${signatureText}`;
               )}
             </div>
           </div>
+        </div>
 
-        <DialogFooter className="flex-col-reverse sm:flex-row gap-2 mt-4">
+        {/* Footer - fixed at bottom with proper styling */}
+        <DialogFooter className="flex-col-reverse sm:flex-row gap-2 pt-4 border-t bg-background sticky bottom-0">
           {emailPreviews.length > 1 && (
             <div className="flex gap-2 sm:mr-auto w-full sm:w-auto">
               <Button variant="outline" size="sm" onClick={goPrev} disabled={currentIndex === 0} className="flex-1 sm:flex-none h-10 sm:h-9">
