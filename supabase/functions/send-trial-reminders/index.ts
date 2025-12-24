@@ -1,12 +1,49 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
-const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+import { SMTPClient } from "https://deno.land/x/denomailer@1.6.0/mod.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
+
+// SMTP Configuration
+const smtpConfig = {
+  connection: {
+    hostname: Deno.env.get("SMTP_HOST") || "smtps.udag.de",
+    port: Number(Deno.env.get("SMTP_PORT")) || 465,
+    tls: true,
+    auth: {
+      username: Deno.env.get("SMTP_USERNAME") || "",
+      password: Deno.env.get("SMTP_PASSWORD") || "",
+    },
+  },
+};
+
+const smtpFrom = Deno.env.get("SMTP_FROM") || "yum@bestellung.pro";
+
+async function sendEmailViaSMTP(options: {
+  to: string[];
+  subject: string;
+  html: string;
+}): Promise<{ success: boolean; error?: string }> {
+  const client = new SMTPClient(smtpConfig);
+  try {
+    await client.send({
+      from: `Bestellung.pro <${smtpFrom}>`,
+      to: options.to,
+      subject: options.subject,
+      content: "",
+      html: options.html,
+    });
+    await client.close();
+    return { success: true };
+  } catch (error: any) {
+    console.error("SMTP send error:", error);
+    try { await client.close(); } catch {}
+    return { success: false, error: error.message };
+  }
+}
 
 interface DemoOrganization {
   id: string;
@@ -63,14 +100,12 @@ function generateEmailHtml(
       <td align="center">
         <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
           
-          <!-- Header -->
           <tr>
             <td style="background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); padding: 32px; text-align: center;">
               <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: 700;">${t.heading}</h1>
             </td>
           </tr>
           
-          <!-- Content -->
           <tr>
             <td style="padding: 32px;">
               <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 0 0 16px 0;">
@@ -80,7 +115,6 @@ function generateEmailHtml(
                 ${t.message}
               </p>
               
-              <!-- Info Box -->
               <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f0f9ff; border-left: 4px solid #3b82f6; border-radius: 4px; margin-bottom: 24px;">
                 <tr>
                   <td style="padding: 16px;">
@@ -91,7 +125,6 @@ function generateEmailHtml(
                 </tr>
               </table>
               
-              <!-- CTA Button -->
               <table width="100%" cellpadding="0" cellspacing="0">
                 <tr>
                   <td align="center" style="padding: 8px 0 24px 0;">
@@ -110,7 +143,6 @@ function generateEmailHtml(
             </td>
           </tr>
           
-          <!-- Footer -->
           <tr>
             <td style="background-color: #f9fafb; padding: 24px; text-align: center; border-top: 1px solid #e5e7eb;">
               <p style="color: #9ca3af; font-size: 12px; margin: 0;">
@@ -131,35 +163,7 @@ function generateEmailHtml(
   `;
 }
 
-async function sendEmail(to: string, subject: string, html: string): Promise<{ success: boolean; error?: string }> {
-  try {
-    const response = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${RESEND_API_KEY}`,
-      },
-      body: JSON.stringify({
-        from: "Bestellung.pro <noreply@bestellung.pro>",
-        to: [to],
-        subject,
-        html,
-      }),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      return { success: false, error: errorData.message || "Failed to send email" };
-    }
-
-    return { success: true };
-  } catch (error: any) {
-    return { success: false, error: error.message };
-  }
-}
-
 serve(async (req) => {
-  // Handle CORS
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
@@ -180,7 +184,6 @@ serve(async (req) => {
     const oneDayFromNow = new Date(now);
     oneDayFromNow.setDate(oneDayFromNow.getDate() + 1);
 
-    // Format dates for comparison (start and end of day)
     const formatDateStart = (d: Date) => {
       const date = new Date(d);
       date.setHours(0, 0, 0, 0);
@@ -192,7 +195,6 @@ serve(async (req) => {
       return date.toISOString();
     };
 
-    // Find demo organizations expiring in exactly 3 days
     const { data: orgsExpiring3Days, error: err3Days } = await supabase
       .from("organizations")
       .select(`
@@ -209,7 +211,6 @@ serve(async (req) => {
       console.error("Error fetching 3-day orgs:", err3Days);
     }
 
-    // Find demo organizations expiring in exactly 1 day
     const { data: orgsExpiring1Day, error: err1Day } = await supabase
       .from("organizations")
       .select(`
@@ -226,7 +227,6 @@ serve(async (req) => {
       console.error("Error fetching 1-day orgs:", err1Day);
     }
 
-    // Find demo organizations that expired today
     const { data: orgsExpiredToday, error: errExpired } = await supabase
       .from("organizations")
       .select(`
@@ -245,7 +245,6 @@ serve(async (req) => {
 
     const emailsSent: { type: string; email: string; org: string }[] = [];
 
-    // Send 3-day reminder emails
     if (orgsExpiring3Days && orgsExpiring3Days.length > 0) {
       console.log(`Found ${orgsExpiring3Days.length} orgs expiring in 3 days`);
       for (const org of orgsExpiring3Days as unknown as DemoOrganization[]) {
@@ -253,7 +252,11 @@ serve(async (req) => {
           if (!profile.email) continue;
           
           const html = generateEmailHtml("3_days", org.name, profile.full_name, appUrl);
-          const result = await sendEmail(profile.email, emailTemplates["3_days"].subject, html);
+          const result = await sendEmailViaSMTP({
+            to: [profile.email],
+            subject: emailTemplates["3_days"].subject,
+            html,
+          });
 
           if (!result.success) {
             console.error(`Error sending 3-day email to ${profile.email}:`, result.error);
@@ -265,7 +268,6 @@ serve(async (req) => {
       }
     }
 
-    // Send 1-day reminder emails
     if (orgsExpiring1Day && orgsExpiring1Day.length > 0) {
       console.log(`Found ${orgsExpiring1Day.length} orgs expiring in 1 day`);
       for (const org of orgsExpiring1Day as unknown as DemoOrganization[]) {
@@ -273,7 +275,11 @@ serve(async (req) => {
           if (!profile.email) continue;
           
           const html = generateEmailHtml("1_day", org.name, profile.full_name, appUrl);
-          const result = await sendEmail(profile.email, emailTemplates["1_day"].subject, html);
+          const result = await sendEmailViaSMTP({
+            to: [profile.email],
+            subject: emailTemplates["1_day"].subject,
+            html,
+          });
 
           if (!result.success) {
             console.error(`Error sending 1-day email to ${profile.email}:`, result.error);
@@ -285,7 +291,6 @@ serve(async (req) => {
       }
     }
 
-    // Send expired emails
     if (orgsExpiredToday && orgsExpiredToday.length > 0) {
       console.log(`Found ${orgsExpiredToday.length} orgs expired today`);
       for (const org of orgsExpiredToday as unknown as DemoOrganization[]) {
@@ -293,7 +298,11 @@ serve(async (req) => {
           if (!profile.email) continue;
           
           const html = generateEmailHtml("expired", org.name, profile.full_name, appUrl);
-          const result = await sendEmail(profile.email, emailTemplates["expired"].subject, html);
+          const result = await sendEmailViaSMTP({
+            to: [profile.email],
+            subject: emailTemplates["expired"].subject,
+            html,
+          });
 
           if (!result.success) {
             console.error(`Error sending expired email to ${profile.email}:`, result.error);

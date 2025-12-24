@@ -1,13 +1,49 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { Resend } from "https://esm.sh/resend@2.0.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
-const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
+import { SMTPClient } from "https://deno.land/x/denomailer@1.6.0/mod.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
+
+// SMTP Configuration
+const smtpConfig = {
+  connection: {
+    hostname: Deno.env.get("SMTP_HOST") || "smtps.udag.de",
+    port: Number(Deno.env.get("SMTP_PORT")) || 465,
+    tls: true,
+    auth: {
+      username: Deno.env.get("SMTP_USERNAME") || "",
+      password: Deno.env.get("SMTP_PASSWORD") || "",
+    },
+  },
+};
+
+const smtpFrom = Deno.env.get("SMTP_FROM") || "yum@bestellung.pro";
+
+async function sendEmailViaSMTP(options: {
+  to: string[];
+  subject: string;
+  html: string;
+}): Promise<{ success: boolean; error?: string }> {
+  const client = new SMTPClient(smtpConfig);
+  try {
+    await client.send({
+      from: `Bestellung.pro <${smtpFrom}>`,
+      to: options.to,
+      subject: options.subject,
+      content: "",
+      html: options.html,
+    });
+    await client.close();
+    return { success: true };
+  } catch (error: any) {
+    console.error("SMTP send error:", error);
+    try { await client.close(); } catch {}
+    return { success: false, error: error.message };
+  }
+}
 
 interface RequestBody {
   orderId: string;
@@ -30,7 +66,6 @@ const handler = async (req: Request): Promise<Response> => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    // Get order details
     const { data: order, error: orderError } = await supabase
       .from("b2b_customer_purchase_orders")
       .select(`
@@ -45,7 +80,6 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error("Bestellung nicht gefunden");
     }
 
-    // Get order items
     const { data: items, error: itemsError } = await supabase
       .from("b2b_customer_purchase_order_items")
       .select("*")
@@ -62,7 +96,6 @@ const handler = async (req: Request): Promise<Response> => {
     const customerEmail = customer?.email || "";
     const deliveryAddress = order.delivery_address || customer?.delivery_address || "Nicht angegeben";
 
-    // Build items table HTML
     const itemsHtml = items?.map((item: any) => `
       <tr>
         <td style="padding: 8px; border-bottom: 1px solid #eee;">${item.article_name}</td>
@@ -129,16 +162,18 @@ const handler = async (req: Request): Promise<Response> => {
       </html>
     `;
 
-    const emailResponse = await resend.emails.send({
-      from: "Bestellung.pro <bestellung@bestellung.pro>",
+    const emailResult = await sendEmailViaSMTP({
       to: [vendorEmail],
       subject: `Neue Bestellung von ${customerName} - ${order.order_number}`,
       html: emailHtml,
     });
 
-    console.log("Email sent successfully:", emailResponse);
+    if (!emailResult.success) {
+      throw new Error(`SMTP error: ${emailResult.error}`);
+    }
 
-    // Update order with email sent status
+    console.log("Email sent successfully via SMTP");
+
     await supabase
       .from("b2b_customer_purchase_orders")
       .update({

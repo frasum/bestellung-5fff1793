@@ -1,14 +1,51 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
-
-const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
-
-
+import { SMTPClient } from "https://deno.land/x/denomailer@1.6.0/mod.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
+
+// SMTP Configuration
+const smtpConfig = {
+  connection: {
+    hostname: Deno.env.get("SMTP_HOST") || "smtps.udag.de",
+    port: Number(Deno.env.get("SMTP_PORT")) || 465,
+    tls: true,
+    auth: {
+      username: Deno.env.get("SMTP_USERNAME") || "",
+      password: Deno.env.get("SMTP_PASSWORD") || "",
+    },
+  },
+};
+
+const smtpFrom = Deno.env.get("SMTP_FROM") || "yum@bestellung.pro";
+
+async function sendEmailViaSMTP(options: {
+  to: string[];
+  subject: string;
+  html: string;
+  text?: string;
+  fromName?: string;
+}): Promise<{ success: boolean; error?: string }> {
+  const client = new SMTPClient(smtpConfig);
+  try {
+    await client.send({
+      from: `${options.fromName || 'Bestellung.pro'} <${smtpFrom}>`,
+      to: options.to,
+      subject: options.subject,
+      content: options.text || "",
+      html: options.html,
+    });
+    await client.close();
+    return { success: true };
+  } catch (error: any) {
+    console.error("SMTP send error:", error);
+    try { await client.close(); } catch {}
+    return { success: false, error: error.message };
+  }
+}
 
 interface OrderItem {
   name: string;
@@ -57,7 +94,6 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log(`Processing order ${orderNumber} for vendor ${vendorName}`);
 
-    // Get account info for sender details
     const { data: orderData } = await supabaseClient
       .from('b2b_supplier_purchase_orders')
       .select('supplier_account_id')
@@ -77,7 +113,6 @@ const handler = async (req: Request): Promise<Response> => {
       }
     }
 
-    // Build items table
     const itemsTable = items.map(item => `
       <tr>
         <td style="padding: 8px; border-bottom: 1px solid #eee;">${item.name}</td>
@@ -87,7 +122,6 @@ const handler = async (req: Request): Promise<Response> => {
       </tr>
     `).join('');
 
-    // Format delivery date
     const formattedDeliveryDate = deliveryDate 
       ? new Date(deliveryDate).toLocaleDateString('de-DE', { 
           weekday: 'long', 
@@ -166,7 +200,6 @@ const handler = async (req: Request): Promise<Response> => {
 </html>
     `;
 
-    // Plain text version
     const textContent = `
 Bestellung ${orderNumber}
 von ${senderName}
@@ -191,32 +224,27 @@ Mit freundlichen Grüßen,
 ${senderName}
     `;
 
-    console.log(`Sending email to ${vendorEmail}`);
+    console.log(`Sending email to ${vendorEmail} via SMTP`);
 
-    const emailResponse = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${RESEND_API_KEY}`,
-      },
-      body: JSON.stringify({
-        from: `${senderName} <bestellung@bestellung.pro>`,
-        to: [vendorEmail],
-        subject: `Bestellung ${orderNumber} von ${senderName}`,
-        html: htmlContent,
-        text: textContent,
-      }),
+    const emailResult = await sendEmailViaSMTP({
+      to: [vendorEmail],
+      subject: `Bestellung ${orderNumber} von ${senderName}`,
+      html: htmlContent,
+      text: textContent,
+      fromName: senderName,
     });
 
-    const emailResult = await emailResponse.json();
-    console.log("Email sent successfully:", emailResult);
+    if (!emailResult.success) {
+      throw new Error(`SMTP error: ${emailResult.error}`);
+    }
 
-    // Log to communication_logs if possible
+    console.log("Email sent successfully via SMTP");
+
     if (orderData?.supplier_account_id) {
       await supabaseClient
         .from('communication_logs')
         .insert({
-          organization_id: orderData.supplier_account_id, // Using account ID as org reference
+          organization_id: orderData.supplier_account_id,
           email_type: 'b2b_purchase_order',
           direction: 'outgoing',
           recipient_email: vendorEmail,
@@ -228,7 +256,7 @@ ${senderName}
     }
 
     return new Response(
-      JSON.stringify({ success: true, emailId: emailResult.id }),
+      JSON.stringify({ success: true }),
       { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
     );
   } catch (error: any) {

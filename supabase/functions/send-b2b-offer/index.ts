@@ -1,13 +1,50 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { Resend } from "https://esm.sh/resend@2.0.0";
-
-const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
+import { SMTPClient } from "https://deno.land/x/denomailer@1.6.0/mod.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
+
+// SMTP Configuration
+const smtpConfig = {
+  connection: {
+    hostname: Deno.env.get("SMTP_HOST") || "smtps.udag.de",
+    port: Number(Deno.env.get("SMTP_PORT")) || 465,
+    tls: true,
+    auth: {
+      username: Deno.env.get("SMTP_USERNAME") || "",
+      password: Deno.env.get("SMTP_PASSWORD") || "",
+    },
+  },
+};
+
+const smtpFrom = Deno.env.get("SMTP_FROM") || "yum@bestellung.pro";
+
+async function sendEmailViaSMTP(options: {
+  to: string[];
+  subject: string;
+  html: string;
+  fromName?: string;
+}): Promise<{ success: boolean; error?: string }> {
+  const client = new SMTPClient(smtpConfig);
+  try {
+    await client.send({
+      from: `${options.fromName || 'Bestellung.pro'} <${smtpFrom}>`,
+      to: options.to,
+      subject: options.subject,
+      content: "",
+      html: options.html,
+    });
+    await client.close();
+    return { success: true };
+  } catch (error: any) {
+    console.error("SMTP send error:", error);
+    try { await client.close(); } catch {}
+    return { success: false, error: error.message };
+  }
+}
 
 interface OfferItem {
   article_name: string;
@@ -18,7 +55,6 @@ interface OfferItem {
 }
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
@@ -37,7 +73,6 @@ serve(async (req) => {
 
     console.log("Sending offer:", offerId);
 
-    // Fetch offer with customer and supplier account details
     const { data: offer, error: offerError } = await supabase
       .from("supplier_b2b_offers")
       .select(`
@@ -53,7 +88,6 @@ serve(async (req) => {
       throw new Error("Offer not found");
     }
 
-    // Fetch offer items
     const { data: items, error: itemsError } = await supabase
       .from("supplier_b2b_offer_items")
       .select("*")
@@ -70,7 +104,6 @@ serve(async (req) => {
     const contactPerson = offer.customer.contact_person;
     const primaryColor = offer.account.primary_color || "#3b82f6";
 
-    // Generate items table HTML
     const itemsHtml = (items || [])
       .map(
         (item: OfferItem) => `
@@ -84,12 +117,10 @@ serve(async (req) => {
       )
       .join("");
 
-    // Format valid until date
     const validUntilText = offer.valid_until
       ? `<p style="margin: 0 0 16px 0; color: #6b7280;">Gültig bis: ${new Date(offer.valid_until).toLocaleDateString("de-DE")}</p>`
       : "";
 
-    // Format notes
     const notesText = offer.notes
       ? `<p style="margin: 16px 0; padding: 12px; background-color: #f9fafb; border-radius: 8px; color: #374151;">${offer.notes}</p>`
       : "";
@@ -105,13 +136,11 @@ serve(async (req) => {
         <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f3f4f6;">
           <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
             <div style="background-color: white; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); overflow: hidden;">
-              <!-- Header -->
               <div style="background-color: ${primaryColor}; padding: 24px; text-align: center;">
                 <h1 style="margin: 0; color: white; font-size: 24px;">Angebot</h1>
                 <p style="margin: 8px 0 0 0; color: rgba(255,255,255,0.9); font-size: 14px;">${offer.offer_number}</p>
               </div>
               
-              <!-- Content -->
               <div style="padding: 24px;">
                 <p style="margin: 0 0 16px 0; color: #374151;">
                   ${contactPerson ? `Sehr geehrte(r) ${contactPerson}` : `Sehr geehrte Damen und Herren`},
@@ -123,7 +152,6 @@ serve(async (req) => {
 
                 ${validUntilText}
                 
-                <!-- Items Table -->
                 <table style="width: 100%; border-collapse: collapse; margin: 24px 0;">
                   <thead>
                     <tr style="background-color: #f9fafb;">
@@ -156,7 +184,6 @@ serve(async (req) => {
                 </p>
               </div>
               
-              <!-- Footer -->
               <div style="background-color: #f9fafb; padding: 16px 24px; text-align: center; border-top: 1px solid #e5e7eb;">
                 <p style="margin: 0; font-size: 12px; color: #6b7280;">
                   Dieses Angebot wurde von ${supplierName} über Bestellung.pro erstellt.
@@ -168,20 +195,19 @@ serve(async (req) => {
       </html>
     `;
 
-    // Send email
-    const { error: emailError } = await resend.emails.send({
-      from: `${supplierName} <onboarding@resend.dev>`,
+    const emailResult = await sendEmailViaSMTP({
       to: [customerEmail],
       subject: `Angebot ${offer.offer_number} von ${supplierName}`,
       html: emailHtml,
+      fromName: supplierName,
     });
 
-    if (emailError) {
-      console.error("Error sending email:", emailError);
+    if (!emailResult.success) {
+      console.error("Error sending email:", emailResult.error);
       throw new Error("Failed to send email");
     }
 
-    console.log("Offer email sent successfully to:", customerEmail);
+    console.log("Offer email sent successfully via SMTP to:", customerEmail);
 
     return new Response(
       JSON.stringify({ success: true, message: "Offer sent successfully" }),

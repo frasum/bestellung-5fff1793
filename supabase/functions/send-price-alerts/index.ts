@@ -1,10 +1,49 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { SMTPClient } from "https://deno.land/x/denomailer@1.6.0/mod.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
+
+// SMTP Configuration
+const smtpConfig = {
+  connection: {
+    hostname: Deno.env.get("SMTP_HOST") || "smtps.udag.de",
+    port: Number(Deno.env.get("SMTP_PORT")) || 465,
+    tls: true,
+    auth: {
+      username: Deno.env.get("SMTP_USERNAME") || "",
+      password: Deno.env.get("SMTP_PASSWORD") || "",
+    },
+  },
+};
+
+const smtpFrom = Deno.env.get("SMTP_FROM") || "yum@bestellung.pro";
+
+async function sendEmailViaSMTP(options: {
+  to: string[];
+  subject: string;
+  html: string;
+}): Promise<{ success: boolean; error?: string }> {
+  const client = new SMTPClient(smtpConfig);
+  try {
+    await client.send({
+      from: `Preisüberwachung <${smtpFrom}>`,
+      to: options.to,
+      subject: options.subject,
+      content: "",
+      html: options.html,
+    });
+    await client.close();
+    return { success: true };
+  } catch (error: any) {
+    console.error("SMTP send error:", error);
+    try { await client.close(); } catch {}
+    return { success: false, error: error.message };
+  }
+}
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -14,23 +53,13 @@ serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const resendApiKey = Deno.env.get("RESEND_API_KEY");
     const appUrl = Deno.env.get("APP_URL") || "https://lovable.dev";
-
-    if (!resendApiKey) {
-      console.error("RESEND_API_KEY not configured");
-      return new Response(
-        JSON.stringify({ success: false, error: "Email service not configured" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
 
     const supabase = createClient(supabaseUrl, supabaseKey);
     const { organization_id } = await req.json();
 
     console.log(`Sending price alerts for organization: ${organization_id || 'all'}`);
 
-    // Get unsent alerts grouped by user
     let query = supabase
       .from("price_watch_alerts")
       .select(`
@@ -70,7 +99,6 @@ serve(async (req) => {
       );
     }
 
-    // Group alerts by user
     const alertsByUser: Record<string, typeof alerts> = {};
     for (const alert of alerts) {
       if (!alertsByUser[alert.user_id]) {
@@ -83,9 +111,7 @@ serve(async (req) => {
 
     let sentCount = 0;
 
-    // Send email to each user
     for (const [userId, userAlerts] of Object.entries(alertsByUser)) {
-      // Get user email
       const { data: profile } = await supabase
         .from("profiles")
         .select("email, full_name")
@@ -97,7 +123,6 @@ serve(async (req) => {
         continue;
       }
 
-      // Check if user has email notifications enabled
       const { data: settings } = await supabase
         .from("price_watch_settings")
         .select("email_notifications")
@@ -109,12 +134,10 @@ serve(async (req) => {
         continue;
       }
 
-      // Calculate total savings
       const totalSavings = userAlerts.reduce((sum, alert) => {
         return sum + (Number((alert as any).price_watch_results?.savings_amount) || 0);
       }, 0);
 
-      // Build email HTML
       const alertRows = userAlerts.map(alert => {
         const result = (alert as any).price_watch_results;
         if (!result) return "";
@@ -182,26 +205,16 @@ serve(async (req) => {
         </html>
       `;
 
-      // Send email via Resend
-      const emailResponse = await fetch("https://api.resend.com/emails", {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${resendApiKey}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          from: "Preisüberwachung <noreply@resend.dev>",
-          to: [profile.email],
-          subject: `💰 ${userAlerts.length} günstigere Preise gefunden - Sparen Sie €${totalSavings.toFixed(2)}`,
-          html: emailHtml,
-        }),
+      const emailResult = await sendEmailViaSMTP({
+        to: [profile.email],
+        subject: `💰 ${userAlerts.length} günstigere Preise gefunden - Sparen Sie €${totalSavings.toFixed(2)}`,
+        html: emailHtml,
       });
 
-      if (emailResponse.ok) {
-        console.log(`Email sent to ${profile.email}`);
+      if (emailResult.success) {
+        console.log(`Email sent to ${profile.email} via SMTP`);
         sentCount++;
 
-        // Mark alerts as sent
         const alertIds = userAlerts.map(a => a.id);
         await supabase
           .from("price_watch_alerts")
@@ -211,10 +224,9 @@ serve(async (req) => {
           })
           .in("id", alertIds);
       } else {
-        console.error(`Failed to send email to ${profile.email}:`, await emailResponse.text());
+        console.error(`Failed to send email to ${profile.email}:`, emailResult.error);
       }
 
-      // Rate limiting
       await new Promise(resolve => setTimeout(resolve, 200));
     }
 

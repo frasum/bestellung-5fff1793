@@ -1,16 +1,56 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { SMTPClient } from "https://deno.land/x/denomailer@1.6.0/mod.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// SMTP Configuration
+const smtpConfig = {
+  connection: {
+    hostname: Deno.env.get("SMTP_HOST") || "smtps.udag.de",
+    port: Number(Deno.env.get("SMTP_PORT")) || 465,
+    tls: true,
+    auth: {
+      username: Deno.env.get("SMTP_USERNAME") || "",
+      password: Deno.env.get("SMTP_PASSWORD") || "",
+    },
+  },
+};
+
+const smtpFrom = Deno.env.get("SMTP_FROM") || "yum@bestellung.pro";
+
+async function sendEmailViaSMTP(options: {
+  to: string[];
+  subject: string;
+  html: string;
+  text?: string;
+}): Promise<{ success: boolean; error?: string }> {
+  const client = new SMTPClient(smtpConfig);
+  try {
+    await client.send({
+      from: `Bestellung.pro <${smtpFrom}>`,
+      to: options.to,
+      subject: options.subject,
+      content: options.text || "",
+      html: options.html,
+    });
+    await client.close();
+    return { success: true };
+  } catch (error: any) {
+    console.error("SMTP send error:", error);
+    try { await client.close(); } catch {}
+    return { success: false, error: error.message };
+  }
+}
+
 interface RequestNewLinkBody {
   supplierId: string;
 }
 
-const RATE_LIMIT_MAX = 3; // Max requests per supplier per hour
+const RATE_LIMIT_MAX = 3;
 const RATE_LIMIT_WINDOW_MINUTES = 60;
 
 serve(async (req: Request): Promise<Response> => {
@@ -21,13 +61,7 @@ serve(async (req: Request): Promise<Response> => {
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const resendApiKey = Deno.env.get("RESEND_API_KEY");
     
-    if (!resendApiKey) {
-      throw new Error("RESEND_API_KEY is not configured");
-    }
-    
-    const cleanedApiKey = resendApiKey.trim().replace(/[^\x20-\x7E]/g, '');
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     const { supplierId }: RequestNewLinkBody = await req.json();
@@ -41,7 +75,6 @@ serve(async (req: Request): Promise<Response> => {
 
     console.log(`Requesting new magic link for supplier: ${supplierId}`);
 
-    // Check rate limit for this supplier
     const windowStart = new Date();
     windowStart.setMinutes(windowStart.getMinutes() - RATE_LIMIT_WINDOW_MINUTES);
     
@@ -66,17 +99,14 @@ serve(async (req: Request): Promise<Response> => {
       );
     }
 
-    // Record this request for rate limiting
     await supabase
       .from('magic_link_rate_limits')
       .insert({ supplier_id: supplierId });
 
-    // Cleanup old rate limit entries periodically (5% chance per request)
     if (Math.random() < 0.05) {
       await supabase.rpc('cleanup_old_magic_link_rate_limits');
     }
 
-    // Fetch supplier data
     const { data: supplier, error: supplierError } = await supabase
       .from("suppliers")
       .select("id, name, email, organization_id, organizations(name)")
@@ -91,7 +121,6 @@ serve(async (req: Request): Promise<Response> => {
       );
     }
 
-    // Check if test mode is enabled
     let actualRecipient = supplier.email;
     let isTestMode = false;
     
@@ -107,7 +136,6 @@ serve(async (req: Request): Promise<Response> => {
       console.log(`Test mode enabled - redirecting email to ${actualRecipient}`);
     }
 
-    // Create new token
     const { data: tokenData, error: tokenError } = await supabase
       .from("supplier_portal_tokens")
       .insert({ supplier_id: supplierId })
@@ -125,7 +153,6 @@ serve(async (req: Request): Promise<Response> => {
 
     console.log(`New magic link created for ${supplier.name}`);
 
-    // Build email
     const subjectPrefix = isTestMode ? "[TEST] " : "";
     const testModeNotice = isTestMode 
       ? `<p style="background: #FEF3C7; border: 1px solid #F59E0B; padding: 12px; border-radius: 6px; margin-bottom: 20px;">
@@ -133,58 +160,49 @@ serve(async (req: Request): Promise<Response> => {
          </p>`
       : "";
 
-    const emailResponse = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${cleanedApiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        from: "Bestellung.pro <noreply@bestellung.pro>",
-        to: [actualRecipient],
-        subject: `${subjectPrefix}Neuer Zugangslink - Lieferantenportal ${organizationName}`,
-        html: `
-          <!DOCTYPE html>
-          <html>
-          <head>
-            <meta charset="utf-8">
-            <style>
-              body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; }
-              .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-              .header { text-align: center; margin-bottom: 30px; }
-              .button { display: inline-block; background: #4F46E5; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: 600; }
-              .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee; font-size: 12px; color: #666; }
-            </style>
-          </head>
-          <body>
-            <div class="container">
-              <div class="header">
-                <h1>📦 Bestellung.pro</h1>
-                <h2>Neuer Zugangslink</h2>
-              </div>
-              
-              ${testModeNotice}
-              
-              <p>Guten Tag,</p>
-              
-              <p>Sie haben einen neuen Zugangslink für das Lieferantenportal von <strong>${organizationName}</strong> angefordert.</p>
-              
-              <p>Klicken Sie auf den folgenden Button, um sich anzumelden:</p>
-              
-              <p style="text-align: center; margin: 30px 0;">
-                <a href="${magicLink}" class="button">Zum Lieferantenportal</a>
-              </p>
-              
-              <p><strong>Wichtig:</strong> Dieser Link ist 7 Tage gültig.</p>
-              
-              <div class="footer">
-                <p>Diese E-Mail wurde automatisch von Bestellung.pro generiert.</p>
-              </div>
-            </div>
-          </body>
-          </html>
-        `,
-        text: `
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <style>
+          body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; }
+          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+          .header { text-align: center; margin-bottom: 30px; }
+          .button { display: inline-block; background: #4F46E5; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: 600; }
+          .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee; font-size: 12px; color: #666; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>📦 Bestellung.pro</h1>
+            <h2>Neuer Zugangslink</h2>
+          </div>
+          
+          ${testModeNotice}
+          
+          <p>Guten Tag,</p>
+          
+          <p>Sie haben einen neuen Zugangslink für das Lieferantenportal von <strong>${organizationName}</strong> angefordert.</p>
+          
+          <p>Klicken Sie auf den folgenden Button, um sich anzumelden:</p>
+          
+          <p style="text-align: center; margin: 30px 0;">
+            <a href="${magicLink}" class="button">Zum Lieferantenportal</a>
+          </p>
+          
+          <p><strong>Wichtig:</strong> Dieser Link ist 7 Tage gültig.</p>
+          
+          <div class="footer">
+            <p>Diese E-Mail wurde automatisch von Bestellung.pro generiert.</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+
+    const textContent = `
 ${isTestMode ? "[TEST] " : ""}Neuer Zugangslink - Lieferantenportal ${organizationName}
 ${isTestMode ? `\nTestmodus: Diese E-Mail wäre normalerweise an ${supplier.email} gesendet worden.\n` : ""}
 Guten Tag,
@@ -195,18 +213,20 @@ Klicken Sie auf den folgenden Link, um sich anzumelden:
 ${magicLink}
 
 Wichtig: Dieser Link ist 7 Tage gültig.
-        `,
-      }),
+    `;
+
+    const emailResult = await sendEmailViaSMTP({
+      to: [actualRecipient],
+      subject: `${subjectPrefix}Neuer Zugangslink - Lieferantenportal ${organizationName}`,
+      html: htmlContent,
+      text: textContent,
     });
 
-    const emailResult = await emailResponse.json();
-    
-    if (!emailResponse.ok) {
-      console.error("Resend API error:", emailResult);
-      throw new Error(`Failed to send email: ${emailResult.message || 'Unknown error'}`);
+    if (!emailResult.success) {
+      throw new Error(`Failed to send email: ${emailResult.error}`);
     }
 
-    console.log("New magic link email sent successfully");
+    console.log("New magic link email sent successfully via SMTP");
 
     return new Response(
       JSON.stringify({ 
