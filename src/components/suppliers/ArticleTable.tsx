@@ -357,12 +357,11 @@ export const ArticleTable = ({
                                   ) : (
                                     <Button
                                       variant="default"
-                                      size="sm"
-                                      className="h-7 gap-1 text-xs"
+                                      size="icon"
+                                      className="h-7 w-7"
                                       onClick={() => onAddToCart(article)}
                                     >
                                       <ShoppingCart className="w-3 h-3" />
-                                      Bestellen
                                     </Button>
                                   )}
                                 </div>

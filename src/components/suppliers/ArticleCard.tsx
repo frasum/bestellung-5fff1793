@@ -139,12 +139,11 @@ export const ArticleCard = memo(({
             ) : (
               <Button
                 variant="default"
-                size="sm"
-                className="h-10 md:h-11 gap-2"
+                size="icon"
+                className="h-10 w-10 md:h-11 md:w-11"
                 onClick={() => onAddToCart(article)}
               >
                 <ShoppingCart className="w-4 h-4" />
-                <span className="hidden sm:inline">Warenkorb</span>
               </Button>
             )}
           </div>

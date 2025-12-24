@@ -183,15 +183,14 @@ export const SupplierTable = ({
                       {onOrderClick && supplierArticles.length > 0 && (
                         <Button 
                           variant="default" 
-                          size="sm" 
-                          className="h-9 px-3 gap-1.5"
+                          size="icon" 
+                          className="h-9 w-9 relative"
                           onClick={() => onOrderClick(supplier)}
                           title="Artikel bestellen"
                         >
                           <ShoppingCart className="w-4 h-4" />
-                          <span className="hidden sm:inline">Bestellen</span>
                           {cartItemCountsBySupplier[supplier.id] > 0 && (
-                            <Badge variant="secondary" className="ml-1 h-5 min-w-5 px-1.5 text-xs">
+                            <Badge variant="secondary" className="absolute -top-1 -right-1 h-5 min-w-5 px-1.5 text-xs">
                               {cartItemCountsBySupplier[supplier.id]}
                             </Badge>
                           )}
@@ -324,15 +323,14 @@ export const SupplierTable = ({
                                           ) : (
                                             <Button
                                               variant="default"
-                                              size="sm"
-                                              className="h-7 gap-1 text-xs"
+                                              size="icon"
+                                              className="h-7 w-7"
                                               onClick={(e) => {
                                                 e.stopPropagation();
                                                 onAddToCart(article);
                                               }}
                                             >
                                               <ShoppingCart className="w-3 h-3" />
-                                              <span className="hidden sm:inline">Warenkorb</span>
                                             </Button>
                                           )}
                                         </div>
