@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useAuth } from '@/contexts/AuthContext';
 
 export type OrderDeliveryMethod = 'email' | 'portal' | 'both';
 
@@ -33,14 +34,27 @@ export interface SupplierInput {
 }
 
 export const useSuppliers = () => {
+  const { user } = useAuth();
+
   return useQuery({
-    queryKey: ['suppliers'],
+    queryKey: ['suppliers', user?.id],
+    enabled: !!user,
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes cache
     queryFn: async () => {
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('organization_id')
+        .eq('id', user!.id)
+        .single();
+
+      if (profileError) throw profileError;
+      if (!profile?.organization_id) return [] as Supplier[];
+
       const { data, error } = await supabase
         .from('suppliers')
         .select('*')
+        .eq('organization_id', profile.organization_id)
         .order('name');
 
       if (error) throw error;
