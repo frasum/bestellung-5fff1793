@@ -136,13 +136,13 @@ export const SupplierTable = ({
                   <TableCell className="hidden lg:table-cell py-2 w-24">
                     <Badge 
                       variant="secondary" 
-                      className="cursor-pointer hover:bg-primary hover:text-primary-foreground hover:scale-105 transition-all"
+                      className="cursor-pointer hover:bg-primary hover:text-primary-foreground hover:scale-105 transition-all px-3"
                       onClick={(e) => {
                         e.stopPropagation();
                         onToggleExpand(supplier.id);
                       }}
                     >
-                      {supplierArticles.length} Artikel
+                      {supplierArticles.length}
                     </Badge>
                   </TableCell>
                   {/* Supplier name - Third column */}
