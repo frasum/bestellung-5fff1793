@@ -166,6 +166,35 @@ export const SYSTEM_FEATURES: SystemFeatureCategory[] = [
     ],
   },
   {
+    key: 'price_radar_invoices',
+    labelDe: 'Preisradar & Rechnungen',
+    labelEn: 'Price Radar & Invoices',
+    features: [
+      // Preisradar
+      { key: 'price_watch_results', labelDe: 'Preisradar Ergebnisse', labelEn: 'Price Watch Results' },
+      { key: 'price_watch_settings', labelDe: 'Preisradar Einstellungen', labelEn: 'Price Watch Settings' },
+      { key: 'price_watch_alerts', labelDe: 'Preisradar Alarme', labelEn: 'Price Watch Alerts' },
+      { key: 'price_alternative_search', labelDe: 'Preis-Alternativen suchen', labelEn: 'Search Price Alternatives' },
+      { key: 'catalog_search_kroeswang', labelDe: 'Katalog-Suche (Kroeswang)', labelEn: 'Catalog Search (Kroeswang)' },
+      { key: 'price_watch_dismiss', labelDe: 'Ergebnis verwerfen', labelEn: 'Dismiss Result' },
+      { key: 'price_watch_mark_reviewed', labelDe: 'Als geprüft markieren', labelEn: 'Mark as Reviewed' },
+      // Rechnungen
+      { key: 'invoice_upload', labelDe: 'Rechnung hochladen', labelEn: 'Invoice Upload' },
+      { key: 'invoice_parsing_ai', labelDe: 'Rechnungs-Analyse (AI)', labelEn: 'Invoice Parsing (AI)' },
+      { key: 'invoice_data_extraction', labelDe: 'Daten-Extraktion (Artikel, Preise)', labelEn: 'Data Extraction (Articles, Prices)' },
+      { key: 'invoice_list_view', labelDe: 'Rechnungs-Liste', labelEn: 'Invoice List' },
+      { key: 'invoice_verification', labelDe: 'Rechnungs-Verifizierung', labelEn: 'Invoice Verification' },
+      { key: 'invoice_delete', labelDe: 'Rechnung löschen', labelEn: 'Delete Invoice' },
+      { key: 'invoice_pdf_viewer', labelDe: 'PDF-Viewer für Rechnungen', labelEn: 'Invoice PDF Viewer' },
+      // Preishistorie
+      { key: 'price_history_popover', labelDe: 'Preishistorie Popover (Artikel)', labelEn: 'Price History Popover (Article)' },
+      { key: 'price_history_report', labelDe: 'Preishistorie-Bericht', labelEn: 'Price History Report' },
+      { key: 'price_history_filters', labelDe: 'Preishistorie Filter', labelEn: 'Price History Filters' },
+      { key: 'price_history_source_link', labelDe: 'Quell-Referenz (Rechnung/Bestellung)', labelEn: 'Source Reference (Invoice/Order)' },
+      { key: 'price_history_export', labelDe: 'Preishistorie CSV-Export', labelEn: 'Price History CSV Export' },
+    ],
+  },
+  {
     key: 'reports',
     labelDe: 'Berichte & Analysen',
     labelEn: 'Reports & Analytics',
@@ -187,7 +216,7 @@ export const SYSTEM_FEATURES: SystemFeatureCategory[] = [
       { key: 'voice_inventory', labelDe: 'Sprach-Inventur', labelEn: 'Voice Inventory' },
       // Lieferanten-Umsatz
       { key: 'supplier_annual_revenue', labelDe: 'Jahresumsatz pro Lieferant', labelEn: 'Annual Revenue per Supplier' },
-      { key: 'price_history', labelDe: 'Preishistorie', labelEn: 'Price History' },
+      { key: 'price_history', labelDe: 'Preishistorie (Artikel-Ebene)', labelEn: 'Price History (Article Level)' },
       // Export
       { key: 'csv_export', labelDe: 'CSV-Export', labelEn: 'CSV Export' },
     ],
@@ -321,6 +350,8 @@ export const SYSTEM_FEATURES: SystemFeatureCategory[] = [
       { key: 'article_identification', labelDe: 'Artikel-Identifikation (Foto)', labelEn: 'Article Identification (Photo)' },
       { key: 'import_helper', labelDe: 'Import-Assistent', labelEn: 'Import Helper' },
       { key: 'order_list_scan', labelDe: 'Bestelllisten-Scan', labelEn: 'Order List Scan' },
+      { key: 'invoice_parsing', labelDe: 'Rechnungs-Parsing', labelEn: 'Invoice Parsing' },
+      { key: 'price_search_ai', labelDe: 'Preis-Suche (AI)', labelEn: 'Price Search (AI)' },
       { key: 'wine_image_search', labelDe: 'Wein-Bildersuche', labelEn: 'Wine Image Search' },
       { key: 'wine_research', labelDe: 'Wein-Recherche', labelEn: 'Wine Research' },
       { key: 'wine_translation', labelDe: 'Wein-Übersetzung', labelEn: 'Wine Translation' },
