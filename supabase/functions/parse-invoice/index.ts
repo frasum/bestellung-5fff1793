@@ -637,7 +637,7 @@ Important:
     // Find matching supplier by name with improved fuzzy matching
     const { data: suppliers } = await supabaseClient
       .from('suppliers')
-      .select('id, name, phone')
+      .select('id, name, phone, address')
       .eq('organization_id', organizationId)
       .eq('is_active', true);
 
@@ -788,12 +788,21 @@ Important:
         matchedSupplierId = bestMatch.supplier.id;
         console.log('✅ Matched supplier:', bestMatch.supplier.name, 'with score:', bestMatch.score, '-', bestMatch.matchDetails);
         
-        // Update supplier with phone number if we have one and they don't
+        // Update supplier with missing contact info from invoice
+        const supplierUpdates: Record<string, string> = {};
+        
         if (invoiceData.supplierPhone && !bestMatch.supplier.phone) {
-          console.log('Updating supplier with phone number:', invoiceData.supplierPhone);
+          supplierUpdates.phone = invoiceData.supplierPhone;
+        }
+        if (invoiceData.supplierAddress && !bestMatch.supplier.address) {
+          supplierUpdates.address = invoiceData.supplierAddress;
+        }
+        
+        if (Object.keys(supplierUpdates).length > 0) {
+          console.log('Updating supplier with missing info:', supplierUpdates);
           await supabaseClient
             .from('suppliers')
-            .update({ phone: invoiceData.supplierPhone })
+            .update(supplierUpdates)
             .eq('id', matchedSupplierId);
         }
       } else if (bestMatch) {
@@ -867,6 +876,38 @@ Important:
       if (locations && locations.length === 1) {
         matchedLocationId = locations[0].id;
         console.log('Using single location as fallback:', matchedLocationId);
+      }
+    }
+
+    // Save customer number to supplier_locations if we have one and found a location
+    if (matchedSupplierId && matchedLocationId && invoiceData.customerNumber) {
+      const { data: existingSupplierLocation } = await supabaseClient
+        .from('supplier_locations')
+        .select('id, customer_number')
+        .eq('supplier_id', matchedSupplierId)
+        .eq('location_id', matchedLocationId)
+        .maybeSingle();
+      
+      if (existingSupplierLocation) {
+        // Record exists - update customer_number if missing
+        if (!existingSupplierLocation.customer_number) {
+          console.log('Updating supplier_location with customer number:', invoiceData.customerNumber);
+          await supabaseClient
+            .from('supplier_locations')
+            .update({ customer_number: invoiceData.customerNumber })
+            .eq('id', existingSupplierLocation.id);
+        }
+      } else {
+        // No record exists - create new supplier_location with customer number
+        console.log('Creating supplier_location with customer number:', invoiceData.customerNumber);
+        await supabaseClient
+          .from('supplier_locations')
+          .insert({
+            supplier_id: matchedSupplierId,
+            location_id: matchedLocationId,
+            customer_number: invoiceData.customerNumber,
+            is_active: true
+          });
       }
     }
 
