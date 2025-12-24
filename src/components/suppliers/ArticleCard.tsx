@@ -1,5 +1,5 @@
 import { memo } from 'react';
-import { Pencil, Trash2, Package } from 'lucide-react';
+import { Pencil, Trash2, Package, Plus, Minus, ShoppingCart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -14,9 +14,12 @@ interface ArticleCardProps {
   hasPendingChanges?: boolean;
   lastOrder?: LastOrderInfo;
   orderUnits?: OrderUnit[];
+  cartQuantity?: number;
   onEdit: (article: Article) => void;
   onDelete: (article: Article) => void;
   onPendingClick?: () => void;
+  onAddToCart?: (article: Article) => void;
+  onRemoveFromCart?: (article: Article) => void;
 }
 
 export const ArticleCard = memo(({
@@ -24,9 +27,12 @@ export const ArticleCard = memo(({
   hasPendingChanges = false,
   lastOrder,
   orderUnits = [],
+  cartQuantity = 0,
   onEdit,
   onDelete,
-  onPendingClick
+  onPendingClick,
+  onAddToCart,
+  onRemoveFromCart
 }: ArticleCardProps) => {
   const orderUnit = article.order_unit_id 
     ? orderUnits.find(u => u.id === article.order_unit_id)
@@ -85,23 +91,64 @@ export const ArticleCard = memo(({
       </div>
       
       {/* Actions */}
-      <div className="flex justify-end gap-1 md:gap-2 mt-4">
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          className="h-10 w-10 md:h-11 md:w-11" 
-          onClick={() => onEdit(article)}
-        >
-          <Pencil className="w-4 h-4 md:w-5 md:h-5" />
-        </Button>
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          className="h-10 w-10 md:h-11 md:w-11 text-destructive hover:text-destructive" 
-          onClick={() => onDelete(article)}
-        >
-          <Trash2 className="w-4 h-4 md:w-5 md:h-5" />
-        </Button>
+      <div className="flex justify-between items-center gap-2 mt-4">
+        <div className="flex gap-1">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="h-10 w-10 md:h-11 md:w-11" 
+            onClick={() => onEdit(article)}
+          >
+            <Pencil className="w-4 h-4 md:w-5 md:h-5" />
+          </Button>
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="h-10 w-10 md:h-11 md:w-11 text-destructive hover:text-destructive" 
+            onClick={() => onDelete(article)}
+          >
+            <Trash2 className="w-4 h-4 md:w-5 md:h-5" />
+          </Button>
+        </div>
+        
+        {/* Cart Controls */}
+        {onAddToCart && (
+          <div className="flex items-center gap-1">
+            {cartQuantity > 0 ? (
+              <>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-10 w-10 md:h-11 md:w-11"
+                  onClick={() => onRemoveFromCart?.(article)}
+                >
+                  <Minus className="w-4 h-4" />
+                </Button>
+                <span className="w-10 text-center font-semibold text-foreground">
+                  {cartQuantity}
+                </span>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-10 w-10 md:h-11 md:w-11"
+                  onClick={() => onAddToCart(article)}
+                >
+                  <Plus className="w-4 h-4" />
+                </Button>
+              </>
+            ) : (
+              <Button
+                variant="default"
+                size="sm"
+                className="h-10 md:h-11 gap-2"
+                onClick={() => onAddToCart(article)}
+              >
+                <ShoppingCart className="w-4 h-4" />
+                <span className="hidden sm:inline">Warenkorb</span>
+              </Button>
+            )}
+          </div>
+        )}
       </div>
     </Card>
   );
