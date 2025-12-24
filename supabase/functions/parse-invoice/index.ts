@@ -980,6 +980,23 @@ Important:
           // Article exists - optionally update price if different
           if (item.unitPrice && Math.abs(Number(existingArticle.price) - item.unitPrice) > 0.01) {
             console.log(`Updating price for "${item.articleName}": ${existingArticle.price} -> ${item.unitPrice}`);
+            
+            // Record price change in history with invoice reference
+            const { error: historyError } = await supabaseClient
+              .from('article_price_history')
+              .insert({
+                article_id: existingArticle.id,
+                organization_id: organizationId,
+                old_price: existingArticle.price,
+                new_price: item.unitPrice,
+                change_source: 'invoice',
+                invoice_id: invoiceId
+              });
+            
+            if (historyError) {
+              console.error('Failed to record price history:', historyError);
+            }
+            
             await supabaseClient
               .from('articles')
               .update({ price: item.unitPrice })
