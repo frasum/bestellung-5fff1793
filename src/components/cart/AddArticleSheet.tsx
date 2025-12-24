@@ -4,6 +4,7 @@ import { Search, Plus, Minus, Check } from 'lucide-react';
 import { useArticlesBySupplier } from '@/hooks/useArticles';
 import { useCart } from '@/contexts/CartContext';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
+import { toTitleCase } from '@/lib/utils';
 import { useOrderUnits } from '@/hooks/useOrderUnits';
 import {
   Sheet,
@@ -127,7 +128,7 @@ export const AddArticleSheet = ({
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex-1 min-w-0">
                         <h4 className="font-medium text-foreground text-sm">
-                          {article.name}
+                          {toTitleCase(article.name)}
                         </h4>
                         {article.sku && (
                           <p className="text-xs text-muted-foreground mt-0.5">

@@ -5,7 +5,7 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Article } from '@/hooks/useArticles';
 import { OrderUnit } from '@/hooks/useOrderUnits';
-import { cn } from '@/lib/utils';
+import { cn, toTitleCase } from '@/lib/utils';
 import { LastOrderInfo } from '@/hooks/useLastOrderByArticle';
 import { format } from 'date-fns';
 
@@ -46,7 +46,7 @@ export const ArticleCard = memo(({
               className="font-medium text-foreground cursor-pointer hover:underline hover:text-accent transition-colors"
               onClick={() => onEdit(article)}
             >
-              {article.name}
+              {toTitleCase(article.name)}
             </p>
             {hasPendingChanges && (
               <span 
