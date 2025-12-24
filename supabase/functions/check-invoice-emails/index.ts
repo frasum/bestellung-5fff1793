@@ -574,6 +574,181 @@ function decodeBase64(base64String: string): Uint8Array | null {
 // deno-lint-ignore no-explicit-any
 type SupabaseClient = any;
 
+// Interface for emails to process
+interface EmailToProcess {
+  seqNum: number;
+  subject: string;
+  from: string;
+  messageId: string;
+  fullMessage: string;
+  pdfContents: Uint8Array[];
+  supplierId: string | null;
+}
+
+// Background processing function
+async function processPdfsInBackground(
+  serviceClient: SupabaseClient,
+  organizationId: string,
+  emailsToProcess: EmailToProcess[],
+  statusId: string,
+  imap: SimpleImapClient
+) {
+  console.info(`[BACKGROUND] Starting processing of ${emailsToProcess.length} emails with PDFs`);
+  
+  let processedPdfs = 0;
+  let newInvoicesCount = 0;
+  let skippedCount = 0;
+  const errors: string[] = [];
+  
+  // Calculate total PDFs
+  const totalPdfs = emailsToProcess.reduce((sum, email) => sum + email.pdfContents.length, 0);
+  
+  for (const email of emailsToProcess) {
+    const { seqNum, subject, from, messageId, pdfContents, supplierId } = email;
+    
+    console.info(`[BACKGROUND] Processing email ${seqNum}: ${pdfContents.length} PDFs`);
+    
+    for (let pdfIndex = 0; pdfIndex < pdfContents.length; pdfIndex++) {
+      const pdfContent = pdfContents[pdfIndex];
+      
+      if (pdfContent.length < 1000) {
+        console.warn(`[BACKGROUND] PDF ${pdfIndex + 1} is too small (${pdfContent.length} bytes), skipping`);
+        skippedCount++;
+        processedPdfs++;
+        continue;
+      }
+
+      console.info(`[BACKGROUND] Processing PDF ${pdfIndex + 1}/${pdfContents.length}, size: ${pdfContent.length}`);
+
+      // Upload to storage with unique filename
+      const filename = `invoice-${Date.now()}-${pdfIndex}.pdf`;
+      const filePath = `${organizationId}/${filename}`;
+
+      const { error: uploadError } = await serviceClient.storage
+        .from("invoices")
+        .upload(filePath, pdfContent, {
+          contentType: "application/pdf",
+          upsert: false,
+        });
+
+      if (uploadError) {
+        console.error(`[BACKGROUND] Upload failed for PDF ${pdfIndex + 1}:`, uploadError.message);
+        errors.push(`Upload failed for PDF ${pdfIndex + 1} from: ${subject}`);
+        processedPdfs++;
+        continue;
+      }
+
+      const { data: publicUrl } = serviceClient.storage
+        .from("invoices")
+        .getPublicUrl(filePath);
+
+      // Create invoice record
+      const { data: invoice, error: invoiceError } = await serviceClient
+        .from("invoices")
+        .insert({
+          organization_id: organizationId,
+          pdf_url: publicUrl.publicUrl,
+          status: "pending",
+          email_from: from,
+          email_subject: subject,
+          email_message_id: messageId,
+          email_received_at: new Date().toISOString(),
+          supplier_id: supplierId,
+        })
+        .select()
+        .single();
+
+      if (invoiceError) {
+        console.error(`[BACKGROUND] Invoice creation failed for PDF ${pdfIndex + 1}:`, invoiceError.message);
+        errors.push(`Invoice creation failed for PDF ${pdfIndex + 1} from: ${subject}`);
+        processedPdfs++;
+        continue;
+      }
+
+      // Log email as "created" - will update to "processed" after successful parsing
+      const { data: emailLog } = await serviceClient.from("invoice_email_log").insert({
+        organization_id: organizationId,
+        message_id: `${messageId}-${pdfIndex}`,
+        email_from: from,
+        email_subject: subject,
+        status: "created",
+        invoice_id: invoice.id,
+      }).select().single();
+
+      // Trigger parse-invoice function
+      try {
+        console.info(`[BACKGROUND] Triggering parse-invoice for invoice ${invoice.id}...`);
+        const parseResult = await serviceClient.functions.invoke("parse-invoice", {
+          body: { invoiceId: invoice.id },
+        });
+        
+        if (parseResult.error) {
+          console.error("[BACKGROUND] parse-invoice returned error:", parseResult.error);
+          if (emailLog) {
+            await serviceClient.from("invoice_email_log")
+              .update({ status: "parse_failed", error_message: parseResult.error.message || 'Unknown error' })
+              .eq("id", emailLog.id);
+          }
+        } else {
+          console.info("[BACKGROUND] parse-invoice completed successfully");
+          if (emailLog) {
+            await serviceClient.from("invoice_email_log")
+              .update({ status: "processed" })
+              .eq("id", emailLog.id);
+          }
+        }
+      } catch (parseError: unknown) {
+        const errMsg = parseError instanceof Error ? parseError.message : String(parseError);
+        console.error("[BACKGROUND] Failed to trigger parse-invoice:", errMsg);
+        if (emailLog) {
+          await serviceClient.from("invoice_email_log")
+            .update({ status: "parse_failed", error_message: errMsg })
+            .eq("id", emailLog.id);
+        }
+      }
+
+      console.info(`[BACKGROUND] Successfully created invoice ${invoice.id} from ${from} (PDF ${pdfIndex + 1}/${pdfContents.length})`);
+      newInvoicesCount++;
+      processedPdfs++;
+      
+      // Update progress in database
+      await serviceClient
+        .from("invoice_processing_status")
+        .update({ 
+          processed_pdfs: processedPdfs,
+          new_invoices: newInvoicesCount 
+        })
+        .eq("id", statusId);
+    }
+    
+    await imap.markAsSeen(seqNum);
+  }
+  
+  // Disconnect IMAP after processing
+  await imap.logout();
+  
+  // Update last check timestamp
+  await serviceClient
+    .from("organizations")
+    .update({ last_invoice_email_check: new Date().toISOString() })
+    .eq("id", organizationId);
+  
+  // Mark processing as completed
+  await serviceClient
+    .from("invoice_processing_status")
+    .update({ 
+      status: errors.length > 0 && newInvoicesCount === 0 ? "failed" : "completed",
+      processed_pdfs: processedPdfs,
+      new_invoices: newInvoicesCount,
+      skipped_duplicates: skippedCount,
+      error_message: errors.length > 0 ? errors.join("; ") : null,
+      completed_at: new Date().toISOString()
+    })
+    .eq("id", statusId);
+  
+  console.info(`[BACKGROUND] Completed: ${processedPdfs} PDFs processed, ${newInvoicesCount} new invoices`);
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -670,26 +845,29 @@ serve(async (req) => {
     await imap.connect();
     await imap.selectMailbox("INBOX");
 
-    // Search for emails from the last 30 days instead of just UNSEEN
-    // This catches emails that were marked as read by another client
+    // Search for emails from the last 30 days
     const sinceDate = new Date();
     sinceDate.setDate(sinceDate.getDate() - 30);
     
     const emailSeqNums = await imap.searchSince(sinceDate);
     
-    let processedCount = 0;
-    let newInvoicesCount = 0;
+    // Collect emails to process (with PDFs)
+    const emailsToProcess: EmailToProcess[] = [];
     let skippedCount = 0;
+    let noAttachmentCount = 0;
     const errors: string[] = [];
 
+    // Phase 1: Quick scan of emails to find those with PDFs
+    console.info(`[PHASE 1] Scanning ${emailSeqNums.length} emails for PDFs...`);
+    
     for (const seqNum of emailSeqNums) {
       try {
         const { envelope, bodystructure } = await imap.fetchMessage(seqNum);
         const { subject, from, messageId } = parseEnvelope(envelope);
 
-        console.info(`Processing email #${seqNum}: "${subject}" from ${from}`);
+        console.info(`Scanning email #${seqNum}: "${subject}" from ${from}`);
 
-        // Check if already processed (handles multi-PDF emails with suffix like messageId-0, messageId-1)
+        // Check if already processed
         const { data: existingLogs } = await serviceClient
           .from("invoice_email_log")
           .select("id")
@@ -718,7 +896,7 @@ serve(async (req) => {
           });
 
           await imap.markAsSeen(seqNum);
-          processedCount++;
+          noAttachmentCount++;
           continue;
         }
 
@@ -743,13 +921,12 @@ serve(async (req) => {
           errors.push(`Failed to extract PDF from: ${subject}`);
           
           await imap.markAsSeen(seqNum);
-          processedCount++;
           continue;
         }
 
         console.info(`Found ${pdfContents.length} PDF(s) in email`);
 
-        // Find matching supplier by email (once per email, not per PDF)
+        // Find matching supplier by email
         const { data: supplier } = await serviceClient
           .from("suppliers")
           .select("id")
@@ -757,137 +934,102 @@ serve(async (req) => {
           .or(`email.eq.${from},invoice_email.eq.${from}`)
           .maybeSingle();
 
-        // Process each PDF separately
-        for (let pdfIndex = 0; pdfIndex < pdfContents.length; pdfIndex++) {
-          const pdfContent = pdfContents[pdfIndex];
-          
-          if (pdfContent.length < 1000) {
-            console.warn(`PDF ${pdfIndex + 1} is too small (${pdfContent.length} bytes), skipping`);
-            continue;
-          }
-
-          console.info(`Processing PDF ${pdfIndex + 1}/${pdfContents.length}, size: ${pdfContent.length}`);
-
-          // Upload to storage with unique filename
-          const filename = `invoice-${Date.now()}-${pdfIndex}.pdf`;
-          const filePath = `${organizationId}/${filename}`;
-
-          const { error: uploadError } = await serviceClient.storage
-            .from("invoices")
-            .upload(filePath, pdfContent, {
-              contentType: "application/pdf",
-              upsert: false,
-            });
-
-          if (uploadError) {
-            console.error(`Upload failed for PDF ${pdfIndex + 1}:`, uploadError.message);
-            errors.push(`Upload failed for PDF ${pdfIndex + 1} from: ${subject}`);
-            continue;
-          }
-
-          const { data: publicUrl } = serviceClient.storage
-            .from("invoices")
-            .getPublicUrl(filePath);
-
-          // Create invoice record
-          const { data: invoice, error: invoiceError } = await serviceClient
-            .from("invoices")
-            .insert({
-              organization_id: organizationId,
-              pdf_url: publicUrl.publicUrl,
-              status: "pending",
-              email_from: from,
-              email_subject: subject,
-              email_message_id: messageId,
-              email_received_at: new Date().toISOString(),
-              supplier_id: supplier?.id || null,
-            })
-            .select()
-            .single();
-
-          if (invoiceError) {
-            console.error(`Invoice creation failed for PDF ${pdfIndex + 1}:`, invoiceError.message);
-            errors.push(`Invoice creation failed for PDF ${pdfIndex + 1} from: ${subject}`);
-            continue;
-          }
-
-          // Log email as "created" - will update to "processed" after successful parsing
-          const { data: emailLog } = await serviceClient.from("invoice_email_log").insert({
-            organization_id: organizationId,
-            message_id: `${messageId}-${pdfIndex}`, // Unique per PDF
-            email_from: from,
-            email_subject: subject,
-            status: "created",
-            invoice_id: invoice.id,
-          }).select().single();
-
-          // Trigger parse-invoice function
-          try {
-            console.info(`Triggering parse-invoice for invoice ${invoice.id}...`);
-            const parseResult = await serviceClient.functions.invoke("parse-invoice", {
-              body: { invoiceId: invoice.id },
-            });
-            
-            if (parseResult.error) {
-              console.error("parse-invoice returned error:", parseResult.error);
-              if (emailLog) {
-                await serviceClient.from("invoice_email_log")
-                  .update({ status: "parse_failed", error_message: parseResult.error.message || 'Unknown error' })
-                  .eq("id", emailLog.id);
-              }
-            } else {
-              console.info("parse-invoice completed successfully");
-              if (emailLog) {
-                await serviceClient.from("invoice_email_log")
-                  .update({ status: "processed" })
-                  .eq("id", emailLog.id);
-              }
-            }
-          } catch (parseError: unknown) {
-            const errMsg = parseError instanceof Error ? parseError.message : String(parseError);
-            console.error("Failed to trigger parse-invoice:", errMsg);
-            if (emailLog) {
-              await serviceClient.from("invoice_email_log")
-                .update({ status: "parse_failed", error_message: errMsg })
-                .eq("id", emailLog.id);
-            }
-          }
-
-          console.info(`Successfully created invoice ${invoice.id} from ${from} (PDF ${pdfIndex + 1}/${pdfContents.length})`);
-          newInvoicesCount++;
-        }
-
-        await imap.markAsSeen(seqNum);
-        processedCount++;
+        // Add to processing queue
+        emailsToProcess.push({
+          seqNum,
+          subject,
+          from,
+          messageId,
+          fullMessage,
+          pdfContents,
+          supplierId: supplier?.id || null,
+        });
 
       } catch (emailError: unknown) {
         const error = emailError instanceof Error ? emailError : new Error(String(emailError));
-        console.error(`Error processing email ${seqNum}:`, error.message);
-        errors.push(`Error processing email: ${error.message}`);
+        console.error(`Error scanning email ${seqNum}:`, error.message);
+        errors.push(`Error scanning email: ${error.message}`);
         await imap.markAsSeen(seqNum);
-        processedCount++;
       }
     }
 
-    await imap.logout();
+    // Calculate total PDFs to process
+    const totalPdfs = emailsToProcess.reduce((sum, email) => sum + email.pdfContents.length, 0);
+    
+    console.info(`[PHASE 1 COMPLETE] Found ${totalPdfs} PDFs in ${emailsToProcess.length} emails`);
 
-    // Update last check timestamp
-    await serviceClient
-      .from("organizations")
-      .update({ last_invoice_email_check: new Date().toISOString() })
-      .eq("id", organizationId);
+    // If no PDFs to process, return immediately
+    if (totalPdfs === 0) {
+      await imap.logout();
+      
+      // Update last check timestamp
+      await serviceClient
+        .from("organizations")
+        .update({ last_invoice_email_check: new Date().toISOString() })
+        .eq("id", organizationId);
 
+      const mode = isCronJob ? "[CRON]" : "[MANUAL]";
+      console.info(`${mode} No PDFs to process: ${skippedCount} skipped, ${noAttachmentCount} without attachments`);
+
+      return new Response(
+        JSON.stringify({
+          success: true,
+          mode: isCronJob ? "cron" : "manual",
+          message: "E-Mails geprüft, keine neuen PDFs gefunden",
+          foundPdfs: 0,
+          skipped: skippedCount,
+          noAttachment: noAttachmentCount,
+          processing: false,
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Create processing status record for real-time progress tracking
+    const { data: statusRecord, error: statusError } = await serviceClient
+      .from("invoice_processing_status")
+      .insert({
+        organization_id: organizationId,
+        total_pdfs: totalPdfs,
+        processed_pdfs: 0,
+        new_invoices: 0,
+        skipped_duplicates: skippedCount,
+        status: "processing",
+      })
+      .select()
+      .single();
+
+    if (statusError) {
+      console.error("Failed to create status record:", statusError);
+    }
+
+    const statusId = statusRecord?.id;
+
+    // Start background processing
+    if (statusId) {
+      // @ts-ignore EdgeRuntime is available in Supabase Edge Functions
+      EdgeRuntime.waitUntil(
+        processPdfsInBackground(serviceClient, organizationId, emailsToProcess, statusId, imap)
+      );
+    } else {
+      // Fallback: process synchronously if status record failed
+      console.warn("Status record creation failed, processing synchronously...");
+      await processPdfsInBackground(serviceClient, organizationId, emailsToProcess, "fallback", imap);
+    }
+
+    // Return immediate response
     const mode = isCronJob ? "[CRON]" : "[MANUAL]";
-    console.info(`${mode} Completed: ${processedCount} processed, ${newInvoicesCount} new invoices, ${skippedCount} skipped`);
+    console.info(`${mode} Returning immediate response, processing ${totalPdfs} PDFs in background`);
 
     return new Response(
       JSON.stringify({
         success: true,
         mode: isCronJob ? "cron" : "manual",
-        processed: processedCount,
-        newInvoices: newInvoicesCount,
+        message: `${totalPdfs} PDF(s) gefunden, werden im Hintergrund verarbeitet...`,
+        foundPdfs: totalPdfs,
         skipped: skippedCount,
-        errors: errors.length > 0 ? errors : undefined,
+        processing: true,
+        statusId: statusId,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );

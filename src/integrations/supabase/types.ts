@@ -2025,6 +2025,56 @@ export type Database = {
           },
         ]
       }
+      invoice_processing_status: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          error_message: string | null
+          id: string
+          new_invoices: number
+          organization_id: string
+          processed_pdfs: number
+          skipped_duplicates: number
+          started_at: string
+          status: string
+          total_pdfs: number
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          new_invoices?: number
+          organization_id: string
+          processed_pdfs?: number
+          skipped_duplicates?: number
+          started_at?: string
+          status?: string
+          total_pdfs?: number
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          new_invoices?: number
+          organization_id?: string
+          processed_pdfs?: number
+          skipped_duplicates?: number
+          started_at?: string
+          status?: string
+          total_pdfs?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoice_processing_status_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       invoices: {
         Row: {
           created_at: string
