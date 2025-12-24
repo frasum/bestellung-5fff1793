@@ -261,7 +261,7 @@ ${signatureText}`;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[calc(100vw-1rem)] sm:max-w-2xl max-h-[95vh] flex flex-col">
+      <DialogContent className="max-w-[calc(100vw-1rem)] sm:max-w-2xl max-h-[95vh] flex flex-col overflow-hidden">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 flex-wrap">
             <Mail className="w-5 h-5 text-primary" />
@@ -281,7 +281,7 @@ ${signatureText}`;
           </DialogTitle>
         </DialogHeader>
 
-        <div className="flex-1 overflow-y-auto pr-2" style={{ maxHeight: 'calc(80vh - 180px)' }}>
+        <div className="flex-1 min-h-0 overflow-y-auto pr-2">
           <div className="space-y-4">
             {/* Email Header */}
             <div className="bg-muted/50 rounded-lg p-4 space-y-2 text-sm">
@@ -596,7 +596,7 @@ ${signatureText}`;
         </div>
 
         {/* Footer - fixed at bottom with proper styling */}
-        <DialogFooter className="flex-col-reverse sm:flex-row gap-2 pt-4 border-t bg-background sticky bottom-0">
+        <DialogFooter className="flex-col-reverse sm:flex-row gap-2 pt-4 border-t bg-background shrink-0">
           {emailPreviews.length > 1 && (
             <div className="flex gap-2 sm:mr-auto w-full sm:w-auto">
               <Button variant="outline" size="sm" onClick={goPrev} disabled={currentIndex === 0} className="flex-1 sm:flex-none h-10 sm:h-9">
