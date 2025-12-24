@@ -542,45 +542,85 @@ function decodeBase64(base64String: string): Uint8Array | null {
   }
 }
 
+// deno-lint-ignore no-explicit-any
+type SupabaseClient = any;
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const supabaseClient = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_ANON_KEY") ?? "",
-      {
-        global: {
-          headers: { Authorization: req.headers.get("Authorization")! },
-        },
+    // Check if this is a cron job request
+    const body = await req.json().catch(() => ({}));
+    const isCronJob = body.source === "cron";
+
+    let organizationId: string;
+    let serviceClient: SupabaseClient;
+
+    if (isCronJob) {
+      // === CRON MODE: Use environment config ===
+      console.info("[CRON] Running in cron mode");
+      
+      serviceClient = createClient(
+        Deno.env.get("SUPABASE_URL") ?? "",
+        Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+      );
+
+      // Get organization ID from environment
+      organizationId = Deno.env.get("INVOICE_ORGANIZATION_ID") ?? "";
+      
+      if (!organizationId) {
+        console.error("[CRON] INVOICE_ORGANIZATION_ID not configured");
+        return new Response(JSON.stringify({ error: "INVOICE_ORGANIZATION_ID not configured" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
       }
-    );
 
-    const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
-    if (authError || !user) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      console.info(`[CRON] Processing emails for organization ${organizationId}`);
+    } else {
+      // === MANUAL MODE: Use user authentication ===
+      const supabaseClient = createClient(
+        Deno.env.get("SUPABASE_URL") ?? "",
+        Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+        {
+          global: {
+            headers: { Authorization: req.headers.get("Authorization")! },
+          },
+        }
+      );
+
+      const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
+      if (authError || !user) {
+        return new Response(JSON.stringify({ error: "Unauthorized" }), {
+          status: 401,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // Get user's organization
+      const { data: profile } = await supabaseClient
+        .from("profiles")
+        .select("organization_id")
+        .eq("id", user.id)
+        .single();
+
+      if (!profile?.organization_id) {
+        return new Response(JSON.stringify({ error: "No organization found" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      organizationId = profile.organization_id;
+
+      // Create service client for database operations
+      serviceClient = createClient(
+        Deno.env.get("SUPABASE_URL") ?? "",
+        Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+      );
     }
-
-    // Get user's organization
-    const { data: profile } = await supabaseClient
-      .from("profiles")
-      .select("organization_id")
-      .eq("id", user.id)
-      .single();
-
-    if (!profile?.organization_id) {
-      return new Response(JSON.stringify({ error: "No organization found" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    const organizationId = profile.organization_id;
 
     // Get IMAP credentials from environment
     const imapHost = Deno.env.get("INVOICE_IMAP_HOST");
@@ -607,11 +647,6 @@ serve(async (req) => {
     let newInvoicesCount = 0;
     let skippedCount = 0;
     const errors: string[] = [];
-
-    const serviceClient = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
-    );
 
     for (const seqNum of unseenSeqNums) {
       try {
@@ -794,9 +829,13 @@ serve(async (req) => {
       .update({ last_invoice_email_check: new Date().toISOString() })
       .eq("id", organizationId);
 
+    const mode = isCronJob ? "[CRON]" : "[MANUAL]";
+    console.info(`${mode} Completed: ${processedCount} processed, ${newInvoicesCount} new invoices, ${skippedCount} skipped`);
+
     return new Response(
       JSON.stringify({
         success: true,
+        mode: isCronJob ? "cron" : "manual",
         processed: processedCount,
         newInvoices: newInvoicesCount,
         skipped: skippedCount,
