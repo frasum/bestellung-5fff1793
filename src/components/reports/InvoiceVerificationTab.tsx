@@ -73,9 +73,11 @@ import {
   useReanalyzeInvoice,
   useCreateArticlesFromInvoice,
   useDeleteInvoice,
+  useInvoiceProcessingStatus,
   Invoice,
   InvoiceDiscrepancy,
 } from '@/hooks/useInvoices';
+import { Progress } from '@/components/ui/progress';
 
 const statusConfig: Record<Invoice['status'], { icon: React.ElementType; color: string; label: string }> = {
   pending: { icon: Clock, color: 'bg-muted text-muted-foreground', label: 'Neu' },
@@ -101,6 +103,7 @@ export function InvoiceVerificationTab() {
   const uploadInvoice = useUploadInvoice();
   const updateStatus = useUpdateInvoiceStatus();
   const checkEmails = useCheckInvoiceEmails();
+  const { status: processingStatus, isProcessing, progress } = useInvoiceProcessingStatus();
   
   // Timer for automatic email check (5 minutes = 300 seconds)
   const [nextCheckIn, setNextCheckIn] = useState<number>(5 * 60);
@@ -252,6 +255,27 @@ export function InvoiceVerificationTab() {
                 </div>
               </div>
             </Button>
+
+            {/* Processing Progress Indicator */}
+            {isProcessing && processingStatus && (
+              <div className="flex-1 bg-primary/5 border border-primary/20 rounded-lg p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                  <span className="text-sm font-medium">
+                    {t('invoices.processingInBackground', 'Verarbeite Rechnungen...')}
+                  </span>
+                </div>
+                <Progress value={progress} className="h-2 mb-1" />
+                <div className="text-xs text-muted-foreground">
+                  {processingStatus.processed_pdfs} von {processingStatus.total_pdfs} PDFs verarbeitet
+                  {processingStatus.new_invoices > 0 && (
+                    <span className="text-success ml-2">
+                      • {processingStatus.new_invoices} neue Rechnungen
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
 
             {/* Upload Area */}
             <div

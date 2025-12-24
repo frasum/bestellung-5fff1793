@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-
+import { useEffect, useState, useCallback } from 'react';
 export interface Invoice {
   id: string;
   organization_id: string;
@@ -266,18 +266,23 @@ export function useCheckInvoiceEmails() {
       if (error) throw error;
       return data as {
         success: boolean;
-        newInvoices: number;
-        skipped: number;
-        errors: number;
         message: string;
+        foundPdfs: number;
+        skipped: number;
+        processing: boolean;
+        statusId?: string;
       };
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['invoices'] });
-      toast({
-        title: data.newInvoices > 0 ? 'Neue Rechnungen gefunden' : 'E-Mails geprüft',
-        description: data.message,
-      });
+      // Only show toast for immediate feedback - progress is handled by useInvoiceProcessingStatus
+      if (!data.processing) {
+        queryClient.invalidateQueries({ queryKey: ['invoices'] });
+        toast({
+          title: 'E-Mails geprüft',
+          description: data.message,
+        });
+      }
+      // If processing=true, the useInvoiceProcessingStatus hook will handle updates
     },
     onError: (error: Error) => {
       console.error('Email check error:', error);
@@ -288,6 +293,108 @@ export function useCheckInvoiceEmails() {
       });
     },
   });
+}
+
+// Real-time progress tracking for background invoice processing
+export interface InvoiceProcessingStatus {
+  id: string;
+  organization_id: string;
+  total_pdfs: number;
+  processed_pdfs: number;
+  new_invoices: number;
+  skipped_duplicates: number;
+  status: 'processing' | 'completed' | 'failed';
+  error_message: string | null;
+  started_at: string;
+  completed_at: string | null;
+}
+
+export function useInvoiceProcessingStatus() {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  const [currentStatus, setCurrentStatus] = useState<InvoiceProcessingStatus | null>(null);
+
+  // Subscribe to real-time updates
+  useEffect(() => {
+    if (!user) return;
+
+    const channel = supabase
+      .channel('invoice-processing-status')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'invoice_processing_status',
+        },
+        (payload) => {
+          console.log('Invoice processing status update:', payload);
+          
+          if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
+            const status = payload.new as InvoiceProcessingStatus;
+            setCurrentStatus(status);
+            
+            // Show toast notifications based on status
+            if (status.status === 'completed') {
+              queryClient.invalidateQueries({ queryKey: ['invoices'] });
+              toast({
+                title: 'Rechnungsimport abgeschlossen',
+                description: `${status.new_invoices} neue Rechnung(en) importiert`,
+              });
+              // Clear status after showing completion
+              setTimeout(() => setCurrentStatus(null), 5000);
+            } else if (status.status === 'failed') {
+              toast({
+                title: 'Fehler beim Rechnungsimport',
+                description: status.error_message || 'Unbekannter Fehler',
+                variant: 'destructive',
+              });
+              // Clear status after showing error
+              setTimeout(() => setCurrentStatus(null), 5000);
+            }
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user, queryClient, toast]);
+
+  // Check for any active processing on mount
+  useEffect(() => {
+    if (!user) return;
+
+    const checkActiveProcessing = async () => {
+      const { data } = await supabase
+        .from('invoice_processing_status')
+        .select('*')
+        .eq('status', 'processing')
+        .order('started_at', { ascending: false })
+        .limit(1);
+
+      if (data && data.length > 0) {
+        setCurrentStatus(data[0] as InvoiceProcessingStatus);
+      }
+    };
+
+    checkActiveProcessing();
+  }, [user]);
+
+  const clearStatus = useCallback(() => {
+    setCurrentStatus(null);
+  }, []);
+
+  return {
+    status: currentStatus,
+    isProcessing: currentStatus?.status === 'processing',
+    progress: currentStatus 
+      ? Math.round((currentStatus.processed_pdfs / currentStatus.total_pdfs) * 100)
+      : 0,
+    clearStatus,
+  };
 }
 
 export function useReanalyzeInvoice() {
