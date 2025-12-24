@@ -140,7 +140,7 @@ export const ArticleCard = memo(({
               <Button
                 variant="default"
                 size="icon"
-                className="h-10 w-10 md:h-11 md:w-11"
+                className="h-10 w-10 md:h-11 md:w-11 rounded-full"
                 onClick={() => onAddToCart(article)}
               >
                 <ShoppingCart className="w-4 h-4" />
