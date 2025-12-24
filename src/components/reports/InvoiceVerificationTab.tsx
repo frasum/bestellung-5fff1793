@@ -76,7 +76,7 @@ import {
 } from '@/hooks/useInvoices';
 
 const statusConfig: Record<Invoice['status'], { icon: React.ElementType; color: string; label: string }> = {
-  pending: { icon: Clock, color: 'bg-muted text-muted-foreground', label: 'Ausstehend' },
+  pending: { icon: Clock, color: 'bg-muted text-muted-foreground', label: 'Neu' },
   processing: { icon: Loader2, color: 'bg-blue-500/20 text-blue-600', label: 'Wird analysiert' },
   matched: { icon: CheckCircle2, color: 'bg-success/20 text-success', label: 'Abgeglichen' },
   discrepancy: { icon: AlertTriangle, color: 'bg-warning/20 text-warning', label: 'Abweichungen' },
