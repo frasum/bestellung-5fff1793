@@ -77,16 +77,28 @@ export interface SupplierWithAssignment extends Supplier {
 // Fetch suppliers that are assigned to a specific location via supplier_locations
 // Also includes unassigned suppliers (those with no location assignments at all)
 export const useSuppliersByLocation = (locationId?: string) => {
+  const { user } = useAuth();
+
   return useQuery({
-    queryKey: ['suppliers-by-location', locationId],
-    enabled: !!locationId,
+    queryKey: ['suppliers-by-location', user?.id, locationId],
+    enabled: !!locationId && !!user,
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
     queryFn: async (): Promise<SupplierWithAssignment[]> => {
-      // 1. Get all suppliers
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('organization_id')
+        .eq('id', user!.id)
+        .maybeSingle();
+
+      if (profileError) throw profileError;
+      if (!profile?.organization_id) return [];
+
+      // 1. Get all suppliers in the user's organization
       const { data: allSuppliers, error: suppliersError } = await supabase
         .from('suppliers')
         .select('*')
+        .eq('organization_id', profile.organization_id)
         .order('name');
 
       if (suppliersError) throw suppliersError;
