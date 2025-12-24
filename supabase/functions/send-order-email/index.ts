@@ -1,13 +1,53 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { Resend } from "https://esm.sh/resend@2.0.0";
+import { SMTPClient } from "https://deno.land/x/denomailer@1.6.0/mod.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
-const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
+
+// SMTP Configuration
+const smtpConfig = {
+  connection: {
+    hostname: Deno.env.get("SMTP_HOST") || "smtps.udag.de",
+    port: Number(Deno.env.get("SMTP_PORT")) || 465,
+    tls: true,
+    auth: {
+      username: Deno.env.get("SMTP_USERNAME") || "",
+      password: Deno.env.get("SMTP_PASSWORD") || "",
+    },
+  },
+};
+
+const smtpFrom = Deno.env.get("SMTP_FROM") || "yum@bestellung.pro";
+
+// Helper to send email via SMTP
+async function sendEmailViaSMTP(options: {
+  to: string[];
+  subject: string;
+  html: string;
+  text?: string;
+  replyTo?: string;
+}): Promise<{ success: boolean; error?: string }> {
+  const client = new SMTPClient(smtpConfig);
+  try {
+    await client.send({
+      from: `Bestellung.pro <${smtpFrom}>`,
+      to: options.to,
+      subject: options.subject,
+      content: options.text || "",
+      html: options.html,
+      replyTo: options.replyTo,
+    });
+    await client.close();
+    return { success: true };
+  } catch (error: any) {
+    console.error("SMTP send error:", error);
+    try { await client.close(); } catch {}
+    return { success: false, error: error.message };
+  }
+}
 
 interface OrderItem {
   article_name: string;
@@ -80,7 +120,6 @@ const generateModernEmail = (data: OrderEmailRequest, template: EmailTemplate): 
     const bgColor = index % 2 === 0 ? '#ffffff' : '#f9fafb';
     const skuDisplay = item.sku ? `<span style="display: inline-block; background: #e5e7eb; color: #374151; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 4px; margin-left: 8px;">${item.sku}</span>` : '';
     const vpeDisplay = item.packaging_unit && item.packaging_unit > 1 ? `<span style="color: #2563eb; font-weight: 600;"> (${item.packaging_unit}er)</span>` : '';
-    // order_unit replaces unit when available
     const displayUnit = item.order_unit || item.unit;
     return `
     <tr style="background: ${bgColor};">
@@ -113,13 +152,11 @@ const generateModernEmail = (data: OrderEmailRequest, template: EmailTemplate): 
         
         <div style="background: #ffffff; padding: 32px; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 16px 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
           
-          <!-- Greeting & Introduction -->
           <div style="margin-bottom: 24px;">
             <p style="margin: 0 0 12px 0; font-size: 16px; color: #1f2937;">${template.greeting}</p>
             <p style="margin: 0; font-size: 15px; color: #374151;">${template.introduction}</p>
           </div>
 
-          <!-- Quick Summary -->
           <div style="margin-bottom: 28px; padding: 20px; background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border-radius: 12px; border: 1px solid #bae6fd;">
             <div style="text-align: center;">
               <div style="font-size: 28px; font-weight: 700; color: #0369a1;">${data.items.length}</div>
@@ -127,7 +164,6 @@ const generateModernEmail = (data: OrderEmailRequest, template: EmailTemplate): 
             </div>
           </div>
 
-          <!-- Order Info -->
           <div style="margin-bottom: 28px; padding: 20px; background: #fafafa; border-radius: 12px;">
             <h2 style="color: #1f2937; font-size: 14px; margin: 0 0 16px 0; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;">Bestelldetails</h2>
             <table style="width: 100%; font-size: 14px;">
@@ -146,7 +182,6 @@ const generateModernEmail = (data: OrderEmailRequest, template: EmailTemplate): 
             </table>
           </div>
 
-          <!-- Delivery Address -->
           <div style="margin-bottom: 28px; padding: 20px; background: #fafafa; border-radius: 12px;">
             <h2 style="color: #1f2937; font-size: 14px; margin: 0 0 12px 0; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;">📍 Lieferadresse</h2>
             <p style="margin: 0; color: #374151; font-size: 14px; line-height: 1.7;">${data.deliveryAddress.replace(/\n/g, '<br>')}</p>
@@ -160,7 +195,6 @@ const generateModernEmail = (data: OrderEmailRequest, template: EmailTemplate): 
           ` : ''}
 
           ${data.confirmationToken ? `
-          <!-- Confirmation Button -->
           <div style="margin-bottom: 28px; text-align: left;">
             <a href="${Deno.env.get("SUPABASE_URL")}/functions/v1/confirm-order?token=${data.confirmationToken}" 
                style="display: inline-block; background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); color: white; font-weight: 700; font-size: 18px; padding: 18px 48px; border-radius: 12px; text-decoration: none; box-shadow: 0 4px 14px rgba(37, 99, 235, 0.4);">
@@ -172,7 +206,6 @@ const generateModernEmail = (data: OrderEmailRequest, template: EmailTemplate): 
           </div>
           ` : ''}
 
-          <!-- Items Table -->
           <div style="margin-bottom: 28px;">
             <h2 style="color: #1f2937; font-size: 14px; margin: 0 0 16px 0; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;">🛒 Bestellte Artikel</h2>
             <table style="width: 100%; border-collapse: collapse; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
@@ -188,7 +221,6 @@ const generateModernEmail = (data: OrderEmailRequest, template: EmailTemplate): 
             </table>
           </div>
 
-          <!-- Closing & Signature -->
           <div style="margin-bottom: 24px;">
             <p style="margin: 0 0 16px 0; font-size: 15px; color: #374151;">${template.closing}</p>
             <p style="margin: 0; font-size: 15px; color: #1f2937;">${signature}</p>
@@ -212,7 +244,6 @@ const generateClassicEmail = (data: OrderEmailRequest, template: EmailTemplate):
   const itemRows = data.items.map((item) => {
     const skuDisplay = item.sku ? ` (${item.sku})` : '';
     const vpeDisplay = item.packaging_unit && item.packaging_unit > 1 ? ` (${item.packaging_unit}er)` : '';
-    // order_unit replaces unit when available
     const displayUnit = item.order_unit || item.unit;
     return `
     <tr>
@@ -233,7 +264,6 @@ const generateClassicEmail = (data: OrderEmailRequest, template: EmailTemplate):
       </head>
       <body style="font-family: Georgia, 'Times New Roman', serif; line-height: 1.6; color: #1f2937; max-width: 650px; margin: 0 auto; padding: 20px; background: #ffffff;">
         
-        <!-- Header -->
         <div style="background: #1e3a5f; padding: 24px 32px; border-bottom: 4px solid #b45309;">
           <h1 style="color: white; margin: 0; font-size: 22px; font-weight: 600; letter-spacing: 1px;">BESTELLUNG BEI ${data.supplierName.toUpperCase()}</h1>
           <p style="color: rgba(255,255,255,0.85); margin: 8px 0 0 0; font-size: 14px;">${data.restaurantName}</p>
@@ -241,11 +271,9 @@ const generateClassicEmail = (data: OrderEmailRequest, template: EmailTemplate):
         
         <div style="padding: 32px; border: 1px solid #d1d5db; border-top: none;">
           
-          <!-- Greeting & Introduction -->
           <p style="margin: 0 0 8px 0; font-size: 15px;">${template.greeting}</p>
           <p style="margin: 0 0 24px 0; font-size: 15px;">${template.introduction}</p>
 
-          <!-- Order Details -->
           <table style="width: 100%; margin-bottom: 24px; font-size: 14px;">
             <tr>
               <td style="padding: 4px 0; width: 140px; color: #6b7280;">Bestelldatum:</td>
@@ -277,7 +305,6 @@ const generateClassicEmail = (data: OrderEmailRequest, template: EmailTemplate):
           </div>
           ` : ''}
 
-          <!-- Items Table -->
           <table style="width: 100%; border-collapse: collapse; margin-bottom: 24px;">
             <thead>
               <tr style="background: #374151;">
@@ -290,7 +317,6 @@ const generateClassicEmail = (data: OrderEmailRequest, template: EmailTemplate):
             </tbody>
           </table>
 
-          <!-- Closing & Signature -->
           <p style="margin: 0 0 16px 0; font-size: 15px;">${template.closing}</p>
           <p style="margin: 0; font-size: 15px;">${signature}</p>
 
@@ -313,7 +339,6 @@ const generateMinimalistEmail = (data: OrderEmailRequest, template: EmailTemplat
   const itemList = data.items.map((item) => {
     const skuDisplay = item.sku ? ` [${item.sku}]` : '';
     const vpeDisplay = item.packaging_unit && item.packaging_unit > 1 ? ` (${item.packaging_unit}er)` : '';
-    // order_unit replaces unit when available
     const displayUnit = item.order_unit || item.unit;
     return `<li style="padding: 8px 0; border-bottom: 1px solid #f3f4f6;">${item.quantity}× ${item.article_name}${skuDisplay} (${displayUnit}${vpeDisplay})</li>`;
   }).join('');
@@ -392,7 +417,6 @@ const generatePlainText = (data: OrderEmailRequest, template: EmailTemplate): st
   
   const itemLines = data.items.map(item => {
     const skuPart = item.sku ? ` (SKU: ${item.sku})` : '';
-    // order_unit replaces unit when available
     const displayUnit = item.order_unit || item.unit;
     const vpePart = item.packaging_unit && item.packaging_unit > 1 ? ` (${item.packaging_unit}er)` : '';
     return `- ${item.article_name}${skuPart}: ${item.quantity} ${displayUnit}${vpePart}`;
@@ -429,7 +453,6 @@ Gesendet über Bestellung.pro
 };
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
@@ -439,13 +462,11 @@ serve(async (req) => {
     
     console.log(`Processing order email for order ${data.orderNumber}`);
     
-    // Create Supabase client to fetch organization settings and email template
     const supabaseClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
-    // Fetch order and organization info
     const { data: order } = await supabaseClient
       .from("orders")
       .select("organization_id")
@@ -458,7 +479,6 @@ serve(async (req) => {
     let template: EmailTemplate = defaultTemplate;
 
     if (order?.organization_id) {
-      // Fetch organization settings
       const { data: org } = await supabaseClient
         .from("organizations")
         .select("test_mode_enabled, test_email")
@@ -471,7 +491,6 @@ serve(async (req) => {
         console.log(`Test mode enabled - redirecting email from ${data.supplierEmail} to ${testEmail}`);
       }
 
-      // Fetch email template
       const { data: emailTemplateData } = await supabaseClient
         .from("email_templates")
         .select("*")
@@ -501,10 +520,8 @@ serve(async (req) => {
     const recipientEmail = isTestMode && testEmail ? testEmail : data.supplierEmail;
     const subjectPrefix = isTestMode ? "[TEST] " : "";
     
-    // Generate subject from template
     const subject = subjectPrefix + generateSubject(template, data);
     
-    // Generate email content with template
     let emailHtml = generateEmailHtml(data, template);
     let emailText = generatePlainText(data, template);
     
@@ -517,25 +534,26 @@ serve(async (req) => {
           </p>
         </div>
       `;
-      // Insert test notice at the beginning of body content
       emailHtml = emailHtml.replace('<body', '<body').replace(/<body[^>]*>/, (match) => match + testNotice);
       emailText = `[TESTMODUS] Diese E-Mail würde im Produktivmodus an ${originalSupplierEmail} gesendet werden.\n\n` + emailText;
     }
     
-    console.log(`Sending order email to ${recipientEmail}${isTestMode ? ' (TEST MODE)' : ''}`);
+    console.log(`Sending order email to ${recipientEmail}${isTestMode ? ' (TEST MODE)' : ''} via SMTP`);
 
-    const emailResponse = await resend.emails.send({
-      from: "Bestellung.pro <bestellung@bestellung.pro>",
+    const emailResult = await sendEmailViaSMTP({
       to: [recipientEmail],
-      reply_to: data.locationEmail || undefined,
       subject: subject,
       html: emailHtml,
       text: emailText,
+      replyTo: data.locationEmail,
     });
 
-    console.log("Email sent successfully:", emailResponse);
+    if (!emailResult.success) {
+      throw new Error(`SMTP error: ${emailResult.error}`);
+    }
 
-    // Update the order to mark email as sent
+    console.log("Email sent successfully via SMTP");
+
     const { error: updateError } = await supabaseClient
       .from("orders")
       .update({ 
@@ -548,7 +566,6 @@ serve(async (req) => {
       console.error("Error updating order email status:", updateError);
     }
 
-    // Log to communication_logs with body_html
     if (order?.organization_id) {
       const { error: logError } = await supabaseClient
         .from("communication_logs")
@@ -571,7 +588,7 @@ serve(async (req) => {
       }
     }
 
-    return new Response(JSON.stringify({ success: true, emailResponse }), {
+    return new Response(JSON.stringify({ success: true }), {
       status: 200,
       headers: { "Content-Type": "application/json", ...corsHeaders },
     });

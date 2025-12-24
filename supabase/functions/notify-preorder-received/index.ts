@@ -1,11 +1,51 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { Resend } from "https://esm.sh/resend@2.0.0";
+import { SMTPClient } from "https://deno.land/x/denomailer@1.6.0/mod.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-internal-secret',
 };
+
+// SMTP Configuration
+const smtpConfig = {
+  connection: {
+    hostname: Deno.env.get("SMTP_HOST") || "smtps.udag.de",
+    port: Number(Deno.env.get("SMTP_PORT")) || 465,
+    tls: true,
+    auth: {
+      username: Deno.env.get("SMTP_USERNAME") || "",
+      password: Deno.env.get("SMTP_PASSWORD") || "",
+    },
+  },
+};
+
+const smtpFrom = Deno.env.get("SMTP_FROM") || "yum@bestellung.pro";
+
+// Helper to send email via SMTP
+async function sendEmailViaSMTP(options: {
+  to: string[];
+  subject: string;
+  html: string;
+  text?: string;
+}): Promise<{ success: boolean; error?: string }> {
+  const client = new SMTPClient(smtpConfig);
+  try {
+    await client.send({
+      from: `Bestellung.pro <${smtpFrom}>`,
+      to: options.to,
+      subject: options.subject,
+      content: options.text || "",
+      html: options.html,
+    });
+    await client.close();
+    return { success: true };
+  } catch (error: any) {
+    console.error("SMTP send error:", error);
+    try { await client.close(); } catch {}
+    return { success: false, error: error.message };
+  }
+}
 
 interface OrderItem {
   article_name: string;
@@ -18,7 +58,7 @@ interface NotifyRequest {
   supplier_name: string;
   location_name: string;
   items: OrderItem[];
-  token?: string; // simple_order_token for validation
+  token?: string;
 }
 
 // Validate that the request comes from a valid simple_order_token
@@ -48,7 +88,6 @@ async function validateTokenForOrganization(token: string, organizationId: strin
     return false;
   }
 
-  // Ensure token belongs to the same organization
   if (data.organization_id !== organizationId) {
     console.log('[notify-preorder-received] Token organization mismatch');
     return false;
@@ -65,12 +104,10 @@ serve(async (req) => {
   try {
     const { organization_id, employee_name, supplier_name, location_name, items, token }: NotifyRequest = await req.json();
 
-    // Check for internal calls (from submit-simple-order Edge Function)
     const internalSecret = req.headers.get('x-internal-secret');
     const expectedSecret = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
     const isInternalCall = internalSecret && internalSecret === expectedSecret;
 
-    // Validate token for external calls
     if (!isInternalCall) {
       if (!token) {
         console.error('[notify-preorder-received] No token provided');
@@ -95,7 +132,6 @@ serve(async (req) => {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
-    const resend = new Resend(Deno.env.get('RESEND_API_KEY'));
 
     // Check test mode settings
     const { data: org } = await supabase
@@ -139,7 +175,6 @@ serve(async (req) => {
         .eq('user_id', profile.id)
         .maybeSingle();
 
-      // Default to true if no preferences exist, otherwise check the flag
       const shouldNotify = prefs === null || prefs.email_preorder_received !== false;
       if (shouldNotify) {
         recipientEmails.push(profile.email);
@@ -154,20 +189,17 @@ serve(async (req) => {
       );
     }
 
-    // In test mode, redirect to test email
     const finalRecipients = isTestMode ? [testEmail!] : recipientEmails;
     const originalRecipients = recipientEmails.join(', ');
 
     console.log(`Sending notification to ${finalRecipients.length} recipients${isTestMode ? ' (TEST MODE)' : ''}`);
 
-    // Build article list HTML
     const itemsHtml = items.map(item => 
       `<li>${item.article_name}: <strong>${item.quantity}</strong></li>`
     ).join('');
 
     const appUrl = Deno.env.get('APP_URL') || 'https://bestellung.pro';
 
-    // Test mode notice for email
     const testModeNotice = isTestMode ? `
       <div style="background: #fef3c7; border: 1px solid #f59e0b; padding: 15px; border-radius: 6px; margin-bottom: 15px;">
         <strong>🧪 TESTMODUS</strong><br>
@@ -248,17 +280,16 @@ ${items.map(item => `- ${item.article_name}: ${item.quantity}`).join('\n')}
       ? `[TEST] Neue EasyOrder von ${employee_name}`
       : `Neue EasyOrder von ${employee_name}`;
 
-    const emailResponse = await resend.emails.send({
-      from: 'Bestellung.pro <noreply@bestellung.pro>',
+    const emailResult = await sendEmailViaSMTP({
       to: finalRecipients,
       subject: subject,
       html: htmlContent,
       text: textContent,
     });
 
-    console.log('Email sent successfully:', emailResponse);
+    console.log('Email sent:', emailResult);
 
-    // Log to communication_logs for each recipient (log actual recipients in test mode)
+    // Log to communication_logs for each recipient
     for (const email of finalRecipients) {
       const { error: logError } = await supabase
         .from("communication_logs")

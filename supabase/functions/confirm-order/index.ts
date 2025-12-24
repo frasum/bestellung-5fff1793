@@ -1,13 +1,49 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { Resend } from "https://esm.sh/resend@2.0.0";
-
-const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
+import { SMTPClient } from "https://deno.land/x/denomailer@1.6.0/mod.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
+
+// SMTP Configuration
+const smtpConfig = {
+  connection: {
+    hostname: Deno.env.get("SMTP_HOST") || "smtps.udag.de",
+    port: Number(Deno.env.get("SMTP_PORT")) || 465,
+    tls: true,
+    auth: {
+      username: Deno.env.get("SMTP_USERNAME") || "",
+      password: Deno.env.get("SMTP_PASSWORD") || "",
+    },
+  },
+};
+
+const smtpFrom = Deno.env.get("SMTP_FROM") || "yum@bestellung.pro";
+
+// Helper to send email via SMTP
+async function sendEmailViaSMTP(options: {
+  to: string[];
+  subject: string;
+  html: string;
+}): Promise<void> {
+  const client = new SMTPClient(smtpConfig);
+  try {
+    await client.send({
+      from: `Bestellung.pro <${smtpFrom}>`,
+      to: options.to,
+      subject: options.subject,
+      content: "",
+      html: options.html,
+    });
+    await client.close();
+  } catch (error: any) {
+    console.error("SMTP send error:", error);
+    try { await client.close(); } catch {}
+    throw error;
+  }
+}
 
 // App URL for redirects
 const APP_URL = Deno.env.get('APP_URL') || 'https://bestellung.pro';
@@ -91,7 +127,6 @@ const generateConfirmationNotificationHtml = (
             </table>
           </div>
 
-          <!-- Order Items Table -->
           <div style="margin-bottom: 24px;">
             <h2 style="color: #1f2937; font-size: 14px; margin: 0 0 16px 0; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;">🛒 Bestellte Artikel</h2>
             <table style="width: 100%; border-collapse: collapse; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
@@ -147,18 +182,12 @@ async function sendConfirmationNotification(
   });
 
   try {
-    const { error } = await resend.emails.send({
-      from: "Bestellung.pro <noreply@bestellung.pro>",
+    await sendEmailViaSMTP({
       to: [recipientEmail],
       subject: `✅ Bestellung ${orderNumber} wurde von ${supplierName} bestätigt`,
       html: generateConfirmationNotificationHtml(orderNumber, supplierName, confirmedAt, items, totalAmount),
     });
-
-    if (error) {
-      console.error("Failed to send confirmation notification:", error);
-    } else {
-      console.log(`Confirmation notification sent to ${recipientEmail}`);
-    }
+    console.log(`Confirmation notification sent to ${recipientEmail} via SMTP`);
   } catch (err) {
     console.error("Error sending confirmation notification:", err);
   }
@@ -169,7 +198,6 @@ serve(async (req) => {
   console.log("Request method:", req.method);
   console.log("Request URL:", req.url);
 
-  // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
     console.log("Handling CORS preflight request");
     return new Response(null, { headers: corsHeaders });
@@ -197,7 +225,6 @@ serve(async (req) => {
       serviceRoleKey ?? ""
     );
 
-    // Find the token with order, user details and order items
     console.log("Querying order_confirmation_tokens table for token...");
     const { data: tokenData, error: tokenError } = await supabase
       .from("order_confirmation_tokens")
@@ -223,13 +250,11 @@ serve(async (req) => {
     console.log("Token expires_at:", tokenData.expires_at);
     console.log("Token confirmed_at:", tokenData.confirmed_at);
 
-    // Check if already confirmed
     if (tokenData.confirmed_at) {
       console.log("Token already used at:", tokenData.confirmed_at);
       return createRedirectResponse("already_confirmed", orderNumber, supplierName);
     }
 
-    // Check if expired
     const expiresAt = new Date(tokenData.expires_at);
     const now = new Date();
     console.log("Token expires at:", expiresAt.toISOString());
@@ -241,7 +266,6 @@ serve(async (req) => {
       return createRedirectResponse("expired", orderNumber, supplierName);
     }
 
-    // Update order status to confirmed
     console.log("Updating order status to 'confirmed'...");
     const { error: updateError } = await supabase
       .from("orders")
@@ -254,7 +278,6 @@ serve(async (req) => {
     }
     console.log("Order status updated successfully");
 
-    // Mark token as used
     console.log("Marking token as used...");
     await supabase
       .from("order_confirmation_tokens")
@@ -262,16 +285,13 @@ serve(async (req) => {
       .eq("id", tokenData.id);
     console.log("Token marked as used");
 
-    // Get organization_id for logging
     const { data: orderForLog } = await supabase
       .from("orders")
       .select("organization_id")
       .eq("id", tokenData.order_id)
       .single();
 
-    // Log confirmation to communication_logs (mark existing order_sent as confirmed)
     if (orderForLog?.organization_id) {
-      // Update existing log entry for this order
       const { error: updateLogError } = await supabase
         .from("communication_logs")
         .update({ 
@@ -287,11 +307,9 @@ serve(async (req) => {
         console.log("Communication log updated to confirmed");
       }
     }
-    console.log("Token marked as used");
 
     console.log(`Order ${orderNumber} confirmed successfully`);
 
-    // Send notification email to order creator
     console.log("Fetching order creator profile for notification...");
     const { data: profile } = await supabase
       .from("profiles")
@@ -310,7 +328,6 @@ serve(async (req) => {
         order.total_amount
       );
 
-      // Log confirmation notification with body_html
       if (orderForLog?.organization_id) {
         const confirmedAt = new Date().toLocaleDateString('de-DE', {
           weekday: 'long',
