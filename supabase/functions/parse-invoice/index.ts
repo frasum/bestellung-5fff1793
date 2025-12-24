@@ -9,7 +9,8 @@ const corsHeaders = {
 interface InvoiceData {
   supplierName: string;
   supplierAddress?: string;
-  supplierEmail?: string; // NEW: Extract supplier email from invoice
+  supplierEmail?: string; // Extract supplier email from invoice
+  supplierPhone?: string; // Extract supplier phone from invoice
   customerNumber?: string;
   invoiceNumber: string;
   invoiceDate: string;
@@ -383,6 +384,7 @@ Extract the following information and return as JSON:
   "supplierName": "Supplier/vendor company name",
   "supplierAddress": "Full supplier address if visible",
   "supplierEmail": "Supplier email address if visible (look in header, footer, contact info)",
+  "supplierPhone": "Supplier phone number if visible (look for 'Tel.', 'Telefon', 'Tel:', 'Phone', 'Fon', 'T:', 'T.' in header, footer, contact section)",
   "customerNumber": "Customer number if visible (look for 'Kunden-Nr.', 'Kundennummer', 'Kd.-Nr.', 'Kd.Nr.', 'Customer No.', 'Kundenkonto', 'Debitor-Nr.')",
   "invoiceNumber": "Invoice/bill number",
   "invoiceDate": "Invoice date in YYYY-MM-DD format",
@@ -414,6 +416,7 @@ Important:
 - Normalize units to standard forms: Stk (piece), kg, g, l, ml, Fl (bottle), Pck (package), Krt (carton)
 - Look carefully for customer number - it identifies which location this invoice belongs to
 - Extract supplier email from the invoice header, footer, or contact section
+- Extract supplier phone number from the invoice header, footer, or contact section
 - Suggest a category for each item based on its name (use German category names)`
           },
           {
@@ -634,7 +637,7 @@ Important:
     // Find matching supplier by name with improved fuzzy matching
     const { data: suppliers } = await supabaseClient
       .from('suppliers')
-      .select('id, name')
+      .select('id, name, phone')
       .eq('organization_id', organizationId)
       .eq('is_active', true);
 
@@ -784,6 +787,15 @@ Important:
       if (bestMatch && bestMatch.score >= 60) {
         matchedSupplierId = bestMatch.supplier.id;
         console.log('✅ Matched supplier:', bestMatch.supplier.name, 'with score:', bestMatch.score, '-', bestMatch.matchDetails);
+        
+        // Update supplier with phone number if we have one and they don't
+        if (invoiceData.supplierPhone && !bestMatch.supplier.phone) {
+          console.log('Updating supplier with phone number:', invoiceData.supplierPhone);
+          await supabaseClient
+            .from('suppliers')
+            .update({ phone: invoiceData.supplierPhone })
+            .eq('id', matchedSupplierId);
+        }
       } else if (bestMatch) {
         console.log('❌ Best match below threshold:', bestMatch.supplier.name, 'with score:', bestMatch.score, '-', bestMatch.matchDetails);
         console.log('Will create new supplier instead');
@@ -809,6 +821,7 @@ Important:
           organization_id: organizationId,
           name: invoiceData.supplierName,
           email: supplierEmail,
+          phone: invoiceData.supplierPhone || null,
           address: invoiceData.supplierAddress || null,
           is_active: true,
         })
