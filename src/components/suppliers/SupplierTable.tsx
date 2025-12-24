@@ -95,8 +95,8 @@ export const SupplierTable = ({
             )}
             
             <TableHead className="w-12"></TableHead>
-            <TableHead>Lieferant</TableHead>
             <TableHead className="hidden lg:table-cell">Artikel</TableHead>
+            <TableHead>Lieferant</TableHead>
             <TableHead className="text-right">Aktionen</TableHead>
           </TableRow>
         </TableHeader>
@@ -132,6 +132,20 @@ export const SupplierTable = ({
                       </Button>
                     )}
                   </TableCell>
+                  {/* Article count - Second column */}
+                  <TableCell className="hidden lg:table-cell py-2">
+                    <Badge 
+                      variant="secondary" 
+                      className="cursor-pointer hover:bg-primary hover:text-primary-foreground hover:scale-105 transition-all"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onToggleExpand(supplier.id);
+                      }}
+                    >
+                      {supplierArticles.length} Artikel
+                    </Badge>
+                  </TableCell>
+                  {/* Supplier name - Third column */}
                   <TableCell className="py-2">
                     <div className="flex items-center gap-2">
                       <div>
@@ -184,18 +198,6 @@ export const SupplierTable = ({
                         </Badge>
                       )}
                     </div>
-                  </TableCell>
-                  <TableCell className="hidden lg:table-cell py-2">
-                    <Badge 
-                      variant="secondary" 
-                      className="cursor-pointer hover:bg-primary hover:text-primary-foreground hover:scale-105 transition-all"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onToggleExpand(supplier.id);
-                      }}
-                    >
-                      {supplierArticles.length} Artikel
-                    </Badge>
                   </TableCell>
                   <TableCell className="text-right py-2">
                     <div className="flex justify-end items-center gap-0.5 sm:gap-1 md:gap-1.5">
