@@ -273,6 +273,7 @@
     "description": "Ausgabenanalyse und Statistiken",
     "overview": "Übersicht",
     "inventoryTab": "Inventur",
+    "priceHistory": "Preishistorie",
     "totalSpent": "Gesamtausgaben",
     "orderCount": "Anzahl Bestellungen",
     "avgOrderValue": "Ø Bestellwert",
@@ -282,7 +283,16 @@
     "spendingTrend": "Ausgabentrend",
     "topArticles": "Top Artikel",
     "timeRange": "Zeitraum",
-    "months": "{{count}} Monate"
+    "months": "{{count}} Monate",
+    "priceChanges": "Preisänderungen",
+    "priceIncreases": "Preiserhöhungen",
+    "priceDecreases": "Preissenkungen",
+    "noPriceChanges": "Keine Preisänderungen gefunden",
+    "allSources": "Alle Quellen",
+    "allSuppliers": "Alle Lieferanten",
+    "last7Days": "Letzte 7 Tage",
+    "last30Days": "Letzte 30 Tage",
+    "last3Months": "Letzte 3 Monate"
   },
   "settings": {
     "title": "Einstellungen",
