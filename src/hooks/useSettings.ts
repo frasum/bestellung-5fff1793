@@ -51,7 +51,7 @@ export const useOrganization = () => {
   const { user } = useAuth();
 
   return useQuery({
-    queryKey: ['organization'],
+    queryKey: ['organization', user?.id],
     queryFn: async () => {
       const { data: profile } = await supabase
         .from('profiles')
