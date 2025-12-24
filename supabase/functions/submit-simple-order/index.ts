@@ -1,6 +1,45 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { Resend } from "https://esm.sh/resend@2.0.0";
+import { SMTPClient } from "https://deno.land/x/denomailer@1.6.0/mod.ts";
+
+// SMTP Configuration
+const smtpConfig = {
+  connection: {
+    hostname: Deno.env.get("SMTP_HOST") || "smtps.udag.de",
+    port: Number(Deno.env.get("SMTP_PORT")) || 465,
+    tls: true,
+    auth: {
+      username: Deno.env.get("SMTP_USERNAME") || "",
+      password: Deno.env.get("SMTP_PASSWORD") || "",
+    },
+  },
+};
+
+const smtpFrom = Deno.env.get("SMTP_FROM") || "bestellungen@bestellung.pro";
+
+// Helper to send email via SMTP
+async function sendEmailViaSMTP(options: {
+  to: string[];
+  subject: string;
+  html: string;
+}): Promise<{ success: boolean; error?: string }> {
+  const client = new SMTPClient(smtpConfig);
+  try {
+    await client.send({
+      from: `Bestellung.pro <${smtpFrom}>`,
+      to: options.to,
+      subject: options.subject,
+      content: "",
+      html: options.html,
+    });
+    await client.close();
+    return { success: true };
+  } catch (error: any) {
+    console.error("SMTP send error:", error);
+    try { await client.close(); } catch {}
+    return { success: false, error: error.message };
+  }
+}
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -632,7 +671,6 @@ serve(async (req) => {
       // Send confirmation email to employee if they have an email
       if (employeeEmail) {
         try {
-          const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
           const lang = tokenData.language || 'de';
           const t = employeeEmailTranslations[lang] || employeeEmailTranslations.de;
 
@@ -664,8 +702,7 @@ serve(async (req) => {
             </html>
           `;
 
-          await resend.emails.send({
-            from: 'Bestellung.pro <bestellungen@bestellung.pro>',
+          await sendEmailViaSMTP({
             to: [employeeEmail],
             subject: t.subject(supplierData.name),
             html: emailHtml,

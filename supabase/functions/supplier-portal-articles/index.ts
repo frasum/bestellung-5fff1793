@@ -1,7 +1,45 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { SMTPClient } from "https://deno.land/x/denomailer@1.6.0/mod.ts";
 
-const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+// SMTP Configuration
+const smtpConfig = {
+  connection: {
+    hostname: Deno.env.get("SMTP_HOST") || "smtps.udag.de",
+    port: Number(Deno.env.get("SMTP_PORT")) || 465,
+    tls: true,
+    auth: {
+      username: Deno.env.get("SMTP_USERNAME") || "",
+      password: Deno.env.get("SMTP_PASSWORD") || "",
+    },
+  },
+};
+
+const smtpFrom = Deno.env.get("SMTP_FROM") || "noreply@bestellung.pro";
+
+// Helper to send email via SMTP
+async function sendEmailViaSMTP(options: {
+  to: string[];
+  subject: string;
+  html: string;
+}): Promise<{ success: boolean; error?: string }> {
+  const client = new SMTPClient(smtpConfig);
+  try {
+    await client.send({
+      from: `Bestellung.pro <${smtpFrom}>`,
+      to: options.to,
+      subject: options.subject,
+      content: "",
+      html: options.html,
+    });
+    await client.close();
+    return { success: true };
+  } catch (error: any) {
+    console.error("SMTP send error:", error);
+    try { await client.close(); } catch {}
+    return { success: false, error: error.message };
+  }
+}
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -864,21 +902,12 @@ serve(async (req) => {
 
           console.log(`Sending notification email to ${adminEmails.length} admin(s): ${adminEmails.join(', ')}`);
 
-          const emailResponse = await fetch('https://api.resend.com/emails', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${RESEND_API_KEY}`,
-            },
-            body: JSON.stringify({
-              from: 'Bestellung.pro <noreply@bestellung.pro>',
-              to: adminEmails,
-              subject: `[Lieferantenportal] Änderungsanfrage von ${supplier.name || 'Lieferant'}`,
-              html: emailHtml,
-            }),
+          const emailResult = await sendEmailViaSMTP({
+            to: adminEmails,
+            subject: `[Lieferantenportal] Änderungsanfrage von ${supplier.name || 'Lieferant'}`,
+            html: emailHtml,
           });
 
-          const emailResult = await emailResponse.json();
           console.log('Admin notification email sent:', emailResult);
         } catch (emailError) {
           console.error('Error sending admin notification:', emailError);
@@ -1150,18 +1179,10 @@ serve(async (req) => {
 
           console.log(`Sending batch notification email to ${adminEmails.length} admin(s)`);
 
-          await fetch('https://api.resend.com/emails', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${RESEND_API_KEY}`,
-            },
-            body: JSON.stringify({
-              from: 'Bestellung.pro <noreply@bestellung.pro>',
-              to: adminEmails,
-              subject: `[Lieferantenportal] ${articleIds.length} Artikeländerungen von ${supplier.name || 'Lieferant'}`,
-              html: emailHtml,
-            }),
+          await sendEmailViaSMTP({
+            to: adminEmails,
+            subject: `[Lieferantenportal] ${articleIds.length} Artikeländerungen von ${supplier.name || 'Lieferant'}`,
+            html: emailHtml,
           });
         } catch (emailError) {
           console.error('Error sending batch admin notification:', emailError);
@@ -1294,21 +1315,12 @@ serve(async (req) => {
 
           console.log(`Sending suggestion notification to ${adminEmails.length} admin(s)`);
 
-          const emailResponse = await fetch('https://api.resend.com/emails', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${RESEND_API_KEY}`,
-            },
-            body: JSON.stringify({
-              from: 'Bestellung.pro <noreply@bestellung.pro>',
-              to: adminEmails,
-              subject: `[Lieferantenportal] Neuer Artikelvorschlag von ${supplier.name || 'Lieferant'}`,
-              html: emailHtml,
-            }),
+          const emailResult = await sendEmailViaSMTP({
+            to: adminEmails,
+            subject: `[Lieferantenportal] Neuer Artikelvorschlag von ${supplier.name || 'Lieferant'}`,
+            html: emailHtml,
           });
 
-          const emailResult = await emailResponse.json();
           console.log('Suggestion notification email sent:', emailResult);
         } catch (emailError) {
           console.error('Error sending suggestion notification:', emailError);

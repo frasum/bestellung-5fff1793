@@ -1,8 +1,45 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { Resend } from "https://esm.sh/resend@2.0.0";
+import { SMTPClient } from "https://deno.land/x/denomailer@1.6.0/mod.ts";
 
-const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
+// SMTP Configuration
+const smtpConfig = {
+  connection: {
+    hostname: Deno.env.get("SMTP_HOST") || "smtps.udag.de",
+    port: Number(Deno.env.get("SMTP_PORT")) || 465,
+    tls: true,
+    auth: {
+      username: Deno.env.get("SMTP_USERNAME") || "",
+      password: Deno.env.get("SMTP_PASSWORD") || "",
+    },
+  },
+};
+
+const smtpFrom = Deno.env.get("SMTP_FROM") || "b2b@bestellung.pro";
+
+// Helper to send email via SMTP
+async function sendEmailViaSMTP(options: {
+  to: string[];
+  subject: string;
+  html: string;
+}): Promise<{ success: boolean; error?: string }> {
+  const client = new SMTPClient(smtpConfig);
+  try {
+    await client.send({
+      from: `B2B Portal <${smtpFrom}>`,
+      to: options.to,
+      subject: options.subject,
+      content: "",
+      html: options.html,
+    });
+    await client.close();
+    return { success: true };
+  } catch (error: any) {
+    console.error("SMTP send error:", error);
+    try { await client.close(); } catch {}
+    return { success: false, error: error.message };
+  }
+}
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -242,14 +279,13 @@ serve(async (req) => {
       const TEST_EMAIL = "frank.schumann@me.com";
       
       try {
-        const emailResponse = await resend.emails.send({
-          from: "B2B Portal <onboarding@resend.dev>",
+        const emailResult = await sendEmailViaSMTP({
           to: [TEST_EMAIL],
           subject: `[TEST] Neue B2B-Bestellung ${order_number} von ${customer.company_name}`,
           html: emailHtml,
         });
 
-        console.log("Email sent successfully:", emailResponse);
+        console.log("Email sent successfully:", emailResult);
 
         // Update order with email_sent status
         await supabase
