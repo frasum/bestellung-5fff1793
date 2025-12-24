@@ -1034,7 +1034,7 @@ Important:
             console.error('Failed to create article:', articleError);
           } else {
             articlesCreated++;
-            // Add to maps for subsequent checks
+            // Add to maps for subsequent checks (prevents duplicates within same invoice)
             const newArtRef = { 
               id: newArticle.id, 
               name: item.articleName, 
@@ -1044,6 +1044,10 @@ Important:
             };
             existingByName.set(normalizeArticleName(item.articleName), newArtRef);
             existingList.push(newArtRef);
+            // CRITICAL: Also add to SKU map to prevent duplicates when same SKU appears multiple times in invoice
+            if (item.articleSku) {
+              existingBySku.set(item.articleSku.toLowerCase(), newArtRef);
+            }
             
             // Auto-assign new article to all organization locations
             const { data: orgLocations } = await supabaseClient
