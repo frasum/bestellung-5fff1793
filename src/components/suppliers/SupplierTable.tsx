@@ -1,5 +1,5 @@
 import { Fragment } from 'react';
-import { Trash2, FileText, Send, Bell, Loader2, QrCode, ExternalLink, Key, Plus } from 'lucide-react';
+import { Trash2, FileText, Send, Bell, Loader2, QrCode, ExternalLink, Key, Plus, ShoppingCart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
@@ -20,6 +20,7 @@ interface SupplierTableProps {
   pendingArticleIds?: Set<string>;
   recentlyActiveSuppliers?: Map<string, SupplierActivityInfo>;
   advancedSettingsEnabled?: boolean;
+  cartItemCountsBySupplier?: Record<string, number>;
   onToggleExpand: (supplierId: string) => void;
   onToggleSelect: (supplierId: string) => void;
   onSelectAll: () => void;
@@ -30,6 +31,7 @@ interface SupplierTableProps {
   onShowTokens?: (supplier: Supplier) => void;
   onOpenPortal?: (supplier: Supplier) => void;
   onShowChanges: (supplier: Supplier) => void;
+  onOrderClick?: (supplier: Supplier) => void;
   
   onPrintOrderList: (supplier: Supplier, articles: Article[]) => void;
   onArticleChangeClick?: (article: Article, supplier: Supplier) => void;
@@ -50,6 +52,7 @@ export const SupplierTable = ({
   pendingArticleIds = new Set(),
   recentlyActiveSuppliers = new Map(),
   advancedSettingsEnabled = false,
+  cartItemCountsBySupplier = {},
   onToggleExpand,
   onToggleSelect,
   onSelectAll,
@@ -60,6 +63,7 @@ export const SupplierTable = ({
   onShowTokens,
   onOpenPortal,
   onShowChanges,
+  onOrderClick,
   onPrintOrderList,
   onArticleChangeClick,
   onEditArticle,
@@ -169,6 +173,24 @@ export const SupplierTable = ({
                   </TableCell>
                   <TableCell className="text-right py-2">
                     <div className="flex justify-end gap-0.5 sm:gap-1 md:gap-1.5 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                      {/* Order Button - Primary action */}
+                      {onOrderClick && supplierArticles.length > 0 && (
+                        <Button 
+                          variant="default" 
+                          size="sm" 
+                          className="h-9 px-3 gap-1.5"
+                          onClick={() => onOrderClick(supplier)}
+                          title="Artikel bestellen"
+                        >
+                          <ShoppingCart className="w-4 h-4" />
+                          <span className="hidden sm:inline">Bestellen</span>
+                          {cartItemCountsBySupplier[supplier.id] > 0 && (
+                            <Badge variant="secondary" className="ml-1 h-5 min-w-5 px-1.5 text-xs">
+                              {cartItemCountsBySupplier[supplier.id]}
+                            </Badge>
+                          )}
+                        </Button>
+                      )}
                       <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground hover:text-foreground" onClick={() => onSendInvitation(supplier)} disabled={invitingSupplierId === supplier.id || sendingInvitation} title="Einladung zum Lieferantenportal senden">
                         {invitingSupplierId === supplier.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
                       </Button>

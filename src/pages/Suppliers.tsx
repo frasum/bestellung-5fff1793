@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLocationContext } from '@/contexts/LocationContext';
+import { useCart } from '@/contexts/CartContext';
 import { DashboardLayout, useSidebarContext } from '@/components/layout/DashboardLayout';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/button';
@@ -48,6 +49,7 @@ import { QuickCaptureWizard } from '@/components/suppliers/QuickCaptureWizard';
 import { WinesTab } from '@/components/suppliers/WinesTab';
 import { SupplierQRCodeDialog } from '@/components/suppliers/SupplierQRCodeDialog';
 import { SupplierTokensDialog } from '@/components/suppliers/SupplierTokensDialog';
+import { AddArticleSheet } from '@/components/cart/AddArticleSheet';
 
 const Suppliers = () => {
   const { t } = useTranslation();
@@ -99,6 +101,26 @@ const Suppliers = () => {
   const [deletingArticle, setDeletingArticle] = useState<Article | null>(null);
   const [selectedArticles, setSelectedArticles] = useState<Set<string>>(new Set());
   const [openArticleSuppliers, setOpenArticleSuppliers] = useState<Set<string>>(new Set());
+
+  // Add Article Sheet state for ordering
+  const [addArticleSheet, setAddArticleSheet] = useState<{ open: boolean; supplierId: string; supplierName: string }>({
+    open: false,
+    supplierId: '',
+    supplierName: ''
+  });
+
+  // Cart context for order functionality
+  const { items: cartItems } = useCart();
+
+  // Calculate cart item counts per supplier
+  const cartItemCountsBySupplier = useMemo(() => {
+    const counts: Record<string, number> = {};
+    cartItems.forEach(item => {
+      const supplierId = item.article.supplier_id;
+      counts[supplierId] = (counts[supplierId] || 0) + item.quantity;
+    });
+    return counts;
+  }, [cartItems]);
 
   // Location context for location-specific customer numbers
   const { activeLocation } = useLocationContext();
@@ -707,10 +729,12 @@ const Suppliers = () => {
                 <p className="text-muted-foreground">
                   {searchQuery || topCategoryFilter !== 'all' || categoryFilter !== 'all' ? 'Keine Lieferanten gefunden' : 'Noch keine Lieferanten. Fügen Sie Ihren ersten Lieferanten hinzu.'}
                 </p>
-               </div> : <SupplierTable suppliers={filteredSuppliers || []} articlesBySupplier={articlesBySupplier} expandedSuppliers={expandedSuppliers} selectedSuppliers={selectedSuppliers} multiSelectEnabled={supplierMultiSelectEnabled} pendingChangesBySupplier={pendingChangesBySupplier || {}} pendingArticleIds={pendingArticleIds || new Set()} recentlyActiveSuppliers={recentlyActiveSuppliers || new Map()} advancedSettingsEnabled={advancedSettingsEnabled} onToggleExpand={toggleSupplierExpanded} onToggleSelect={toggleSupplierSelected} onSelectAll={selectAllSuppliers} onEdit={supplier => {
+               </div> : <SupplierTable suppliers={filteredSuppliers || []} articlesBySupplier={articlesBySupplier} expandedSuppliers={expandedSuppliers} selectedSuppliers={selectedSuppliers} multiSelectEnabled={supplierMultiSelectEnabled} pendingChangesBySupplier={pendingChangesBySupplier || {}} pendingArticleIds={pendingArticleIds || new Set()} recentlyActiveSuppliers={recentlyActiveSuppliers || new Map()} advancedSettingsEnabled={advancedSettingsEnabled} cartItemCountsBySupplier={cartItemCountsBySupplier} onToggleExpand={toggleSupplierExpanded} onToggleSelect={toggleSupplierSelected} onSelectAll={selectAllSuppliers} onEdit={supplier => {
             setEditingSupplier(supplier);
             setIsSupplierDialogOpen(true);
-          }} onDelete={setDeletingSupplier} onSendInvitation={handleSendInvitation} onShowQRCode={setQrCodeSupplier} onShowTokens={setTokensDialogSupplier} onOpenPortal={handleOpenPortal} onShowChanges={setChangesDialogSupplier} onPrintOrderList={async (supplier, articles) => await generateOrderListPdf(supplier, articles.map(a => ({
+          }} onDelete={setDeletingSupplier} onSendInvitation={handleSendInvitation} onShowQRCode={setQrCodeSupplier} onShowTokens={setTokensDialogSupplier} onOpenPortal={handleOpenPortal} onShowChanges={setChangesDialogSupplier} onOrderClick={supplier => {
+            setAddArticleSheet({ open: true, supplierId: supplier.id, supplierName: supplier.name });
+          }} onPrintOrderList={async (supplier, articles) => await generateOrderListPdf(supplier, articles.map(a => ({
             name: a.name,
             unit: a.unit,
             sku: a.sku,
@@ -813,6 +837,14 @@ const Suppliers = () => {
         open={!!tokensDialogSupplier} 
         onOpenChange={open => !open && setTokensDialogSupplier(null)} 
         supplier={tokensDialogSupplier} 
+      />
+
+      {/* Add Article Sheet for ordering */}
+      <AddArticleSheet
+        open={addArticleSheet.open}
+        onOpenChange={(open) => setAddArticleSheet(prev => ({ ...prev, open }))}
+        supplierId={addArticleSheet.supplierId}
+        supplierName={addArticleSheet.supplierName}
       />
     </DashboardLayout>;
 };
