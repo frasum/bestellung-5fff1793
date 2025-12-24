@@ -102,8 +102,21 @@ class SimpleImapClient {
     return messageCount;
   }
 
-  async searchUnseen(): Promise<number[]> {
-    const resp = await this.sendCommand("SEARCH UNSEEN");
+  async searchSince(sinceDate: Date | null): Promise<number[]> {
+    // Format date as DD-Mon-YYYY for IMAP (e.g., 01-Jan-2025)
+    let searchCmd = "SEARCH ALL";
+    
+    if (sinceDate) {
+      const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+      const day = sinceDate.getDate().toString().padStart(2, '0');
+      const month = months[sinceDate.getMonth()];
+      const year = sinceDate.getFullYear();
+      const dateStr = `${day}-${month}-${year}`;
+      searchCmd = `SEARCH SINCE ${dateStr}`;
+    }
+    
+    console.info(`Executing: ${searchCmd}`);
+    const resp = await this.sendCommand(searchCmd);
     console.info("SEARCH response:", JSON.stringify(resp));
     
     const seqNumbers: number[] = [];
@@ -125,7 +138,7 @@ class SimpleImapClient {
       }
     }
     
-    console.info(`Found ${seqNumbers.length} unread messages: [${seqNumbers.join(", ")}]`);
+    console.info(`Found ${seqNumbers.length} messages since ${sinceDate?.toISOString() || 'beginning'}: [${seqNumbers.join(", ")}]`);
     return seqNumbers;
   }
 
@@ -657,14 +670,19 @@ serve(async (req) => {
     await imap.connect();
     await imap.selectMailbox("INBOX");
 
-    const unseenSeqNums = await imap.searchUnseen();
+    // Search for emails from the last 30 days instead of just UNSEEN
+    // This catches emails that were marked as read by another client
+    const sinceDate = new Date();
+    sinceDate.setDate(sinceDate.getDate() - 30);
+    
+    const emailSeqNums = await imap.searchSince(sinceDate);
     
     let processedCount = 0;
     let newInvoicesCount = 0;
     let skippedCount = 0;
     const errors: string[] = [];
 
-    for (const seqNum of unseenSeqNums) {
+    for (const seqNum of emailSeqNums) {
       try {
         const { envelope, bodystructure } = await imap.fetchMessage(seqNum);
         const { subject, from, messageId } = parseEnvelope(envelope);
