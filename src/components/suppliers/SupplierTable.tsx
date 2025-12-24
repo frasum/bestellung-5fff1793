@@ -244,11 +244,11 @@ export const SupplierTable = ({
                         <Table>
                           <TableHeader>
                             <TableRow className="hover:bg-transparent border-b border-border/50">
+                              <TableHead className="h-8 text-xs text-center w-[120px]">Bestellen</TableHead>
                               <TableHead className="h-8 text-xs">Artikel</TableHead>
                               <TableHead className="h-8 text-xs hidden md:table-cell">Beschreibung</TableHead>
                               <TableHead className="h-8 text-xs">Einheit</TableHead>
                               <TableHead className="h-8 text-xs text-right">Preis (€)</TableHead>
-                              <TableHead className="h-8 text-xs text-center w-[120px]">Bestellen</TableHead>
                               <TableHead className="h-8 text-xs text-right w-[60px]"></TableHead>
                             </TableRow>
                           </TableHeader>
@@ -256,37 +256,7 @@ export const SupplierTable = ({
                             {supplierArticles.map(article => {
                               return (
                                 <TableRow key={article.id} className="group/article border-b border-border/30 hover:bg-muted/50">
-                                  <TableCell className="py-1.5">
-                                    <div className="flex items-center gap-2">
-                                      <p 
-                                        className="text-sm font-medium cursor-pointer hover:underline hover:text-accent transition-colors"
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          onEditArticle(article);
-                                        }}
-                                      >
-                                        {article.name}
-                                      </p>
-                                      {pendingArticleIds.has(article.id) && (
-                                        <span 
-                                          className="w-2 h-2 rounded-full bg-orange-500 animate-pulse cursor-pointer" 
-                                          title="Ausstehende Änderungen"
-                                          onClick={() => onArticleChangeClick?.(article, supplier)}
-                                        />
-                                      )}
-                                    </div>
-                                  </TableCell>
-                                  <TableCell className="py-1.5 hidden md:table-cell">
-                                    <p className="text-xs text-muted-foreground truncate max-w-[200px]" title={article.description || ''}>
-                                      {article.description || '-'}
-                                    </p>
-                                  </TableCell>
-                                  <TableCell className="py-1.5 text-sm">
-                                    {article.unit}
-                                  </TableCell>
-                                  <TableCell className="py-1.5 text-right text-sm">
-                                    {Number(article.price).toFixed(2)}
-                                  </TableCell>
+                                  {/* Cart Controls - Left Side */}
                                   <TableCell className="py-1.5">
                                     {onAddToCart && (() => {
                                       const qty = cartItemsByArticle.get(article.id) || 0;
@@ -336,6 +306,37 @@ export const SupplierTable = ({
                                         </div>
                                       );
                                     })()}
+                                  </TableCell>
+                                  <TableCell className="py-1.5">
+                                    <div className="flex items-center gap-2">
+                                      <p 
+                                        className="text-sm font-medium cursor-pointer hover:underline hover:text-accent transition-colors"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          onEditArticle(article);
+                                        }}
+                                      >
+                                        {article.name}
+                                      </p>
+                                      {pendingArticleIds.has(article.id) && (
+                                        <span 
+                                          className="w-2 h-2 rounded-full bg-orange-500 animate-pulse cursor-pointer" 
+                                          title="Ausstehende Änderungen"
+                                          onClick={() => onArticleChangeClick?.(article, supplier)}
+                                        />
+                                      )}
+                                    </div>
+                                  </TableCell>
+                                  <TableCell className="py-1.5 hidden md:table-cell">
+                                    <p className="text-xs text-muted-foreground truncate max-w-[200px]" title={article.description || ''}>
+                                      {article.description || '-'}
+                                    </p>
+                                  </TableCell>
+                                  <TableCell className="py-1.5 text-sm">
+                                    {article.unit}
+                                  </TableCell>
+                                  <TableCell className="py-1.5 text-right text-sm">
+                                    {Number(article.price).toFixed(2)}
                                   </TableCell>
                                   <TableCell className="py-1.5 text-right">
                                     <Button 
