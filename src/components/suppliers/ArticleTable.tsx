@@ -358,7 +358,7 @@ export const ArticleTable = ({
                                     <Button
                                       variant="default"
                                       size="icon"
-                                      className="h-7 w-7"
+                                      className="h-7 w-7 rounded-full"
                                       onClick={() => onAddToCart(article)}
                                     >
                                       <ShoppingCart className="w-3 h-3" />

@@ -184,7 +184,7 @@ export const SupplierTable = ({
                         <Button 
                           variant="default" 
                           size="icon" 
-                          className="h-9 w-9 relative"
+                          className="h-9 w-9 relative rounded-full"
                           onClick={() => onOrderClick(supplier)}
                           title="Artikel bestellen"
                         >
@@ -324,7 +324,7 @@ export const SupplierTable = ({
                                             <Button
                                               variant="default"
                                               size="icon"
-                                              className="h-7 w-7"
+                                              className="h-7 w-7 rounded-full"
                                               onClick={(e) => {
                                                 e.stopPropagation();
                                                 onAddToCart(article);
