@@ -58,7 +58,13 @@ export const useSuppliers = () => {
         .order('name');
 
       if (error) throw error;
-      return data as Supplier[];
+      
+      // Deduplicate by ID to prevent cache issues
+      const uniqueSuppliers = (data || []).filter((supplier, index, self) =>
+        index === self.findIndex((s) => s.id === supplier.id)
+      );
+      
+      return uniqueSuppliers as Supplier[];
     },
   });
 };
