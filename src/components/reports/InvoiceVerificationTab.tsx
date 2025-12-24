@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDropzone } from 'react-dropzone';
 import { format } from 'date-fns';
@@ -99,6 +99,23 @@ export function InvoiceVerificationTab() {
   const uploadInvoice = useUploadInvoice();
   const updateStatus = useUpdateInvoiceStatus();
   const checkEmails = useCheckInvoiceEmails();
+  
+  // Timer for automatic email check (5 minutes = 300 seconds)
+  const [nextCheckIn, setNextCheckIn] = useState<number>(5 * 60);
+  
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setNextCheckIn(prev => {
+        if (prev <= 1) {
+          checkEmails.mutate();
+          return 5 * 60;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    
+    return () => clearInterval(timer);
+  }, []);
   const reanalyzeInvoice = useReanalyzeInvoice();
   const createArticlesFromInvoice = useCreateArticlesFromInvoice();
   const deleteInvoice = useDeleteInvoice();
@@ -215,7 +232,10 @@ export function InvoiceVerificationTab() {
               variant="outline"
               size="lg"
               className="flex-1 h-auto py-4"
-              onClick={() => checkEmails.mutate()}
+              onClick={() => {
+                checkEmails.mutate();
+                setNextCheckIn(5 * 60);
+              }}
               disabled={checkEmails.isPending}
             >
               {checkEmails.isPending ? (
@@ -227,6 +247,10 @@ export function InvoiceVerificationTab() {
                 <div className="font-medium">{t('invoices.checkEmails', 'E-Mails prüfen')}</div>
                 <div className="text-xs text-muted-foreground">
                   {t('invoices.checkEmailsDesc', 'Neue Rechnungen aus Postfach abrufen')}
+                </div>
+                <div className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
+                  <Clock className="h-3 w-3" />
+                  Nächste Prüfung in {Math.floor(nextCheckIn / 60)}:{String(nextCheckIn % 60).padStart(2, '0')}
                 </div>
               </div>
             </Button>
