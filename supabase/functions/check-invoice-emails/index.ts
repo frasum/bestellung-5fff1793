@@ -689,15 +689,15 @@ serve(async (req) => {
 
         console.info(`Processing email #${seqNum}: "${subject}" from ${from}`);
 
-        // Check if already processed
-        const { data: existingLog } = await serviceClient
+        // Check if already processed (handles multi-PDF emails with suffix like messageId-0, messageId-1)
+        const { data: existingLogs } = await serviceClient
           .from("invoice_email_log")
           .select("id")
-          .eq("message_id", messageId)
           .eq("organization_id", organizationId)
-          .maybeSingle();
+          .or(`message_id.eq.${messageId},message_id.like.${messageId}-%`)
+          .limit(1);
 
-        if (existingLog) {
+        if (existingLogs && existingLogs.length > 0) {
           console.info(`Email ${messageId} already processed, skipping`);
           skippedCount++;
           await imap.markAsSeen(seqNum);
