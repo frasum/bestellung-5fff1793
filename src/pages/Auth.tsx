@@ -125,13 +125,13 @@ const Auth = () => {
 
   useEffect(() => {
     if (user && !inviteToken) {
-      navigate('/reports');
+        navigate('/suppliers');
     }
     // If user is logged in and has invite token, accept the invitation
     if (user && inviteToken) {
       acceptInvitation().then((success) => {
         if (success) {
-          navigate('/reports');
+          navigate('/suppliers');
         }
       });
     }
@@ -182,12 +182,12 @@ const Auth = () => {
       setIsLoading(false);
       if (success) {
         toast.success('Erfolgreich angemeldet!');
-        navigate('/reports');
+          navigate('/suppliers');
       }
     } else {
       setIsLoading(false);
       toast.success('Welcome back!');
-      navigate('/reports');
+          navigate('/suppliers');
     }
   };
 
@@ -216,7 +216,7 @@ const Auth = () => {
     
     if (success) {
       toast.success('Konto erstellt! Weiterleitung...');
-      navigate('/reports');
+          navigate('/suppliers');
     }
   };
 
@@ -233,7 +233,7 @@ const Auth = () => {
       }
     } else {
       toast.success('Account created! Redirecting...');
-      navigate('/reports');
+          navigate('/suppliers');
     }
   };
 
@@ -271,7 +271,7 @@ const Auth = () => {
         );
         setShowDemoDialog(false);
         setShowEmptyDemoDialog(false);
-        navigate('/reports');
+        navigate('/suppliers');
       } else if (result?.needsManualLogin) {
         toast.success('Demo-Account erstellt! Bitte melden Sie sich mit der E-Mail an.');
         setShowDemoDialog(false);
