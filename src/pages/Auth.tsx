@@ -675,50 +675,54 @@ const Auth = () => {
           ) : (
             /* Demo Tab Content */
             <div className="space-y-4">
-              <Button 
-                variant="outline" 
-                className="w-full gap-2"
-                onClick={() => setShowDemoDialog(true)}
-              >
-                <Play className="w-4 h-4" />
-                Demo starten
-              </Button>
-              <p className="text-xs text-muted-foreground text-center">
-                7 Tage kostenlos testen mit Beispieldaten
-              </p>
+              <h3 className="text-lg font-semibold text-foreground">Demo-Zugänge</h3>
               
-              <div className="border-t border-border pt-4 space-y-3">
-                <p className="text-sm font-medium text-center text-muted-foreground">Erweiterte Optionen</p>
-                
-                <Button 
-                  variant="secondary" 
-                  className="w-full gap-2"
-                  onClick={() => setShowEmptyDemoDialog(true)}
-                >
-                  <FlaskConical className="w-4 h-4" />
-                  Leere Demo (Onboarding testen)
-                </Button>
+              {/* Demo starten - Blue Card */}
+              <div
+                onClick={() => setShowDemoDialog(true)}
+                className="flex items-center gap-4 p-4 rounded-lg border-l-4 border-blue-500 bg-blue-50 dark:bg-blue-950/30 cursor-pointer hover:shadow-md transition-shadow"
+              >
+                <div className="flex-shrink-0">
+                  <Play className="h-6 w-6 text-blue-600" />
+                </div>
+                <div className="flex-1">
+                  <p className="font-medium text-blue-700 dark:text-blue-400">Demo starten</p>
+                  <p className="text-sm text-blue-600/70 dark:text-blue-400/70">
+                    7 Tage kostenlos mit Beispieldaten
+                  </p>
+                </div>
+              </div>
 
-                <Button 
-                  variant="outline" 
-                  className="w-full gap-2 border-primary/50 text-primary hover:bg-primary/10"
-                  onClick={() => setShowVoiceOnboardingDialog(true)}
-                >
-                  <Mic className="w-4 h-4" />
-                  Mit Sprach-Assistent starten
-                </Button>
+              {/* Sprach-Onboarding - Green Card */}
+              <div
+                onClick={() => setShowVoiceOnboardingDialog(true)}
+                className="flex items-center gap-4 p-4 rounded-lg border-l-4 border-green-500 bg-green-50 dark:bg-green-950/30 cursor-pointer hover:shadow-md transition-shadow"
+              >
+                <div className="flex-shrink-0">
+                  <Mic className="h-6 w-6 text-green-600" />
+                </div>
+                <div className="flex-1">
+                  <p className="font-medium text-green-700 dark:text-green-400">Sprach-Onboarding</p>
+                  <p className="text-sm text-green-600/70 dark:text-green-400/70">
+                    Per Sprache einrichten
+                  </p>
+                </div>
+              </div>
 
-                <Button 
-                  variant="outline" 
-                  className="w-full gap-2"
-                  onClick={() => setShowQuestionOnboardingDialog(true)}
-                >
-                  <ClipboardList className="w-4 h-4" />
-                  Mit Fragebogen starten
-                </Button>
-                <p className="text-xs text-muted-foreground text-center">
-                  Richten Sie Ihren Katalog Schritt für Schritt ein
-                </p>
+              {/* Fragebogen-Onboarding - Orange Card */}
+              <div
+                onClick={() => setShowQuestionOnboardingDialog(true)}
+                className="flex items-center gap-4 p-4 rounded-lg border-l-4 border-orange-500 bg-orange-50 dark:bg-orange-950/30 cursor-pointer hover:shadow-md transition-shadow"
+              >
+                <div className="flex-shrink-0">
+                  <ClipboardList className="h-6 w-6 text-orange-600" />
+                </div>
+                <div className="flex-1">
+                  <p className="font-medium text-orange-700 dark:text-orange-400">Fragebogen-Onboarding</p>
+                  <p className="text-sm text-orange-600/70 dark:text-orange-400/70">
+                    Schritt für Schritt einrichten
+                  </p>
+                </div>
               </div>
             </div>
           )}
