@@ -1609,13 +1609,13 @@ const Orders = () => {
       {/* Floating Action Button - Neue Bestellung */}
       <Tooltip>
         <TooltipTrigger asChild>
-          <Button
-            onClick={() => navigate('/suppliers')}
-            size="lg"
-            className="fixed bottom-6 right-6 z-50 h-14 w-14 rounded-full shadow-lg hover:scale-105 transition-transform duration-200 flex items-center justify-center"
-          >
-            <Plus className="h-7 w-7" strokeWidth={2.5} />
-          </Button>
+      <Button
+        onClick={() => navigate('/suppliers')}
+        size="lg"
+        className="fixed bottom-6 right-6 z-50 h-16 w-16 rounded-full shadow-lg hover:scale-105 transition-transform duration-200 flex items-center justify-center"
+      >
+        <ShoppingCart className="h-8 w-8" />
+      </Button>
         </TooltipTrigger>
         <TooltipContent side="left">
           <p>{t('orders.newOrder')}</p>
