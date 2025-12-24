@@ -67,6 +67,54 @@ function normalizeUnit(unit: string | undefined | null): string {
   return normalized || unit; // Keep original if not found
 }
 
+// Sanitize JSON string by removing non-ASCII characters outside of string literals
+// This fixes corruption issues like Greek characters appearing in JSON keys
+function sanitizeJsonString(json: string): string {
+  let result = '';
+  let inString = false;
+  let escape = false;
+  
+  for (let i = 0; i < json.length; i++) {
+    const char = json[i];
+    const code = json.charCodeAt(i);
+    
+    if (escape) {
+      result += char;
+      escape = false;
+      continue;
+    }
+    
+    if (char === '\\' && inString) {
+      result += char;
+      escape = true;
+      continue;
+    }
+    
+    if (char === '"') {
+      inString = !inString;
+      result += char;
+      continue;
+    }
+    
+    if (inString) {
+      // Inside strings: keep most characters, but replace control chars
+      if (code < 32 && code !== 9 && code !== 10 && code !== 13) {
+        result += ' '; // Replace control chars with space
+      } else {
+        result += char;
+      }
+    } else {
+      // Outside strings: only allow valid JSON structural characters
+      // Valid: whitespace, digits, {, }, [, ], :, ,, ., -, +, e, E, true/false/null chars, "
+      if (/[\s\d{}[\]:,.\-+eEtrufalsn"]/.test(char)) {
+        result += char;
+      }
+      // Skip any other characters (like Εί. or other non-ASCII)
+    }
+  }
+  return result;
+}
+
 // Fuzzy matching for article names to detect duplicates
 function normalizeArticleName(name: string): string {
   return name
@@ -427,6 +475,10 @@ Important:
       }
 
       console.log('Cleaned JSON content (first 500 chars):', jsonContent.substring(0, 500));
+      
+      // Sanitize JSON to remove any non-ASCII characters outside strings (fixes corruption)
+      jsonContent = sanitizeJsonString(jsonContent);
+      console.log('Sanitized JSON content (first 500 chars):', jsonContent.substring(0, 500));
       
       // Try to parse the JSON, with repair fallback for truncated responses
       try {

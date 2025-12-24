@@ -57,9 +57,11 @@ import {
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { PdfCanvasViewer } from './PdfCanvasViewer';
 import { cn } from '@/lib/utils';
 import {
   useInvoices,
@@ -123,9 +125,7 @@ export function InvoiceVerificationTab() {
   const [selectedInvoiceId, setSelectedInvoiceId] = useState<string | null>(null);
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
   const [pdfDialogUrl, setPdfDialogUrl] = useState<string | null>(null);
-  const [pdfBlobUrl, setPdfBlobUrl] = useState<string | null>(null);
-  const [pdfLoading, setPdfLoading] = useState(false);
-  const [pdfError, setPdfError] = useState<string | null>(null);
+  const [pdfViewerError, setPdfViewerError] = useState<string | null>(null);
   const [deletingInvoice, setDeletingInvoice] = useState<Invoice | null>(null);
 
   const locale = i18n.language === 'de' ? de : enUS;
@@ -145,54 +145,14 @@ export function InvoiceVerificationTab() {
   });
 
   const openPdfViewer = (pdfUrl: string) => {
-    // Reset state and trigger fetch
     setPdfDialogUrl(pdfUrl);
-    setPdfBlobUrl(null);
-    setPdfLoading(true);
-    setPdfError(null);
+    setPdfViewerError(null);
   };
 
   const closePdfDialog = () => {
-    if (pdfBlobUrl) {
-      URL.revokeObjectURL(pdfBlobUrl);
-      setPdfBlobUrl(null);
-    }
     setPdfDialogUrl(null);
-    setPdfLoading(false);
-    setPdfError(null);
+    setPdfViewerError(null);
   };
-
-  // Fetch PDF as blob when dialog opens (bypasses X-Frame-Options restrictions)
-  useEffect(() => {
-    if (!pdfDialogUrl) return;
-
-    const controller = new AbortController();
-    
-    const fetchPdf = async () => {
-      try {
-        const response = await fetch(pdfDialogUrl, { signal: controller.signal });
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}`);
-        }
-        const blob = await response.blob();
-        const blobUrl = URL.createObjectURL(blob);
-        setPdfBlobUrl(blobUrl);
-        setPdfError(null);
-      } catch (err: unknown) {
-        if ((err as Error).name === 'AbortError') return;
-        console.error('PDF fetch error:', err);
-        setPdfError((err as Error).message || 'Fehler beim Laden');
-      } finally {
-        setPdfLoading(false);
-      }
-    };
-
-    fetchPdf();
-
-    return () => {
-      controller.abort();
-    };
-  }, [pdfDialogUrl]);
 
   const toggleExpanded = (id: string) => {
     setExpandedInvoices(prev => {
@@ -620,36 +580,27 @@ export function InvoiceVerificationTab() {
                 </div>
               )}
             </DialogTitle>
+            <DialogDescription className="sr-only">
+              {t('invoices.pdfPreviewDescription', 'PDF-Dokument der Rechnung')}
+            </DialogDescription>
           </DialogHeader>
-          <div className="flex-1 min-h-0 bg-muted/30">
-            {/* Loading state */}
-            {pdfLoading && (
-              <div className="flex flex-col items-center justify-center h-full p-8">
-                <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
-                <p className="text-muted-foreground">
-                  {t('invoices.loadingPdf', 'PDF wird geladen...')}
-                </p>
-              </div>
-            )}
-            
-            {/* PDF loaded successfully - use blob URL */}
-            {pdfBlobUrl && !pdfLoading && (
-              <iframe
-                src={pdfBlobUrl}
-                className="w-full h-full border-0"
-                title="PDF Vorschau"
+          <div className="flex-1 min-h-0">
+            {pdfDialogUrl && !pdfViewerError && (
+              <PdfCanvasViewer
+                pdfUrl={pdfDialogUrl}
+                onError={(err) => setPdfViewerError(err)}
               />
             )}
             
-            {/* Error state or fallback */}
-            {pdfError && !pdfLoading && (
-              <div className="flex flex-col items-center justify-center h-full p-8 text-center">
+            {/* Error state with fallback buttons */}
+            {pdfViewerError && (
+              <div className="flex flex-col items-center justify-center h-full p-8 text-center bg-muted/30">
                 <FileText className="h-16 w-16 text-muted-foreground mb-4" />
                 <p className="text-lg font-medium mb-2">
                   {t('invoices.pdfNotSupported', 'PDF-Vorschau nicht verfügbar')}
                 </p>
                 <p className="text-sm text-muted-foreground mb-4">
-                  {pdfError}
+                  {pdfViewerError}
                 </p>
                 <div className="flex gap-2">
                   <Button asChild>
