@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -70,6 +71,7 @@ export const ArticleFormDialog = ({
   const { data: locations = [] } = useLocations();
   const { data: articleLocations = [] } = useArticleLocations(editingArticle?.id);
   const updateArticleLocations = useUpdateArticleLocations();
+  const isMobile = useIsMobile();
 
   // Fetch organization ID
   useEffect(() => {
@@ -323,8 +325,8 @@ export const ArticleFormDialog = ({
           <DialogTitle>{editingArticle ? 'Artikel bearbeiten' : 'Neuer Artikel'}</DialogTitle>
         </DialogHeader>
         <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-          {/* AI Photo Capture - only in advanced mode */}
-          {advancedSettingsEnabled && (
+          {/* AI Photo Capture - only in advanced mode AND on mobile */}
+          {advancedSettingsEnabled && isMobile && (
             <ArticlePhotoCapture
               supplierId={form.watch('supplier_id') || null}
               organizationId={organizationId}
