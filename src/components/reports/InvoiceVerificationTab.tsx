@@ -26,6 +26,7 @@ import {
   ExternalLink,
   Plus,
   Trash2,
+  Sparkles,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -311,6 +312,13 @@ export function InvoiceVerificationTab() {
                               {discrepancyCount > 0 && (
                                 <Badge variant="destructive" className="text-xs">
                                   {discrepancyCount} {t('invoices.discrepancies', 'Abweichungen')}
+                                </Badge>
+                              )}
+                              {/* Auto-created indicator from notes */}
+                              {invoice.notes && (invoice.notes.includes('automatisch erstellt') || invoice.notes.includes('Lieferant wurde automatisch')) && (
+                                <Badge variant="secondary" className="text-xs bg-amber-500/20 text-amber-700 dark:text-amber-400 border-amber-500/30">
+                                  <Sparkles className="h-3 w-3 mr-1" />
+                                  {t('invoices.autoCreated', 'Auto-erstellt')}
                                 </Badge>
                               )}
                             </div>
