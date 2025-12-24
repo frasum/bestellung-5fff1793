@@ -179,6 +179,9 @@
   },
   "suppliers": {
     "title": "Suppliers",
+    "articlesTab": "Suppliers & Articles",
+    "winesTab": "Wines",
+    "suggestionsTab": "Suggestions",
     "description": "Manage your suppliers",
     "addSupplier": "Add Supplier",
     "editSupplier": "Edit Supplier",
