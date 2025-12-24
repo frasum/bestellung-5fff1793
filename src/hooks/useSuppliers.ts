@@ -46,7 +46,7 @@ export const useSuppliers = () => {
         .from('profiles')
         .select('organization_id')
         .eq('id', user!.id)
-        .single();
+        .maybeSingle();
 
       if (profileError) throw profileError;
       if (!profile?.organization_id) return [] as Supplier[];
