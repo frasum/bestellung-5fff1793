@@ -47,6 +47,7 @@ import {
 } from '@/components/ui/popover';
 import { useTranslation } from 'react-i18next';
 import { OrderEmailViewDialog } from '@/components/orders/OrderEmailViewDialog';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 import { cn } from '@/lib/utils';
@@ -594,12 +595,7 @@ const Orders = () => {
   return (
     <DashboardLayout>
       <div className="space-y-2 md:space-y-5 xl:space-y-6">
-        <PageHeader activeTab={activeTab === 'orders' ? undefined : activeTab}>
-          <Button onClick={() => navigate('/suppliers')} className="h-9">
-            <Package className="w-4 h-4 sm:mr-2" />
-            <span className="hidden sm:inline">{t('orders.newOrder')}</span>
-          </Button>
-        </PageHeader>
+        <PageHeader activeTab={activeTab === 'orders' ? undefined : activeTab} />
 
         {/* Warning for orders without location */}
         {ordersWithoutLocation.length > 0 && locations && locations.length > 1 && (
@@ -1609,6 +1605,22 @@ const Orders = () => {
         order={selectedOrder}
         restaurantName={orgData?.name || 'Restaurant'}
       />
+
+      {/* Floating Action Button - Neue Bestellung */}
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            onClick={() => navigate('/suppliers')}
+            size="lg"
+            className="fixed bottom-6 right-6 z-50 h-14 w-14 rounded-full shadow-lg hover:scale-105 transition-transform duration-200 hidden lg:flex"
+          >
+            <Package className="h-6 w-6" />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent side="left">
+          <p>{t('orders.newOrder')}</p>
+        </TooltipContent>
+      </Tooltip>
     </DashboardLayout>
   );
 };
