@@ -22,6 +22,17 @@ const smtpConfig = {
 
 const smtpFrom = Deno.env.get("SMTP_FROM") || "yum@bestellung.pro";
 
+// Helper function to clean HTML content to avoid encoding issues
+function cleanHtmlContent(html: string): string {
+  // Remove excessive whitespace that can cause quoted-printable encoding issues
+  return html
+    .replace(/\r\n/g, '\n')  // Normalize line endings
+    .replace(/\n\s*\n/g, '\n')  // Remove empty lines with whitespace
+    .replace(/>\s+</g, '><')  // Remove whitespace between tags
+    .replace(/\s{2,}/g, ' ')  // Replace multiple spaces with single space
+    .trim();
+}
+
 // Helper to send email via SMTP
 async function sendEmailViaSMTP(options: {
   to: string[];
@@ -32,12 +43,15 @@ async function sendEmailViaSMTP(options: {
 }): Promise<{ success: boolean; error?: string }> {
   const client = new SMTPClient(smtpConfig);
   try {
+    // Clean HTML to minimize quoted-printable encoding issues
+    const cleanedHtml = cleanHtmlContent(options.html);
+    
     await client.send({
       from: `Bestellung.pro <${smtpFrom}>`,
       to: options.to,
       subject: options.subject,
       content: options.text || "",
-      html: options.html,
+      html: cleanedHtml,
       replyTo: options.replyTo,
     });
     await client.close();
