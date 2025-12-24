@@ -37,7 +37,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { format, isAfter, isBefore, startOfDay, endOfDay, subDays, subMonths, Locale } from 'date-fns';
 import { de, enUS, fr } from 'date-fns/locale';
-import { Loader2, Package, CheckCircle2, Clock, Truck, XCircle, Eye, Search, X, ChevronRight, Trash2, FlaskConical, Filter, FileText, ShoppingCart, Calendar, Smartphone, MapPin, Bell, AlertTriangle, Send, User } from 'lucide-react';
+import { Loader2, Package, CheckCircle2, Clock, Truck, XCircle, Eye, Search, X, ChevronRight, Trash2, FlaskConical, Filter, FileText, ShoppingCart, Calendar, Smartphone, MapPin, Bell, AlertTriangle, Send, User, Plus } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { SimpleOrderTab } from '@/components/settings/SimpleOrderTab';
 import {
@@ -1614,7 +1614,7 @@ const Orders = () => {
             size="lg"
             className="fixed bottom-6 right-6 z-50 h-14 w-14 rounded-full shadow-lg hover:scale-105 transition-transform duration-200 flex items-center justify-center"
           >
-            <Package className="h-6 w-6" />
+            <Plus className="h-7 w-7" strokeWidth={2.5} />
           </Button>
         </TooltipTrigger>
         <TooltipContent side="left">
