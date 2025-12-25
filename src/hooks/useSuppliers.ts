@@ -2,6 +2,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
+import { useOrganization } from '@/hooks/useOrganization';
+import { requireOrganizationId } from '@/lib/supabaseHelpers';
 
 export type OrderDeliveryMethod = 'email' | 'portal' | 'both';
 
@@ -34,27 +36,20 @@ export interface SupplierInput {
 }
 
 export const useSuppliers = () => {
-  const { user } = useAuth();
+  const { data: organizationId, isLoading: orgLoading } = useOrganization();
 
   return useQuery({
-    queryKey: ['suppliers', user?.id],
-    enabled: !!user,
+    queryKey: ['suppliers', organizationId],
+    enabled: !!organizationId && !orgLoading,
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes cache
     queryFn: async () => {
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('organization_id')
-        .eq('id', user!.id)
-        .maybeSingle();
-
-      if (profileError) throw profileError;
-      if (!profile?.organization_id) return [] as Supplier[];
+      if (!organizationId) return [] as Supplier[];
 
       const { data, error } = await supabase
         .from('suppliers')
         .select('*')
-        .eq('organization_id', profile.organization_id)
+        .eq('organization_id', organizationId)
         .order('name');
 
       if (error) throw error;
@@ -155,23 +150,13 @@ export const useCreateSupplier = () => {
 
   return useMutation({
     mutationFn: async (input: SupplierInput) => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Not authenticated');
-
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('organization_id')
-        .eq('id', user.id)
-        .single();
-
-      if (profileError) throw profileError;
-      if (!profile?.organization_id) throw new Error('No organization found');
+      const organizationId = await requireOrganizationId();
 
       const { data, error } = await supabase
         .from('suppliers')
         .insert({
           ...input,
-          organization_id: profile.organization_id,
+          organization_id: organizationId,
         })
         .select()
         .single();

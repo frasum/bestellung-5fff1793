@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-
+import { requireOrganizationId } from '@/lib/supabaseHelpers';
 export interface Article {
   id: string;
   organization_id: string;
@@ -100,23 +100,13 @@ export const useCreateArticle = () => {
 
   return useMutation({
     mutationFn: async (input: ArticleInput) => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Not authenticated');
-
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('organization_id')
-        .eq('id', user.id)
-        .single();
-
-      if (profileError) throw profileError;
-      if (!profile?.organization_id) throw new Error('No organization found');
+      const organizationId = await requireOrganizationId();
 
       const { data, error } = await supabase
         .from('articles')
         .insert({
           ...input,
-          organization_id: profile.organization_id,
+          organization_id: organizationId,
         })
         .select('*, suppliers(id, name, minimum_order_value)')
         .single();
