@@ -1,26 +1,18 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import * as bcrypt from "https://deno.land/x/bcrypt@v0.4.1/mod.ts";
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { corsHeaders, handleCors, jsonResponse, errorResponse } from "../_shared/cors.ts";
 
 serve(async (req) => {
   // Handle CORS preflight requests
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
-  }
+  const corsRes = handleCors(req);
+  if (corsRes) return corsRes;
 
   try {
     const { employeeId, pin } = await req.json();
 
     if (!employeeId) {
-      return new Response(
-        JSON.stringify({ success: false, error: 'Employee ID is required' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      return errorResponse('Employee ID is required', 400);
     }
 
     console.log('Hashing PIN for employee:', employeeId);
@@ -32,20 +24,14 @@ serve(async (req) => {
     // Get auth user from JWT
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
-      return new Response(
-        JSON.stringify({ success: false, error: 'Not authenticated' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      return errorResponse('Not authenticated', 401);
     }
 
     const token = authHeader.replace('Bearer ', '');
     const { data: { user }, error: authError } = await supabase.auth.getUser(token);
     
     if (authError || !user) {
-      return new Response(
-        JSON.stringify({ success: false, error: 'Invalid token' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      return errorResponse('Invalid token', 401);
     }
 
     // Verify user is admin in the organization
@@ -56,10 +42,7 @@ serve(async (req) => {
       .single();
 
     if (!profile?.organization_id) {
-      return new Response(
-        JSON.stringify({ success: false, error: 'No organization found' }),
-        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      return errorResponse('No organization found', 403);
     }
 
     const { data: hasRole } = await supabase.rpc('has_role', {
@@ -68,10 +51,7 @@ serve(async (req) => {
     });
 
     if (!hasRole) {
-      return new Response(
-        JSON.stringify({ success: false, error: 'Only admins can set PINs' }),
-        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      return errorResponse('Only admins can set PINs', 403);
     }
 
     // Verify employee belongs to the user's organization
@@ -82,17 +62,11 @@ serve(async (req) => {
       .single();
 
     if (empError || !employee) {
-      return new Response(
-        JSON.stringify({ success: false, error: 'Employee not found' }),
-        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      return errorResponse('Employee not found', 404);
     }
 
     if (employee.organization_id !== profile.organization_id) {
-      return new Response(
-        JSON.stringify({ success: false, error: 'Employee not in your organization' }),
-        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      return errorResponse('Employee not in your organization', 403);
     }
 
     // Hash PIN if provided, or set to null if empty/removed
@@ -113,23 +87,14 @@ serve(async (req) => {
 
     if (updateError) {
       console.error('Error updating PIN:', updateError);
-      return new Response(
-        JSON.stringify({ success: false, error: 'Failed to update PIN' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      return errorResponse('Failed to update PIN', 500);
     }
 
-    return new Response(
-      JSON.stringify({ success: true }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    return jsonResponse({ success: true });
 
   } catch (error) {
     console.error('Error in hash-employee-pin:', error);
     const message = error instanceof Error ? error.message : 'Unknown error';
-    return new Response(
-      JSON.stringify({ success: false, error: message }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    return errorResponse(message, 500);
   }
 });

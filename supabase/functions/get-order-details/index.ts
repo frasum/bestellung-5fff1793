@@ -1,11 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "GET, OPTIONS",
-};
+import { handleCors, jsonResponse, errorResponse } from "../_shared/cors.ts";
 
 serve(async (req) => {
   console.log("=== GET-ORDER-DETAILS START ===");
@@ -13,9 +8,8 @@ serve(async (req) => {
   console.log("Request method:", req.method);
 
   // Handle CORS preflight
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
-  }
+  const corsRes = handleCors(req);
+  if (corsRes) return corsRes;
 
   try {
     const url = new URL(req.url);
@@ -27,10 +21,7 @@ serve(async (req) => {
 
     if (!orderId) {
       console.error("No orderId provided");
-      return new Response(
-        JSON.stringify({ error: "Order ID required" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return errorResponse("Order ID required", 400);
     }
 
     const supabase = createClient(
@@ -50,19 +41,13 @@ serve(async (req) => {
 
       if (tokenError || !tokenData) {
         console.error("Invalid or missing token:", tokenError);
-        return new Response(
-          JSON.stringify({ error: "Invalid confirmation token" }),
-          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
+        return errorResponse("Invalid confirmation token", 403);
       }
 
       // Check if token is expired
       if (new Date(tokenData.expires_at) < new Date()) {
         console.error("Token expired");
-        return new Response(
-          JSON.stringify({ error: "Confirmation token has expired" }),
-          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
+        return errorResponse("Confirmation token has expired", 403);
       }
 
       console.log("Token validated successfully");
@@ -90,18 +75,12 @@ serve(async (req) => {
 
     if (error) {
       console.error("Error fetching order:", error);
-      return new Response(
-        JSON.stringify({ error: "Failed to fetch order" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return errorResponse("Failed to fetch order", 500);
     }
 
     if (!order) {
       console.error("Order not found or not confirmed");
-      return new Response(
-        JSON.stringify({ error: "Order not found or not confirmed" }),
-        { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return errorResponse("Order not found or not confirmed", 404);
     }
 
     console.log("Order found:", order.order_number);
@@ -173,16 +152,10 @@ serve(async (req) => {
     console.log("Returning response with", response.items.length, "items");
     console.log("=== GET-ORDER-DETAILS SUCCESS ===");
 
-    return new Response(
-      JSON.stringify(response),
-      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    return jsonResponse(response);
 
   } catch (error) {
     console.error("Unhandled error:", error);
-    return new Response(
-      JSON.stringify({ error: "Internal server error" }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    return errorResponse("Internal server error", 500);
   }
 });
