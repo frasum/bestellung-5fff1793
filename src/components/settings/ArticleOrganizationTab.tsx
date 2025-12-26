@@ -25,8 +25,10 @@ import { TOP_CATEGORIES } from '@/components/suppliers/constants';
 import { toast } from 'sonner';
 import { ArticleFormDialog } from '@/components/suppliers/ArticleFormDialog';
 import { SupplierFormDialog } from '@/components/suppliers/SupplierFormDialog';
+import { toTitleCase } from '@/lib/utils';
 
 type TopCategory = typeof TOP_CATEGORIES[number];
+
 
 interface ArticleWithTopCategory {
   id: string;
@@ -726,7 +728,7 @@ export const ArticleOrganizationTab = () => {
                               }}
                               className="font-medium text-left hover:text-primary hover:underline transition-colors"
                             >
-                              {article.name}
+                              {toTitleCase(article.name)}
                             </button>
                             <button
                               onClick={() => {
