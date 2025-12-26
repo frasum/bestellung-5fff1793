@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -70,8 +70,22 @@ export const SupplierFormDialog = ({
     }
   }, [editingSupplier, form]);
 
+  // Stable reference tracking to prevent infinite loops
+  const locationIdsRef = useRef<string>('');
+  const supplierLocationIdsRef = useRef<string>('');
+
   // Initialize location data when supplier locations are loaded
   useEffect(() => {
+    const locationIds = locations.map(l => l.id).sort().join(',');
+    const slIds = supplierLocations.map(sl => `${sl.location_id}-${sl.is_active}-${sl.customer_number || ''}-${sl.minimum_order_value || ''}`).sort().join(',');
+    
+    // Only update if something actually changed
+    if (locationIds === locationIdsRef.current && slIds === supplierLocationIdsRef.current) {
+      return;
+    }
+    locationIdsRef.current = locationIds;
+    supplierLocationIdsRef.current = slIds;
+
     if (locations.length > 0) {
       const initial: Record<string, LocationFormData> = {};
       locations.forEach(loc => {

@@ -354,25 +354,36 @@ const Suppliers = () => {
     return allArticles.filter(article => locationArticleIds.has(article.id));
   }, [allArticles, locationArticleIds]);
 
-  // Extract article categories for supplier filter (from location-filtered articles)
-  const articleCategoriesForSupplierFilter = [...new Set(locationFilteredArticles?.map(a => a.category).filter(Boolean) as string[])].sort();
+  // Extract article categories for supplier filter (from location-filtered articles) - memoized
+  const articleCategoriesForSupplierFilter = useMemo(() => 
+    [...new Set(locationFilteredArticles?.map(a => a.category).filter(Boolean) as string[])].sort(),
+    [locationFilteredArticles]
+  );
 
-  // Group articles by supplier (from location-filtered articles)
-  const articlesBySupplier = locationFilteredArticles?.reduce((acc, article) => {
-    if (!acc[article.supplier_id]) {
-      acc[article.supplier_id] = [];
-    }
-    acc[article.supplier_id].push(article);
-    return acc;
-  }, {} as Record<string, Article[]>) || {};
+  // Group articles by supplier (from location-filtered articles) - memoized
+  const articlesBySupplier = useMemo(() => 
+    locationFilteredArticles?.reduce((acc, article) => {
+      if (!acc[article.supplier_id]) {
+        acc[article.supplier_id] = [];
+      }
+      acc[article.supplier_id].push(article);
+      return acc;
+    }, {} as Record<string, Article[]>) || {},
+    [locationFilteredArticles]
+  );
 
-  // Extract categories from articles (location-filtered)
-  const articleDerivedCategories = locationFilteredArticles?.map(a => a.category).filter(Boolean) as string[] || [];
-  const dbCategoryNames = dbCategories?.map(c => c.name) || [];
-  const allArticleCategories = [...new Set([...articleDerivedCategories, ...dbCategoryNames])].sort();
+  // Extract categories from articles (location-filtered) - memoized
+  const allArticleCategories = useMemo(() => {
+    const articleDerivedCategories = locationFilteredArticles?.map(a => a.category).filter(Boolean) as string[] || [];
+    const dbCategoryNames = dbCategories?.map(c => c.name) || [];
+    return [...new Set([...articleDerivedCategories, ...dbCategoryNames])].sort();
+  }, [locationFilteredArticles, dbCategories]);
 
-  // Extract unique units from articles + defaults (location-filtered)
-  const existingUnits = [...new Set([...DEFAULT_UNITS, ...(locationFilteredArticles?.map(a => a.unit).filter(Boolean) as string[] || [])])].sort();
+  // Extract unique units from articles + defaults (location-filtered) - memoized
+  const existingUnits = useMemo(() => 
+    [...new Set([...DEFAULT_UNITS, ...(locationFilteredArticles?.map(a => a.unit).filter(Boolean) as string[] || [])])].sort(),
+    [locationFilteredArticles]
+  );
 
   // Supplier functions
   const toggleSupplierExpanded = (supplierId: string) => {
