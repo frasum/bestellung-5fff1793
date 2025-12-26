@@ -313,15 +313,15 @@ export const CategoriesTab = () => {
                                         </div>
                                         
                                         <Select
-                                          value={article.category || ''}
-                                          onValueChange={(value) => handleChangeArticleCategory(article.id, value || null)}
+                                          value={article.category || '__none__'}
+                                          onValueChange={(value) => handleChangeArticleCategory(article.id, value === '__none__' ? null : value)}
                                           disabled={updatingArticleId === article.id}
                                         >
                                           <SelectTrigger className="w-32 sm:w-40 h-8 text-xs">
                                             <SelectValue placeholder={t('settings.selectCategory')} />
                                           </SelectTrigger>
                                           <SelectContent>
-                                            <SelectItem value="">{t('settings.noCategory')}</SelectItem>
+                                            <SelectItem value="__none__">{t('settings.noCategory')}</SelectItem>
                                             {sortedCategories.map(cat => (
                                               <SelectItem key={cat.id} value={cat.name}>{cat.name}</SelectItem>
                                             ))}
