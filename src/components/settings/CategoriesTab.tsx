@@ -307,7 +307,7 @@ export const CategoriesTab = () => {
                                   </p>
                                 ) : (
                                   <Table>
-                                    <TableHeader className="sticky top-[52px] bg-muted z-10">
+                                    <TableHeader className="sticky top-[49px] bg-muted z-10">
                                       <TableRow className="border-b">
                                         <TableHead className="text-xs font-medium text-muted-foreground uppercase">
                                           {t('articles.name')}
