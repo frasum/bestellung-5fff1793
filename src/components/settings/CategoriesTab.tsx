@@ -262,7 +262,7 @@ export const CategoriesTab = () => {
                                     )} />
                                     <span className="font-medium">{category.name}</span>
                                     <span className="text-sm text-muted-foreground ml-2">
-                                      {categoryArticles.length} {t('common.articles')}
+                                      {categoryArticles.length}
                                     </span>
                                   </div>
                                   <div className="flex items-center gap-1">
