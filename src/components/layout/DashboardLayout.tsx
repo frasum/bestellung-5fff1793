@@ -18,7 +18,7 @@ import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import { LocationSwitcher } from '@/components/LocationSwitcher';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 import { ThemeToggle } from '@/components/ThemeToggle';
-import { useOrganization, useUpdateOrganization } from '@/hooks/useSettings';
+import { useOrganizationDetails, useUpdateOrganization } from '@/hooks/useSettings';
 import { Badge } from '@/components/ui/badge';
 import { MobileBottomNav } from '@/components/layout/MobileBottomNav';
 import { FloatingCartButton } from '@/components/FloatingCartButton';
@@ -70,7 +70,7 @@ export const DashboardLayout = ({
   useKeyboardShortcuts();
   
   
-  const { data: organization, isLoading: isOrgLoading } = useOrganization();
+  const { data: organization, isLoading: isOrgLoading } = useOrganizationDetails();
   const updateOrganization = useUpdateOrganization();
   const { activeLocation } = useLocationContext();
   const { data: drafts } = useCartDrafts(activeLocation?.id, false);

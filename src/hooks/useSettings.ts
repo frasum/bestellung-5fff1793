@@ -47,11 +47,11 @@ export interface Organization {
   developer_checklist_notes: string | null;
 }
 
-export const useOrganization = () => {
+export const useOrganizationDetails = () => {
   const { user } = useAuth();
 
   return useQuery({
-    queryKey: ['organization', user?.id],
+    queryKey: ['organization-details', user?.id],
     queryFn: async () => {
       const { data: profile } = await supabase
         .from('profiles')

@@ -7,7 +7,7 @@ import {
   useMarkAsReviewed,
   useRunPriceSearch
 } from '@/hooks/usePriceWatch';
-import { useOrganization } from '@/hooks/useSettings';
+import { useOrganizationDetails } from '@/hooks/useSettings';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -61,7 +61,7 @@ export const PriceWatchTab = () => {
   const { t } = useTranslation();
   const { data: results, isLoading } = usePriceWatchResults();
   const { data: settings } = usePriceWatchSettings();
-  const { data: organization } = useOrganization();
+  const { data: organization } = useOrganizationDetails();
   const dismissResult = useDismissResult();
   const markAsReviewed = useMarkAsReviewed();
   const runPriceSearch = useRunPriceSearch();

@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Globe, Mail, Palette, Map, Database, Server } from 'lucide-react';
-import { useOrganization, useUpdateOrganization } from '@/hooks/useSettings';
+import { useOrganizationDetails, useUpdateOrganization } from '@/hooks/useSettings';
 import { I18nCheckDialog } from '@/components/settings/I18nCheckDialog';
 
 const AdvancedSettingsSwitch = () => {
@@ -151,7 +151,7 @@ const AdvancedToolsSection = () => {
 
 const TestModeSection = () => {
   const { t } = useTranslation();
-  const { data: organization } = useOrganization();
+  const { data: organization } = useOrganizationDetails();
   const updateOrganization = useUpdateOrganization();
   const [testEmails, setTestEmails] = useState<string[]>([]);
   const [newEmail, setNewEmail] = useState('');
