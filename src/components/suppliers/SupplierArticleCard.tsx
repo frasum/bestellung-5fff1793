@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Save, Loader2, Clock, Camera, Trash2, Upload } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn, toTitleCase } from '@/lib/utils';
 import { SupplierUnitSelect } from './SupplierUnitSelect';
 import { compressImage } from '@/lib/imageCompression';
 import { SupplierOrderUnitSelect } from './SupplierOrderUnitSelect';
@@ -261,7 +261,7 @@ export function SupplierArticleCard({
       {/* Header */}
       <div className="flex justify-between items-start gap-2 mb-4">
         <div className="flex-1 min-w-0">
-          <h3 className="font-semibold text-base break-words">{article.name}</h3>
+          <h3 className="font-semibold text-base break-words">{toTitleCase(article.name)}</h3>
           {article.sku && (
             <p className="text-xs text-muted-foreground mt-0.5">SKU: {article.sku}</p>
           )}
