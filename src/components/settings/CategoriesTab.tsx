@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Plus, Pencil, Trash2, Tag, Check, X, Merge, ChevronRight } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -291,45 +292,68 @@ export const CategoriesTab = () => {
                               )}
                             </div>
                             
-                            {/* Expandable Article List */}
+                            {/* Expandable Article List - Table with Sticky Header */}
                             {isExpanded && (
-                              <div className="border-t bg-muted/30 p-3 max-h-80 overflow-y-auto">
+                              <div className="border-t bg-muted/30 max-h-80 overflow-y-auto">
                                 {categoryArticles.length === 0 ? (
-                                  <p className="text-sm text-muted-foreground text-center py-2">
+                                  <p className="text-sm text-muted-foreground text-center py-4">
                                     {t('settings.noArticlesInCategory')}
                                   </p>
                                 ) : (
-                                  <div className="space-y-2">
-                                    {categoryArticles.map(article => (
-                                      <div 
-                                        key={article.id} 
-                                        className="flex items-center justify-between py-2 px-2 rounded-md hover:bg-background/50 border-b last:border-0"
-                                      >
-                                        <div className="flex-1 min-w-0">
-                                          <span className="text-sm font-medium truncate block">{article.name}</span>
-                                          <span className="text-xs text-muted-foreground">
+                                  <Table>
+                                    <TableHeader className="sticky top-0 bg-muted z-10">
+                                      <TableRow className="border-b">
+                                        <TableHead className="text-xs font-medium text-muted-foreground uppercase">
+                                          {t('articles.name')}
+                                        </TableHead>
+                                        <TableHead className="text-xs font-medium text-muted-foreground uppercase">
+                                          {t('articles.supplier')}
+                                        </TableHead>
+                                        <TableHead className="text-xs font-medium text-muted-foreground uppercase">
+                                          {t('articles.unit')}
+                                        </TableHead>
+                                        <TableHead className="text-xs font-medium text-muted-foreground uppercase text-right">
+                                          {t('articles.price')}
+                                        </TableHead>
+                                        <TableHead className="text-xs font-medium text-muted-foreground uppercase w-40">
+                                          {t('articles.category')}
+                                        </TableHead>
+                                      </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                      {categoryArticles.map(article => (
+                                        <TableRow key={article.id} className="hover:bg-background/50">
+                                          <TableCell className="font-medium text-sm">{article.name}</TableCell>
+                                          <TableCell className="text-sm text-muted-foreground">
                                             {article.suppliers?.name || t('common.noSupplier')}
-                                          </span>
-                                        </div>
-                                        
-                                        <Select
-                                          value={article.category || '__none__'}
-                                          onValueChange={(value) => handleChangeArticleCategory(article.id, value === '__none__' ? null : value)}
-                                          disabled={updatingArticleId === article.id}
-                                        >
-                                          <SelectTrigger className="w-32 sm:w-40 h-8 text-xs">
-                                            <SelectValue placeholder={t('settings.selectCategory')} />
-                                          </SelectTrigger>
-                                          <SelectContent>
-                                            <SelectItem value="__none__">{t('settings.noCategory')}</SelectItem>
-                                            {sortedCategories.map(cat => (
-                                              <SelectItem key={cat.id} value={cat.name}>{cat.name}</SelectItem>
-                                            ))}
-                                          </SelectContent>
-                                        </Select>
-                                      </div>
-                                    ))}
-                                  </div>
+                                          </TableCell>
+                                          <TableCell className="text-sm text-muted-foreground">
+                                            {article.unit || '-'}
+                                          </TableCell>
+                                          <TableCell className="text-sm text-right">
+                                            €{Number(article.price || 0).toFixed(2)}
+                                          </TableCell>
+                                          <TableCell>
+                                            <Select
+                                              value={article.category || '__none__'}
+                                              onValueChange={(value) => handleChangeArticleCategory(article.id, value === '__none__' ? null : value)}
+                                              disabled={updatingArticleId === article.id}
+                                            >
+                                              <SelectTrigger className="h-8 text-xs">
+                                                <SelectValue placeholder={t('settings.selectCategory')} />
+                                              </SelectTrigger>
+                                              <SelectContent>
+                                                <SelectItem value="__none__">{t('settings.noCategory')}</SelectItem>
+                                                {sortedCategories.map(cat => (
+                                                  <SelectItem key={cat.id} value={cat.name}>{cat.name}</SelectItem>
+                                                ))}
+                                              </SelectContent>
+                                            </Select>
+                                          </TableCell>
+                                        </TableRow>
+                                      ))}
+                                    </TableBody>
+                                  </Table>
                                 )}
                               </div>
                             )}
