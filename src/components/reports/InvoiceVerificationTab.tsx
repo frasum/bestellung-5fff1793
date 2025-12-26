@@ -26,7 +26,6 @@ import {
   ExternalLink,
   Plus,
   Trash2,
-  Sparkles,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -78,6 +77,7 @@ import {
   InvoiceDiscrepancy,
 } from '@/hooks/useInvoices';
 import { Progress } from '@/components/ui/progress';
+import { InvoiceProcessingSummary } from './InvoiceProcessingSummary';
 
 const statusConfig: Record<Invoice['status'], { icon: React.ElementType; color: string; label: string }> = {
   pending: { icon: Clock, color: 'bg-muted text-muted-foreground', label: 'Neu' },
@@ -355,25 +355,20 @@ export function InvoiceVerificationTab() {
                                 <StatusIcon className={cn('h-3 w-3 mr-1', invoice.status === 'processing' && 'animate-spin')} />
                                 {statusConfig[invoice.status].label}
                               </Badge>
-                              {discrepancyCount > 0 && (
-                                <Badge variant="destructive" className="text-xs">
-                                  {discrepancyCount} {t('invoices.discrepancies', 'Abweichungen')}
-                                </Badge>
-                              )}
-                              {/* Auto-created indicator from notes */}
-                              {invoice.notes && (invoice.notes.includes('automatisch erstellt') || invoice.notes.includes('Lieferant wurde automatisch')) && (
-                                <Badge variant="secondary" className="text-xs bg-amber-500/20 text-amber-700 dark:text-amber-400 border-amber-500/30">
-                                  <Sparkles className="h-3 w-3 mr-1" />
-                                  {t('invoices.autoCreated', 'Auto-erstellt')}
-                                </Badge>
-                              )}
                             </div>
-                            <div className="text-xs text-muted-foreground mt-0.5">
-                              {invoice.invoice_number && <span className="mr-3">{invoice.invoice_number}</span>}
+                            <div className="text-xs text-muted-foreground mt-0.5 flex items-center gap-2">
+                              {invoice.invoice_number && <span>{invoice.invoice_number}</span>}
                               {invoice.invoice_date && (
                                 <span>{format(new Date(invoice.invoice_date), 'dd.MM.yyyy', { locale })}</span>
                               )}
                             </div>
+                            {/* Processing summary badges */}
+                            <InvoiceProcessingSummary 
+                              parsedData={invoice.parsed_data}
+                              matchedOrderNumber={invoice.orders?.order_number}
+                              discrepancyCount={discrepancyCount}
+                              className="mt-1.5"
+                            />
                           </div>
                         </div>
 
