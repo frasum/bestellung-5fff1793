@@ -228,10 +228,16 @@ export const CategoriesTab = () => {
                         return (
                           <div
                             key={category.id}
-                            className="border rounded-lg bg-background overflow-hidden"
+                            className={cn(
+                              "border rounded-lg bg-background overflow-hidden",
+                              isExpanded && "max-h-96 overflow-y-auto"
+                            )}
                           >
-                            {/* Category Header */}
-                            <div className="flex items-center justify-between p-3 hover:bg-muted/50">
+                            {/* Category Header - Sticky when expanded */}
+                            <div className={cn(
+                              "flex items-center justify-between p-3 hover:bg-muted/50",
+                              isExpanded && "sticky top-0 bg-background z-20 border-b"
+                            )}>
                               {editingId === category.id ? (
                                 <div className="flex items-center gap-2 flex-1">
                                   <Input
@@ -294,14 +300,14 @@ export const CategoriesTab = () => {
                             
                             {/* Expandable Article List - Table with Sticky Header */}
                             {isExpanded && (
-                              <div className="border-t bg-muted/30 max-h-80 overflow-y-auto">
+                              <div className="bg-muted/30">
                                 {categoryArticles.length === 0 ? (
                                   <p className="text-sm text-muted-foreground text-center py-4">
                                     {t('settings.noArticlesInCategory')}
                                   </p>
                                 ) : (
                                   <Table>
-                                    <TableHeader className="sticky top-0 bg-muted z-10">
+                                    <TableHeader className="sticky top-[52px] bg-muted z-10">
                                       <TableRow className="border-b">
                                         <TableHead className="text-xs font-medium text-muted-foreground uppercase">
                                           {t('articles.name')}
