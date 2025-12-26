@@ -344,14 +344,14 @@ const nodeDetails: Record<string, { title: string; description: string; items: s
     icon: "🔒"
   },
   // External Services
-  Resend: {
-    title: "Resend E-Mail Service",
-    description: "Professioneller E-Mail-Versand",
+  SMTP: {
+    title: "SMTP E-Mail Service",
+    description: "Eigener SMTP-Server für E-Mail-Versand",
     items: [
-      "Transaktions-E-Mails",
+      "SMTP via denomailer",
       "HTML-Templates",
-      "Zustellungsraten >99%",
-      "Bounce-Handling"
+      "Zustellungskontrolle",
+      "Eigener Server (smtps.udag.de)"
     ],
     icon: "📧"
   },
@@ -455,7 +455,7 @@ flowchart TB
 
     subgraph External["🌐 Externe Dienste"]
         direction TB
-        Resend["📧 Resend (E-Mail)"]
+        SMTP["📧 SMTP (E-Mail)"]
         OpenAI["🤖 OpenAI GPT-4o"]
         ElevenLabs["🎤 ElevenLabs Voice"]
         Perplexity["🔍 Perplexity AI"]
@@ -472,12 +472,12 @@ flowchart TB
     
     AuthFuncs --> Auth
     OrderFuncs --> Database
-    OrderFuncs --> Resend
+    OrderFuncs --> SMTP
     AIFuncs --> OpenAI
     AIFuncs --> ElevenLabs
     AIFuncs --> Perplexity
     B2BFuncs --> Database
-    B2BFuncs --> Resend
+    B2BFuncs --> SMTP
 
     %% Layer Styling
     style Frontend fill:#dbeafe,stroke:#3b82f6,stroke-width:2px,color:#1e40af
