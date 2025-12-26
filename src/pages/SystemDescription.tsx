@@ -27,7 +27,23 @@ import {
   Wine,
   Download,
   Smartphone,
-  Star
+  Star,
+  Receipt,
+  Mic,
+  Building2,
+  TrendingUp,
+  ClipboardCheck,
+  FileSearch,
+  Scan,
+  Image,
+  Brain,
+  Sparkles,
+  Package,
+  Grape,
+  BookOpen,
+  Gamepad2,
+  Warehouse,
+  Calculator
 } from 'lucide-react';
 import { generateSystemOverviewPdf } from '@/lib/systemOverviewPdf';
 
@@ -144,6 +160,98 @@ Die Lösung digitalisiert den gesamten Bestellprozess – von der Artikelverwalt
     { icon: Smartphone, name: 'Demo-Modus', desc: '7 Tage kostenlos testen' },
   ];
 
+  // NEW: Invoice Processing
+  const invoiceProcessing = {
+    title: 'KI-Rechnungsverarbeitung',
+    description: 'Automatische Analyse von Lieferantenrechnungen mit künstlicher Intelligenz. Das System erkennt Artikelpreise, gleicht sie mit Bestellungen ab und aktualisiert Ihre Stammdaten automatisch.',
+    features: [
+      { icon: FileSearch, name: 'PDF-Upload', desc: 'Rechnungen per Drag & Drop hochladen' },
+      { icon: Brain, name: 'KI-Analyse', desc: 'Automatische Erkennung von Lieferant, Artikeln, Mengen und Preisen' },
+      { icon: Sparkles, name: 'Auto-Erstellung', desc: 'Neue Lieferanten und Artikel werden automatisch angelegt' },
+      { icon: TrendingUp, name: 'Preisabgleich', desc: 'Vergleich mit Bestellungen – Abweichungen werden markiert' },
+      { icon: Mail, name: 'E-Mail-Integration', desc: 'Rechnungen direkt aus dem E-Mail-Postfach (IMAP) verarbeiten' },
+      { icon: Receipt, name: 'Preishistorie', desc: 'Alle Preisänderungen werden automatisch protokolliert' },
+    ]
+  };
+
+  // NEW: Voice Features
+  const voiceFeatures = {
+    title: 'Sprachsteuerung',
+    description: 'Bestellungen und Inventur per Spracheingabe – freihändig und schnell. Unterstützt 6 Sprachen mit KI-basierter Transkription.',
+    features: [
+      { icon: Mic, name: 'Sprachbestellung', desc: 'Artikel per Sprache bestellen: "3 Kisten Mineralwasser"' },
+      { icon: ClipboardCheck, name: 'Sprach-Inventur', desc: 'Bestände diktieren statt tippen' },
+      { icon: Languages, name: 'Mehrsprachig', desc: 'Deutsch, Englisch, Französisch, Italienisch, Thai, Vietnamesisch' },
+      { icon: Brain, name: 'KI-Erkennung', desc: 'Intelligente Zuordnung zu Ihrem Artikelkatalog' },
+    ]
+  };
+
+  // NEW: B2B Portal
+  const b2bPortal = {
+    title: 'B2B-Lieferantenportal',
+    description: 'Komplettes Bestellsystem für Lieferanten: Verwalten Sie Ihre Kunden, Artikel und Bestellungen – oder nutzen Sie das Portal für Ihren eigenen Einkauf bei Sublieferanten.',
+    features: [
+      { icon: Building2, name: 'Lieferanten-Dashboard', desc: 'Eigenes Portal für jeden Lieferanten' },
+      { icon: UserPlus, name: 'Kunden einladen', desc: 'Geschäftskunden per E-Mail einladen' },
+      { icon: Package, name: 'Artikelverwaltung', desc: 'Eigene Artikel und Preise pflegen' },
+      { icon: FileText, name: 'Angebote erstellen', desc: 'PDF-Angebote direkt aus dem System' },
+      { icon: Smartphone, name: 'Mobile Inventur', desc: 'Inventur per QR-Code auf dem Smartphone' },
+      { icon: ShoppingCart, name: 'Eigener Einkauf', desc: 'Bestellungen bei eigenen Sublieferanten aufgeben' },
+    ]
+  };
+
+  // NEW: Price Watch
+  const priceWatch = {
+    title: 'Preisüberwachung (Price Watch)',
+    description: 'Automatische Suche nach günstigeren Preisen und Alternativen. Integration mit Großhandels-Katalogen für Preisvergleiche.',
+    features: [
+      { icon: TrendingUp, name: 'Preissuche', desc: 'Automatische Suche nach Alternativen im Web' },
+      { icon: FileSearch, name: 'Kröswang-Integration', desc: 'Direkter Zugriff auf den Kröswang-Katalog' },
+      { icon: Mail, name: 'Preisalarme', desc: 'E-Mail-Benachrichtigung bei Preisänderungen' },
+      { icon: BarChart3, name: 'Vergleichsanalyse', desc: 'Übersichtliche Darstellung von Preisunterschieden' },
+    ]
+  };
+
+  // NEW: Wine Features
+  const wineFeatures = {
+    title: 'Wein-Management',
+    description: 'Spezialisierte Funktionen für die Weinverwaltung: KI-Recherche, mehrsprachige Beschreibungen und ein interaktives Quiz für Ihr Team.',
+    features: [
+      { icon: Wine, name: 'Weinkatalog', desc: 'Dedizierte Ansicht für Ihre Weinkarte' },
+      { icon: Brain, name: 'KI-Weinrecherche', desc: 'Automatische Ermittlung von Rebsorte, Herkunft, Geschmacksprofil' },
+      { icon: Image, name: 'Bildsuche', desc: 'Weinetiketten per Foto finden' },
+      { icon: Languages, name: 'Übersetzung', desc: 'Automatische Übersetzung in 6 Sprachen' },
+      { icon: BookOpen, name: 'PDF-Weinkarte', desc: 'Generierung einer druckfertigen Weinkarte mit QR-Codes' },
+      { icon: Gamepad2, name: 'Wein-Quiz', desc: '"Wer wird Weinkenner?" – Schulungstool für Ihr Team' },
+    ]
+  };
+
+  // NEW: Scan & Photo Features
+  const scanFeatures = {
+    title: 'KI-Foto & Scan-Funktionen',
+    description: 'Erfassen Sie Artikel und Bestelllisten per Foto – die KI erkennt Produkte und ordnet sie automatisch Ihrem Katalog zu.',
+    features: [
+      { icon: Scan, name: 'Listen scannen', desc: 'Handschriftliche Bestelllisten abfotografieren' },
+      { icon: Camera, name: 'Artikel erkennen', desc: 'Produktfotos für automatische Artikelanlage' },
+      { icon: Brain, name: 'KI-Zuordnung', desc: 'Intelligente Zuordnung zu bestehenden Artikeln' },
+      { icon: Sparkles, name: 'Vorschläge', desc: 'Foto-Vorschläge für fehlende Artikelbilder' },
+    ]
+  };
+
+  // NEW: Inventory Features
+  const inventoryFeatures = {
+    title: 'Erweiterte Inventur',
+    description: 'Digitale Inventur für alle Standorte mit Export-Funktionen, Warenwertkalkulation und Zeitvergleich.',
+    features: [
+      { icon: Warehouse, name: 'Mehrere Lager', desc: 'Getrennte Erfassung für Lager 1 und Lager 2' },
+      { icon: MapPin, name: 'Multi-Standort', desc: 'Inventur pro Standort durchführen' },
+      { icon: Download, name: 'Export', desc: 'PDF & Excel Export der Inventurliste' },
+      { icon: Calculator, name: 'Warenwert', desc: 'Automatische Berechnung des Gesamtwarenwerts' },
+      { icon: BarChart3, name: 'Zeitvergleich', desc: 'Vergleich zwischen verschiedenen Inventur-Zeitpunkten' },
+      { icon: Mic, name: 'Spracheingabe', desc: 'Bestände per Sprache erfassen' },
+    ]
+  };
+
   const pricing = [
     { name: 'FREE', price: '0 €', features: ['1 Benutzer', '1 Standort', '50 Artikel', 'Basis-Funktionen'] },
     { name: 'BASIC', price: '29 €', features: ['3 Benutzer', '2 Standorte', '500 Artikel', 'E-Mail-Support'] },
@@ -172,6 +280,20 @@ Die Lösung digitalisiert den gesamten Bestellprozess – von der Artikelverwalt
         return `Der Bestellprozess\n\n${orderProcess.map(p => `${p.step}. ${p.title}: ${p.desc}`).join('\n')}`;
       case 'highlights':
         return `Highlight-Features\n\n${highlights.map(h => `• ${h.name}: ${h.desc}`).join('\n')}`;
+      case 'invoiceProcessing':
+        return `${invoiceProcessing.title}\n\n${invoiceProcessing.description}\n\n${invoiceProcessing.features.map(f => `• ${f.name}: ${f.desc}`).join('\n')}`;
+      case 'voiceFeatures':
+        return `${voiceFeatures.title}\n\n${voiceFeatures.description}\n\n${voiceFeatures.features.map(f => `• ${f.name}: ${f.desc}`).join('\n')}`;
+      case 'b2bPortal':
+        return `${b2bPortal.title}\n\n${b2bPortal.description}\n\n${b2bPortal.features.map(f => `• ${f.name}: ${f.desc}`).join('\n')}`;
+      case 'priceWatch':
+        return `${priceWatch.title}\n\n${priceWatch.description}\n\n${priceWatch.features.map(f => `• ${f.name}: ${f.desc}`).join('\n')}`;
+      case 'wineFeatures':
+        return `${wineFeatures.title}\n\n${wineFeatures.description}\n\n${wineFeatures.features.map(f => `• ${f.name}: ${f.desc}`).join('\n')}`;
+      case 'scanFeatures':
+        return `${scanFeatures.title}\n\n${scanFeatures.description}\n\n${scanFeatures.features.map(f => `• ${f.name}: ${f.desc}`).join('\n')}`;
+      case 'inventoryFeatures':
+        return `${inventoryFeatures.title}\n\n${inventoryFeatures.description}\n\n${inventoryFeatures.features.map(f => `• ${f.name}: ${f.desc}`).join('\n')}`;
       case 'pricing':
         return `Preise\n\n${pricing.map(p => `${p.name} (${p.price}/Monat):\n${p.features.map(f => `  • ${f}`).join('\n')}`).join('\n\n')}\n\nAlle Preise zzgl. MwSt.`;
       case 'testimonials':
@@ -181,6 +303,13 @@ Die Lösung digitalisiert den gesamten Bestellprozess – von der Artikelverwalt
           generateSectionText('intro'),
           generateSectionText('benefits'),
           generateSectionText('modules'),
+          generateSectionText('invoiceProcessing'),
+          generateSectionText('voiceFeatures'),
+          generateSectionText('b2bPortal'),
+          generateSectionText('priceWatch'),
+          generateSectionText('wineFeatures'),
+          generateSectionText('scanFeatures'),
+          generateSectionText('inventoryFeatures'),
           generateSectionText('roles'),
           generateSectionText('process'),
           generateSectionText('highlights'),
@@ -190,6 +319,57 @@ Die Lösung digitalisiert den gesamten Bestellprozess – von der Artikelverwalt
       default:
         return '';
     }
+  };
+
+  // Render feature section helper
+  const FeatureSection = ({ 
+    sectionId, 
+    title, 
+    description, 
+    features, 
+    accentColor = 'bg-primary' 
+  }: { 
+    sectionId: string;
+    title: string; 
+    description: string; 
+    features: Array<{ icon: any; name: string; desc: string }>;
+    accentColor?: string;
+  }) => {
+    const IconComponent = features[0]?.icon;
+    return (
+      <Card>
+        <CardHeader className="flex flex-row items-start justify-between">
+          <div>
+            <CardTitle className="flex items-center gap-2">
+              <div className={`p-2 rounded-lg ${accentColor}`}>
+                {IconComponent && <IconComponent className="h-5 w-5 text-white" />}
+              </div>
+              {title}
+            </CardTitle>
+            <p className="text-sm text-muted-foreground mt-2">{description}</p>
+          </div>
+          <CopyButton text={generateSectionText(sectionId)} sectionId={sectionId} />
+        </CardHeader>
+        <CardContent>
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-3">
+            {features.map((f, i) => {
+              const FeatureIcon = f.icon;
+              return (
+                <div key={i} className="flex items-start gap-3 p-3 rounded-lg bg-muted/50">
+                  <div className={`p-2 rounded-full ${accentColor}/10`}>
+                    <FeatureIcon className="h-4 w-4 text-primary" />
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-sm">{f.name}</h4>
+                    <p className="text-xs text-muted-foreground">{f.desc}</p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </CardContent>
+      </Card>
+    );
   };
 
   return (
@@ -285,6 +465,67 @@ Die Lösung digitalisiert den gesamten Bestellprozess – von der Artikelverwalt
           </CardContent>
         </Card>
 
+        {/* NEW SECTIONS */}
+        <div className="space-y-6">
+          <h2 className="text-2xl font-bold text-center pt-4">Erweiterte Funktionen</h2>
+          
+          <FeatureSection 
+            sectionId="invoiceProcessing"
+            title={invoiceProcessing.title}
+            description={invoiceProcessing.description}
+            features={invoiceProcessing.features}
+            accentColor="bg-blue-500"
+          />
+
+          <FeatureSection 
+            sectionId="voiceFeatures"
+            title={voiceFeatures.title}
+            description={voiceFeatures.description}
+            features={voiceFeatures.features}
+            accentColor="bg-violet-500"
+          />
+
+          <FeatureSection 
+            sectionId="b2bPortal"
+            title={b2bPortal.title}
+            description={b2bPortal.description}
+            features={b2bPortal.features}
+            accentColor="bg-indigo-500"
+          />
+
+          <FeatureSection 
+            sectionId="priceWatch"
+            title={priceWatch.title}
+            description={priceWatch.description}
+            features={priceWatch.features}
+            accentColor="bg-orange-500"
+          />
+
+          <FeatureSection 
+            sectionId="wineFeatures"
+            title={wineFeatures.title}
+            description={wineFeatures.description}
+            features={wineFeatures.features}
+            accentColor="bg-rose-500"
+          />
+
+          <FeatureSection 
+            sectionId="scanFeatures"
+            title={scanFeatures.title}
+            description={scanFeatures.description}
+            features={scanFeatures.features}
+            accentColor="bg-cyan-500"
+          />
+
+          <FeatureSection 
+            sectionId="inventoryFeatures"
+            title={inventoryFeatures.title}
+            description={inventoryFeatures.description}
+            features={inventoryFeatures.features}
+            accentColor="bg-teal-500"
+          />
+        </div>
+
         {/* Roles */}
         <Card>
           <CardHeader className="flex flex-row items-start justify-between">
@@ -335,9 +576,6 @@ Die Lösung digitalisiert den gesamten Bestellprozess – von der Artikelverwalt
                     <h4 className="font-medium">{p.title}</h4>
                     <p className="text-sm text-muted-foreground">{p.desc}</p>
                   </div>
-                  {i < orderProcess.length - 1 && (
-                    <div className="absolute left-[19px] mt-8 w-0.5 h-8 bg-primary/20" />
-                  )}
                 </div>
               ))}
             </div>
@@ -425,10 +663,16 @@ Die Lösung digitalisiert den gesamten Bestellprozess – von der Artikelverwalt
 
         {/* CTA */}
         <Card className="bg-primary text-primary-foreground">
-          <CardContent className="py-8 text-center">
+          <CardContent className="text-center py-8">
             <h3 className="text-2xl font-bold mb-2">Jetzt kostenlos testen</h3>
-            <p className="opacity-90 mb-4">7 Tage kostenlos – keine Kreditkarte erforderlich</p>
-            <Button variant="secondary" size="lg" onClick={() => navigate('/auth')}>
+            <p className="opacity-90 mb-4">7 Tage Demo-Zugang – keine Kreditkarte erforderlich</p>
+            <Button 
+              variant="secondary" 
+              size="lg"
+              onClick={() => navigate('/demo-suppliers')}
+              className="gap-2"
+            >
+              <Smartphone className="h-5 w-5" />
               Demo starten
             </Button>
           </CardContent>
