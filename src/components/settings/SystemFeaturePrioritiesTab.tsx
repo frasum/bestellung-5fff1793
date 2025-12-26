@@ -21,7 +21,7 @@ import {
 } from '@/hooks/useSystemFeaturePriorities';
 import { useEdgeFunctionRegistry } from '@/hooks/useEdgeFunctionRegistry';
 import { exportPrioritiesToPdf, exportPrioritiesToJson } from '@/lib/systemPrioritiesExport';
-import { useOrganization, useUpdateChecklistNotes } from '@/hooks/useSettings';
+import { useOrganizationDetails, useUpdateChecklistNotes } from '@/hooks/useSettings';
 import { cn } from '@/lib/utils';
 import {
   Dialog,
@@ -296,7 +296,7 @@ export const SystemFeaturePrioritiesTab = () => {
   const { t, i18n } = useTranslation();
   const { data: priorities, isLoading } = useSystemFeaturePriorities();
   const { data: edgeFunctions, isLoading: edgeFunctionsLoading } = useEdgeFunctionRegistry();
-  const { data: organization } = useOrganization();
+  const { data: organization } = useOrganizationDetails();
   const bulkMutation = useBulkSetCategoryPriority();
   const notesMutation = useUpdateChecklistNotes();
   const isSuperAdmin = useIsSuperAdmin();

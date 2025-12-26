@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Building2, Users, Store, Ruler, Tag, FolderTree, Package, FileText, Download, Loader2, Phone, Languages, Crown } from 'lucide-react';
-import { useOrganization, useUpdateOrganization } from '@/hooks/useSettings';
+import { useOrganizationDetails, useUpdateOrganization } from '@/hooks/useSettings';
 import { TeamTab } from './TeamTab';
 import { LocationsWithAddressesTab } from './LocationsWithAddressesTab';
 import { UnitsTab } from './UnitsTab';
@@ -28,7 +28,7 @@ interface OrganizationTabProps {
 const OrganizationGeneralContent = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { data: organization, isLoading } = useOrganization();
+  const { data: organization, isLoading } = useOrganizationDetails();
   const updateOrganization = useUpdateOrganization();
   const [name, setName] = useState('');
   const [contactEmail, setContactEmail] = useState('');

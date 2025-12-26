@@ -7,7 +7,7 @@ import {
   useRunPriceSearch,
   usePriceWatchResults
 } from '@/hooks/usePriceWatch';
-import { useOrganization } from '@/hooks/useSettings';
+import { useOrganizationDetails } from '@/hooks/useSettings';
 import { useCategories } from '@/hooks/useCategories';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -41,7 +41,7 @@ export const PriceWatchSettingsTab = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { data: settings, isLoading } = usePriceWatchSettings();
-  const { data: organization } = useOrganization();
+  const { data: organization } = useOrganizationDetails();
   const { data: results } = usePriceWatchResults();
   const { data: dbCategories = [], isLoading: categoriesLoading } = useCategories();
   const updateSettings = useUpdatePriceWatchSettings();

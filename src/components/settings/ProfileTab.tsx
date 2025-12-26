@@ -8,7 +8,7 @@ import { Switch } from '@/components/ui/switch';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Lock, Globe, Mail, Palette, User, Settings, Map, Database, Server } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { useUserProfile, useUpdateUserProfile, useUpdatePassword, useOrganization, useUpdateOrganization } from '@/hooks/useSettings';
+import { useUserProfile, useUpdateUserProfile, useUpdatePassword, useOrganizationDetails, useUpdateOrganization } from '@/hooks/useSettings';
 import { I18nCheckDialog } from './I18nCheckDialog';
 import { UsageDashboard } from './UsageDashboard';
 
@@ -148,7 +148,7 @@ const AdvancedToolsSection = () => {
 
 const TestModeContent = () => {
   const { t } = useTranslation();
-  const { data: organization } = useOrganization();
+  const { data: organization } = useOrganizationDetails();
   const updateOrganization = useUpdateOrganization();
   const [testEmails, setTestEmails] = useState<string[]>([]);
   const [newEmail, setNewEmail] = useState('');
@@ -344,7 +344,7 @@ const TestModeContent = () => {
 export const ProfileTab = () => {
   const { t } = useTranslation();
   const { data: profile, isLoading } = useUserProfile();
-  const { data: organization } = useOrganization();
+  const { data: organization } = useOrganizationDetails();
   const updateProfile = useUpdateUserProfile();
   const updatePassword = useUpdatePassword();
   const [fullName, setFullName] = useState('');
