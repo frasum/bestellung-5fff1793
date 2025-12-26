@@ -807,7 +807,15 @@ const Suppliers = () => {
             setEditingSupplier(supplier);
             setIsSupplierDialogOpen(true);
           }} onDelete={setDeletingSupplier} onSendInvitation={handleSendInvitation} onShowQRCode={setQrCodeSupplier} onShowTokens={setTokensDialogSupplier} onOpenPortal={handleOpenPortal} onShowChanges={setChangesDialogSupplier} onOrderClick={supplier => {
-            setAddArticleSheet({ open: true, supplierId: supplier.id, supplierName: supplier.name });
+            setExpandedSuppliers(prev => {
+              const next = new Set(prev);
+              if (next.has(supplier.id)) {
+                next.delete(supplier.id);
+              } else {
+                next.add(supplier.id);
+              }
+              return next;
+            });
           }} onPrintOrderList={async (supplier, articles) => await generateOrderListPdf(supplier, articles.map(a => ({
             name: a.name,
             unit: a.unit,
