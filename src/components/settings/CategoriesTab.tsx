@@ -309,19 +309,19 @@ export const CategoriesTab = () => {
                                   <Table>
                                     <TableHeader className="sticky top-[49px] bg-muted z-10">
                                       <TableRow className="border-b">
-                                        <TableHead className="text-xs font-medium text-muted-foreground uppercase">
+                                        <TableHead className="text-xs font-medium text-muted-foreground">
                                           {t('articles.name')}
                                         </TableHead>
-                                        <TableHead className="text-xs font-medium text-muted-foreground uppercase">
+                                        <TableHead className="text-xs font-medium text-muted-foreground">
                                           {t('articles.supplier')}
                                         </TableHead>
-                                        <TableHead className="text-xs font-medium text-muted-foreground uppercase">
+                                        <TableHead className="text-xs font-medium text-muted-foreground">
                                           {t('articles.unit')}
                                         </TableHead>
-                                        <TableHead className="text-xs font-medium text-muted-foreground uppercase text-right">
+                                        <TableHead className="text-xs font-medium text-muted-foreground text-right">
                                           {t('articles.price')}
                                         </TableHead>
-                                        <TableHead className="text-xs font-medium text-muted-foreground uppercase w-40">
+                                        <TableHead className="text-xs font-medium text-muted-foreground w-40">
                                           {t('articles.category')}
                                         </TableHead>
                                       </TableRow>
