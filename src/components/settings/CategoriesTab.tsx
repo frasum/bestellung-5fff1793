@@ -261,9 +261,9 @@ export const CategoriesTab = () => {
                                       isExpanded && "rotate-90"
                                     )} />
                                     <span className="font-medium">{category.name}</span>
-                                    <Badge variant="secondary" className="ml-1">
+                                    <span className="text-sm text-muted-foreground ml-2">
                                       {categoryArticles.length} {t('common.articles')}
-                                    </Badge>
+                                    </span>
                                   </div>
                                   <div className="flex items-center gap-1">
                                     <Button
