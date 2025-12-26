@@ -32,6 +32,29 @@ interface InvoiceData {
   }>;
 }
 
+/**
+ * Converts ALL CAPS text to Title Case for better readability.
+ * Only transforms if text is predominantly uppercase (>70%).
+ */
+function toTitleCase(text: string): string {
+  if (!text) return text;
+  
+  // Count uppercase vs total letters
+  const upperCount = (text.match(/[A-ZÄÖÜ]/g) || []).length;
+  const letterCount = (text.match(/[A-Za-zäöüÄÖÜß]/g) || []).length;
+  
+  // If not predominantly uppercase, return as-is
+  if (letterCount > 0 && upperCount / letterCount < 0.7) {
+    return text;
+  }
+  
+  return text
+    .toLowerCase()
+    .split(' ')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+}
+
 // Unit normalization mapping
 const UNIT_NORMALIZATIONS: Record<string, string> = {
   // Stück variants
@@ -828,7 +851,7 @@ Important:
         .from('suppliers')
         .insert({
           organization_id: organizationId,
-          name: invoiceData.supplierName,
+          name: toTitleCase(invoiceData.supplierName),
           email: supplierEmail,
           phone: invoiceData.supplierPhone || null,
           address: invoiceData.supplierAddress || null,
@@ -1014,13 +1037,14 @@ Important:
           }
         } else {
           // Create new article with normalized unit and AI-suggested category
-          console.log(`Creating new article: "${item.articleName}" (unit: ${normalizedUnit}, category: ${item.suggestedCategory || 'none'})`);
+          const formattedArticleName = toTitleCase(item.articleName);
+          console.log(`Creating new article: "${formattedArticleName}" (unit: ${normalizedUnit}, category: ${item.suggestedCategory || 'none'})`);
           const { data: newArticle, error: articleError } = await supabaseClient
             .from('articles')
             .insert({
               organization_id: organizationId,
               supplier_id: matchedSupplierId,
-              name: item.articleName,
+              name: formattedArticleName,
               sku: item.articleSku || null,
               unit: normalizedUnit,
               price: item.unitPrice || 0,
@@ -1136,7 +1160,7 @@ Important:
       const invoiceItems = invoiceData.items.map((item, index) => ({
         invoice_id: invoiceId,
         position_number: item.position || index + 1,
-        article_name: item.articleName,
+        article_name: toTitleCase(item.articleName),
         article_sku: item.articleSku || null,
         quantity: item.quantity,
         unit: item.unit || 'Stk',
