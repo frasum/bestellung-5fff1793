@@ -70,7 +70,7 @@ export const DashboardLayout = ({
   useKeyboardShortcuts();
   
   
-  const { data: organization } = useOrganization();
+  const { data: organization, isLoading: isOrgLoading } = useOrganization();
   const updateOrganization = useUpdateOrganization();
   const { activeLocation } = useLocationContext();
   const { data: drafts } = useCartDrafts(activeLocation?.id, false);
@@ -113,7 +113,10 @@ export const DashboardLayout = ({
   
   const handleTestModeToggle = (checked: boolean) => {
     const orgId = organization?.id || organizationIdRef.current;
-    if (!orgId) return;
+    if (!orgId) {
+      toast.error(t('common.error'));
+      return;
+    }
     
     updateOrganization.mutate({
       id: orgId,
@@ -121,6 +124,9 @@ export const DashboardLayout = ({
     }, {
       onSuccess: () => {
         toast.success(checked ? t('testMode.activated') : t('testMode.deactivated'));
+      },
+      onError: () => {
+        toast.error(t('common.error'));
       }
     });
   };
@@ -209,7 +215,7 @@ export const DashboardLayout = ({
                       id="test-mode-toggle"
                       checked={organization?.test_mode_enabled || false}
                       onCheckedChange={handleTestModeToggle}
-                      disabled={updateOrganization.isPending}
+                      disabled={updateOrganization.isPending || isOrgLoading}
                     />
                   </div>
                   <p className="text-xs text-muted-foreground">
@@ -308,7 +314,7 @@ export const DashboardLayout = ({
                       id="test-mode-toggle-desktop"
                       checked={organization?.test_mode_enabled || false}
                       onCheckedChange={handleTestModeToggle}
-                      disabled={updateOrganization.isPending}
+                      disabled={updateOrganization.isPending || isOrgLoading}
                     />
                   </div>
                   
