@@ -106,7 +106,9 @@
     "keyboardShortcuts": "Keyboard Shortcuts",
     "help": "Help",
     "showSidebar": "Show sidebar",
-    "hideSidebar": "Hide sidebar"
+    "hideSidebar": "Hide sidebar",
+    "articles": "Articles",
+    "noSupplier": "No supplier"
   },
   "nav": {
     "dashboard": "Dashboard",
