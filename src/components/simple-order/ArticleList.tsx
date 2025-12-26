@@ -5,7 +5,7 @@ import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Minus, Plus, Search, Star, PenLine } from 'lucide-react';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
-import { cn } from '@/lib/utils';
+import { cn, toTitleCase } from '@/lib/utils';
 import { FreeItemDialog, FreeItem } from './FreeItemDialog';
 import { FreeItemCard } from './FreeItemCard';
 
@@ -396,7 +396,7 @@ const ArticleCard = ({
 
         <div className="flex-1 min-w-0">
           <h3 className="font-semibold text-base leading-tight">
-            {article.name}
+            {toTitleCase(article.name)}
           </h3>
           {/* Hide description for wine articles to keep ordering interface clean */}
           {article.description && !article.category?.toLowerCase().includes('wein') && (

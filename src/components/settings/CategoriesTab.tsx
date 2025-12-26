@@ -14,7 +14,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useCategories, useCreateCategory, useUpdateCategory, useDeleteCategory } from '@/hooks/useCategories';
 import { useArticles } from '@/hooks/useArticles';
-import { cn } from '@/lib/utils';
+import { cn, toTitleCase } from '@/lib/utils';
 
 export const CategoriesTab = () => {
   const { t } = useTranslation();
@@ -329,7 +329,7 @@ export const CategoriesTab = () => {
                                     <TableBody>
                                       {categoryArticles.map(article => (
                                         <TableRow key={article.id} className="hover:bg-background/50">
-                                          <TableCell className="font-medium text-sm">{article.name}</TableCell>
+                                          <TableCell className="font-medium text-sm">{toTitleCase(article.name)}</TableCell>
                                           <TableCell className="text-sm text-muted-foreground">
                                             {article.suppliers?.name || t('common.noSupplier')}
                                           </TableCell>
