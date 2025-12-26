@@ -1093,7 +1093,19 @@ Important:
       notes.push(`${articlesCreated} Artikel wurden automatisch erstellt`);
     }
 
-    // Update invoice with parsed data
+    // Build processing statistics for UI display
+    const processingStats = {
+      supplierCreated: supplierAutoCreated,
+      supplierName: invoiceData.supplierName || null,
+      articlesCreated,
+      articlesUpdated,
+      articlesMerged,
+      totalItems: invoiceData.items?.length || 0,
+      matchedOrderId: null as string | null, // Will be set by matchAndFindDiscrepancies
+      discrepanciesFound: 0, // Will be set by matchAndFindDiscrepancies
+    };
+
+    // Update invoice with parsed data including processing stats
     const { error: updateError } = await supabaseClient
       .from('invoices')
       .update({
@@ -1108,7 +1120,7 @@ Important:
         vat_amount: invoiceData.vatAmount,
         gross_amount: invoiceData.grossAmount,
         currency: invoiceData.currency || 'EUR',
-        parsed_data: invoiceData,
+        parsed_data: { ...invoiceData, processingStats },
         status: initialStatus,
         notes: notes.length > 0 ? notes.join('; ') : null,
       })
@@ -1225,7 +1237,7 @@ async function matchAndFindDiscrepancies(
 ) {
   console.log('Matching invoice with orders for supplier:', supplierId);
 
-  // Get the invoice with items
+  // Get the invoice with items and current parsed_data
   const { data: invoice } = await supabase
     .from('invoices')
     .select('*, invoice_items(*)')
@@ -1233,6 +1245,9 @@ async function matchAndFindDiscrepancies(
     .single();
 
   if (!invoice) return;
+  
+  // Get current parsed_data to preserve processingStats
+  const currentParsedData = invoice.parsed_data || {};
 
   // Find recent orders from this supplier (last 30 days before invoice date)
   const invoiceDate = new Date(invoice.invoice_date || invoice.created_at);
@@ -1377,7 +1392,17 @@ async function matchAndFindDiscrepancies(
     }
   }
 
-  // Insert discrepancies
+  // Insert discrepancies and update invoice with matching stats
+  const updatedParsedData = {
+    ...currentParsedData,
+    processingStats: {
+      ...currentParsedData.processingStats,
+      matchedOrderId: bestMatchOrder.id,
+      matchedOrderNumber: bestMatchOrder.order_number,
+      discrepanciesFound: discrepancies.length,
+    }
+  };
+
   if (discrepancies.length > 0) {
     const { error } = await supabase
       .from('invoice_discrepancies')
@@ -1387,16 +1412,22 @@ async function matchAndFindDiscrepancies(
       console.error('Failed to insert discrepancies:', error);
     }
 
-    // Set status to discrepancy
+    // Set status to discrepancy and update processingStats
     await supabase
       .from('invoices')
-      .update({ status: 'discrepancy' })
+      .update({ 
+        status: 'discrepancy',
+        parsed_data: updatedParsedData
+      })
       .eq('id', invoiceId);
   } else {
-    // No discrepancies - set to matched
+    // No discrepancies - set to matched and update processingStats
     await supabase
       .from('invoices')
-      .update({ status: 'matched' })
+      .update({ 
+        status: 'matched',
+        parsed_data: updatedParsedData
+      })
       .eq('id', invoiceId);
   }
 
