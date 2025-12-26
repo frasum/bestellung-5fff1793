@@ -1,5 +1,5 @@
 import { Fragment } from 'react';
-import { Trash2, FileText, Send, Bell, Loader2, QrCode, ExternalLink, Key, Plus, ShoppingCart, Minus } from 'lucide-react';
+import { Trash2, FileText, Send, Bell, Loader2, QrCode, ExternalLink, Key, Plus, ShoppingCart, Minus, Calendar, User, Package } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
@@ -8,7 +8,10 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { Supplier } from '@/hooks/useSuppliers';
 import { Article } from '@/hooks/useArticles';
 import { SupplierActivityInfo } from '@/hooks/useSupplierChanges';
+import { LastOrderInfo } from '@/hooks/useLastOrderByArticle';
 import { cn } from '@/lib/utils';
+import { format } from 'date-fns';
+import { de } from 'date-fns/locale';
 
 interface SupplierTableProps {
   suppliers: Supplier[];
@@ -23,6 +26,7 @@ interface SupplierTableProps {
   cartItemCountsBySupplier?: Record<string, number>;
   cartItemsByArticle?: Map<string, number>;
   highlightSearch?: string;
+  lastOrderByArticle?: Record<string, LastOrderInfo>;
   onToggleExpand: (supplierId: string) => void;
   onToggleSelect: (supplierId: string) => void;
   onSelectAll: () => void;
@@ -59,6 +63,7 @@ export const SupplierTable = ({
   cartItemCountsBySupplier = {},
   cartItemsByArticle = new Map(),
   highlightSearch = '',
+  lastOrderByArticle = {},
   onToggleExpand,
   onToggleSelect,
   onSelectAll,
@@ -322,22 +327,41 @@ export const SupplierTable = ({
                                     })()}
                                   </TableCell>
                                   <TableCell className="py-1.5">
-                                    <div className="flex items-center gap-2">
-                                      <p 
-                                        className="text-sm font-medium cursor-pointer hover:underline hover:text-accent transition-colors"
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          onEditArticle(article);
-                                        }}
-                                      >
-                                        {article.name}
-                                      </p>
-                                      {pendingArticleIds.has(article.id) && (
-                                        <span 
-                                          className="w-2 h-2 rounded-full bg-orange-500 animate-pulse cursor-pointer" 
-                                          title="Ausstehende Änderungen"
-                                          onClick={() => onArticleChangeClick?.(article, supplier)}
-                                        />
+                                    <div className="flex flex-col gap-0.5">
+                                      <div className="flex items-center gap-2">
+                                        <p 
+                                          className="text-sm font-medium cursor-pointer hover:underline hover:text-accent transition-colors"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            onEditArticle(article);
+                                          }}
+                                        >
+                                          {article.name}
+                                        </p>
+                                        {pendingArticleIds.has(article.id) && (
+                                          <span
+                                            className="w-2 h-2 rounded-full bg-orange-500 animate-pulse cursor-pointer" 
+                                            title="Ausstehende Änderungen"
+                                            onClick={() => onArticleChangeClick?.(article, supplier)}
+                                          />
+                                        )}
+                                      </div>
+                                      {/* Letzte Bestellung inline */}
+                                      {lastOrderByArticle?.[article.id] && (
+                                        <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+                                          <span className="flex items-center gap-0.5">
+                                            <Calendar className="w-3 h-3" />
+                                            {format(new Date(lastOrderByArticle[article.id].date), 'dd.MM.', { locale: de })}
+                                          </span>
+                                          <span className="flex items-center gap-0.5">
+                                            <User className="w-3 h-3" />
+                                            {lastOrderByArticle[article.id].orderedBy}
+                                          </span>
+                                          <span className="flex items-center gap-0.5">
+                                            <Package className="w-3 h-3" />
+                                            {lastOrderByArticle[article.id].quantity} {article.unit}
+                                          </span>
+                                        </div>
                                       )}
                                     </div>
                                   </TableCell>
