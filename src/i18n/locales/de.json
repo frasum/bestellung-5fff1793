@@ -107,7 +107,9 @@
     "help": "Hilfe",
     "unknown": "Unbekannt",
     "showSidebar": "Navigation einblenden",
-    "hideSidebar": "Navigation ausblenden"
+    "hideSidebar": "Navigation ausblenden",
+    "articles": "Artikel",
+    "noSupplier": "Kein Lieferant"
   },
 "nav": {
     "dashboard": "Dashboard",
