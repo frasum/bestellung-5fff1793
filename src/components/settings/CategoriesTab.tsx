@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -7,12 +7,13 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Plus, Pencil, Trash2, Tag, Check, X, Merge } from 'lucide-react';
+import { Plus, Pencil, Trash2, Tag, Check, X, Merge, ChevronRight } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useCategories, useCreateCategory, useUpdateCategory, useDeleteCategory } from '@/hooks/useCategories';
 import { useArticles } from '@/hooks/useArticles';
+import { cn } from '@/lib/utils';
 
 export const CategoriesTab = () => {
   const { t } = useTranslation();
@@ -30,8 +31,40 @@ export const CategoriesTab = () => {
   const [mergingCategory, setMergingCategory] = useState<{ id: string; name: string } | null>(null);
   const [mergeTargetId, setMergeTargetId] = useState<string>('');
   const [isMerging, setIsMerging] = useState(false);
+  const [expandedCategoryId, setExpandedCategoryId] = useState<string | null>(null);
+  const [updatingArticleId, setUpdatingArticleId] = useState<string | null>(null);
 
   const articleCategories = [...new Set(articles?.map((a) => a.category).filter(Boolean) || [])] as string[];
+
+  // Group articles by category
+  const articlesByCategory = useMemo(() => {
+    const grouped: Record<string, typeof articles> = {};
+    articles.forEach(article => {
+      const cat = article.category || '';
+      if (!grouped[cat]) grouped[cat] = [];
+      grouped[cat].push(article);
+    });
+    return grouped;
+  }, [articles]);
+
+  // Handle changing article category
+  const handleChangeArticleCategory = async (articleId: string, newCategory: string | null) => {
+    setUpdatingArticleId(articleId);
+    try {
+      const { error } = await supabase
+        .from('articles')
+        .update({ category: newCategory })
+        .eq('id', articleId);
+      
+      if (error) throw error;
+      queryClient.invalidateQueries({ queryKey: ['articles'] });
+      toast.success(t('settings.categoryUpdated'));
+    } catch (error) {
+      toast.error(t('settings.categoryUpdateError'));
+    } finally {
+      setUpdatingArticleId(null);
+    }
+  };
   const dbCategoryNames = categories.map(c => c.name);
   const missingCategories = articleCategories.filter(c => !dbCategoryNames.includes(c));
 
@@ -187,59 +220,122 @@ export const CategoriesTab = () => {
                     </p>
                   ) : (
                     <div className="space-y-2">
-                      {sortedCategories.map((category) => (
-                        <div
-                          key={category.id}
-                          className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 bg-background"
-                        >
-                          {editingId === category.id ? (
-                            <div className="flex items-center gap-2 flex-1">
-                              <Input
-                                value={editingName}
-                                onChange={(e) => setEditingName(e.target.value)}
-                                onKeyDown={(e) => {
-                                  if (e.key === 'Enter') handleSaveEdit();
-                                  if (e.key === 'Escape') handleCancelEdit();
-                                }}
-                                className="h-10 sm:h-8"
-                                autoFocus
-                              />
-                              <Button size="icon" variant="ghost" onClick={handleSaveEdit} className="h-10 w-10 sm:h-8 sm:w-8">
-                                <Check className="h-4 w-4 text-green-600" />
-                              </Button>
-                              <Button size="icon" variant="ghost" onClick={handleCancelEdit} className="h-10 w-10 sm:h-8 sm:w-8">
-                                <X className="h-4 w-4" />
-                              </Button>
+                      {sortedCategories.map((category) => {
+                        const categoryArticles = articlesByCategory[category.name] || [];
+                        const isExpanded = expandedCategoryId === category.id;
+                        
+                        return (
+                          <div
+                            key={category.id}
+                            className="border rounded-lg bg-background overflow-hidden"
+                          >
+                            {/* Category Header */}
+                            <div className="flex items-center justify-between p-3 hover:bg-muted/50">
+                              {editingId === category.id ? (
+                                <div className="flex items-center gap-2 flex-1">
+                                  <Input
+                                    value={editingName}
+                                    onChange={(e) => setEditingName(e.target.value)}
+                                    onKeyDown={(e) => {
+                                      if (e.key === 'Enter') handleSaveEdit();
+                                      if (e.key === 'Escape') handleCancelEdit();
+                                    }}
+                                    className="h-10 sm:h-8"
+                                    autoFocus
+                                  />
+                                  <Button size="icon" variant="ghost" onClick={handleSaveEdit} className="h-10 w-10 sm:h-8 sm:w-8">
+                                    <Check className="h-4 w-4 text-green-600" />
+                                  </Button>
+                                  <Button size="icon" variant="ghost" onClick={handleCancelEdit} className="h-10 w-10 sm:h-8 sm:w-8">
+                                    <X className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              ) : (
+                                <>
+                                  <div 
+                                    className="flex items-center gap-2 cursor-pointer flex-1"
+                                    onClick={() => setExpandedCategoryId(isExpanded ? null : category.id)}
+                                  >
+                                    <ChevronRight className={cn(
+                                      "h-4 w-4 transition-transform text-muted-foreground",
+                                      isExpanded && "rotate-90"
+                                    )} />
+                                    <span className="font-medium">{category.name}</span>
+                                    <Badge variant="secondary" className="ml-1">
+                                      {categoryArticles.length} {t('common.articles')}
+                                    </Badge>
+                                  </div>
+                                  <div className="flex items-center gap-1">
+                                    <Button
+                                      size="icon"
+                                      variant="ghost"
+                                      onClick={() => setMergingCategory(category)}
+                                      title={t('settings.mergeCategory')}
+                                      className="h-10 w-10 sm:h-8 sm:w-8"
+                                    >
+                                      <Merge className="h-4 w-4" />
+                                    </Button>
+                                    <Button size="icon" variant="ghost" onClick={() => handleStartEdit(category)} className="h-10 w-10 sm:h-8 sm:w-8">
+                                      <Pencil className="h-4 w-4" />
+                                    </Button>
+                                    <Button
+                                      size="icon"
+                                      variant="ghost"
+                                      onClick={() => setDeletingCategory(category)}
+                                      className="text-destructive hover:text-destructive h-10 w-10 sm:h-8 sm:w-8"
+                                    >
+                                      <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                  </div>
+                                </>
+                              )}
                             </div>
-                          ) : (
-                            <>
-                              <span className="font-medium">{category.name}</span>
-                              <div className="flex items-center gap-1">
-                                <Button
-                                  size="icon"
-                                  variant="ghost"
-                                  onClick={() => setMergingCategory(category)}
-                                  title={t('settings.mergeCategory')}
-                                  className="h-10 w-10 sm:h-8 sm:w-8"
-                                >
-                                  <Merge className="h-4 w-4" />
-                                </Button>
-                                <Button size="icon" variant="ghost" onClick={() => handleStartEdit(category)} className="h-10 w-10 sm:h-8 sm:w-8">
-                                  <Pencil className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                  size="icon"
-                                  variant="ghost"
-                                  onClick={() => setDeletingCategory(category)}
-                                  className="text-destructive hover:text-destructive h-10 w-10 sm:h-8 sm:w-8"
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
+                            
+                            {/* Expandable Article List */}
+                            {isExpanded && (
+                              <div className="border-t bg-muted/30 p-3 max-h-80 overflow-y-auto">
+                                {categoryArticles.length === 0 ? (
+                                  <p className="text-sm text-muted-foreground text-center py-2">
+                                    {t('settings.noArticlesInCategory')}
+                                  </p>
+                                ) : (
+                                  <div className="space-y-2">
+                                    {categoryArticles.map(article => (
+                                      <div 
+                                        key={article.id} 
+                                        className="flex items-center justify-between py-2 px-2 rounded-md hover:bg-background/50 border-b last:border-0"
+                                      >
+                                        <div className="flex-1 min-w-0">
+                                          <span className="text-sm font-medium truncate block">{article.name}</span>
+                                          <span className="text-xs text-muted-foreground">
+                                            {article.suppliers?.name || t('common.noSupplier')}
+                                          </span>
+                                        </div>
+                                        
+                                        <Select
+                                          value={article.category || ''}
+                                          onValueChange={(value) => handleChangeArticleCategory(article.id, value || null)}
+                                          disabled={updatingArticleId === article.id}
+                                        >
+                                          <SelectTrigger className="w-32 sm:w-40 h-8 text-xs">
+                                            <SelectValue placeholder={t('settings.selectCategory')} />
+                                          </SelectTrigger>
+                                          <SelectContent>
+                                            <SelectItem value="">{t('settings.noCategory')}</SelectItem>
+                                            {sortedCategories.map(cat => (
+                                              <SelectItem key={cat.id} value={cat.name}>{cat.name}</SelectItem>
+                                            ))}
+                                          </SelectContent>
+                                        </Select>
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
                               </div>
-                            </>
-                          )}
-                        </div>
-                      ))}
+                            )}
+                          </div>
+                        );
+                      })}
                     </div>
                   )}
                 </div>
