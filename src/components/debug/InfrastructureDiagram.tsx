@@ -387,6 +387,130 @@ const nodeDetails: Record<string, { title: string; description: string; items: s
       "Weinrecherche"
     ],
     icon: "🔍"
+  },
+  // Subgraphs - Main Layers
+  Frontend: {
+    title: "Frontend Layer",
+    description: "Moderne React-basierte Benutzeroberfläche",
+    items: [
+      "React 18 mit TypeScript",
+      "Vite als Build-Tool",
+      "TanStack Query für Server-State",
+      "Tailwind CSS für Styling",
+      "6 Sprachen unterstützt (i18next)",
+      "Client-Side Routing (React Router v6)"
+    ],
+    icon: "🖥️"
+  },
+  Cloud: {
+    title: "Lovable Cloud",
+    description: "Backend-Infrastruktur mit Supabase",
+    items: [
+      "PostgreSQL Datenbank mit 50+ Tabellen",
+      "Row Level Security für Datenisolation",
+      "Echtzeit WebSocket-Verbindungen",
+      "Sichere Dateispeicherung",
+      "Multi-Tenant Architektur"
+    ],
+    icon: "☁️"
+  },
+  EdgeFunctions: {
+    title: "Edge Functions",
+    description: "35+ serverlose Funktionen für Business-Logik",
+    items: [
+      "Deno Runtime",
+      "TypeScript",
+      "Automatisches Scaling",
+      "Globale Verteilung",
+      "Bestellungen, AI, B2B, Auth"
+    ],
+    icon: "⚙️"
+  },
+  External: {
+    title: "Externe Dienste",
+    description: "Third-Party Integrationen",
+    items: [
+      "SMTP E-Mail (smtps.udag.de)",
+      "OpenAI GPT-4o für KI",
+      "ElevenLabs Voice AI",
+      "Perplexity AI Suche"
+    ],
+    icon: "🌐"
+  },
+  // Inner Subgraphs
+  Auth: {
+    title: "Authentifizierung",
+    description: "Mehrere Auth-Methoden für verschiedene User-Typen",
+    items: [
+      "Email/Password für Admins",
+      "Magic Links für Lieferanten",
+      "PIN-Codes für Mitarbeiter",
+      "Session Management"
+    ],
+    icon: "🔐"
+  },
+  Database: {
+    title: "PostgreSQL Datenbank",
+    description: "Relationale Datenbank mit 50+ Tabellen",
+    items: [
+      "Organizations, Suppliers, Articles",
+      "Orders, Cart Drafts, Invoices",
+      "B2B Portal Entities",
+      "RLS für Datenisolation"
+    ],
+    icon: "🗄️"
+  },
+  Storage: {
+    title: "File Storage",
+    description: "Sichere Dateispeicherung für Medien",
+    items: [
+      "Artikelbilder",
+      "Portal-Logos",
+      "B2B-Branding",
+      "CDN-Distribution"
+    ],
+    icon: "📁"
+  },
+  OrderFuncs: {
+    title: "Bestellungs-Funktionen",
+    description: "Edge Functions für Bestellworkflows",
+    items: [
+      "E-Mail-Versand",
+      "Bestellbestätigung",
+      "Simple Order Submit"
+    ],
+    icon: "📦"
+  },
+  AIFuncs: {
+    title: "AI-Funktionen",
+    description: "KI-gestützte Features",
+    items: [
+      "Import-Helfer",
+      "Sprach-Transkription",
+      "Artikel-Erkennung",
+      "Wein-Recherche"
+    ],
+    icon: "🤖"
+  },
+  B2BFuncs: {
+    title: "B2B Portal Funktionen",
+    description: "Business-to-Business Features",
+    items: [
+      "Angebotserstellung",
+      "B2B-Bestellungen",
+      "Kundeneinladungen"
+    ],
+    icon: "🤝"
+  },
+  AuthFuncs: {
+    title: "Auth-Funktionen",
+    description: "Authentifizierungs-Logik",
+    items: [
+      "PIN-Verifizierung",
+      "Token-Validierung",
+      "PIN-Hashing"
+    ],
+    icon: "🔑"
   }
 };
 
@@ -555,25 +679,54 @@ export function InfrastructureDiagram() {
     renderDiagram();
   }, []);
 
-  // Add click handlers to nodes after rendering
+  // Add click handlers to nodes and clusters after rendering
   useEffect(() => {
     if (isRendered && diagramRef.current) {
+      // Handle regular nodes
       const nodes = diagramRef.current.querySelectorAll('.node');
       nodes.forEach((node) => {
         const nodeElement = node as HTMLElement;
-        // Extract node ID from the element id (format: flowchart-NodeId-123)
-        const idMatch = nodeElement.id.match(/flowchart-(\w+)-/);
+        const idMatch = nodeElement.id.match(/flowchart-(\w+)-\d+/);
         if (idMatch) {
           const nodeId = idMatch[1];
           if (nodeDetails[nodeId]) {
             nodeElement.style.cursor = 'pointer';
             nodeElement.classList.add('interactive-node');
             
-            const clickHandler = () => handleNodeClick(nodeId);
+            const clickHandler = (e: Event) => {
+              e.stopPropagation();
+              handleNodeClick(nodeId);
+            };
             nodeElement.addEventListener('click', clickHandler);
-            
-            // Store reference for cleanup
             (nodeElement as any)._clickHandler = clickHandler;
+          }
+        }
+      });
+
+      // Handle subgraphs (clusters)
+      const clusters = diagramRef.current.querySelectorAll('.cluster');
+      clusters.forEach((cluster) => {
+        const clusterElement = cluster as HTMLElement;
+        // Cluster IDs have format: flowchart-Frontend-123 or similar
+        const idMatch = clusterElement.id.match(/flowchart-(\w+)-\d+/);
+        if (idMatch) {
+          const clusterId = idMatch[1];
+          if (nodeDetails[clusterId]) {
+            // Make the cluster label clickable
+            const labelElement = clusterElement.querySelector('.cluster-label');
+            if (labelElement) {
+              (labelElement as HTMLElement).style.cursor = 'pointer';
+              (labelElement as HTMLElement).style.textDecoration = 'underline';
+              (labelElement as HTMLElement).style.textDecorationStyle = 'dotted';
+              labelElement.classList.add('interactive-cluster');
+              
+              const clickHandler = (e: Event) => {
+                e.stopPropagation();
+                handleNodeClick(clusterId);
+              };
+              labelElement.addEventListener('click', clickHandler);
+              (labelElement as any)._clickHandler = clickHandler;
+            }
           }
         }
       });
@@ -585,6 +738,13 @@ export function InfrastructureDiagram() {
           const nodeElement = node as HTMLElement;
           if ((nodeElement as any)._clickHandler) {
             nodeElement.removeEventListener('click', (nodeElement as any)._clickHandler);
+          }
+        });
+        
+        const clusters = diagramRef.current?.querySelectorAll('.interactive-cluster');
+        clusters?.forEach((cluster) => {
+          if ((cluster as any)._clickHandler) {
+            cluster.removeEventListener('click', (cluster as any)._clickHandler);
           }
         });
       };
