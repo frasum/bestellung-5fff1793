@@ -9,7 +9,7 @@ import { Supplier } from '@/hooks/useSuppliers';
 import { Article } from '@/hooks/useArticles';
 import { SupplierActivityInfo } from '@/hooks/useSupplierChanges';
 import { LastOrderInfo } from '@/hooks/useLastOrderByArticle';
-import { cn } from '@/lib/utils';
+import { cn, toTitleCase } from '@/lib/utils';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 
@@ -336,7 +336,7 @@ export const SupplierTable = ({
                                             onEditArticle(article);
                                           }}
                                         >
-                                          {article.name}
+                                          {toTitleCase(article.name)}
                                         </p>
                                         {pendingArticleIds.has(article.id) && (
                                           <span
@@ -366,8 +366,8 @@ export const SupplierTable = ({
                                     </div>
                                   </TableCell>
                                   <TableCell className="py-1.5 hidden md:table-cell">
-                                    <p className="text-xs text-muted-foreground truncate max-w-[200px]" title={article.description || ''}>
-                                      {article.description || '-'}
+                                    <p className="text-xs text-muted-foreground truncate max-w-[200px]" title={toTitleCase(article.description || '') || ''}>
+                                      {toTitleCase(article.description || '') || '-'}
                                     </p>
                                   </TableCell>
                                   <TableCell className="py-1.5 text-sm">
