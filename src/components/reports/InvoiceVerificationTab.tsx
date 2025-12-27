@@ -103,7 +103,7 @@ export function InvoiceVerificationTab() {
   const uploadInvoice = useUploadInvoice();
   const updateStatus = useUpdateInvoiceStatus();
   const checkEmails = useCheckInvoiceEmails();
-  const { status: processingStatus, isProcessing, progress } = useInvoiceProcessingStatus();
+  const { status: processingStatus, isProcessing, progress, cancelProcessing } = useInvoiceProcessingStatus();
   
   // Timer for automatic email check (5 minutes = 300 seconds)
   const [nextCheckIn, setNextCheckIn] = useState<number>(5 * 60);
@@ -259,11 +259,22 @@ export function InvoiceVerificationTab() {
             {/* Processing Progress Indicator */}
             {isProcessing && processingStatus && (
               <div className="flex-1 bg-primary/5 border border-primary/20 rounded-lg p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <Loader2 className="h-4 w-4 animate-spin text-primary" />
-                  <span className="text-sm font-medium">
-                    {t('invoices.processingInBackground', 'Verarbeite Rechnungen...')}
-                  </span>
+                <div className="flex items-center justify-between gap-2 mb-2">
+                  <div className="flex items-center gap-2">
+                    <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                    <span className="text-sm font-medium">
+                      {t('invoices.processingInBackground', 'Verarbeite Rechnungen...')}
+                    </span>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={cancelProcessing}
+                    className="h-7 px-2 text-destructive hover:text-destructive hover:bg-destructive/10"
+                  >
+                    <X className="h-4 w-4 mr-1" />
+                    Abbrechen
+                  </Button>
                 </div>
                 <Progress value={progress} className="h-2 mb-1" />
                 <div className="text-xs text-muted-foreground">

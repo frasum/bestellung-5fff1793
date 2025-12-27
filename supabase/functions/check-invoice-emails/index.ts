@@ -617,6 +617,25 @@ async function processPdfsInBackground(
   const totalPdfs = emailsToProcess.reduce((sum, email) => sum + email.pdfContents.length, 0);
   
   for (const email of emailsToProcess) {
+    // Check if cancellation was requested
+    const { data: statusCheck } = await serviceClient
+      .from("invoice_processing_status")
+      .select("status")
+      .eq("id", statusId)
+      .single();
+    
+    if (statusCheck?.status === "cancelled") {
+      console.info("[BACKGROUND] Processing cancelled by user");
+      await imap.logout();
+      await serviceClient
+        .from("invoice_processing_status")
+        .update({ 
+          completed_at: new Date().toISOString()
+        })
+        .eq("id", statusId);
+      return;
+    }
+    
     const { seqNum, subject, from, messageId, pdfContents, supplierId } = email;
     
     console.info(`[BACKGROUND] Processing email ${seqNum}: ${pdfContents.length} PDFs`);

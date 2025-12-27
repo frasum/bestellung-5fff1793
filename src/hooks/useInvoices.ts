@@ -308,7 +308,7 @@ export interface InvoiceProcessingStatus {
   processed_pdfs: number;
   new_invoices: number;
   skipped_duplicates: number;
-  status: 'processing' | 'completed' | 'failed';
+  status: 'processing' | 'completed' | 'failed' | 'cancelled';
   error_message: string | null;
   started_at: string;
   completed_at: string | null;
@@ -357,6 +357,13 @@ export function useInvoiceProcessingStatus() {
               });
               // Clear status after showing error
               setTimeout(() => setCurrentStatus(null), 5000);
+            } else if (status.status === 'cancelled') {
+              queryClient.invalidateQueries({ queryKey: ['invoices'] });
+              toast({
+                title: 'Rechnungsimport abgebrochen',
+                description: `${status.new_invoices} Rechnung(en) wurden vor dem Abbruch importiert`,
+              });
+              setTimeout(() => setCurrentStatus(null), 3000);
             }
           }
         }
@@ -392,6 +399,31 @@ export function useInvoiceProcessingStatus() {
     setCurrentStatus(null);
   }, []);
 
+  const cancelProcessing = useCallback(async () => {
+    if (!currentStatus?.id) return;
+    
+    try {
+      const { error } = await supabase
+        .from('invoice_processing_status')
+        .update({ status: 'cancelled' })
+        .eq('id', currentStatus.id);
+      
+      if (error) throw error;
+      
+      toast({
+        title: 'Abbruch angefordert',
+        description: 'Die Verarbeitung wird gestoppt...',
+      });
+    } catch (err) {
+      console.error('Failed to cancel processing:', err);
+      toast({
+        title: 'Fehler',
+        description: 'Abbruch konnte nicht angefordert werden',
+        variant: 'destructive',
+      });
+    }
+  }, [currentStatus?.id, toast]);
+
   return {
     status: currentStatus,
     isProcessing: currentStatus?.status === 'processing',
@@ -399,6 +431,7 @@ export function useInvoiceProcessingStatus() {
       ? Math.round((currentStatus.processed_pdfs / currentStatus.total_pdfs) * 100)
       : 0,
     clearStatus,
+    cancelProcessing,
   };
 }
 
