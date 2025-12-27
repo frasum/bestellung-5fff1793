@@ -179,11 +179,16 @@ export function useUploadInvoice() {
 
       return parseResponse.data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['invoices'] });
+      const count = data?.invoicesProcessed || 1;
       toast({
-        title: 'Rechnung hochgeladen',
-        description: 'Die Rechnung wird analysiert...',
+        title: count > 1 
+          ? `${count} Rechnungen erkannt` 
+          : 'Rechnung hochgeladen',
+        description: count > 1
+          ? `${count} separate Rechnungen wurden aus dem PDF erkannt und angelegt.`
+          : 'Die Rechnung wird analysiert...',
       });
     },
     onError: (error: Error) => {
