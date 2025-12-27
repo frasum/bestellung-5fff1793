@@ -17,7 +17,11 @@ export interface Invoice {
   gross_amount: number | null;
   currency: string;
   pdf_url: string | null;
-  status: 'pending' | 'processing' | 'matched' | 'discrepancy' | 'approved' | 'rejected';
+  status: 'pending' | 'processing' | 'matched' | 'discrepancy' | 'approved' | 'rejected' | 'cancelled';
+  analysis_started_at?: string | null;
+  analysis_updated_at?: string | null;
+  cancel_requested_at?: string | null;
+  analysis_error?: string | null;
   notes: string | null;
   parsed_data: any;
   created_at: string;
@@ -461,6 +465,36 @@ export function useReanalyzeInvoice() {
       console.error('Reanalyze error:', error);
       toast({
         title: 'Analyse fehlgeschlagen',
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
+  });
+}
+
+export function useCancelInvoiceAnalysis() {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (invoiceId: string) => {
+      const { error } = await supabase
+        .from('invoices')
+        .update({ cancel_requested_at: new Date().toISOString() })
+        .eq('id', invoiceId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['invoices'] });
+      toast({
+        title: 'Abbruch angefordert',
+        description: 'Die Analyse wird gestoppt...',
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: 'Fehler',
         description: error.message,
         variant: 'destructive',
       });

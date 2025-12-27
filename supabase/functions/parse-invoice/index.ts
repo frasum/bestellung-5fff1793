@@ -182,10 +182,59 @@ function calculateArticleSimilarity(name1: string, name2: string): number {
   return (matches / totalUniqueTokens) * 100;
 }
 
+// Helper function to update analysis heartbeat
+async function updateAnalysisHeartbeat(supabaseClient: any, invoiceId: string, step?: string) {
+  const updateData: any = { analysis_updated_at: new Date().toISOString() };
+  if (step) {
+    updateData.notes = `Analysiere: ${step}`;
+  }
+  await supabaseClient
+    .from('invoices')
+    .update(updateData)
+    .eq('id', invoiceId);
+}
+
+// Helper function to check if cancellation was requested
+async function checkCancelRequested(supabaseClient: any, invoiceId: string): Promise<boolean> {
+  const { data } = await supabaseClient
+    .from('invoices')
+    .select('cancel_requested_at')
+    .eq('id', invoiceId)
+    .single();
+  return !!(data?.cancel_requested_at);
+}
+
+// Helper function to mark analysis as cancelled
+async function markAnalysisCancelled(supabaseClient: any, invoiceId: string) {
+  await supabaseClient
+    .from('invoices')
+    .update({
+      status: 'cancelled',
+      analysis_error: 'Analyse wurde vom Benutzer abgebrochen',
+      analysis_updated_at: new Date().toISOString(),
+    })
+    .eq('id', invoiceId);
+}
+
+// Helper function to mark analysis as failed
+async function markAnalysisFailed(supabaseClient: any, invoiceId: string, error: string) {
+  await supabaseClient
+    .from('invoices')
+    .update({
+      status: 'pending',
+      analysis_error: error,
+      analysis_updated_at: new Date().toISOString(),
+    })
+    .eq('id', invoiceId);
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
+
+  let invoiceId: string | null = null;
+  let supabaseClient: any = null;
 
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
@@ -215,14 +264,24 @@ serve(async (req) => {
       });
     }
 
-    const supabaseClient = createClient(supabaseUrl, supabaseServiceKey);
+    supabaseClient = createClient(supabaseUrl, supabaseServiceKey);
     
     // Parse request body first to get invoiceId
-    const { invoiceId, pdfUrl, pdfBase64 } = await req.json();
+    const { invoiceId: requestInvoiceId, pdfUrl, pdfBase64 } = await req.json();
+    invoiceId = requestInvoiceId;
 
     if (!invoiceId) {
       return new Response(JSON.stringify({ error: 'invoiceId is required' }), {
         status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Check if cancellation was already requested before we start
+    if (await checkCancelRequested(supabaseClient, invoiceId)) {
+      console.log('Cancellation already requested before start, aborting');
+      await markAnalysisCancelled(supabaseClient, invoiceId);
+      return new Response(JSON.stringify({ success: false, cancelled: true }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
@@ -280,20 +339,23 @@ serve(async (req) => {
       organizationId = profile.organization_id;
     }
 
-    if (!invoiceId) {
-      return new Response(JSON.stringify({ error: 'invoiceId is required' }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-
-    // Update invoice status to processing
+    // Update invoice status to processing with analysis tracking
+    const now = new Date().toISOString();
     await supabaseClient
       .from('invoices')
-      .update({ status: 'processing' })
+      .update({ 
+        status: 'processing',
+        analysis_started_at: now,
+        analysis_updated_at: now,
+        analysis_error: null,
+        cancel_requested_at: null, // Clear any old cancel request
+      })
       .eq('id', invoiceId);
 
     console.log('Processing invoice:', invoiceId);
+
+    // Heartbeat: Starting
+    await updateAnalysisHeartbeat(supabaseClient, invoiceId, 'PDF wird geladen');
 
     // Get PDF URL or base64 - if not provided, fetch from database
     let finalPdfUrl = pdfUrl;
@@ -309,10 +371,7 @@ serve(async (req) => {
       
       if (fetchError || !invoiceRecord?.pdf_url) {
         console.error('Failed to fetch invoice PDF URL:', fetchError);
-        await supabaseClient
-          .from('invoices')
-          .update({ status: 'pending', notes: 'PDF URL nicht gefunden' })
-          .eq('id', invoiceId);
+        await markAnalysisFailed(supabaseClient, invoiceId, 'PDF URL nicht gefunden');
         return new Response(JSON.stringify({ error: 'Invoice has no PDF URL and none was provided' }), {
           status: 400,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -322,10 +381,21 @@ serve(async (req) => {
       console.log('Using PDF URL from database:', finalPdfUrl);
     }
 
+    // Cancel checkpoint 1: Before downloading PDF
+    if (await checkCancelRequested(supabaseClient, invoiceId)) {
+      console.log('Cancellation requested before PDF download');
+      await markAnalysisCancelled(supabaseClient, invoiceId);
+      return new Response(JSON.stringify({ success: false, cancelled: true }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     // If we have a URL but no base64, download the PDF and convert to base64
     // (Gemini doesn't support PDF URLs directly, only base64)
     if (finalPdfUrl && !finalPdfBase64) {
       console.log('Downloading PDF from URL to convert to base64...');
+      await updateAnalysisHeartbeat(supabaseClient, invoiceId, 'PDF wird heruntergeladen');
+      
       try {
         const pdfResponse = await fetch(finalPdfUrl);
         if (!pdfResponse.ok) {
@@ -343,10 +413,7 @@ serve(async (req) => {
         console.log('PDF converted to base64, length:', finalPdfBase64.length);
       } catch (downloadError) {
         console.error('Failed to download PDF:', downloadError);
-        await supabaseClient
-          .from('invoices')
-          .update({ status: 'pending', notes: 'PDF konnte nicht heruntergeladen werden' })
-          .eq('id', invoiceId);
+        await markAnalysisFailed(supabaseClient, invoiceId, 'PDF konnte nicht heruntergeladen werden');
         return new Response(JSON.stringify({ error: 'Failed to download PDF for processing' }), {
           status: 500,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -375,6 +442,15 @@ serve(async (req) => {
       .update({ matched_order_id: null })
       .eq('id', invoiceId);
 
+    // Cancel checkpoint 2: Before AI call
+    if (await checkCancelRequested(supabaseClient, invoiceId)) {
+      console.log('Cancellation requested before AI call');
+      await markAnalysisCancelled(supabaseClient, invoiceId);
+      return new Response(JSON.stringify({ success: false, cancelled: true }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     // Prepare content for AI - always use base64 for PDFs (Gemini doesn't support PDF URLs)
     let pdfContent: { type: string; image_url?: { url: string }; text?: string }[];
     
@@ -392,19 +468,28 @@ serve(async (req) => {
       });
     }
 
-    // Call Lovable AI to extract invoice data - NOW INCLUDING customerNumber and MULTI-INVOICE support
-    const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${lovableApiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'google/gemini-2.5-pro',
-        messages: [
-          {
-            role: 'system',
-            content: `You are an expert invoice parser. Extract structured data from invoice PDFs/images.
+    // Heartbeat: AI call starting
+    await updateAnalysisHeartbeat(supabaseClient, invoiceId, 'KI analysiert Rechnung');
+
+    // Call Lovable AI to extract invoice data with timeout
+    const AI_TIMEOUT_MS = 180000; // 3 minutes timeout
+    const abortController = new AbortController();
+    const timeoutId = setTimeout(() => abortController.abort(), AI_TIMEOUT_MS);
+
+    let aiResponse: Response;
+    try {
+      aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${lovableApiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'google/gemini-2.5-pro',
+          messages: [
+            {
+              role: 'system',
+              content: `You are an expert invoice parser. Extract structured data from invoice PDFs/images.
 
 IMPORTANT: This PDF may contain MULTIPLE invoices from different suppliers on different pages.
 
@@ -466,29 +551,43 @@ DETECTION CRITERIA for separate invoices:
 - Different supplier name/logo → new invoice
 - Same supplier BUT different invoice number → new invoice
 - Same supplier AND same invoice number → SAME invoice (combine all pages/items into one)`
-          },
-          {
-            role: 'user',
-            content: [
-              { type: 'text', text: 'Please extract all invoices from this PDF. Remember to group pages by (supplierName + invoiceNumber) - same supplier with same invoice number across multiple pages is ONE invoice.' },
-              ...pdfContent
-            ]
-          }
-        ],
-        temperature: 0.1,
-        // Increase token budget to avoid truncated JSON for invoices with many line items
-        max_tokens: 32000,
-      }),
-    });
+            },
+            {
+              role: 'user',
+              content: [
+                { type: 'text', text: 'Please extract all invoices from this PDF. Remember to group pages by (supplierName + invoiceNumber) - same supplier with same invoice number across multiple pages is ONE invoice.' },
+                ...pdfContent
+              ]
+            }
+          ],
+          temperature: 0.1,
+          // Increase token budget to avoid truncated JSON for invoices with many line items
+          max_tokens: 32000,
+        }),
+        signal: abortController.signal,
+      });
+    } catch (fetchError: any) {
+      clearTimeout(timeoutId);
+      if (fetchError.name === 'AbortError') {
+        console.error('AI request timed out after', AI_TIMEOUT_MS, 'ms');
+        await markAnalysisFailed(supabaseClient, invoiceId, `KI-Anfrage Timeout nach ${AI_TIMEOUT_MS / 1000} Sekunden`);
+        return new Response(JSON.stringify({ error: 'AI request timed out' }), {
+          status: 504,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      throw fetchError;
+    }
+    clearTimeout(timeoutId);
+
+    // Heartbeat after AI response
+    await updateAnalysisHeartbeat(supabaseClient, invoiceId, 'KI-Antwort wird verarbeitet');
 
     if (!aiResponse.ok) {
       const errorText = await aiResponse.text();
       console.error('AI API error:', aiResponse.status, errorText);
       
-      await supabaseClient
-        .from('invoices')
-        .update({ status: 'pending', notes: 'AI parsing failed: ' + errorText })
-        .eq('id', invoiceId);
+      await markAnalysisFailed(supabaseClient, invoiceId, 'AI parsing failed: ' + errorText);
       
       return new Response(JSON.stringify({ error: 'AI parsing failed' }), {
         status: 500,
@@ -695,14 +794,7 @@ DETECTION CRITERIA for separate invoices:
           .eq('id', invoiceId);
       } else {
         console.error('Could not extract minimum header data');
-        await supabaseClient
-          .from('invoices')
-          .update({ 
-            status: 'pending', 
-            notes: 'Parsing fehlgeschlagen - bitte manuell prüfen', 
-            parsed_data: { raw: rawContent } 
-          })
-          .eq('id', invoiceId);
+        await markAnalysisFailed(supabaseClient, invoiceId, 'Parsing fehlgeschlagen - bitte manuell prüfen');
         
         return new Response(JSON.stringify({ error: 'Failed to parse invoice data' }), {
           status: 500,
@@ -710,6 +802,18 @@ DETECTION CRITERIA for separate invoices:
         });
       }
     }
+
+    // Cancel checkpoint 3: Before saving data
+    if (await checkCancelRequested(supabaseClient, invoiceId)) {
+      console.log('Cancellation requested before saving data');
+      await markAnalysisCancelled(supabaseClient, invoiceId);
+      return new Response(JSON.stringify({ success: false, cancelled: true }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Heartbeat: Saving data
+    await updateAnalysisHeartbeat(supabaseClient, invoiceId, 'Daten werden gespeichert');
 
     // Get PDF URL for creating additional invoice records
     const { data: originalInvoice } = await supabaseClient
@@ -791,6 +895,16 @@ DETECTION CRITERIA for separate invoices:
   } catch (error) {
     console.error('Invoice processing error:', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    
+    // Mark as failed in the database if we have the invoice ID and client
+    if (invoiceId && supabaseClient) {
+      try {
+        await markAnalysisFailed(supabaseClient, invoiceId, errorMessage);
+      } catch (updateError) {
+        console.error('Failed to update invoice status after error:', updateError);
+      }
+    }
+    
     return new Response(JSON.stringify({ error: errorMessage }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
