@@ -46,17 +46,6 @@ interface MultiSupplierCsvImportDialogProps {
   organizationId: string;
 }
 
-// Known supplier patterns to detect section starts
-const SUPPLIER_PATTERNS = [
-  { name: 'Hamberger', patterns: ['hamberger', 'intergast'] },
-  { name: 'Mehdi Food', patterns: ['mehdi', 'mehdi food'] },
-  { name: 'Papazof Seven Seas', patterns: ['papazof', 'seven seas'] },
-  { name: 'KAO Handels GmbH', patterns: ['kao', 'kao handels'] },
-  { name: 'Sonnberg Biofleisch', patterns: ['sonnberg', 'biofleisch'] },
-  { name: 'Früchte Feldbrach', patterns: ['feldbrach', 'früchte feldbrach'] },
-  { name: 'Bäckerei Schmidt', patterns: ['bäckerei schmidt', 'schmidt'] },
-];
-
 // Clean German price format: "4,99 €" -> "4.99"
 const cleanPrice = (value: string): string => {
   if (!value) return value;
@@ -65,51 +54,107 @@ const cleanPrice = (value: string): string => {
   return isNaN(num) ? value : num.toString();
 };
 
+// Supplier name mapping for normalization
+const SUPPLIER_NAME_MAPPING: Record<string, string> = {
+  'hamberger': 'Hamberger (Intergast)',
+  'mehdi food': 'Mehdi Food',
+  'medi food': 'Mehdi Food',
+  'papazof': 'Papazof Seven Seas',
+  'papazof fisch': 'Papazof Seven Seas',
+  'papazof seven seas': 'Papazof Seven Seas',
+  'kao': 'KAO Handels GmbH',
+  'kao handels': 'KAO Handels GmbH',
+  'sonnberg': 'Sonnberg Biofleisch',
+  'sonnberg biofleisch': 'Sonnberg Biofleisch',
+  'früchte feldbrach': 'Früchte Feldbrach',
+  'feldbrach': 'Früchte Feldbrach',
+  'bäckerei schmidt': 'Bäckerei Schmidt',
+  'bäckerei': 'Bäckerei Schmidt',
+  'online': 'Online-Bestellungen',
+  'fleisch': 'Fleisch-Übersicht',
+};
+
+// Blacklist patterns - lines that should NOT be detected as suppliers
+const BLACKLIST_PATTERNS = [
+  /^anlieferung/i,
+  /^artikel\s*nr/i,
+  /^artnr/i,
+  /bestellmenge/i,
+  /bezeichnung\s*1/i,
+  /^\d{1,2}\.\d{1,2}\.\d{2,4}/,  // Date patterns
+  /^preis$/i,
+  /^einheit$/i,
+  /^;+$/,  // Only semicolons
+  /^,+$/,  // Only commas
+];
+
 // Detect if a line is a new supplier section header
+// Main pattern: "NAME: Tabelle 1" or "NAME: Online Produkte"
 const isSupplierHeader = (line: string, lineIndex: number, allLines: string[]): { isHeader: boolean; supplierName: string | null } => {
-  const lowerLine = line.toLowerCase();
-  
-  // Check for "Tabelle X" pattern which often precedes supplier info
-  if (/tabelle\s*\d+/i.test(line)) {
-    // Look at next few lines for supplier name
-    for (let i = 1; i <= 3 && lineIndex + i < allLines.length; i++) {
-      const nextLine = allLines[lineIndex + i];
-      for (const pattern of SUPPLIER_PATTERNS) {
-        if (pattern.patterns.some(p => nextLine.toLowerCase().includes(p))) {
-          return { isHeader: true, supplierName: pattern.name };
-        }
-      }
-      // Check if it looks like a company name (not a product)
-      if (nextLine && /^[A-ZÄÖÜ]/.test(nextLine) && !/\d{1,2},\d{2}/.test(nextLine) && nextLine.length < 50) {
-        return { isHeader: true, supplierName: nextLine.trim() };
-      }
+  // Skip empty lines
+  if (!line || line.trim().length === 0) {
+    return { isHeader: false, supplierName: null };
+  }
+
+  // Check blacklist first
+  for (const pattern of BLACKLIST_PATTERNS) {
+    if (pattern.test(line)) {
+      return { isHeader: false, supplierName: null };
     }
   }
-  
-  // Check for direct supplier name patterns
-  for (const pattern of SUPPLIER_PATTERNS) {
-    if (pattern.patterns.some(p => lowerLine.includes(p))) {
-      // Make sure it's not just a product containing the supplier name
-      if (!lowerLine.includes('preis') && !lowerLine.includes('€') && line.length < 60) {
-        return { isHeader: true, supplierName: pattern.name };
-      }
+
+  // Main pattern 1: "NAME: Tabelle X" (e.g., "HAMBERGER: Tabelle 1")
+  const tablePattern = /^([A-ZÄÖÜa-zäöü\s\-]+):\s*Tabelle\s*\d+/i;
+  const tableMatch = line.match(tablePattern);
+  if (tableMatch) {
+    const rawName = tableMatch[1].trim();
+    const normalizedName = normalizeSupplierName(rawName);
+    return { isHeader: true, supplierName: normalizedName };
+  }
+
+  // Main pattern 2: "NAME: XYZ Produkte" (e.g., "Online: Online Produkte")
+  const productPattern = /^([A-ZÄÖÜa-zäöü\s\-]+):\s*[A-ZÄÖÜa-zäöü]+\s*Produkte/i;
+  const productMatch = line.match(productPattern);
+  if (productMatch) {
+    const rawName = productMatch[1].trim();
+    const normalizedName = normalizeSupplierName(rawName);
+    return { isHeader: true, supplierName: normalizedName };
+  }
+
+  // Fallback pattern: Just "NAME:" at start followed by text
+  const colonPattern = /^([A-ZÄÖÜ][A-ZÄÖÜa-zäöü\s\-]{2,20}):\s*.+/;
+  const colonMatch = line.match(colonPattern);
+  if (colonMatch) {
+    const rawName = colonMatch[1].trim();
+    // Only accept if it matches a known supplier
+    const lowerName = rawName.toLowerCase();
+    if (Object.keys(SUPPLIER_NAME_MAPPING).some(key => lowerName.includes(key) || key.includes(lowerName))) {
+      const normalizedName = normalizeSupplierName(rawName);
+      return { isHeader: true, supplierName: normalizedName };
     }
   }
-  
-  // Check for new header row pattern (Artikel NR, Bezeichnung, etc.)
-  const headerKeywords = ['artikel nr', 'artikelbezeichnung', 'bezeichnung', 'preis'];
-  const matchCount = headerKeywords.filter(kw => lowerLine.includes(kw)).length;
-  if (matchCount >= 2) {
-    // This is likely a new section header - check previous lines for supplier name
-    for (let i = 1; i <= 5 && lineIndex - i >= 0; i++) {
-      const prevLine = allLines[lineIndex - i].trim();
-      if (prevLine && /^[A-ZÄÖÜ]/.test(prevLine) && !/\d{1,2},\d{2}/.test(prevLine) && prevLine.length < 50 && prevLine.length > 3) {
-        return { isHeader: true, supplierName: prevLine };
-      }
-    }
-  }
-  
+
   return { isHeader: false, supplierName: null };
+};
+
+// Normalize supplier name using the mapping
+const normalizeSupplierName = (rawName: string): string => {
+  const lowerName = rawName.toLowerCase().trim();
+  
+  // Check exact match first
+  if (SUPPLIER_NAME_MAPPING[lowerName]) {
+    return SUPPLIER_NAME_MAPPING[lowerName];
+  }
+  
+  // Check partial matches
+  for (const [key, value] of Object.entries(SUPPLIER_NAME_MAPPING)) {
+    if (lowerName.includes(key) || key.includes(lowerName)) {
+      return value;
+    }
+  }
+  
+  // Return original name with proper capitalization
+  return rawName.charAt(0).toUpperCase() + rawName.slice(1);
 };
 
 // Extract contact info from lines
