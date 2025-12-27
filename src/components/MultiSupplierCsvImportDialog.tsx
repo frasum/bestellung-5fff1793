@@ -471,6 +471,18 @@ export const MultiSupplierCsvImportDialog = ({
     setError(null);
 
     try {
+      // Load all locations for this organization for automatic assignment
+      const { data: orgLocations, error: locationsError } = await supabase
+        .from('locations')
+        .select('id')
+        .eq('organization_id', organizationId);
+
+      if (locationsError) {
+        console.error('Error loading locations:', locationsError);
+      }
+
+      console.log('[MultiSupplierImport] Organization locations:', orgLocations?.length || 0);
+
       let suppliersCreated = 0;
       let articlesImported = 0;
 
@@ -479,11 +491,15 @@ export const MultiSupplierCsvImportDialog = ({
 
         // Create new supplier if needed
         if (section.isNew && !supplierId) {
+          // Generate placeholder email if none provided (email is NOT NULL in DB)
+          const emailToUse = section.contactEmail || 
+            `import+${section.supplierName.toLowerCase().replace(/[^a-z0-9]/g, '-')}@placeholder.invalid`;
+
           const { data: newSupplier, error: supplierError } = await supabase
             .from('suppliers')
             .insert({
               name: section.supplierName,
-              email: section.contactEmail || null,
+              email: emailToUse,
               phone: section.contactPhone || null,
               address: section.address || null,
               customer_number: section.customerNumber || null,
@@ -495,11 +511,31 @@ export const MultiSupplierCsvImportDialog = ({
 
           if (supplierError) {
             console.error('Error creating supplier:', supplierError);
+            toast.error(`Fehler beim Anlegen von "${section.supplierName}": ${supplierError.message}`);
             continue;
           }
 
           supplierId = newSupplier.id;
           suppliersCreated++;
+
+          // Assign new supplier to all organization locations
+          if (orgLocations && orgLocations.length > 0) {
+            const supplierLocationEntries = orgLocations.map(loc => ({
+              supplier_id: supplierId!,
+              location_id: loc.id,
+              is_active: true,
+            }));
+
+            const { error: slError } = await supabase
+              .from('supplier_locations')
+              .insert(supplierLocationEntries);
+
+            if (slError) {
+              console.error('Error creating supplier_locations:', slError);
+            } else {
+              console.log(`[MultiSupplierImport] Created ${supplierLocationEntries.length} supplier_locations for "${section.supplierName}"`);
+            }
+          }
         }
 
         if (!supplierId) continue;
@@ -568,14 +604,38 @@ export const MultiSupplierCsvImportDialog = ({
         }).filter(a => a.name && a.name.length > 0);
 
         if (articlesToInsert.length > 0) {
-          const { error: articlesError } = await supabase
+          // Insert articles and get their IDs for location assignment
+          const { data: insertedArticles, error: articlesError } = await supabase
             .from('articles')
-            .insert(articlesToInsert);
+            .insert(articlesToInsert)
+            .select('id');
 
           if (articlesError) {
             console.error('Error importing articles:', articlesError);
+            toast.error(`Fehler beim Import der Artikel für "${section.supplierName}": ${articlesError.message}`);
           } else {
             articlesImported += articlesToInsert.length;
+
+            // Assign new articles to all organization locations
+            if (insertedArticles && orgLocations && orgLocations.length > 0) {
+              const articleLocationEntries = insertedArticles.flatMap(article =>
+                orgLocations.map(loc => ({
+                  article_id: article.id,
+                  location_id: loc.id,
+                  is_active: true,
+                }))
+              );
+
+              const { error: alError } = await supabase
+                .from('article_locations')
+                .insert(articleLocationEntries);
+
+              if (alError) {
+                console.error('Error creating article_locations:', alError);
+              } else {
+                console.log(`[MultiSupplierImport] Created ${articleLocationEntries.length} article_locations for "${section.supplierName}"`);
+              }
+            }
           }
         }
       }
@@ -591,6 +651,7 @@ export const MultiSupplierCsvImportDialog = ({
       }, 2000);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Import fehlgeschlagen');
+      toast.error('Import fehlgeschlagen: ' + (err instanceof Error ? err.message : 'Unbekannter Fehler'));
     } finally {
       setIsImporting(false);
     }
