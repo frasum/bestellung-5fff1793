@@ -2524,6 +2524,56 @@ export type Database = {
           },
         ]
       }
+      organization_email_settings: {
+        Row: {
+          created_at: string | null
+          id: string
+          imap_host: string
+          imap_password_encrypted: string
+          imap_port: number | null
+          imap_user: string
+          is_active: boolean | null
+          last_checked_at: string | null
+          mailbox: string | null
+          organization_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          imap_host: string
+          imap_password_encrypted: string
+          imap_port?: number | null
+          imap_user: string
+          is_active?: boolean | null
+          last_checked_at?: string | null
+          mailbox?: string | null
+          organization_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          imap_host?: string
+          imap_password_encrypted?: string
+          imap_port?: number | null
+          imap_user?: string
+          is_active?: boolean | null
+          last_checked_at?: string | null
+          mailbox?: string | null
+          organization_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organization_email_settings_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: true
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       organizations: {
         Row: {
           address: string | null
