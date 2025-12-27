@@ -2097,6 +2097,10 @@ export type Database = {
       }
       invoices: {
         Row: {
+          analysis_error: string | null
+          analysis_started_at: string | null
+          analysis_updated_at: string | null
+          cancel_requested_at: string | null
           created_at: string
           currency: string | null
           customer_number: string | null
@@ -2123,6 +2127,10 @@ export type Database = {
           vat_amount: number | null
         }
         Insert: {
+          analysis_error?: string | null
+          analysis_started_at?: string | null
+          analysis_updated_at?: string | null
+          cancel_requested_at?: string | null
           created_at?: string
           currency?: string | null
           customer_number?: string | null
@@ -2149,6 +2157,10 @@ export type Database = {
           vat_amount?: number | null
         }
         Update: {
+          analysis_error?: string | null
+          analysis_started_at?: string | null
+          analysis_updated_at?: string | null
+          cancel_requested_at?: string | null
           created_at?: string
           currency?: string | null
           customer_number?: string | null

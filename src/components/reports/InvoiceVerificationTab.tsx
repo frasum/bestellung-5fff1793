@@ -73,6 +73,7 @@ import {
   useCreateArticlesFromInvoice,
   useDeleteInvoice,
   useInvoiceProcessingStatus,
+  useCancelInvoiceAnalysis,
   Invoice,
   InvoiceDiscrepancy,
 } from '@/hooks/useInvoices';
@@ -86,6 +87,7 @@ const statusConfig: Record<Invoice['status'], { icon: React.ElementType; color: 
   discrepancy: { icon: AlertTriangle, color: 'bg-warning/20 text-warning', label: 'Abweichungen' },
   approved: { icon: CheckCircle2, color: 'bg-success/20 text-success', label: 'Freigegeben' },
   rejected: { icon: XCircle, color: 'bg-destructive/20 text-destructive', label: 'Abgelehnt' },
+  cancelled: { icon: XCircle, color: 'bg-muted text-muted-foreground', label: 'Abgebrochen' },
 };
 
 const discrepancyTypeConfig: Record<InvoiceDiscrepancy['discrepancy_type'], { icon: React.ElementType; color: string; label: string }> = {
@@ -103,6 +105,7 @@ export function InvoiceVerificationTab() {
   const uploadInvoice = useUploadInvoice();
   const updateStatus = useUpdateInvoiceStatus();
   const checkEmails = useCheckInvoiceEmails();
+  const cancelAnalysis = useCancelInvoiceAnalysis();
   const { status: processingStatus, isProcessing, progress, cancelProcessing } = useInvoiceProcessingStatus();
   
   // Timer for automatic email check (5 minutes = 300 seconds)
