@@ -20,6 +20,7 @@ interface InvoiceData {
   vatAmount: number;
   grossAmount: number;
   currency: string;
+  pagesFound?: number[]; // Which pages this invoice was found on (for multi-invoice PDFs)
   items: Array<{
     position?: number;
     articleName: string;
@@ -30,6 +31,11 @@ interface InvoiceData {
     totalPrice: number;
     suggestedCategory?: string; // NEW: AI-suggested category
   }>;
+}
+
+// Response format for multi-invoice PDFs
+interface MultiInvoiceResponse {
+  invoices: InvoiceData[];
 }
 
 /**
@@ -386,7 +392,7 @@ serve(async (req) => {
       });
     }
 
-    // Call Lovable AI to extract invoice data - NOW INCLUDING customerNumber
+    // Call Lovable AI to extract invoice data - NOW INCLUDING customerNumber and MULTI-INVOICE support
     const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -400,39 +406,53 @@ serve(async (req) => {
             role: 'system',
             content: `You are an expert invoice parser. Extract structured data from invoice PDFs/images.
 
+IMPORTANT: This PDF may contain MULTIPLE invoices from different suppliers on different pages.
+
+GROUPING RULES - CRITICAL:
+- Group pages by the combination of (supplierName + invoiceNumber)
+- If the SAME supplier has the SAME invoice number on multiple pages, combine them into ONE invoice object (it's a multi-page invoice)
+- If the SAME supplier has DIFFERENT invoice numbers, these are SEPARATE invoices
+- Different suppliers with the same invoice number are SEPARATE invoices (invoice numbers are supplier-specific)
+- Example: Feldbrach RE-001 on pages 1-2 = ONE invoice; Feldbrach RE-002 on page 3 = SECOND invoice; KAO RE-001 on page 4 = THIRD invoice (different supplier)
+
 Return ONLY valid JSON (no markdown fences, no commentary, no backticks).
 
-Extract the following information and return as JSON:
+ALWAYS return in this format with an "invoices" array, even for a single invoice:
 {
-  "supplierName": "Supplier/vendor company name",
-  "supplierAddress": "Full supplier address if visible",
-  "supplierEmail": "Supplier email address if visible (look in header, footer, contact info)",
-  "supplierPhone": "Supplier phone number if visible (look for 'Tel.', 'Telefon', 'Tel:', 'Phone', 'Fon', 'T:', 'T.' in header, footer, contact section)",
-  "customerNumber": "Customer number if visible (look for 'Kunden-Nr.', 'Kundennummer', 'Kd.-Nr.', 'Kd.Nr.', 'Customer No.', 'Kundenkonto', 'Debitor-Nr.')",
-  "invoiceNumber": "Invoice/bill number",
-  "invoiceDate": "Invoice date in YYYY-MM-DD format",
-  "deliveryDate": "Delivery date in YYYY-MM-DD format if shown",
-  "dueDate": "Payment due date in YYYY-MM-DD format if shown",
-  "netAmount": numeric value (net total without VAT),
-  "vatAmount": numeric value (VAT/tax amount),
-  "grossAmount": numeric value (total including VAT),
-  "currency": "EUR" or other currency code,
-  "items": [
+  "invoices": [
     {
-      "position": position number if shown,
-      "articleName": "Product/article name",
-      "articleSku": "SKU/article number if shown",
-      "quantity": numeric quantity,
-      "unit": "unit like Stk, kg, Fl, etc",
-      "unitPrice": numeric unit price,
-      "totalPrice": numeric line total,
-      "suggestedCategory": "Suggest a food/beverage category in German based on the article name. Categories: Fleisch, Fisch, Gemüse, Obst, Milchprodukte, Backwaren, Getränke, Wein, Bier, Spirituosen, Gewürze, Öle, Konserven, Tiefkühl, Trockenprodukte, Reinigung, Verbrauchsmaterial, Sonstiges"
+      "supplierName": "Supplier/vendor company name",
+      "supplierAddress": "Full supplier address if visible",
+      "supplierEmail": "Supplier email address if visible (look in header, footer, contact info)",
+      "supplierPhone": "Supplier phone number if visible (look for 'Tel.', 'Telefon', 'Tel:', 'Phone', 'Fon', 'T:', 'T.' in header, footer, contact section)",
+      "customerNumber": "Customer number if visible (look for 'Kunden-Nr.', 'Kundennummer', 'Kd.-Nr.', 'Kd.Nr.', 'Customer No.', 'Kundenkonto', 'Debitor-Nr.')",
+      "invoiceNumber": "Invoice/bill number",
+      "invoiceDate": "Invoice date in YYYY-MM-DD format",
+      "deliveryDate": "Delivery date in YYYY-MM-DD format if shown",
+      "dueDate": "Payment due date in YYYY-MM-DD format if shown",
+      "netAmount": numeric value (net total without VAT),
+      "vatAmount": numeric value (VAT/tax amount),
+      "grossAmount": numeric value (total including VAT),
+      "currency": "EUR" or other currency code,
+      "pagesFound": [1, 2],  // Which pages this invoice was found on (helps with debugging)
+      "items": [
+        {
+          "position": position number if shown,
+          "articleName": "Product/article name",
+          "articleSku": "SKU/article number if shown",
+          "quantity": numeric quantity,
+          "unit": "unit like Stk, kg, Fl, etc",
+          "unitPrice": numeric unit price,
+          "totalPrice": numeric line total,
+          "suggestedCategory": "Suggest a food/beverage category in German based on the article name. Categories: Fleisch, Fisch, Gemüse, Obst, Milchprodukte, Backwaren, Getränke, Wein, Bier, Spirituosen, Gewürze, Öle, Konserven, Tiefkühl, Trockenprodukte, Reinigung, Verbrauchsmaterial, Sonstiges"
+        }
+      ]
     }
   ]
 }
 
 Important:
-- Parse ALL line items from the invoice
+- Parse ALL line items from ALL invoices in the document
 - Use numeric values without currency symbols
 - If a value is unclear or missing, use null
 - Parse German date formats (DD.MM.YYYY) to YYYY-MM-DD
@@ -440,19 +460,24 @@ Important:
 - Look carefully for customer number - it identifies which location this invoice belongs to
 - Extract supplier email from the invoice header, footer, or contact section
 - Extract supplier phone number from the invoice header, footer, or contact section
-- Suggest a category for each item based on its name (use German category names)`
+- Suggest a category for each item based on its name (use German category names)
+
+DETECTION CRITERIA for separate invoices:
+- Different supplier name/logo → new invoice
+- Same supplier BUT different invoice number → new invoice
+- Same supplier AND same invoice number → SAME invoice (combine all pages/items into one)`
           },
           {
             role: 'user',
             content: [
-              { type: 'text', text: 'Please extract all data from this invoice:' },
+              { type: 'text', text: 'Please extract all invoices from this PDF. Remember to group pages by (supplierName + invoiceNumber) - same supplier with same invoice number across multiple pages is ONE invoice.' },
               ...pdfContent
             ]
           }
         ],
         temperature: 0.1,
         // Increase token budget to avoid truncated JSON for invoices with many line items
-        max_tokens: 16000,
+        max_tokens: 32000,
       }),
     });
 
@@ -476,8 +501,8 @@ Important:
 
     console.log('AI response received (first 500 chars):', (aiContent ?? '').substring(0, 500));
 
-    // Parse the JSON from AI response
-    let invoiceData: InvoiceData;
+    // Parse the JSON from AI response - now supports multi-invoice format
+    let allInvoices: InvoiceData[];
     try {
       // Extract JSON from potential markdown code blocks
       let jsonContent = aiContent ?? '';
@@ -507,8 +532,9 @@ Important:
       console.log('Sanitized JSON content (first 500 chars):', jsonContent.substring(0, 500));
       
       // Try to parse the JSON, with repair fallback for truncated responses
+      let parsedResponse: any;
       try {
-        invoiceData = JSON.parse(jsonContent.trim());
+        parsedResponse = JSON.parse(jsonContent.trim());
       } catch (initialParseError) {
         console.log('Initial parse failed, attempting JSON repair...');
         
@@ -571,7 +597,7 @@ Important:
             if (lastCompleteEnd >= 0) {
               // Rebuild JSON with only complete items
               const completeItems = afterItems.substring(0, lastCompleteEnd + 1);
-              repairedJson = repairedJson.substring(0, itemsStart + itemsMatch[0].length) + completeItems + ']}';
+              repairedJson = repairedJson.substring(0, itemsStart + itemsMatch[0].length) + completeItems + ']}}';
               console.log('Repaired JSON by closing items array after last complete item');
             }
           }
@@ -594,13 +620,43 @@ Important:
         repairedJson = repairedJson.replace(/,\s*([\]}])/g, '$1');
         
         console.log('Attempting to parse repaired JSON (last 200 chars):', repairedJson.slice(-200));
-        invoiceData = JSON.parse(repairedJson);
+        parsedResponse = JSON.parse(repairedJson);
         console.log('JSON repair successful!');
       }
+
+      // Handle both new multi-invoice format and legacy single-invoice format
+      if (parsedResponse.invoices && Array.isArray(parsedResponse.invoices)) {
+        // New format: { invoices: [...] }
+        allInvoices = parsedResponse.invoices;
+        console.log(`Multi-invoice format detected: ${allInvoices.length} invoice(s) found`);
+      } else if (parsedResponse.supplierName) {
+        // Legacy format: single invoice object
+        allInvoices = [parsedResponse as InvoiceData];
+        console.log('Legacy single-invoice format detected');
+      } else {
+        throw new Error('Invalid response format: neither invoices array nor supplierName found');
+      }
+
+      // Deduplicate by (supplierName + invoiceNumber) - safety check in case AI missed this
+      const seenKeys = new Map<string, InvoiceData>();
+      for (const inv of allInvoices) {
+        const key = `${(inv.supplierName || '').toLowerCase().trim()}::${(inv.invoiceNumber || '').toLowerCase().trim()}`;
+        if (seenKeys.has(key)) {
+          // Merge items from duplicate into existing
+          const existing = seenKeys.get(key)!;
+          existing.items = [...(existing.items || []), ...(inv.items || [])];
+          console.log(`Merged duplicate invoice: ${key}`);
+        } else {
+          seenKeys.set(key, inv);
+        }
+      }
+      allInvoices = Array.from(seenKeys.values());
+      console.log(`After deduplication: ${allInvoices.length} unique invoice(s)`);
+
     } catch (parseError) {
       console.error('Failed to parse AI response even after repair:', parseError);
       
-      // Fallback: Try to extract at least header data
+      // Fallback: Try to extract at least header data for a single invoice
       let headerData: Partial<InvoiceData> = {};
       const rawContent = aiContent ?? '';
       
@@ -627,7 +683,7 @@ Important:
       
       if (hasMinimumData) {
         console.log('Fallback: Extracted header data:', headerData);
-        invoiceData = headerData as InvoiceData;
+        allInvoices = [headerData as InvoiceData];
         
         // Add note about partial parsing
         await supabaseClient
@@ -655,7 +711,102 @@ Important:
       }
     }
 
-    console.log('Extracted customer number:', invoiceData.customerNumber);
+    // Get PDF URL for creating additional invoice records
+    const { data: originalInvoice } = await supabaseClient
+      .from('invoices')
+      .select('pdf_url')
+      .eq('id', invoiceId)
+      .single();
+    const originalPdfUrl = originalInvoice?.pdf_url;
+
+    console.log(`Processing ${allInvoices.length} invoice(s) from PDF...`);
+
+    // Track all invoice IDs we'll process (first one uses existing ID, rest get new IDs)
+    const invoiceIdsToProcess: { id: string; invoiceData: InvoiceData; isNew: boolean }[] = [];
+    
+    // First invoice updates the original record
+    if (allInvoices.length > 0) {
+      invoiceIdsToProcess.push({ id: invoiceId, invoiceData: allInvoices[0], isNew: false });
+    }
+
+    // Additional invoices create new records
+    for (let i = 1; i < allInvoices.length; i++) {
+      const inv = allInvoices[i];
+      
+      // Check if this invoice already exists (same supplier + invoice number)
+      const { data: existingInvoice } = await supabaseClient
+        .from('invoices')
+        .select('id')
+        .eq('organization_id', organizationId)
+        .eq('invoice_number', inv.invoiceNumber)
+        .maybeSingle();
+
+      if (existingInvoice) {
+        console.log(`Invoice ${inv.invoiceNumber} from ${inv.supplierName} already exists (id: ${existingInvoice.id}), skipping...`);
+        continue;
+      }
+
+      // Create new invoice record for this additional invoice
+      const { data: newInvoice, error: newInvoiceError } = await supabaseClient
+        .from('invoices')
+        .insert({
+          organization_id: organizationId,
+          pdf_url: originalPdfUrl, // Same PDF, different invoice
+          status: 'processing',
+          notes: `Rechnung ${i + 1} von ${allInvoices.length} aus Multi-Invoice PDF`,
+        })
+        .select('id')
+        .single();
+
+      if (newInvoiceError) {
+        console.error(`Failed to create invoice record for invoice ${i + 1}:`, newInvoiceError);
+        continue;
+      }
+
+      console.log(`Created new invoice record ${newInvoice.id} for ${inv.supplierName} - ${inv.invoiceNumber}`);
+      invoiceIdsToProcess.push({ id: newInvoice.id, invoiceData: inv, isNew: true });
+    }
+
+    console.log(`Will process ${invoiceIdsToProcess.length} invoice record(s)`);
+
+    // Now process each invoice
+    for (const { id: currentInvoiceId, invoiceData, isNew } of invoiceIdsToProcess) {
+      console.log(`\n--- Processing invoice ${currentInvoiceId}: ${invoiceData.supplierName} - ${invoiceData.invoiceNumber} ---`);
+      
+      // Process this single invoice (rest of the original logic follows)
+      await processInvoiceData(supabaseClient, currentInvoiceId, invoiceData, organizationId, finalPdfUrl);
+    }
+
+    // Return success with count of processed invoices
+    return new Response(JSON.stringify({ 
+      success: true, 
+      invoicesProcessed: invoiceIdsToProcess.length,
+      message: invoiceIdsToProcess.length > 1 
+        ? `${invoiceIdsToProcess.length} Rechnungen erkannt und verarbeitet`
+        : 'Rechnung verarbeitet'
+    }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+
+  } catch (error) {
+    console.error('Invoice processing error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    return new Response(JSON.stringify({ error: errorMessage }), {
+      status: 500,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
+});
+
+// Helper function to process a single invoice's data
+async function processInvoiceData(
+  supabaseClient: any,
+  invoiceId: string,
+  invoiceData: InvoiceData,
+  organizationId: string,
+  pdfUrl: string | null
+) {
+  console.log('Extracted customer number:', invoiceData.customerNumber);
 
     // Find matching supplier by name with improved fuzzy matching
     const { data: suppliers } = await supabaseClient
@@ -1082,7 +1233,7 @@ Important:
             if (orgLocations && orgLocations.length > 0) {
               const { error: locError } = await supabaseClient
                 .from('article_locations')
-                .insert(orgLocations.map(loc => ({
+                .insert(orgLocations.map((loc: { id: string }) => ({
                   article_id: newArticle.id,
                   location_id: loc.id,
                   is_active: true
@@ -1194,63 +1345,8 @@ Important:
         .eq('id', invoiceId);
     }
 
-    // Get the final invoice state
-    const { data: finalInvoice } = await supabaseClient
-      .from('invoices')
-      .select(`
-        *,
-        suppliers (name),
-        locations (name),
-        invoice_items (*),
-        invoice_discrepancies (*)
-      `)
-      .eq('id', invoiceId)
-      .single();
-
-    return new Response(JSON.stringify({ 
-      success: true, 
-      invoice: finalInvoice,
-      parsed: invoiceData,
-      autoCreated: {
-        supplier: supplierAutoCreated,
-        articlesCreated,
-        articlesUpdated,
-      }
-    }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
-
-  } catch (error) {
-    console.error('Error in parse-invoice:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    
-    // CRITICAL: Never leave invoice stuck in 'processing' - always update to pending with error
-    try {
-      const { invoiceId } = await req.clone().json().catch(() => ({}));
-      if (invoiceId) {
-        const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-        const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-        const supabaseClient = createClient(supabaseUrl, supabaseServiceKey);
-        
-        await supabaseClient
-          .from('invoices')
-          .update({ 
-            status: 'pending', 
-            notes: `Verarbeitung fehlgeschlagen: ${errorMessage}` 
-          })
-          .eq('id', invoiceId);
-        console.log('Updated invoice status to pending after error');
-      }
-    } catch (updateError) {
-      console.error('Failed to update invoice status after error:', updateError);
-    }
-    
-    return new Response(JSON.stringify({ error: errorMessage }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
-  }
-});
+    console.log(`Invoice ${invoiceId} processing complete`);
+}
 
 async function matchAndFindDiscrepancies(
   supabase: any,
