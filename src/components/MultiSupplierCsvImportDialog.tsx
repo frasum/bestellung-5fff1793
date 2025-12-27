@@ -215,6 +215,48 @@ export const MultiSupplierCsvImportDialog = ({
     // Detect delimiter
     const sampleText = allLines.slice(0, 20).join('\n');
     const delimiter = sampleText.includes(';') ? ';' : ',';
+
+    // Debug: Log available suppliers for matching
+    console.log('[MultiSupplierImport] Available existing suppliers for org:', organizationId, existingSuppliers.map(s => s.name));
+    
+    // Helper function to find matching existing supplier with flexible matching
+    const findMatchingSupplier = (supplierName: string): ExistingSupplier | undefined => {
+      const nameLower = supplierName.toLowerCase().trim();
+      
+      // 1. Exact match (case-insensitive)
+      let match = existingSuppliers.find(s => s.name.toLowerCase() === nameLower);
+      if (match) {
+        console.log(`[Match] Exact match: "${supplierName}" -> "${match.name}"`);
+        return match;
+      }
+      
+      // 2. Partial match (one contains the other)
+      match = existingSuppliers.find(s => {
+        const existingLower = s.name.toLowerCase();
+        return existingLower.includes(nameLower) || nameLower.includes(existingLower);
+      });
+      if (match) {
+        console.log(`[Match] Partial match: "${supplierName}" -> "${match.name}"`);
+        return match;
+      }
+      
+      // 3. Check via normalized mapping keys
+      for (const [key, normalizedValue] of Object.entries(SUPPLIER_NAME_MAPPING)) {
+        if (nameLower.includes(key) || key.includes(nameLower)) {
+          const mappedMatch = existingSuppliers.find(s => 
+            s.name.toLowerCase().includes(key) || 
+            s.name.toLowerCase() === normalizedValue.toLowerCase()
+          );
+          if (mappedMatch) {
+            console.log(`[Match] Mapping match: "${supplierName}" via key "${key}" -> "${mappedMatch.name}"`);
+            return mappedMatch;
+          }
+        }
+      }
+      
+      console.log(`[Match] No match found for: "${supplierName}" - will create NEW supplier`);
+      return undefined;
+    };
     
     for (let i = 0; i < allLines.length; i++) {
       const line = allLines[i];
@@ -229,10 +271,8 @@ export const MultiSupplierCsvImportDialog = ({
           detectedSections.push(currentSection);
         }
         
-        // Start new section
-        const existingSupplier = existingSuppliers.find(
-          s => s.name.toLowerCase() === supplierName.toLowerCase()
-        );
+        // Start new section - use flexible matching
+        const existingSupplier = findMatchingSupplier(supplierName);
         
         // Look ahead for contact info
         const contactLines = allLines.slice(i, Math.min(i + 10, allLines.length));
@@ -351,7 +391,7 @@ export const MultiSupplierCsvImportDialog = ({
     }
     
     return detectedSections;
-  }, [existingSuppliers]);
+  }, [existingSuppliers, organizationId]);
 
   const handleFileChange = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
