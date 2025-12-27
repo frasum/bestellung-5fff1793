@@ -401,16 +401,71 @@ serve(async (req) => {
         if (!pdfResponse.ok) {
           throw new Error(`Failed to download PDF: ${pdfResponse.status}`);
         }
-        const pdfBuffer = await pdfResponse.arrayBuffer();
-        const uint8Array = new Uint8Array(pdfBuffer);
         
-        // Convert to base64
-        let binary = '';
-        for (let i = 0; i < uint8Array.length; i++) {
-          binary += String.fromCharCode(uint8Array[i]);
+        // Check content length first - reject PDFs > 10MB to prevent memory issues
+        const contentLength = pdfResponse.headers.get('content-length');
+        const MAX_PDF_SIZE = 10 * 1024 * 1024; // 10MB
+        if (contentLength && parseInt(contentLength, 10) > MAX_PDF_SIZE) {
+          console.error('PDF too large:', contentLength, 'bytes');
+          await markAnalysisFailed(supabaseClient, invoiceId, 'PDF ist zu groß (max. 10MB)');
+          return new Response(JSON.stringify({ error: 'PDF exceeds maximum size of 10MB' }), {
+            status: 400,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
         }
-        finalPdfBase64 = btoa(binary);
+        
+        // Use streaming to read the response in chunks - more memory efficient
+        const reader = pdfResponse.body?.getReader();
+        if (!reader) {
+          throw new Error('Failed to get reader from response');
+        }
+        
+        const chunks: Uint8Array[] = [];
+        let totalSize = 0;
+        
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          
+          totalSize += value.length;
+          // Double-check size during download
+          if (totalSize > MAX_PDF_SIZE) {
+            reader.cancel();
+            console.error('PDF exceeded max size during download:', totalSize);
+            await markAnalysisFailed(supabaseClient, invoiceId, 'PDF ist zu groß (max. 10MB)');
+            return new Response(JSON.stringify({ error: 'PDF exceeds maximum size of 10MB' }), {
+              status: 400,
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            });
+          }
+          
+          chunks.push(value);
+        }
+        
+        console.log('PDF downloaded, total size:', totalSize, 'bytes');
+        
+        // Merge chunks into single Uint8Array
+        const pdfData = new Uint8Array(totalSize);
+        let offset = 0;
+        for (const chunk of chunks) {
+          pdfData.set(chunk, offset);
+          offset += chunk.length;
+        }
+        
+        // Convert to base64 using built-in btoa with chunked processing
+        // Process in 32KB chunks to avoid stack overflow
+        const CHUNK_SIZE = 32768;
+        let base64 = '';
+        for (let i = 0; i < pdfData.length; i += CHUNK_SIZE) {
+          const chunk = pdfData.subarray(i, Math.min(i + CHUNK_SIZE, pdfData.length));
+          base64 += btoa(String.fromCharCode.apply(null, chunk as unknown as number[]));
+        }
+        
+        finalPdfBase64 = base64;
         console.log('PDF converted to base64, length:', finalPdfBase64.length);
+        
+        // Clear references to free memory
+        chunks.length = 0;
       } catch (downloadError) {
         console.error('Failed to download PDF:', downloadError);
         await markAnalysisFailed(supabaseClient, invoiceId, 'PDF konnte nicht heruntergeladen werden');
