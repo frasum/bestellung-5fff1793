@@ -52,9 +52,11 @@ import { WinesTab } from '@/components/suppliers/WinesTab';
 import { SupplierQRCodeDialog } from '@/components/suppliers/SupplierQRCodeDialog';
 import { SupplierTokensDialog } from '@/components/suppliers/SupplierTokensDialog';
 import { AddArticleSheet } from '@/components/cart/AddArticleSheet';
+import { SupplierMergeDialog } from '@/components/suppliers/SupplierMergeDialog';
 
 const Suppliers = () => {
   const { t } = useTranslation();
+  const queryClient = useQueryClient();
   const {
     user,
     loading: authLoading
@@ -252,6 +254,7 @@ const Suppliers = () => {
   const [organizationId, setOrganizationId] = useState<string | null>(null);
   const [qrCodeSupplier, setQrCodeSupplier] = useState<Supplier | null>(null);
   const [tokensDialogSupplier, setTokensDialogSupplier] = useState<Supplier | null>(null);
+  const [isMergeDialogOpen, setIsMergeDialogOpen] = useState(false);
   // Local state for multi-select toggles
   const [supplierMultiSelectEnabled, setSupplierMultiSelectEnabled] = useState(() => {
     const saved = localStorage.getItem('suppliers-multi-select');
@@ -742,6 +745,16 @@ const Suppliers = () => {
             <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
               <SupplierFilters searchQuery={searchQuery} onSearchChange={setSearchQuery} topCategoryFilter={topCategoryFilter} onTopCategoryChange={setTopCategoryFilter} categoryFilter={categoryFilter} onCategoryChange={setCategoryFilter} articleCategories={articleCategoriesForSupplierFilter} multiSelectEnabled={supplierMultiSelectEnabled} onMultiSelectChange={setSupplierMultiSelectEnabled} selectedCount={selectedSuppliers.size} onPrintCombined={handlePrintCombined} showMultiSelectToggle={advancedSettingsEnabled} />
               <div className="flex flex-wrap gap-2 shrink-0">
+                {advancedSettingsEnabled && (
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => setIsMergeDialogOpen(true)}
+                    title="Lieferanten zusammenführen"
+                  >
+                    Zusammenführen
+                  </Button>
+                )}
                 <Button 
                   variant="outline" 
                   size="sm"
@@ -953,6 +966,18 @@ const Suppliers = () => {
         onOpenChange={(open) => setAddArticleSheet(prev => ({ ...prev, open }))}
         supplierId={addArticleSheet.supplierId}
         supplierName={addArticleSheet.supplierName}
+      />
+
+      {/* Supplier Merge Dialog */}
+      <SupplierMergeDialog
+        open={isMergeDialogOpen}
+        onOpenChange={setIsMergeDialogOpen}
+        suppliers={allSuppliers || []}
+        articlesBySupplier={articlesBySupplier}
+        onSuccess={() => {
+          queryClient.invalidateQueries({ queryKey: ['suppliers'] });
+          queryClient.invalidateQueries({ queryKey: ['articles'] });
+        }}
       />
     </DashboardLayout>;
 };
