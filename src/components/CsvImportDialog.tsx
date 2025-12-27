@@ -89,24 +89,86 @@ export const CsvImportDialog = ({
     setSelectedSupplierId('');
   };
 
+  // Clean German price format: "4,99 €" -> "4.99"
+  const cleanPrice = (value: string): string => {
+    if (!value) return value;
+    // Remove € symbol and whitespace, replace comma with dot
+    const cleaned = value.replace(/€/g, '').replace(/\s/g, '').replace(',', '.');
+    // Check if it's a valid number
+    const num = parseFloat(cleaned);
+    return isNaN(num) ? value : num.toString();
+  };
+
+  // Detect header row by looking for typical column names
+  const detectHeaderRow = (lines: string[], delimiter: string): number => {
+    const headerKeywords = ['artikel', 'name', 'preis', 'einheit', 'menge', 'bezeichnung', 'nr', 'sku', 'price', 'unit'];
+    
+    for (let i = 0; i < Math.min(20, lines.length); i++) {
+      const line = lines[i].toLowerCase();
+      const matchCount = headerKeywords.filter(kw => line.includes(kw)).length;
+      if (matchCount >= 2) {
+        return i;
+      }
+    }
+    return 0; // Default to first line
+  };
+
   const parseCSV = (text: string): { headers: string[]; rows: Record<string, string>[] } => {
-    const lines = text.split('\n').filter(line => line.trim());
-    if (lines.length === 0) throw new Error('CSV file is empty');
+    const allLines = text.split('\n');
+    const nonEmptyLines = allLines.map((line, idx) => ({ line: line.trim(), originalIdx: idx })).filter(l => l.line);
+    
+    if (nonEmptyLines.length === 0) throw new Error('CSV file is empty');
 
-    const firstLine = lines[0];
-    const delimiter = firstLine.includes(';') ? ';' : ',';
+    // Detect delimiter from first few lines
+    const sampleLines = nonEmptyLines.slice(0, 5).map(l => l.line).join('\n');
+    const delimiter = sampleLines.includes(';') ? ';' : ',';
 
-    const headers = firstLine.split(delimiter).map(h => h.trim().replace(/^["']|["']$/g, ''));
+    // Auto-detect header row
+    const headerRowIdx = detectHeaderRow(nonEmptyLines.map(l => l.line), delimiter);
+    const headerLine = nonEmptyLines[headerRowIdx].line;
+
+    const headers = headerLine.split(delimiter).map(h => h.trim().replace(/^["']|["']$/g, ''));
     const rows: Record<string, string>[] = [];
 
-    for (let i = 1; i < lines.length; i++) {
-      const values = lines[i].split(delimiter).map(v => v.trim().replace(/^["']|["']$/g, ''));
-      if (values.length === headers.length) {
+    // Price column detection for cleaning
+    const priceColumns = headers.map((h, i) => ({
+      index: i,
+      isPrice: /preis|price|€|ek|vk/i.test(h)
+    }));
+
+    for (let i = headerRowIdx + 1; i < nonEmptyLines.length; i++) {
+      const line = nonEmptyLines[i].line;
+      const values = line.split(delimiter).map(v => v.trim().replace(/^["']|["']$/g, ''));
+      
+      // Skip rows that don't have enough data (likely category headers or empty)
+      const nonEmptyValues = values.filter(v => v && v.length > 0);
+      if (nonEmptyValues.length < 2) continue;
+      
+      // Skip rows where first few columns are empty (malformed data)
+      if (values.length >= headers.length) {
         const row: Record<string, string> = {};
         headers.forEach((header, index) => {
-          row[header] = values[index];
+          let value = values[index] || '';
+          
+          // Clean price columns
+          if (priceColumns[index]?.isPrice) {
+            value = cleanPrice(value);
+          }
+          
+          row[header] = value;
         });
-        rows.push(row);
+        
+        // Only add rows that have at least a name or SKU
+        const hasName = Object.entries(row).some(([k, v]) => 
+          /name|bezeichnung|artikel/i.test(k) && v && v.length > 0
+        );
+        const hasSku = Object.entries(row).some(([k, v]) => 
+          /nr|sku|nummer/i.test(k) && v && v.length > 0
+        );
+        
+        if (hasName || hasSku) {
+          rows.push(row);
+        }
       }
     }
 
@@ -340,10 +402,10 @@ export const CsvImportDialog = ({
 
       // Common column name aliases (German -> English field names)
       const columnAliases: Record<string, string[]> = {
-        name: ['name', 'artikelname', 'artikel', 'produkt', 'bezeichnung', 'produktname', 'article', 'product', 'deutsche bezeichnung', 'deutschebezeichnung'],
+        name: ['name', 'artikelname', 'artikel', 'produkt', 'bezeichnung', 'produktname', 'article', 'product', 'deutsche bezeichnung', 'deutschebezeichnung', 'artikelbezeichnung'],
         price: ['price', 'preis', 'vk', 'ek', 'einzelpreis', 'verkaufspreis', 'einkaufspreis', 'betrag'],
-        unit: ['unit', 'einheit', 'me', 'mengeneinheit'],
-        sku: ['sku', 'artikelnummer', 'artnr', 'art.nr.', 'artikelnr', 'nummer', 'produktnummer'],
+        unit: ['unit', 'einheit', 'me', 'mengeneinheit', 'gebinde', 'gebindegrösse', 'gebinde größe', 'inhalt', 'inhalt/einheit'],
+        sku: ['sku', 'artikelnummer', 'artnr', 'art.nr.', 'artikelnr', 'nummer', 'produktnummer', 'artikel nr', 'artikelnr.'],
         category: ['category', 'kategorie', 'warengruppe', 'gruppe', 'productgroup'],
         description: ['description', 'beschreibung', 'beschr.', 'info', 'details', 'thailändische übersetzung', 'thailändischeübersetzung', 'thai', 'übersetzung'],
         supplier: ['supplier', 'lieferant', 'lieferantenname', 'supplier_name', 'anbieter'],
