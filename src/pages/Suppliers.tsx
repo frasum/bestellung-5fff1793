@@ -1,4 +1,5 @@
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -13,11 +14,12 @@ import { useSubscriptionLimits } from '@/hooks/useSubscriptionLimits';
 import { UpgradeDialog } from '@/components/subscription/UpgradeDialog';
 import { useArticles, useCreateArticle, useUpdateArticle, useDeleteArticle, useBulkUpdateArticles, Article, ArticleInput } from '@/hooks/useArticles';
 import { useArticleLocationsByLocation } from '@/hooks/useArticleLocations';
-import { Plus, Loader2, Package } from 'lucide-react';
+import { Plus, Loader2, Package, Upload } from 'lucide-react';
 import { useArticleImageUpload } from '@/hooks/useArticleImageUpload';
 import { useSendSupplierInvitation } from '@/hooks/useSupplierPortal';
 import { generateOrderListPdf, generateCombinedOrderListPdf } from '@/lib/orderListPdf';
 import { CsvImportDialog } from '@/components/CsvImportDialog';
+import { MultiSupplierCsvImportDialog } from '@/components/MultiSupplierCsvImportDialog';
 import { useImportSuppliers, useImportArticles } from '@/hooks/useImport';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -85,6 +87,7 @@ const Suppliers = () => {
   const [selectedSuppliers, setSelectedSuppliers] = useState<Set<string>>(new Set());
   const [isSupplierDialogOpen, setIsSupplierDialogOpen] = useState(false);
   const [isSupplierImportOpen, setIsSupplierImportOpen] = useState(false);
+  const [isMultiSupplierImportOpen, setIsMultiSupplierImportOpen] = useState(false);
   const [editingSupplier, setEditingSupplier] = useState<Supplier | null>(null);
   const [deletingSupplier, setDeletingSupplier] = useState<Supplier | null>(null);
   const [articleImportSupplierId, setArticleImportSupplierId] = useState<string | null>(null);
@@ -740,6 +743,15 @@ const Suppliers = () => {
               <SupplierFilters searchQuery={searchQuery} onSearchChange={setSearchQuery} topCategoryFilter={topCategoryFilter} onTopCategoryChange={setTopCategoryFilter} categoryFilter={categoryFilter} onCategoryChange={setCategoryFilter} articleCategories={articleCategoriesForSupplierFilter} multiSelectEnabled={supplierMultiSelectEnabled} onMultiSelectChange={setSupplierMultiSelectEnabled} selectedCount={selectedSuppliers.size} onPrintCombined={handlePrintCombined} showMultiSelectToggle={advancedSettingsEnabled} />
               <div className="flex flex-wrap gap-2 shrink-0">
                 <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => setIsMultiSupplierImportOpen(true)}
+                  title="Multi-Lieferanten CSV importieren"
+                >
+                  <Upload className="w-4 h-4 mr-2" />
+                  CSV Import
+                </Button>
+                <Button 
                   variant="accent" 
                   size="icon" 
                   className="h-11 w-11 rounded-full" 
@@ -774,6 +786,20 @@ const Suppliers = () => {
               });
             }
           }} templateFileName="articles_template.csv" />
+
+            {/* Multi-Supplier Import Dialog */}
+            {organizationId && (
+              <MultiSupplierCsvImportDialog
+                open={isMultiSupplierImportOpen}
+                onOpenChange={setIsMultiSupplierImportOpen}
+                onImportComplete={() => {
+                  // Refetch queries after import
+                  window.location.reload();
+                }}
+                existingSuppliers={(allSuppliers || []).map(s => ({ id: s.id, name: s.name }))}
+                organizationId={organizationId}
+              />
+            )}
 
             {/* Suppliers Table */}
             {suppliersLoading ? <div className="flex items-center justify-center py-12">
