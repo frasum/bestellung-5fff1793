@@ -1,5 +1,6 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Bell, FileText, ExternalLink } from 'lucide-react';
+import { Bell, FileText, ExternalLink, Mail } from 'lucide-react';
+import { InvoiceEmailSettingsTab } from './InvoiceEmailSettingsTab';
 
 interface CommunicationTabProps {
   activeSubTab: string;
@@ -45,6 +46,14 @@ export const CommunicationTab = ({
             <span className="hidden sm:inline">Lieferantenportal</span>
             <span className="sm:hidden">Portal</span>
           </TabsTrigger>
+          <TabsTrigger 
+            value="invoice-email" 
+            className="gap-1.5 text-xs sm:text-sm data-[state=active]:bg-background data-[state=active]:shadow-sm"
+          >
+            <Mail className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+            <span className="hidden sm:inline">Rechnungs-E-Mail</span>
+            <span className="sm:hidden">Rechnung</span>
+          </TabsTrigger>
           </TabsList>
         </div>
 
@@ -58,6 +67,10 @@ export const CommunicationTab = ({
 
         <TabsContent value="supplier-portal" className="mt-4 animate-in fade-in-50 slide-in-from-right-2 duration-200">
           <SupplierPortalContent />
+        </TabsContent>
+
+        <TabsContent value="invoice-email" className="mt-4 animate-in fade-in-50 slide-in-from-right-2 duration-200">
+          <InvoiceEmailSettingsTab />
         </TabsContent>
       </Tabs>
     </div>

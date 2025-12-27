@@ -30,7 +30,7 @@ const DEFAULT_SUB_TABS: Record<string, string> = {
 // Sub-tabs configuration for each main tab
 const SUB_TABS_CONFIG: Record<string, string[]> = {
   organization: ['general', 'team', 'locations', 'units-categories'],
-  communication: ['notifications', 'email-templates', 'supplier-portal'],
+  communication: ['notifications', 'email-templates', 'supplier-portal', 'invoice-email'],
 };
 
 const Settings = () => {
