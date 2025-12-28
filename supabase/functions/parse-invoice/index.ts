@@ -1259,6 +1259,9 @@ async function processInvoiceData(
     let articlesUpdated = 0;
     let articlesMerged = 0;
     
+    // Track which articles are newly created (by normalized name or SKU)
+    const newlyCreatedArticles = new Set<string>();
+    
     if (matchedSupplierId && invoiceData.items && invoiceData.items.length > 0) {
       console.log('Checking/creating articles for', invoiceData.items.length, 'items');
       
@@ -1378,6 +1381,11 @@ async function processInvoiceData(
             console.error('Failed to create article:', articleError);
           } else {
             articlesCreated++;
+            // Track that this article was newly created
+            newlyCreatedArticles.add(normalizeArticleName(item.articleName));
+            if (item.articleSku) {
+              newlyCreatedArticles.add(item.articleSku.toLowerCase());
+            }
             // Add to maps for subsequent checks (prevents duplicates within same invoice)
             const newArtRef = { 
               id: newArticle.id, 
@@ -1477,16 +1485,23 @@ async function processInvoiceData(
 
     // Insert invoice items
     if (invoiceData.items && invoiceData.items.length > 0) {
-      const invoiceItems = invoiceData.items.map((item, index) => ({
-        invoice_id: invoiceId,
-        position_number: item.position || index + 1,
-        article_name: toTitleCase(item.articleName),
-        article_sku: item.articleSku || null,
-        quantity: item.quantity,
-        unit: item.unit || 'Stk',
-        unit_price: item.unitPrice,
-        total_price: item.totalPrice,
-      }));
+      const invoiceItems = invoiceData.items.map((item, index) => {
+        // Check if this item's article was newly created
+        const isNewArticle = newlyCreatedArticles.has(normalizeArticleName(item.articleName)) ||
+          (item.articleSku ? newlyCreatedArticles.has(item.articleSku.toLowerCase()) : false);
+        
+        return {
+          invoice_id: invoiceId,
+          position_number: item.position || index + 1,
+          article_name: toTitleCase(item.articleName),
+          article_sku: item.articleSku || null,
+          quantity: item.quantity,
+          unit: item.unit || 'Stk',
+          unit_price: item.unitPrice,
+          total_price: item.totalPrice,
+          is_new_article: isNewArticle,
+        };
+      });
 
       const { error: itemsError } = await supabaseClient
         .from('invoice_items')

@@ -44,6 +44,7 @@ export interface InvoiceItem {
   unit: string | null;
   unit_price: number | null;
   total_price: number | null;
+  is_new_article: boolean;
   created_at: string;
 }
 

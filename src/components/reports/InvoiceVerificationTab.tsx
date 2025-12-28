@@ -26,6 +26,7 @@ import {
   ExternalLink,
   Plus,
   Trash2,
+  Sparkles,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -414,7 +415,15 @@ export function InvoiceVerificationTab() {
                                 {invoice.invoice_items.map((item) => (
                                   <TableRow key={item.id}>
                                     <TableCell className="font-medium">
-                                      <div>{item.article_name}</div>
+                                      <div className="flex items-center gap-2">
+                                        <span>{item.article_name}</span>
+                                        {item.is_new_article && (
+                                          <Badge variant="secondary" className="bg-emerald-500/10 text-emerald-600 text-xs">
+                                            <Sparkles className="h-3 w-3 mr-1" />
+                                            {t('common.new', 'Neu')}
+                                          </Badge>
+                                        )}
+                                      </div>
                                       {item.article_sku && (
                                         <div className="text-xs text-muted-foreground">{item.article_sku}</div>
                                       )}
