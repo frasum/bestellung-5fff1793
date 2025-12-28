@@ -37,7 +37,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { format, isAfter, isBefore, startOfDay, endOfDay, subDays, subMonths, Locale } from 'date-fns';
 import { de, enUS, fr } from 'date-fns/locale';
-import { Loader2, Package, CheckCircle2, Clock, Truck, XCircle, Eye, Search, X, ChevronRight, Trash2, FlaskConical, Filter, FileText, ShoppingCart, Calendar, Smartphone, MapPin, Bell, AlertTriangle, Send, User, Plus } from 'lucide-react';
+import { Loader2, Package, CheckCircle2, Clock, Truck, XCircle, Eye, Search, X, ChevronRight, Trash2, FlaskConical, Filter, FileText, ShoppingCart, Calendar, Smartphone, MapPin, Bell, AlertTriangle, Send, User, Plus, Merge } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { SimpleOrderTab } from '@/components/settings/SimpleOrderTab';
 import {
@@ -52,6 +52,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { Checkbox } from '@/components/ui/checkbox';
+import { OrderMergeDialog } from '@/components/orders/OrderMergeDialog';
 
 type DateFilter = 'all' | 'today' | 'week' | 'month' | '3months';
 
@@ -242,6 +244,9 @@ const Orders = () => {
   const [openSuppliers, setOpenSuppliers] = useState<Set<string>>(new Set());
   // Track which individual orders are open (default: all closed)
   const [openOrders, setOpenOrders] = useState<Set<string>>(new Set());
+  // Track selected orders for merging
+  const [selectedOrderIds, setSelectedOrderIds] = useState<Set<string>>(new Set());
+  const [mergeDialogOpen, setMergeDialogOpen] = useState(false);
   // Track highlighted order from URL
   const highlightedOrderId = searchParams.get('orderId');
 
@@ -288,6 +293,36 @@ const Orders = () => {
       newOpen.add(orderId);
     }
     setOpenOrders(newOpen);
+  };
+
+  // Toggle order selection for merging
+  const toggleOrderSelection = (orderId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const newSelected = new Set(selectedOrderIds);
+    if (newSelected.has(orderId)) {
+      newSelected.delete(orderId);
+    } else {
+      newSelected.add(orderId);
+    }
+    setSelectedOrderIds(newSelected);
+  };
+
+  // Get selected orders objects
+  const selectedOrders = useMemo(() => {
+    if (!orders) return [];
+    return orders.filter(o => selectedOrderIds.has(o.id));
+  }, [orders, selectedOrderIds]);
+
+  // Check if selected orders can be merged (same supplier)
+  const canMergeSelected = useMemo(() => {
+    if (selectedOrders.length < 2) return false;
+    const supplierId = selectedOrders[0].supplier_id;
+    return selectedOrders.every(o => o.supplier_id === supplierId);
+  }, [selectedOrders]);
+
+  // Clear selection
+  const clearSelection = () => {
+    setSelectedOrderIds(new Set());
   };
 
   // Get location display name helper
@@ -872,6 +907,32 @@ const Orders = () => {
             <Button variant="outline" onClick={clearFilters}>{t('orders.clearFilters')}</Button>
           </div>
         ) : (
+          <>
+          {/* Selection toolbar */}
+          {selectedOrderIds.size > 0 && (
+            <div className="flex items-center justify-between p-3 bg-primary/10 border border-primary/30 rounded-lg">
+              <div className="flex items-center gap-3">
+                <Badge variant="secondary">{selectedOrderIds.size} ausgewählt</Badge>
+                {!canMergeSelected && selectedOrderIds.size >= 2 && (
+                  <span className="text-xs text-warning">Bestellungen müssen vom selben Lieferanten sein</span>
+                )}
+              </div>
+              <div className="flex items-center gap-2">
+                <Button variant="ghost" size="sm" onClick={clearSelection}>
+                  <X className="w-4 h-4 mr-1" />
+                  Auswahl aufheben
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={() => setMergeDialogOpen(true)}
+                  disabled={!canMergeSelected}
+                >
+                  <Merge className="w-4 h-4 mr-1" />
+                  Zusammenführen
+                </Button>
+              </div>
+            </div>
+          )}
           <div className="space-y-3">
             {Array.from(groupedOrders.entries()).map(([supplierName, supplierOrders]) => {
               const isOpen = openSuppliers.has(supplierName);
@@ -912,7 +973,25 @@ const Orders = () => {
                             open={isOrderOpen}
                             onOpenChange={() => toggleOrder(order.id)}
                           >
-                            <div ref={isHighlighted ? highlightedOrderRef : undefined}>
+                            <div ref={isHighlighted ? highlightedOrderRef : undefined} className="flex items-start gap-2">
+                            {/* Checkbox for selection */}
+                            <div className="hidden sm:flex items-center pt-3.5">
+                              <Checkbox
+                                checked={selectedOrderIds.has(order.id)}
+                                onCheckedChange={() => {
+                                  const newSelected = new Set(selectedOrderIds);
+                                  if (newSelected.has(order.id)) {
+                                    newSelected.delete(order.id);
+                                  } else {
+                                    newSelected.add(order.id);
+                                  }
+                                  setSelectedOrderIds(newSelected);
+                                }}
+                                onClick={(e) => e.stopPropagation()}
+                                className="mr-1"
+                              />
+                            </div>
+                            <div className="flex-1">
                             {/* Mobile Order Header - Single Line */}
                             <CollapsibleTrigger className="w-full sm:hidden">
                               <div className="flex items-center gap-2 p-3 bg-card border border-border rounded-lg">
@@ -943,7 +1022,10 @@ const Orders = () => {
                             
                             {/* Desktop Order Header */}
                             <CollapsibleTrigger className="w-full hidden sm:block">
-                              <div className="flex items-center gap-3 p-3 bg-card border border-border rounded-lg">
+                              <div className={cn(
+                                "flex items-center gap-3 p-3 bg-card border border-border rounded-lg",
+                                selectedOrderIds.has(order.id) && "ring-2 ring-primary/50"
+                              )}>
                                 <ChevronRight className={cn(
                                   "w-4 h-4 text-muted-foreground transition-transform duration-200 flex-shrink-0",
                                   isOrderOpen && "rotate-90"
@@ -1201,6 +1283,7 @@ const Orders = () => {
                               </div>
                             </CollapsibleContent>
                             </div>
+                            </div>
                           </Collapsible>
                         );
                       })}
@@ -1210,6 +1293,7 @@ const Orders = () => {
               );
             })}
           </div>
+          </>
         )}
           </TabsContent>
 
@@ -1606,7 +1690,16 @@ const Orders = () => {
         restaurantName={orgData?.name || 'Restaurant'}
       />
 
-      {/* Floating Action Button - Neue Bestellung */}
+      {/* Order Merge Dialog */}
+      <OrderMergeDialog
+        open={mergeDialogOpen}
+        onOpenChange={setMergeDialogOpen}
+        orders={selectedOrders}
+        onSuccess={() => {
+          clearSelection();
+        }}
+      />
+
       <Tooltip>
         <TooltipTrigger asChild>
       <Button
