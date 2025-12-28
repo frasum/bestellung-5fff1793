@@ -211,6 +211,8 @@ export const WinesTab = ({ articles, suppliers, onEditArticle }: WinesTabProps) 
           ...(result.grape_variety !== notFound && { grape_variety: result.grape_variety }),
           ...(result.flavor_profile !== notFound && { flavor_profile: result.flavor_profile }),
           ...(result.food_pairings !== notFound && { food_pairings: result.food_pairings }),
+          // Herkunftsland aus Region übernehmen (nur wenn noch leer)
+          ...(result.region !== notFound && !wine.origin_country?.trim() && { origin_country: result.region }),
         });
 
         // Update local state for real-time badge updates
@@ -578,6 +580,8 @@ const WineCard = ({ wine, onEdit }: WineCardProps) => {
         ...(researchResult.grape_variety !== notFound && { grape_variety: researchResult.grape_variety }),
         ...(researchResult.flavor_profile !== notFound && { flavor_profile: researchResult.flavor_profile }),
         ...(researchResult.food_pairings !== notFound && { food_pairings: researchResult.food_pairings }),
+        // Herkunftsland/Region übernehmen
+        ...(researchResult.region !== notFound && { origin_country: researchResult.region }),
         // Also save image if found
         ...(researchResult.image_url && { image_url: researchResult.image_url }),
       });
