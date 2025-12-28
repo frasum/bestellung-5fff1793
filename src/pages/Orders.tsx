@@ -7,6 +7,7 @@ import { DashboardLayout, useSidebarContext } from '@/components/layout/Dashboar
 import { PageHeader } from '@/components/layout/PageHeader';
 import { useOrders, useUpdateOrderStatus, useDeleteTestOrders, useUpdateOrderLocation, useResendOrderEmail, Order } from '@/hooks/useOrders';
 import { useCartDrafts, useDeleteCartDraft, CartDraft } from '@/hooks/useCartDrafts';
+import { Article } from '@/hooks/useArticles';
 import { useLocations } from '@/hooks/useLocations';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -483,7 +484,19 @@ const Orders = () => {
     if (loadFromDraft) {
       loadFromDraft(
         regularItems.map(item => ({
-          article: item.article!,
+          article: {
+            ...item.article!,
+            order_unit_id: item.article?.order_unit_id || null,
+            origin_country: item.article?.origin_country || null,
+            packaging_unit: item.article?.packaging_unit || null,
+            reference_price: item.article?.reference_price || null,
+            reference_unit: item.article?.reference_unit || null,
+            image_url: item.article?.image_url || null,
+            selling_price: item.article?.selling_price || null,
+            grape_variety: item.article?.grape_variety || null,
+            flavor_profile: item.article?.flavor_profile || null,
+            food_pairings: item.article?.food_pairings || null,
+          } as Article,
           quantity: item.quantity,
         })),
         firstDraft.desired_delivery_date,
