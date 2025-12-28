@@ -463,19 +463,47 @@ const Orders = () => {
     
     // Combine all items from selected drafts
     const allItems = selectedDrafts.flatMap(d => d.items || []);
-    const regularItems = allItems.filter(item => item.article && !item.is_free_text_item);
-    const freeTextItems = allItems.filter(item => item.is_free_text_item && item.free_text_name);
     
-    if (regularItems.length === 0 && freeTextItems.length === 0) {
+    // Group regular items by article.id and sum quantities
+    const itemsByArticleId = new Map<string, { article: typeof allItems[0]['article']; quantity: number }>();
+    allItems.filter(item => item.article && !item.is_free_text_item).forEach(item => {
+      const articleId = item.article!.id;
+      const existing = itemsByArticleId.get(articleId);
+      if (existing) {
+        existing.quantity += item.quantity;
+      } else {
+        itemsByArticleId.set(articleId, {
+          article: item.article,
+          quantity: item.quantity,
+        });
+      }
+    });
+    
+    // Group free-text items by name and sum quantities
+    const freeItemsByName = new Map<string, { item: typeof allItems[0]; quantity: number }>();
+    allItems.filter(item => item.is_free_text_item && item.free_text_name).forEach(item => {
+      const key = `${item.free_text_name}_${item.supplier_id || ''}`;
+      const existing = freeItemsByName.get(key);
+      if (existing) {
+        existing.quantity += item.quantity;
+      } else {
+        freeItemsByName.set(key, {
+          item,
+          quantity: item.quantity,
+        });
+      }
+    });
+    
+    if (itemsByArticleId.size === 0 && freeItemsByName.size === 0) {
       toast.error('Diese Vorbestellungen enthalten keine Artikel.');
       return;
     }
     
-    const mappedFreeItems = freeTextItems.map(item => ({
+    const mappedFreeItems = Array.from(freeItemsByName.values()).map(({ item, quantity }) => ({
       id: item.id,
       name: item.free_text_name!,
       unit: item.free_text_unit || 'Stk',
-      quantity: item.quantity,
+      quantity,
       supplier_id: item.supplier_id || '',
     }));
     
@@ -483,21 +511,21 @@ const Orders = () => {
     const firstDraft = selectedDrafts[0];
     if (loadFromDraft) {
       loadFromDraft(
-        regularItems.map(item => ({
+        Array.from(itemsByArticleId.values()).map(({ article, quantity }) => ({
           article: {
-            ...item.article!,
-            order_unit_id: item.article?.order_unit_id || null,
-            origin_country: item.article?.origin_country || null,
-            packaging_unit: item.article?.packaging_unit || null,
-            reference_price: item.article?.reference_price || null,
-            reference_unit: item.article?.reference_unit || null,
-            image_url: item.article?.image_url || null,
-            selling_price: item.article?.selling_price || null,
-            grape_variety: item.article?.grape_variety || null,
-            flavor_profile: item.article?.flavor_profile || null,
-            food_pairings: item.article?.food_pairings || null,
+            ...article!,
+            order_unit_id: article?.order_unit_id || null,
+            origin_country: article?.origin_country || null,
+            packaging_unit: article?.packaging_unit || null,
+            reference_price: article?.reference_price || null,
+            reference_unit: article?.reference_unit || null,
+            image_url: article?.image_url || null,
+            selling_price: article?.selling_price || null,
+            grape_variety: article?.grape_variety || null,
+            flavor_profile: article?.flavor_profile || null,
+            food_pairings: article?.food_pairings || null,
           } as Article,
-          quantity: item.quantity,
+          quantity,
         })),
         firstDraft.desired_delivery_date,
         firstDraft.desired_time_window,
