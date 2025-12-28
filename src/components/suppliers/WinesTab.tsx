@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { Article, useUpdateArticle } from '@/hooks/useArticles';
@@ -66,6 +67,7 @@ export const WinesTab = ({ articles, suppliers, onEditArticle }: WinesTabProps) 
   const [translateProgress, setTranslateProgress] = useState<{ current: number; total: number; wineName: string } | null>(null);
   const [pdfProgress, setPdfProgress] = useState<{ current: number; total: number } | null>(null);
   const [filterMode, setFilterMode] = useState<FilterMode>('all');
+  const [searchQuery, setSearchQuery] = useState('');
   const [advancedMode, setAdvancedMode] = useState(() => localStorage.getItem('advanced-settings-enabled') === 'true');
   const [quizOpen, setQuizOpen] = useState(false);
   // Track successfully researched wine IDs for real-time badge updates
@@ -123,28 +125,48 @@ export const WinesTab = ({ articles, suppliers, onEditArticle }: WinesTabProps) 
     ).length;
   }, [wineArticles, researchedIds]);
 
-  // Filter wines based on filterMode
+  // Filter wines based on filterMode and search query
   const filteredWines = useMemo(() => {
+    let wines = wineArticles;
+    
+    // Apply filter mode
     switch (filterMode) {
       case 'missing-description':
-        return wineArticles.filter(w => !w.description?.trim());
+        wines = wines.filter(w => !w.description?.trim());
+        break;
       case 'missing-grape':
-        return wineArticles.filter(w => !w.grape_variety?.trim());
+        wines = wines.filter(w => !w.grape_variety?.trim());
+        break;
       case 'missing-origin':
-        return wineArticles.filter(w => !w.origin_country?.trim());
+        wines = wines.filter(w => !w.origin_country?.trim());
+        break;
       case 'missing-price':
-        return wineArticles.filter(w => !w.selling_price || w.selling_price === 0);
+        wines = wines.filter(w => !w.selling_price || w.selling_price === 0);
+        break;
       case 'incomplete':
-        return wineArticles.filter(w => 
+        wines = wines.filter(w => 
           !w.description?.trim() || 
           !w.grape_variety?.trim() ||
           !w.origin_country?.trim() ||
           !w.image_url
         );
-      default:
-        return wineArticles;
+        break;
     }
-  }, [wineArticles, filterMode]);
+    
+    // Apply search filter
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      wines = wines.filter(w => 
+        w.name.toLowerCase().includes(query) ||
+        w.grape_variety?.toLowerCase().includes(query) ||
+        w.origin_country?.toLowerCase().includes(query) ||
+        w.description?.toLowerCase().includes(query) ||
+        suppliers.find(s => s.id === w.supplier_id)?.name.toLowerCase().includes(query)
+      );
+    }
+    
+    return wines;
+  }, [wineArticles, filterMode, searchQuery, suppliers]);
 
   // Wines without description (candidates for batch research)
   // Excludes wines that have been successfully researched in this session
@@ -381,12 +403,23 @@ export const WinesTab = ({ articles, suppliers, onEditArticle }: WinesTabProps) 
         </div>
       )}
 
+      {/* Search Bar */}
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input
+          placeholder={t('wines.searchPlaceholder', 'Wein suchen nach Name, Rebsorte, Herkunft...')}
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="pl-9"
+        />
+      </div>
+
       {/* Filter Toggle */}
       <ToggleGroup 
         type="single" 
         value={filterMode} 
         onValueChange={(value) => value && setFilterMode(value as FilterMode)}
-        className="justify-start"
+        className="justify-start flex-wrap"
       >
         <ToggleGroupItem value="all" className="gap-1.5">
           {t('wines.filterAll', 'Alle')}
