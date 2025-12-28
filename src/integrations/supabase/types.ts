@@ -14,6 +14,122 @@ export type Database = {
   }
   public: {
     Tables: {
+      active_cart_items: {
+        Row: {
+          article_id: string | null
+          cart_id: string
+          created_at: string
+          free_text_name: string | null
+          free_text_unit: string | null
+          id: string
+          is_free_text_item: boolean | null
+          quantity: number
+          supplier_id: string | null
+        }
+        Insert: {
+          article_id?: string | null
+          cart_id: string
+          created_at?: string
+          free_text_name?: string | null
+          free_text_unit?: string | null
+          id?: string
+          is_free_text_item?: boolean | null
+          quantity?: number
+          supplier_id?: string | null
+        }
+        Update: {
+          article_id?: string | null
+          cart_id?: string
+          created_at?: string
+          free_text_name?: string | null
+          free_text_unit?: string | null
+          id?: string
+          is_free_text_item?: boolean | null
+          quantity?: number
+          supplier_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "active_cart_items_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: false
+            referencedRelation: "articles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "active_cart_items_cart_id_fkey"
+            columns: ["cart_id"]
+            isOneToOne: false
+            referencedRelation: "active_carts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "active_cart_items_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      active_carts: {
+        Row: {
+          created_at: string
+          delivery_date: string | null
+          employee_id: string | null
+          id: string
+          location_id: string | null
+          organization_id: string
+          time_window: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          delivery_date?: string | null
+          employee_id?: string | null
+          id?: string
+          location_id?: string | null
+          organization_id: string
+          time_window?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          delivery_date?: string | null
+          employee_id?: string | null
+          id?: string
+          location_id?: string | null
+          organization_id?: string
+          time_window?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "active_carts_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "active_carts_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "active_carts_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       article_locations: {
         Row: {
           article_id: string
