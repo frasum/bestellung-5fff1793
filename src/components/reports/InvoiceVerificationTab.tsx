@@ -73,6 +73,7 @@ import {
   useReanalyzeInvoice,
   useCreateArticlesFromInvoice,
   useDeleteInvoice,
+  useDeleteAllInvoices,
   useInvoiceProcessingStatus,
   useCancelInvoiceAnalysis,
   Invoice,
@@ -128,12 +129,14 @@ export function InvoiceVerificationTab() {
   const reanalyzeInvoice = useReanalyzeInvoice();
   const createArticlesFromInvoice = useCreateArticlesFromInvoice();
   const deleteInvoice = useDeleteInvoice();
+  const deleteAllInvoices = useDeleteAllInvoices();
   const [expandedInvoices, setExpandedInvoices] = useState<Set<string>>(new Set());
   const [selectedInvoiceId, setSelectedInvoiceId] = useState<string | null>(null);
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
   const [pdfDialogUrl, setPdfDialogUrl] = useState<string | null>(null);
   const [pdfViewerError, setPdfViewerError] = useState<string | null>(null);
   const [deletingInvoice, setDeletingInvoice] = useState<Invoice | null>(null);
+  const [showDeleteAllDialog, setShowDeleteAllDialog] = useState(false);
 
   const locale = i18n.language === 'de' ? de : enUS;
 
@@ -326,8 +329,19 @@ export function InvoiceVerificationTab() {
 
       {/* Invoices List */}
       <Card>
-        <CardHeader className="border-b">
+        <CardHeader className="border-b flex flex-row items-center justify-between">
           <CardTitle className="text-base">{t('invoices.recentInvoices', 'Hochgeladene Rechnungen')}</CardTitle>
+          {invoices && invoices.length > 0 && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowDeleteAllDialog(true)}
+              className="text-destructive hover:text-destructive hover:bg-destructive/10"
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              {t('invoices.deleteAll', 'Alle löschen')}
+            </Button>
+          )}
         </CardHeader>
         <CardContent className="p-0">
           {isLoading ? (
@@ -692,6 +706,58 @@ export function InvoiceVerificationTab() {
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               {t('common.delete', 'Löschen')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Delete All Invoices Confirmation Dialog */}
+      <AlertDialog open={showDeleteAllDialog} onOpenChange={setShowDeleteAllDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-destructive flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5" />
+              {t('invoices.deleteAllInvoices', 'Alle Rechnungen löschen?')}
+            </AlertDialogTitle>
+            <AlertDialogDescription className="space-y-3">
+              <p className="font-medium text-foreground">
+                {t(
+                  'invoices.deleteAllWarning',
+                  '{{count}} Rechnungen und alle zugehörigen Daten werden unwiderruflich gelöscht.',
+                  { count: invoices?.length || 0 }
+                )}
+              </p>
+              <div className="bg-muted p-3 rounded-md text-sm space-y-1">
+                <p className="text-success flex items-center gap-2">
+                  <CheckCircle2 className="h-4 w-4" />
+                  {t('invoices.priceHistoryPreserved', 'Preishistorie bleibt erhalten')}
+                </p>
+                <p className="text-success flex items-center gap-2">
+                  <CheckCircle2 className="h-4 w-4" />
+                  {t('invoices.emailLogPreserved', 'E-Mail-Import-Verlauf bleibt erhalten')}
+                </p>
+                <p className="text-muted-foreground text-xs mt-2">
+                  {t('invoices.emailLogNote', 'Bereits importierte E-Mails werden nicht erneut verarbeitet.')}
+                </p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t('common.cancel', 'Abbrechen')}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                deleteAllInvoices.mutate();
+                setShowDeleteAllDialog(false);
+              }}
+              disabled={deleteAllInvoices.isPending}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleteAllInvoices.isPending ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <Trash2 className="h-4 w-4 mr-2" />
+              )}
+              {t('invoices.confirmDeleteAll', 'Alle löschen')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

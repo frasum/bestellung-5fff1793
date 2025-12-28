@@ -503,6 +503,101 @@ export function useCancelInvoiceAnalysis() {
   });
 }
 
+export function useDeleteAllInvoices() {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
+
+  return useMutation({
+    mutationFn: async () => {
+      // Get organization ID for storage folder
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('organization_id')
+        .eq('id', user?.id)
+        .single();
+
+      if (!profile?.organization_id) {
+        throw new Error('No organization found');
+      }
+
+      // 1. Delete all invoice_discrepancies
+      const { error: discrepancyError } = await supabase
+        .from('invoice_discrepancies')
+        .delete()
+        .neq('id', '00000000-0000-0000-0000-000000000000');
+
+      if (discrepancyError) {
+        console.warn('Error deleting discrepancies:', discrepancyError);
+      }
+
+      // 2. Delete all invoice_items
+      const { error: itemsError } = await supabase
+        .from('invoice_items')
+        .delete()
+        .neq('id', '00000000-0000-0000-0000-000000000000');
+
+      if (itemsError) {
+        console.warn('Error deleting invoice items:', itemsError);
+      }
+
+      // 3. Delete all invoice_processing_status
+      const { error: processingError } = await supabase
+        .from('invoice_processing_status')
+        .delete()
+        .neq('id', '00000000-0000-0000-0000-000000000000');
+
+      if (processingError) {
+        console.warn('Error deleting processing status:', processingError);
+      }
+
+      // 4. Delete all PDFs from storage
+      const { data: files, error: listError } = await supabase.storage
+        .from('invoices')
+        .list(profile.organization_id);
+
+      if (listError) {
+        console.warn('Error listing storage files:', listError);
+      } else if (files && files.length > 0) {
+        const filePaths = files.map(f => `${profile.organization_id}/${f.name}`);
+        const { error: storageError } = await supabase.storage
+          .from('invoices')
+          .remove(filePaths);
+
+        if (storageError) {
+          console.warn('Error deleting storage files:', storageError);
+        }
+      }
+
+      // 5. Delete all invoices
+      const { error: invoiceError } = await supabase
+        .from('invoices')
+        .delete()
+        .neq('id', '00000000-0000-0000-0000-000000000000');
+
+      if (invoiceError) throw invoiceError;
+
+      // NOTE: invoice_email_log and article_price_history are NOT deleted
+
+      return { success: true };
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['invoices'] });
+      toast({
+        title: 'Alle Rechnungen gelöscht',
+        description: 'Alle Rechnungsdaten wurden entfernt. Preishistorie und E-Mail-Verlauf bleiben erhalten.',
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: 'Fehler beim Löschen',
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
+  });
+}
+
 export function useCreateArticlesFromInvoice() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
