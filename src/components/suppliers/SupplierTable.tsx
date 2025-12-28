@@ -124,13 +124,13 @@ export const SupplierTable = ({
                   <TableCell className="py-2">
                     {onOrderClick && supplierArticles.length > 0 && (
                       <Button 
-                        variant="default" 
+                        variant="outline" 
                         size="icon" 
-                        className="h-9 w-9 relative rounded-full"
+                        className="h-9 w-9 relative rounded-full border-border hover:bg-accent/10"
                         onClick={() => onOrderClick(supplier)}
                         title="Artikel bestellen"
                       >
-                        <ShoppingCart className="w-4 h-4" />
+                        <ShoppingCart className="w-4 h-4 text-primary" />
                         {cartItemCountsBySupplier[supplier.id] > 0 && (
                           <Badge variant="secondary" className="absolute -top-1 -right-1 h-5 min-w-5 px-1.5 text-xs">
                             {cartItemCountsBySupplier[supplier.id]}
@@ -311,15 +311,15 @@ export const SupplierTable = ({
                                             </>
                                           ) : (
                                             <Button
-                                              variant="default"
+                                              variant="outline"
                                               size="icon"
-                                              className="h-7 w-7 rounded-full"
+                                              className="h-7 w-7 rounded-full border-border hover:bg-accent/10"
                                               onClick={(e) => {
                                                 e.stopPropagation();
                                                 onAddToCart(article);
                                               }}
                                             >
-                                              <ShoppingCart className="w-3 h-3" />
+                                              <ShoppingCart className="w-3 h-3 text-primary" />
                                             </Button>
                                           )}
                                         </div>
