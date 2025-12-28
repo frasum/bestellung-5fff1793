@@ -18,6 +18,11 @@ import { toast } from 'sonner';
 import { generateWineCatalogPdf } from '@/lib/wineCatalogPdf';
 import { WineQuizGame } from '@/components/wine-quiz/WineQuizGame';
 
+// Helper function to remove citation markers like [1], [2], etc.
+const cleanCitations = (text: string): string => {
+  return text.replace(/\[\d+\]/g, '').trim();
+};
+
 // Helper function to get localized wine field
 const getLocalizedField = (wine: Article, field: string): string => {
   const lang = i18n.language;
@@ -26,11 +31,12 @@ const getLocalizedField = (wine: Article, field: string): string => {
     const localizedKey = `${field}_${lang}` as keyof Article;
     const localizedValue = wine[localizedKey];
     if (localizedValue && typeof localizedValue === 'string') {
-      return localizedValue;
+      return cleanCitations(localizedValue);
     }
   }
   // Fallback to German original
-  return (wine[field as keyof Article] as string) || '';
+  const value = (wine[field as keyof Article] as string) || '';
+  return cleanCitations(value);
 };
 
 interface WineResearchResult {
