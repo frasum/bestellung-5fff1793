@@ -417,6 +417,16 @@ const Orders = () => {
     return easyOrderGroups.flatMap(g => g.drafts);
   }, [easyOrderGroups]);
   
+  // Get supplier name from draft (defined before useMemo that uses it)
+  const getSupplierFromDraft = (draft: CartDraft): string => {
+    // Try to extract from name (format: "EasyOrder: NAME (Supplier)")
+    const match = draft.name.match(/\(([^)]+)\)$/);
+    if (match) return match[1];
+    // Fallback: use first item's supplier
+    const firstItem = draft.items?.find(i => i.article);
+    return firstItem?.article?.suppliers?.name || 'Unbekannt';
+  };
+
   // Get selected drafts objects
   const selectedDrafts = useMemo(() => {
     return allEasyOrderDrafts.filter(d => selectedDraftIds.has(d.id));
@@ -583,15 +593,6 @@ const Orders = () => {
     setSelectedGroup(null);
   };
 
-  // Get supplier name from draft
-  const getSupplierFromDraft = (draft: CartDraft): string => {
-    // Try to extract from name (format: "EasyOrder: NAME (Supplier)")
-    const match = draft.name.match(/\(([^)]+)\)$/);
-    if (match) return match[1];
-    // Fallback: use first item's supplier
-    const firstItem = draft.items?.find(i => i.article);
-    return firstItem?.article?.suppliers?.name || 'Unbekannt';
-  };
 
   const handleDeleteDraft = (draft: CartDraft) => {
     setSelectedDraft(draft);
