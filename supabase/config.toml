@@ -1,5 +1,8 @@
 project_id = "lclhwmxpbpmqtiwmgmgm"
 
+[functions.merge-orders]
+verify_jwt = true
+
 [functions.identify-article]
 verify_jwt = false
 
