@@ -1985,6 +1985,7 @@ export type Database = {
           created_at: string
           id: string
           invoice_id: string
+          is_new_article: boolean
           matched_article_id: string | null
           matched_order_item_id: string | null
           position_number: number | null
@@ -1999,6 +2000,7 @@ export type Database = {
           created_at?: string
           id?: string
           invoice_id: string
+          is_new_article?: boolean
           matched_article_id?: string | null
           matched_order_item_id?: string | null
           position_number?: number | null
@@ -2013,6 +2015,7 @@ export type Database = {
           created_at?: string
           id?: string
           invoice_id?: string
+          is_new_article?: boolean
           matched_article_id?: string | null
           matched_order_item_id?: string | null
           position_number?: number | null
