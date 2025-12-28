@@ -409,6 +409,90 @@ const Orders = () => {
   // Track which EasyOrder groups are expanded
   const [openEasyOrderGroups, setOpenEasyOrderGroups] = useState<Set<string>>(new Set());
   
+  // Track selected draft IDs for merging
+  const [selectedDraftIds, setSelectedDraftIds] = useState<Set<string>>(new Set());
+  
+  // Get all EasyOrder drafts flat for selection
+  const allEasyOrderDrafts = useMemo(() => {
+    return easyOrderGroups.flatMap(g => g.drafts);
+  }, [easyOrderGroups]);
+  
+  // Get selected drafts objects
+  const selectedDrafts = useMemo(() => {
+    return allEasyOrderDrafts.filter(d => selectedDraftIds.has(d.id));
+  }, [allEasyOrderDrafts, selectedDraftIds]);
+  
+  // Check if selected drafts can be merged (same supplier)
+  const canMergeDrafts = useMemo(() => {
+    if (selectedDrafts.length < 2) return false;
+    const firstSupplier = getSupplierFromDraft(selectedDrafts[0]);
+    return selectedDrafts.every(d => getSupplierFromDraft(d) === firstSupplier);
+  }, [selectedDrafts]);
+  
+  // Toggle draft selection
+  const toggleDraftSelection = (draftId: string, e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    const newSelected = new Set(selectedDraftIds);
+    if (newSelected.has(draftId)) {
+      newSelected.delete(draftId);
+    } else {
+      newSelected.add(draftId);
+    }
+    setSelectedDraftIds(newSelected);
+  };
+  
+  // Clear draft selection
+  const clearDraftSelection = () => {
+    setSelectedDraftIds(new Set());
+  };
+  
+  // Merge selected drafts into cart
+  const mergeSelectedDraftsToCart = () => {
+    if (selectedDrafts.length < 2) return;
+    
+    // Combine all items from selected drafts
+    const allItems = selectedDrafts.flatMap(d => d.items || []);
+    const regularItems = allItems.filter(item => item.article && !item.is_free_text_item);
+    const freeTextItems = allItems.filter(item => item.is_free_text_item && item.free_text_name);
+    
+    if (regularItems.length === 0 && freeTextItems.length === 0) {
+      toast.error('Diese Vorbestellungen enthalten keine Artikel.');
+      return;
+    }
+    
+    const mappedFreeItems = freeTextItems.map(item => ({
+      id: item.id,
+      name: item.free_text_name!,
+      unit: item.free_text_unit || 'Stk',
+      quantity: item.quantity,
+      supplier_id: item.supplier_id || '',
+    }));
+    
+    // Use first draft's delivery info
+    const firstDraft = selectedDrafts[0];
+    if (loadFromDraft) {
+      loadFromDraft(
+        regularItems.map(item => ({
+          article: item.article!,
+          quantity: item.quantity,
+        })),
+        firstDraft.desired_delivery_date,
+        firstDraft.desired_time_window,
+        firstDraft.location_id,
+        firstDraft.employee_id,
+        mappedFreeItems
+      );
+      
+      // Delete all selected drafts
+      selectedDrafts.forEach(draft => {
+        deleteDraft.mutate(draft.id);
+      });
+      
+      clearDraftSelection();
+      navigate('/cart');
+    }
+  };
+  
   const toggleEasyOrderGroup = (key: string) => {
     const newOpen = new Set(openEasyOrderGroups);
     if (newOpen.has(key)) {
@@ -1353,6 +1437,32 @@ const Orders = () => {
               </div>
             )}
 
+            {/* Selection toolbar for drafts */}
+            {selectedDraftIds.size > 0 && (
+              <div className="flex items-center justify-between p-3 bg-primary/10 border border-primary/30 rounded-lg">
+                <div className="flex items-center gap-3">
+                  <Badge variant="secondary">{selectedDraftIds.size} ausgewählt</Badge>
+                  {!canMergeDrafts && selectedDraftIds.size >= 2 && (
+                    <span className="text-xs text-warning">Vorbestellungen müssen vom selben Lieferanten sein</span>
+                  )}
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button variant="ghost" size="sm" onClick={clearDraftSelection}>
+                    <X className="w-4 h-4 mr-1" />
+                    Auswahl aufheben
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={mergeSelectedDraftsToCart}
+                    disabled={!canMergeDrafts}
+                  >
+                    <Merge className="w-4 h-4 mr-1" />
+                    Zusammenführen
+                  </Button>
+                </div>
+              </div>
+            )}
+
             {/* Drafts List - Grouped EasyOrders + Regular Drafts */}
             {!draftsLoading && filteredDrafts.length > 0 && (
               <div className="space-y-4">
@@ -1416,13 +1526,21 @@ const Orders = () => {
                         <CollapsibleContent>
                           <div className="px-4 pb-4 space-y-3">
                             {/* Supplier List */}
-                            <div className="space-y-2 pl-8">
+                            <div className="space-y-2 pl-4 sm:pl-8">
                               {group.drafts.map((draft) => (
                                 <div
                                   key={draft.id}
-                                  className="flex items-center justify-between p-3 bg-muted/30 rounded-lg"
+                                  className={cn(
+                                    "flex items-center justify-between p-3 bg-muted/30 rounded-lg",
+                                    selectedDraftIds.has(draft.id) && "ring-2 ring-primary/50"
+                                  )}
                                 >
                                   <div className="flex items-center gap-3">
+                                    <Checkbox
+                                      checked={selectedDraftIds.has(draft.id)}
+                                      onCheckedChange={() => toggleDraftSelection(draft.id)}
+                                      onClick={(e) => e.stopPropagation()}
+                                    />
                                     <Package className="w-4 h-4 text-muted-foreground" />
                                     <div>
                                       <span className="font-medium text-foreground">
