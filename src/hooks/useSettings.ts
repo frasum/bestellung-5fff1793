@@ -98,7 +98,11 @@ export const useUpdateOrganization = () => {
       if (error) throw error;
     },
     onSuccess: () => {
+      // Invalidate all organization-related queries to ensure UI updates
       queryClient.invalidateQueries({ queryKey: ['organization'] });
+      queryClient.invalidateQueries({ queryKey: ['organization-details'] });
+      queryClient.invalidateQueries({ queryKey: ['organization-subscription'] });
+      queryClient.invalidateQueries({ queryKey: ['organization-test-mode'] });
       toast.success('Organization updated');
     },
     onError: () => toast.error('Failed to update organization'),
@@ -118,7 +122,9 @@ export const useUpdateChecklistNotes = () => {
       if (error) throw error;
     },
     onSuccess: () => {
+      // Invalidate all organization-related queries
       queryClient.invalidateQueries({ queryKey: ['organization'] });
+      queryClient.invalidateQueries({ queryKey: ['organization-details'] });
     },
     onError: () => toast.error('Failed to save notes'),
   });
