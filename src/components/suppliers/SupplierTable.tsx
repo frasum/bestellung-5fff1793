@@ -124,9 +124,9 @@ export const SupplierTable = ({
                   <TableCell className="py-2">
                     {onOrderClick && supplierArticles.length > 0 && (
                       <Button 
-                        variant="default" 
+                        variant="outline" 
                         size="icon" 
-                        className="h-9 w-9 relative rounded-full"
+                        className="h-9 w-9 relative rounded-full text-primary border-primary hover:bg-primary hover:text-primary-foreground"
                         onClick={() => onOrderClick(supplier)}
                         title="Artikel bestellen"
                       >
@@ -311,9 +311,9 @@ export const SupplierTable = ({
                                             </>
                                           ) : (
                                             <Button
-                                              variant="default"
+                                              variant="outline"
                                               size="icon"
-                                              className="h-7 w-7 rounded-full"
+                                              className="h-7 w-7 rounded-full text-primary border-primary hover:bg-primary hover:text-primary-foreground"
                                               onClick={(e) => {
                                                 e.stopPropagation();
                                                 onAddToCart(article);
