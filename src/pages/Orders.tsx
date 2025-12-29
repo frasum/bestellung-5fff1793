@@ -7,7 +7,6 @@ import { DashboardLayout, useSidebarContext } from '@/components/layout/Dashboar
 import { PageHeader } from '@/components/layout/PageHeader';
 import { useOrders, useUpdateOrderStatus, useDeleteTestOrders, useUpdateOrderLocation, useResendOrderEmail, Order } from '@/hooks/useOrders';
 import { useCartDrafts, useDeleteCartDraft, CartDraft } from '@/hooks/useCartDrafts';
-import { Article } from '@/hooks/useArticles';
 import { useLocations } from '@/hooks/useLocations';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -38,7 +37,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { format, isAfter, isBefore, startOfDay, endOfDay, subDays, subMonths, Locale } from 'date-fns';
 import { de, enUS, fr } from 'date-fns/locale';
-import { Loader2, Package, CheckCircle2, Clock, Truck, XCircle, Eye, Search, X, ChevronRight, Trash2, FlaskConical, Filter, FileText, ShoppingCart, Calendar, Smartphone, MapPin, Bell, AlertTriangle, Send, User, Plus, Merge } from 'lucide-react';
+import { Loader2, Package, CheckCircle2, Clock, Truck, XCircle, Eye, Search, X, ChevronRight, Trash2, FlaskConical, Filter, FileText, ShoppingCart, Calendar, Smartphone, MapPin, Bell, AlertTriangle, Send, User, Plus } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { SimpleOrderTab } from '@/components/settings/SimpleOrderTab';
 import {
@@ -53,8 +52,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
-import { Checkbox } from '@/components/ui/checkbox';
-import { OrderMergeDialog } from '@/components/orders/OrderMergeDialog';
 
 type DateFilter = 'all' | 'today' | 'week' | 'month' | '3months';
 
@@ -245,9 +242,6 @@ const Orders = () => {
   const [openSuppliers, setOpenSuppliers] = useState<Set<string>>(new Set());
   // Track which individual orders are open (default: all closed)
   const [openOrders, setOpenOrders] = useState<Set<string>>(new Set());
-  // Track selected orders for merging
-  const [selectedOrderIds, setSelectedOrderIds] = useState<Set<string>>(new Set());
-  const [mergeDialogOpen, setMergeDialogOpen] = useState(false);
   // Track highlighted order from URL
   const highlightedOrderId = searchParams.get('orderId');
 
@@ -294,36 +288,6 @@ const Orders = () => {
       newOpen.add(orderId);
     }
     setOpenOrders(newOpen);
-  };
-
-  // Toggle order selection for merging
-  const toggleOrderSelection = (orderId: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    const newSelected = new Set(selectedOrderIds);
-    if (newSelected.has(orderId)) {
-      newSelected.delete(orderId);
-    } else {
-      newSelected.add(orderId);
-    }
-    setSelectedOrderIds(newSelected);
-  };
-
-  // Get selected orders objects
-  const selectedOrders = useMemo(() => {
-    if (!orders) return [];
-    return orders.filter(o => selectedOrderIds.has(o.id));
-  }, [orders, selectedOrderIds]);
-
-  // Check if selected orders can be merged (same supplier)
-  const canMergeSelected = useMemo(() => {
-    if (selectedOrders.length < 2) return false;
-    const supplierId = selectedOrders[0].supplier_id;
-    return selectedOrders.every(o => o.supplier_id === supplierId);
-  }, [selectedOrders]);
-
-  // Clear selection
-  const clearSelection = () => {
-    setSelectedOrderIds(new Set());
   };
 
   // Get location display name helper
@@ -409,140 +373,6 @@ const Orders = () => {
 
   // Track which EasyOrder groups are expanded
   const [openEasyOrderGroups, setOpenEasyOrderGroups] = useState<Set<string>>(new Set());
-  
-  // Track selected draft IDs for merging
-  const [selectedDraftIds, setSelectedDraftIds] = useState<Set<string>>(new Set());
-  
-  // Get all EasyOrder drafts flat for selection
-  const allEasyOrderDrafts = useMemo(() => {
-    return easyOrderGroups.flatMap(g => g.drafts);
-  }, [easyOrderGroups]);
-  
-  // Get supplier name from draft (defined before useMemo that uses it)
-  const getSupplierFromDraft = (draft: CartDraft): string => {
-    // Try to extract from name (format: "EasyOrder: NAME (Supplier)")
-    const match = draft.name.match(/\(([^)]+)\)$/);
-    if (match) return match[1];
-    // Fallback: use first item's supplier
-    const firstItem = draft.items?.find(i => i.article);
-    return firstItem?.article?.suppliers?.name || 'Unbekannt';
-  };
-
-  // Get selected drafts objects
-  const selectedDrafts = useMemo(() => {
-    return allEasyOrderDrafts.filter(d => selectedDraftIds.has(d.id));
-  }, [allEasyOrderDrafts, selectedDraftIds]);
-  
-  // Check if selected drafts can be merged (same supplier)
-  const canMergeDrafts = useMemo(() => {
-    if (selectedDrafts.length < 2) return false;
-    const firstSupplier = getSupplierFromDraft(selectedDrafts[0]);
-    return selectedDrafts.every(d => getSupplierFromDraft(d) === firstSupplier);
-  }, [selectedDrafts]);
-  
-  // Toggle draft selection
-  const toggleDraftSelection = (draftId: string, e?: React.MouseEvent) => {
-    e?.stopPropagation();
-    const newSelected = new Set(selectedDraftIds);
-    if (newSelected.has(draftId)) {
-      newSelected.delete(draftId);
-    } else {
-      newSelected.add(draftId);
-    }
-    setSelectedDraftIds(newSelected);
-  };
-  
-  // Clear draft selection
-  const clearDraftSelection = () => {
-    setSelectedDraftIds(new Set());
-  };
-  
-  // Merge selected drafts into cart
-  const mergeSelectedDraftsToCart = () => {
-    if (selectedDrafts.length < 2) return;
-    
-    // Combine all items from selected drafts
-    const allItems = selectedDrafts.flatMap(d => d.items || []);
-    
-    // Group regular items by article.id and sum quantities
-    const itemsByArticleId = new Map<string, { article: typeof allItems[0]['article']; quantity: number }>();
-    allItems.filter(item => item.article && !item.is_free_text_item).forEach(item => {
-      const articleId = item.article!.id;
-      const existing = itemsByArticleId.get(articleId);
-      if (existing) {
-        existing.quantity += item.quantity;
-      } else {
-        itemsByArticleId.set(articleId, {
-          article: item.article,
-          quantity: item.quantity,
-        });
-      }
-    });
-    
-    // Group free-text items by name and sum quantities
-    const freeItemsByName = new Map<string, { item: typeof allItems[0]; quantity: number }>();
-    allItems.filter(item => item.is_free_text_item && item.free_text_name).forEach(item => {
-      const key = `${item.free_text_name}_${item.supplier_id || ''}`;
-      const existing = freeItemsByName.get(key);
-      if (existing) {
-        existing.quantity += item.quantity;
-      } else {
-        freeItemsByName.set(key, {
-          item,
-          quantity: item.quantity,
-        });
-      }
-    });
-    
-    if (itemsByArticleId.size === 0 && freeItemsByName.size === 0) {
-      toast.error('Diese Vorbestellungen enthalten keine Artikel.');
-      return;
-    }
-    
-    const mappedFreeItems = Array.from(freeItemsByName.values()).map(({ item, quantity }) => ({
-      id: item.id,
-      name: item.free_text_name!,
-      unit: item.free_text_unit || 'Stk',
-      quantity,
-      supplier_id: item.supplier_id || '',
-    }));
-    
-    // Use first draft's delivery info
-    const firstDraft = selectedDrafts[0];
-    if (loadFromDraft) {
-      loadFromDraft(
-        Array.from(itemsByArticleId.values()).map(({ article, quantity }) => ({
-          article: {
-            ...article!,
-            order_unit_id: article?.order_unit_id || null,
-            origin_country: article?.origin_country || null,
-            packaging_unit: article?.packaging_unit || null,
-            reference_price: article?.reference_price || null,
-            reference_unit: article?.reference_unit || null,
-            image_url: article?.image_url || null,
-            selling_price: article?.selling_price || null,
-            grape_variety: article?.grape_variety || null,
-            flavor_profile: article?.flavor_profile || null,
-            food_pairings: article?.food_pairings || null,
-          } as Article,
-          quantity,
-        })),
-        firstDraft.desired_delivery_date,
-        firstDraft.desired_time_window,
-        firstDraft.location_id,
-        firstDraft.employee_id,
-        mappedFreeItems
-      );
-      
-      // Delete all selected drafts
-      selectedDrafts.forEach(draft => {
-        deleteDraft.mutate(draft.id);
-      });
-      
-      clearDraftSelection();
-      navigate('/cart');
-    }
-  };
   
   const toggleEasyOrderGroup = (key: string) => {
     const newOpen = new Set(openEasyOrderGroups);
@@ -634,6 +464,15 @@ const Orders = () => {
     setSelectedGroup(null);
   };
 
+  // Get supplier name from draft
+  const getSupplierFromDraft = (draft: CartDraft): string => {
+    // Try to extract from name (format: "EasyOrder: NAME (Supplier)")
+    const match = draft.name.match(/\(([^)]+)\)$/);
+    if (match) return match[1];
+    // Fallback: use first item's supplier
+    const firstItem = draft.items?.find(i => i.article);
+    return firstItem?.article?.suppliers?.name || 'Unbekannt';
+  };
 
   const handleDeleteDraft = (draft: CartDraft) => {
     setSelectedDraft(draft);
@@ -1033,32 +872,6 @@ const Orders = () => {
             <Button variant="outline" onClick={clearFilters}>{t('orders.clearFilters')}</Button>
           </div>
         ) : (
-          <>
-          {/* Selection toolbar */}
-          {selectedOrderIds.size > 0 && (
-            <div className="flex items-center justify-between p-3 bg-primary/10 border border-primary/30 rounded-lg">
-              <div className="flex items-center gap-3">
-                <Badge variant="secondary">{selectedOrderIds.size} ausgewählt</Badge>
-                {!canMergeSelected && selectedOrderIds.size >= 2 && (
-                  <span className="text-xs text-warning">Bestellungen müssen vom selben Lieferanten sein</span>
-                )}
-              </div>
-              <div className="flex items-center gap-2">
-                <Button variant="ghost" size="sm" onClick={clearSelection}>
-                  <X className="w-4 h-4 mr-1" />
-                  Auswahl aufheben
-                </Button>
-                <Button
-                  size="sm"
-                  onClick={() => setMergeDialogOpen(true)}
-                  disabled={!canMergeSelected}
-                >
-                  <Merge className="w-4 h-4 mr-1" />
-                  Zusammenführen
-                </Button>
-              </div>
-            </div>
-          )}
           <div className="space-y-3">
             {Array.from(groupedOrders.entries()).map(([supplierName, supplierOrders]) => {
               const isOpen = openSuppliers.has(supplierName);
@@ -1099,25 +912,7 @@ const Orders = () => {
                             open={isOrderOpen}
                             onOpenChange={() => toggleOrder(order.id)}
                           >
-                            <div ref={isHighlighted ? highlightedOrderRef : undefined} className="flex items-start gap-2">
-                            {/* Checkbox for selection */}
-                            <div className="hidden sm:flex items-center pt-3.5">
-                              <Checkbox
-                                checked={selectedOrderIds.has(order.id)}
-                                onCheckedChange={() => {
-                                  const newSelected = new Set(selectedOrderIds);
-                                  if (newSelected.has(order.id)) {
-                                    newSelected.delete(order.id);
-                                  } else {
-                                    newSelected.add(order.id);
-                                  }
-                                  setSelectedOrderIds(newSelected);
-                                }}
-                                onClick={(e) => e.stopPropagation()}
-                                className="mr-1"
-                              />
-                            </div>
-                            <div className="flex-1">
+                            <div ref={isHighlighted ? highlightedOrderRef : undefined}>
                             {/* Mobile Order Header - Single Line */}
                             <CollapsibleTrigger className="w-full sm:hidden">
                               <div className="flex items-center gap-2 p-3 bg-card border border-border rounded-lg">
@@ -1148,10 +943,7 @@ const Orders = () => {
                             
                             {/* Desktop Order Header */}
                             <CollapsibleTrigger className="w-full hidden sm:block">
-                              <div className={cn(
-                                "flex items-center gap-3 p-3 bg-card border border-border rounded-lg",
-                                selectedOrderIds.has(order.id) && "ring-2 ring-primary/50"
-                              )}>
+                              <div className="flex items-center gap-3 p-3 bg-card border border-border rounded-lg">
                                 <ChevronRight className={cn(
                                   "w-4 h-4 text-muted-foreground transition-transform duration-200 flex-shrink-0",
                                   isOrderOpen && "rotate-90"
@@ -1409,7 +1201,6 @@ const Orders = () => {
                               </div>
                             </CollapsibleContent>
                             </div>
-                            </div>
                           </Collapsible>
                         );
                       })}
@@ -1419,7 +1210,6 @@ const Orders = () => {
               );
             })}
           </div>
-          </>
         )}
           </TabsContent>
 
@@ -1476,32 +1266,6 @@ const Orders = () => {
                     {t('drafts.browseArticles')}
                   </Button>
                 )}
-              </div>
-            )}
-
-            {/* Selection toolbar for drafts */}
-            {selectedDraftIds.size > 0 && (
-              <div className="flex items-center justify-between p-3 bg-primary/10 border border-primary/30 rounded-lg">
-                <div className="flex items-center gap-3">
-                  <Badge variant="secondary">{selectedDraftIds.size} ausgewählt</Badge>
-                  {!canMergeDrafts && selectedDraftIds.size >= 2 && (
-                    <span className="text-xs text-warning">Vorbestellungen müssen vom selben Lieferanten sein</span>
-                  )}
-                </div>
-                <div className="flex items-center gap-2">
-                  <Button variant="ghost" size="sm" onClick={clearDraftSelection}>
-                    <X className="w-4 h-4 mr-1" />
-                    Auswahl aufheben
-                  </Button>
-                  <Button
-                    size="sm"
-                    onClick={mergeSelectedDraftsToCart}
-                    disabled={!canMergeDrafts}
-                  >
-                    <Merge className="w-4 h-4 mr-1" />
-                    Zusammenführen
-                  </Button>
-                </div>
               </div>
             )}
 
@@ -1568,21 +1332,13 @@ const Orders = () => {
                         <CollapsibleContent>
                           <div className="px-4 pb-4 space-y-3">
                             {/* Supplier List */}
-                            <div className="space-y-2 pl-4 sm:pl-8">
+                            <div className="space-y-2 pl-8">
                               {group.drafts.map((draft) => (
                                 <div
                                   key={draft.id}
-                                  className={cn(
-                                    "flex items-center justify-between p-3 bg-muted/30 rounded-lg",
-                                    selectedDraftIds.has(draft.id) && "ring-2 ring-primary/50"
-                                  )}
+                                  className="flex items-center justify-between p-3 bg-muted/30 rounded-lg"
                                 >
                                   <div className="flex items-center gap-3">
-                                    <Checkbox
-                                      checked={selectedDraftIds.has(draft.id)}
-                                      onCheckedChange={() => toggleDraftSelection(draft.id)}
-                                      onClick={(e) => e.stopPropagation()}
-                                    />
                                     <Package className="w-4 h-4 text-muted-foreground" />
                                     <div>
                                       <span className="font-medium text-foreground">
@@ -1850,16 +1606,7 @@ const Orders = () => {
         restaurantName={orgData?.name || 'Restaurant'}
       />
 
-      {/* Order Merge Dialog */}
-      <OrderMergeDialog
-        open={mergeDialogOpen}
-        onOpenChange={setMergeDialogOpen}
-        orders={selectedOrders}
-        onSuccess={() => {
-          clearSelection();
-        }}
-      />
-
+      {/* Floating Action Button - Neue Bestellung */}
       <Tooltip>
         <TooltipTrigger asChild>
       <Button

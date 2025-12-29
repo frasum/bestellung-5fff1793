@@ -9,7 +9,6 @@ interface OrderItem {
   article_name: string;
   quantity: number;
   unit: string;
-  order_unit?: string | null;
   unit_price: number;
   total_price: number;
 }
@@ -124,7 +123,7 @@ export const OrderEmailViewDialog = ({
                           <p className="font-medium text-sm">€{Number(item.total_price).toFixed(2)}</p>
                         </div>
                         <p className="text-xs text-muted-foreground mt-1">
-                          {item.quantity} {item.order_unit || item.unit} × €{Number(item.unit_price).toFixed(2)}
+                          {item.quantity} {item.unit} × €{Number(item.unit_price).toFixed(2)}
                         </p>
                       </div>
                     ))
@@ -152,8 +151,8 @@ export const OrderEmailViewDialog = ({
                       {order.order_items && order.order_items.length > 0 ? (
                         order.order_items.map((item, idx) => (
                           <tr key={idx}>
-                                            <td className="p-3">{item.article_name}</td>
-                                            <td className="p-3 text-center">{item.quantity} {item.order_unit || item.unit}</td>
+                            <td className="p-3">{item.article_name}</td>
+                            <td className="p-3 text-center">{item.quantity} {item.unit}</td>
                             <td className="p-3 text-right">€{Number(item.unit_price).toFixed(2)}</td>
                             <td className="p-3 text-right font-medium">€{Number(item.total_price).toFixed(2)}</td>
                           </tr>

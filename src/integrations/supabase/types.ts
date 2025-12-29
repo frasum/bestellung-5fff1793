@@ -14,122 +14,6 @@ export type Database = {
   }
   public: {
     Tables: {
-      active_cart_items: {
-        Row: {
-          article_id: string | null
-          cart_id: string
-          created_at: string
-          free_text_name: string | null
-          free_text_unit: string | null
-          id: string
-          is_free_text_item: boolean | null
-          quantity: number
-          supplier_id: string | null
-        }
-        Insert: {
-          article_id?: string | null
-          cart_id: string
-          created_at?: string
-          free_text_name?: string | null
-          free_text_unit?: string | null
-          id?: string
-          is_free_text_item?: boolean | null
-          quantity?: number
-          supplier_id?: string | null
-        }
-        Update: {
-          article_id?: string | null
-          cart_id?: string
-          created_at?: string
-          free_text_name?: string | null
-          free_text_unit?: string | null
-          id?: string
-          is_free_text_item?: boolean | null
-          quantity?: number
-          supplier_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "active_cart_items_article_id_fkey"
-            columns: ["article_id"]
-            isOneToOne: false
-            referencedRelation: "articles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "active_cart_items_cart_id_fkey"
-            columns: ["cart_id"]
-            isOneToOne: false
-            referencedRelation: "active_carts"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "active_cart_items_supplier_id_fkey"
-            columns: ["supplier_id"]
-            isOneToOne: false
-            referencedRelation: "suppliers"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      active_carts: {
-        Row: {
-          created_at: string
-          delivery_date: string | null
-          employee_id: string | null
-          id: string
-          location_id: string | null
-          organization_id: string
-          time_window: string | null
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          delivery_date?: string | null
-          employee_id?: string | null
-          id?: string
-          location_id?: string | null
-          organization_id: string
-          time_window?: string | null
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          delivery_date?: string | null
-          employee_id?: string | null
-          id?: string
-          location_id?: string | null
-          organization_id?: string
-          time_window?: string | null
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "active_carts_employee_id_fkey"
-            columns: ["employee_id"]
-            isOneToOne: false
-            referencedRelation: "employees"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "active_carts_location_id_fkey"
-            columns: ["location_id"]
-            isOneToOne: false
-            referencedRelation: "locations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "active_carts_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       article_locations: {
         Row: {
           article_id: string
@@ -2101,7 +1985,6 @@ export type Database = {
           created_at: string
           id: string
           invoice_id: string
-          is_new_article: boolean
           matched_article_id: string | null
           matched_order_item_id: string | null
           position_number: number | null
@@ -2116,7 +1999,6 @@ export type Database = {
           created_at?: string
           id?: string
           invoice_id: string
-          is_new_article?: boolean
           matched_article_id?: string | null
           matched_order_item_id?: string | null
           position_number?: number | null
@@ -2131,7 +2013,6 @@ export type Database = {
           created_at?: string
           id?: string
           invoice_id?: string
-          is_new_article?: boolean
           matched_article_id?: string | null
           matched_order_item_id?: string | null
           position_number?: number | null
@@ -2216,10 +2097,6 @@ export type Database = {
       }
       invoices: {
         Row: {
-          analysis_error: string | null
-          analysis_started_at: string | null
-          analysis_updated_at: string | null
-          cancel_requested_at: string | null
           created_at: string
           currency: string | null
           customer_number: string | null
@@ -2246,10 +2123,6 @@ export type Database = {
           vat_amount: number | null
         }
         Insert: {
-          analysis_error?: string | null
-          analysis_started_at?: string | null
-          analysis_updated_at?: string | null
-          cancel_requested_at?: string | null
           created_at?: string
           currency?: string | null
           customer_number?: string | null
@@ -2276,10 +2149,6 @@ export type Database = {
           vat_amount?: number | null
         }
         Update: {
-          analysis_error?: string | null
-          analysis_started_at?: string | null
-          analysis_updated_at?: string | null
-          cancel_requested_at?: string | null
           created_at?: string
           currency?: string | null
           customer_number?: string | null
@@ -2651,56 +2520,6 @@ export type Database = {
             columns: ["supplier_id"]
             isOneToOne: false
             referencedRelation: "suppliers"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      organization_email_settings: {
-        Row: {
-          created_at: string | null
-          id: string
-          imap_host: string
-          imap_password_encrypted: string
-          imap_port: number | null
-          imap_user: string
-          is_active: boolean | null
-          last_checked_at: string | null
-          mailbox: string | null
-          organization_id: string | null
-          updated_at: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          id?: string
-          imap_host: string
-          imap_password_encrypted: string
-          imap_port?: number | null
-          imap_user: string
-          is_active?: boolean | null
-          last_checked_at?: string | null
-          mailbox?: string | null
-          organization_id?: string | null
-          updated_at?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          id?: string
-          imap_host?: string
-          imap_password_encrypted?: string
-          imap_port?: number | null
-          imap_user?: string
-          is_active?: boolean | null
-          last_checked_at?: string | null
-          mailbox?: string | null
-          organization_id?: string | null
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "organization_email_settings_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: true
-            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]

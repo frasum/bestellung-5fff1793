@@ -261,12 +261,12 @@ export const ArticleTable = ({
                                     </>
                                   ) : (
                                     <Button
-                                      variant="outline"
+                                      variant="default"
                                       size="icon"
-                                      className="h-7 w-7 rounded-full border-border hover:bg-accent/10"
+                                      className="h-7 w-7 rounded-full"
                                       onClick={() => onAddToCart(article)}
                                     >
-                                      <ShoppingCart className="w-3 h-3 text-primary" />
+                                      <ShoppingCart className="w-3 h-3" />
                                     </Button>
                                   )}
                                 </div>

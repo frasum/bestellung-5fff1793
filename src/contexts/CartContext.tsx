@@ -1,8 +1,6 @@
-import { createContext, useContext, useState, ReactNode, useCallback, useEffect, useRef } from 'react';
+import { createContext, useContext, useState, ReactNode, useCallback } from 'react';
 import { Article } from '@/hooks/useArticles';
 import { toast } from 'sonner';
-import { supabase } from '@/integrations/supabase/client';
-import { useActiveCart } from '@/hooks/useActiveCart';
 
 export interface CartItem {
   article: Article;
@@ -54,98 +52,6 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   const [draftTimeWindow, setDraftTimeWindow] = useState<string | null>(null);
   const [draftLocationId, setDraftLocationId] = useState<string | null>(null);
   const [draftEmployeeId, setDraftEmployeeId] = useState<string | null>(null);
-  const [isLoaded, setIsLoaded] = useState(false);
-  
-  const { loadCart, debouncedSave, clearSavedCart } = useActiveCart();
-  const userRef = useRef<{ id: string; organizationId: string } | null>(null);
-
-  // Load cart from database on mount
-  useEffect(() => {
-    const loadSavedCart = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user) {
-        setIsLoaded(true);
-        return;
-      }
-
-      // Get user's organization
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('organization_id')
-        .eq('id', session.user.id)
-        .single();
-
-      if (!profile?.organization_id) {
-        setIsLoaded(true);
-        return;
-      }
-
-      userRef.current = { id: session.user.id, organizationId: profile.organization_id };
-
-      const savedCart = await loadCart(session.user.id, profile.organization_id);
-      if (savedCart) {
-        setItems(savedCart.items);
-        setFreeItems(savedCart.freeItems);
-        setDraftDeliveryDate(savedCart.deliveryDate);
-        setDraftTimeWindow(savedCart.timeWindow);
-        setDraftLocationId(savedCart.locationId);
-        setDraftEmployeeId(savedCart.employeeId);
-      }
-      setIsLoaded(true);
-    };
-
-    loadSavedCart();
-
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === 'SIGNED_IN' && session?.user) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('organization_id')
-          .eq('id', session.user.id)
-          .single();
-
-        if (profile?.organization_id) {
-          userRef.current = { id: session.user.id, organizationId: profile.organization_id };
-          const savedCart = await loadCart(session.user.id, profile.organization_id);
-          if (savedCart) {
-            setItems(savedCart.items);
-            setFreeItems(savedCart.freeItems);
-            setDraftDeliveryDate(savedCart.deliveryDate);
-            setDraftTimeWindow(savedCart.timeWindow);
-            setDraftLocationId(savedCart.locationId);
-            setDraftEmployeeId(savedCart.employeeId);
-          }
-        }
-      } else if (event === 'SIGNED_OUT') {
-        userRef.current = null;
-        setItems([]);
-        setFreeItems([]);
-        setDraftDeliveryDate(null);
-        setDraftTimeWindow(null);
-        setDraftLocationId(null);
-        setDraftEmployeeId(null);
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, [loadCart]);
-
-  // Auto-save cart when items change
-  useEffect(() => {
-    if (!isLoaded || !userRef.current) return;
-
-    debouncedSave(
-      userRef.current.id,
-      userRef.current.organizationId,
-      items,
-      freeItems,
-      draftDeliveryDate,
-      draftTimeWindow,
-      draftLocationId,
-      draftEmployeeId
-    );
-  }, [items, freeItems, draftDeliveryDate, draftTimeWindow, draftLocationId, draftEmployeeId, isLoaded, debouncedSave]);
 
   const addItem = useCallback((article: Article, quantity = 1) => {
     setItems((prev) => {
@@ -209,19 +115,14 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     );
   }, [removeFreeItem]);
 
-  const clearCart = useCallback(async () => {
+  const clearCart = useCallback(() => {
     setItems([]);
     setFreeItems([]);
     setDraftDeliveryDate(null);
     setDraftTimeWindow(null);
     setDraftLocationId(null);
     setDraftEmployeeId(null);
-    
-    // Also clear from database
-    if (userRef.current) {
-      await clearSavedCart(userRef.current.id);
-    }
-  }, [clearSavedCart]);
+  }, []);
 
   const getTotal = useCallback(() => {
     return items.reduce(

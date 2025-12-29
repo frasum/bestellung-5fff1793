@@ -22,16 +22,15 @@ const smtpConfig = {
 
 const smtpFrom = Deno.env.get("SMTP_FROM") || "yum@bestellung.pro";
 
-// Helper function to clean HTML content - only safe normalizations
-// IMPORTANT: Aggressive whitespace removal was causing emails to render empty in some clients
+// Helper function to clean HTML content to avoid encoding issues
 function cleanHtmlContent(html: string): string {
+  // Remove excessive whitespace that can cause quoted-printable encoding issues
   return html
-    .replace(/\r\n/g, '\n')  // Normalize line endings (safe)
+    .replace(/\r\n/g, '\n')  // Normalize line endings
+    .replace(/\n\s*\n/g, '\n')  // Remove empty lines with whitespace
+    .replace(/>\s+</g, '><')  // Remove whitespace between tags
+    .replace(/\s{2,}/g, ' ')  // Replace multiple spaces with single space
     .trim();
-  // REMOVED - these were breaking email rendering:
-  // .replace(/\n\s*\n/g, '\n')  - can destroy layout
-  // .replace(/>\s+</g, '><')    - DANGEROUS for email clients
-  // .replace(/\s{2,}/g, ' ')    - can destroy layout
 }
 
 // Helper to send email via SMTP

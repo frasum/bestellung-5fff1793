@@ -37,22 +37,12 @@ export interface CartDraftItem {
     sku: string | null;
     price: number;
     unit: string;
-    order_unit_id: string | null;
     category: string | null;
     top_category: string | null;
     is_active: boolean;
     created_at: string;
     updated_at: string;
     supplier_id: string;
-    origin_country: string | null;
-    packaging_unit: number | null;
-    reference_price: number | null;
-    reference_unit: string | null;
-    image_url: string | null;
-    selling_price: number | null;
-    grape_variety: string | null;
-    flavor_profile: string | null;
-    food_pairings: string | null;
     suppliers?: {
       id: string;
       name: string;

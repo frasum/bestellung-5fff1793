@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { Article, useUpdateArticle } from '@/hooks/useArticles';
@@ -19,11 +18,6 @@ import { toast } from 'sonner';
 import { generateWineCatalogPdf } from '@/lib/wineCatalogPdf';
 import { WineQuizGame } from '@/components/wine-quiz/WineQuizGame';
 
-// Helper function to remove citation markers like [1], [2], etc.
-const cleanCitations = (text: string): string => {
-  return text.replace(/\[\d+\]/g, '').trim();
-};
-
 // Helper function to get localized wine field
 const getLocalizedField = (wine: Article, field: string): string => {
   const lang = i18n.language;
@@ -32,12 +26,11 @@ const getLocalizedField = (wine: Article, field: string): string => {
     const localizedKey = `${field}_${lang}` as keyof Article;
     const localizedValue = wine[localizedKey];
     if (localizedValue && typeof localizedValue === 'string') {
-      return cleanCitations(localizedValue);
+      return localizedValue;
     }
   }
   // Fallback to German original
-  const value = (wine[field as keyof Article] as string) || '';
-  return cleanCitations(value);
+  return (wine[field as keyof Article] as string) || '';
 };
 
 interface WineResearchResult {
@@ -67,7 +60,6 @@ export const WinesTab = ({ articles, suppliers, onEditArticle }: WinesTabProps) 
   const [translateProgress, setTranslateProgress] = useState<{ current: number; total: number; wineName: string } | null>(null);
   const [pdfProgress, setPdfProgress] = useState<{ current: number; total: number } | null>(null);
   const [filterMode, setFilterMode] = useState<FilterMode>('all');
-  const [searchQuery, setSearchQuery] = useState('');
   const [advancedMode, setAdvancedMode] = useState(() => localStorage.getItem('advanced-settings-enabled') === 'true');
   const [quizOpen, setQuizOpen] = useState(false);
   // Track successfully researched wine IDs for real-time badge updates
@@ -125,48 +117,28 @@ export const WinesTab = ({ articles, suppliers, onEditArticle }: WinesTabProps) 
     ).length;
   }, [wineArticles, researchedIds]);
 
-  // Filter wines based on filterMode and search query
+  // Filter wines based on filterMode
   const filteredWines = useMemo(() => {
-    let wines = wineArticles;
-    
-    // Apply filter mode
     switch (filterMode) {
       case 'missing-description':
-        wines = wines.filter(w => !w.description?.trim());
-        break;
+        return wineArticles.filter(w => !w.description?.trim());
       case 'missing-grape':
-        wines = wines.filter(w => !w.grape_variety?.trim());
-        break;
+        return wineArticles.filter(w => !w.grape_variety?.trim());
       case 'missing-origin':
-        wines = wines.filter(w => !w.origin_country?.trim());
-        break;
+        return wineArticles.filter(w => !w.origin_country?.trim());
       case 'missing-price':
-        wines = wines.filter(w => !w.selling_price || w.selling_price === 0);
-        break;
+        return wineArticles.filter(w => !w.selling_price || w.selling_price === 0);
       case 'incomplete':
-        wines = wines.filter(w => 
+        return wineArticles.filter(w => 
           !w.description?.trim() || 
           !w.grape_variety?.trim() ||
           !w.origin_country?.trim() ||
           !w.image_url
         );
-        break;
+      default:
+        return wineArticles;
     }
-    
-    // Apply search filter
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
-      wines = wines.filter(w => 
-        w.name.toLowerCase().includes(query) ||
-        w.grape_variety?.toLowerCase().includes(query) ||
-        w.origin_country?.toLowerCase().includes(query) ||
-        w.description?.toLowerCase().includes(query) ||
-        suppliers.find(s => s.id === w.supplier_id)?.name.toLowerCase().includes(query)
-      );
-    }
-    
-    return wines;
-  }, [wineArticles, filterMode, searchQuery, suppliers]);
+  }, [wineArticles, filterMode]);
 
   // Wines without description (candidates for batch research)
   // Excludes wines that have been successfully researched in this session
@@ -233,8 +205,6 @@ export const WinesTab = ({ articles, suppliers, onEditArticle }: WinesTabProps) 
           ...(result.grape_variety !== notFound && { grape_variety: result.grape_variety }),
           ...(result.flavor_profile !== notFound && { flavor_profile: result.flavor_profile }),
           ...(result.food_pairings !== notFound && { food_pairings: result.food_pairings }),
-          // Herkunftsland aus Region übernehmen (nur wenn noch leer)
-          ...(result.region !== notFound && !wine.origin_country?.trim() && { origin_country: result.region }),
         });
 
         // Update local state for real-time badge updates
@@ -403,23 +373,12 @@ export const WinesTab = ({ articles, suppliers, onEditArticle }: WinesTabProps) 
         </div>
       )}
 
-      {/* Search Bar */}
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input
-          placeholder={t('wines.searchPlaceholder', 'Wein suchen nach Name, Rebsorte, Herkunft...')}
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-9"
-        />
-      </div>
-
       {/* Filter Toggle */}
       <ToggleGroup 
         type="single" 
         value={filterMode} 
         onValueChange={(value) => value && setFilterMode(value as FilterMode)}
-        className="justify-start flex-wrap"
+        className="justify-start"
       >
         <ToggleGroupItem value="all" className="gap-1.5">
           {t('wines.filterAll', 'Alle')}
@@ -613,8 +572,6 @@ const WineCard = ({ wine, onEdit }: WineCardProps) => {
         ...(researchResult.grape_variety !== notFound && { grape_variety: researchResult.grape_variety }),
         ...(researchResult.flavor_profile !== notFound && { flavor_profile: researchResult.flavor_profile }),
         ...(researchResult.food_pairings !== notFound && { food_pairings: researchResult.food_pairings }),
-        // Herkunftsland/Region übernehmen
-        ...(researchResult.region !== notFound && { origin_country: researchResult.region }),
         // Also save image if found
         ...(researchResult.image_url && { image_url: researchResult.image_url }),
       });

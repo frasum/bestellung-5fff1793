@@ -1,23 +1,10 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { decryptPassword } from "../_shared/encryption.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
-
-// Interface for email settings from database
-interface EmailSettings {
-  id: string;
-  organization_id: string;
-  imap_host: string;
-  imap_port: number;
-  imap_user: string;
-  imap_password_encrypted: string;
-  mailbox: string;
-  is_active: boolean;
-}
 
 // Simple IMAP client implementation for Deno
 class SimpleImapClient {
@@ -617,25 +604,6 @@ async function processPdfsInBackground(
   const totalPdfs = emailsToProcess.reduce((sum, email) => sum + email.pdfContents.length, 0);
   
   for (const email of emailsToProcess) {
-    // Check if cancellation was requested
-    const { data: statusCheck } = await serviceClient
-      .from("invoice_processing_status")
-      .select("status")
-      .eq("id", statusId)
-      .single();
-    
-    if (statusCheck?.status === "cancelled") {
-      console.info("[BACKGROUND] Processing cancelled by user");
-      await imap.logout();
-      await serviceClient
-        .from("invoice_processing_status")
-        .update({ 
-          completed_at: new Date().toISOString()
-        })
-        .eq("id", statusId);
-      return;
-    }
-    
     const { seqNum, subject, from, messageId, pdfContents, supplierId } = email;
     
     console.info(`[BACKGROUND] Processing email ${seqNum}: ${pdfContents.length} PDFs`);
@@ -793,90 +761,28 @@ serve(async (req) => {
 
     let organizationId: string;
     let serviceClient: SupabaseClient;
-    let emailSettings: EmailSettings | null = null;
-
-    // Create service client for database operations
-    serviceClient = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
-    );
-
-    const encryptionKey = Deno.env.get("EMAIL_ENCRYPTION_KEY");
-    if (!encryptionKey) {
-      console.error("EMAIL_ENCRYPTION_KEY not configured");
-      return new Response(JSON.stringify({ error: "Encryption not configured" }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
 
     if (isCronJob) {
-      // === CRON MODE: Process all active organizations ===
-      console.info("[CRON] Running in cron mode - processing all active organizations");
+      // === CRON MODE: Use environment config ===
+      console.info("[CRON] Running in cron mode");
       
-      const { data: allSettings, error: settingsError } = await serviceClient
-        .from("organization_email_settings")
-        .select("*")
-        .eq("is_active", true);
+      serviceClient = createClient(
+        Deno.env.get("SUPABASE_URL") ?? "",
+        Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+      );
 
-      if (settingsError) {
-        console.error("[CRON] Failed to fetch email settings:", settingsError);
-        return new Response(JSON.stringify({ error: "Failed to fetch email settings" }), {
-          status: 500,
+      // Get organization ID from environment
+      organizationId = Deno.env.get("INVOICE_ORGANIZATION_ID") ?? "";
+      
+      if (!organizationId) {
+        console.error("[CRON] INVOICE_ORGANIZATION_ID not configured");
+        return new Response(JSON.stringify({ error: "INVOICE_ORGANIZATION_ID not configured" }), {
+          status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
 
-      if (!allSettings || allSettings.length === 0) {
-        console.info("[CRON] No active email settings found");
-        return new Response(JSON.stringify({ 
-          success: true, 
-          message: "Keine aktiven E-Mail-Einstellungen konfiguriert",
-          organizationsProcessed: 0 
-        }), {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-
-      console.info(`[CRON] Found ${allSettings.length} organizations with active email settings`);
-
-      // Process each organization
-      const results: { org: string; success: boolean; message: string }[] = [];
-      
-      for (const settings of allSettings) {
-        try {
-          console.info(`[CRON] Processing organization ${settings.organization_id}...`);
-          const result = await processOrganizationEmails(
-            serviceClient, 
-            settings as EmailSettings, 
-            encryptionKey,
-            true
-          );
-          results.push({
-            org: settings.organization_id,
-            success: true,
-            message: result.message,
-          });
-        } catch (orgError: unknown) {
-          const err = orgError instanceof Error ? orgError : new Error(String(orgError));
-          console.error(`[CRON] Error processing org ${settings.organization_id}:`, err.message);
-          results.push({
-            org: settings.organization_id,
-            success: false,
-            message: err.message,
-          });
-        }
-      }
-
-      return new Response(JSON.stringify({
-        success: true,
-        mode: "cron",
-        organizationsProcessed: allSettings.length,
-        results,
-      }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-
+      console.info(`[CRON] Processing emails for organization ${organizationId}`);
     } else {
       // === MANUAL MODE: Use user authentication ===
       const supabaseClient = createClient(
@@ -913,44 +819,220 @@ serve(async (req) => {
 
       organizationId = profile.organization_id;
 
-      // Get email settings for this organization
-      const { data: settings, error: settingsError } = await serviceClient
-        .from("organization_email_settings")
-        .select("*")
-        .eq("organization_id", organizationId)
-        .maybeSingle();
-
-      if (settingsError) {
-        console.error("Failed to fetch email settings:", settingsError);
-        return new Response(JSON.stringify({ error: "Failed to fetch email settings" }), {
-          status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-
-      if (!settings) {
-        return new Response(JSON.stringify({ 
-          error: "Keine E-Mail-Einstellungen konfiguriert. Bitte konfigurieren Sie diese unter Einstellungen → Kommunikation → Rechnungs-E-Mail." 
-        }), {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-
-      emailSettings = settings as EmailSettings;
-
-      // Process this organization's emails
-      const result = await processOrganizationEmails(
-        serviceClient, 
-        emailSettings, 
-        encryptionKey,
-        false
+      // Create service client for database operations
+      serviceClient = createClient(
+        Deno.env.get("SUPABASE_URL") ?? "",
+        Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
       );
+    }
 
-      return new Response(JSON.stringify(result), {
+    // Get IMAP credentials from environment
+    const imapHost = Deno.env.get("INVOICE_IMAP_HOST");
+    const imapPort = parseInt(Deno.env.get("INVOICE_IMAP_PORT") || "993");
+    const imapUser = Deno.env.get("INVOICE_IMAP_USER");
+    const imapPass = Deno.env.get("INVOICE_IMAP_PASSWORD");
+
+    if (!imapHost || !imapUser || !imapPass) {
+      return new Response(JSON.stringify({ error: "IMAP credentials not configured" }), {
+        status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    console.info(`Connecting to IMAP server ${imapHost}:${imapPort}...`);
+
+    const imap = new SimpleImapClient(imapHost, imapPort, imapUser, imapPass);
+    await imap.connect();
+    await imap.selectMailbox("INBOX");
+
+    // Search for emails from the last 30 days
+    const sinceDate = new Date();
+    sinceDate.setDate(sinceDate.getDate() - 30);
+    
+    const emailSeqNums = await imap.searchSince(sinceDate);
+    
+    // Collect emails to process (with PDFs)
+    const emailsToProcess: EmailToProcess[] = [];
+    let skippedCount = 0;
+    let noAttachmentCount = 0;
+    const errors: string[] = [];
+
+    // Phase 1: Quick scan of emails to find those with PDFs
+    console.info(`[PHASE 1] Scanning ${emailSeqNums.length} emails for PDFs...`);
+    
+    for (const seqNum of emailSeqNums) {
+      try {
+        const { envelope, bodystructure } = await imap.fetchMessage(seqNum);
+        const { subject, from, messageId } = parseEnvelope(envelope);
+
+        console.info(`Scanning email #${seqNum}: "${subject}" from ${from}`);
+
+        // Check if already processed
+        const { data: existingLogs } = await serviceClient
+          .from("invoice_email_log")
+          .select("id")
+          .eq("organization_id", organizationId)
+          .or(`message_id.eq.${messageId},message_id.like.${messageId}-%`)
+          .limit(1);
+
+        if (existingLogs && existingLogs.length > 0) {
+          console.info(`Email ${messageId} already processed, skipping`);
+          skippedCount++;
+          await imap.markAsSeen(seqNum);
+          continue;
+        }
+
+        // Check for PDF attachments
+        if (!hasPdfAttachment(bodystructure)) {
+          console.info("No PDF attachments found in email");
+          
+          // Log as processed without invoice
+          await serviceClient.from("invoice_email_log").insert({
+            organization_id: organizationId,
+            message_id: messageId,
+            email_from: from,
+            email_subject: subject,
+            status: "no_attachment",
+          });
+
+          await imap.markAsSeen(seqNum);
+          noAttachmentCount++;
+          continue;
+        }
+
+        // Fetch full message to extract PDF
+        console.info("Fetching full message for PDF extraction...");
+        const fullMessage = await imap.fetchFullMessage(seqNum);
+        console.info("Full message length:", fullMessage.length);
+        
+        const pdfContents = extractPdfFromMime(fullMessage);
+
+        if (pdfContents.length === 0) {
+          console.error("Could not extract any PDF content from email");
+          
+          await serviceClient.from("invoice_email_log").insert({
+            organization_id: organizationId,
+            message_id: messageId,
+            email_from: from,
+            email_subject: subject,
+            status: "extraction_failed",
+            error_message: "Could not extract PDF content from email",
+          });
+          errors.push(`Failed to extract PDF from: ${subject}`);
+          
+          await imap.markAsSeen(seqNum);
+          continue;
+        }
+
+        console.info(`Found ${pdfContents.length} PDF(s) in email`);
+
+        // Find matching supplier by email
+        const { data: supplier } = await serviceClient
+          .from("suppliers")
+          .select("id")
+          .eq("organization_id", organizationId)
+          .or(`email.eq.${from},invoice_email.eq.${from}`)
+          .maybeSingle();
+
+        // Add to processing queue
+        emailsToProcess.push({
+          seqNum,
+          subject,
+          from,
+          messageId,
+          fullMessage,
+          pdfContents,
+          supplierId: supplier?.id || null,
+        });
+
+      } catch (emailError: unknown) {
+        const error = emailError instanceof Error ? emailError : new Error(String(emailError));
+        console.error(`Error scanning email ${seqNum}:`, error.message);
+        errors.push(`Error scanning email: ${error.message}`);
+        await imap.markAsSeen(seqNum);
+      }
+    }
+
+    // Calculate total PDFs to process
+    const totalPdfs = emailsToProcess.reduce((sum, email) => sum + email.pdfContents.length, 0);
+    
+    console.info(`[PHASE 1 COMPLETE] Found ${totalPdfs} PDFs in ${emailsToProcess.length} emails`);
+
+    // If no PDFs to process, return immediately
+    if (totalPdfs === 0) {
+      await imap.logout();
+      
+      // Update last check timestamp
+      await serviceClient
+        .from("organizations")
+        .update({ last_invoice_email_check: new Date().toISOString() })
+        .eq("id", organizationId);
+
+      const mode = isCronJob ? "[CRON]" : "[MANUAL]";
+      console.info(`${mode} No PDFs to process: ${skippedCount} skipped, ${noAttachmentCount} without attachments`);
+
+      return new Response(
+        JSON.stringify({
+          success: true,
+          mode: isCronJob ? "cron" : "manual",
+          message: "E-Mails geprüft, keine neuen PDFs gefunden",
+          foundPdfs: 0,
+          skipped: skippedCount,
+          noAttachment: noAttachmentCount,
+          processing: false,
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Create processing status record for real-time progress tracking
+    const { data: statusRecord, error: statusError } = await serviceClient
+      .from("invoice_processing_status")
+      .insert({
+        organization_id: organizationId,
+        total_pdfs: totalPdfs,
+        processed_pdfs: 0,
+        new_invoices: 0,
+        skipped_duplicates: skippedCount,
+        status: "processing",
+      })
+      .select()
+      .single();
+
+    if (statusError) {
+      console.error("Failed to create status record:", statusError);
+    }
+
+    const statusId = statusRecord?.id;
+
+    // Start background processing
+    if (statusId) {
+      // @ts-ignore EdgeRuntime is available in Supabase Edge Functions
+      EdgeRuntime.waitUntil(
+        processPdfsInBackground(serviceClient, organizationId, emailsToProcess, statusId, imap)
+      );
+    } else {
+      // Fallback: process synchronously if status record failed
+      console.warn("Status record creation failed, processing synchronously...");
+      await processPdfsInBackground(serviceClient, organizationId, emailsToProcess, "fallback", imap);
+    }
+
+    // Return immediate response
+    const mode = isCronJob ? "[CRON]" : "[MANUAL]";
+    console.info(`${mode} Returning immediate response, processing ${totalPdfs} PDFs in background`);
+
+    return new Response(
+      JSON.stringify({
+        success: true,
+        mode: isCronJob ? "cron" : "manual",
+        message: `${totalPdfs} PDF(s) gefunden, werden im Hintergrund verarbeitet...`,
+        foundPdfs: totalPdfs,
+        skipped: skippedCount,
+        processing: true,
+        statusId: statusId,
+      }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
 
   } catch (error: unknown) {
     const err = error instanceof Error ? error : new Error(String(error));
@@ -961,206 +1043,3 @@ serve(async (req) => {
     });
   }
 });
-
-// Process emails for a single organization
-async function processOrganizationEmails(
-  serviceClient: SupabaseClient,
-  emailSettings: EmailSettings,
-  encryptionKey: string,
-  isCronJob: boolean
-): Promise<{ success: boolean; message: string; foundPdfs?: number; skipped?: number; processing?: boolean; statusId?: string }> {
-  const organizationId = emailSettings.organization_id;
-  
-  // Decrypt password
-  const imapPass = await decryptPassword(emailSettings.imap_password_encrypted, encryptionKey);
-  const imapHost = emailSettings.imap_host;
-  const imapPort = emailSettings.imap_port || 993;
-  const imapUser = emailSettings.imap_user;
-  const mailbox = emailSettings.mailbox || "INBOX";
-
-  console.info(`[${isCronJob ? 'CRON' : 'MANUAL'}] Connecting to IMAP server ${imapHost}:${imapPort} for org ${organizationId}...`);
-
-  const imap = new SimpleImapClient(imapHost, imapPort, imapUser, imapPass);
-  await imap.connect();
-  await imap.selectMailbox(mailbox);
-
-  // Search for emails from the last 30 days
-  const sinceDate = new Date();
-  sinceDate.setDate(sinceDate.getDate() - 30);
-  
-  const emailSeqNums = await imap.searchSince(sinceDate);
-  
-  // Collect emails to process (with PDFs)
-  const emailsToProcess: EmailToProcess[] = [];
-  let skippedCount = 0;
-  let noAttachmentCount = 0;
-  const errors: string[] = [];
-
-  // Phase 1: Quick scan of emails to find those with PDFs
-  console.info(`[PHASE 1] Scanning ${emailSeqNums.length} emails for PDFs...`);
-  
-  for (const seqNum of emailSeqNums) {
-    try {
-      const { envelope, bodystructure } = await imap.fetchMessage(seqNum);
-      const { subject, from, messageId } = parseEnvelope(envelope);
-
-      console.info(`Scanning email #${seqNum}: "${subject}" from ${from}`);
-
-      // Check if already processed
-      const { data: existingLogs } = await serviceClient
-        .from("invoice_email_log")
-        .select("id")
-        .eq("organization_id", organizationId)
-        .or(`message_id.eq.${messageId},message_id.like.${messageId}-%`)
-        .limit(1);
-
-      if (existingLogs && existingLogs.length > 0) {
-        console.info(`Email ${messageId} already processed, skipping`);
-        skippedCount++;
-        await imap.markAsSeen(seqNum);
-        continue;
-      }
-
-      // Check for PDF attachments
-      if (!hasPdfAttachment(bodystructure)) {
-        console.info("No PDF attachments found in email");
-        
-        // Log as processed without invoice
-        await serviceClient.from("invoice_email_log").insert({
-          organization_id: organizationId,
-          message_id: messageId,
-          email_from: from,
-          email_subject: subject,
-          status: "no_attachment",
-        });
-
-        await imap.markAsSeen(seqNum);
-        noAttachmentCount++;
-        continue;
-      }
-
-      // Fetch full message to extract PDF
-      console.info("Fetching full message for PDF extraction...");
-      const fullMessage = await imap.fetchFullMessage(seqNum);
-      console.info("Full message length:", fullMessage.length);
-      
-      const pdfContents = extractPdfFromMime(fullMessage);
-
-      if (pdfContents.length === 0) {
-        console.error("Could not extract any PDF content from email");
-        
-        await serviceClient.from("invoice_email_log").insert({
-          organization_id: organizationId,
-          message_id: messageId,
-          email_from: from,
-          email_subject: subject,
-          status: "extraction_failed",
-          error_message: "Could not extract PDF content from email",
-        });
-        errors.push(`Failed to extract PDF from: ${subject}`);
-        
-        await imap.markAsSeen(seqNum);
-        continue;
-      }
-
-      console.info(`Found ${pdfContents.length} PDF(s) in email`);
-
-      // Find matching supplier by email
-      const { data: supplier } = await serviceClient
-        .from("suppliers")
-        .select("id")
-        .eq("organization_id", organizationId)
-        .or(`email.eq.${from},invoice_email.eq.${from}`)
-        .maybeSingle();
-
-      // Add to processing queue
-      emailsToProcess.push({
-        seqNum,
-        subject,
-        from,
-        messageId,
-        fullMessage,
-        pdfContents,
-        supplierId: supplier?.id || null,
-      });
-
-    } catch (emailError: unknown) {
-      const error = emailError instanceof Error ? emailError : new Error(String(emailError));
-      console.error(`Error scanning email ${seqNum}:`, error.message);
-      errors.push(`Error scanning email: ${error.message}`);
-      await imap.markAsSeen(seqNum);
-    }
-  }
-
-  // Calculate total PDFs to process
-  const totalPdfs = emailsToProcess.reduce((sum, email) => sum + email.pdfContents.length, 0);
-  
-  console.info(`[PHASE 1 COMPLETE] Found ${totalPdfs} PDFs in ${emailsToProcess.length} emails`);
-
-  // Update last check timestamp
-  await serviceClient
-    .from("organization_email_settings")
-    .update({ last_checked_at: new Date().toISOString() })
-    .eq("organization_id", organizationId);
-
-  // If no PDFs to process, return immediately
-  if (totalPdfs === 0) {
-    await imap.logout();
-
-    const mode = isCronJob ? "[CRON]" : "[MANUAL]";
-    console.info(`${mode} No PDFs to process: ${skippedCount} skipped, ${noAttachmentCount} without attachments`);
-
-    return {
-      success: true,
-      message: "E-Mails geprüft, keine neuen PDFs gefunden",
-      foundPdfs: 0,
-      skipped: skippedCount,
-      processing: false,
-    };
-  }
-
-  // Create processing status record for real-time progress tracking
-  const { data: statusRecord, error: statusError } = await serviceClient
-    .from("invoice_processing_status")
-    .insert({
-      organization_id: organizationId,
-      total_pdfs: totalPdfs,
-      processed_pdfs: 0,
-      new_invoices: 0,
-      skipped_duplicates: skippedCount,
-      status: "processing",
-    })
-    .select()
-    .single();
-
-  if (statusError) {
-    console.error("Failed to create status record:", statusError);
-  }
-
-  const statusId = statusRecord?.id;
-
-  // Start background processing
-  if (statusId) {
-    // @ts-ignore EdgeRuntime is available in Supabase Edge Functions
-    EdgeRuntime.waitUntil(
-      processPdfsInBackground(serviceClient, organizationId, emailsToProcess, statusId, imap)
-    );
-  } else {
-    // Fallback: process synchronously if status record failed
-    console.warn("Status record creation failed, processing synchronously...");
-    await processPdfsInBackground(serviceClient, organizationId, emailsToProcess, "fallback", imap);
-  }
-
-  // Return immediate response
-  const mode = isCronJob ? "[CRON]" : "[MANUAL]";
-  console.info(`${mode} Returning immediate response, processing ${totalPdfs} PDFs in background`);
-
-  return {
-    success: true,
-    message: `${totalPdfs} PDF(s) gefunden, werden im Hintergrund verarbeitet...`,
-    foundPdfs: totalPdfs,
-    skipped: skippedCount,
-    processing: true,
-    statusId: statusId,
-  };
-}

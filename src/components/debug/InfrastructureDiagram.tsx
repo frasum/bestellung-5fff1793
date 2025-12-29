@@ -843,7 +843,19 @@ export function InfrastructureDiagram() {
     <div className="space-y-6">
       <style>{`
         .interactive-node {
-          cursor: pointer;
+          transition: all 0.2s ease;
+        }
+        .interactive-node:hover {
+          filter: brightness(0.92);
+          transform: scale(1.02);
+        }
+        .interactive-node rect,
+        .interactive-node polygon {
+          transition: all 0.2s ease;
+        }
+        .interactive-node:hover rect,
+        .interactive-node:hover polygon {
+          stroke-width: 3px !important;
         }
       `}</style>
 

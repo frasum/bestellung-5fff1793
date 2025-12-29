@@ -17,11 +17,7 @@ export interface Invoice {
   gross_amount: number | null;
   currency: string;
   pdf_url: string | null;
-  status: 'pending' | 'processing' | 'matched' | 'discrepancy' | 'approved' | 'rejected' | 'cancelled';
-  analysis_started_at?: string | null;
-  analysis_updated_at?: string | null;
-  cancel_requested_at?: string | null;
-  analysis_error?: string | null;
+  status: 'pending' | 'processing' | 'matched' | 'discrepancy' | 'approved' | 'rejected';
   notes: string | null;
   parsed_data: any;
   created_at: string;
@@ -44,7 +40,6 @@ export interface InvoiceItem {
   unit: string | null;
   unit_price: number | null;
   total_price: number | null;
-  is_new_article: boolean;
   created_at: string;
 }
 
@@ -184,16 +179,11 @@ export function useUploadInvoice() {
 
       return parseResponse.data;
     },
-    onSuccess: (data) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['invoices'] });
-      const count = data?.invoicesProcessed || 1;
       toast({
-        title: count > 1 
-          ? `${count} Rechnungen erkannt` 
-          : 'Rechnung hochgeladen',
-        description: count > 1
-          ? `${count} separate Rechnungen wurden aus dem PDF erkannt und angelegt.`
-          : 'Die Rechnung wird analysiert...',
+        title: 'Rechnung hochgeladen',
+        description: 'Die Rechnung wird analysiert...',
       });
     },
     onError: (error: Error) => {
@@ -313,7 +303,7 @@ export interface InvoiceProcessingStatus {
   processed_pdfs: number;
   new_invoices: number;
   skipped_duplicates: number;
-  status: 'processing' | 'completed' | 'failed' | 'cancelled';
+  status: 'processing' | 'completed' | 'failed';
   error_message: string | null;
   started_at: string;
   completed_at: string | null;
@@ -362,13 +352,6 @@ export function useInvoiceProcessingStatus() {
               });
               // Clear status after showing error
               setTimeout(() => setCurrentStatus(null), 5000);
-            } else if (status.status === 'cancelled') {
-              queryClient.invalidateQueries({ queryKey: ['invoices'] });
-              toast({
-                title: 'Rechnungsimport abgebrochen',
-                description: `${status.new_invoices} Rechnung(en) wurden vor dem Abbruch importiert`,
-              });
-              setTimeout(() => setCurrentStatus(null), 3000);
             }
           }
         }
@@ -404,31 +387,6 @@ export function useInvoiceProcessingStatus() {
     setCurrentStatus(null);
   }, []);
 
-  const cancelProcessing = useCallback(async () => {
-    if (!currentStatus?.id) return;
-    
-    try {
-      const { error } = await supabase
-        .from('invoice_processing_status')
-        .update({ status: 'cancelled' })
-        .eq('id', currentStatus.id);
-      
-      if (error) throw error;
-      
-      toast({
-        title: 'Abbruch angefordert',
-        description: 'Die Verarbeitung wird gestoppt...',
-      });
-    } catch (err) {
-      console.error('Failed to cancel processing:', err);
-      toast({
-        title: 'Fehler',
-        description: 'Abbruch konnte nicht angefordert werden',
-        variant: 'destructive',
-      });
-    }
-  }, [currentStatus?.id, toast]);
-
   return {
     status: currentStatus,
     isProcessing: currentStatus?.status === 'processing',
@@ -436,7 +394,6 @@ export function useInvoiceProcessingStatus() {
       ? Math.round((currentStatus.processed_pdfs / currentStatus.total_pdfs) * 100)
       : 0,
     clearStatus,
-    cancelProcessing,
   };
 }
 
@@ -466,131 +423,6 @@ export function useReanalyzeInvoice() {
       console.error('Reanalyze error:', error);
       toast({
         title: 'Analyse fehlgeschlagen',
-        description: error.message,
-        variant: 'destructive',
-      });
-    },
-  });
-}
-
-export function useCancelInvoiceAnalysis() {
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (invoiceId: string) => {
-      const { error } = await supabase
-        .from('invoices')
-        .update({ cancel_requested_at: new Date().toISOString() })
-        .eq('id', invoiceId);
-
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['invoices'] });
-      toast({
-        title: 'Abbruch angefordert',
-        description: 'Die Analyse wird gestoppt...',
-      });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: 'Fehler',
-        description: error.message,
-        variant: 'destructive',
-      });
-    },
-  });
-}
-
-export function useDeleteAllInvoices() {
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
-  const { user } = useAuth();
-
-  return useMutation({
-    mutationFn: async () => {
-      // Get organization ID for storage folder
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('organization_id')
-        .eq('id', user?.id)
-        .single();
-
-      if (!profile?.organization_id) {
-        throw new Error('No organization found');
-      }
-
-      // 1. Delete all invoice_discrepancies
-      const { error: discrepancyError } = await supabase
-        .from('invoice_discrepancies')
-        .delete()
-        .neq('id', '00000000-0000-0000-0000-000000000000');
-
-      if (discrepancyError) {
-        console.warn('Error deleting discrepancies:', discrepancyError);
-      }
-
-      // 2. Delete all invoice_items
-      const { error: itemsError } = await supabase
-        .from('invoice_items')
-        .delete()
-        .neq('id', '00000000-0000-0000-0000-000000000000');
-
-      if (itemsError) {
-        console.warn('Error deleting invoice items:', itemsError);
-      }
-
-      // 3. Delete all invoice_processing_status
-      const { error: processingError } = await supabase
-        .from('invoice_processing_status')
-        .delete()
-        .neq('id', '00000000-0000-0000-0000-000000000000');
-
-      if (processingError) {
-        console.warn('Error deleting processing status:', processingError);
-      }
-
-      // 4. Delete all PDFs from storage
-      const { data: files, error: listError } = await supabase.storage
-        .from('invoices')
-        .list(profile.organization_id);
-
-      if (listError) {
-        console.warn('Error listing storage files:', listError);
-      } else if (files && files.length > 0) {
-        const filePaths = files.map(f => `${profile.organization_id}/${f.name}`);
-        const { error: storageError } = await supabase.storage
-          .from('invoices')
-          .remove(filePaths);
-
-        if (storageError) {
-          console.warn('Error deleting storage files:', storageError);
-        }
-      }
-
-      // 5. Delete all invoices
-      const { error: invoiceError } = await supabase
-        .from('invoices')
-        .delete()
-        .neq('id', '00000000-0000-0000-0000-000000000000');
-
-      if (invoiceError) throw invoiceError;
-
-      // NOTE: invoice_email_log and article_price_history are NOT deleted
-
-      return { success: true };
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['invoices'] });
-      toast({
-        title: 'Alle Rechnungen gelöscht',
-        description: 'Alle Rechnungsdaten wurden entfernt. Preishistorie und E-Mail-Verlauf bleiben erhalten.',
-      });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: 'Fehler beim Löschen',
         description: error.message,
         variant: 'destructive',
       });

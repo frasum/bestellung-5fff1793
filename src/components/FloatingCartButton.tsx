@@ -46,11 +46,11 @@ export const FloatingCartButton = () => {
             className={cn(
               'fixed bottom-6 right-6 z-50 h-14 w-14 rounded-full shadow-lg',
               'hover:scale-105 transition-transform duration-200',
-              'bg-background hover:bg-accent/10 border border-border',
+              'bg-primary hover:bg-primary/90',
               isPulsing && 'animate-[pulse-cart_0.6s_ease-in-out]'
             )}
           >
-            <ShoppingCart className={cn('h-6 w-6 text-primary', isPulsing && 'animate-[wiggle_0.3s_ease-in-out]')} />
+            <ShoppingCart className={cn('h-6 w-6', isPulsing && 'animate-[wiggle_0.3s_ease-in-out]')} />
             {itemCount > 0 && (
               <Badge 
                 variant="destructive" 
