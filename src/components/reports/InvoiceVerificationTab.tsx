@@ -103,6 +103,16 @@ interface MonthGroup {
   totalAmount: number;
 }
 
+interface ParsedItem {
+  position?: number;
+  articleName: string;
+  articleSku?: string;
+  quantity: number;
+  unit?: string;
+  unitPrice?: number;
+  totalPrice?: number;
+}
+
 const statusConfig: Record<Invoice['status'], { icon: React.ElementType; color: string; label: string }> = {
   pending: { icon: Clock, color: 'bg-muted text-muted-foreground', label: 'Neu' },
   processing: { icon: Loader2, color: 'bg-blue-500/20 text-blue-600', label: 'Wird analysiert' },
@@ -829,6 +839,24 @@ function InvoiceRow({
   const StatusIcon = statusConfig[invoice.status].icon;
   const discrepancyCount = invoice.invoice_discrepancies?.filter(d => !d.is_resolved).length || 0;
 
+  // Get items from invoice_items or fall back to parsed_data
+  const invoiceItems = invoice.invoice_items && invoice.invoice_items.length > 0
+    ? invoice.invoice_items
+    : ((invoice.parsed_data?.items as ParsedItem[]) || []).map((item, index) => ({
+        id: `parsed-${index}`,
+        invoice_id: invoice.id,
+        article_name: item.articleName,
+        article_sku: item.articleSku || null,
+        quantity: item.quantity,
+        unit: item.unit || null,
+        unit_price: item.unitPrice || null,
+        total_price: item.totalPrice || null,
+        position_number: item.position || index + 1,
+        matched_order_item_id: null,
+        matched_article_id: null,
+        created_at: invoice.created_at,
+      }));
+
   return (
     <Collapsible open={isExpanded} onOpenChange={onToggle}>
       <CollapsibleTrigger asChild>
@@ -880,7 +908,7 @@ function InvoiceRow({
       <CollapsibleContent>
         <div className="px-8 pb-4 pt-0 space-y-4">
           {/* Invoice Items */}
-          {invoice.invoice_items && invoice.invoice_items.length > 0 && (
+          {invoiceItems.length > 0 && (
             <div className="rounded-md border">
               <Table>
                 <TableHeader>
@@ -892,7 +920,7 @@ function InvoiceRow({
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {invoice.invoice_items.map((item) => (
+                  {invoiceItems.map((item) => (
                     <TableRow key={item.id}>
                       <TableCell className="font-medium">
                         <div>{item.article_name}</div>
