@@ -281,6 +281,7 @@ serve(async (req) => {
             order_id: tokenData.order_id,
             status: 'sent',
             body_html: notificationHtml,
+            sender_email: smtpFrom,
           });
 
         if (logError) {

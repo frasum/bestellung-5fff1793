@@ -162,6 +162,7 @@ const handler = async (req: Request): Promise<Response> => {
           body_html: htmlContent,
           status: 'sent',
           supplier_id: accountData.linked_supplier_id,
+          sender_email: smtpFrom,
         });
       }
     }

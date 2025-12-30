@@ -302,6 +302,7 @@ ${items.map(item => `- ${item.article_name}: ${item.quantity}`).join('\n')}
           subject: subject,
           status: 'sent',
           body_html: htmlContent,
+          sender_email: smtpFrom,
         });
 
       if (logError) {

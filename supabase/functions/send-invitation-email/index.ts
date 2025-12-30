@@ -310,6 +310,7 @@ ${t.ignore}
             subject: t.subject(organizationName),
             status: 'sent',
             body_html: htmlContent,
+            sender_email: smtpFrom,
           });
 
         if (logError) {

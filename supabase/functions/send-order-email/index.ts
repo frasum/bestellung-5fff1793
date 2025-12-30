@@ -598,6 +598,7 @@ serve(async (req) => {
           order_id: data.orderId,
           status: 'sent',
           body_html: emailHtml,
+          sender_email: smtpFrom,
         });
 
       if (logError) {
