@@ -51,6 +51,23 @@ export function useOrganizationEmailSettings() {
   });
 }
 
+// Helper to extract error message from FunctionsHttpError
+async function extractErrorMessage(error: unknown): Promise<string> {
+  if (error && typeof error === 'object' && 'context' in error) {
+    const ctx = (error as { context?: Response }).context;
+    if (ctx && typeof ctx.json === 'function') {
+      try {
+        const body = await ctx.json();
+        if (body?.error) return body.error;
+      } catch {
+        // ignore parse errors
+      }
+    }
+  }
+  if (error instanceof Error) return error.message;
+  return String(error);
+}
+
 export function useUpdateEmailSettings() {
   const queryClient = useQueryClient();
 
@@ -60,7 +77,10 @@ export function useUpdateEmailSettings() {
         body: formData,
       });
 
-      if (error) throw error;
+      if (error) {
+        const msg = await extractErrorMessage(error);
+        throw new Error(msg);
+      }
       if (data?.error) throw new Error(data.error);
 
       return data;
@@ -83,7 +103,10 @@ export function useTestEmailConnection() {
         body: formData,
       });
 
-      if (error) throw error;
+      if (error) {
+        const msg = await extractErrorMessage(error);
+        throw new Error(msg);
+      }
       if (data?.error) throw new Error(data.error);
 
       return data;
