@@ -454,7 +454,8 @@ export const ArticleFormDialog = ({
               <Input 
                 id="article-packaging-unit" 
                 type="number" 
-                min="1"
+                min="0.01"
+                step="any"
                 {...form.register('packaging_unit')} 
                 placeholder="z.B. 6" 
                 onFocus={(e) => e.target.select()}
@@ -466,7 +467,7 @@ export const ArticleFormDialog = ({
             {/* Berechneter BE-Preis */}
             {(() => {
               const price = parseFloat(form.watch('price') || '0');
-              const packagingUnit = parseInt(form.watch('packaging_unit') || '0');
+              const packagingUnit = parseFloat(form.watch('packaging_unit') || '0');
               const orderUnitId = form.watch('order_unit_id');
               const selectedOrderUnit = orderUnits.find(u => u.id === orderUnitId);
               
