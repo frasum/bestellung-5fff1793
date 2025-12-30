@@ -200,14 +200,20 @@ export const WinesTab = ({ articles, suppliers, onEditArticle }: WinesTabProps) 
 
         const result = data as WineResearchResult;
         
-        await updateArticle.mutateAsync({
-          id: wine.id,
-          ...(result.description !== notFound && { description: result.description }),
-          ...(result.grape_variety !== notFound && { grape_variety: result.grape_variety }),
-          ...(result.origin_country !== notFound && { origin_country: result.origin_country }),
-          ...(result.flavor_profile !== notFound && { flavor_profile: result.flavor_profile }),
-          ...(result.food_pairings !== notFound && { food_pairings: result.food_pairings }),
-        });
+        const updateData: Record<string, string> = {};
+        if (result.description !== notFound) updateData.description = result.description;
+        if (result.grape_variety !== notFound) updateData.grape_variety = result.grape_variety;
+        if (result.origin_country !== notFound) updateData.origin_country = result.origin_country;
+        if (result.flavor_profile !== notFound) updateData.flavor_profile = result.flavor_profile;
+        if (result.food_pairings !== notFound) updateData.food_pairings = result.food_pairings;
+
+        // Only update if we have data to update
+        if (Object.keys(updateData).length > 0) {
+          await updateArticle.mutateAsync({
+            id: wine.id,
+            ...updateData,
+          });
+        }
 
         // Update local state for real-time badge updates
         setResearchedIds(prev => new Set([...prev, wine.id]));
