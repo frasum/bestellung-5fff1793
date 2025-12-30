@@ -43,6 +43,7 @@ export interface CartDraftItem {
     created_at: string;
     updated_at: string;
     supplier_id: string;
+    packaging_unit: number | null;
     suppliers?: {
       id: string;
       name: string;
@@ -76,6 +77,7 @@ export const useCartDrafts = (locationId?: string, showAllLocations?: boolean) =
               created_at,
               updated_at,
               supplier_id,
+              packaging_unit,
               suppliers(id, name, minimum_order_value)
             )
           ),

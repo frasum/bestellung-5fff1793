@@ -126,7 +126,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
 
   const getTotal = useCallback(() => {
     return items.reduce(
-      (total, item) => total + Number(item.article.price) * item.quantity,
+      (total, item) => total + Number(item.article.price) * (Number(item.article.packaging_unit) || 1) * item.quantity,
       0
     );
   }, [items]);

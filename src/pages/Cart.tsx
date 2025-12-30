@@ -155,7 +155,7 @@ const Cart = () => {
     return {
       supplierId,
       name,
-      total: supplierItems.reduce((sum, item) => sum + Number(item.article.price) * item.quantity, 0),
+      total: supplierItems.reduce((sum, item) => sum + Number(item.article.price) * (Number(item.article.packaging_unit) || 1) * item.quantity, 0),
       items: supplierItems,
       freeItems: freeItemsForSupplier,
       minimumOrderValue: getMinimumOrderValue(supplierId, supplier?.minimum_order_value || null),

@@ -57,7 +57,7 @@ export function LiveDemoRestaurantPanel({ soundEnabled }: LiveDemoRestaurantPane
     return grouped;
   }, [cart]);
 
-  const cartTotal = cart.reduce((sum, item) => sum + item.article.price * item.quantity, 0);
+  const cartTotal = cart.reduce((sum, item) => sum + item.article.price * (Number(item.article.packaging_unit) || 1) * item.quantity, 0);
   const cartItemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
   const handleAddToCart = (article: Article) => {
@@ -89,14 +89,14 @@ export function LiveDemoRestaurantPanel({ soundEnabled }: LiveDemoRestaurantPane
 
   // Generate simulated email HTML for demo
   const generateDemoEmailHtml = (supplier: any, items: LocalCartItem[], orderNumber: string) => {
-    const totalAmount = items.reduce((sum, item) => sum + item.article.price * item.quantity, 0);
+    const totalAmount = items.reduce((sum, item) => sum + item.article.price * (Number(item.article.packaging_unit) || 1) * item.quantity, 0);
     const itemRows = items.map(item => `
       <tr>
         <td style="padding: 8px; border-bottom: 1px solid #eee;">${item.article.name}</td>
         <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: center;">${item.quantity}</td>
         <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: center;">${item.article.unit}</td>
         <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: right;">€${item.article.price.toFixed(2)}</td>
-        <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: right;">€${(item.article.price * item.quantity).toFixed(2)}</td>
+        <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: right;">€${(item.article.price * (Number(item.article.packaging_unit) || 1) * item.quantity).toFixed(2)}</td>
       </tr>
     `).join('');
 
@@ -176,7 +176,7 @@ export function LiveDemoRestaurantPanel({ soundEnabled }: LiveDemoRestaurantPane
       // Generate order number
       const { data: orderNumber } = await supabase.rpc('generate_order_number');
       
-      const totalAmount = supplierItems.reduce((sum, item) => sum + item.article.price * item.quantity, 0);
+      const totalAmount = supplierItems.reduce((sum, item) => sum + item.article.price * (Number(item.article.packaging_unit) || 1) * item.quantity, 0);
 
       // Create order directly in DB (no email function)
       const { data: order, error: orderError } = await supabase
@@ -206,7 +206,7 @@ export function LiveDemoRestaurantPanel({ soundEnabled }: LiveDemoRestaurantPane
         quantity: item.quantity,
         unit: item.article.unit,
         unit_price: item.article.price,
-        total_price: item.article.price * item.quantity,
+        total_price: item.article.price * (Number(item.article.packaging_unit) || 1) * item.quantity,
       }));
 
       await supabase.from('order_items').insert(orderItems);
