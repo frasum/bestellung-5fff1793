@@ -18,7 +18,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Trash2, Loader2 } from 'lucide-react';
+import { Plus, Trash2, Loader2, X, Check } from 'lucide-react';
 
 interface B2BSupplier {
   id: string;
@@ -495,13 +495,26 @@ export default function B2BOfferFormDialog({
             </div>
 
             {/* Actions */}
-            <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => onOpenChange(false)}>
-                Abbrechen
+            <div className="flex justify-center items-center gap-6 pt-4">
+              <Button 
+                type="button" 
+                variant="outline"
+                size="icon"
+                className="h-12 w-12 rounded-full border-2 text-muted-foreground hover:text-foreground"
+                onClick={() => onOpenChange(false)}
+                title="Abbrechen"
+              >
+                <X className="h-5 w-5" />
               </Button>
-              <Button onClick={handleSubmit} disabled={saving}>
-                {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                {offer ? 'Speichern' : 'Angebot erstellen'}
+              <Button 
+                type="button"
+                size="icon"
+                className="h-12 w-12 rounded-full bg-emerald-500 hover:bg-emerald-600 text-white"
+                onClick={handleSubmit} 
+                disabled={saving}
+                title={offer ? 'Speichern' : 'Angebot erstellen'}
+              >
+                {saving ? <Loader2 className="h-5 w-5 animate-spin" /> : <Check className="h-5 w-5" />}
               </Button>
             </div>
           </div>

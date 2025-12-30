@@ -13,7 +13,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Check, ChevronsUpDown, Loader2, Plus, Package, Save, Globe, ChevronDown, Sparkles, Trash2, MapPin } from 'lucide-react';
+import { Check, ChevronsUpDown, Loader2, Plus, Package, Save, Globe, ChevronDown, Sparkles, Trash2, MapPin, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Article } from '@/hooks/useArticles';
 import { Supplier } from '@/hooks/useSuppliers';
@@ -1017,24 +1017,37 @@ export const ArticleFormDialog = ({
             </div>
           )}
 
-          <div className="flex gap-3 pt-4">
+          <div className="flex justify-center items-center gap-6 pt-4">
             {editingArticle && onDelete && (
               <Button 
                 type="button" 
-                variant="destructive" 
-                className="h-10 sm:h-9"
+                variant="destructive"
+                size="icon"
+                className="h-12 w-12 rounded-full"
                 onClick={() => onDelete(editingArticle)}
+                title="Löschen"
               >
-                <Trash2 className="w-4 h-4 mr-2" />
-                Löschen
+                <X className="h-5 w-5" />
               </Button>
             )}
-            <div className="flex-1" />
-            <Button type="button" variant="outline" className="h-10 sm:h-9" onClick={() => onOpenChange(false)}>
-              Abbrechen
+            <Button 
+              type="button" 
+              variant="outline"
+              size="icon"
+              className="h-12 w-12 rounded-full border-2 text-muted-foreground hover:text-foreground"
+              onClick={() => onOpenChange(false)}
+              title="Abbrechen"
+            >
+              <X className="h-5 w-5" />
             </Button>
-            <Button type="submit" className="h-10 sm:h-9" disabled={isPending}>
-              {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : editingArticle ? 'Speichern' : 'Erstellen'}
+            <Button 
+              type="submit" 
+              size="icon"
+              className="h-12 w-12 rounded-full bg-emerald-500 hover:bg-emerald-600 text-white"
+              disabled={isPending}
+              title={editingArticle ? 'Speichern' : 'Erstellen'}
+            >
+              {isPending ? <Loader2 className="h-5 w-5 animate-spin" /> : <Check className="h-5 w-5" />}
             </Button>
           </div>
         </form>
