@@ -299,7 +299,7 @@ const Orders = () => {
   const getDraftTotal = (draft: CartDraft) => {
     return draft.items?.reduce((sum, item) => {
       if (item.article) {
-        return sum + Number(item.article.price) * item.quantity;
+        return sum + Number(item.article.price) * (Number(item.article.packaging_unit) || 1) * item.quantity;
       }
       return sum;
     }, 0) || 0;

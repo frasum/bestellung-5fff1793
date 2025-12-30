@@ -139,6 +139,7 @@ export const SupplierMobilePurchaseTab = ({ session }: Props) => {
   const cartTotal = useMemo(() => {
     return cart.reduce((sum, item) => sum + (item.article.price * item.quantity), 0);
   }, [cart]);
+  // Note: This component uses OwnArticle type which doesn't have packaging_unit field
 
   const cartItemCount = useMemo(() => {
     return cart.reduce((sum, item) => sum + item.quantity, 0);

@@ -149,6 +149,7 @@ const B2BMobilePurchaseTab = ({ accountId, supplierId }: B2BMobilePurchaseTabPro
   const cartTotal = useMemo(() => {
     return cart.reduce((sum, item) => sum + (item.article.price || 0) * item.quantity, 0);
   }, [cart]);
+  // Note: B2B vendor articles don't have packaging_unit field
 
   const cartItemCount = useMemo(() => {
     return cart.reduce((sum, item) => sum + item.quantity, 0);

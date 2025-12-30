@@ -154,7 +154,7 @@ const Checkout = () => {
         };
       }
       acc[supplierId].items.push(item);
-      acc[supplierId].total += Number(item.article.price) * item.quantity;
+      acc[supplierId].total += Number(item.article.price) * (Number(item.article.packaging_unit) || 1) * item.quantity;
       return acc;
     }, {} as Record<string, { supplierId: string; supplierName: string; supplierEmail: string; items: typeof items; freeItems: typeof freeItems; total: number }>);
 
@@ -266,7 +266,7 @@ const Checkout = () => {
           quantity: item.quantity,
           unit: item.article.unit,
           unit_price: Number(item.article.price),
-          total_price: Number(item.article.price) * item.quantity,
+          total_price: Number(item.article.price) * (Number(item.article.packaging_unit) || 1) * item.quantity,
           sku: item.article.sku || undefined,
           packaging_unit: item.article.packaging_unit || undefined,
           order_unit: formatOrderUnit(item.article.order_unit_id) || undefined,
