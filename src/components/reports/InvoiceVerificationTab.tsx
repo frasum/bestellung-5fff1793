@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDropzone } from 'react-dropzone';
 import { format } from 'date-fns';
@@ -26,6 +26,10 @@ import {
   ExternalLink,
   Plus,
   Trash2,
+  Building2,
+  Calendar,
+  List,
+  ChevronsUpDown,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -60,6 +64,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { PdfCanvasViewer } from './PdfCanvasViewer';
 import { cn } from '@/lib/utils';
 import {
@@ -78,6 +83,25 @@ import {
 } from '@/hooks/useInvoices';
 import { Progress } from '@/components/ui/progress';
 import { InvoiceProcessingSummary } from './InvoiceProcessingSummary';
+
+type ViewMode = 'supplier' | 'date' | 'flat';
+
+interface SupplierGroup {
+  supplierId: string | null;
+  supplierName: string;
+  invoices: Invoice[];
+  totalAmount: number;
+  pendingCount: number;
+  approvedCount: number;
+  discrepancyCount: number;
+}
+
+interface MonthGroup {
+  monthKey: string;
+  monthLabel: string;
+  invoices: Invoice[];
+  totalAmount: number;
+}
 
 const statusConfig: Record<Invoice['status'], { icon: React.ElementType; color: string; label: string }> = {
   pending: { icon: Clock, color: 'bg-muted text-muted-foreground', label: 'Neu' },
@@ -124,14 +148,126 @@ export function InvoiceVerificationTab() {
   const reanalyzeInvoice = useReanalyzeInvoice();
   const createArticlesFromInvoice = useCreateArticlesFromInvoice();
   const deleteInvoice = useDeleteInvoice();
+  
+  const locale = i18n.language === 'de' ? de : enUS;
+  
   const [expandedInvoices, setExpandedInvoices] = useState<Set<string>>(new Set());
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
+  const [viewMode, setViewMode] = useState<ViewMode>('supplier');
   const [selectedInvoiceId, setSelectedInvoiceId] = useState<string | null>(null);
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
   const [pdfDialogUrl, setPdfDialogUrl] = useState<string | null>(null);
+
+  // Grouping functions
+  const groupInvoicesBySupplier = useMemo((): SupplierGroup[] => {
+    if (!invoices) return [];
+    
+    const groups = new Map<string, SupplierGroup>();
+    
+    invoices.forEach(invoice => {
+      const supplierId = invoice.supplier_id || 'unknown';
+      const supplierName = invoice.suppliers?.name || t('invoices.unknownSupplier', 'Unbekannter Lieferant');
+      
+      if (!groups.has(supplierId)) {
+        groups.set(supplierId, {
+          supplierId: invoice.supplier_id,
+          supplierName,
+          invoices: [],
+          totalAmount: 0,
+          pendingCount: 0,
+          approvedCount: 0,
+          discrepancyCount: 0,
+        });
+      }
+      
+      const group = groups.get(supplierId)!;
+      group.invoices.push(invoice);
+      group.totalAmount += Number(invoice.gross_amount || 0);
+      
+      if (invoice.status === 'pending' || invoice.status === 'processing') {
+        group.pendingCount++;
+      } else if (invoice.status === 'approved' || invoice.status === 'matched') {
+        group.approvedCount++;
+      } else if (invoice.status === 'discrepancy') {
+        group.discrepancyCount++;
+      }
+    });
+    
+    // Sort groups by supplier name, sort invoices within by date (newest first)
+    return Array.from(groups.values())
+      .sort((a, b) => a.supplierName.localeCompare(b.supplierName))
+      .map(group => ({
+        ...group,
+        invoices: group.invoices.sort((a, b) => {
+          const dateA = a.invoice_date ? new Date(a.invoice_date).getTime() : 0;
+          const dateB = b.invoice_date ? new Date(b.invoice_date).getTime() : 0;
+          return dateB - dateA;
+        }),
+      }));
+  }, [invoices, t]);
+
+  const groupInvoicesByMonth = useMemo((): MonthGroup[] => {
+    if (!invoices) return [];
+    
+    const groups = new Map<string, MonthGroup>();
+    
+    invoices.forEach(invoice => {
+      const invoiceDate = invoice.invoice_date ? new Date(invoice.invoice_date) : new Date(invoice.created_at);
+      const monthKey = format(invoiceDate, 'yyyy-MM');
+      const monthLabel = format(invoiceDate, 'MMMM yyyy', { locale });
+      
+      if (!groups.has(monthKey)) {
+        groups.set(monthKey, {
+          monthKey,
+          monthLabel,
+          invoices: [],
+          totalAmount: 0,
+        });
+      }
+      
+      const group = groups.get(monthKey)!;
+      group.invoices.push(invoice);
+      group.totalAmount += Number(invoice.gross_amount || 0);
+    });
+    
+    // Sort groups by month (newest first), sort invoices within by supplier name
+    return Array.from(groups.values())
+      .sort((a, b) => b.monthKey.localeCompare(a.monthKey))
+      .map(group => ({
+        ...group,
+        invoices: group.invoices.sort((a, b) => {
+          const nameA = a.suppliers?.name || '';
+          const nameB = b.suppliers?.name || '';
+          return nameA.localeCompare(nameB);
+        }),
+      }));
+  }, [invoices, locale]);
+
+  const toggleGroup = (groupId: string) => {
+    setExpandedGroups(prev => {
+      const next = new Set(prev);
+      if (next.has(groupId)) {
+        next.delete(groupId);
+      } else {
+        next.add(groupId);
+      }
+      return next;
+    });
+  };
+
+  const expandAllGroups = () => {
+    if (viewMode === 'supplier') {
+      setExpandedGroups(new Set(groupInvoicesBySupplier.map(g => g.supplierId || 'unknown')));
+    } else if (viewMode === 'date') {
+      setExpandedGroups(new Set(groupInvoicesByMonth.map(g => g.monthKey)));
+    }
+  };
+
+  const collapseAllGroups = () => {
+    setExpandedGroups(new Set());
+  };
   const [pdfViewerError, setPdfViewerError] = useState<string | null>(null);
   const [deletingInvoice, setDeletingInvoice] = useState<Invoice | null>(null);
-
-  const locale = i18n.language === 'de' ? de : enUS;
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     acceptedFiles.forEach(file => {
@@ -312,7 +448,41 @@ export function InvoiceVerificationTab() {
       {/* Invoices List */}
       <Card>
         <CardHeader className="border-b">
-          <CardTitle className="text-base">{t('invoices.recentInvoices', 'Hochgeladene Rechnungen')}</CardTitle>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <CardTitle className="text-base">{t('invoices.recentInvoices', 'Hochgeladene Rechnungen')}</CardTitle>
+            <div className="flex items-center gap-2">
+              <ToggleGroup
+                type="single"
+                value={viewMode}
+                onValueChange={(value) => value && setViewMode(value as ViewMode)}
+                className="bg-muted/50 p-1 rounded-lg"
+              >
+                <ToggleGroupItem value="supplier" size="sm" className="text-xs px-3 data-[state=on]:bg-background">
+                  <Building2 className="h-3.5 w-3.5 mr-1.5" />
+                  {t('invoices.bySupplier', 'Lieferant')}
+                </ToggleGroupItem>
+                <ToggleGroupItem value="date" size="sm" className="text-xs px-3 data-[state=on]:bg-background">
+                  <Calendar className="h-3.5 w-3.5 mr-1.5" />
+                  {t('invoices.byDate', 'Datum')}
+                </ToggleGroupItem>
+                <ToggleGroupItem value="flat" size="sm" className="text-xs px-3 data-[state=on]:bg-background">
+                  <List className="h-3.5 w-3.5 mr-1.5" />
+                  {t('invoices.flatList', 'Liste')}
+                </ToggleGroupItem>
+              </ToggleGroup>
+              {viewMode !== 'flat' && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => expandedGroups.size > 0 ? collapseAllGroups() : expandAllGroups()}
+                  className="text-xs"
+                >
+                  <ChevronsUpDown className="h-3.5 w-3.5 mr-1" />
+                  {expandedGroups.size > 0 ? t('common.collapseAll', 'Alle zuklappen') : t('common.expandAll', 'Alle aufklappen')}
+                </Button>
+              )}
+            </div>
+          </div>
         </CardHeader>
         <CardContent className="p-0">
           {isLoading ? (
@@ -324,246 +494,189 @@ export function InvoiceVerificationTab() {
               <FileText className="h-12 w-12 mx-auto mb-3 opacity-50" />
               <p>{t('invoices.noInvoices', 'Noch keine Rechnungen hochgeladen')}</p>
             </div>
-          ) : (
+          ) : viewMode === 'supplier' ? (
+            // Supplier grouped view
             <div className="divide-y divide-border">
-              {invoices.map((invoice) => {
-                const isExpanded = expandedInvoices.has(invoice.id);
-                const StatusIcon = statusConfig[invoice.status].icon;
-                const discrepancyCount = invoice.invoice_discrepancies?.filter(d => !d.is_resolved).length || 0;
-
+              {groupInvoicesBySupplier.map((group) => {
+                const groupId = group.supplierId || 'unknown';
+                const isGroupExpanded = expandedGroups.has(groupId);
+                
                 return (
                   <Collapsible
-                    key={invoice.id}
-                    open={isExpanded}
-                    onOpenChange={() => toggleExpanded(invoice.id)}
+                    key={groupId}
+                    open={isGroupExpanded}
+                    onOpenChange={() => toggleGroup(groupId)}
                   >
                     <CollapsibleTrigger asChild>
-                      <div className="flex items-center justify-between p-4 hover:bg-muted/50 cursor-pointer">
+                      <div className="flex items-center justify-between p-4 hover:bg-muted/50 cursor-pointer bg-muted/20">
                         <div className="flex items-center gap-3 min-w-0 flex-1">
-                          {isExpanded ? (
+                          {isGroupExpanded ? (
                             <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />
                           ) : (
                             <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
                           )}
-                          
+                          <Building2 className="h-5 w-5 text-muted-foreground" />
                           <div className="min-w-0 flex-1">
                             <div className="flex items-center gap-2 flex-wrap">
-                              <span className="font-medium truncate">
-                                {invoice.suppliers?.name || t('invoices.unknownSupplier', 'Unbekannter Lieferant')}
-                              </span>
-                              <Badge variant="outline" className={cn('text-xs', statusConfig[invoice.status].color)}>
-                                <StatusIcon className={cn('h-3 w-3 mr-1', invoice.status === 'processing' && 'animate-spin')} />
-                                {statusConfig[invoice.status].label}
+                              <span className="font-semibold">{group.supplierName}</span>
+                              <Badge variant="secondary" className="text-xs">
+                                {group.invoices.length} {t('invoices.invoicesCount', 'Rechnungen')}
                               </Badge>
                             </div>
-                            <div className="text-xs text-muted-foreground mt-0.5 flex items-center gap-2">
-                              {invoice.invoice_number && <span>{invoice.invoice_number}</span>}
-                              {invoice.invoice_date && (
-                                <span>{format(new Date(invoice.invoice_date), 'dd.MM.yyyy', { locale })}</span>
+                            <div className="flex items-center gap-2 mt-1">
+                              {group.pendingCount > 0 && (
+                                <Badge variant="outline" className="text-xs bg-muted text-muted-foreground">
+                                  {group.pendingCount} {t('invoices.pending', 'neu')}
+                                </Badge>
+                              )}
+                              {group.discrepancyCount > 0 && (
+                                <Badge variant="outline" className="text-xs bg-warning/10 text-warning border-warning/30">
+                                  {group.discrepancyCount} {t('invoices.withDiscrepancies', 'Abweichungen')}
+                                </Badge>
+                              )}
+                              {group.approvedCount > 0 && (
+                                <Badge variant="outline" className="text-xs bg-success/10 text-success border-success/30">
+                                  {group.approvedCount} {t('invoices.approved', 'freigegeben')}
+                                </Badge>
                               )}
                             </div>
-                            {/* Processing summary badges */}
-                            <InvoiceProcessingSummary 
-                              parsedData={invoice.parsed_data}
-                              matchedOrderNumber={invoice.orders?.order_number}
-                              discrepancyCount={discrepancyCount}
-                              className="mt-1.5"
-                            />
                           </div>
                         </div>
-
-                        <div className="flex items-center gap-3">
-                          {invoice.gross_amount && (
-                            <span className="font-semibold">
-                              €{Number(invoice.gross_amount).toLocaleString('de-DE', { minimumFractionDigits: 2 })}
-                            </span>
-                          )}
+                        <div className="text-right">
+                          <span className="font-semibold text-lg">
+                            €{group.totalAmount.toLocaleString('de-DE', { minimumFractionDigits: 2 })}
+                          </span>
                         </div>
                       </div>
                     </CollapsibleTrigger>
-
                     <CollapsibleContent>
-                      <div className="px-4 pb-4 pt-0 space-y-4">
-                        {/* Invoice Items */}
-                        {invoice.invoice_items && invoice.invoice_items.length > 0 && (
-                          <div className="rounded-md border">
-                            <Table>
-                              <TableHeader>
-                                <TableRow>
-                                  <TableHead className="w-[40%]">{t('common.article', 'Artikel')}</TableHead>
-                                  <TableHead className="text-right">{t('common.quantity', 'Menge')}</TableHead>
-                                  <TableHead className="text-right">{t('common.unitPrice', 'Stückpreis')}</TableHead>
-                                  <TableHead className="text-right">{t('common.total', 'Gesamt')}</TableHead>
-                                </TableRow>
-                              </TableHeader>
-                              <TableBody>
-                                {invoice.invoice_items.map((item) => (
-                                  <TableRow key={item.id}>
-                                    <TableCell className="font-medium">
-                                      <div>{item.article_name}</div>
-                                      {item.article_sku && (
-                                        <div className="text-xs text-muted-foreground">{item.article_sku}</div>
-                                      )}
-                                    </TableCell>
-                                    <TableCell className="text-right">
-                                      {item.quantity} {item.unit}
-                                    </TableCell>
-                                    <TableCell className="text-right">
-                                      €{Number(item.unit_price || 0).toFixed(2)}
-                                    </TableCell>
-                                    <TableCell className="text-right font-medium">
-                                      €{Number(item.total_price || 0).toFixed(2)}
-                                    </TableCell>
-                                  </TableRow>
-                                ))}
-                              </TableBody>
-                            </Table>
-                          </div>
-                        )}
-
-                        {/* Discrepancies */}
-                        {invoice.invoice_discrepancies && invoice.invoice_discrepancies.length > 0 && (
-                          <div className="space-y-2">
-                            <h4 className="text-sm font-semibold text-destructive flex items-center gap-2">
-                              <AlertTriangle className="h-4 w-4" />
-                              {t('invoices.foundDiscrepancies', 'Gefundene Abweichungen')}
-                            </h4>
-                            <div className="space-y-2">
-                              {invoice.invoice_discrepancies.map((disc) => {
-                                const config = discrepancyTypeConfig[disc.discrepancy_type];
-                                const DiscIcon = config.icon;
-                                
-                                return (
-                                  <div
-                                    key={disc.id}
-                                    className={cn(
-                                      'flex items-center justify-between p-3 rounded-md border',
-                                      disc.is_resolved ? 'bg-muted/30 opacity-60' : 'bg-destructive/5 border-destructive/20'
-                                    )}
-                                  >
-                                    <div className="flex items-center gap-3">
-                                      <DiscIcon className={cn('h-5 w-5', config.color)} />
-                                      <div>
-                                        <div className="font-medium text-sm">{config.label}</div>
-                                        <div className="text-xs text-muted-foreground">
-                                          {t('invoices.expected', 'Erwartet')}: {disc.expected_value} → {t('invoices.actual', 'Tatsächlich')}: {disc.actual_value}
-                                        </div>
-                                        {disc.difference_percent && (
-                                          <div className={cn('text-xs font-medium', config.color)}>
-                                            {disc.difference_percent > 0 ? '+' : ''}{disc.difference_percent.toFixed(1)}%
-                                            {disc.difference_amount && ` (€${disc.difference_amount.toFixed(2)})`}
-                                          </div>
-                                        )}
-                                      </div>
-                                    </div>
-                                    {disc.is_resolved && (
-                                      <Badge variant="secondary" className="text-xs">
-                                        <Check className="h-3 w-3 mr-1" />
-                                        {t('invoices.resolved', 'Geklärt')}
-                                      </Badge>
-                                    )}
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Actions */}
-                        <div className="flex items-center gap-2 pt-2 flex-wrap">
-                          {invoice.pdf_url && (
-                            <>
-                              <Button 
-                                variant="outline" 
-                                size="sm" 
-                                onClick={() => openPdfViewer(invoice.pdf_url!)}
-                              >
-                                <Eye className="h-4 w-4 mr-2" />
-                                {t('invoices.viewPdf', 'PDF anzeigen')}
-                              </Button>
-                              <Button variant="ghost" size="sm" asChild>
-                                <a href={invoice.pdf_url} download>
-                                  <Download className="h-4 w-4 mr-2" />
-                                  {t('invoices.download', 'Download')}
-                                </a>
-                              </Button>
-                            </>
-                          )}
-                          {/* Add Articles to Catalog Button */}
-                          {invoice.supplier_id && invoice.invoice_items && invoice.invoice_items.length > 0 && (
-                            <Button
-                              variant="secondary"
-                              size="sm"
-                              onClick={() => createArticlesFromInvoice.mutate({ 
-                                invoiceId: invoice.id, 
-                                supplierId: invoice.supplier_id! 
-                              })}
-                              disabled={createArticlesFromInvoice.isPending}
-                            >
-                              {createArticlesFromInvoice.isPending ? (
-                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                              ) : (
-                                <Plus className="h-4 w-4 mr-2" />
-                              )}
-                              {t('invoices.addArticlesToCatalog', 'Artikel übernehmen')}
-                            </Button>
-                          )}
-                          {invoice.status === 'pending' && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleReanalyze(invoice.id)}
-                              disabled={reanalyzeInvoice.isPending}
-                            >
-                              {reanalyzeInvoice.isPending ? (
-                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                              ) : (
-                                <RefreshCw className="h-4 w-4 mr-2" />
-                              )}
-                              {t('invoices.reanalyze', 'Erneut analysieren')}
-                            </Button>
-                          )}
-                          {(invoice.status === 'matched' || invoice.status === 'discrepancy') && (
-                            <>
-                              <Button
-                                variant="default"
-                                size="sm"
-                                onClick={() => handleApprove(invoice.id)}
-                                disabled={updateStatus.isPending}
-                              >
-                                <Check className="h-4 w-4 mr-2" />
-                                {t('invoices.approve', 'Freigeben')}
-                              </Button>
-                              <Button
-                                variant="destructive"
-                                size="sm"
-                                onClick={() => handleReject(invoice.id)}
-                                disabled={updateStatus.isPending}
-                              >
-                                <X className="h-4 w-4 mr-2" />
-                                {t('invoices.reject', 'Ablehnen')}
-                              </Button>
-                            </>
-                          )}
-                          {/* Delete Button */}
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setDeletingInvoice(invoice);
+                      <div className="divide-y divide-border border-t">
+                        {group.invoices.map((invoice) => (
+                          <InvoiceRow
+                            key={invoice.id}
+                            invoice={invoice}
+                            isExpanded={expandedInvoices.has(invoice.id)}
+                            onToggle={() => toggleExpanded(invoice.id)}
+                            locale={locale}
+                            onOpenPdf={openPdfViewer}
+                            onApprove={handleApprove}
+                            onReject={handleReject}
+                            onReanalyze={handleReanalyze}
+                            onDelete={setDeletingInvoice}
+                            onCreateArticles={(invoiceId, supplierId) => 
+                              createArticlesFromInvoice.mutate({ invoiceId, supplierId })
+                            }
+                            isPending={{
+                              update: updateStatus.isPending,
+                              reanalyze: reanalyzeInvoice.isPending,
+                              createArticles: createArticlesFromInvoice.isPending,
                             }}
-                            className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                          >
-                            <Trash2 className="h-4 w-4 mr-2" />
-                            {t('common.delete', 'Löschen')}
-                          </Button>
-                        </div>
+                            showSupplierName={false}
+                            t={t}
+                          />
+                        ))}
                       </div>
                     </CollapsibleContent>
                   </Collapsible>
                 );
               })}
+            </div>
+          ) : viewMode === 'date' ? (
+            // Date grouped view
+            <div className="divide-y divide-border">
+              {groupInvoicesByMonth.map((group) => {
+                const isGroupExpanded = expandedGroups.has(group.monthKey);
+                
+                return (
+                  <Collapsible
+                    key={group.monthKey}
+                    open={isGroupExpanded}
+                    onOpenChange={() => toggleGroup(group.monthKey)}
+                  >
+                    <CollapsibleTrigger asChild>
+                      <div className="flex items-center justify-between p-4 hover:bg-muted/50 cursor-pointer bg-muted/20">
+                        <div className="flex items-center gap-3 min-w-0 flex-1">
+                          {isGroupExpanded ? (
+                            <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />
+                          ) : (
+                            <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+                          )}
+                          <Calendar className="h-5 w-5 text-muted-foreground" />
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="font-semibold capitalize">{group.monthLabel}</span>
+                              <Badge variant="secondary" className="text-xs">
+                                {group.invoices.length} {t('invoices.invoicesCount', 'Rechnungen')}
+                              </Badge>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <span className="font-semibold text-lg">
+                            €{group.totalAmount.toLocaleString('de-DE', { minimumFractionDigits: 2 })}
+                          </span>
+                        </div>
+                      </div>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                      <div className="divide-y divide-border border-t">
+                        {group.invoices.map((invoice) => (
+                          <InvoiceRow
+                            key={invoice.id}
+                            invoice={invoice}
+                            isExpanded={expandedInvoices.has(invoice.id)}
+                            onToggle={() => toggleExpanded(invoice.id)}
+                            locale={locale}
+                            onOpenPdf={openPdfViewer}
+                            onApprove={handleApprove}
+                            onReject={handleReject}
+                            onReanalyze={handleReanalyze}
+                            onDelete={setDeletingInvoice}
+                            onCreateArticles={(invoiceId, supplierId) => 
+                              createArticlesFromInvoice.mutate({ invoiceId, supplierId })
+                            }
+                            isPending={{
+                              update: updateStatus.isPending,
+                              reanalyze: reanalyzeInvoice.isPending,
+                              createArticles: createArticlesFromInvoice.isPending,
+                            }}
+                            showSupplierName={true}
+                            t={t}
+                          />
+                        ))}
+                      </div>
+                    </CollapsibleContent>
+                  </Collapsible>
+                );
+              })}
+            </div>
+          ) : (
+            // Flat view (original)
+            <div className="divide-y divide-border">
+              {invoices.map((invoice) => (
+                <InvoiceRow
+                  key={invoice.id}
+                  invoice={invoice}
+                  isExpanded={expandedInvoices.has(invoice.id)}
+                  onToggle={() => toggleExpanded(invoice.id)}
+                  locale={locale}
+                  onOpenPdf={openPdfViewer}
+                  onApprove={handleApprove}
+                  onReject={handleReject}
+                  onReanalyze={handleReanalyze}
+                  onDelete={setDeletingInvoice}
+                  onCreateArticles={(invoiceId, supplierId) => 
+                    createArticlesFromInvoice.mutate({ invoiceId, supplierId })
+                  }
+                  isPending={{
+                    update: updateStatus.isPending,
+                    reanalyze: reanalyzeInvoice.isPending,
+                    createArticles: createArticlesFromInvoice.isPending,
+                  }}
+                  showSupplierName={true}
+                  t={t}
+                />
+              ))}
             </div>
           )}
         </CardContent>
@@ -674,6 +787,271 @@ export function InvoiceVerificationTab() {
         </AlertDialogContent>
       </AlertDialog>
     </div>
+  );
+}
+
+// Invoice row component for reuse in different views
+interface InvoiceRowProps {
+  invoice: Invoice;
+  isExpanded: boolean;
+  onToggle: () => void;
+  locale: typeof de | typeof enUS;
+  onOpenPdf: (url: string) => void;
+  onApprove: (id: string) => void;
+  onReject: (id: string) => void;
+  onReanalyze: (id: string) => void;
+  onDelete: (invoice: Invoice) => void;
+  onCreateArticles: (invoiceId: string, supplierId: string) => void;
+  isPending: {
+    update: boolean;
+    reanalyze: boolean;
+    createArticles: boolean;
+  };
+  showSupplierName: boolean;
+  t: ReturnType<typeof useTranslation>['t'];
+}
+
+function InvoiceRow({
+  invoice,
+  isExpanded,
+  onToggle,
+  locale,
+  onOpenPdf,
+  onApprove,
+  onReject,
+  onReanalyze,
+  onDelete,
+  onCreateArticles,
+  isPending,
+  showSupplierName,
+  t,
+}: InvoiceRowProps) {
+  const StatusIcon = statusConfig[invoice.status].icon;
+  const discrepancyCount = invoice.invoice_discrepancies?.filter(d => !d.is_resolved).length || 0;
+
+  return (
+    <Collapsible open={isExpanded} onOpenChange={onToggle}>
+      <CollapsibleTrigger asChild>
+        <div className="flex items-center justify-between p-4 hover:bg-muted/50 cursor-pointer pl-8">
+          <div className="flex items-center gap-3 min-w-0 flex-1">
+            {isExpanded ? (
+              <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />
+            ) : (
+              <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+            )}
+            
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2 flex-wrap">
+                {showSupplierName && (
+                  <span className="font-medium truncate">
+                    {invoice.suppliers?.name || t('invoices.unknownSupplier', 'Unbekannter Lieferant')}
+                  </span>
+                )}
+                <Badge variant="outline" className={cn('text-xs', statusConfig[invoice.status].color)}>
+                  <StatusIcon className={cn('h-3 w-3 mr-1', invoice.status === 'processing' && 'animate-spin')} />
+                  {statusConfig[invoice.status].label}
+                </Badge>
+              </div>
+              <div className="text-xs text-muted-foreground mt-0.5 flex items-center gap-2">
+                {invoice.invoice_number && <span>{invoice.invoice_number}</span>}
+                {invoice.invoice_date && (
+                  <span>{format(new Date(invoice.invoice_date), 'dd.MM.yyyy', { locale })}</span>
+                )}
+              </div>
+              <InvoiceProcessingSummary 
+                parsedData={invoice.parsed_data}
+                matchedOrderNumber={invoice.orders?.order_number}
+                discrepancyCount={discrepancyCount}
+                className="mt-1.5"
+              />
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            {invoice.gross_amount && (
+              <span className="font-semibold">
+                €{Number(invoice.gross_amount).toLocaleString('de-DE', { minimumFractionDigits: 2 })}
+              </span>
+            )}
+          </div>
+        </div>
+      </CollapsibleTrigger>
+
+      <CollapsibleContent>
+        <div className="px-8 pb-4 pt-0 space-y-4">
+          {/* Invoice Items */}
+          {invoice.invoice_items && invoice.invoice_items.length > 0 && (
+            <div className="rounded-md border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-[40%]">{t('common.article', 'Artikel')}</TableHead>
+                    <TableHead className="text-right">{t('common.quantity', 'Menge')}</TableHead>
+                    <TableHead className="text-right">{t('common.unitPrice', 'Stückpreis')}</TableHead>
+                    <TableHead className="text-right">{t('common.total', 'Gesamt')}</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {invoice.invoice_items.map((item) => (
+                    <TableRow key={item.id}>
+                      <TableCell className="font-medium">
+                        <div>{item.article_name}</div>
+                        {item.article_sku && (
+                          <div className="text-xs text-muted-foreground">{item.article_sku}</div>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {item.quantity} {item.unit}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        €{Number(item.unit_price || 0).toFixed(2)}
+                      </TableCell>
+                      <TableCell className="text-right font-medium">
+                        €{Number(item.total_price || 0).toFixed(2)}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+
+          {/* Discrepancies */}
+          {invoice.invoice_discrepancies && invoice.invoice_discrepancies.length > 0 && (
+            <div className="space-y-2">
+              <h4 className="text-sm font-semibold text-destructive flex items-center gap-2">
+                <AlertTriangle className="h-4 w-4" />
+                {t('invoices.foundDiscrepancies', 'Gefundene Abweichungen')}
+              </h4>
+              <div className="space-y-2">
+                {invoice.invoice_discrepancies.map((disc) => {
+                  const config = discrepancyTypeConfig[disc.discrepancy_type];
+                  const DiscIcon = config.icon;
+                  
+                  return (
+                    <div
+                      key={disc.id}
+                      className={cn(
+                        'flex items-center justify-between p-3 rounded-md border',
+                        disc.is_resolved ? 'bg-muted/30 opacity-60' : 'bg-destructive/5 border-destructive/20'
+                      )}
+                    >
+                      <div className="flex items-center gap-3">
+                        <DiscIcon className={cn('h-5 w-5', config.color)} />
+                        <div>
+                          <div className="font-medium text-sm">{config.label}</div>
+                          <div className="text-xs text-muted-foreground">
+                            {t('invoices.expected', 'Erwartet')}: {disc.expected_value} → {t('invoices.actual', 'Tatsächlich')}: {disc.actual_value}
+                          </div>
+                          {disc.difference_percent && (
+                            <div className={cn('text-xs font-medium', config.color)}>
+                              {disc.difference_percent > 0 ? '+' : ''}{disc.difference_percent.toFixed(1)}%
+                              {disc.difference_amount && ` (€${disc.difference_amount.toFixed(2)})`}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      {disc.is_resolved && (
+                        <Badge variant="secondary" className="text-xs">
+                          <Check className="h-3 w-3 mr-1" />
+                          {t('invoices.resolved', 'Geklärt')}
+                        </Badge>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Actions */}
+          <div className="flex items-center gap-2 pt-2 flex-wrap">
+            {invoice.pdf_url && (
+              <>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => onOpenPdf(invoice.pdf_url!)}
+                >
+                  <Eye className="h-4 w-4 mr-2" />
+                  {t('invoices.viewPdf', 'PDF anzeigen')}
+                </Button>
+                <Button variant="ghost" size="sm" asChild>
+                  <a href={invoice.pdf_url} download>
+                    <Download className="h-4 w-4 mr-2" />
+                    {t('invoices.download', 'Download')}
+                  </a>
+                </Button>
+              </>
+            )}
+            {invoice.supplier_id && invoice.invoice_items && invoice.invoice_items.length > 0 && (
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => onCreateArticles(invoice.id, invoice.supplier_id!)}
+                disabled={isPending.createArticles}
+              >
+                {isPending.createArticles ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <Plus className="h-4 w-4 mr-2" />
+                )}
+                {t('invoices.addArticlesToCatalog', 'Artikel übernehmen')}
+              </Button>
+            )}
+            {invoice.status === 'pending' && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onReanalyze(invoice.id)}
+                disabled={isPending.reanalyze}
+              >
+                {isPending.reanalyze ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                )}
+                {t('invoices.reanalyze', 'Erneut analysieren')}
+              </Button>
+            )}
+            {(invoice.status === 'matched' || invoice.status === 'discrepancy') && (
+              <>
+                <Button
+                  variant="default"
+                  size="sm"
+                  onClick={() => onApprove(invoice.id)}
+                  disabled={isPending.update}
+                >
+                  <Check className="h-4 w-4 mr-2" />
+                  {t('invoices.approve', 'Freigeben')}
+                </Button>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => onReject(invoice.id)}
+                  disabled={isPending.update}
+                >
+                  <X className="h-4 w-4 mr-2" />
+                  {t('invoices.reject', 'Ablehnen')}
+                </Button>
+              </>
+            )}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete(invoice);
+              }}
+              className="text-destructive hover:text-destructive hover:bg-destructive/10"
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              {t('common.delete', 'Löschen')}
+            </Button>
+          </div>
+        </div>
+      </CollapsibleContent>
+    </Collapsible>
   );
 }
 
