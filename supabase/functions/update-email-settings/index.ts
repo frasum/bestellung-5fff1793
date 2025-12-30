@@ -9,9 +9,12 @@ const corsHeaders = {
 // Decode EMAIL_ENCRYPTION_KEY (supports 64-char hex or base64-encoded 32 bytes)
 function decodeEncryptionKey(key: string): Uint8Array {
   const trimmed = key.trim();
+  
+  console.log(`EMAIL_ENCRYPTION_KEY length: ${trimmed.length}, first 4 chars: ${trimmed.substring(0, 4)}...`);
 
   // 64 hex chars = 32 bytes
   if (/^[0-9a-fA-F]{64}$/.test(trimmed)) {
+    console.log("Detected hex format");
     const pairs = trimmed.match(/.{1,2}/g);
     if (!pairs || pairs.length !== 32) {
       throw new Error(
@@ -22,11 +25,16 @@ function decodeEncryptionKey(key: string): Uint8Array {
   }
 
   // base64 (standard or urlsafe) representing 32 bytes
+  console.log("Trying base64 format...");
   try {
     const normalized = trimmed.replace(/-/g, "+").replace(/_/g, "/");
-    const raw = atob(normalized);
+    // Add padding if needed
+    const padded = normalized.padEnd(normalized.length + (4 - (normalized.length % 4)) % 4, "=");
+    const raw = atob(padded);
     const bytes = new Uint8Array(raw.length);
     for (let i = 0; i < raw.length; i++) bytes[i] = raw.charCodeAt(i);
+
+    console.log(`Base64 decoded to ${bytes.byteLength} bytes`);
 
     if (bytes.byteLength !== 32) {
       throw new Error(
@@ -35,9 +43,11 @@ function decodeEncryptionKey(key: string): Uint8Array {
     }
 
     return bytes;
-  } catch {
+  } catch (e) {
+    const errorMsg = e instanceof Error ? e.message : String(e);
+    console.error(`Base64 decode failed: ${errorMsg}`);
     throw new Error(
-      "EMAIL_ENCRYPTION_KEY muss entweder 64 Hex-Zeichen (32 Bytes) oder Base64-codierte 32 Bytes sein"
+      `EMAIL_ENCRYPTION_KEY ungültig (Länge: ${trimmed.length}). Erwartet: 64 Hex-Zeichen oder 44 Base64-Zeichen. Fehler: ${errorMsg}`
     );
   }
 }
