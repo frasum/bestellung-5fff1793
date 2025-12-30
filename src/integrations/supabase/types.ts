@@ -1562,6 +1562,7 @@ export type Database = {
       email_templates: {
         Row: {
           article_list_format: string
+          cc_emails: string[] | null
           closing: string
           created_at: string
           design_style: string
@@ -1579,6 +1580,7 @@ export type Database = {
         }
         Insert: {
           article_list_format?: string
+          cc_emails?: string[] | null
           closing?: string
           created_at?: string
           design_style?: string
@@ -1596,6 +1598,7 @@ export type Database = {
         }
         Update: {
           article_list_format?: string
+          cc_emails?: string[] | null
           closing?: string
           created_at?: string
           design_style?: string
