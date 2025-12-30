@@ -741,15 +741,14 @@ const Suppliers = () => {
             <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
               <SupplierFilters searchQuery={searchQuery} onSearchChange={setSearchQuery} topCategoryFilter={topCategoryFilter} onTopCategoryChange={setTopCategoryFilter} categoryFilter={categoryFilter} onCategoryChange={setCategoryFilter} articleCategories={articleCategoriesForSupplierFilter} multiSelectEnabled={supplierMultiSelectEnabled} onMultiSelectChange={setSupplierMultiSelectEnabled} selectedCount={selectedSuppliers.size} onPrintCombined={handlePrintCombined} showMultiSelectToggle={advancedSettingsEnabled} />
               <div className="flex flex-wrap gap-2 shrink-0">
-                {advancedSettingsEnabled && (suppliers?.length ?? 0) >= 2 && (
+                {(suppliers?.length ?? 0) >= 2 && (
                   <Button 
                     variant="outline" 
-                    size="icon" 
-                    className="h-11 w-11 rounded-full" 
                     onClick={() => setIsMergeSuppliersOpen(true)}
-                    title="Lieferanten zusammenführen"
+                    className="gap-2"
                   >
-                    <Merge className="w-5 h-5" />
+                    <Merge className="w-4 h-4" />
+                    <span className="hidden sm:inline">Zusammenführen</span>
                   </Button>
                 )}
                 <Button 
