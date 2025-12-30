@@ -669,6 +669,22 @@ async function processPdfsInBackground(
     
     for (let pdfIndex = 0; pdfIndex < pdfContents.length; pdfIndex++) {
       const pdfContent = pdfContents[pdfIndex];
+      const pdfMessageId = `${messageId}-${pdfIndex}`;
+      
+      // Check if THIS specific PDF was already processed
+      const { data: existingLog } = await serviceClient
+        .from("invoice_email_log")
+        .select("id")
+        .eq("organization_id", organizationId)
+        .eq("message_id", pdfMessageId)
+        .maybeSingle();
+      
+      if (existingLog) {
+        console.info(`[BACKGROUND] PDF ${pdfMessageId} already processed, skipping`);
+        skippedCount++;
+        processedPdfs++;
+        continue;
+      }
       
       if (pdfContent.length < 1000) {
         console.warn(`[BACKGROUND] PDF ${pdfIndex + 1} is too small (${pdfContent.length} bytes), skipping`);
@@ -971,20 +987,8 @@ serve(async (req) => {
 
         console.info(`Scanning email #${seqNum}: "${subject}" from ${from}`);
 
-        // Check if already processed
-        const { data: existingLogs } = await serviceClient
-          .from("invoice_email_log")
-          .select("id")
-          .eq("organization_id", organizationId)
-          .or(`message_id.eq.${messageId},message_id.like.${messageId}-%`)
-          .limit(1);
-
-        if (existingLogs && existingLogs.length > 0) {
-          console.info(`Email ${messageId} already processed, skipping`);
-          skippedCount++;
-          await imap.markAsSeen(seqNum);
-          continue;
-        }
+        // NOTE: PDF-level duplicate check happens in processPdfsInBackground
+        // We don't skip entire emails here to allow partial processing
 
         // Check for PDF attachments
         if (!hasPdfAttachment(bodystructure)) {
