@@ -4768,6 +4768,10 @@ export type Database = {
         Returns: boolean
       }
       is_super_admin: { Args: { _user_id: string }; Returns: boolean }
+      merge_suppliers: {
+        Args: { source_id: string; target_id: string }
+        Returns: undefined
+      }
       remove_team_member: {
         Args: { member_user_id: string }
         Returns: undefined

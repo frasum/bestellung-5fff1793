@@ -13,7 +13,7 @@ import { useSubscriptionLimits } from '@/hooks/useSubscriptionLimits';
 import { UpgradeDialog } from '@/components/subscription/UpgradeDialog';
 import { useArticles, useCreateArticle, useUpdateArticle, useDeleteArticle, useBulkUpdateArticles, Article, ArticleInput } from '@/hooks/useArticles';
 import { useArticleLocationsByLocation } from '@/hooks/useArticleLocations';
-import { Plus, Loader2, Package } from 'lucide-react';
+import { Plus, Loader2, Package, Merge } from 'lucide-react';
 import { useArticleImageUpload } from '@/hooks/useArticleImageUpload';
 import { useSendSupplierInvitation } from '@/hooks/useSupplierPortal';
 import { generateOrderListPdf, generateCombinedOrderListPdf } from '@/lib/orderListPdf';
@@ -50,6 +50,7 @@ import { WinesTab } from '@/components/suppliers/WinesTab';
 import { SupplierQRCodeDialog } from '@/components/suppliers/SupplierQRCodeDialog';
 import { SupplierTokensDialog } from '@/components/suppliers/SupplierTokensDialog';
 import { AddArticleSheet } from '@/components/cart/AddArticleSheet';
+import { MergeSuppliersDialog } from '@/components/suppliers/MergeSuppliersDialog';
 
 const Suppliers = () => {
   const { t } = useTranslation();
@@ -249,6 +250,7 @@ const Suppliers = () => {
   const [organizationId, setOrganizationId] = useState<string | null>(null);
   const [qrCodeSupplier, setQrCodeSupplier] = useState<Supplier | null>(null);
   const [tokensDialogSupplier, setTokensDialogSupplier] = useState<Supplier | null>(null);
+  const [isMergeSuppliersOpen, setIsMergeSuppliersOpen] = useState(false);
   // Local state for multi-select toggles
   const [supplierMultiSelectEnabled, setSupplierMultiSelectEnabled] = useState(() => {
     const saved = localStorage.getItem('suppliers-multi-select');
@@ -739,6 +741,17 @@ const Suppliers = () => {
             <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
               <SupplierFilters searchQuery={searchQuery} onSearchChange={setSearchQuery} topCategoryFilter={topCategoryFilter} onTopCategoryChange={setTopCategoryFilter} categoryFilter={categoryFilter} onCategoryChange={setCategoryFilter} articleCategories={articleCategoriesForSupplierFilter} multiSelectEnabled={supplierMultiSelectEnabled} onMultiSelectChange={setSupplierMultiSelectEnabled} selectedCount={selectedSuppliers.size} onPrintCombined={handlePrintCombined} showMultiSelectToggle={advancedSettingsEnabled} />
               <div className="flex flex-wrap gap-2 shrink-0">
+                {advancedSettingsEnabled && (suppliers?.length ?? 0) >= 2 && (
+                  <Button 
+                    variant="outline" 
+                    size="icon" 
+                    className="h-11 w-11 rounded-full" 
+                    onClick={() => setIsMergeSuppliersOpen(true)}
+                    title="Lieferanten zusammenführen"
+                  >
+                    <Merge className="w-5 h-5" />
+                  </Button>
+                )}
                 <Button 
                   variant="accent" 
                   size="icon" 
@@ -774,6 +787,14 @@ const Suppliers = () => {
               });
             }
           }} templateFileName="articles_template.csv" />
+
+            {/* Merge Suppliers Dialog */}
+            <MergeSuppliersDialog 
+              open={isMergeSuppliersOpen} 
+              onOpenChange={setIsMergeSuppliersOpen}
+              suppliers={suppliers || []}
+              articles={allArticles || []}
+            />
 
             {/* Suppliers Table */}
             {suppliersLoading ? <div className="flex items-center justify-center py-12">
