@@ -136,7 +136,7 @@ export const ArticleFormDialog = ({
     defaultValues: { 
       supplier_id: '', name: '', description: '', sku: '', unit: 'pcs', price: '', category: '', 
       origin_country: '', packaging_unit: '', order_unit_id: '', reference_price: '', reference_unit: '', 
-      selling_price: '', grape_variety: '', flavor_profile: '', food_pairings: '',
+      selling_price: '', grape_variety: '', flavor_profile: '', food_pairings: '', special_attributes: '',
       description_en: '', grape_variety_en: '', flavor_profile_en: '', food_pairings_en: '', origin_country_en: '',
       description_th: '', grape_variety_th: '', flavor_profile_th: '', food_pairings_th: '', origin_country_th: '',
       description_fr: '', grape_variety_fr: '', flavor_profile_fr: '', food_pairings_fr: '', origin_country_fr: '',
@@ -165,6 +165,7 @@ export const ArticleFormDialog = ({
         grape_variety: (editingArticle as any).grape_variety || '',
         flavor_profile: (editingArticle as any).flavor_profile || '',
         food_pairings: (editingArticle as any).food_pairings || '',
+        special_attributes: (editingArticle as any).special_attributes || '',
         // Translation fields
         description_en: (editingArticle as any).description_en || '',
         grape_variety_en: (editingArticle as any).grape_variety_en || '',
@@ -187,7 +188,7 @@ export const ArticleFormDialog = ({
       form.reset({ 
         supplier_id: preselectedSupplierId || '', name: '', description: '', sku: '', unit: 'pcs', price: '', category: '', 
         origin_country: '', packaging_unit: '', order_unit_id: '', reference_price: '', reference_unit: '', 
-        selling_price: '', grape_variety: '', flavor_profile: '', food_pairings: '',
+        selling_price: '', grape_variety: '', flavor_profile: '', food_pairings: '', special_attributes: '',
         description_en: '', grape_variety_en: '', flavor_profile_en: '', food_pairings_en: '', origin_country_en: '',
         description_th: '', grape_variety_th: '', flavor_profile_th: '', food_pairings_th: '', origin_country_th: '',
         description_fr: '', grape_variety_fr: '', flavor_profile_fr: '', food_pairings_fr: '', origin_country_fr: '',
@@ -768,7 +769,18 @@ export const ArticleFormDialog = ({
                 />
               </div>
 
-              {/* === TRANSLATIONS SECTION === */}
+              {/* Special Attributes (Bio, Vegan, etc.) */}
+              <div className="space-y-2">
+                <Label htmlFor="article-special-attributes">Besonderheiten ✨</Label>
+                <Input 
+                  id="article-special-attributes" 
+                  {...form.register('special_attributes')} 
+                  placeholder="z.B. Bio, Vegan, Biodynamisch, Demeter, Alte Reben"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Komma-getrennte Liste besonderer Eigenschaften
+                </p>
+              </div>
               <Collapsible open={translationsOpen} onOpenChange={setTranslationsOpen}>
                 <CollapsibleTrigger className="flex items-center gap-2 w-full py-2 hover:bg-muted/50 rounded-md px-2 -mx-2 transition-colors">
                   <Globe className="h-4 w-4 text-muted-foreground" />

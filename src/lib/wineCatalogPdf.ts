@@ -11,6 +11,7 @@ interface WineArticle {
   flavor_profile?: string | null;
   food_pairings?: string | null;
   selling_price?: number | null;
+  special_attributes?: string | null;
   category?: string | null;
   supplier?: { name: string } | null;
   supplier_id: string;
@@ -337,6 +338,18 @@ export const generateWineCatalogPdf = async (
         const originTextWidth = textWidth - 30;
         const originLines = doc.splitTextToSize(cleanCitations(wine.origin_country), originTextWidth);
         doc.text(originLines.slice(0, 1), textStartX + 28, infoY);
+        infoY += 10;
+      }
+
+      // Special attributes (Bio, Vegan, etc.)
+      if (wine.special_attributes) {
+        doc.setTextColor(...COLORS.textDark);
+        doc.setFontSize(13);
+        doc.text('✨ Besonderheiten:', textStartX, infoY);
+        doc.setTextColor(...COLORS.gold);
+        const attrTextWidth = textWidth - 35;
+        const attrLines = doc.splitTextToSize(wine.special_attributes, attrTextWidth);
+        doc.text(attrLines.slice(0, 1), textStartX + 35, infoY);
         infoY += 10;
       }
 
