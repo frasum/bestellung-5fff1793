@@ -996,21 +996,28 @@ serve(async (req) => {
 
         console.info(`Scanning email #${seqNum}: "${subject}" from ${from}`);
 
-        // NOTE: PDF-level duplicate check happens in processPdfsInBackground
-        // We don't skip entire emails here to allow partial processing
-
-        // Check for PDF attachments
+        // Check for PDF attachments first
         if (!hasPdfAttachment(bodystructure)) {
           console.info("No PDF attachments found in email");
           
-          // Log as processed without invoice
-          await serviceClient.from("invoice_email_log").insert({
-            organization_id: organizationId,
-            message_id: messageId,
-            email_from: from,
-            email_subject: subject,
-            status: "no_attachment",
-          });
+          // Only log if not already logged
+          const { data: existingNoAttachLog } = await serviceClient
+            .from("invoice_email_log")
+            .select("id")
+            .eq("organization_id", organizationId)
+            .eq("message_id", messageId)
+            .eq("status", "no_attachment")
+            .maybeSingle();
+            
+          if (!existingNoAttachLog) {
+            await serviceClient.from("invoice_email_log").insert({
+              organization_id: organizationId,
+              message_id: messageId,
+              email_from: from,
+              email_subject: subject,
+              status: "no_attachment",
+            });
+          }
 
           await imap.markAsSeen(seqNum);
           noAttachmentCount++;
@@ -1027,14 +1034,25 @@ serve(async (req) => {
         if (pdfContents.length === 0) {
           console.error("Could not extract any PDF content from email");
           
-          await serviceClient.from("invoice_email_log").insert({
-            organization_id: organizationId,
-            message_id: messageId,
-            email_from: from,
-            email_subject: subject,
-            status: "extraction_failed",
-            error_message: "Could not extract PDF content from email",
-          });
+          // Only log extraction failure if not already logged
+          const { data: existingFailLog } = await serviceClient
+            .from("invoice_email_log")
+            .select("id")
+            .eq("organization_id", organizationId)
+            .eq("message_id", messageId)
+            .eq("status", "extraction_failed")
+            .maybeSingle();
+            
+          if (!existingFailLog) {
+            await serviceClient.from("invoice_email_log").insert({
+              organization_id: organizationId,
+              message_id: messageId,
+              email_from: from,
+              email_subject: subject,
+              status: "extraction_failed",
+              error_message: "Could not extract PDF content from email",
+            });
+          }
           errors.push(`Failed to extract PDF from: ${subject}`);
           
           await imap.markAsSeen(seqNum);
@@ -1042,6 +1060,34 @@ serve(async (req) => {
         }
 
         console.info(`Found ${pdfContents.length} PDF(s) in email`);
+
+        // Filter out already-processed PDFs BEFORE adding to queue
+        const newPdfContents: Uint8Array[] = [];
+        for (let pdfIndex = 0; pdfIndex < pdfContents.length; pdfIndex++) {
+          const pdfMessageId = `${messageId}-${pdfIndex}`;
+          
+          const { data: existingLog } = await serviceClient
+            .from("invoice_email_log")
+            .select("id, status")
+            .eq("organization_id", organizationId)
+            .eq("message_id", pdfMessageId)
+            .maybeSingle();
+          
+          if (existingLog) {
+            console.info(`PDF ${pdfMessageId} already processed (status: ${existingLog.status}), skipping`);
+            skippedCount++;
+          } else {
+            newPdfContents.push(pdfContents[pdfIndex]);
+          }
+        }
+
+        if (newPdfContents.length === 0) {
+          console.info(`All ${pdfContents.length} PDFs from email already processed`);
+          await imap.markAsSeen(seqNum);
+          continue;
+        }
+
+        console.info(`${newPdfContents.length} new PDFs to process (${pdfContents.length - newPdfContents.length} already processed)`);
 
         // Find matching supplier by email
         const { data: supplier } = await serviceClient
@@ -1051,14 +1097,14 @@ serve(async (req) => {
           .or(`email.eq.${from},invoice_email.eq.${from}`)
           .maybeSingle();
 
-        // Add to processing queue
+        // Add to processing queue with only new PDFs
         emailsToProcess.push({
           seqNum,
           subject,
           from,
           messageId,
           fullMessage,
-          pdfContents,
+          pdfContents: newPdfContents,
           supplierId: supplier?.id || null,
         });
 
