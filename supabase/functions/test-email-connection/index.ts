@@ -6,13 +6,49 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Decode EMAIL_ENCRYPTION_KEY (supports 64-char hex or base64-encoded 32 bytes)
+function decodeEncryptionKey(key: string): Uint8Array {
+  const trimmed = key.trim();
+
+  // 64 hex chars = 32 bytes
+  if (/^[0-9a-fA-F]{64}$/.test(trimmed)) {
+    const pairs = trimmed.match(/.{1,2}/g);
+    if (!pairs || pairs.length !== 32) {
+      throw new Error(
+        "EMAIL_ENCRYPTION_KEY: Hex-Format erkannt, aber nicht 32 Bytes"
+      );
+    }
+    return new Uint8Array(pairs.map((b) => parseInt(b, 16)));
+  }
+
+  // base64 (standard or urlsafe) representing 32 bytes
+  try {
+    const normalized = trimmed.replace(/-/g, "+").replace(/_/g, "/");
+    const padded = normalized.padEnd(normalized.length + (4 - (normalized.length % 4)) % 4, "=");
+    const raw = atob(padded);
+    const bytes = new Uint8Array(raw.length);
+    for (let i = 0; i < raw.length; i++) bytes[i] = raw.charCodeAt(i);
+
+    if (bytes.byteLength !== 32) {
+      throw new Error(
+        `EMAIL_ENCRYPTION_KEY: Base64 ergibt ${bytes.byteLength} statt 32 Bytes`
+      );
+    }
+
+    return bytes;
+  } catch (e) {
+    const errorMsg = e instanceof Error ? e.message : String(e);
+    throw new Error(
+      `EMAIL_ENCRYPTION_KEY ungültig (Länge: ${trimmed.length}). Erwartet: 64 Hex-Zeichen oder 44 Base64-Zeichen. Fehler: ${errorMsg}`
+    );
+  }
+}
+
 // Decrypt password using AES-256-GCM
-async function decryptPassword(encryptedBase64: string, keyHex: string): Promise<string> {
-  const keyBytes = new Uint8Array(keyHex.match(/.{1,2}/g)!.map(byte => parseInt(byte, 16)));
-  
+async function decryptPassword(encryptedBase64: string, keyBytes: Uint8Array): Promise<string> {
   const key = await crypto.subtle.importKey(
     "raw",
-    keyBytes,
+    keyBytes.buffer as ArrayBuffer,
     { name: "AES-GCM" },
     false,
     ["decrypt"]
@@ -130,6 +166,9 @@ serve(async (req) => {
       throw new Error("EMAIL_ENCRYPTION_KEY not configured");
     }
 
+    // Validate encryption key early
+    const keyBytes = decodeEncryptionKey(encryptionKey);
+
     // Get authorization header
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
@@ -183,7 +222,7 @@ serve(async (req) => {
         throw new Error("No password provided and no stored password found");
       }
 
-      password = await decryptPassword(settings.imap_password_encrypted, encryptionKey);
+      password = await decryptPassword(settings.imap_password_encrypted, keyBytes);
     }
 
     // Test connection
