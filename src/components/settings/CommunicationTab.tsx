@@ -1,5 +1,5 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Bell, FileText, ExternalLink } from 'lucide-react';
+import { Bell, FileText, ExternalLink, Mail } from 'lucide-react';
 
 interface CommunicationTabProps {
   activeSubTab: string;
@@ -7,6 +7,7 @@ interface CommunicationTabProps {
   NotificationsContent: React.ComponentType;
   EmailTemplatesContent: React.ComponentType;
   SupplierPortalContent: React.ComponentType;
+  InvoiceEmailContent: React.ComponentType;
 }
 
 export const CommunicationTab = ({ 
@@ -15,6 +16,7 @@ export const CommunicationTab = ({
   NotificationsContent, 
   EmailTemplatesContent,
   SupplierPortalContent,
+  InvoiceEmailContent,
 }: CommunicationTabProps) => {
   return (
     <div className="bg-muted/30 rounded-lg p-2 sm:p-4 border border-border/50">
@@ -38,6 +40,14 @@ export const CommunicationTab = ({
             <span className="sm:hidden">E-Mail</span>
           </TabsTrigger>
           <TabsTrigger 
+            value="invoice-email" 
+            className="gap-1.5 text-xs sm:text-sm data-[state=active]:bg-background data-[state=active]:shadow-sm"
+          >
+            <Mail className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+            <span className="hidden sm:inline">Rechnungs-E-Mail</span>
+            <span className="sm:hidden">Rechnung</span>
+          </TabsTrigger>
+          <TabsTrigger 
             value="supplier-portal" 
             className="gap-1.5 text-xs sm:text-sm data-[state=active]:bg-background data-[state=active]:shadow-sm"
           >
@@ -54,6 +64,10 @@ export const CommunicationTab = ({
 
         <TabsContent value="email-templates" className="mt-4 animate-in fade-in-50 slide-in-from-bottom-2 duration-200">
           <EmailTemplatesContent />
+        </TabsContent>
+
+        <TabsContent value="invoice-email" className="mt-4 animate-in fade-in-50 slide-in-from-bottom-2 duration-200">
+          <InvoiceEmailContent />
         </TabsContent>
 
         <TabsContent value="supplier-portal" className="mt-4 animate-in fade-in-50 slide-in-from-right-2 duration-200">
