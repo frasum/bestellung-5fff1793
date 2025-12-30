@@ -6,31 +6,67 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Decode EMAIL_ENCRYPTION_KEY (supports 64-char hex or base64-encoded 32 bytes)
+function decodeEncryptionKey(key: string): Uint8Array {
+  const trimmed = key.trim();
+
+  // 64 hex chars = 32 bytes
+  if (/^[0-9a-fA-F]{64}$/.test(trimmed)) {
+    const pairs = trimmed.match(/.{1,2}/g);
+    if (!pairs || pairs.length !== 32) {
+      throw new Error(
+        `EMAIL_ENCRYPTION_KEY ist als Hex ungültig (erwartet: 32 Bytes, erhalten: ${pairs?.length ?? 0})`
+      );
+    }
+    return new Uint8Array(pairs.map((b) => parseInt(b, 16)));
+  }
+
+  // base64 (standard or urlsafe) representing 32 bytes
+  try {
+    const normalized = trimmed.replace(/-/g, "+").replace(/_/g, "/");
+    const raw = atob(normalized);
+    const bytes = new Uint8Array(raw.length);
+    for (let i = 0; i < raw.length; i++) bytes[i] = raw.charCodeAt(i);
+
+    if (bytes.byteLength !== 32) {
+      throw new Error(
+        `EMAIL_ENCRYPTION_KEY Base64 muss 32 Bytes ergeben (aktuell: ${bytes.byteLength})`
+      );
+    }
+
+    return bytes;
+  } catch {
+    throw new Error(
+      "EMAIL_ENCRYPTION_KEY muss entweder 64 Hex-Zeichen (32 Bytes) oder Base64-codierte 32 Bytes sein"
+    );
+  }
+}
+
 // Encrypt password using AES-256-GCM
-async function encryptPassword(password: string, keyHex: string): Promise<string> {
+async function encryptPassword(password: string, encryptionKey: string): Promise<string> {
   const encoder = new TextEncoder();
-  const keyBytes = new Uint8Array(keyHex.match(/.{1,2}/g)!.map(byte => parseInt(byte, 16)));
-  
+  const keyBytes = decodeEncryptionKey(encryptionKey);
+
   const key = await crypto.subtle.importKey(
     "raw",
-    keyBytes,
+    keyBytes as unknown as BufferSource,
     { name: "AES-GCM" },
     false,
     ["encrypt"]
   );
-  
+
   const iv = crypto.getRandomValues(new Uint8Array(12));
   const encrypted = await crypto.subtle.encrypt(
     { name: "AES-GCM", iv },
     key,
     encoder.encode(password)
   );
-  
+
   // Combine IV + encrypted data and encode as base64
   const combined = new Uint8Array(iv.length + new Uint8Array(encrypted).length);
   combined.set(iv);
   combined.set(new Uint8Array(encrypted), iv.length);
-  
+
   return btoa(String.fromCharCode(...combined));
 }
 
@@ -48,15 +84,9 @@ serve(async (req) => {
       throw new Error("EMAIL_ENCRYPTION_KEY nicht konfiguriert");
     }
 
-    // Validate encryption key length (must be 64 hex chars = 32 bytes = 256 bits)
-    if (encryptionKey.length !== 64) {
-      throw new Error(`EMAIL_ENCRYPTION_KEY muss 64 Hex-Zeichen haben (aktuell: ${encryptionKey.length})`);
-    }
-
-    // Validate it's a valid hex string
-    if (!/^[0-9a-fA-F]+$/.test(encryptionKey)) {
-      throw new Error("EMAIL_ENCRYPTION_KEY muss ein gültiger Hex-String sein (nur 0-9 und a-f)");
-    }
+    // Validate encryption key format by decoding it (supports 64 hex chars or base64 encoded 32 bytes)
+    // This will throw a descriptive error if invalid.
+    decodeEncryptionKey(encryptionKey);
 
     // Get authorization header
     const authHeader = req.headers.get("Authorization");
