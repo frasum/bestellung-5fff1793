@@ -149,18 +149,25 @@ serve(async (req) => {
             role: 'system',
             content: `Du bist ein Wein-Experte. Recherchiere detaillierte Informationen über den angefragten Wein und gib die Ergebnisse als strukturiertes JSON zurück.
 
+WICHTIG: Leite das Herkunftsland (origin_country) aus dem Weingut, der Region oder dem Weinnamen ab. Beispiele:
+- Pfalz, Mosel, Rheingau → Deutschland
+- Chianti, Toskana, Piemont → Italien
+- Bordeaux, Burgund, Champagne → Frankreich
+- Rioja, Ribera del Duero → Spanien
+
 Antworte NUR mit einem gültigen JSON-Objekt im folgenden Format:
 {
   "description": "Ausführliche Beschreibung des Weins (2-3 Sätze)",
   "grape_variety": "Rebsorte(n)",
   "region": "Anbaugebiet/Region/Appellation",
-  "origin_country": "Herkunftsland (z.B. Italien, Frankreich, Spanien, Deutschland)",
+  "origin_country": "Herkunftsland (z.B. Deutschland, Italien, Frankreich, Spanien)",
   "flavor_profile": "Geschmacksprofil (Aromen, Struktur, Tannine)",
   "food_pairings": "Empfohlene Speisebegleitungen",
   "producer_info": "Informationen zum Weingut/Produzenten"
 }
 
-Falls keine Informationen gefunden werden, setze den Wert auf "Keine Informationen gefunden".`
+Falls keine Informationen gefunden werden, setze den Wert auf "Keine Informationen gefunden".
+ABER: Wenn du das Weingut oder die Region kennst, MUSST du das Herkunftsland ableiten!`
           },
           {
             role: 'user',
