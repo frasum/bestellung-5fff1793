@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Plus, Pencil, Trash2, Phone, Mail, User, UserCheck, UserX, MapPin, ChevronDown, ChevronRight, Package, Copy, MessageCircle, ExternalLink, QrCode, Zap, KeyRound, Shield, ShieldAlert, Mic, PlusCircle, Camera, Wine } from 'lucide-react';
+import { Plus, Pencil, Trash2, Phone, Mail, User, UserCheck, UserX, MapPin, ChevronDown, ChevronRight, Package, Copy, MessageCircle, ExternalLink, QrCode, Zap, KeyRound, Shield, ShieldAlert, Mic, PlusCircle, Camera, Wine, X, Check, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -1191,17 +1191,28 @@ export function EmployeesTab() {
               </div>
             </div>
           </div>
-          <DialogFooter className="flex-shrink-0 px-6 pb-6 pt-4 border-t bg-background">
-            <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
-              Abbrechen
+          <div className="flex justify-center items-center gap-6 px-6 pb-6 pt-4 border-t bg-background">
+            <Button 
+              type="button" 
+              variant="outline"
+              size="icon"
+              className="h-12 w-12 rounded-full border-2 text-muted-foreground hover:text-foreground"
+              onClick={() => setIsDialogOpen(false)}
+              title="Abbrechen"
+            >
+              <X className="h-5 w-5" />
             </Button>
-            <Button
+            <Button 
+              type="button"
+              size="icon"
+              className="h-12 w-12 rounded-full bg-emerald-500 hover:bg-emerald-600 text-white"
               onClick={handleSubmit}
               disabled={!formData.name.trim() || (formData.autoApprove && !editingEmployee?.pin_code && formData.pinCode.length !== 4) || createEmployee.isPending || updateEmployee.isPending}
+              title={editingEmployee ? 'Speichern' : 'Anlegen'}
             >
-              {editingEmployee ? 'Speichern' : 'Anlegen'}
+              {(createEmployee.isPending || updateEmployee.isPending) ? <Loader2 className="h-5 w-5 animate-spin" /> : <Check className="h-5 w-5" />}
             </Button>
-          </DialogFooter>
+          </div>
         </DialogContent>
       </Dialog>
 
@@ -1281,17 +1292,28 @@ export function EmployeesTab() {
               </Button>
             </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={closePinDialog}>
-              Abbrechen
+          <div className="flex justify-center items-center gap-6 pt-4">
+            <Button 
+              type="button" 
+              variant="outline"
+              size="icon"
+              className="h-12 w-12 rounded-full border-2 text-muted-foreground hover:text-foreground"
+              onClick={closePinDialog}
+              title="Abbrechen"
+            >
+              <X className="h-5 w-5" />
             </Button>
             <Button 
+              type="button"
+              size="icon"
+              className="h-12 w-12 rounded-full bg-emerald-500 hover:bg-emerald-600 text-white"
               onClick={handleSavePin} 
               disabled={isSavingPin || (pinValue.length > 0 && pinValue.length !== 4)}
+              title="Speichern"
             >
-              {isSavingPin ? 'Speichern...' : 'Speichern'}
+              {isSavingPin ? <Loader2 className="h-5 w-5 animate-spin" /> : <Check className="h-5 w-5" />}
             </Button>
-          </DialogFooter>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

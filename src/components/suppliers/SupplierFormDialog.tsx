@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
-import { Loader2, Package, Mail, Globe, Send, MapPin } from 'lucide-react';
+import { Loader2, Package, Mail, Globe, Send, MapPin, X, Check } from 'lucide-react';
 import { Supplier, SupplierInput, OrderDeliveryMethod } from '@/hooks/useSuppliers';
 import { supplierSchema, SupplierFormData } from './schemas';
 import { useLocations } from '@/hooks/useLocations';
@@ -279,12 +279,25 @@ export const SupplierFormDialog = ({
             </div>
           )}
           
-          <div className="flex gap-3 pt-4">
-            <Button type="button" variant="outline" className="flex-1 h-10 sm:h-9" onClick={() => onOpenChange(false)}>
-              Abbrechen
+          <div className="flex justify-center items-center gap-6 pt-4">
+            <Button 
+              type="button" 
+              variant="outline"
+              size="icon"
+              className="h-12 w-12 rounded-full border-2 text-muted-foreground hover:text-foreground"
+              onClick={() => onOpenChange(false)}
+              title="Abbrechen"
+            >
+              <X className="h-5 w-5" />
             </Button>
-            <Button type="submit" className="flex-1 h-10 sm:h-9" disabled={isPending || upsertLocation.isPending}>
-              {(isPending || upsertLocation.isPending) ? <Loader2 className="w-4 h-4 animate-spin" /> : editingSupplier ? 'Speichern' : 'Erstellen'}
+            <Button 
+              type="submit" 
+              size="icon"
+              className="h-12 w-12 rounded-full bg-emerald-500 hover:bg-emerald-600 text-white"
+              disabled={isPending || upsertLocation.isPending}
+              title={editingSupplier ? 'Speichern' : 'Erstellen'}
+            >
+              {(isPending || upsertLocation.isPending) ? <Loader2 className="h-5 w-5 animate-spin" /> : <Check className="h-5 w-5" />}
             </Button>
           </div>
         </form>

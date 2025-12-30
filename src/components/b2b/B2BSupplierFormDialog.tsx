@@ -12,6 +12,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { toast } from 'sonner';
+import { X, Check, Loader2 } from 'lucide-react';
 import type { B2BSupplier } from './B2BSuppliersTab';
 
 interface B2BSupplierFormDialogProps {
@@ -172,12 +173,25 @@ const B2BSupplierFormDialog = ({
             />
           </div>
 
-          <div className="flex justify-end gap-2 pt-4">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-              Abbrechen
+          <div className="flex justify-center items-center gap-6 pt-4">
+            <Button 
+              type="button" 
+              variant="outline"
+              size="icon"
+              className="h-12 w-12 rounded-full border-2 text-muted-foreground hover:text-foreground"
+              onClick={() => onOpenChange(false)}
+              title="Abbrechen"
+            >
+              <X className="h-5 w-5" />
             </Button>
-            <Button type="submit" disabled={loading}>
-              {loading ? 'Speichern...' : 'Speichern'}
+            <Button 
+              type="submit" 
+              size="icon"
+              className="h-12 w-12 rounded-full bg-emerald-500 hover:bg-emerald-600 text-white"
+              disabled={loading}
+              title="Speichern"
+            >
+              {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Check className="h-5 w-5" />}
             </Button>
           </div>
         </form>
