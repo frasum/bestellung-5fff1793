@@ -51,7 +51,7 @@ export function CommunicationLogPreviewDialog({ log, open, onOpenChange }: Commu
           </div>
           <div className="flex gap-2">
             <span className="text-muted-foreground w-20 shrink-0">{t('settings.communicationLog.preview.from')}:</span>
-            <span>Bestellung.pro &lt;noreply@bestellung.pro&gt;</span>
+            <span>Bestellung.pro &lt;{log.sender_email || 'yum@bestellung.pro'}&gt;</span>
           </div>
           <div className="flex gap-2">
             <span className="text-muted-foreground w-20 shrink-0">{t('settings.communicationLog.preview.subject')}:</span>

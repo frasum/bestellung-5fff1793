@@ -17,6 +17,7 @@ export interface CommunicationLog {
   created_at: string;
   confirmed_at: string | null;
   body_html: string | null;
+  sender_email: string | null;
 }
 
 export function useCommunicationLogs(filter?: string) {

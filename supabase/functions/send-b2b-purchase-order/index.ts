@@ -252,6 +252,7 @@ ${senderName}
           subject: `Bestellung ${orderNumber} von ${senderName}`,
           body_html: htmlContent,
           status: 'sent',
+          sender_email: smtpFrom,
         });
     }
 

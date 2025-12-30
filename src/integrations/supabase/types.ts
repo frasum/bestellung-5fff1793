@@ -1340,6 +1340,7 @@ export type Database = {
           organization_id: string
           recipient_email: string
           recipient_name: string | null
+          sender_email: string | null
           status: string
           subject: string
           supplier_id: string | null
@@ -1357,6 +1358,7 @@ export type Database = {
           organization_id: string
           recipient_email: string
           recipient_name?: string | null
+          sender_email?: string | null
           status?: string
           subject: string
           supplier_id?: string | null
@@ -1374,6 +1376,7 @@ export type Database = {
           organization_id?: string
           recipient_email?: string
           recipient_name?: string | null
+          sender_email?: string | null
           status?: string
           subject?: string
           supplier_id?: string | null
