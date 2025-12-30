@@ -91,6 +91,16 @@ function normalizeUnit(unit: string | undefined | null): string {
   return normalized || unit; // Keep original if not found
 }
 
+// Check if an email is a placeholder (auto-generated or dummy)
+function isPlaceholderEmail(email: string | null | undefined): boolean {
+  if (!email) return true;
+  const lowerEmail = email.toLowerCase();
+  return lowerEmail.endsWith('.auto') || 
+         lowerEmail.includes('@unbekannt') ||
+         lowerEmail.includes('placeholder') ||
+         lowerEmail.includes('noemail');
+}
+
 // Sanitize JSON string by removing non-ASCII characters outside of string literals
 // This fixes corruption issues like Greek characters appearing in JSON keys
 function sanitizeJsonString(json: string): string {
@@ -660,7 +670,7 @@ Important:
     // Find matching supplier by name with improved fuzzy matching
     const { data: suppliers } = await supabaseClient
       .from('suppliers')
-      .select('id, name, phone, address')
+      .select('id, name, email, phone, address')
       .eq('organization_id', organizationId)
       .eq('is_active', true);
 
@@ -813,6 +823,15 @@ Important:
         
         // Update supplier with missing contact info from invoice
         const supplierUpdates: Record<string, string> = {};
+        
+        // Update email if missing or is a placeholder
+        if (invoiceData.supplierEmail && invoiceData.supplierEmail.includes('@')) {
+          const currentEmailIsPlaceholder = isPlaceholderEmail(bestMatch.supplier.email);
+          if (!bestMatch.supplier.email || currentEmailIsPlaceholder) {
+            supplierUpdates.email = invoiceData.supplierEmail;
+            console.log('Updating supplier email from invoice:', invoiceData.supplierEmail);
+          }
+        }
         
         if (invoiceData.supplierPhone && !bestMatch.supplier.phone) {
           supplierUpdates.phone = invoiceData.supplierPhone;
