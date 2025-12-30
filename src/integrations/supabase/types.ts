@@ -281,6 +281,7 @@ export type Database = {
           selling_price: number | null
           sku: string | null
           sort_order: number
+          special_attributes: string | null
           supplier_id: string
           top_category: string | null
           unit: string
@@ -323,6 +324,7 @@ export type Database = {
           selling_price?: number | null
           sku?: string | null
           sort_order?: number
+          special_attributes?: string | null
           supplier_id: string
           top_category?: string | null
           unit?: string
@@ -365,6 +367,7 @@ export type Database = {
           selling_price?: number | null
           sku?: string | null
           sort_order?: number
+          special_attributes?: string | null
           supplier_id?: string
           top_category?: string | null
           unit?: string

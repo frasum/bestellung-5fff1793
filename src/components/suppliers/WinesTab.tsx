@@ -701,6 +701,14 @@ const WineCard = ({ wine, onEdit }: WineCardProps) => {
               </div>
             )}
 
+            {/* Special Attributes (Bio, Vegan, etc.) */}
+            {(wine as any).special_attributes && (
+              <div className="flex items-start gap-1.5 text-sm">
+                <Sparkles className="h-3.5 w-3.5 text-emerald-500 mt-0.5 shrink-0" />
+                <span className="text-muted-foreground">{(wine as any).special_attributes}</span>
+              </div>
+            )}
+
             <div className="flex flex-wrap items-center gap-2 pt-2">
               {getLocalizedField(wine, 'origin_country') && (
                 <Badge variant="outline" className="text-xs gap-1">

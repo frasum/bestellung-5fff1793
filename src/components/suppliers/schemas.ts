@@ -54,6 +54,8 @@ export const articleSchema = z.object({
   flavor_profile_fr: z.string().optional(),
   food_pairings_fr: z.string().optional(),
   origin_country_fr: z.string().optional(),
+  // Special attributes (Bio, Vegan, etc.)
+  special_attributes: z.string().optional(),
 });
 
 export type SupplierFormData = z.infer<typeof supplierSchema>;
