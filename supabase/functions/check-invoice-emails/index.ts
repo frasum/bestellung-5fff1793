@@ -436,10 +436,19 @@ function extractPdfFromMime(mimeMessage: string): Uint8Array[] {
   for (const boundary of boundaries) {
     const results = extractPdfWithBoundary(mimeMessage, boundary);
     for (const pdf of results) {
-      // Avoid duplicates by checking size
-      const isDuplicate = allPdfs.some(existing => existing.length === pdf.length);
+      // More robust duplicate detection: check first 100 bytes + size
+      const pdfStart = pdf.slice(0, Math.min(100, pdf.length));
+      const isDuplicate = allPdfs.some(existing => {
+        if (existing.length !== pdf.length) return false;
+        // Same size - check if content is identical (compare first 100 bytes)
+        const existingStart = existing.slice(0, Math.min(100, existing.length));
+        return pdfStart.every((byte, i) => byte === existingStart[i]);
+      });
+      
       if (!isDuplicate) {
         allPdfs.push(pdf);
+      } else {
+        console.info(`Skipping duplicate PDF (size: ${pdf.length} bytes, content match)`);
       }
     }
   }
