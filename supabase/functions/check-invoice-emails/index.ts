@@ -6,6 +6,65 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Decode EMAIL_ENCRYPTION_KEY (supports 64-char hex or base64-encoded 32 bytes)
+function decodeEncryptionKey(key: string): Uint8Array {
+  const trimmed = key.trim();
+
+  // 64 hex chars = 32 bytes
+  if (/^[0-9a-fA-F]{64}$/.test(trimmed)) {
+    const pairs = trimmed.match(/.{1,2}/g);
+    if (!pairs || pairs.length !== 32) {
+      throw new Error("EMAIL_ENCRYPTION_KEY: Hex-Format erkannt, aber nicht 32 Bytes");
+    }
+    return new Uint8Array(pairs.map((b) => parseInt(b, 16)));
+  }
+
+  // base64 (standard or urlsafe) representing 32 bytes
+  try {
+    const normalized = trimmed.replace(/-/g, "+").replace(/_/g, "/");
+    const padded = normalized.padEnd(normalized.length + (4 - (normalized.length % 4)) % 4, "=");
+    const raw = atob(padded);
+    const bytes = new Uint8Array(raw.length);
+    for (let i = 0; i < raw.length; i++) bytes[i] = raw.charCodeAt(i);
+
+    if (bytes.byteLength !== 32) {
+      throw new Error(`EMAIL_ENCRYPTION_KEY: Base64 ergibt ${bytes.byteLength} statt 32 Bytes`);
+    }
+
+    return bytes;
+  } catch (e) {
+    const errorMsg = e instanceof Error ? e.message : String(e);
+    throw new Error(
+      `EMAIL_ENCRYPTION_KEY ungültig (Länge: ${trimmed.length}). Erwartet: 64 Hex-Zeichen oder 44 Base64-Zeichen. Fehler: ${errorMsg}`
+    );
+  }
+}
+
+// Decrypt password using AES-256-GCM
+async function decryptPassword(encryptedBase64: string, keyBytes: Uint8Array): Promise<string> {
+  const key = await crypto.subtle.importKey(
+    "raw",
+    keyBytes.buffer as ArrayBuffer,
+    { name: "AES-GCM" },
+    false,
+    ["decrypt"]
+  );
+
+  const encryptedData = Uint8Array.from(atob(encryptedBase64), (c) => c.charCodeAt(0));
+
+  // First 12 bytes are the IV, rest is ciphertext + tag
+  const iv = encryptedData.slice(0, 12);
+  const ciphertext = encryptedData.slice(12);
+
+  const decrypted = await crypto.subtle.decrypt(
+    { name: "AES-GCM", iv },
+    key,
+    ciphertext
+  );
+
+  return new TextDecoder().decode(decrypted);
+}
+
 // Simple IMAP client implementation for Deno
 class SimpleImapClient {
   private conn: Deno.TlsConn | null = null;
@@ -826,20 +885,65 @@ serve(async (req) => {
       );
     }
 
-    // Get IMAP credentials from environment
-    const imapHost = Deno.env.get("INVOICE_IMAP_HOST");
-    const imapPort = parseInt(Deno.env.get("INVOICE_IMAP_PORT") || "993");
-    const imapUser = Deno.env.get("INVOICE_IMAP_USER");
-    const imapPass = Deno.env.get("INVOICE_IMAP_PASSWORD");
+    // Load IMAP settings from database for this organization
+    const { data: emailSettings, error: settingsError } = await serviceClient
+      .from("organization_email_settings")
+      .select("*")
+      .eq("organization_id", organizationId)
+      .eq("is_active", true)
+      .maybeSingle();
 
-    if (!imapHost || !imapUser || !imapPass) {
-      return new Response(JSON.stringify({ error: "IMAP credentials not configured" }), {
+    if (settingsError) {
+      console.error("Error loading email settings:", settingsError);
+      return new Response(JSON.stringify({ error: "Fehler beim Laden der E-Mail-Einstellungen" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (!emailSettings) {
+      console.info(`No active email settings found for organization ${organizationId}`);
+      return new Response(JSON.stringify({ error: "Keine E-Mail-Einstellungen für diese Organisation konfiguriert" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    console.info(`Connecting to IMAP server ${imapHost}:${imapPort}...`);
+    const imapHost = emailSettings.imap_host;
+    const imapPort = emailSettings.imap_port || 993;
+    const imapUser = emailSettings.imap_username;
+
+    if (!imapHost || !imapUser || !emailSettings.imap_password_encrypted) {
+      console.error("Incomplete IMAP settings:", { imapHost, imapUser, hasPassword: !!emailSettings.imap_password_encrypted });
+      return new Response(JSON.stringify({ error: "Unvollständige IMAP-Einstellungen" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Decrypt password
+    const encryptionKey = Deno.env.get("EMAIL_ENCRYPTION_KEY");
+    if (!encryptionKey) {
+      console.error("EMAIL_ENCRYPTION_KEY not configured");
+      return new Response(JSON.stringify({ error: "EMAIL_ENCRYPTION_KEY nicht konfiguriert" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    let imapPass: string;
+    try {
+      const keyBytes = decodeEncryptionKey(encryptionKey);
+      imapPass = await decryptPassword(emailSettings.imap_password_encrypted, keyBytes);
+    } catch (decryptError) {
+      console.error("Failed to decrypt password:", decryptError);
+      return new Response(JSON.stringify({ error: "Fehler beim Entschlüsseln des IMAP-Passworts" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    console.info(`Connecting to IMAP server ${imapHost}:${imapPort} as ${imapUser}...`);
 
     const imap = new SimpleImapClient(imapHost, imapPort, imapUser, imapPass);
     await imap.connect();
