@@ -1,11 +1,15 @@
 import { useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useOrganization } from '@/hooks/useOrganization';
 
 export function useArticlesRealtime() {
   const queryClient = useQueryClient();
+  const { data: organizationId } = useOrganization();
 
   useEffect(() => {
+    if (!organizationId) return;
+    
     const channel = supabase
       .channel('articles-realtime')
       .on(
@@ -17,9 +21,9 @@ export function useArticlesRealtime() {
         },
         (payload) => {
           console.log('Article change detected:', payload);
-          // Invalidate queries to trigger refetch
-          queryClient.invalidateQueries({ queryKey: ['articles'] });
-          queryClient.invalidateQueries({ queryKey: ['articles', 'supplier'] });
+          // Invalidate queries with organization-specific keys
+          queryClient.invalidateQueries({ queryKey: ['articles', organizationId] });
+          queryClient.invalidateQueries({ queryKey: ['articles', organizationId, 'supplier'] });
         }
       )
       .subscribe();
@@ -27,5 +31,5 @@ export function useArticlesRealtime() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [queryClient]);
+  }, [queryClient, organizationId]);
 }

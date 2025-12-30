@@ -52,6 +52,7 @@ import { SupplierQRCodeDialog } from '@/components/suppliers/SupplierQRCodeDialo
 import { SupplierTokensDialog } from '@/components/suppliers/SupplierTokensDialog';
 import { AddArticleSheet } from '@/components/cart/AddArticleSheet';
 import { MergeSuppliersDialog } from '@/components/suppliers/MergeSuppliersDialog';
+import { OrgDebugBar } from '@/components/debug/OrgDebugBar';
 
 const Suppliers = () => {
   const { t } = useTranslation();
@@ -719,6 +720,9 @@ const Suppliers = () => {
   
   return <DashboardLayout>
       <div className="space-y-2 md:space-y-5 xl:space-y-6">
+        {/* Debug Bar - only visible when advanced settings enabled */}
+        <OrgDebugBar />
+        
         {/* Header with Breadcrumb */}
         <PageHeader activeTab={activeTab} />
 
