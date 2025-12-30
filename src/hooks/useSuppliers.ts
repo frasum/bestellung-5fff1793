@@ -73,27 +73,22 @@ export interface SupplierWithAssignment extends Supplier {
 // Also includes unassigned suppliers (those with no location assignments at all)
 export const useSuppliersByLocation = (locationId?: string) => {
   const { user } = useAuth();
+  const { data: organizationId } = useOrganization();
 
   return useQuery({
-    queryKey: ['suppliers-by-location', user?.id, locationId],
-    enabled: !!locationId && !!user,
+    queryKey: ['suppliers-by-location', organizationId, locationId],
+    enabled: !!locationId && !!user && !!organizationId,
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
     queryFn: async (): Promise<SupplierWithAssignment[]> => {
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('organization_id')
-        .eq('id', user!.id)
-        .maybeSingle();
+      if (!organizationId) return [];
 
-      if (profileError) throw profileError;
-      if (!profile?.organization_id) return [];
-
-      // 1. Get all suppliers in the user's organization
+      // 1. Get all active suppliers in the user's organization
       const { data: allSuppliers, error: suppliersError } = await supabase
         .from('suppliers')
         .select('*')
-        .eq('organization_id', profile.organization_id)
+        .eq('organization_id', organizationId)
+        .eq('is_active', true)
         .order('name');
 
       if (suppliersError) throw suppliersError;
@@ -199,6 +194,7 @@ export const useCreateSupplier = () => {
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['suppliers'] });
+      queryClient.invalidateQueries({ queryKey: ['suppliers-by-location'] });
     },
     onSuccess: () => toast.success('Supplier created successfully'),
   });
@@ -241,6 +237,7 @@ export const useUpdateSupplier = () => {
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['suppliers'] });
+      queryClient.invalidateQueries({ queryKey: ['suppliers-by-location'] });
     },
     onSuccess: () => toast.success('Lieferant erfolgreich aktualisiert'),
   });
@@ -285,6 +282,7 @@ export const useDeleteSupplier = () => {
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['suppliers'] });
+      queryClient.invalidateQueries({ queryKey: ['suppliers-by-location'] });
     },
     onSuccess: () => toast.success('Lieferant erfolgreich gelöscht'),
   });
@@ -322,6 +320,7 @@ export const useDeactivateSupplier = () => {
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['suppliers'] });
+      queryClient.invalidateQueries({ queryKey: ['suppliers-by-location'] });
     },
     onSuccess: () => toast.success('Lieferant erfolgreich deaktiviert'),
   });

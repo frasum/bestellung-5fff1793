@@ -17,9 +17,11 @@ export function useSuppliersRealtime() {
         },
         (payload) => {
           console.log('Supplier change detected:', payload);
-          // Invalidate queries to trigger refetch
+          // Invalidate all supplier queries to trigger refetch
           queryClient.invalidateQueries({ queryKey: ['suppliers'] });
-          queryClient.invalidateQueries({ queryKey: ['suppliers-by-location'] });
+          queryClient.invalidateQueries({ 
+            predicate: (query) => query.queryKey[0] === 'suppliers-by-location'
+          });
         }
       )
       .subscribe();
