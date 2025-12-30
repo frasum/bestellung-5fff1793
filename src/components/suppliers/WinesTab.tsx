@@ -141,10 +141,16 @@ export const WinesTab = ({ articles, suppliers, onEditArticle }: WinesTabProps) 
     }
   }, [wineArticles, filterMode]);
 
-  // Wines without description (candidates for batch research)
+  // Wines that need research (missing description OR origin_country OR grape_variety)
   // Excludes wines that have been successfully researched in this session
-  const winesWithoutDescription = useMemo(() => {
-    return wineArticles.filter(wine => !researchedIds.has(wine.id) && !wine.description?.trim());
+  const winesToResearch = useMemo(() => {
+    return wineArticles.filter(wine => 
+      !researchedIds.has(wine.id) && (
+        !wine.description?.trim() || 
+        !wine.origin_country?.trim() || 
+        !wine.grape_variety?.trim()
+      )
+    );
   }, [wineArticles, researchedIds]);
 
   // Group wines by supplier
@@ -173,10 +179,10 @@ export const WinesTab = ({ articles, suppliers, onEditArticle }: WinesTabProps) 
   // Batch research function
   const handleBatchResearch = useCallback(async () => {
     // Capture the current list at the start of batch processing
-    const winesToResearch = winesWithoutDescription;
+    const winesForBatch = [...winesToResearch];
     
-    if (winesToResearch.length === 0) {
-      toast.info(t('wines.allWinesHaveDescriptions', 'Alle Weine haben bereits Beschreibungen'));
+    if (winesForBatch.length === 0) {
+      toast.info(t('wines.allWinesComplete', 'Alle Weine sind vollständig'));
       return;
     }
 
@@ -184,9 +190,9 @@ export const WinesTab = ({ articles, suppliers, onEditArticle }: WinesTabProps) 
     let successCount = 0;
     let errorCount = 0;
 
-    for (let i = 0; i < winesToResearch.length; i++) {
-      const wine = winesToResearch[i];
-      setBatchProgress({ current: i + 1, total: winesToResearch.length, wineName: wine.name });
+    for (let i = 0; i < winesForBatch.length; i++) {
+      const wine = winesForBatch[i];
+      setBatchProgress({ current: i + 1, total: winesForBatch.length, wineName: wine.name });
 
       try {
         const { data, error } = await supabase.functions.invoke('research-wine', {
@@ -236,7 +242,7 @@ export const WinesTab = ({ articles, suppliers, onEditArticle }: WinesTabProps) 
     } else {
       toast.warning(t('wines.batchResearchPartial', '{{success}} erfolgreich, {{errors}} Fehler', { success: successCount, errors: errorCount }));
     }
-  }, [winesWithoutDescription, updateArticle, t]);
+  }, [winesToResearch, updateArticle, t]);
 
   if (wineArticles.length === 0) {
     return (
@@ -297,7 +303,7 @@ export const WinesTab = ({ articles, suppliers, onEditArticle }: WinesTabProps) 
           </Button>
 
           {/* Batch Research Button - only in advanced mode */}
-          {advancedMode && winesWithoutDescription.length > 0 && (
+          {advancedMode && winesToResearch.length > 0 && (
             <Button
               variant="outline"
               size="sm"
@@ -312,7 +318,7 @@ export const WinesTab = ({ articles, suppliers, onEditArticle }: WinesTabProps) 
               )}
               {t('wines.batchResearch', 'Alle recherchieren')}
               <Badge variant="secondary" className="ml-1">
-                {winesWithoutDescription.length}
+                {winesToResearch.length}
               </Badge>
             </Button>
           )}
@@ -406,7 +412,7 @@ export const WinesTab = ({ articles, suppliers, onEditArticle }: WinesTabProps) 
         <ToggleGroupItem value="missing-description" className="gap-1.5 hidden sm:flex">
           {t('wines.filterMissingDescription', 'Ohne Beschreibung')}
           <Badge variant="secondary" className="text-xs">
-            {winesWithoutDescription.length}
+            {wineArticles.filter(w => !w.description?.trim()).length}
           </Badge>
         </ToggleGroupItem>
         <ToggleGroupItem value="missing-grape" className="gap-1.5 hidden sm:flex">
