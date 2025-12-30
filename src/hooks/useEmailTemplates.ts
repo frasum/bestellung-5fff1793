@@ -19,6 +19,7 @@ export interface EmailTemplate {
   footer_text: string;
   footer_logo_url: string | null;
   show_powered_by: boolean;
+  cc_emails: string[];
   created_at: string;
   updated_at: string;
 }
@@ -34,6 +35,7 @@ export interface EmailTemplateUpdate {
   footer_text?: string;
   footer_logo_url?: string | null;
   show_powered_by?: boolean;
+  cc_emails?: string[];
 }
 
 export const useEmailTemplate = () => {
@@ -138,4 +140,5 @@ export const getDefaultTemplate = (): EmailTemplateUpdate => ({
   footer_text: 'Diese Bestellung wurde über Bestellung.pro aufgegeben.',
   footer_logo_url: null,
   show_powered_by: true,
+  cc_emails: ['mail@bestellung.pro'],
 });

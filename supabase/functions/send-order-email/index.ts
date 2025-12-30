@@ -36,6 +36,7 @@ function cleanHtmlContent(html: string): string {
 // Helper to send email via SMTP
 async function sendEmailViaSMTP(options: {
   to: string[];
+  cc?: string[];
   subject: string;
   html: string;
   text?: string;
@@ -50,14 +51,22 @@ async function sendEmailViaSMTP(options: {
     // Use dynamic sender name (location name) or fallback to 'Bestellung.pro'
     const senderName = options.fromName || 'Bestellung.pro';
     
-    await client.send({
+    const sendOptions: any = {
       from: `${senderName} <${smtpFrom}>`,
       to: options.to,
       subject: options.subject,
       content: options.text || "",
       html: cleanedHtml,
       replyTo: options.replyTo,
-    });
+    };
+    
+    // Add CC recipients if provided
+    if (options.cc && options.cc.length > 0) {
+      sendOptions.cc = options.cc;
+      console.log(`Adding CC recipients: ${options.cc.join(', ')}`);
+    }
+    
+    await client.send(sendOptions);
     await client.close();
     return { success: true };
   } catch (error: any) {
@@ -104,6 +113,7 @@ interface EmailTemplate {
   footer_text: string;
   footer_logo_url: string | null;
   show_powered_by: boolean;
+  cc_emails: string[];
 }
 
 const defaultTemplate: EmailTemplate = {
@@ -117,6 +127,7 @@ const defaultTemplate: EmailTemplate = {
   footer_text: 'Diese Bestellung wurde über Bestellung.pro aufgegeben.',
   footer_logo_url: null,
   show_powered_by: true,
+  cc_emails: [],
 };
 
 // Generate subject line from template
@@ -528,6 +539,7 @@ serve(async (req) => {
           footer_text: emailTemplateData.footer_text || defaultTemplate.footer_text,
           footer_logo_url: emailTemplateData.footer_logo_url || defaultTemplate.footer_logo_url,
           show_powered_by: emailTemplateData.show_powered_by ?? defaultTemplate.show_powered_by,
+          cc_emails: emailTemplateData.cc_emails || defaultTemplate.cc_emails,
         };
         console.log(`Using email template with design_style: ${template.design_style}`);
       } else {
@@ -558,8 +570,12 @@ serve(async (req) => {
     
     console.log(`Sending order email to ${recipientEmail}${isTestMode ? ' (TEST MODE)' : ''} via SMTP`);
 
+    // Prepare CC emails (filter out empty strings)
+    const ccEmails = template.cc_emails.filter(email => email && email.trim().length > 0);
+
     const emailResult = await sendEmailViaSMTP({
       to: [recipientEmail],
+      cc: ccEmails.length > 0 ? ccEmails : undefined,
       subject: subject,
       html: emailHtml,
       text: emailText,

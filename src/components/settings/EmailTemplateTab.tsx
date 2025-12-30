@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { FileText, Mail, Palette, RotateCcw, Check } from 'lucide-react';
+import { FileText, Mail, Palette, RotateCcw, Check, Copy } from 'lucide-react';
 import { useEmailTemplate, useUpsertEmailTemplate, getDefaultTemplate } from '@/hooks/useEmailTemplates';
 
 export const EmailTemplateTab = () => {
@@ -27,6 +27,7 @@ export const EmailTemplateTab = () => {
     footer_text: '',
     footer_logo_url: '',
     show_powered_by: true,
+    cc_emails: '' as string,
   });
 
   useState(() => {
@@ -42,6 +43,7 @@ export const EmailTemplateTab = () => {
         footer_text: template.footer_text || '',
         footer_logo_url: template.footer_logo_url || '',
         show_powered_by: template.show_powered_by ?? true,
+        cc_emails: (template.cc_emails || []).join(', '),
       });
     } else {
       setFormData({
@@ -55,6 +57,7 @@ export const EmailTemplateTab = () => {
         footer_text: defaultTemplate.footer_text || '',
         footer_logo_url: defaultTemplate.footer_logo_url || '',
         show_powered_by: defaultTemplate.show_powered_by ?? true,
+        cc_emails: (defaultTemplate.cc_emails || []).join(', '),
       });
     }
   });
@@ -70,6 +73,7 @@ export const EmailTemplateTab = () => {
     footer_text: template.footer_text || '',
     footer_logo_url: template.footer_logo_url || '',
     show_powered_by: template.show_powered_by ?? true,
+    cc_emails: (template.cc_emails || []).join(', '),
   } : formData;
 
   const handleChange = (field: keyof typeof formData, value: string) => {
@@ -81,7 +85,16 @@ export const EmailTemplateTab = () => {
   };
 
   const handleSave = () => {
-    upsertTemplate.mutate(formData);
+    // Convert cc_emails string to array
+    const ccEmailsArray = formData.cc_emails
+      .split(',')
+      .map(email => email.trim())
+      .filter(email => email.length > 0);
+    
+    upsertTemplate.mutate({
+      ...formData,
+      cc_emails: ccEmailsArray,
+    });
   };
 
   const handleReset = () => {
@@ -96,6 +109,7 @@ export const EmailTemplateTab = () => {
       footer_text: defaultTemplate.footer_text || '',
       footer_logo_url: defaultTemplate.footer_logo_url || '',
       show_powered_by: defaultTemplate.show_powered_by ?? true,
+      cc_emails: (defaultTemplate.cc_emails || []).join(', '),
     });
   };
 
@@ -130,6 +144,31 @@ export const EmailTemplateTab = () => {
     <Card>
       <CardContent className="p-0">
         <Accordion type="multiple" className="w-full">
+          {/* CC Recipients */}
+          <AccordionItem value="cc" className="border-b">
+            <AccordionTrigger className="group px-4 py-3 hover:no-underline hover:bg-muted/50 data-[state=open]:bg-primary/5">
+              <div className="flex items-center gap-2">
+                <Copy className="h-4 w-4 text-muted-foreground group-data-[state=open]:text-primary transition-colors" />
+                <span className="font-medium group-data-[state=open]:text-primary transition-colors">CC-Empfänger</span>
+              </div>
+            </AccordionTrigger>
+            <AccordionContent className="px-4 pb-4 bg-primary/5">
+              <p className="text-sm text-muted-foreground mb-4">E-Mail-Adressen, die bei jeder Bestellung eine Kopie erhalten sollen.</p>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="cc-emails">CC E-Mail-Adressen</Label>
+                  <Input
+                    id="cc-emails"
+                    value={formData.cc_emails || currentData.cc_emails || ''}
+                    onChange={(e) => setFormData(prev => ({ ...prev, cc_emails: e.target.value }))}
+                    placeholder="mail@bestellung.pro, buchhaltung@beispiel.de"
+                  />
+                  <p className="text-xs text-muted-foreground">Mehrere Adressen mit Komma trennen. Alle hier eingetragenen Adressen erhalten eine Kopie jeder Bestellungs-E-Mail.</p>
+                </div>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+
           {/* Email Footer */}
           <AccordionItem value="footer" className="border-b">
             <AccordionTrigger className="group px-4 py-3 hover:no-underline hover:bg-muted/50 data-[state=open]:bg-primary/5">
