@@ -642,6 +642,12 @@ function decodeBase64(base64String: string): Uint8Array | null {
 // deno-lint-ignore no-explicit-any
 type SupabaseClient = any;
 
+// Interface for PDF with original index preserved
+interface PdfWithIndex {
+  originalIndex: number;
+  content: Uint8Array;
+}
+
 // Interface for emails to process
 interface EmailToProcess {
   seqNum: number;
@@ -649,7 +655,7 @@ interface EmailToProcess {
   from: string;
   messageId: string;
   fullMessage: string;
-  pdfContents: Uint8Array[];
+  pdfAttachments: PdfWithIndex[];
   supplierId: string | null;
 }
 
@@ -669,16 +675,17 @@ async function processPdfsInBackground(
   const errors: string[] = [];
   
   // Calculate total PDFs
-  const totalPdfs = emailsToProcess.reduce((sum, email) => sum + email.pdfContents.length, 0);
+  const totalPdfs = emailsToProcess.reduce((sum, email) => sum + email.pdfAttachments.length, 0);
   
   for (const email of emailsToProcess) {
-    const { seqNum, subject, from, messageId, pdfContents, supplierId } = email;
+    const { seqNum, subject, from, messageId, pdfAttachments, supplierId } = email;
     
-    console.info(`[BACKGROUND] Processing email ${seqNum}: ${pdfContents.length} PDFs`);
+    console.info(`[BACKGROUND] Processing email ${seqNum}: ${pdfAttachments.length} PDFs`);
     
-    for (let pdfIndex = 0; pdfIndex < pdfContents.length; pdfIndex++) {
-      const pdfContent = pdfContents[pdfIndex];
-      const pdfMessageId = `${messageId}-${pdfIndex}`;
+    for (let i = 0; i < pdfAttachments.length; i++) {
+      const { originalIndex, content: pdfContent } = pdfAttachments[i];
+      // Use ORIGINAL index for duplicate checking - this is the critical fix!
+      const pdfMessageId = `${messageId}-${originalIndex}`;
       
       // Check if THIS specific PDF was already processed
       const { data: existingLog } = await serviceClient
@@ -696,16 +703,16 @@ async function processPdfsInBackground(
       }
       
       if (pdfContent.length < 1000) {
-        console.warn(`[BACKGROUND] PDF ${pdfIndex + 1} is too small (${pdfContent.length} bytes), skipping`);
+        console.warn(`[BACKGROUND] PDF index ${originalIndex} is too small (${pdfContent.length} bytes), skipping`);
         skippedCount++;
         processedPdfs++;
         continue;
       }
 
-      console.info(`[BACKGROUND] Processing PDF ${pdfIndex + 1}/${pdfContents.length}, size: ${pdfContent.length}`);
+      console.info(`[BACKGROUND] Processing PDF ${i + 1}/${pdfAttachments.length} (original index: ${originalIndex}), size: ${pdfContent.length}`);
 
-      // Upload to storage with unique filename
-      const filename = `invoice-${Date.now()}-${pdfIndex}.pdf`;
+      // Upload to storage with unique filename using original index
+      const filename = `invoice-${Date.now()}-${originalIndex}.pdf`;
       const filePath = `${organizationId}/${filename}`;
 
       const { error: uploadError } = await serviceClient.storage
@@ -716,8 +723,8 @@ async function processPdfsInBackground(
         });
 
       if (uploadError) {
-        console.error(`[BACKGROUND] Upload failed for PDF ${pdfIndex + 1}:`, uploadError.message);
-        errors.push(`Upload failed for PDF ${pdfIndex + 1} from: ${subject}`);
+        console.error(`[BACKGROUND] Upload failed for PDF index ${originalIndex}:`, uploadError.message);
+        errors.push(`Upload failed for PDF ${originalIndex} from: ${subject}`);
         processedPdfs++;
         continue;
       }
@@ -743,16 +750,16 @@ async function processPdfsInBackground(
         .single();
 
       if (invoiceError) {
-        console.error(`[BACKGROUND] Invoice creation failed for PDF ${pdfIndex + 1}:`, invoiceError.message);
-        errors.push(`Invoice creation failed for PDF ${pdfIndex + 1} from: ${subject}`);
+        console.error(`[BACKGROUND] Invoice creation failed for PDF index ${originalIndex}:`, invoiceError.message);
+        errors.push(`Invoice creation failed for PDF ${originalIndex} from: ${subject}`);
         processedPdfs++;
         continue;
       }
 
-      // Log email as "created" - will update to "processed" after successful parsing
+      // Log email with ORIGINAL index - this ensures correct duplicate tracking
       const { data: emailLog } = await serviceClient.from("invoice_email_log").insert({
         organization_id: organizationId,
-        message_id: `${messageId}-${pdfIndex}`,
+        message_id: pdfMessageId, // Uses originalIndex
         email_from: from,
         email_subject: subject,
         status: "created",
@@ -791,7 +798,7 @@ async function processPdfsInBackground(
         }
       }
 
-      console.info(`[BACKGROUND] Successfully created invoice ${invoice.id} from ${from} (PDF ${pdfIndex + 1}/${pdfContents.length})`);
+      console.info(`[BACKGROUND] Successfully created invoice ${invoice.id} from ${from} (PDF ${i + 1}/${pdfAttachments.length}, original index: ${originalIndex})`);
       newInvoicesCount++;
       processedPdfs++;
       
@@ -972,7 +979,10 @@ serve(async (req) => {
 
     const imap = new SimpleImapClient(imapHost, imapPort, imapUser, imapPass);
     await imap.connect();
-    await imap.selectMailbox("INBOX");
+    // Use configured mailbox or default to INBOX
+    const mailboxName = emailSettings.mailbox || "INBOX";
+    console.info(`Selecting mailbox: ${mailboxName}`);
+    await imap.selectMailbox(mailboxName);
 
     // Search for emails from the last 30 days
     const sinceDate = new Date();
@@ -1062,7 +1072,8 @@ serve(async (req) => {
         console.info(`Found ${pdfContents.length} PDF(s) in email`);
 
         // Filter out already-processed PDFs BEFORE adding to queue
-        const newPdfContents: Uint8Array[] = [];
+        // CRITICAL: Preserve original index for correct duplicate tracking!
+        const newPdfAttachments: PdfWithIndex[] = [];
         for (let pdfIndex = 0; pdfIndex < pdfContents.length; pdfIndex++) {
           const pdfMessageId = `${messageId}-${pdfIndex}`;
           
@@ -1077,17 +1088,21 @@ serve(async (req) => {
             console.info(`PDF ${pdfMessageId} already processed (status: ${existingLog.status}), skipping`);
             skippedCount++;
           } else {
-            newPdfContents.push(pdfContents[pdfIndex]);
+            // Store both the original index AND the content
+            newPdfAttachments.push({
+              originalIndex: pdfIndex,
+              content: pdfContents[pdfIndex]
+            });
           }
         }
 
-        if (newPdfContents.length === 0) {
+        if (newPdfAttachments.length === 0) {
           console.info(`All ${pdfContents.length} PDFs from email already processed`);
           await imap.markAsSeen(seqNum);
           continue;
         }
 
-        console.info(`${newPdfContents.length} new PDFs to process (${pdfContents.length - newPdfContents.length} already processed)`);
+        console.info(`${newPdfAttachments.length} new PDFs to process (${pdfContents.length - newPdfAttachments.length} already processed)`);
 
         // Find matching supplier by email
         const { data: supplier } = await serviceClient
@@ -1097,14 +1112,14 @@ serve(async (req) => {
           .or(`email.eq.${from},invoice_email.eq.${from}`)
           .maybeSingle();
 
-        // Add to processing queue with only new PDFs
+        // Add to processing queue with preserved original indices
         emailsToProcess.push({
           seqNum,
           subject,
           from,
           messageId,
           fullMessage,
-          pdfContents: newPdfContents,
+          pdfAttachments: newPdfAttachments,
           supplierId: supplier?.id || null,
         });
 
@@ -1117,7 +1132,7 @@ serve(async (req) => {
     }
 
     // Calculate total PDFs to process
-    const totalPdfs = emailsToProcess.reduce((sum, email) => sum + email.pdfContents.length, 0);
+    const totalPdfs = emailsToProcess.reduce((sum, email) => sum + email.pdfAttachments.length, 0);
     
     console.info(`[PHASE 1 COMPLETE] Found ${totalPdfs} PDFs in ${emailsToProcess.length} emails`);
 
