@@ -45,7 +45,17 @@ serve(async (req) => {
     const encryptionKey = Deno.env.get("EMAIL_ENCRYPTION_KEY");
 
     if (!encryptionKey) {
-      throw new Error("EMAIL_ENCRYPTION_KEY not configured");
+      throw new Error("EMAIL_ENCRYPTION_KEY nicht konfiguriert");
+    }
+
+    // Validate encryption key length (must be 64 hex chars = 32 bytes = 256 bits)
+    if (encryptionKey.length !== 64) {
+      throw new Error(`EMAIL_ENCRYPTION_KEY muss 64 Hex-Zeichen haben (aktuell: ${encryptionKey.length})`);
+    }
+
+    // Validate it's a valid hex string
+    if (!/^[0-9a-fA-F]+$/.test(encryptionKey)) {
+      throw new Error("EMAIL_ENCRYPTION_KEY muss ein gültiger Hex-String sein (nur 0-9 und a-f)");
     }
 
     // Get authorization header
