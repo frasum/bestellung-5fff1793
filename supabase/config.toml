@@ -179,3 +179,9 @@ verify_jwt = false
 
 [functions.check-invoice-emails]
 verify_jwt = false
+
+[functions.update-email-settings]
+verify_jwt = true
+
+[functions.test-email-connection]
+verify_jwt = true

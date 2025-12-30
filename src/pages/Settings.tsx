@@ -20,6 +20,7 @@ import { PriceWatchSettingsTab } from '@/components/settings/PriceWatchSettingsT
 import { OrganizationsOverviewTab } from '@/components/settings/OrganizationsOverviewTab';
 import { SystemTab } from '@/components/settings/SystemTab';
 import { DataManagementTab } from '@/components/settings/DataManagementTab';
+import { InvoiceEmailSettingsTab } from '@/components/settings/InvoiceEmailSettingsTab';
 
 // Default sub-tabs for each main tab (won't be shown in URL)
 const DEFAULT_SUB_TABS: Record<string, string> = {
@@ -30,7 +31,7 @@ const DEFAULT_SUB_TABS: Record<string, string> = {
 // Sub-tabs configuration for each main tab
 const SUB_TABS_CONFIG: Record<string, string[]> = {
   organization: ['general', 'team', 'locations', 'units-categories'],
-  communication: ['notifications', 'email-templates', 'supplier-portal'],
+  communication: ['notifications', 'email-templates', 'invoice-email', 'supplier-portal'],
 };
 
 const Settings = () => {
@@ -214,6 +215,7 @@ const Settings = () => {
               NotificationsContent={NotificationsTab}
               EmailTemplatesContent={EmailTemplateTab}
               SupplierPortalContent={SupplierPortalTab}
+              InvoiceEmailContent={InvoiceEmailSettingsTab}
             />
           </TabsContent>
 
