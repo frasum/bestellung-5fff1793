@@ -187,4 +187,4 @@ verify_jwt = true
 verify_jwt = true
 
 [functions.sync-wine-menu]
-verify_jwt = true
+verify_jwt = false
