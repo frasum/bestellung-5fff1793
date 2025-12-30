@@ -674,12 +674,15 @@ Important:
       .eq('organization_id', organizationId)
       .eq('is_active', true);
 
-    // Stop words - legal entity designators that should be ignored during matching
+    // Stop words - legal entity designators and generic service terms that should be ignored during matching
     const stopWords = new Set([
       'gmbh', 'ag', 'kg', 'ohg', 'gbr', 'ltd', 'inc', 'co', 'se', 'ug', 'mbh',
       'e.v', 'ev', 'und', 'and', 'the', 'der', 'die', 'das', 'handels', 'handel',
       'vertriebs', 'vertrieb', 'import', 'export', 'international', 'deutschland',
-      'germany', 'europe', 'europa'
+      'germany', 'europe', 'europa',
+      // Generic service terms that cause false matches
+      'service', 'services', 'dienstleistung', 'dienstleistungen',
+      'solutions', 'consulting', 'management', 'gruppe', 'group'
     ]);
 
     // Helper function to normalize German umlauts and special characters
@@ -774,8 +777,14 @@ Important:
                 }
               }
               // Token contains the other (only for longer tokens - stricter: min 7 chars)
+              // AND the shorter token must be at least 70% of the longer one to avoid partial matches
               else if (invToken.length >= 7 && supToken.length >= 7) {
-                if (invToken.includes(supToken) || supToken.includes(invToken)) {
+                const shorter = invToken.length < supToken.length ? invToken : supToken;
+                const longer = invToken.length >= supToken.length ? invToken : supToken;
+                const overlapRatio = shorter.length / longer.length;
+                
+                // Only match if the shorter is at least 70% of the longer (e.g. "service" vs "reinigungsservice" = 41% - no match)
+                if (overlapRatio >= 0.7 && (invToken.includes(supToken) || supToken.includes(invToken))) {
                   if (!matchedTokens.includes(invToken)) {
                     matchedTokens.push(invToken);
                   }
