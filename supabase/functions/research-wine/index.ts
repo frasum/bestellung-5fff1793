@@ -9,6 +9,7 @@ interface WineResearchResult {
   description: string;
   grape_variety: string;
   region: string;
+  origin_country: string;
   flavor_profile: string;
   food_pairings: string;
   producer_info: string;
@@ -153,6 +154,7 @@ Antworte NUR mit einem gültigen JSON-Objekt im folgenden Format:
   "description": "Ausführliche Beschreibung des Weins (2-3 Sätze)",
   "grape_variety": "Rebsorte(n)",
   "region": "Anbaugebiet/Region/Appellation",
+  "origin_country": "Herkunftsland (z.B. Italien, Frankreich, Spanien, Deutschland)",
   "flavor_profile": "Geschmacksprofil (Aromen, Struktur, Tannine)",
   "food_pairings": "Empfohlene Speisebegleitungen",
   "producer_info": "Informationen zum Weingut/Produzenten"
@@ -205,6 +207,7 @@ Falls keine Informationen gefunden werden, setze den Wert auf "Keine Information
         description: parsed.description || 'Keine Informationen gefunden',
         grape_variety: parsed.grape_variety || 'Keine Informationen gefunden',
         region: parsed.region || 'Keine Informationen gefunden',
+        origin_country: parsed.origin_country || 'Keine Informationen gefunden',
         flavor_profile: parsed.flavor_profile || 'Keine Informationen gefunden',
         food_pairings: parsed.food_pairings || 'Keine Informationen gefunden',
         producer_info: parsed.producer_info || 'Keine Informationen gefunden',
@@ -220,6 +223,7 @@ Falls keine Informationen gefunden werden, setze den Wert auf "Keine Information
         description: content,
         grape_variety: 'Keine Informationen gefunden',
         region: 'Keine Informationen gefunden',
+        origin_country: 'Keine Informationen gefunden',
         flavor_profile: 'Keine Informationen gefunden',
         food_pairings: 'Keine Informationen gefunden',
         producer_info: 'Keine Informationen gefunden',

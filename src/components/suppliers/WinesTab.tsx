@@ -37,6 +37,7 @@ interface WineResearchResult {
   description: string;
   grape_variety: string;
   region: string;
+  origin_country: string;
   flavor_profile: string;
   food_pairings: string;
   producer_info: string;
@@ -203,6 +204,7 @@ export const WinesTab = ({ articles, suppliers, onEditArticle }: WinesTabProps) 
           id: wine.id,
           ...(result.description !== notFound && { description: result.description }),
           ...(result.grape_variety !== notFound && { grape_variety: result.grape_variety }),
+          ...(result.origin_country !== notFound && { origin_country: result.origin_country }),
           ...(result.flavor_profile !== notFound && { flavor_profile: result.flavor_profile }),
           ...(result.food_pairings !== notFound && { food_pairings: result.food_pairings }),
         });
