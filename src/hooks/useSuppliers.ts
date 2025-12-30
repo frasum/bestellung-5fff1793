@@ -107,12 +107,13 @@ export const useSuppliersByLocation = (locationId?: string) => {
         (locationAssignments || []).map(sl => sl.supplier_id)
       );
 
-      // 3. Get ALL supplier_locations to find which suppliers have ANY assignment
+      // 3. Get ALL ACTIVE supplier_locations to find which suppliers have ANY active assignment
       const supplierIds = allSuppliers.map(s => s.id);
       const { data: allAssignments, error: aaError } = await supabase
         .from('supplier_locations')
         .select('supplier_id')
-        .in('supplier_id', supplierIds);
+        .in('supplier_id', supplierIds)
+        .eq('is_active', true);
 
       if (aaError) throw aaError;
 
