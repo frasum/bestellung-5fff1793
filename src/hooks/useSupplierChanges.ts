@@ -236,6 +236,7 @@ export const useRejectChange = () => {
       queryClient.invalidateQueries({ queryKey: ['supplier-pending-changes'] });
       queryClient.invalidateQueries({ queryKey: ['supplier-pending-changes-count'] });
       queryClient.invalidateQueries({ queryKey: ['combined-pending-by-supplier'] });
+      queryClient.invalidateQueries({ queryKey: ['pending-article-ids'] });
       toast.success('Änderung abgelehnt');
     },
     onError: (error: any) => {
@@ -324,6 +325,7 @@ export const useRejectAllChanges = () => {
       queryClient.invalidateQueries({ queryKey: ['supplier-pending-changes'] });
       queryClient.invalidateQueries({ queryKey: ['supplier-pending-changes-count'] });
       queryClient.invalidateQueries({ queryKey: ['combined-pending-by-supplier'] });
+      queryClient.invalidateQueries({ queryKey: ['pending-article-ids'] });
       toast.success('Alle Änderungen abgelehnt');
     },
     onError: (error: any) => {
