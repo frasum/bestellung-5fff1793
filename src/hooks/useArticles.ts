@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { requireOrganizationId } from '@/lib/supabaseHelpers';
+import { useOrganization } from '@/hooks/useOrganization';
 export interface Article {
   id: string;
   organization_id: string;
@@ -55,14 +56,18 @@ export interface ArticleInput {
 }
 
 export const useArticles = () => {
+  const { data: organizationId } = useOrganization();
+  
   return useQuery({
-    queryKey: ['articles'],
+    queryKey: ['articles', organizationId],
+    enabled: !!organizationId,
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes cache
     queryFn: async () => {
       const { data, error } = await supabase
         .from('articles')
         .select('*, suppliers(id, name, minimum_order_value)')
+        .eq('organization_id', organizationId!)
         .order('name');
 
       if (error) throw error;
@@ -72,14 +77,18 @@ export const useArticles = () => {
 };
 
 export const useArticlesBySupplier = (supplierId: string | null) => {
+  const { data: organizationId } = useOrganization();
+  
   return useQuery({
-    queryKey: ['articles', 'supplier', supplierId],
+    queryKey: ['articles', organizationId, 'supplier', supplierId],
+    enabled: !!organizationId,
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
     queryFn: async () => {
       let query = supabase
         .from('articles')
         .select('*, suppliers(id, name, minimum_order_value)')
+        .eq('organization_id', organizationId!)
         .eq('is_active', true)
         .order('name');
 
@@ -91,7 +100,6 @@ export const useArticlesBySupplier = (supplierId: string | null) => {
       if (error) throw error;
       return data as Article[];
     },
-    enabled: true,
   });
 };
 

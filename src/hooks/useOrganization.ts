@@ -15,8 +15,10 @@ export function useOrganization() {
   return useQuery({
     queryKey: ['organization', user?.id],
     enabled: !!user,
-    staleTime: 10 * 60 * 1000, // 10 minutes - organization rarely changes
-    gcTime: 15 * 60 * 1000, // 15 minutes cache
+    staleTime: 30 * 1000, // 30 seconds - detect org changes quickly
+    gcTime: 5 * 60 * 1000, // 5 minutes cache
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
     queryFn: async () => {
       const { data, error } = await supabase
         .from('profiles')
