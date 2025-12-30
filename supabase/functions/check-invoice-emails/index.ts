@@ -911,7 +911,7 @@ serve(async (req) => {
 
     const imapHost = emailSettings.imap_host;
     const imapPort = emailSettings.imap_port || 993;
-    const imapUser = emailSettings.imap_username;
+    const imapUser = emailSettings.imap_user;
 
     if (!imapHost || !imapUser || !emailSettings.imap_password_encrypted) {
       console.error("Incomplete IMAP settings:", { imapHost, imapUser, hasPassword: !!emailSettings.imap_password_encrypted });
