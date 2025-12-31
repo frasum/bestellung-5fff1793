@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useOrganization } from '@/hooks/useOrganization';
 
 export interface SuggestedArticle {
   id: string;
@@ -26,9 +27,13 @@ export interface SuggestedArticle {
 }
 
 export const useSuggestedArticles = (sourceFilter?: 'all' | 'supplier' | 'employee' | 'employee_photo') => {
+  const { data: organizationId } = useOrganization();
+
   return useQuery({
-    queryKey: ['suggested-articles', sourceFilter],
+    queryKey: ['suggested-articles', organizationId, sourceFilter],
     queryFn: async () => {
+      if (!organizationId) return [];
+
       let query = supabase
         .from('suggested_articles')
         .select(`
@@ -36,6 +41,7 @@ export const useSuggestedArticles = (sourceFilter?: 'all' | 'supplier' | 'employ
           suppliers:supplier_id (name),
           employees:employee_id (name)
         `)
+        .eq('organization_id', organizationId)
         .eq('status', 'pending')
         .order('created_at', { ascending: false });
 
@@ -51,41 +57,51 @@ export const useSuggestedArticles = (sourceFilter?: 'all' | 'supplier' | 'employ
         employees: { name: string } | null;
       })[];
     },
+    enabled: !!organizationId,
   });
 };
 
 export const useSuggestedArticlesCount = () => {
+  const { data: organizationId } = useOrganization();
+
   return useQuery({
-    queryKey: ['suggested-articles-count'],
+    queryKey: ['suggested-articles-count', organizationId],
     queryFn: async () => {
+      if (!organizationId) return 0;
+
       const { count, error } = await supabase
         .from('suggested_articles')
         .select('id', { count: 'exact', head: true })
+        .eq('organization_id', organizationId)
         .eq('status', 'pending');
 
       if (error) throw error;
       return count || 0;
     },
+    enabled: !!organizationId,
   });
 };
 
 export const useSuggestedArticlesBySupplier = (supplierId: string | null) => {
+  const { data: organizationId } = useOrganization();
+
   return useQuery({
-    queryKey: ['suggested-articles', supplierId],
+    queryKey: ['suggested-articles', organizationId, 'supplier', supplierId],
     queryFn: async () => {
-      if (!supplierId) return [];
+      if (!supplierId || !organizationId) return [];
       
       const { data, error } = await supabase
         .from('suggested_articles')
         .select('*')
         .eq('supplier_id', supplierId)
+        .eq('organization_id', organizationId)
         .eq('status', 'pending')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
       return data as SuggestedArticle[];
     },
-    enabled: !!supplierId,
+    enabled: !!supplierId && !!organizationId,
   });
 };
 

@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useOrganization } from '@/hooks/useOrganization';
 
 export interface Category {
   id: string;
@@ -11,17 +12,23 @@ export interface Category {
 }
 
 export function useCategories() {
+  const { data: organizationId } = useOrganization();
+
   return useQuery({
-    queryKey: ['categories'],
+    queryKey: ['categories', organizationId],
     queryFn: async () => {
+      if (!organizationId) return [];
+
       const { data, error } = await supabase
         .from('categories')
         .select('*')
+        .eq('organization_id', organizationId)
         .order('name');
 
       if (error) throw error;
       return data as Category[];
     },
+    enabled: !!organizationId,
     staleTime: 10 * 60 * 1000, // 10 minutes
     gcTime: 30 * 60 * 1000, // 30 minutes
   });

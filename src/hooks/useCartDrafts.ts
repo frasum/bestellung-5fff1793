@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
+import { useOrganization } from '@/hooks/useOrganization';
 
 export interface CartDraft {
   id: string;
@@ -53,9 +54,13 @@ export interface CartDraftItem {
 }
 
 export const useCartDrafts = (locationId?: string, showAllLocations?: boolean) => {
+  const { data: organizationId } = useOrganization();
+
   return useQuery({
-    queryKey: ['cart-drafts', showAllLocations ? 'all' : locationId],
+    queryKey: ['cart-drafts', organizationId, showAllLocations ? 'all' : locationId],
     queryFn: async () => {
+      if (!organizationId) return [];
+
       let query = supabase
         .from('cart_drafts')
         .select(`
@@ -83,6 +88,7 @@ export const useCartDrafts = (locationId?: string, showAllLocations?: boolean) =
           ),
           location:locations(id, name, short_code)
         `)
+        .eq('organization_id', organizationId)
         .order('updated_at', { ascending: false });
 
       // Only apply location filter if not showing all locations
@@ -96,6 +102,7 @@ export const useCartDrafts = (locationId?: string, showAllLocations?: boolean) =
       if (error) throw error;
       return data as (CartDraft & { location?: { id: string; name: string; short_code: string | null } })[];
     },
+    enabled: !!organizationId,
     staleTime: 1 * 60 * 1000, // 1 minute
     gcTime: 5 * 60 * 1000, // 5 minutes
   });

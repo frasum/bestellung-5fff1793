@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useOrganization } from '@/hooks/useOrganization';
 
 export interface Location {
   id: string;
@@ -21,32 +22,24 @@ export interface LocationInput {
 }
 
 export const useLocations = () => {
+  const { data: organizationId } = useOrganization();
+
   return useQuery({
-    queryKey: ['locations'],
+    queryKey: ['locations', organizationId],
     queryFn: async () => {
-      // Get the user's organization_id first
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return [];
+      if (!organizationId) return [];
 
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('organization_id')
-        .eq('id', user.id)
-        .single();
-
-      if (!profile?.organization_id) return [];
-
-      // Only fetch locations for the user's organization
       const { data, error } = await supabase
         .from('locations')
         .select('*')
-        .eq('organization_id', profile.organization_id)
+        .eq('organization_id', organizationId)
         .order('is_default', { ascending: false })
         .order('name');
 
       if (error) throw error;
       return data as Location[];
     },
+    enabled: !!organizationId,
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes
   });
