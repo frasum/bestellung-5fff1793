@@ -72,14 +72,19 @@ interface CreateOrderInput {
 // locationId: string = filter by specific location
 // locationId: null = load all orders (no location filter)
 // locationId: undefined = load all orders (no location filter)
-export const useOrders = (locationId?: string | null) => {
+export const useOrders = (locationId?: string | null, organizationId?: string | null) => {
   return useQuery({
-    queryKey: ['orders', locationId],
+    queryKey: ['orders', organizationId, locationId],
     queryFn: async () => {
       let query = supabase
         .from('orders')
         .select('*, suppliers(id, name, email, customer_number), order_items(*), locations(id, name, short_code), employees(id, name)')
         .order('created_at', { ascending: false });
+
+      // Always filter by organization if provided (RLS handles this but explicit is safer)
+      if (organizationId) {
+        query = query.eq('organization_id', organizationId);
+      }
 
       if (locationId) {
         // Show ONLY orders for this specific location (strict filtering)
@@ -92,6 +97,7 @@ export const useOrders = (locationId?: string | null) => {
       if (error) throw error;
       return data as Order[];
     },
+    enabled: !!organizationId,
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes
   });

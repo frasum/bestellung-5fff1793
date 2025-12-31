@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
+import { useOrganization } from '@/hooks/useOrganization';
 
 export interface InventorySession {
   id: string;
@@ -43,43 +44,58 @@ export interface InventorySessionWithStats extends InventorySession {
 }
 
 export const useInventorySessions = () => {
+  const { data: organizationId } = useOrganization();
+
   return useQuery({
-    queryKey: ['inventory-sessions'],
+    queryKey: ['inventory-sessions', organizationId],
     queryFn: async () => {
+      if (!organizationId) return [];
+
       const { data, error } = await supabase
         .from('inventory_sessions')
         .select('*')
+        .eq('organization_id', organizationId)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
       return data as InventorySession[];
     },
+    enabled: !!organizationId,
     staleTime: 2 * 60 * 1000, // 2 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes
   });
 };
 
 export const useInventorySessionsWithStats = () => {
+  const { data: organizationId } = useOrganization();
+
   return useQuery({
-    queryKey: ['inventory-sessions-with-stats'],
+    queryKey: ['inventory-sessions-with-stats', organizationId],
     queryFn: async () => {
-      // Get all sessions
+      if (!organizationId) return [];
+
+      // Get all sessions for this organization
       const { data: sessions, error: sessionsError } = await supabase
         .from('inventory_sessions')
         .select('*')
+        .eq('organization_id', organizationId)
         .order('created_at', { ascending: false });
 
       if (sessionsError) throw sessionsError;
 
-      // Get all inventory items with unit prices
+      if (!sessions || sessions.length === 0) return [];
+
+      // Get all inventory items for these sessions with unit prices
+      const sessionIds = sessions.map(s => s.id);
       const { data: allItems, error: itemsError } = await supabase
         .from('inventory_items')
-        .select('session_id, storage_1, storage_2, unit_price');
+        .select('session_id, storage_1, storage_2, unit_price')
+        .in('session_id', sessionIds);
 
       if (itemsError) throw itemsError;
 
       // Calculate stats per session
-      const sessionsWithStats: InventorySessionWithStats[] = (sessions || []).map(session => {
+      const sessionsWithStats: InventorySessionWithStats[] = sessions.map(session => {
         const sessionItems = allItems?.filter(item => item.session_id === session.id) || [];
         const itemCount = sessionItems.length;
         const totalValue = sessionItems.reduce((sum, item) => {
@@ -97,6 +113,7 @@ export const useInventorySessionsWithStats = () => {
 
       return sessionsWithStats;
     },
+    enabled: !!organizationId,
   });
 };
 

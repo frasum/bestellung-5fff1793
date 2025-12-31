@@ -38,10 +38,19 @@ export const LocationProvider = ({ children }: { children: ReactNode }) => {
       localStorage.removeItem('activeLocationId');
       setActiveLocationState(null);
       
-      // Invalidate all org-bound queries to force refetch with correct org
+      // Invalidate ALL org-bound queries to force refetch with correct org
       queryClient.invalidateQueries({ queryKey: ['locations'] });
       queryClient.invalidateQueries({ queryKey: ['suppliers'] });
-      queryClient.invalidateQueries({ queryKey: ['articles', organizationId] });
+      queryClient.invalidateQueries({ queryKey: ['articles'] });
+      queryClient.invalidateQueries({ queryKey: ['categories'] });
+      queryClient.invalidateQueries({ queryKey: ['employees'] });
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+      queryClient.invalidateQueries({ queryKey: ['inventory-sessions'] });
+      queryClient.invalidateQueries({ queryKey: ['inventory-sessions-with-stats'] });
+      queryClient.invalidateQueries({ queryKey: ['suggested-articles'] });
+      queryClient.invalidateQueries({ queryKey: ['suggested-articles-count'] });
+      queryClient.invalidateQueries({ queryKey: ['cart-drafts'] });
+      queryClient.invalidateQueries({ queryKey: ['price-history'] });
     }
   }, [organizationId, activeLocation, queryClient]);
 

@@ -2,11 +2,14 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useOrganization } from '@/hooks/useOrganization';
 import { useLocationContext } from '@/contexts/LocationContext';
 import { supabase } from '@/integrations/supabase/client';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Badge } from '@/components/ui/badge';
-import { AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { AlertTriangle, CheckCircle2, RefreshCcw } from 'lucide-react';
+import { toast } from 'sonner';
 
 export function OrgDebugBar() {
+  const queryClient = useQueryClient();
   const { user } = useAuth();
   const { data: organizationId, isLoading: orgLoading } = useOrganization();
   const { activeLocation, locations } = useLocationContext();
@@ -31,18 +34,56 @@ export function OrgDebugBar() {
 
   const isMismatch = organizationId && activeLocation && activeLocation.organization_id !== organizationId;
 
+  const handleClearAllCache = () => {
+    // Invalidate all organization-bound queries
+    queryClient.invalidateQueries({ queryKey: ['locations'] });
+    queryClient.invalidateQueries({ queryKey: ['suppliers'] });
+    queryClient.invalidateQueries({ queryKey: ['articles'] });
+    queryClient.invalidateQueries({ queryKey: ['categories'] });
+    queryClient.invalidateQueries({ queryKey: ['employees'] });
+    queryClient.invalidateQueries({ queryKey: ['orders'] });
+    queryClient.invalidateQueries({ queryKey: ['inventory-sessions'] });
+    queryClient.invalidateQueries({ queryKey: ['inventory-sessions-with-stats'] });
+    queryClient.invalidateQueries({ queryKey: ['suggested-articles'] });
+    queryClient.invalidateQueries({ queryKey: ['suggested-articles-count'] });
+    queryClient.invalidateQueries({ queryKey: ['cart-drafts'] });
+    queryClient.invalidateQueries({ queryKey: ['price-history'] });
+    queryClient.invalidateQueries({ queryKey: ['organization'] });
+    
+    // Clear localStorage location to force fresh selection
+    localStorage.removeItem('activeLocationId');
+    
+    toast.success('Cache geleert - Seite wird neu geladen...');
+    
+    // Force reload after short delay
+    setTimeout(() => {
+      window.location.reload();
+    }, 500);
+  };
+
   return (
     <div className="bg-muted/50 border border-border rounded-lg p-3 mb-4 text-xs font-mono">
-      <div className="flex items-center gap-2 mb-2">
-        {isMismatch ? (
-          <AlertTriangle className="h-4 w-4 text-destructive" />
-        ) : (
-          <CheckCircle2 className="h-4 w-4 text-green-500" />
-        )}
-        <span className="font-semibold text-foreground">Org/Location Debug</span>
-        {isMismatch && (
-          <Badge variant="destructive" className="text-[10px]">MISMATCH!</Badge>
-        )}
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center gap-2">
+          {isMismatch ? (
+            <AlertTriangle className="h-4 w-4 text-destructive" />
+          ) : (
+            <CheckCircle2 className="h-4 w-4 text-green-500" />
+          )}
+          <span className="font-semibold text-foreground">Org/Location Debug</span>
+          {isMismatch && (
+            <Badge variant="destructive" className="text-[10px]">MISMATCH!</Badge>
+          )}
+        </div>
+        <Button 
+          variant="outline" 
+          size="sm" 
+          onClick={handleClearAllCache}
+          className="h-6 text-[10px] px-2"
+        >
+          <RefreshCcw className="h-3 w-3 mr-1" />
+          Clear Cache
+        </Button>
       </div>
       
       <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-muted-foreground">

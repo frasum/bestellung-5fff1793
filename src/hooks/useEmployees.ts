@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useOrganization } from '@/hooks/useOrganization';
 
 export interface Employee {
   id: string;
@@ -48,29 +49,23 @@ export interface UpdateEmployeeInput {
 }
 
 export function useEmployees() {
+  const { data: organizationId } = useOrganization();
+
   return useQuery({
-    queryKey: ['employees'],
+    queryKey: ['employees', organizationId],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Not authenticated');
-
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('organization_id')
-        .eq('id', user.id)
-        .single();
-
-      if (!profile?.organization_id) throw new Error('No organization');
+      if (!organizationId) return [];
 
       const { data, error } = await supabase
         .from('employees')
         .select('*')
-        .eq('organization_id', profile.organization_id)
+        .eq('organization_id', organizationId)
         .order('name', { ascending: true });
 
       if (error) throw error;
       return data as Employee[];
     },
+    enabled: !!organizationId,
   });
 }
 
