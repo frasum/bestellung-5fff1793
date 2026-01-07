@@ -8,6 +8,7 @@ import { PageHeader } from '@/components/layout/PageHeader';
 import { useOrders, useUpdateOrderStatus, useDeleteTestOrders, useUpdateOrderLocation, useResendOrderEmail, Order } from '@/hooks/useOrders';
 import { useCartDrafts, useDeleteCartDraft, CartDraft } from '@/hooks/useCartDrafts';
 import { useLocations } from '@/hooks/useLocations';
+import { useOrganization } from '@/hooks/useOrganization';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -79,6 +80,7 @@ const Orders = () => {
   const { user, loading: authLoading } = useAuth();
   const { activeLocation } = useLocationContext();
   const { data: locations } = useLocations();
+  const { data: organizationId } = useOrganization();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { t, i18n } = useTranslation();
@@ -94,7 +96,7 @@ const Orders = () => {
   }, [locationFilter, activeLocation?.id]);
   
   // Orders state
-  const { data: orders, isLoading } = useOrders(queryLocationId);
+  const { data: orders, isLoading } = useOrders(queryLocationId, organizationId);
   const updateStatus = useUpdateOrderStatus();
   const updateLocation = useUpdateOrderLocation();
   const deleteTestOrders = useDeleteTestOrders();
