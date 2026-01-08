@@ -12,7 +12,7 @@ import { useSupplierLocations } from '@/hooks/useSupplierLocations';
 import { useSubscriptionLimits } from '@/hooks/useSubscriptionLimits';
 import { UpgradeDialog } from '@/components/subscription/UpgradeDialog';
 import { useArticles, useCreateArticle, useUpdateArticle, useDeleteArticle, useBulkUpdateArticles, Article, ArticleInput } from '@/hooks/useArticles';
-import { useArticleLocationsByLocation } from '@/hooks/useArticleLocations';
+import { useArticleLocationsByLocation, useCreateArticleLocationsForNewArticle } from '@/hooks/useArticleLocations';
 import { Plus, Loader2, Package, Merge } from 'lucide-react';
 import { useArticleImageUpload } from '@/hooks/useArticleImageUpload';
 import { useSendSupplierInvitation } from '@/hooks/useSupplierPortal';
@@ -215,6 +215,7 @@ const Suppliers = () => {
   const deleteArticle = useDeleteArticle();
   const bulkUpdateArticles = useBulkUpdateArticles();
   const importArticles = useImportArticles();
+  const createArticleLocations = useCreateArticleLocationsForNewArticle();
   const {
     sendInvitation,
     loading: sendingInvitation
@@ -527,7 +528,7 @@ const Suppliers = () => {
   } = useArticleImageUpload();
 
   // Article submit handler
-  const handleArticleSubmit = async (data: ArticleFormData, capturedImage?: string, imageCleared?: boolean) => {
+  const handleArticleSubmit = async (data: ArticleFormData, capturedImage?: string, imageCleared?: boolean, locationIds?: string[]) => {
     const input: ArticleInput = {
       supplier_id: data.supplier_id,
       name: data.name,
@@ -570,15 +571,24 @@ const Suppliers = () => {
         ...input
       });
     } else {
-      // Create article first, then upload image
+      // Create article first, then upload image and set locations
       const newArticle = await createArticle.mutateAsync(input);
-      if (capturedImage && capturedImage.startsWith('data:') && newArticle) {
-        const imageUrl = await uploadImage(capturedImage, newArticle.organization_id, newArticle.id);
-        if (imageUrl) {
-          await updateArticle.mutateAsync({
-            id: newArticle.id,
-            image_url: imageUrl
-          });
+      if (newArticle) {
+        // Create article locations for selected locations
+        await createArticleLocations.mutateAsync({
+          articleId: newArticle.id,
+          organizationId: newArticle.organization_id,
+          locationIds: locationIds,
+        });
+        
+        if (capturedImage && capturedImage.startsWith('data:')) {
+          const imageUrl = await uploadImage(capturedImage, newArticle.organization_id, newArticle.id);
+          if (imageUrl) {
+            await updateArticle.mutateAsync({
+              id: newArticle.id,
+              image_url: imageUrl
+            });
+          }
         }
       }
     }
