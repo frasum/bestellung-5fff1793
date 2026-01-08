@@ -1943,6 +1943,7 @@ export type Database = {
           completed_at: string | null
           created_at: string
           id: string
+          location_id: string
           name: string
           notes: string | null
           organization_id: string
@@ -1953,6 +1954,7 @@ export type Database = {
           completed_at?: string | null
           created_at?: string
           id?: string
+          location_id: string
           name?: string
           notes?: string | null
           organization_id: string
@@ -1963,6 +1965,7 @@ export type Database = {
           completed_at?: string | null
           created_at?: string
           id?: string
+          location_id?: string
           name?: string
           notes?: string | null
           organization_id?: string
@@ -1970,6 +1973,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "inventory_sessions_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "inventory_sessions_organization_id_fkey"
             columns: ["organization_id"]

@@ -14,6 +14,7 @@ import {
   InventorySessionWithStats,
 } from '@/hooks/useInventory';
 import { useUnits, useCreateUnit, useDeleteUnit } from '@/hooks/useUnits';
+import { useLocationContext } from '@/contexts/LocationContext';
 import { useCategories } from '@/hooks/useCategories';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -96,6 +97,7 @@ const DEFAULT_UNITS = ['kg', 'g', 'Stück', 'Stk', 'Liter', 'l', '0,75l', '1,0l'
 
 export const InventoryTab = () => {
   const { t, i18n } = useTranslation();
+  const { activeLocation } = useLocationContext();
 
   const getDateLocale = () => {
     const locales: Record<string, Locale> = { de, en: enUS, fr, it, th, vi };
@@ -139,6 +141,11 @@ export const InventoryTab = () => {
   const updateArticle = useUpdateArticle();
   const createUnit = useCreateUnit();
   const deleteUnit = useDeleteUnit();
+
+  // Reset active session when location changes
+  useEffect(() => {
+    setActiveSessionId(null);
+  }, [activeLocation?.id]);
 
   const commonUnits = useMemo(() => {
     const dbUnits = units?.map(u => u.name) || [];
