@@ -65,6 +65,13 @@
     "easyOrderTab": "Easy Order",
     "noLocation": "No location"
   },
+  "pwa": {
+    "installTitle": "Install EasyOrder",
+    "installDescription": "Add to home screen for quick access",
+    "iosInstructions": "Tap \"Share\" then \"Add to Home Screen\"",
+    "install": "Install",
+    "later": "Later"
+  },
   "common": {
     "save": "Save",
     "unknown": "Unknown",

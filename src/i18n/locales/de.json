@@ -65,6 +65,13 @@
     "easyOrderTab": "Easy Order",
     "noLocation": "Kein Standort"
   },
+  "pwa": {
+    "installTitle": "EasyOrder installieren",
+    "installDescription": "Für schnellen Zugriff zum Startbildschirm hinzufügen",
+    "iosInstructions": "Tippe auf \"Teilen\" und dann \"Zum Home-Bildschirm\"",
+    "install": "Installieren",
+    "later": "Später"
+  },
   "common": {
     "save": "Speichern",
     "unknown": "Unbekannt",
