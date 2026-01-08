@@ -33,7 +33,7 @@ interface ArticleFormDialogProps {
   suppliers: Supplier[];
   categories: string[];
   units: string[];
-  onSubmit: (data: ArticleFormData, capturedImage?: string, imageCleared?: boolean) => Promise<void>;
+  onSubmit: (data: ArticleFormData, capturedImage?: string, imageCleared?: boolean, locationIds?: string[]) => Promise<void>;
   isPending: boolean;
   onDelete?: (article: Article) => void;
 }
@@ -220,18 +220,23 @@ export const ArticleFormDialog = ({
   }, [open, editingArticle, articleLocationIds.join(','), locationIds.join(',')]);
 
   const handleSubmit = async (data: ArticleFormData) => {
-    await onSubmit(data, capturedImage || undefined, imageCleared);
-    
-    // Update article locations if editing and there are multiple locations
-    if (editingArticle && locations.length > 1) {
-      try {
-        await updateArticleLocations.mutateAsync({
-          articleId: editingArticle.id,
-          locationIds: selectedLocationIds,
-        });
-      } catch (error) {
-        console.error('Failed to update article locations:', error);
+    // Pass locationIds for new articles, update locations directly for edits
+    if (editingArticle) {
+      await onSubmit(data, capturedImage || undefined, imageCleared);
+      // Update article locations if there are multiple locations
+      if (locations.length > 1) {
+        try {
+          await updateArticleLocations.mutateAsync({
+            articleId: editingArticle.id,
+            locationIds: selectedLocationIds,
+          });
+        } catch (error) {
+          console.error('Failed to update article locations:', error);
+        }
       }
+    } else {
+      // For new articles, pass the selected location IDs
+      await onSubmit(data, capturedImage || undefined, imageCleared, selectedLocationIds);
     }
     
     form.reset();

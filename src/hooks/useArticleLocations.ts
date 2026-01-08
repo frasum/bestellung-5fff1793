@@ -138,28 +138,40 @@ export const useUpdateArticleLocations = () => {
   });
 };
 
-// Create article location when a new article is created (assigns to all locations by default)
+// Create article locations when a new article is created
+// If locationIds provided, use those; otherwise assign to all locations
 export const useCreateArticleLocationsForNewArticle = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ articleId, organizationId }: { articleId: string; organizationId: string }) => {
-      // Get all locations for this organization
-      const { data: locations, error: locError } = await supabase
-        .from('locations')
-        .select('id')
-        .eq('organization_id', organizationId);
+    mutationFn: async ({ articleId, organizationId, locationIds }: { 
+      articleId: string; 
+      organizationId: string;
+      locationIds?: string[];
+    }) => {
+      let targetLocationIds = locationIds;
+      
+      // If no specific locations provided, get all locations for this organization
+      if (!targetLocationIds || targetLocationIds.length === 0) {
+        const { data: locations, error: locError } = await supabase
+          .from('locations')
+          .select('id')
+          .eq('organization_id', organizationId);
 
-      if (locError) throw locError;
+        if (locError) throw locError;
+        if (!locations || locations.length === 0) return;
+        
+        targetLocationIds = locations.map(loc => loc.id);
+      }
 
-      if (!locations || locations.length === 0) return;
+      if (!targetLocationIds || targetLocationIds.length === 0) return;
 
-      // Insert article_locations for each location
+      // Insert article_locations for each selected location
       const { error: insertError } = await supabase
         .from('article_locations')
-        .insert(locations.map(loc => ({
+        .insert(targetLocationIds.map(locationId => ({
           article_id: articleId,
-          location_id: loc.id,
+          location_id: locationId,
         })));
 
       if (insertError) throw insertError;
