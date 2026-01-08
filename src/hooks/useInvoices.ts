@@ -3,6 +3,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { useEffect, useState, useCallback } from 'react';
+// Timeout in milliseconds for stuck invoices (10 minutes)
+const INVOICE_PROCESSING_TIMEOUT_MS = 10 * 60 * 1000;
+
 export interface Invoice {
   id: string;
   organization_id: string;
@@ -22,10 +25,22 @@ export interface Invoice {
   parsed_data: any;
   created_at: string;
   updated_at: string;
+  analysis_started_at?: string | null;
+  analysis_updated_at?: string | null;
   suppliers?: { name: string } | null;
   orders?: { order_number: string } | null;
   invoice_items?: InvoiceItem[];
   invoice_discrepancies?: InvoiceDiscrepancy[];
+}
+
+// Helper to check if an invoice is stuck in processing
+export function isInvoiceStuck(invoice: Invoice): boolean {
+  if (invoice.status !== 'processing') return false;
+  
+  const updatedAt = new Date(invoice.updated_at).getTime();
+  const now = Date.now();
+  
+  return (now - updatedAt) > INVOICE_PROCESSING_TIMEOUT_MS;
 }
 
 export interface InvoiceItem {
@@ -403,6 +418,17 @@ export function useReanalyzeInvoice() {
 
   return useMutation({
     mutationFn: async (invoiceId: string) => {
+      // First reset the invoice status to pending to allow re-analysis
+      await supabase
+        .from('invoices')
+        .update({ 
+          status: 'pending',
+          analysis_error: null,
+          analysis_started_at: null,
+          analysis_updated_at: null,
+        })
+        .eq('id', invoiceId);
+      
       const { data, error } = await supabase.functions.invoke('parse-invoice', {
         body: { invoiceId },
       });
@@ -423,6 +449,42 @@ export function useReanalyzeInvoice() {
       console.error('Reanalyze error:', error);
       toast({
         title: 'Analyse fehlgeschlagen',
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
+  });
+}
+
+// Hook to reset stuck invoices
+export function useResetStuckInvoice() {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (invoiceId: string) => {
+      const { error } = await supabase
+        .from('invoices')
+        .update({ 
+          status: 'pending',
+          analysis_error: null,
+          analysis_started_at: null,
+          analysis_updated_at: null,
+        })
+        .eq('id', invoiceId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['invoices'] });
+      toast({
+        title: 'Rechnung zurückgesetzt',
+        description: 'Die Rechnung kann jetzt erneut analysiert werden.',
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: 'Fehler',
         description: error.message,
         variant: 'destructive',
       });

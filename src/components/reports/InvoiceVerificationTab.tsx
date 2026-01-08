@@ -78,6 +78,8 @@ import {
   useCreateArticlesFromInvoice,
   useDeleteInvoice,
   useInvoiceProcessingStatus,
+  useResetStuckInvoice,
+  isInvoiceStuck,
   Invoice,
   InvoiceDiscrepancy,
 } from '@/hooks/useInvoices';
@@ -113,9 +115,10 @@ interface ParsedItem {
   totalPrice?: number;
 }
 
-const statusConfig: Record<Invoice['status'], { icon: React.ElementType; color: string; label: string }> = {
+const statusConfig: Record<Invoice['status'] | 'stuck', { icon: React.ElementType; color: string; label: string }> = {
   pending: { icon: Clock, color: 'bg-muted text-muted-foreground', label: 'Neu' },
   processing: { icon: Loader2, color: 'bg-blue-500/20 text-blue-600', label: 'Wird analysiert' },
+  stuck: { icon: AlertTriangle, color: 'bg-destructive/20 text-destructive', label: 'Hängt - Erneut versuchen?' },
   matched: { icon: CheckCircle2, color: 'bg-success/20 text-success', label: 'Abgeglichen' },
   discrepancy: { icon: AlertTriangle, color: 'bg-warning/20 text-warning', label: 'Abweichungen' },
   approved: { icon: CheckCircle2, color: 'bg-success/20 text-success', label: 'Freigegeben' },
@@ -156,6 +159,7 @@ export function InvoiceVerificationTab() {
     return () => clearInterval(timer);
   }, []);
   const reanalyzeInvoice = useReanalyzeInvoice();
+  const resetStuckInvoice = useResetStuckInvoice();
   const createArticlesFromInvoice = useCreateArticlesFromInvoice();
   const deleteInvoice = useDeleteInvoice();
   
@@ -836,7 +840,10 @@ function InvoiceRow({
   showSupplierName,
   t,
 }: InvoiceRowProps) {
-  const StatusIcon = statusConfig[invoice.status].icon;
+  // Check if invoice is stuck in processing
+  const isStuck = isInvoiceStuck(invoice);
+  const displayStatus = isStuck ? 'stuck' : invoice.status;
+  const StatusIcon = statusConfig[displayStatus].icon;
   const discrepancyCount = invoice.invoice_discrepancies?.filter(d => !d.is_resolved).length || 0;
 
   // Get items from invoice_items or fall back to parsed_data
@@ -875,9 +882,20 @@ function InvoiceRow({
                     {invoice.suppliers?.name || t('invoices.unknownSupplier', 'Unbekannter Lieferant')}
                   </span>
                 )}
-                <Badge variant="outline" className={cn('text-xs', statusConfig[invoice.status].color)}>
-                  <StatusIcon className={cn('h-3 w-3 mr-1', invoice.status === 'processing' && 'animate-spin')} />
-                  {statusConfig[invoice.status].label}
+                <Badge 
+                  variant="outline" 
+                  className={cn(
+                    'text-xs', 
+                    statusConfig[displayStatus].color,
+                    isStuck && 'cursor-pointer hover:bg-destructive/30'
+                  )}
+                  onClick={isStuck ? (e) => {
+                    e.stopPropagation();
+                    onReanalyze(invoice.id);
+                  } : undefined}
+                >
+                  <StatusIcon className={cn('h-3 w-3 mr-1', invoice.status === 'processing' && !isStuck && 'animate-spin')} />
+                  {statusConfig[displayStatus].label}
                 </Badge>
               </div>
               <div className="text-xs text-muted-foreground mt-0.5 flex items-center gap-2">
