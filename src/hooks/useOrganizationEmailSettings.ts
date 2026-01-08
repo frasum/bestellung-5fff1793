@@ -12,6 +12,7 @@ export interface OrganizationEmailSettings {
   mailbox: string;
   is_active: boolean;
   last_checked_at: string | null;
+  last_error: string | null;
   created_at: string;
   updated_at: string;
   // Note: imap_password_encrypted is not exposed to frontend
@@ -34,20 +35,20 @@ export function useOrganizationEmailSettings() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('organization_email_settings')
-        .select('id, organization_id, imap_host, imap_port, imap_user, mailbox, is_active, last_checked_at, created_at, updated_at')
-        .single();
+        .select('id, organization_id, imap_host, imap_port, imap_user, mailbox, is_active, last_checked_at, last_error, created_at, updated_at')
+        .maybeSingle();
 
       if (error) {
-        if (error.code === 'PGRST116') {
-          // No settings found - return null
-          return null;
-        }
+        console.error('Error loading email settings:', error);
         throw error;
       }
 
-      return data as OrganizationEmailSettings;
+      console.log('Loaded email settings:', data ? { id: data.id, imap_host: data.imap_host, is_active: data.is_active } : 'null');
+      return data as OrganizationEmailSettings | null;
     },
     enabled: !!session,
+    refetchOnMount: 'always',
+    staleTime: 0,
   });
 }
 
@@ -111,14 +112,14 @@ export function useTestEmailConnection() {
 
       return data;
     },
-    onSuccess: (data) => {
-      if (data.success) {
-        toast.success(`Verbindung erfolgreich! ${data.messageCount ?? 0} E-Mails im Postfach.`);
+    onSuccess: (data: { success?: boolean; message?: string }) => {
+      if (data?.success) {
+        toast.success(data.message || 'Host erreichbar');
       }
     },
     onError: (error: Error) => {
-      console.error('Connection test failed:', error);
-      toast.error(`Verbindungstest fehlgeschlagen: ${error.message}`);
+      console.error('Host validation failed:', error);
+      toast.error(`Host-Prüfung fehlgeschlagen: ${error.message}`);
     },
   });
 }

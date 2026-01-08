@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Mail, Server, Lock, Inbox, RefreshCw, CheckCircle2, XCircle, Loader2 } from 'lucide-react';
+import { Mail, Server, Lock, Inbox, RefreshCw, CheckCircle2, XCircle, Loader2, AlertTriangle, Globe } from 'lucide-react';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 
@@ -269,17 +269,32 @@ export function InvoiceEmailSettingsTab() {
             </div>
 
             {/* Status Section */}
-            {settings?.last_checked_at && (
-              <div className="rounded-lg border bg-muted/50 p-4">
-                <div className="flex items-center gap-2 text-sm">
-                  <CheckCircle2 className="h-4 w-4 text-green-500" />
-                  <span className="text-muted-foreground">
-                    Letzter erfolgreicher Abruf:{' '}
-                    <span className="font-medium text-foreground">
-                      {format(new Date(settings.last_checked_at), "dd. MMMM yyyy 'um' HH:mm 'Uhr'", { locale: de })}
-                    </span>
-                  </span>
-                </div>
+            {(settings?.last_checked_at || settings?.last_error) && (
+              <div className="space-y-2">
+                {settings?.last_checked_at && (
+                  <div className="rounded-lg border bg-muted/50 p-4">
+                    <div className="flex items-center gap-2 text-sm">
+                      <CheckCircle2 className="h-4 w-4 text-green-500" />
+                      <span className="text-muted-foreground">
+                        Letzter erfolgreicher Abruf:{' '}
+                        <span className="font-medium text-foreground">
+                          {format(new Date(settings.last_checked_at), "dd. MMMM yyyy 'um' HH:mm 'Uhr'", { locale: de })}
+                        </span>
+                      </span>
+                    </div>
+                  </div>
+                )}
+                {settings?.last_error && (
+                  <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4">
+                    <div className="flex items-start gap-2 text-sm">
+                      <AlertTriangle className="h-4 w-4 text-destructive mt-0.5 flex-shrink-0" />
+                      <div>
+                        <span className="font-medium text-destructive">Letzter Fehler:</span>
+                        <p className="text-muted-foreground mt-1">{settings.last_error}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
@@ -289,14 +304,14 @@ export function InvoiceEmailSettingsTab() {
                 type="button"
                 variant="outline"
                 onClick={handleTestConnection}
-                disabled={testConnection.isPending || !form.getValues('imap_host') || !form.getValues('imap_user')}
+                disabled={testConnection.isPending || !form.getValues('imap_host')}
               >
                 {testConnection.isPending ? (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 ) : (
-                  <RefreshCw className="mr-2 h-4 w-4" />
+                  <Globe className="mr-2 h-4 w-4" />
                 )}
-                Verbindung testen
+                Host prüfen
               </Button>
 
               <Button 

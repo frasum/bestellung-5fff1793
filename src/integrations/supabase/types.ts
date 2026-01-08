@@ -2674,6 +2674,7 @@ export type Database = {
           imap_user: string
           is_active: boolean | null
           last_checked_at: string | null
+          last_error: string | null
           mailbox: string | null
           organization_id: string | null
           updated_at: string | null
@@ -2687,6 +2688,7 @@ export type Database = {
           imap_user: string
           is_active?: boolean | null
           last_checked_at?: string | null
+          last_error?: string | null
           mailbox?: string | null
           organization_id?: string | null
           updated_at?: string | null
@@ -2700,6 +2702,7 @@ export type Database = {
           imap_user?: string
           is_active?: boolean | null
           last_checked_at?: string | null
+          last_error?: string | null
           mailbox?: string | null
           organization_id?: string | null
           updated_at?: string | null
