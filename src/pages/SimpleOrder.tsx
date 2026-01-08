@@ -26,6 +26,7 @@ import { VoiceOrderMode } from '@/components/simple-order/VoiceOrderMode';
 import { FreeItem } from '@/components/simple-order/FreeItemDialog';
 import { PhotoCaptureTab } from '@/components/simple-order/PhotoCaptureTab';
 import { WineCatalogView } from '@/components/simple-order/WineCatalogView';
+import { PWAInstallPrompt } from '@/components/simple-order/PWAInstallPrompt';
 
 interface Article {
   id: string;
@@ -1113,6 +1114,9 @@ const SimpleOrder = () => {
           />
         </>
       )}
+      
+      {/* PWA Install Prompt */}
+      <PWAInstallPrompt />
     </div>
   );
 };
