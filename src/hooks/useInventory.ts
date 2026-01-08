@@ -3,10 +3,12 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
 import { useOrganization } from '@/hooks/useOrganization';
+import { useLocationContext } from '@/contexts/LocationContext';
 
 export interface InventorySession {
   id: string;
   organization_id: string;
+  location_id: string;
   user_id: string;
   name: string;
   status: 'in_progress' | 'completed';
@@ -45,40 +47,44 @@ export interface InventorySessionWithStats extends InventorySession {
 
 export const useInventorySessions = () => {
   const { data: organizationId } = useOrganization();
+  const { activeLocation } = useLocationContext();
 
   return useQuery({
-    queryKey: ['inventory-sessions', organizationId],
+    queryKey: ['inventory-sessions', organizationId, activeLocation?.id],
     queryFn: async () => {
-      if (!organizationId) return [];
+      if (!organizationId || !activeLocation) return [];
 
       const { data, error } = await supabase
         .from('inventory_sessions')
         .select('*')
         .eq('organization_id', organizationId)
+        .eq('location_id', activeLocation.id)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
       return data as InventorySession[];
     },
-    enabled: !!organizationId,
-    staleTime: 2 * 60 * 1000, // 2 minutes
-    gcTime: 10 * 60 * 1000, // 10 minutes
+    enabled: !!organizationId && !!activeLocation,
+    staleTime: 2 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
   });
 };
 
 export const useInventorySessionsWithStats = () => {
   const { data: organizationId } = useOrganization();
+  const { activeLocation } = useLocationContext();
 
   return useQuery({
-    queryKey: ['inventory-sessions-with-stats', organizationId],
+    queryKey: ['inventory-sessions-with-stats', organizationId, activeLocation?.id],
     queryFn: async () => {
-      if (!organizationId) return [];
+      if (!organizationId || !activeLocation) return [];
 
-      // Get all sessions for this organization
+      // Get all sessions for this organization and location
       const { data: sessions, error: sessionsError } = await supabase
         .from('inventory_sessions')
         .select('*')
         .eq('organization_id', organizationId)
+        .eq('location_id', activeLocation.id)
         .order('created_at', { ascending: false });
 
       if (sessionsError) throw sessionsError;
@@ -113,7 +119,7 @@ export const useInventorySessionsWithStats = () => {
 
       return sessionsWithStats;
     },
-    enabled: !!organizationId,
+    enabled: !!organizationId && !!activeLocation,
   });
 };
 
@@ -166,9 +172,12 @@ export const useInventoryItems = (sessionId: string | null) => {
 export const useCreateInventorySession = () => {
   const queryClient = useQueryClient();
   const { user } = useAuth();
+  const { activeLocation } = useLocationContext();
 
   return useMutation({
     mutationFn: async ({ name, notes }: { name: string; notes?: string }) => {
+      if (!activeLocation) throw new Error('No location selected');
+
       const { data: profile } = await supabase
         .from('profiles')
         .select('organization_id')
@@ -183,6 +192,7 @@ export const useCreateInventorySession = () => {
           name,
           notes,
           organization_id: profile.organization_id,
+          location_id: activeLocation.id,
           user_id: user?.id,
         })
         .select()
@@ -193,6 +203,7 @@ export const useCreateInventorySession = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['inventory-sessions'] });
+      queryClient.invalidateQueries({ queryKey: ['inventory-sessions-with-stats'] });
       toast.success('Inventur gestartet');
     },
     onError: () => {
