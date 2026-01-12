@@ -11,6 +11,7 @@ import { useArticles } from '@/hooks/useArticles';
 import { useInventorySessions, useInventoryItems } from '@/hooks/useInventory';
 import { useLocations } from '@/hooks/useLocations';
 import { useLocationContext } from '@/contexts/LocationContext';
+import { useOrganization } from '@/hooks/useOrganization';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -39,10 +40,11 @@ const RecentOrdersCard = () => {
   const {
     activeLocation
   } = useLocationContext();
+  const { data: organizationId } = useOrganization();
   const {
     data: orders,
     isLoading
-  } = useOrders(activeLocation?.id);
+  } = useOrders(activeLocation?.id, organizationId);
   const {
     data: locations
   } = useLocations();
@@ -162,6 +164,7 @@ const QuickOverviewKPIs = () => {
   const {
     activeLocation
   } = useLocationContext();
+  const { data: organizationId } = useOrganization();
   const {
     data: suppliers,
     isLoading: suppliersLoading
@@ -173,7 +176,7 @@ const QuickOverviewKPIs = () => {
   const {
     data: orders,
     isLoading: ordersLoading
-  } = useOrders(activeLocation?.id);
+  } = useOrders(activeLocation?.id, organizationId);
   const {
     data: sessions,
     isLoading: sessionsLoading
@@ -273,10 +276,11 @@ const Reports = () => {
   const {
     activeLocation
   } = useLocationContext();
+  const { data: organizationId } = useOrganization();
   const {
     data: orders,
     isLoading
-  } = useOrders(activeLocation?.id);
+  } = useOrders(activeLocation?.id, organizationId);
   const {
     data: annualRevenue,
     isLoading: revenueLoading
