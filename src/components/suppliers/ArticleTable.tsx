@@ -173,7 +173,7 @@ export const ArticleTable = ({
               <Fragment>
                 <CollapsibleTrigger asChild>
                   <TableRow className="bg-muted/50 cursor-pointer">
-                    <TableCell colSpan={advancedViewEnabled ? 6 : 5} className="py-2 px-4">
+                    <TableCell colSpan={advancedViewEnabled ? 7 : 6} className="py-2 px-4">
                       <div className="flex items-center gap-2">
                         <ChevronRight className={cn("h-4 w-4 transition-transform", openSuppliers.has(group.supplier.id) && "rotate-90")} />
                         <span className="font-semibold text-sm text-foreground">{group.supplier.name}</span>
@@ -321,6 +321,12 @@ export const ArticleTable = ({
                             <p className="break-words line-clamp-2 max-w-[200px]" title={article.description || ''}>{article.description || '-'}</p>
                           </TableCell>
                           <TableCell className="hidden sm:table-cell text-muted-foreground py-2">{article.suppliers?.name}</TableCell>
+                          {/* STÜCK/BE Spalte */}
+                          <TableCell className="text-center text-muted-foreground py-2 w-20">
+                            {(article as any).packaging_unit && (article as any).packaging_unit > 1 
+                              ? `${(article as any).packaging_unit}x` 
+                              : '-'}
+                          </TableCell>
                           <TableCell className="text-right font-medium py-2">
                             <div className="flex flex-col items-end gap-0.5">
                               <div className="flex items-center justify-end gap-1">
