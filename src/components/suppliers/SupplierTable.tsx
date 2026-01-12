@@ -251,7 +251,7 @@ export const SupplierTable = ({
                 </TableRow>
                 {isExpanded && supplierArticles.length > 0 && (
                   <TableRow className="bg-muted/30">
-                    <TableCell colSpan={multiSelectEnabled ? 5 : 4} className="p-0">
+                    <TableCell colSpan={multiSelectEnabled ? 6 : 5} className="p-0">
                       <div className="p-4 pl-16">
                         <Table>
                           <TableHeader>
@@ -260,6 +260,7 @@ export const SupplierTable = ({
                               <TableHead className="h-8 text-xs">Artikel</TableHead>
                               <TableHead className="h-8 text-xs hidden md:table-cell">Beschreibung</TableHead>
                               <TableHead className="h-8 text-xs">Einheit</TableHead>
+                              <TableHead className="h-8 text-xs text-center">Stück/BE</TableHead>
                               <TableHead className="h-8 text-xs text-right">Preis (€)</TableHead>
                               <TableHead className="h-8 text-xs text-right w-[60px]"></TableHead>
                             </TableRow>
@@ -372,6 +373,11 @@ export const SupplierTable = ({
                                   </TableCell>
                                   <TableCell className="py-1.5 text-sm">
                                     {article.unit}
+                                  </TableCell>
+                                  <TableCell className="py-1.5 text-center text-sm text-muted-foreground">
+                                    {article.packaging_unit && article.packaging_unit > 1 
+                                      ? `${article.packaging_unit}x` 
+                                      : '-'}
                                   </TableCell>
                                   <TableCell className="py-1.5 text-right text-sm">
                                     {Number(article.price).toFixed(2)}
