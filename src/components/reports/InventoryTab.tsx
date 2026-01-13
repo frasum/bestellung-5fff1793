@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useArticles, useUpdateArticle } from '@/hooks/useArticles';
+import { useArticles, useUpdateArticle, useCreateArticle, useDeleteArticle, Article, ArticleInput } from '@/hooks/useArticles';
 import { useSuppliers } from '@/hooks/useSuppliers';
 import {
   useInventorySessionsWithStats,
@@ -89,6 +89,8 @@ import { generateInventoryListPdf, exportInventoryToExcel } from '@/lib/inventor
 import { toast } from 'sonner';
 import { InventoryComparisonDialog } from './InventoryComparisonDialog';
 import { MergeArticlesDialog } from '@/components/suppliers/MergeArticlesDialog';
+import { ArticleFormDialog } from '@/components/suppliers/ArticleFormDialog';
+import { ArticleFormData } from '@/components/suppliers/schemas';
 import { cn } from '@/lib/utils';
 
 interface LocalInventoryItem {
@@ -132,6 +134,12 @@ export const InventoryTab = () => {
   
   const [openPriceSuppliers, setOpenPriceSuppliers] = useState<Set<string>>(new Set());
   const [openInventorySuppliers, setOpenInventorySuppliers] = useState<Set<string>>(new Set());
+  
+  // Article CRUD state
+  const [showArticleDialog, setShowArticleDialog] = useState(false);
+  const [editingArticle, setEditingArticle] = useState<Article | null>(null);
+  const [preselectedSupplierId, setPreselectedSupplierId] = useState<string | null>(null);
+  const [deleteArticleId, setDeleteArticleId] = useState<string | null>(null);
 
   const { data: articles, isLoading: articlesLoading } = useArticles();
   const { data: suppliers } = useSuppliers();
@@ -146,6 +154,8 @@ export const InventoryTab = () => {
   const bulkUpsertItems = useBulkUpsertInventoryItems();
   const deleteSession = useDeleteInventorySession();
   const updateArticle = useUpdateArticle();
+  const createArticle = useCreateArticle();
+  const deleteArticle = useDeleteArticle();
   const createUnit = useCreateUnit();
   const deleteUnit = useDeleteUnit();
   const upsertItem = useUpsertInventoryItem();
@@ -567,6 +577,61 @@ export const InventoryTab = () => {
     setShowMergeArticlesDialog(true);
   };
 
+  // Article CRUD handlers
+  const handleOpenNewArticle = (supplierId: string) => {
+    setEditingArticle(null);
+    setPreselectedSupplierId(supplierId);
+    setShowArticleDialog(true);
+  };
+
+  const handleOpenEditArticle = (article: Article) => {
+    setEditingArticle(article);
+    setPreselectedSupplierId(null);
+    setShowArticleDialog(true);
+  };
+
+  const handleSaveArticle = async (
+    data: ArticleFormData,
+    capturedImage?: string,
+    imageCleared?: boolean,
+    locationIds?: string[]
+  ) => {
+    // Convert form data (strings) to proper types for ArticleInput
+    const articleData: ArticleInput = {
+      supplier_id: preselectedSupplierId || data.supplier_id,
+      name: data.name || '',
+      description: data.description,
+      sku: data.sku,
+      unit: data.unit || 'Stk',
+      price: parseFloat(data.price) || 0,
+      category: data.category,
+      origin_country: data.origin_country,
+      packaging_unit: data.packaging_unit ? parseInt(data.packaging_unit) : undefined,
+      order_unit_id: data.order_unit_id || null,
+      reference_price: data.reference_price ? parseFloat(data.reference_price.replace(',', '.')) : undefined,
+      reference_unit: data.reference_unit,
+      selling_price: data.selling_price ? parseFloat(data.selling_price) : undefined,
+      grape_variety: data.grape_variety,
+      flavor_profile: data.flavor_profile,
+      food_pairings: data.food_pairings,
+    };
+
+    if (editingArticle) {
+      await updateArticle.mutateAsync({ id: editingArticle.id, ...articleData });
+    } else {
+      await createArticle.mutateAsync(articleData);
+    }
+    setShowArticleDialog(false);
+    setEditingArticle(null);
+    setPreselectedSupplierId(null);
+  };
+
+  const handleConfirmDeleteArticle = async () => {
+    if (!deleteArticleId) return;
+    await deleteArticle.mutateAsync(deleteArticleId);
+    setDeleteArticleId(null);
+  };
+
   return (
     <div className="space-y-6">
       {/* Session Dropdown + Actions */}
@@ -975,6 +1040,18 @@ export const InventoryTab = () => {
                                 className="h-8 w-8"
                                 onClick={(e) => {
                                   e.stopPropagation();
+                                  handleOpenNewArticle(group.supplier.id);
+                                }}
+                                title={t('articles.addNew', 'Neuen Artikel hinzufügen')}
+                              >
+                                <Plus className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8"
+                                onClick={(e) => {
+                                  e.stopPropagation();
                                   handleOpenMergeArticles(group.supplier.id);
                                 }}
                                 title={t('articles.mergeTitle', 'Artikel zusammenführen')}
@@ -994,7 +1071,12 @@ export const InventoryTab = () => {
                                 <div key={article.id} className="p-4">
                                   <div className="flex justify-between items-start mb-3">
                                     <div className="min-w-0 flex-1">
-                                      <p className="font-medium text-foreground text-sm">{article.name}</p>
+                                      <p 
+                                        className="font-medium text-foreground text-sm cursor-pointer hover:underline hover:text-accent transition-colors"
+                                        onClick={() => handleOpenEditArticle(article)}
+                                      >
+                                        {article.name}
+                                      </p>
                                       {article.sku && (
                                         <p className="text-xs text-muted-foreground">{article.sku}</p>
                                       )}
@@ -1002,14 +1084,24 @@ export const InventoryTab = () => {
                                         {article.unit}
                                       </p>
                                     </div>
-                                    {values.total > 0 && (
-                                      <div className="text-right flex-shrink-0 ml-2">
-                                        <p className="font-semibold text-sm">{values.total.toFixed(1)}</p>
-                                        <p className="text-xs text-muted-foreground">
-                                          €{(values.total * article.price).toFixed(2)}
-                                        </p>
-                                      </div>
-                                    )}
+                                    <div className="flex items-center gap-2 ml-2">
+                                      {values.total > 0 && (
+                                        <div className="text-right flex-shrink-0">
+                                          <p className="font-semibold text-sm">{values.total.toFixed(1)}</p>
+                                          <p className="text-xs text-muted-foreground">
+                                            €{(values.total * article.price).toFixed(2)}
+                                          </p>
+                                        </div>
+                                      )}
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-8 w-8 text-destructive"
+                                        onClick={() => setDeleteArticleId(article.id)}
+                                      >
+                                        <Trash2 className="w-4 h-4" />
+                                      </Button>
+                                    </div>
                                   </div>
                                   <div className="grid grid-cols-2 gap-3">
                                     <div className="relative">
@@ -1085,16 +1177,22 @@ export const InventoryTab = () => {
                                   <TableHead className="w-28 text-center">{t('inventory.storage2')}</TableHead>
                                   <TableHead className="w-20 text-right">{t('inventory.sum')}</TableHead>
                                   <TableHead className="w-24 text-right">{t('inventory.value')}</TableHead>
+                                  <TableHead className="w-12"></TableHead>
                                 </TableRow>
                               </TableHeader>
                               <TableBody>
                                 {group.articles.map((article) => {
                                   const values = getItemValues(article.id);
-                                  return (
-                                    <TableRow key={article.id}>
+                                    return (
+                                    <TableRow key={article.id} className="group">
                                       <TableCell>
                                         <div>
-                                          <span className="font-medium">{article.name}</span>
+                                          <span 
+                                            className="font-medium cursor-pointer hover:underline hover:text-accent transition-colors"
+                                            onClick={() => handleOpenEditArticle(article)}
+                                          >
+                                            {article.name}
+                                          </span>
                                           {article.sku && (
                                             <span className="block text-xs text-muted-foreground">
                                               {article.sku}
@@ -1168,6 +1266,16 @@ export const InventoryTab = () => {
                                           ? `€${(values.total * article.price).toFixed(2)}`
                                           : '-'}
                                       </TableCell>
+                                      <TableCell>
+                                        <Button
+                                          variant="ghost"
+                                          size="icon"
+                                          className="h-7 w-7 text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
+                                          onClick={() => setDeleteArticleId(article.id)}
+                                        >
+                                          <Trash2 className="w-3.5 h-3.5" />
+                                        </Button>
+                                      </TableCell>
                                     </TableRow>
                                   );
                                 })}
@@ -1227,18 +1335,32 @@ export const InventoryTab = () => {
                                 </p>
                               </div>
                             </div>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleOpenMergeArticles(group.supplier.id);
-                              }}
-                              title={t('articles.mergeTitle', 'Artikel zusammenführen')}
-                            >
-                              <Merge className="w-4 h-4" />
-                            </Button>
+                            <div className="flex items-center gap-2">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleOpenNewArticle(group.supplier.id);
+                                }}
+                                title={t('articles.addNew', 'Neuen Artikel hinzufügen')}
+                              >
+                                <Plus className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleOpenMergeArticles(group.supplier.id);
+                                }}
+                                title={t('articles.mergeTitle', 'Artikel zusammenführen')}
+                              >
+                                <Merge className="w-4 h-4" />
+                              </Button>
+                            </div>
                           </div>
                         </CardHeader>
                       </CollapsibleTrigger>
@@ -1249,7 +1371,12 @@ export const InventoryTab = () => {
                               <div key={article.id} className="p-4">
                                 <div className="flex justify-between items-start">
                                   <div className="min-w-0 flex-1">
-                                    <p className="font-medium text-foreground text-sm">{article.name}</p>
+                                    <p 
+                                      className="font-medium text-foreground text-sm cursor-pointer hover:underline hover:text-accent transition-colors"
+                                      onClick={() => handleOpenEditArticle(article)}
+                                    >
+                                      {article.name}
+                                    </p>
                                     {article.sku && (
                                       <p className="text-xs text-muted-foreground">{article.sku}</p>
                                     )}
@@ -1262,7 +1389,7 @@ export const InventoryTab = () => {
                                       </Badge>
                                     )}
                                   </div>
-                                  <div className="flex-shrink-0 ml-3">
+                                  <div className="flex items-center gap-2 flex-shrink-0 ml-3">
                                     {editingPriceId === article.id ? (
                                       <div className="flex items-center gap-1">
                                         <Input
@@ -1299,12 +1426,22 @@ export const InventoryTab = () => {
                                         </Button>
                                       </div>
                                     ) : (
-                                      <button
-                                        onClick={() => handleStartPriceEdit(article.id, article.price)}
-                                        className="font-semibold text-lg hover:text-primary cursor-pointer transition-colors px-3 py-2 rounded-lg hover:bg-muted min-w-[80px] text-right"
-                                      >
-                                        €{article.price.toFixed(2)}
-                                      </button>
+                                      <>
+                                        <button
+                                          onClick={() => handleStartPriceEdit(article.id, article.price)}
+                                          className="font-semibold text-lg hover:text-primary cursor-pointer transition-colors px-3 py-2 rounded-lg hover:bg-muted min-w-[80px] text-right"
+                                        >
+                                          €{article.price.toFixed(2)}
+                                        </button>
+                                        <Button
+                                          variant="ghost"
+                                          size="icon"
+                                          className="h-8 w-8 text-destructive"
+                                          onClick={() => setDeleteArticleId(article.id)}
+                                        >
+                                          <Trash2 className="w-4 h-4" />
+                                        </Button>
+                                      </>
                                     )}
                                   </div>
                                 </div>
@@ -1320,14 +1457,20 @@ export const InventoryTab = () => {
                                   <TableHead>{t('inventory.category')}</TableHead>
                                   <TableHead className="w-24">{t('inventory.unit')}</TableHead>
                                   <TableHead className="w-36 text-right">{t('inventory.price')}</TableHead>
+                                  <TableHead className="w-12"></TableHead>
                                 </TableRow>
                               </TableHeader>
                               <TableBody>
                                 {group.articles.map((article) => (
-                                  <TableRow key={article.id}>
+                                  <TableRow key={article.id} className="group">
                                     <TableCell>
                                       <div>
-                                        <span className="font-medium">{article.name}</span>
+                                        <span 
+                                          className="font-medium cursor-pointer hover:underline hover:text-accent transition-colors"
+                                          onClick={() => handleOpenEditArticle(article)}
+                                        >
+                                          {article.name}
+                                        </span>
                                         {article.sku && (
                                           <span className="block text-xs text-muted-foreground">
                                             {article.sku}
@@ -1654,6 +1797,44 @@ export const InventoryTab = () => {
         })) || []}
         preselectedSupplierId={mergeArticlesSupplierId}
       />
+
+      {/* Article Form Dialog */}
+      <ArticleFormDialog
+        open={showArticleDialog}
+        onOpenChange={setShowArticleDialog}
+        editingArticle={editingArticle}
+        preselectedSupplierId={preselectedSupplierId}
+        suppliers={suppliers || []}
+        categories={categories}
+        units={commonUnits}
+        onSubmit={handleSaveArticle}
+        isPending={createArticle.isPending || updateArticle.isPending}
+        onDelete={(article) => setDeleteArticleId(article.id)}
+      />
+
+      {/* Delete Article Confirmation */}
+      <AlertDialog
+        open={!!deleteArticleId}
+        onOpenChange={(open) => !open && setDeleteArticleId(null)}
+      >
+        <AlertDialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-lg">
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('articles.deleteTitle', 'Artikel löschen')}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t('articles.deleteConfirmation', 'Möchten Sie diesen Artikel wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.')}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex-col sm:flex-row gap-2">
+            <AlertDialogCancel className="w-full sm:w-auto h-10 sm:h-9">{t('common.cancel')}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmDeleteArticle}
+              className="w-full sm:w-auto h-10 sm:h-9 bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {t('common.delete')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
