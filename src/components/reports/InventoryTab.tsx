@@ -80,6 +80,7 @@ import {
   ChevronRight,
   GitCompareArrows,
   Loader2,
+  Merge,
 } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { format, Locale } from 'date-fns';
@@ -87,6 +88,7 @@ import { de, enUS, fr, it, th, vi } from 'date-fns/locale';
 import { generateInventoryListPdf, exportInventoryToExcel } from '@/lib/inventoryListPdf';
 import { toast } from 'sonner';
 import { InventoryComparisonDialog } from './InventoryComparisonDialog';
+import { MergeArticlesDialog } from '@/components/suppliers/MergeArticlesDialog';
 import { cn } from '@/lib/utils';
 
 interface LocalInventoryItem {
@@ -112,6 +114,8 @@ export const InventoryTab = () => {
   const [showNewSessionDialog, setShowNewSessionDialog] = useState(false);
   const [showHistoryDialog, setShowHistoryDialog] = useState(false);
   const [showComparisonDialog, setShowComparisonDialog] = useState(false);
+  const [showMergeArticlesDialog, setShowMergeArticlesDialog] = useState(false);
+  const [mergeArticlesSupplierId, setMergeArticlesSupplierId] = useState<string | null>(null);
   const [deleteSessionId, setDeleteSessionId] = useState<string | null>(null);
   const [newSessionName, setNewSessionName] = useState('');
   const [supplierFilter, setSupplierFilter] = useState<string>('all');
@@ -558,6 +562,11 @@ export const InventoryTab = () => {
 
   const activeFilterCount = (supplierFilter !== 'all' ? 1 : 0) + (categoryFilter !== 'all' ? 1 : 0);
 
+  const handleOpenMergeArticles = (supplierId: string) => {
+    setMergeArticlesSupplierId(supplierId);
+    setShowMergeArticlesDialog(true);
+  };
+
   return (
     <div className="space-y-6">
       {/* Session Dropdown + Actions */}
@@ -953,12 +962,26 @@ export const InventoryTab = () => {
                                 </p>
                               </div>
                             </div>
-                            {group.capturedCount > 0 && group.capturedCount === group.articles.length && (
-                              <Badge variant="default" className="bg-green-600">
-                                <CheckCircle className="w-3 h-3 mr-1" />
-                                {t('inventory.complete')}
-                              </Badge>
-                            )}
+                            <div className="flex items-center gap-2">
+                              {group.capturedCount > 0 && group.capturedCount === group.articles.length && (
+                                <Badge variant="default" className="bg-green-600">
+                                  <CheckCircle className="w-3 h-3 mr-1" />
+                                  {t('inventory.complete')}
+                                </Badge>
+                              )}
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleOpenMergeArticles(group.supplier.id);
+                                }}
+                                title={t('articles.mergeTitle', 'Artikel zusammenführen')}
+                              >
+                                <Merge className="w-4 h-4" />
+                              </Button>
+                            </div>
                           </div>
                         </CardHeader>
                       </CollapsibleTrigger>
@@ -1204,6 +1227,18 @@ export const InventoryTab = () => {
                                 </p>
                               </div>
                             </div>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleOpenMergeArticles(group.supplier.id);
+                              }}
+                              title={t('articles.mergeTitle', 'Artikel zusammenführen')}
+                            >
+                              <Merge className="w-4 h-4" />
+                            </Button>
                           </div>
                         </CardHeader>
                       </CollapsibleTrigger>
@@ -1599,6 +1634,25 @@ export const InventoryTab = () => {
         onOpenChange={setShowComparisonDialog}
         sessions={sessions || []}
         currentSessionId={activeSessionId}
+      />
+
+      {/* Merge Articles Dialog */}
+      <MergeArticlesDialog
+        open={showMergeArticlesDialog}
+        onOpenChange={(open) => {
+          setShowMergeArticlesDialog(open);
+          if (!open) setMergeArticlesSupplierId(null);
+        }}
+        suppliers={suppliers || []}
+        articles={articles?.map(a => ({
+          id: a.id,
+          name: a.name,
+          sku: a.sku,
+          unit: a.unit,
+          price: a.price,
+          supplier_id: a.supplier_id,
+        })) || []}
+        preselectedSupplierId={mergeArticlesSupplierId}
       />
     </div>
   );

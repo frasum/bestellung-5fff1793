@@ -4784,6 +4784,10 @@ export type Database = {
         Returns: boolean
       }
       is_super_admin: { Args: { _user_id: string }; Returns: boolean }
+      merge_articles: {
+        Args: { source_id: string; target_id: string }
+        Returns: undefined
+      }
       merge_suppliers: {
         Args: { source_id: string; target_id: string }
         Returns: undefined
