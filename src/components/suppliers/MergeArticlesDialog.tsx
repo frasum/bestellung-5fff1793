@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Dialog,
@@ -55,6 +55,13 @@ export function MergeArticlesDialog({
   const [selectedSupplierId, setSelectedSupplierId] = useState<string>(preselectedSupplierId || '');
   const [sourceId, setSourceId] = useState<string>('');
   const [targetId, setTargetId] = useState<string>('');
+
+  // Synchronize selectedSupplierId when dialog opens with preselectedSupplierId
+  useEffect(() => {
+    if (open && preselectedSupplierId) {
+      setSelectedSupplierId(preselectedSupplierId);
+    }
+  }, [open, preselectedSupplierId]);
 
   // Filter articles by selected supplier
   const supplierArticles = useMemo(() => {
