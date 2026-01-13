@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useArticles, useUpdateArticle } from '@/hooks/useArticles';
 import { useSuppliers } from '@/hooks/useSuppliers';
@@ -10,6 +10,7 @@ import {
   useUpdateInventorySession,
   useBulkUpsertInventoryItems,
   useDeleteInventorySession,
+  useUpsertInventoryItem,
   InventoryItem,
   InventorySessionWithStats,
 } from '@/hooks/useInventory';
@@ -78,6 +79,7 @@ import {
   ChevronDown,
   ChevronRight,
   GitCompareArrows,
+  Loader2,
 } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { format, Locale } from 'date-fns';
@@ -85,6 +87,7 @@ import { de, enUS, fr, it, th, vi } from 'date-fns/locale';
 import { generateInventoryListPdf, exportInventoryToExcel } from '@/lib/inventoryListPdf';
 import { toast } from 'sonner';
 import { InventoryComparisonDialog } from './InventoryComparisonDialog';
+import { cn } from '@/lib/utils';
 
 interface LocalInventoryItem {
   article_id: string;
@@ -141,6 +144,19 @@ export const InventoryTab = () => {
   const updateArticle = useUpdateArticle();
   const createUnit = useCreateUnit();
   const deleteUnit = useDeleteUnit();
+  const upsertItem = useUpsertInventoryItem();
+  
+  // Auto-save tracking
+  const [savingArticleIds, setSavingArticleIds] = useState<Set<string>>(new Set());
+  const [savedArticleIds, setSavedArticleIds] = useState<Set<string>>(new Set());
+  const saveTimeouts = useRef<Map<string, NodeJS.Timeout>>(new Map());
+  
+  // Cleanup timeouts on unmount
+  useEffect(() => {
+    return () => {
+      saveTimeouts.current.forEach(timeout => clearTimeout(timeout));
+    };
+  }, []);
 
   // Reset active session when location changes
   useEffect(() => {
@@ -333,6 +349,53 @@ export const InventoryTab = () => {
     setShowNewSessionDialog(false);
     setNewSessionName('');
   };
+  
+  // Auto-save function with debouncing
+  const autoSaveItem = useCallback((articleId: string, storage_1: number, storage_2: number) => {
+    if (!activeSessionId || activeSession?.status === 'completed') return;
+    
+    // Clear existing timeout for this article
+    const existingTimeout = saveTimeouts.current.get(articleId);
+    if (existingTimeout) clearTimeout(existingTimeout);
+    
+    // Set new timeout
+    const timeout = setTimeout(async () => {
+      const article = articles?.find(a => a.id === articleId);
+      setSavingArticleIds(prev => new Set(prev).add(articleId));
+      
+      try {
+        await upsertItem.mutateAsync({
+          session_id: activeSessionId,
+          article_id: articleId,
+          storage_1,
+          storage_2,
+          unit_price: article?.price || 0,
+        });
+        
+        setSavedArticleIds(prev => new Set(prev).add(articleId));
+        // Remove saved indicator after 2 seconds
+        setTimeout(() => {
+          setSavedArticleIds(prev => {
+            const next = new Set(prev);
+            next.delete(articleId);
+            return next;
+          });
+        }, 2000);
+      } catch (error) {
+        console.error('Auto-save error:', error);
+        toast.error(t('inventory.saveError', 'Fehler beim Speichern'));
+      } finally {
+        setSavingArticleIds(prev => {
+          const next = new Set(prev);
+          next.delete(articleId);
+          return next;
+        });
+        saveTimeouts.current.delete(articleId);
+      }
+    }, 800); // 800ms delay for debouncing
+    
+    saveTimeouts.current.set(articleId, timeout);
+  }, [activeSessionId, activeSession?.status, articles, upsertItem, t]);
 
   const handleItemChange = (
     articleId: string,
@@ -347,7 +410,12 @@ export const InventoryTab = () => {
         storage_1: 0,
         storage_2: 0,
       };
-      newMap.set(articleId, { ...existing, [field]: numValue });
+      const updated = { ...existing, [field]: numValue };
+      newMap.set(articleId, updated);
+      
+      // Trigger auto-save
+      autoSaveItem(articleId, updated.storage_1, updated.storage_2);
+      
       return newMap;
     });
     setHasChanges(true);
@@ -921,37 +989,61 @@ export const InventoryTab = () => {
                                     )}
                                   </div>
                                   <div className="grid grid-cols-2 gap-3">
-                                    <div>
+                                    <div className="relative">
                                       <Label className="text-xs text-muted-foreground mb-1 block">{t('inventory.storage1')}</Label>
-                                      <Input
-                                        type="number"
-                                        inputMode="decimal"
-                                        min="0"
-                                        step="0.01"
-                                        value={values.storage_1 || ''}
-                                        onChange={(e) =>
-                                          handleItemChange(article.id, 'storage_1', e.target.value)
-                                        }
-                                        onFocus={(e) => e.target.select()}
-                                        className="h-11 text-center text-base [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                                        placeholder="0"
-                                      />
+                                      <div className="relative">
+                                        <Input
+                                          type="number"
+                                          inputMode="decimal"
+                                          min="0"
+                                          step="0.01"
+                                          value={values.storage_1 || ''}
+                                          onChange={(e) =>
+                                            handleItemChange(article.id, 'storage_1', e.target.value)
+                                          }
+                                          onFocus={(e) => e.target.select()}
+                                          className={cn(
+                                            "h-11 text-center text-base [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none pr-8",
+                                            savingArticleIds.has(article.id) && "border-amber-400",
+                                            savedArticleIds.has(article.id) && "border-green-500"
+                                          )}
+                                          placeholder="0"
+                                        />
+                                        {savingArticleIds.has(article.id) && (
+                                          <Loader2 className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 animate-spin text-amber-500" />
+                                        )}
+                                        {savedArticleIds.has(article.id) && !savingArticleIds.has(article.id) && (
+                                          <Check className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-green-500" />
+                                        )}
+                                      </div>
                                     </div>
-                                    <div>
+                                    <div className="relative">
                                       <Label className="text-xs text-muted-foreground mb-1 block">{t('inventory.storage2')}</Label>
-                                      <Input
-                                        type="number"
-                                        inputMode="decimal"
-                                        min="0"
-                                        step="0.01"
-                                        value={values.storage_2 || ''}
-                                        onChange={(e) =>
-                                          handleItemChange(article.id, 'storage_2', e.target.value)
-                                        }
-                                        onFocus={(e) => e.target.select()}
-                                        className="h-11 text-center text-base [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                                        placeholder="0"
-                                      />
+                                      <div className="relative">
+                                        <Input
+                                          type="number"
+                                          inputMode="decimal"
+                                          min="0"
+                                          step="0.01"
+                                          value={values.storage_2 || ''}
+                                          onChange={(e) =>
+                                            handleItemChange(article.id, 'storage_2', e.target.value)
+                                          }
+                                          onFocus={(e) => e.target.select()}
+                                          className={cn(
+                                            "h-11 text-center text-base [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none pr-8",
+                                            savingArticleIds.has(article.id) && "border-amber-400",
+                                            savedArticleIds.has(article.id) && "border-green-500"
+                                          )}
+                                          placeholder="0"
+                                        />
+                                        {savingArticleIds.has(article.id) && (
+                                          <Loader2 className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 animate-spin text-amber-500" />
+                                        )}
+                                        {savedArticleIds.has(article.id) && !savingArticleIds.has(article.id) && (
+                                          <Check className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-green-500" />
+                                        )}
+                                      </div>
                                     </div>
                                   </div>
                                 </div>
@@ -994,32 +1086,56 @@ export const InventoryTab = () => {
                                         €{article.price.toFixed(2)}
                                       </TableCell>
                                       <TableCell>
-                                        <Input
-                                          type="number"
-                                          min="0"
-                                          step="0.01"
-                                          value={values.storage_1 || ''}
-                                          onChange={(e) =>
-                                            handleItemChange(article.id, 'storage_1', e.target.value)
-                                          }
-                                          onFocus={(e) => e.target.select()}
-                                          className="w-full text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                                          placeholder="0"
-                                        />
+                                        <div className="relative">
+                                          <Input
+                                            type="number"
+                                            min="0"
+                                            step="0.01"
+                                            value={values.storage_1 || ''}
+                                            onChange={(e) =>
+                                              handleItemChange(article.id, 'storage_1', e.target.value)
+                                            }
+                                            onFocus={(e) => e.target.select()}
+                                            className={cn(
+                                              "w-full text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none pr-7",
+                                              savingArticleIds.has(article.id) && "border-amber-400",
+                                              savedArticleIds.has(article.id) && "border-green-500"
+                                            )}
+                                            placeholder="0"
+                                          />
+                                          {savingArticleIds.has(article.id) && (
+                                            <Loader2 className="absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 animate-spin text-amber-500" />
+                                          )}
+                                          {savedArticleIds.has(article.id) && !savingArticleIds.has(article.id) && (
+                                            <Check className="absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 text-green-500" />
+                                          )}
+                                        </div>
                                       </TableCell>
                                       <TableCell>
-                                        <Input
-                                          type="number"
-                                          min="0"
-                                          step="0.01"
-                                          value={values.storage_2 || ''}
-                                          onChange={(e) =>
-                                            handleItemChange(article.id, 'storage_2', e.target.value)
-                                          }
-                                          onFocus={(e) => e.target.select()}
-                                          className="w-full text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                                          placeholder="0"
-                                        />
+                                        <div className="relative">
+                                          <Input
+                                            type="number"
+                                            min="0"
+                                            step="0.01"
+                                            value={values.storage_2 || ''}
+                                            onChange={(e) =>
+                                              handleItemChange(article.id, 'storage_2', e.target.value)
+                                            }
+                                            onFocus={(e) => e.target.select()}
+                                            className={cn(
+                                              "w-full text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none pr-7",
+                                              savingArticleIds.has(article.id) && "border-amber-400",
+                                              savedArticleIds.has(article.id) && "border-green-500"
+                                            )}
+                                            placeholder="0"
+                                          />
+                                          {savingArticleIds.has(article.id) && (
+                                            <Loader2 className="absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 animate-spin text-amber-500" />
+                                          )}
+                                          {savedArticleIds.has(article.id) && !savingArticleIds.has(article.id) && (
+                                            <Check className="absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 text-green-500" />
+                                          )}
+                                        </div>
                                       </TableCell>
                                       <TableCell className="text-right font-medium">
                                         {values.total > 0 ? values.total.toFixed(1) : '-'}
