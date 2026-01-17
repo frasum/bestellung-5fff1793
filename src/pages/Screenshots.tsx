@@ -27,8 +27,9 @@ const screenshots: Screenshot[] = [
   { id: '01', name: 'Präsentation / Landing Page', filename: '01-presentation.png', category: 'public', description: 'Hauptseite mit Hero-Bereich und Produktübersicht' },
   { id: '02', name: 'Preise', filename: '02-pricing.png', category: 'public', description: 'Übersicht der Abonnement-Pläne und Features' },
   { id: '03', name: 'Login / Anmeldung', filename: '03-auth-login.png', category: 'public', description: 'Benutzer-Anmeldung und Registrierung' },
-  // App Pages
+  // Settings Pages
   { id: '04', name: 'Einstellungen', filename: '04-settings.png', category: 'settings', description: 'Organisations- und Systemeinstellungen' },
+  { id: '05', name: 'Profil', filename: '05-profile.png', category: 'settings', description: 'Benutzerprofil und Passwort-Änderung' },
 ];
 
 const categoryLabels: Record<string, { label: string; color: string }> = {
