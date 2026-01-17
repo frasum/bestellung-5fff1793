@@ -127,7 +127,7 @@ export const useCreateOrder = () => {
       if (orderNumberError) throw orderNumberError;
 
       const totalAmount = input.items.reduce(
-        (sum, item) => sum + Number(item.article.price) * item.quantity,
+        (sum, item) => sum + Number(item.article.price) * (Number(item.article.packaging_unit) || 1) * item.quantity,
         0
       );
 
@@ -184,7 +184,7 @@ export const useCreateOrder = () => {
         unit: item.article.unit,
         order_unit: formatOrderUnit(item.article.order_unit_id) || null,
         unit_price: Number(item.article.price),
-        total_price: Number(item.article.price) * item.quantity,
+        total_price: Number(item.article.price) * (Number(item.article.packaging_unit) || 1) * item.quantity,
         is_free_text_item: false,
       }));
 
@@ -226,7 +226,7 @@ export const useCreateOrder = () => {
               quantity: item.quantity,
               unit: item.article.unit,
               unit_price: Number(item.article.price),
-              total_price: Number(item.article.price) * item.quantity,
+              total_price: Number(item.article.price) * (Number(item.article.packaging_unit) || 1) * item.quantity,
               sku: item.article.sku || undefined,
               packaging_unit: item.article.packaging_unit || undefined,
               order_unit: formatOrderUnit(item.article.order_unit_id),
