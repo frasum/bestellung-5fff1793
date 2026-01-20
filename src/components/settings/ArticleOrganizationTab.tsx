@@ -26,6 +26,7 @@ import { toast } from 'sonner';
 import { ArticleFormDialog } from '@/components/suppliers/ArticleFormDialog';
 import { SupplierFormDialog } from '@/components/suppliers/SupplierFormDialog';
 import { toTitleCase } from '@/lib/utils';
+import { ArticleFormData } from '@/components/suppliers/schemas';
 
 type TopCategory = typeof TOP_CATEGORIES[number];
 
@@ -320,7 +321,7 @@ export const ArticleOrganizationTab = () => {
   };
 
   // Handle article edit submission
-  const handleArticleSubmit = async (data: any, capturedImage?: string, imageCleared?: boolean) => {
+  const handleArticleSubmit = async (data: ArticleFormData, capturedImage?: string, imageCleared?: boolean) => {
     if (editingArticle) {
       await updateArticle.mutateAsync({
         id: editingArticle.id,
