@@ -24,57 +24,36 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from '@/components/ui/alert-dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { format, isAfter, isBefore, startOfDay, endOfDay, subDays, subMonths, Locale } from 'date-fns';
 import { de, enUS, fr } from 'date-fns/locale';
-import { Loader2, Package, CheckCircle2, Clock, Truck, XCircle, Eye, Search, X, ChevronRight, Trash2, FlaskConical, Filter, FileText, ShoppingCart, Calendar, Smartphone, MapPin, Bell, AlertTriangle, Send, User, Plus } from 'lucide-react';
+import { Loader2, Search, ChevronRight, FileText, ShoppingCart, Smartphone, MapPin, Bell, AlertTriangle, Plus, Package } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { SimpleOrderTab } from '@/components/settings/SimpleOrderTab';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
 import { useTranslation } from 'react-i18next';
-import { OrderEmailViewDialog } from '@/components/orders/OrderEmailViewDialog';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
-type DateFilter = 'all' | 'today' | 'week' | 'month' | '3months';
+// Extracted components
+import {
+  DateFilter,
+  EasyOrderGroup,
+  OrdersFilters,
+  TestModeBanner,
+  OrderItem,
+  EasyOrderGroupCard,
+  DraftCard,
+  DeleteDraftDialog,
+  DeleteGroupDialog,
+  LoadDraftDialog,
+  OrderEmailViewDialog,
+  getLocationDisplayName,
+} from '@/components/orders';
 
 const localeMap: Record<string, Locale> = { de, en: enUS, fr };
-
-const statusColors: Record<Order['status'], string> = {
-  pending: 'bg-warning/20 text-warning',
-  confirmed: 'bg-success/20 text-success',
-  processing: 'bg-purple-500/20 text-purple-500',
-  shipped: 'bg-cyan-500/20 text-cyan-500',
-  delivered: 'bg-success/20 text-success',
-  cancelled: 'bg-destructive/20 text-destructive',
-};
-
-const statusIcons: Record<Order['status'], typeof Clock> = {
-  pending: Clock,
-  confirmed: CheckCircle2,
-  processing: Package,
-  shipped: Truck,
-  delivered: CheckCircle2,
-  cancelled: XCircle,
-};
 
 const Orders = () => {
   const { user, loading: authLoading } = useAuth();
@@ -85,10 +64,8 @@ const Orders = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const { t, i18n } = useTranslation();
   
-  // Location filter state: 'active' = current location (default), 'all' = all locations, or specific location id
+  // Location filter state
   const [locationFilter, setLocationFilter] = useState<string>('active');
-  
-  // Compute locationId for query based on filter
   const queryLocationId = useMemo(() => {
     if (locationFilter === 'all') return null;
     if (locationFilter === 'active') return activeLocation?.id;
@@ -106,7 +83,7 @@ const Orders = () => {
   const locale = localeMap[i18n.language] || de;
   const highlightedOrderRef = useRef<HTMLDivElement>(null);
   
-  // Drafts state - default to active location
+  // Drafts state
   const [draftsLocationFilter, setDraftsLocationFilter] = useState<string>('active');
   const showAllDraftLocations = draftsLocationFilter === 'all';
   const draftsQueryLocationId = useMemo(() => {
@@ -116,11 +93,11 @@ const Orders = () => {
   }, [draftsLocationFilter, activeLocation?.id]);
   const { data: drafts, isLoading: draftsLoading } = useCartDrafts(draftsQueryLocationId, showAllDraftLocations);
   
-  // Reset filters when active location changes
   useEffect(() => {
     setLocationFilter('active');
     setDraftsLocationFilter('active');
   }, [activeLocation?.id]);
+  
   const deleteDraft = useDeleteCartDraft();
   const { loadFromDraft, items: cartItems } = useCart();
   const [draftsSearchQuery, setDraftsSearchQuery] = useState('');
@@ -128,11 +105,11 @@ const Orders = () => {
   const [selectedDraft, setSelectedDraft] = useState<CartDraft | null>(null);
   const [loadDialogOpen, setLoadDialogOpen] = useState(false);
   
-  // Tab state from URL
+  // Tab state
   const tabParam = searchParams.get('tab');
   const activeTab = tabParam === 'drafts' ? 'drafts' : tabParam === 'simple-order' ? 'simple-order' : 'orders';
 
-  // Fetch organization info for test mode
+  // Organization test mode
   const { data: orgData } = useQuery({
     queryKey: ['organization-test-mode', user?.id],
     queryFn: async () => {
@@ -154,7 +131,6 @@ const Orders = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<Order['status'] | 'all'>('all');
   const [dateFilter, setDateFilter] = useState<DateFilter>('all');
-
   const hasActiveFilters = searchQuery || statusFilter !== 'all' || dateFilter !== 'all' || locationFilter !== 'active';
 
   const clearFilters = () => {
@@ -164,282 +140,156 @@ const Orders = () => {
     setLocationFilter('active');
   };
 
-  // Count test orders
-  const testOrdersCount = useMemo(() => {
-    if (!orders) return 0;
-    return orders.filter(order => order.is_test_order).length;
-  }, [orders]);
-
-  // Count orders without location
-  const ordersWithoutLocation = useMemo(() => {
-    if (!orders) return [];
-    return orders.filter(order => !order.location_id);
-  }, [orders]);
+  const testOrdersCount = useMemo(() => orders?.filter(order => order.is_test_order).length || 0, [orders]);
+  const ordersWithoutLocation = useMemo(() => orders?.filter(order => !order.location_id) || [], [orders]);
 
   // Filter orders
   const filteredOrders = useMemo(() => {
     if (!orders) return [];
-    
     return orders.filter((order) => {
-      // Search filter
       const searchLower = searchQuery.toLowerCase();
       const matchesSearch = !searchQuery || 
         order.order_number.toLowerCase().includes(searchLower) ||
         order.suppliers?.name?.toLowerCase().includes(searchLower);
-      
-      // Status filter
       const matchesStatus = statusFilter === 'all' || order.status === statusFilter;
-      
-      // Date filter
       let matchesDate = true;
       if (dateFilter !== 'all') {
         const orderDate = new Date(order.created_at);
         const now = new Date();
-        
         switch (dateFilter) {
-          case 'today':
-            matchesDate = isAfter(orderDate, startOfDay(now)) && isBefore(orderDate, endOfDay(now));
-            break;
-          case 'week':
-            matchesDate = isAfter(orderDate, subDays(now, 7));
-            break;
-          case 'month':
-            matchesDate = isAfter(orderDate, subMonths(now, 1));
-            break;
-          case '3months':
-            matchesDate = isAfter(orderDate, subMonths(now, 3));
-            break;
+          case 'today': matchesDate = isAfter(orderDate, startOfDay(now)) && isBefore(orderDate, endOfDay(now)); break;
+          case 'week': matchesDate = isAfter(orderDate, subDays(now, 7)); break;
+          case 'month': matchesDate = isAfter(orderDate, subMonths(now, 1)); break;
+          case '3months': matchesDate = isAfter(orderDate, subMonths(now, 3)); break;
         }
       }
-      
       return matchesSearch && matchesStatus && matchesDate;
     });
   }, [orders, searchQuery, statusFilter, dateFilter]);
 
-  // Group orders by supplier and sort by date within each group
+  // Group orders by supplier
   const groupedOrders = useMemo(() => {
     if (!filteredOrders.length) return new Map<string, Order[]>();
-    
     const grouped = filteredOrders.reduce((acc, order) => {
       const supplierName = order.suppliers?.name || t('common.unknown');
-      if (!acc.has(supplierName)) {
-        acc.set(supplierName, []);
-      }
+      if (!acc.has(supplierName)) acc.set(supplierName, []);
       acc.get(supplierName)!.push(order);
       return acc;
     }, new Map<string, Order[]>());
-    
-    // Sort orders within each group by date (newest first)
     grouped.forEach((supplierOrders) => {
-      supplierOrders.sort((a, b) => 
-        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-      );
+      supplierOrders.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
     });
-    
-    // Sort suppliers alphabetically
     return new Map([...grouped.entries()].sort((a, b) => a[0].localeCompare(b[0])));
-  }, [filteredOrders]);
+  }, [filteredOrders, t]);
 
-  // Track which supplier groups are open (default: all closed)
+  // Collapsible states
   const [openSuppliers, setOpenSuppliers] = useState<Set<string>>(new Set());
-  // Track which individual orders are open (default: all closed)
   const [openOrders, setOpenOrders] = useState<Set<string>>(new Set());
-  // Track highlighted order from URL
   const highlightedOrderId = searchParams.get('orderId');
 
-  // Auto-expand supplier and order when navigating from dashboard
   useEffect(() => {
     if (highlightedOrderId && orders && groupedOrders.size > 0) {
-      // Find the order and its supplier
       const targetOrder = orders.find(o => o.id === highlightedOrderId);
       if (targetOrder) {
         const supplierName = targetOrder.suppliers?.name || t('common.unknown');
-        
-        // Open the supplier group and the specific order
         setOpenSuppliers(prev => new Set([...prev, supplierName]));
         setOpenOrders(prev => new Set([...prev, highlightedOrderId]));
-        
-        // Scroll to the order after a short delay
-        setTimeout(() => {
-          highlightedOrderRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }, 100);
-        
-        // Clear the URL parameter after scrolling
-        setTimeout(() => {
-          setSearchParams({}, { replace: true });
-        }, 2000);
+        setTimeout(() => highlightedOrderRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 100);
+        setTimeout(() => setSearchParams({}, { replace: true }), 2000);
       }
     }
-  }, [highlightedOrderId, orders, groupedOrders]);
+  }, [highlightedOrderId, orders, groupedOrders, t, setSearchParams]);
 
-  const toggleSupplier = (supplierName: string) => {
-    const newOpen = new Set(openSuppliers);
-    if (newOpen.has(supplierName)) {
-      newOpen.delete(supplierName);
-    } else {
-      newOpen.add(supplierName);
-    }
-    setOpenSuppliers(newOpen);
-  };
+  const toggleSupplier = (name: string) => setOpenSuppliers(prev => {
+    const next = new Set(prev);
+    next.has(name) ? next.delete(name) : next.add(name);
+    return next;
+  });
 
-  const toggleOrder = (orderId: string) => {
-    const newOpen = new Set(openOrders);
-    if (newOpen.has(orderId)) {
-      newOpen.delete(orderId);
-    } else {
-      newOpen.add(orderId);
-    }
-    setOpenOrders(newOpen);
-  };
+  const toggleOrder = (id: string) => setOpenOrders(prev => {
+    const next = new Set(prev);
+    next.has(id) ? next.delete(id) : next.add(id);
+    return next;
+  });
 
-  // Get location display name helper
-  const getLocationDisplayName = (loc: { name: string; short_code: string | null }) => {
-    return loc.short_code || loc.name;
-  };
+  // Drafts logic
+  const getDraftTotal = (draft: CartDraft) => draft.items?.reduce((sum, item) => {
+    if (item.article) return sum + Number(item.article.price) * (Number(item.article.packaging_unit) || 1) * item.quantity;
+    return sum;
+  }, 0) || 0;
 
-  // Drafts functions
-  const getDraftTotal = (draft: CartDraft) => {
-    return draft.items?.reduce((sum, item) => {
-      if (item.article) {
-        return sum + Number(item.article.price) * (Number(item.article.packaging_unit) || 1) * item.quantity;
-      }
-      return sum;
-    }, 0) || 0;
-  };
-
-  const filteredDrafts = drafts?.filter(draft => 
-    draft.name.toLowerCase().includes(draftsSearchQuery.toLowerCase())
-  ) || [];
-
-  // Group EasyOrder drafts by employee_id + created_at (within 1 minute window)
-  interface EasyOrderGroup {
-    key: string;
-    employeeName: string;
-    supplierNames: string[];
-    drafts: CartDraft[];
-    totalItems: number;
-    totalPrice: number;
-    desiredDeliveryDate: string | null;
-    location: { id: string; name: string; short_code: string | null } | null;
-    createdAt: string;
-  }
+  const filteredDrafts = drafts?.filter(draft => draft.name.toLowerCase().includes(draftsSearchQuery.toLowerCase())) || [];
 
   const { easyOrderGroups, regularDrafts } = useMemo(() => {
     const easyOrderDrafts = filteredDrafts.filter(d => d.name.startsWith('EasyOrder:'));
     const regularDrafts = filteredDrafts.filter(d => !d.name.startsWith('EasyOrder:'));
-    
-    // Group by employee_id + time window (1 minute)
     const groupsMap = new Map<string, CartDraft[]>();
     easyOrderDrafts.forEach(draft => {
-      const timeKey = Math.floor(new Date(draft.created_at).getTime() / 60000); // 1 minute buckets
+      const timeKey = Math.floor(new Date(draft.created_at).getTime() / 60000);
       const key = `${draft.employee_id || 'unknown'}-${timeKey}`;
       if (!groupsMap.has(key)) groupsMap.set(key, []);
       groupsMap.get(key)!.push(draft);
     });
-    
-    // Convert to EasyOrderGroup array
     const groups: EasyOrderGroup[] = Array.from(groupsMap.entries()).map(([key, drafts]) => {
-      // Extract employee name from first draft name (format: "EasyOrder: NAME" or "EasyOrder: NAME (Supplier)")
       const match = drafts[0].name.match(/^EasyOrder:\s*(.+?)(?:\s*\(|$)/);
       const employeeName = match ? match[1].trim() : 'Unbekannt';
-      
-      // Extract supplier names from each draft
       const supplierNames = drafts.map(draft => {
         const supplierMatch = draft.name.match(/\(([^)]+)\)$/);
         if (supplierMatch) return supplierMatch[1];
         const firstItem = draft.items?.find(i => i.article);
         return firstItem?.article?.suppliers?.name || 'Unbekannt';
       });
-      
-      const totalItems = drafts.reduce((sum, d) => sum + (d.items?.length || 0), 0);
-      const totalPrice = drafts.reduce((sum, d) => sum + getDraftTotal(d), 0);
-      
       return {
-        key,
-        employeeName,
-        supplierNames,
-        drafts,
-        totalItems,
-        totalPrice,
+        key, employeeName, supplierNames, drafts,
+        totalItems: drafts.reduce((sum, d) => sum + (d.items?.length || 0), 0),
+        totalPrice: drafts.reduce((sum, d) => sum + getDraftTotal(d), 0),
         desiredDeliveryDate: drafts[0].desired_delivery_date,
         location: (drafts[0] as { location?: { id: string; name: string; short_code: string | null } }).location || null,
         createdAt: drafts[0].created_at,
       };
     });
-    
-    // Sort groups by creation time (newest first)
     groups.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-    
     return { easyOrderGroups: groups, regularDrafts };
   }, [filteredDrafts]);
 
-  // Track which EasyOrder groups are expanded
   const [openEasyOrderGroups, setOpenEasyOrderGroups] = useState<Set<string>>(new Set());
-  
-  const toggleEasyOrderGroup = (key: string) => {
-    const newOpen = new Set(openEasyOrderGroups);
-    if (newOpen.has(key)) {
-      newOpen.delete(key);
-    } else {
-      newOpen.add(key);
-    }
-    setOpenEasyOrderGroups(newOpen);
-  };
+  const toggleEasyOrderGroup = (key: string) => setOpenEasyOrderGroups(prev => {
+    const next = new Set(prev);
+    next.has(key) ? next.delete(key) : next.add(key);
+    return next;
+  });
 
-  // Load all drafts from an EasyOrder group to cart
+  // Draft loading
   const loadGroupToCart = (group: EasyOrderGroup) => {
-    // Check if cart has items - show confirmation dialog
     if (cartItems.length > 0) {
-      // Use the first draft for the confirmation dialog
       setSelectedDraft(group.drafts[0]);
-      // Store the full group for loading - we'll handle this specially
       (window as unknown as { __pendingEasyOrderGroup?: EasyOrderGroup }).__pendingEasyOrderGroup = group;
       setLoadDialogOpen(true);
       return;
     }
-    
     executeGroupLoad(group);
   };
 
   const executeGroupLoad = (group: EasyOrderGroup) => {
-    // Combine all items from all drafts in the group
     const allItems = group.drafts.flatMap(d => d.items || []);
     const regularItems = allItems.filter(item => item.article && !item.is_free_text_item);
     const freeTextItems = allItems.filter(item => item.is_free_text_item && item.free_text_name);
-    
     if (regularItems.length === 0 && freeTextItems.length === 0) {
       toast.error('Diese Vorbestellungen enthalten keine Artikel.');
       return;
     }
-    
     const mappedFreeItems = freeTextItems.map(item => ({
-      id: item.id,
-      name: item.free_text_name!,
-      unit: item.free_text_unit || 'Stk',
-      quantity: item.quantity,
-      supplier_id: item.supplier_id || '',
+      id: item.id, name: item.free_text_name!, unit: item.free_text_unit || 'Stk',
+      quantity: item.quantity, supplier_id: item.supplier_id || '',
     }));
-    
-    // Load all items to cart (use first draft for delivery date etc.)
     const firstDraft = group.drafts[0];
     if (loadFromDraft) {
       loadFromDraft(
-        regularItems.map(item => ({
-          article: item.article!,
-          quantity: item.quantity,
-        })),
-        firstDraft.desired_delivery_date,
-        firstDraft.desired_time_window,
-        firstDraft.location_id,
-        firstDraft.employee_id,
-        mappedFreeItems
+        regularItems.map(item => ({ article: item.article!, quantity: item.quantity })),
+        firstDraft.desired_delivery_date, firstDraft.desired_time_window,
+        firstDraft.location_id, firstDraft.employee_id, mappedFreeItems
       );
-      
-      // Delete all drafts in the group
-      group.drafts.forEach(draft => {
-        deleteDraft.mutate(draft.id);
-      });
-      
+      group.drafts.forEach(draft => deleteDraft.mutate(draft.id));
       navigate('/cart');
     }
     setLoadDialogOpen(false);
@@ -447,142 +297,53 @@ const Orders = () => {
     (window as unknown as { __pendingEasyOrderGroup?: EasyOrderGroup }).__pendingEasyOrderGroup = undefined;
   };
 
-  // Delete all drafts in an EasyOrder group
   const [deleteGroupDialogOpen, setDeleteGroupDialogOpen] = useState(false);
   const [selectedGroup, setSelectedGroup] = useState<EasyOrderGroup | null>(null);
-
-  const handleDeleteGroup = (group: EasyOrderGroup) => {
-    setSelectedGroup(group);
-    setDeleteGroupDialogOpen(true);
-  };
-
+  const handleDeleteGroup = (group: EasyOrderGroup) => { setSelectedGroup(group); setDeleteGroupDialogOpen(true); };
   const confirmDeleteGroup = () => {
-    if (selectedGroup) {
-      selectedGroup.drafts.forEach(draft => {
-        deleteDraft.mutate(draft.id);
-      });
-    }
+    selectedGroup?.drafts.forEach(draft => deleteDraft.mutate(draft.id));
     setDeleteGroupDialogOpen(false);
     setSelectedGroup(null);
   };
 
-  // Get supplier name from draft
-  const getSupplierFromDraft = (draft: CartDraft): string => {
-    // Try to extract from name (format: "EasyOrder: NAME (Supplier)")
-    const match = draft.name.match(/\(([^)]+)\)$/);
-    if (match) return match[1];
-    // Fallback: use first item's supplier
-    const firstItem = draft.items?.find(i => i.article);
-    return firstItem?.article?.suppliers?.name || 'Unbekannt';
-  };
-
-  const handleDeleteDraft = (draft: CartDraft) => {
-    setSelectedDraft(draft);
-    setDeleteDialogOpen(true);
-  };
-
-  const confirmDeleteDraft = () => {
-    if (selectedDraft) {
-      deleteDraft.mutate(selectedDraft.id);
-    }
-    setDeleteDialogOpen(false);
-    setSelectedDraft(null);
-  };
+  const handleDeleteDraft = (draft: CartDraft) => { setSelectedDraft(draft); setDeleteDialogOpen(true); };
+  const confirmDeleteDraft = () => { selectedDraft && deleteDraft.mutate(selectedDraft.id); setDeleteDialogOpen(false); setSelectedDraft(null); };
 
   const handleLoadDraft = (draft: CartDraft) => {
-    if (cartItems.length > 0) {
-      setSelectedDraft(draft);
-      setLoadDialogOpen(true);
-    } else {
-      loadDraftToCart(draft);
-    }
+    if (cartItems.length > 0) { setSelectedDraft(draft); setLoadDialogOpen(true); }
+    else loadDraftToCart(draft);
   };
 
   const loadDraftToCart = (draft: CartDraft) => {
-    // DEBUG: Log all draft items to understand structure
-    console.log('📦 Draft items raw:', draft.items);
-    console.log('📦 Draft items with is_free_text_item:', draft.items?.map(item => ({
-      id: item.id,
-      is_free_text_item: item.is_free_text_item,
-      free_text_name: item.free_text_name,
-      free_text_unit: item.free_text_unit,
-      supplier_id: item.supplier_id,
-      article: item.article ? 'present' : 'null',
-      quantity: item.quantity
-    })));
-    
-    // 1. Reguläre Artikel (mit article) und freie Artikel (is_free_text_item) trennen
     const regularItems = draft.items?.filter(item => item.article && !item.is_free_text_item) || [];
     const freeTextItems = draft.items?.filter(item => item.is_free_text_item && item.free_text_name) || [];
-    
-    console.log('📦 Regular items count:', regularItems.length);
-    console.log('📦 Free text items count:', freeTextItems.length);
-    console.log('📦 Free text items:', freeTextItems);
-    
     if (regularItems.length === 0 && freeTextItems.length === 0) {
       toast.error('Diese Vorbestellung enthält keine Artikel und kann nicht übernommen werden.');
-      setLoadDialogOpen(false);
-      setSelectedDraft(null);
-      return;
+      setLoadDialogOpen(false); setSelectedDraft(null); return;
     }
-    
     const mappedFreeItems = freeTextItems.map(item => ({
-      id: item.id,
-      name: item.free_text_name!,
-      unit: item.free_text_unit || 'Stk',
-      quantity: item.quantity,
-      supplier_id: item.supplier_id || '',
+      id: item.id, name: item.free_text_name!, unit: item.free_text_unit || 'Stk',
+      quantity: item.quantity, supplier_id: item.supplier_id || '',
     }));
-    console.log('📦 Mapped free items for cart:', mappedFreeItems);
-    
-    // 2. Beide Typen in Warenkorb laden
     if (loadFromDraft) {
       loadFromDraft(
-        regularItems.map(item => ({
-          article: item.article!,
-          quantity: item.quantity,
-        })),
-        draft.desired_delivery_date,
-        draft.desired_time_window,
-        draft.location_id,
-        draft.employee_id,
-        // Freie Artikel als FreeCartItem[]
-        mappedFreeItems
+        regularItems.map(item => ({ article: item.article!, quantity: item.quantity })),
+        draft.desired_delivery_date, draft.desired_time_window,
+        draft.location_id, draft.employee_id, mappedFreeItems
       );
-      
-      // 3. Erst NACH erfolgreichem Laden die Vorbestellung löschen
       deleteDraft.mutate(draft.id);
-      
       navigate('/cart');
     }
-    setLoadDialogOpen(false);
-    setSelectedDraft(null);
-  };
-
-  const getDraftItemCount = (draft: CartDraft) => {
-    return draft.items?.length || 0;
+    setLoadDialogOpen(false); setSelectedDraft(null);
   };
 
   const handleTabChange = (value: string) => {
-    if (value === 'drafts') {
-      setSearchParams({ tab: 'drafts' }, { replace: true });
-    } else if (value === 'simple-order') {
-      setSearchParams({ tab: 'simple-order' }, { replace: true });
-    } else {
-      setSearchParams({}, { replace: true });
-    }
+    if (value === 'drafts') setSearchParams({ tab: 'drafts' }, { replace: true });
+    else if (value === 'simple-order') setSearchParams({ tab: 'simple-order' }, { replace: true });
+    else setSearchParams({}, { replace: true });
   };
 
-  useEffect(() => {
-    if (!authLoading && !user) {
-      navigate('/auth');
-    }
-  }, [user, authLoading, navigate]);
-
-  const handleViewEmail = (order: Order) => {
-    setSelectedOrder(order);
-    setEmailDialogOpen(true);
-  };
+  useEffect(() => { if (!authLoading && !user) navigate('/auth'); }, [user, authLoading, navigate]);
 
   if (authLoading || !user) {
     return (
@@ -592,14 +353,11 @@ const Orders = () => {
     );
   }
 
-  const { sidebarCollapsed, toggleSidebar } = useSidebarContext();
-  
   return (
     <DashboardLayout>
       <div className="space-y-2 md:space-y-5 xl:space-y-6">
         <PageHeader activeTab={activeTab === 'orders' ? undefined : activeTab} />
 
-        {/* Warning for orders without location */}
         {ordersWithoutLocation.length > 0 && locations && locations.length > 1 && (
           <Alert variant="default" className="border-warning/50 bg-warning/10">
             <AlertTriangle className="h-4 w-4 text-warning" />
@@ -607,31 +365,24 @@ const Orders = () => {
               <span className="text-warning">
                 {ordersWithoutLocation.length} {ordersWithoutLocation.length === 1 ? 'Bestellung' : 'Bestellungen'} ohne Standort-Zuordnung
               </span>
-              <span className="text-xs text-muted-foreground">
-                (Filter auf "Alle Standorte" setzen um diese zu sehen)
-              </span>
+              <span className="text-xs text-muted-foreground">(Filter auf "Alle Standorte" setzen um diese zu sehen)</span>
             </AlertDescription>
           </Alert>
         )}
 
-        {/* Tabs */}
         <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
           <TabsList className="grid w-full max-w-2xl grid-cols-3 bg-muted/50 border border-border rounded-md h-9">
             <TabsTrigger value="orders" className="flex items-center gap-2 text-sm h-8">
               <ShoppingCart className="w-4 h-4" />
               <span className="hidden sm:inline">{t('orders.title')}</span>
-              {orders && orders.length > 0 && (
-                <Badge variant="secondary" className="ml-1 text-xs">{orders.length}</Badge>
-              )}
+              {orders && orders.length > 0 && <Badge variant="secondary" className="ml-1 text-xs">{orders.length}</Badge>}
             </TabsTrigger>
             <TabsTrigger value="drafts" className="flex items-center gap-2 text-sm h-8">
               <FileText className="w-4 h-4" />
               <span className="hidden sm:inline">{t('nav.drafts')}</span>
               {drafts && drafts.length > 0 && (
                 <div className="flex items-center gap-1 ml-1">
-                  {drafts.some(d => d.name.startsWith('EasyOrder:')) && (
-                    <Bell className="w-3.5 h-3.5 text-red-500 animate-pulse" />
-                  )}
+                  {drafts.some(d => d.name.startsWith('EasyOrder:')) && <Bell className="w-3.5 h-3.5 text-red-500 animate-pulse" />}
                   <Badge variant="secondary" className="text-xs">{drafts.length}</Badge>
                 </div>
               )}
@@ -642,591 +393,84 @@ const Orders = () => {
             </TabsTrigger>
           </TabsList>
 
-          {/* Orders Tab Content */}
+          {/* Orders Tab */}
           <TabsContent value="orders" className="space-y-6 mt-6">
+            {orgData?.testModeEnabled && (
+              <TestModeBanner
+                testEmail={orgData.testEmail}
+                testOrdersCount={testOrdersCount}
+                onDeleteTestOrders={() => deleteTestOrders.mutate()}
+                isDeleting={deleteTestOrders.isPending}
+              />
+            )}
 
-        {/* Test Mode Banner */}
-        {orgData?.testModeEnabled && (
-          <div className="bg-warning/10 border border-warning/30 rounded-lg p-4">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <div className="flex items-center gap-3">
-                <FlaskConical className="w-5 h-5 text-warning" />
-                <div>
-                  <p className="font-medium text-warning">{t('orders.testMode.banner')}</p>
-                  <p className="text-sm text-muted-foreground">
-                    {t('orders.testMode.bannerDescription', { email: orgData.testEmail })}
-                  </p>
-                </div>
-              </div>
-              {testOrdersCount > 0 ? (
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button variant="destructive" size="sm">
-                      <Trash2 className="w-4 h-4 mr-2" />
-                      {t('orders.testMode.deleteAll')} ({testOrdersCount})
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-lg">
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>{t('orders.testMode.deleteConfirmTitle')}</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        {t('orders.testMode.deleteConfirmDescription', { count: testOrdersCount })}
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter className="flex-col sm:flex-row gap-2">
-                      <AlertDialogCancel className="w-full sm:w-auto h-10 sm:h-9">{t('common.cancel')}</AlertDialogCancel>
-                      <AlertDialogAction
-                        onClick={() => deleteTestOrders.mutate()}
-                        className="w-full sm:w-auto h-10 sm:h-9 bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                      >
-                        {deleteTestOrders.isPending ? (
-                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        ) : (
-                          <Trash2 className="w-4 h-4 mr-2" />
-                        )}
-                        {t('common.delete')}
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
-              ) : (
-                <span className="text-sm text-muted-foreground">
-                  {t('orders.testMode.noTestOrders')}
-                </span>
-              )}
-            </div>
-          </div>
-        )}
-        {/* Mobile Filters */}
-        <div className="flex gap-2 sm:hidden">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input
-              placeholder={t('orders.searchPlaceholder')}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 h-11"
+            <OrdersFilters
+              searchQuery={searchQuery} setSearchQuery={setSearchQuery}
+              statusFilter={statusFilter} setStatusFilter={setStatusFilter}
+              dateFilter={dateFilter} setDateFilter={setDateFilter}
+              locationFilter={locationFilter} setLocationFilter={setLocationFilter}
+              locations={locations} activeLocation={activeLocation}
+              hasActiveFilters={hasActiveFilters} clearFilters={clearFilters}
             />
-          </div>
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button variant="outline" size="icon" className="h-11 w-11 shrink-0 relative">
-                <Filter className="w-4 h-4" />
-                {(statusFilter !== 'all' || dateFilter !== 'all' || locationFilter !== 'active') && (
-                  <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-primary rounded-full" />
-                )}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-72 bg-card border border-border" align="end">
+
+            {isLoading ? (
+              <div className="flex items-center justify-center py-12"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>
+            ) : filteredOrders.length === 0 ? (
+              <div className="text-center py-12 bg-card border border-border rounded-xl">
+                <Package className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
+                <h2 className="text-xl font-semibold text-foreground mb-2">{t('orders.noOrders')}</h2>
+                <p className="text-muted-foreground mb-6">{t('orders.noOrdersDescription')}</p>
+                <Button onClick={() => navigate('/suppliers')}>{t('orders.startOrder')}</Button>
+              </div>
+            ) : (
               <div className="space-y-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">{t('orders.filterByStatus')}</label>
-                  <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as Order['status'] | 'all')}>
-                    <SelectTrigger className="w-full">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">{t('orders.allStatuses')}</SelectItem>
-                      <SelectItem value="pending">{t('orders.status.pending')}</SelectItem>
-                      <SelectItem value="confirmed">{t('orders.status.confirmed')}</SelectItem>
-                      <SelectItem value="processing">{t('orders.status.processing')}</SelectItem>
-                      <SelectItem value="shipped">{t('orders.status.shipped')}</SelectItem>
-                      <SelectItem value="delivered">{t('orders.status.delivered')}</SelectItem>
-                      <SelectItem value="cancelled">{t('orders.status.cancelled')}</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">{t('orders.filterByDate')}</label>
-                  <Select value={dateFilter} onValueChange={(v) => setDateFilter(v as DateFilter)}>
-                    <SelectTrigger className="w-full">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">{t('orders.allDates')}</SelectItem>
-                      <SelectItem value="today">{t('orders.today')}</SelectItem>
-                      <SelectItem value="week">{t('orders.lastWeek')}</SelectItem>
-                      <SelectItem value="month">{t('orders.lastMonth')}</SelectItem>
-                      <SelectItem value="3months">{t('orders.last3Months')}</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                {locations && locations.length > 1 && (
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">{t('orders.filterByLocation')}</label>
-                    <Select value={locationFilter} onValueChange={setLocationFilter}>
-                      <SelectTrigger className="w-full">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="active">
-                          {activeLocation ? getLocationDisplayName(activeLocation) : t('orders.currentLocation')}
-                        </SelectItem>
-                        <SelectItem value="all">{t('orders.allLocations')}</SelectItem>
-                        {locations.map(loc => (
-                          <SelectItem key={loc.id} value={loc.id}>
-                            {getLocationDisplayName(loc)}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
-                {hasActiveFilters && (
-                  <Button variant="outline" size="sm" onClick={clearFilters} className="w-full">
-                    <X className="w-4 h-4 mr-2" />
-                    {t('orders.clearFilters')}
-                  </Button>
-                )}
-              </div>
-            </PopoverContent>
-          </Popover>
-        </div>
-
-        {/* Desktop Filters */}
-        <div className="hidden sm:flex gap-3">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input
-              placeholder={t('orders.searchPlaceholder')}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9"
-            />
-          </div>
-          <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as Order['status'] | 'all')}>
-            <SelectTrigger className="w-40 h-10">
-              <SelectValue placeholder={t('orders.filterByStatus')} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">{t('orders.allStatuses')}</SelectItem>
-              <SelectItem value="pending">{t('orders.status.pending')}</SelectItem>
-              <SelectItem value="confirmed">{t('orders.status.confirmed')}</SelectItem>
-              <SelectItem value="processing">{t('orders.status.processing')}</SelectItem>
-              <SelectItem value="shipped">{t('orders.status.shipped')}</SelectItem>
-              <SelectItem value="delivered">{t('orders.status.delivered')}</SelectItem>
-              <SelectItem value="cancelled">{t('orders.status.cancelled')}</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select value={dateFilter} onValueChange={(v) => setDateFilter(v as DateFilter)}>
-            <SelectTrigger className="w-40 h-10">
-              <SelectValue placeholder={t('orders.filterByDate')} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">{t('orders.allDates')}</SelectItem>
-              <SelectItem value="today">{t('orders.today')}</SelectItem>
-              <SelectItem value="week">{t('orders.lastWeek')}</SelectItem>
-              <SelectItem value="month">{t('orders.lastMonth')}</SelectItem>
-              <SelectItem value="3months">{t('orders.last3Months')}</SelectItem>
-            </SelectContent>
-          </Select>
-          {locations && locations.length > 1 && (
-            <Select value={locationFilter} onValueChange={setLocationFilter}>
-              <SelectTrigger className="w-40 h-10">
-                <div className="flex items-center gap-2">
-                  <MapPin className="w-4 h-4" />
-                  <span className="truncate">
-                    {locationFilter === 'active' 
-                      ? (activeLocation ? getLocationDisplayName(activeLocation) : t('orders.currentLocation'))
-                      : locationFilter === 'all'
-                        ? t('orders.allLocations')
-                        : getLocationDisplayName(locations.find(l => l.id === locationFilter) || { name: '', short_code: null })
-                    }
-                  </span>
-                </div>
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="active">
-                  {activeLocation ? getLocationDisplayName(activeLocation) : t('orders.currentLocation')} ({t('orders.currentLocation')})
-                </SelectItem>
-                <SelectItem value="all">{t('orders.allLocations')}</SelectItem>
-                {locations.map(loc => (
-                  <SelectItem key={loc.id} value={loc.id}>
-                    {getLocationDisplayName(loc)}
-                  </SelectItem>
+                {Array.from(groupedOrders.entries()).map(([supplierName, supplierOrders]) => (
+                  <Collapsible key={supplierName} open={openSuppliers.has(supplierName)} onOpenChange={() => toggleSupplier(supplierName)}>
+                    <div className="bg-card border border-border rounded-xl overflow-hidden">
+                      <CollapsibleTrigger className="w-full flex items-center justify-between p-4 hover:bg-muted/50 transition-colors">
+                        <div className="flex items-center gap-3">
+                          <ChevronRight className={cn("w-5 h-5 text-muted-foreground transition-transform duration-200", openSuppliers.has(supplierName) && "rotate-90")} />
+                          <span className="font-semibold text-foreground">{supplierName}</span>
+                          <Badge variant="secondary" className="text-xs">{supplierOrders.length} {t('orders.orders')}</Badge>
+                        </div>
+                        <span className="font-bold text-foreground">
+                          €{supplierOrders.reduce((sum, o) => sum + Number(o.total_amount), 0).toFixed(2)}
+                        </span>
+                      </CollapsibleTrigger>
+                      <CollapsibleContent>
+                        <div className="px-4 pb-4 space-y-2">
+                          {supplierOrders.map((order) => (
+                            <OrderItem
+                              key={order.id}
+                              ref={order.id === highlightedOrderId ? highlightedOrderRef : undefined}
+                              order={order}
+                              isOpen={openOrders.has(order.id)}
+                              onToggle={() => toggleOrder(order.id)}
+                              onUpdateStatus={(status) => updateStatus.mutate({ orderId: order.id, status })}
+                              onUpdateLocation={(locId) => updateLocation.mutate({ orderId: order.id, locationId: locId })}
+                              onViewEmail={() => { setSelectedOrder(order); setEmailDialogOpen(true); }}
+                              onResendEmail={() => resendEmail.mutate(order)}
+                              isResending={resendEmail.isPending}
+                              locations={locations}
+                              locale={locale}
+                              isHighlighted={order.id === highlightedOrderId ? true : false}
+                            />
+                          ))}
+                        </div>
+                      </CollapsibleContent>
+                    </div>
+                  </Collapsible>
                 ))}
-              </SelectContent>
-            </Select>
-          )}
-          {hasActiveFilters && (
-            <Button variant="ghost" size="icon" onClick={clearFilters} className="shrink-0">
-              <X className="w-4 h-4" />
-            </Button>
-          )}
-        </div>
-
-        {isLoading ? (
-          <div className="flex items-center justify-center py-12">
-            <Loader2 className="w-8 h-8 animate-spin text-primary" />
-          </div>
-        ) : orders?.length === 0 ? (
-          <div className="text-center py-16 bg-card border border-border rounded-xl">
-            <Package className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
-            <h2 className="text-xl font-semibold text-foreground mb-2">{t('orders.noOrders')}</h2>
-            <p className="text-muted-foreground mb-6">{t('orders.noOrdersDescription')}</p>
-            <Button onClick={() => navigate('/articles')}>{t('orders.browseArticles')}</Button>
-          </div>
-        ) : filteredOrders.length === 0 ? (
-          <div className="text-center py-16 bg-card border border-border rounded-xl">
-            <Search className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
-            <h2 className="text-xl font-semibold text-foreground mb-2">{t('orders.noResults')}</h2>
-            <p className="text-muted-foreground mb-6">{t('orders.noResultsDescription')}</p>
-            <Button variant="outline" onClick={clearFilters}>{t('orders.clearFilters')}</Button>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {Array.from(groupedOrders.entries()).map(([supplierName, supplierOrders]) => {
-              const isOpen = openSuppliers.has(supplierName);
-              const totalAmount = supplierOrders.reduce((sum, o) => sum + Number(o.total_amount), 0);
-              
-              return (
-                <Collapsible
-                  key={supplierName}
-                  open={isOpen}
-                  onOpenChange={() => toggleSupplier(supplierName)}
-                >
-                  {/* Supplier Header */}
-                  <CollapsibleTrigger className="w-full">
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 bg-card border border-border rounded-lg hover:bg-muted/50 transition-colors min-h-[56px]">
-                      <div className="flex items-center gap-3">
-                        <ChevronRight className={cn(
-                          "w-5 h-5 text-muted-foreground transition-transform duration-200 shrink-0",
-                          isOpen && "rotate-90"
-                        )} />
-                        <span className="font-semibold text-foreground text-left">{supplierName}</span>
-                        <Badge variant="secondary" className="shrink-0">{supplierOrders.length}</Badge>
-                      </div>
-                      <span className="font-bold text-foreground pl-8 sm:pl-0 text-left sm:text-right mt-1 sm:mt-0">€{totalAmount.toFixed(2)}</span>
-                    </div>
-                  </CollapsibleTrigger>
-                  
-                  {/* Orders for this Supplier */}
-                  <CollapsibleContent>
-                    <div className="space-y-2 pl-4 mt-2">
-                      {supplierOrders.map((order) => {
-                        const StatusIcon = statusIcons[order.status];
-                        const isOrderOpen = openOrders.has(order.id);
-                        const isHighlighted = order.id === highlightedOrderId;
-                        
-                        return (
-                          <Collapsible
-                            key={order.id}
-                            open={isOrderOpen}
-                            onOpenChange={() => toggleOrder(order.id)}
-                          >
-                            <div ref={isHighlighted ? highlightedOrderRef : undefined}>
-                            {/* Mobile Order Header - Single Line */}
-                            <CollapsibleTrigger className="w-full sm:hidden">
-                              <div className="flex items-center gap-2 p-3 bg-card border border-border rounded-lg">
-                                <ChevronRight className={cn(
-                                  "w-4 h-4 text-muted-foreground transition-transform duration-200 shrink-0",
-                                  isOrderOpen && "rotate-90"
-                                )} />
-                                <StatusIcon className="w-4 h-4 text-primary shrink-0" />
-                                <span className="font-medium text-foreground text-sm truncate max-w-[100px]">{order.order_number}</span>
-                                <Badge className={cn(statusColors[order.status], "text-xs shrink-0")}>
-                                  {t(`orders.status.${order.status}`)}
-                                </Badge>
-                                {order.is_test_order && (
-                                  <FlaskConical className="w-3.5 h-3.5 text-warning shrink-0" />
-                                )}
-                                {!order.location_id && (
-                                  <MapPin className="w-3.5 h-3.5 text-warning shrink-0" />
-                                )}
-                                <span className="text-xs text-muted-foreground shrink-0">
-                                  {format(new Date(order.created_at), 'd. MMM', { locale })}
-                                </span>
-                                <span className="text-xs text-muted-foreground shrink-0">
-                                  {order.order_items?.length || 0} Art.
-                                </span>
-                                <span className="font-bold text-foreground ml-auto shrink-0">€{Number(order.total_amount).toFixed(2)}</span>
-                              </div>
-                            </CollapsibleTrigger>
-                            
-                            {/* Desktop Order Header */}
-                            <CollapsibleTrigger className="w-full hidden sm:block">
-                              <div className="flex items-center gap-3 p-3 bg-card border border-border rounded-lg">
-                                <ChevronRight className={cn(
-                                  "w-4 h-4 text-muted-foreground transition-transform duration-200 flex-shrink-0",
-                                  isOrderOpen && "rotate-90"
-                                )} />
-                                <StatusIcon className="w-4 h-4 text-primary flex-shrink-0" />
-                                <span className="font-medium text-foreground">{order.order_number}</span>
-                                <Badge className={cn(statusColors[order.status], "text-xs")}>
-                                  {t(`orders.status.${order.status}`)}
-                                </Badge>
-                                {order.is_test_order && (
-                                  <Badge className="bg-warning/20 text-warning text-xs">
-                                    <FlaskConical className="w-3 h-3 mr-1" />
-                                    {t('orders.testMode.badge')}
-                                  </Badge>
-                                )}
-                                <span className="text-sm text-muted-foreground">
-                                  {format(new Date(order.created_at), 'EEE d. MMM, HH:mm', { locale })}
-                                </span>
-                                {order.location_id && locations && (() => {
-                                  const loc = locations.find(l => l.id === order.location_id);
-                                  return loc ? (
-                                    <span className="flex items-center gap-1 text-sm text-muted-foreground">
-                                      <MapPin className="w-3.5 h-3.5" />
-                                      {loc.short_code || loc.name}
-                                    </span>
-                                  ) : null;
-                                })()}
-                                {!order.location_id && (
-                                  <span className="flex items-center gap-1 text-sm text-warning" title={t('orders.noLocationAssigned')}>
-                                    <MapPin className="w-3.5 h-3.5" />
-                                    <span className="text-xs">{t('orders.noLocation')}</span>
-                                  </span>
-                                )}
-                                <span className="text-sm text-muted-foreground">
-                                  {order.order_items?.length || 0} {t('orders.items')}
-                                </span>
-                                {order.employees?.name ? (
-                                  <>
-                                    <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-purple-500/20 text-purple-600 dark:text-purple-400 border-purple-300 dark:border-purple-700">
-                                      <Smartphone className="w-3 h-3 mr-0.5" />
-                                      {order.employees.name}
-                                    </Badge>
-                                    <span className="text-muted-foreground text-[10px]">→</span>
-                                    <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-primary/10 text-primary border-primary/30">
-                                      <User className="w-3 h-3 mr-0.5" />
-                                      Admin
-                                    </Badge>
-                                  </>
-                                ) : (
-                                  <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-primary/10 text-primary border-primary/30">
-                                    <User className="w-3 h-3 mr-0.5" />
-                                    Admin
-                                  </Badge>
-                                )}
-                                <span className="font-bold text-foreground ml-auto">€{Number(order.total_amount).toFixed(2)}</span>
-                              </div>
-                            </CollapsibleTrigger>
-                            
-                            {/* Order Details */}
-                            <CollapsibleContent>
-                              <div className="mt-1 p-4 bg-muted/30 border border-border rounded-lg space-y-4">
-                                {/* Order Items */}
-                                <div className="space-y-2">
-                                  {order.order_items?.map((item) => (
-                                    <div key={item.id} className="flex items-center justify-between text-sm">
-                                      <span className="text-foreground">{item.article_name}</span>
-                                      <span className="text-muted-foreground">
-                                        {item.quantity} {item.order_unit || item.unit} • €{Number(item.total_price).toFixed(2)}
-                                      </span>
-                                    </div>
-                                  ))}
-                                </div>
-                                
-                                {/* Delivery Address */}
-                                <div className="pt-3 border-t border-border">
-                                  <p className="text-sm text-muted-foreground">
-                                    {order.delivery_address.split('\n').join(' • ')}
-                                  </p>
-                                </div>
-                                
-                                {/* Location Assignment */}
-                                {locations && locations.length > 1 && (
-                                  <div className="pt-3 border-t border-border">
-                                    <div className="flex items-center gap-3">
-                                      <span className="text-sm text-muted-foreground flex items-center gap-1.5">
-                                        <MapPin className="w-4 h-4" />
-                                        Standort:
-                                      </span>
-                                      <Select
-                                        value={order.location_id || 'none'}
-                                        onValueChange={(value) => {
-                                          updateLocation.mutate({ 
-                                            orderId: order.id, 
-                                            locationId: value === 'none' ? null : value 
-                                          });
-                                        }}
-                                      >
-                                        <SelectTrigger 
-                                          className={cn(
-                                            "w-40 h-9 bg-card",
-                                            !order.location_id && "border-warning text-warning"
-                                          )}
-                                          onClick={(e) => e.stopPropagation()}
-                                        >
-                                          <SelectValue placeholder="Standort wählen" />
-                                        </SelectTrigger>
-                                        <SelectContent 
-                                          className="bg-card border border-border z-50"
-                                          onClick={(e) => e.stopPropagation()}
-                                          onPointerDown={(e) => e.stopPropagation()}
-                                        >
-                                          <SelectItem value="none" className="text-muted-foreground">
-                                            Kein Standort
-                                          </SelectItem>
-                                          {locations.map(loc => (
-                                            <SelectItem key={loc.id} value={loc.id}>
-                                              {loc.short_code || loc.name}
-                                            </SelectItem>
-                                          ))}
-                                        </SelectContent>
-                                      </Select>
-                                    </div>
-                                  </div>
-                                )}
-                                
-                                {/* Mobile Actions - Touch-friendly */}
-                                <div className="flex flex-col gap-3 pt-3 border-t border-border sm:hidden">
-                                  {order.email_sent && (
-                                    <div className="flex gap-2">
-                                      <Button
-                                        variant="outline"
-                                        className="flex-1 h-11 justify-center"
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          handleViewEmail(order);
-                                        }}
-                                      >
-                                        <Eye className="w-5 h-5 mr-2" />
-                                        {t('orders.viewEmail')}
-                                      </Button>
-                                      <Button
-                                        variant="outline"
-                                        className="flex-1 h-11 justify-center"
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          resendEmail.mutate(order);
-                                        }}
-                                        disabled={resendEmail.isPending}
-                                      >
-                                        {resendEmail.isPending ? (
-                                          <Loader2 className="w-5 h-5 animate-spin" />
-                                        ) : (
-                                          <>
-                                            <Send className="w-5 h-5 mr-2" />
-                                            Erneut senden
-                                          </>
-                                        )}
-                                      </Button>
-                                    </div>
-                                  )}
-                                  <div className="grid grid-cols-3 gap-2">
-                                    <Button
-                                      variant={order.status === 'confirmed' ? 'default' : 'outline'}
-                                      size="sm"
-                                      className="h-11 flex-col gap-0.5 px-2"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        updateStatus.mutate({ orderId: order.id, status: 'confirmed' });
-                                      }}
-                                    >
-                                      <CheckCircle2 className="w-4 h-4" />
-                                      <span className="text-[10px]">{t('orders.status.confirmed')}</span>
-                                    </Button>
-                                    <Button
-                                      variant={order.status === 'delivered' ? 'default' : 'outline'}
-                                      size="sm"
-                                      className="h-11 flex-col gap-0.5 px-2"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        updateStatus.mutate({ orderId: order.id, status: 'delivered' });
-                                      }}
-                                    >
-                                      <Truck className="w-4 h-4" />
-                                      <span className="text-[10px]">{t('orders.status.delivered')}</span>
-                                    </Button>
-                                    <Button
-                                      variant={order.status === 'cancelled' ? 'destructive' : 'outline'}
-                                      size="sm"
-                                      className="h-11 flex-col gap-0.5 px-2"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        updateStatus.mutate({ orderId: order.id, status: 'cancelled' });
-                                      }}
-                                    >
-                                      <XCircle className="w-4 h-4" />
-                                      <span className="text-[10px]">{t('orders.status.cancelled')}</span>
-                                    </Button>
-                                  </div>
-                                </div>
-                                
-                                {/* Desktop Actions */}
-                                <div className="hidden sm:flex items-center justify-between pt-3 border-t border-border">
-                                  <div className="flex items-center gap-2">
-                                    {order.email_sent && (
-                                      <>
-                                        <Button
-                                          variant="outline"
-                                          size="sm"
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            handleViewEmail(order);
-                                          }}
-                                        >
-                                          <Eye className="w-4 h-4 mr-1" />
-                                          {t('orders.viewEmail')}
-                                        </Button>
-                                        <Button
-                                          variant="outline"
-                                          size="sm"
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            resendEmail.mutate(order);
-                                          }}
-                                          disabled={resendEmail.isPending}
-                                        >
-                                          {resendEmail.isPending ? (
-                                            <Loader2 className="w-4 h-4 animate-spin" />
-                                          ) : (
-                                            <>
-                                              <Send className="w-4 h-4 mr-1" />
-                                              Erneut senden
-                                            </>
-                                          )}
-                                        </Button>
-                                      </>
-                                    )}
-                                  </div>
-                                  <Select
-                                    value={order.status}
-                                    onValueChange={(value) => updateStatus.mutate({ orderId: order.id, status: value as Order['status'] })}
-                                  >
-                                    <SelectTrigger className="w-36 bg-card" onClick={(e) => e.stopPropagation()}>
-                                      <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent className="bg-card border border-border z-50">
-                                      <SelectItem value="pending">{t('orders.status.pending')}</SelectItem>
-                                      <SelectItem value="confirmed">{t('orders.status.confirmed')}</SelectItem>
-                                      <SelectItem value="processing">{t('orders.status.processing')}</SelectItem>
-                                      <SelectItem value="shipped">{t('orders.status.shipped')}</SelectItem>
-                                      <SelectItem value="delivered">{t('orders.status.delivered')}</SelectItem>
-                                      <SelectItem value="cancelled">{t('orders.status.cancelled')}</SelectItem>
-                                    </SelectContent>
-                                  </Select>
-                                </div>
-                              </div>
-                            </CollapsibleContent>
-                            </div>
-                          </Collapsible>
-                        );
-                      })}
-                    </div>
-                  </CollapsibleContent>
-                </Collapsible>
-              );
-            })}
-          </div>
-        )}
+              </div>
+            )}
           </TabsContent>
 
-          {/* Drafts Tab Content */}
+          {/* Drafts Tab */}
           <TabsContent value="drafts" className="space-y-6 mt-6">
-            {/* Search and Location Filter */}
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
               <div className="relative flex-1 max-w-sm w-full">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input
-                  placeholder={t('drafts.searchPlaceholder')}
-                  value={draftsSearchQuery}
-                  onChange={(e) => setDraftsSearchQuery(e.target.value)}
-                  className="pl-9 h-11 sm:h-10"
-                />
+                <Input placeholder={t('drafts.searchPlaceholder')} value={draftsSearchQuery} onChange={(e) => setDraftsSearchQuery(e.target.value)} className="pl-9 h-11 sm:h-10" />
               </div>
               {locations && locations.length > 1 && (
                 <Select value={draftsLocationFilter} onValueChange={setDraftsLocationFilter}>
@@ -1237,391 +481,67 @@ const Orders = () => {
                   <SelectContent>
                     <SelectItem value="all">{t('orders.allLocations', 'Alle Standorte')}</SelectItem>
                     {locations.map((loc) => (
-                      <SelectItem key={loc.id} value={loc.id}>
-                        {loc.short_code || loc.name}
-                      </SelectItem>
+                      <SelectItem key={loc.id} value={loc.id}>{loc.short_code || loc.name}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               )}
             </div>
 
-            {/* Loading State */}
-            {draftsLoading && (
-              <div className="flex items-center justify-center py-16">
-                <Loader2 className="w-8 h-8 animate-spin text-primary" />
-              </div>
-            )}
+            {draftsLoading && <div className="flex items-center justify-center py-16"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>}
 
-            {/* Empty State */}
             {!draftsLoading && filteredDrafts.length === 0 && (
               <div className="text-center py-16 bg-card border border-border rounded-xl">
                 <FileText className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
-                <h2 className="text-xl font-semibold text-foreground mb-2">
-                  {draftsSearchQuery ? t('drafts.noResults') : t('drafts.empty')}
-                </h2>
-                <p className="text-muted-foreground mb-6">
-                  {draftsSearchQuery ? t('drafts.noResultsDescription') : t('drafts.emptyDescription')}
-                </p>
-                {!draftsSearchQuery && (
-                  <Button onClick={() => navigate('/suppliers')}>
-                    {t('drafts.browseArticles')}
-                  </Button>
-                )}
+                <h2 className="text-xl font-semibold text-foreground mb-2">{draftsSearchQuery ? t('drafts.noResults') : t('drafts.empty')}</h2>
+                <p className="text-muted-foreground mb-6">{draftsSearchQuery ? t('drafts.noResultsDescription') : t('drafts.emptyDescription')}</p>
+                {!draftsSearchQuery && <Button onClick={() => navigate('/suppliers')}>{t('drafts.browseArticles')}</Button>}
               </div>
             )}
 
-            {/* Drafts List - Grouped EasyOrders + Regular Drafts */}
             {!draftsLoading && filteredDrafts.length > 0 && (
               <div className="space-y-4">
-                {/* EasyOrder Groups */}
-                {easyOrderGroups.map((group) => {
-                  const isOpen = openEasyOrderGroups.has(group.key);
-                  
-                  return (
-                    <Collapsible
-                      key={group.key}
-                      open={isOpen}
-                      onOpenChange={() => toggleEasyOrderGroup(group.key)}
-                    >
-                      {/* Group Header */}
-                      <div className="bg-card border border-primary/30 rounded-xl overflow-hidden">
-                        <CollapsibleTrigger className="w-full">
-                          <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 hover:bg-muted/50 transition-colors">
-                            <div className="flex items-center gap-3">
-                              <ChevronRight className={cn(
-                                "w-5 h-5 text-muted-foreground transition-transform duration-200 shrink-0",
-                                isOpen && "rotate-90"
-                              )} />
-                              <div className="flex items-center gap-2">
-                                <Smartphone className="w-5 h-5 text-primary" />
-                                <Bell className="w-4 h-4 text-red-500 animate-pulse" />
-                              </div>
-                              <div className="text-left">
-                                <div className="flex items-center gap-2">
-                                  <span className="font-semibold text-foreground">
-                                    EasyOrder: {group.employeeName}
-                                  </span>
-                                  <Badge variant="secondary" className="text-xs">
-                                    {group.supplierNames.join(', ')}
-                                  </Badge>
-                                </div>
-                                <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground mt-0.5">
-                                  <span>{group.totalItems} Artikel</span>
-                                  {group.location && (
-                                    <span className="flex items-center gap-1">
-                                      <MapPin className="w-3 h-3" />
-                                      {group.location.short_code || group.location.name}
-                                    </span>
-                                  )}
-                                  {group.desiredDeliveryDate && (
-                                    <span className="flex items-center gap-1">
-                                      📅 {format(new Date(group.desiredDeliveryDate), 'dd.MM.', { locale })}
-                                    </span>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-3 mt-2 sm:mt-0 pl-10 sm:pl-0">
-                              <span className="text-lg font-bold text-foreground">
-                                €{group.totalPrice.toFixed(2)}
-                              </span>
-                            </div>
-                          </div>
-                        </CollapsibleTrigger>
-                        
-                        {/* Expanded Group Content */}
-                        <CollapsibleContent>
-                          <div className="px-4 pb-4 space-y-3">
-                            {/* Supplier List */}
-                            <div className="space-y-2 pl-8">
-                              {group.drafts.map((draft) => (
-                                <div
-                                  key={draft.id}
-                                  className="flex items-center justify-between p-3 bg-muted/30 rounded-lg"
-                                >
-                                  <div className="flex items-center gap-3">
-                                    <Package className="w-4 h-4 text-muted-foreground" />
-                                    <div>
-                                      <span className="font-medium text-foreground">
-                                        {getSupplierFromDraft(draft)}
-                                      </span>
-                                      <span className="text-sm text-muted-foreground ml-2">
-                                        ({getDraftItemCount(draft)} Art.)
-                                      </span>
-                                    </div>
-                                  </div>
-                                  <div className="flex items-center gap-2">
-                                    <span className="font-medium text-foreground">
-                                      €{getDraftTotal(draft).toFixed(2)}
-                                    </span>
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      className="h-8"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleLoadDraft(draft);
-                                      }}
-                                    >
-                                      <ShoppingCart className="w-4 h-4" />
-                                    </Button>
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                            
-                            {/* Group Actions */}
-                            <div className="flex items-center justify-end gap-2 pt-3 border-t border-border">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="text-destructive hover:text-destructive"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleDeleteGroup(group);
-                                }}
-                              >
-                                <Trash2 className="w-4 h-4 mr-2" />
-                                Alle löschen
-                              </Button>
-                              <Button
-                                size="sm"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  loadGroupToCart(group);
-                                }}
-                              >
-                                <ShoppingCart className="w-4 h-4 mr-2" />
-                                Alle in Warenkorb laden
-                              </Button>
-                            </div>
-                          </div>
-                        </CollapsibleContent>
-                      </div>
-                    </Collapsible>
-                  );
-                })}
-
-                {/* Regular Drafts (non-EasyOrder) */}
+                {easyOrderGroups.map((group) => (
+                  <EasyOrderGroupCard
+                    key={group.key}
+                    group={group}
+                    isOpen={openEasyOrderGroups.has(group.key)}
+                    onToggle={() => toggleEasyOrderGroup(group.key)}
+                    onLoadToCart={() => loadGroupToCart(group)}
+                    onDelete={() => handleDeleteGroup(group)}
+                    onLoadSingleDraft={handleLoadDraft}
+                    locale={locale}
+                  />
+                ))}
                 {regularDrafts.map((draft) => (
-                  <div
-                    key={draft.id}
-                    className="bg-card border border-border rounded-xl p-4 sm:p-6 hover:border-primary/50 transition-colors"
-                  >
-                    <div className="flex flex-col gap-4">
-                      {/* Draft Info */}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-3 mb-2">
-                          <FileText className="w-5 h-5 text-primary" />
-                          <h3 className="text-base sm:text-lg font-semibold text-foreground truncate">
-                            {draft.name}
-                          </h3>
-                          {/* Location Badge */}
-                          {(draft as { location?: { id: string; name: string; short_code: string | null } }).location && (
-                            <Badge variant="secondary" className="text-xs shrink-0">
-                              <MapPin className="w-3 h-3 mr-1" />
-                              {(draft as { location?: { id: string; name: string; short_code: string | null } }).location!.short_code || (draft as { location?: { id: string; name: string; short_code: string | null } }).location!.name}
-                            </Badge>
-                          )}
-                        </div>
-                        <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:text-sm text-muted-foreground">
-                          {getDraftItemCount(draft) === 0 ? (
-                            <Badge variant="outline" className="text-xs border-warning text-warning bg-warning/10">
-                              <AlertTriangle className="h-3 w-3 mr-1" />
-                              Keine Artikel
-                            </Badge>
-                          ) : (
-                            <span className="flex items-center gap-1">
-                              <Package className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                              {getDraftItemCount(draft)} {t('drafts.items')}
-                            </span>
-                          )}
-                          <span className="flex items-center gap-1">
-                            <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                            {format(new Date(draft.created_at), 'dd.MM.yy, HH:mm', { locale })}
-                          </span>
-                          {draft.desired_delivery_date && (
-                            <span className="flex items-center gap-1 text-primary">
-                              📅 {format(new Date(draft.desired_delivery_date), 'dd.MM.', { locale })}
-                              {draft.desired_time_window && (
-                                <span className="ml-1">
-                                  🕐 {draft.desired_time_window === 'flexible' ? t('checkout.flexible') : draft.desired_time_window}
-                                </span>
-                              )}
-                            </span>
-                          )}
-                        </div>
-                        {draft.notes && (
-                          <p className="text-sm text-muted-foreground mt-2 line-clamp-2">
-                            {draft.notes}
-                          </p>
-                        )}
-                      </div>
-
-                      {/* Price & Actions Row */}
-                      <div className="flex items-center justify-between gap-3 pt-3 border-t border-border">
-                        <div>
-                          <p className="text-xl sm:text-2xl font-bold text-foreground">
-                            €{getDraftTotal(draft).toFixed(2)}
-                          </p>
-                          <p className="text-xs sm:text-sm text-muted-foreground">
-                            {t('drafts.total')}
-                          </p>
-                        </div>
-
-                        {/* Actions */}
-                        <div className="flex items-center gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="h-10 sm:h-9"
-                            onClick={() => handleLoadDraft(draft)}
-                          >
-                            <ShoppingCart className="w-4 h-4 sm:mr-2" />
-                            <span className="hidden sm:inline">{t('drafts.loadToCart')}</span>
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-10 w-10 text-destructive hover:text-destructive"
-                            onClick={() => handleDeleteDraft(draft)}
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Items Preview */}
-                    {draft.items && draft.items.length > 0 && (
-                      <div className="mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-border">
-                        <div className="flex flex-wrap gap-1.5 sm:gap-2">
-                          {draft.items.slice(0, 4).map((item) => (
-                            <span
-                              key={item.id}
-                              className="inline-flex items-center px-2 py-1 rounded-md bg-muted text-xs sm:text-sm"
-                            >
-                              {item.quantity}x {item.article?.name || 'Unknown'}
-                            </span>
-                          ))}
-                          {draft.items.length > 4 && (
-                            <span className="inline-flex items-center px-2 py-1 rounded-md bg-muted text-xs sm:text-sm text-muted-foreground">
-                              +{draft.items.length - 4} {t('drafts.more')}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    )}
-                  </div>
+                  <DraftCard key={draft.id} draft={draft} onLoad={() => handleLoadDraft(draft)} onDelete={() => handleDeleteDraft(draft)} locale={locale} />
                 ))}
               </div>
             )}
           </TabsContent>
 
-          {/* Simple Order Tab Content */}
-          <TabsContent value="simple-order" className="mt-6">
-            <SimpleOrderTab />
-          </TabsContent>
+          <TabsContent value="simple-order" className="mt-6"><SimpleOrderTab /></TabsContent>
         </Tabs>
       </div>
 
-      {/* Delete Draft Confirmation Dialog */}
-      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <AlertDialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-lg">
-          <AlertDialogHeader>
-            <AlertDialogTitle>{t('drafts.deleteTitle')}</AlertDialogTitle>
-            <AlertDialogDescription>
-              {t('drafts.deleteDescription', { name: selectedDraft?.name })}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter className="flex-col sm:flex-row gap-2">
-            <AlertDialogCancel className="w-full sm:w-auto h-10 sm:h-9">{t('common.cancel')}</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={confirmDeleteDraft}
-              className="w-full sm:w-auto h-10 sm:h-9 bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              {t('common.delete')}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      {/* Load Draft Confirmation Dialog */}
-      <AlertDialog open={loadDialogOpen} onOpenChange={(open) => {
-        setLoadDialogOpen(open);
-        if (!open) {
-          (window as unknown as { __pendingEasyOrderGroup?: unknown }).__pendingEasyOrderGroup = undefined;
-        }
-      }}>
-        <AlertDialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-lg">
-          <AlertDialogHeader>
-            <AlertDialogTitle>{t('drafts.loadTitle')}</AlertDialogTitle>
-            <AlertDialogDescription>
-              {t('drafts.loadDescription')}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter className="flex-col sm:flex-row gap-2">
-            <AlertDialogCancel className="w-full sm:w-auto h-10 sm:h-9">{t('common.cancel')}</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => {
-                const pendingGroup = (window as unknown as { __pendingEasyOrderGroup?: typeof easyOrderGroups[0] }).__pendingEasyOrderGroup;
-                if (pendingGroup) {
-                  executeGroupLoad(pendingGroup);
-                } else if (selectedDraft) {
-                  loadDraftToCart(selectedDraft);
-                }
-              }}
-              className="w-full sm:w-auto h-10 sm:h-9"
-            >
-              {t('drafts.replaceCart')}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      {/* Delete EasyOrder Group Confirmation Dialog */}
-      <AlertDialog open={deleteGroupDialogOpen} onOpenChange={setDeleteGroupDialogOpen}>
-        <AlertDialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-lg">
-          <AlertDialogHeader>
-            <AlertDialogTitle>EasyOrder löschen?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Möchten Sie alle {selectedGroup?.drafts.length} Vorbestellungen von {selectedGroup?.employeeName} löschen? Diese Aktion kann nicht rückgängig gemacht werden.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter className="flex-col sm:flex-row gap-2">
-            <AlertDialogCancel className="w-full sm:w-auto h-10 sm:h-9">{t('common.cancel')}</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={confirmDeleteGroup}
-              className="w-full sm:w-auto h-10 sm:h-9 bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              {t('common.delete')}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      <OrderEmailViewDialog
-        open={emailDialogOpen}
-        onOpenChange={setEmailDialogOpen}
-        order={selectedOrder}
-        restaurantName={orgData?.name || 'Restaurant'}
+      <DeleteDraftDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen} draft={selectedDraft} onConfirm={confirmDeleteDraft} />
+      <LoadDraftDialog open={loadDialogOpen} onOpenChange={(open) => { setLoadDialogOpen(open); if (!open) (window as unknown as { __pendingEasyOrderGroup?: unknown }).__pendingEasyOrderGroup = undefined; }}
+        onConfirm={() => {
+          const pendingGroup = (window as unknown as { __pendingEasyOrderGroup?: EasyOrderGroup }).__pendingEasyOrderGroup;
+          if (pendingGroup) executeGroupLoad(pendingGroup);
+          else if (selectedDraft) loadDraftToCart(selectedDraft);
+        }}
       />
+      <DeleteGroupDialog open={deleteGroupDialogOpen} onOpenChange={setDeleteGroupDialogOpen} group={selectedGroup} onConfirm={confirmDeleteGroup} />
+      <OrderEmailViewDialog open={emailDialogOpen} onOpenChange={setEmailDialogOpen} order={selectedOrder} restaurantName={orgData?.name || 'Restaurant'} />
 
-      {/* Floating Action Button - Neue Bestellung */}
       <Tooltip>
         <TooltipTrigger asChild>
-      <Button
-        onClick={() => navigate('/suppliers')}
-        size="lg"
-        className="fixed bottom-6 right-6 z-50 h-16 w-16 rounded-full shadow-lg hover:scale-105 transition-transform duration-200 flex items-center justify-center"
-      >
-        <ShoppingCart className="h-8 w-8" />
-      </Button>
+          <Button onClick={() => navigate('/suppliers')} size="lg" className="fixed bottom-6 right-6 z-50 h-16 w-16 rounded-full shadow-lg hover:scale-105 transition-transform duration-200 flex items-center justify-center">
+            <ShoppingCart className="h-8 w-8" />
+          </Button>
         </TooltipTrigger>
-        <TooltipContent side="left">
-          <p>{t('orders.newOrder')}</p>
-        </TooltipContent>
+        <TooltipContent side="left"><p>{t('orders.newOrder')}</p></TooltipContent>
       </Tooltip>
     </DashboardLayout>
   );
