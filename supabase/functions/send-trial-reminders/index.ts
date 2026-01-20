@@ -38,10 +38,11 @@ async function sendEmailViaSMTP(options: {
     });
     await client.close();
     return { success: true };
-  } catch (error: any) {
-    console.error("SMTP send error:", error);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    console.error("SMTP send error:", message);
     try { await client.close(); } catch {}
-    return { success: false, error: error.message };
+    return { success: false, error: message };
   }
 }
 
@@ -327,10 +328,11 @@ serve(async (req) => {
         headers: { "Content-Type": "application/json", ...corsHeaders },
       }
     );
-  } catch (error: any) {
-    console.error("Error in send-trial-reminders:", error);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    console.error("Error in send-trial-reminders:", message);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: message }),
       {
         status: 500,
         headers: { "Content-Type": "application/json", ...corsHeaders },

@@ -39,10 +39,11 @@ async function sendEmailViaSMTP(options: {
     });
     await client.close();
     return { success: true };
-  } catch (error: any) {
-    console.error("SMTP send error:", error);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    console.error("SMTP send error:", message);
     try { await client.close(); } catch {}
-    return { success: false, error: error.message };
+    return { success: false, error: message };
   }
 }
 
@@ -236,10 +237,11 @@ Wichtig: Dieser Link ist 7 Tage gültig.
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
-  } catch (error: any) {
-    console.error("Error in request-new-magic-link:", error);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    console.error("Error in request-new-magic-link:", message);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: message }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }

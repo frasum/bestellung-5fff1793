@@ -111,10 +111,11 @@ serve(async (req) => {
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
-  } catch (error: any) {
-    console.error('Error in verify-supplier-token:', error);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    console.error('Error in verify-supplier-token:', message);
     return new Response(
-      JSON.stringify({ error: error.message, status: 'error' }),
+      JSON.stringify({ error: message, status: 'error' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
