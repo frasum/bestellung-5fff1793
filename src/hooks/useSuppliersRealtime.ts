@@ -15,8 +15,7 @@ export function useSuppliersRealtime() {
           schema: 'public',
           table: 'suppliers',
         },
-        (payload) => {
-          console.log('Supplier change detected:', payload);
+        () => {
           // Invalidate all supplier queries to trigger refetch
           queryClient.invalidateQueries({ queryKey: ['suppliers'] });
           queryClient.invalidateQueries({ 

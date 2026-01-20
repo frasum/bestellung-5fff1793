@@ -9,7 +9,6 @@ export const useDesktopNotifications = () => {
 
   const requestPermission = useCallback(async () => {
     if (!('Notification' in window)) {
-      console.log('Browser does not support notifications');
       return false;
     }
 

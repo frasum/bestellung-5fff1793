@@ -182,7 +182,6 @@ export const applyTranslationOverrides = async () => {
           override.override_value
         );
       });
-      console.log(`Applied ${overrides.length} translation overrides`);
     }
   } catch (error) {
     console.error('Error applying translation overrides:', error);
