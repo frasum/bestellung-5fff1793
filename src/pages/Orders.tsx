@@ -131,7 +131,7 @@ const Orders = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<Order['status'] | 'all'>('all');
   const [dateFilter, setDateFilter] = useState<DateFilter>('all');
-  const hasActiveFilters = searchQuery || statusFilter !== 'all' || dateFilter !== 'all' || locationFilter !== 'active';
+  const hasActiveFilters = !!searchQuery || statusFilter !== 'all' || dateFilter !== 'all' || locationFilter !== 'active';
 
   const clearFilters = () => {
     setSearchQuery('');
