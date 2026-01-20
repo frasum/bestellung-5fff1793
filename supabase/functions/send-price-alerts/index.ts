@@ -2,6 +2,25 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { SMTPClient } from "https://deno.land/x/denomailer@1.6.0/mod.ts";
 
+interface PriceWatchResult {
+  article_name: string;
+  article_category: string | null;
+  found_price: number;
+  found_supplier: string;
+  source_url: string | null;
+  current_price: number;
+  savings_percent: number;
+  savings_amount: number;
+}
+
+interface PriceWatchAlert {
+  id: string;
+  user_id: string;
+  organization_id: string;
+  result_id: string;
+  price_watch_results: PriceWatchResult[];
+}
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -135,12 +154,13 @@ serve(async (req) => {
         continue;
       }
 
-      const totalSavings = userAlerts.reduce((sum, alert) => {
-        return sum + (Number((alert as any).price_watch_results?.savings_amount) || 0);
+      const typedAlerts = userAlerts as PriceWatchAlert[];
+      const totalSavings = typedAlerts.reduce((sum, alert) => {
+        return sum + (Number(alert.price_watch_results?.[0]?.savings_amount) || 0);
       }, 0);
 
-      const alertRows = userAlerts.map(alert => {
-        const result = (alert as any).price_watch_results;
+      const alertRows = typedAlerts.map(alert => {
+        const result = alert.price_watch_results?.[0];
         if (!result) return "";
         return `
           <tr style="border-bottom: 1px solid #e5e7eb;">

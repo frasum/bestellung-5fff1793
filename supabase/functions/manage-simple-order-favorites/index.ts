@@ -1,6 +1,17 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
+interface EmployeeData {
+  id: string;
+  name: string;
+}
+
+interface TokenWithEmployee {
+  id: string;
+  employee_id: string | null;
+  employee: EmployeeData[];
+}
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -56,7 +67,8 @@ serve(async (req) => {
     }
 
     // Get employee_id from the token
-    const employeeId = tokenData.employee_id || (tokenData.employee as any)?.id;
+    const typedTokenData = tokenData as TokenWithEmployee;
+    const employeeId = typedTokenData.employee_id || typedTokenData.employee?.[0]?.id;
 
     if (!employeeId) {
       console.log('Token has no employee assigned - cannot save favorites');

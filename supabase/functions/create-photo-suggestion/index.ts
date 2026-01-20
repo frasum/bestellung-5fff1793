@@ -1,6 +1,19 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
+interface EmployeeData {
+  id: string;
+  name: string;
+  can_capture_photos: boolean;
+  can_add_free_items: boolean;
+}
+
+interface TokenWithEmployee {
+  id: string;
+  organization_id: string;
+  employee: EmployeeData[];
+}
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -41,7 +54,8 @@ serve(async (req) => {
     }
 
     // Check if employee has permission (can_capture_photos OR can_add_free_items)
-    const employee = tokenData.employee as any;
+    const typedTokenData = tokenData as TokenWithEmployee;
+    const employee = typedTokenData.employee?.[0];
     const canCapture = employee?.can_capture_photos;
     const canAddFreeItems = employee?.can_add_free_items;
     if (!canCapture && !canAddFreeItems) {
