@@ -257,8 +257,9 @@ export default function B2BCustomerPortal() {
 
       await checkAuthAndLoadData();
       toast.success('Willkommen zurück!');
-    } catch (err: any) {
-      toast.error('Anmeldung fehlgeschlagen: ' + err.message);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Unbekannter Fehler';
+      toast.error('Anmeldung fehlgeschlagen: ' + message);
     } finally {
       setLoginLoading(false);
     }
@@ -358,9 +359,10 @@ export default function B2BCustomerPortal() {
       setCart([]);
       setViewState('confirmation');
       toast.success('Bestellung erfolgreich aufgegeben!');
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error submitting order:', error);
-      toast.error('Fehler beim Absenden: ' + error.message);
+      const message = error instanceof Error ? error.message : 'Unbekannter Fehler';
+      toast.error('Fehler beim Absenden: ' + message);
     } finally {
       setSubmitting(false);
     }

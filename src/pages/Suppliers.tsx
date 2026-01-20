@@ -339,7 +339,7 @@ const Suppliers = () => {
       if (newWindow) {
         newWindow.location.href = data.portalUrl;
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error opening portal:', error);
       // Fenster schließen bei Fehler
       if (newWindow) {
@@ -348,7 +348,8 @@ const Suppliers = () => {
       const {
         toast
       } = await import('sonner');
-      toast.error('Fehler beim Öffnen des Portals: ' + error.message);
+      const message = error instanceof Error ? error.message : 'Unbekannter Fehler';
+      toast.error('Fehler beim Öffnen des Portals: ' + message);
     }
   };
 

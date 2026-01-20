@@ -306,8 +306,9 @@ const Checkout = () => {
       setEmailPreviews(previews);
       setPendingOrderData(data);
       setShowEmailPreview(true);
-    } catch (error: any) {
-      toast.error(error.message || t('checkout.loadPreviewError'));
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : t('checkout.loadPreviewError');
+      toast.error(message);
     }
   };
 
@@ -358,8 +359,9 @@ const Checkout = () => {
       clearCart();
       setShowEmailPreview(false);
       toast.success(t('checkout.ordersSuccessful', { count: orderNumbers.length }));
-    } catch (error: any) {
-      toast.error(error.message || t('checkout.createOrderError'));
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : t('checkout.createOrderError');
+      toast.error(message);
     } finally {
       setIsSubmitting(false);
     }

@@ -151,8 +151,9 @@ export const useApproveSuggestedArticle = () => {
       queryClient.invalidateQueries({ queryKey: ['articles'] });
       toast.success('Artikel übernommen');
     },
-    onError: (error: any) => {
-      toast.error('Fehler: ' + error.message);
+    onError: (error: unknown) => {
+      const message = error instanceof Error ? error.message : 'Unbekannter Fehler';
+      toast.error('Fehler: ' + message);
     },
   });
 };
@@ -178,8 +179,9 @@ export const useRejectSuggestedArticle = () => {
       queryClient.invalidateQueries({ queryKey: ['combined-pending-by-supplier'] });
       toast.success('Vorschlag abgelehnt');
     },
-    onError: (error: any) => {
-      toast.error('Fehler: ' + error.message);
+    onError: (error: unknown) => {
+      const message = error instanceof Error ? error.message : 'Unbekannter Fehler';
+      toast.error('Fehler: ' + message);
     },
   });
 };
@@ -224,8 +226,9 @@ export const useApproveAllSuggestedArticles = () => {
       queryClient.invalidateQueries({ queryKey: ['articles'] });
       toast.success('Alle Vorschläge übernommen');
     },
-    onError: (error: any) => {
-      toast.error('Fehler: ' + error.message);
+    onError: (error: unknown) => {
+      const message = error instanceof Error ? error.message : 'Unbekannter Fehler';
+      toast.error('Fehler: ' + message);
     },
   });
 };
@@ -251,8 +254,9 @@ export const useRejectAllSuggestedArticles = () => {
       queryClient.invalidateQueries({ queryKey: ['combined-pending-by-supplier'] });
       toast.success('Alle Vorschläge abgelehnt');
     },
-    onError: (error: any) => {
-      toast.error('Fehler: ' + error.message);
+    onError: (error: unknown) => {
+      const message = error instanceof Error ? error.message : 'Unbekannter Fehler';
+      toast.error('Fehler: ' + message);
     },
   });
 };

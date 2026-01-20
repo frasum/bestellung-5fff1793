@@ -66,9 +66,10 @@ const B2BSupplierLogin = () => {
 
       toast.error('Kein B2B-Zugang mit dieser E-Mail gefunden');
       await supabase.auth.signOut();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Login error:', error);
-      toast.error(error.message || 'Login fehlgeschlagen');
+      const message = error instanceof Error ? error.message : 'Login fehlgeschlagen';
+      toast.error(message);
     } finally {
       setIsLoading(false);
     }
@@ -137,9 +138,10 @@ const B2BSupplierLogin = () => {
 
       toast.success('Registrierung erfolgreich! Bitte bestätigen Sie Ihre E-Mail.');
       setIsRegistering(false);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Registration error:', error);
-      toast.error(error.message || 'Registrierung fehlgeschlagen');
+      const message = error instanceof Error ? error.message : 'Registrierung fehlgeschlagen';
+      toast.error(message);
     } finally {
       setIsLoading(false);
     }

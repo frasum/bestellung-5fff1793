@@ -141,7 +141,7 @@ const B2BSupplierDashboard = () => {
         setSupplier(supplierData);
         await loadStats(accountId, supplierId);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error loading account:', error);
       toast.error('Fehler beim Laden des Kontos');
     } finally {
@@ -186,7 +186,7 @@ const B2BSupplierDashboard = () => {
 
       toast.error('Kein B2B-Konto gefunden');
       navigate('/b2b/login');
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error loading account:', error);
       toast.error('Fehler beim Laden des Kontos');
     } finally {

@@ -72,7 +72,7 @@ export const SupplierPortalOrdersTab = ({ session }: SupplierPortalOrdersTabProp
 
       if (error) throw error;
       setOrders(data?.orders || []);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error fetching orders:', error);
       toast.error('Fehler beim Laden der Bestellungen');
     } finally {
@@ -200,7 +200,7 @@ export const SupplierPortalOrdersTab = ({ session }: SupplierPortalOrdersTabProp
       ));
       
       toast.success('Bestellung bestätigt');
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error confirming order:', error);
       toast.error('Fehler beim Bestätigen der Bestellung');
     } finally {

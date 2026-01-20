@@ -33,9 +33,10 @@ export function useMergeArticles() {
       
       toast.success(t('articles.mergeSuccess', 'Artikel erfolgreich zusammengeführt'));
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
       console.error('Error merging articles:', error);
-      toast.error(t('articles.mergeError', 'Fehler beim Zusammenführen') + ': ' + (error.message || 'Unbekannter Fehler'));
+      const message = error instanceof Error ? error.message : 'Unbekannter Fehler';
+      toast.error(t('articles.mergeError', 'Fehler beim Zusammenführen') + ': ' + message);
     },
   });
 }

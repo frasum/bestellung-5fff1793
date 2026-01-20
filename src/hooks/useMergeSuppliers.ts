@@ -32,9 +32,10 @@ export function useMergeSuppliers() {
       
       toast.success('Lieferanten erfolgreich zusammengeführt');
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
       console.error('Error merging suppliers:', error);
-      toast.error('Fehler beim Zusammenführen: ' + (error.message || 'Unbekannter Fehler'));
+      const message = error instanceof Error ? error.message : 'Unbekannter Fehler';
+      toast.error('Fehler beim Zusammenführen: ' + message);
     },
   });
 }
