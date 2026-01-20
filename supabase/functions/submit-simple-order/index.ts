@@ -221,7 +221,18 @@ serve(async (req) => {
     type TokenSource = 'simple_order_token' | 'employee_session';
     let tokenSource: TokenSource = 'simple_order_token';
 
-    let tokenData: any = null;
+    interface TokenData {
+      token: string;
+      organization_id: string;
+      employee_id: string | null;
+      supplier_id: string | null;
+      expires_at: string | null;
+      supplier: { id: string; name: string; organization_id: string } | null;
+      __token_source?: TokenSource;
+      language?: string;
+    }
+
+    let tokenData: TokenData | null = null;
 
     // 1) Try SimpleOrder token (used by QR/magic-link flow)
     const { data: simpleToken, error: simpleTokenError } = await supabase
@@ -301,6 +312,14 @@ serve(async (req) => {
       );
     }
 
+    // Ensure tokenData is set after all validation
+    if (!tokenData) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid token' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     // Get an admin user from the organization to use as user_id for the draft/order
     const { data: adminProfile, error: adminError } = await supabase
       .from('profiles')
@@ -321,7 +340,7 @@ serve(async (req) => {
 
     // If this is an Employee Portal session token, enforce location/supplier permissions
     // (prevents using a valid session token to order for arbitrary locations/suppliers)
-    if ((tokenData as any)?.__token_source === 'employee_session') {
+    if (tokenData?.__token_source === 'employee_session') {
       if (!requestSupplierId) {
         return new Response(
           JSON.stringify({ error: 'supplier_id is required for employee sessions' }),

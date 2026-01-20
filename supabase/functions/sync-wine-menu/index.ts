@@ -176,7 +176,7 @@ Deno.serve(async (req) => {
 
       matchedCount++;
       const article = match.article;
-      const updates: Record<string, any> = {};
+      const updates: Record<string, string | number> = {};
       const updatesApplied: SyncResult['updates'] = {};
 
       // Rule 1: selling_price - only set if currently empty/null/0

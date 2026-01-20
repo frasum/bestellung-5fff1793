@@ -54,12 +54,28 @@ Deno.serve(async (req) => {
     console.log(`Organization: ${organization_id}, Supplier: ${supplier_id}`);
     console.log(`Dry run: ${dryRun}`);
 
+    interface ArticleData {
+      organization_id: string;
+      supplier_id: string;
+      name: string;
+      description: string;
+      grape_variety: string | null;
+      selling_price: number | null;
+      flavor_profile: string | null;
+      special_attributes: string | null;
+      origin_country: string | null;
+      category: string;
+      unit: string;
+      price: number;
+      is_active: boolean;
+    }
+
     const results = {
       total: wines.length,
       created: 0,
       skipped: 0,
       errors: [] as string[],
-      articles: [] as any[],
+      articles: [] as ArticleData[],
     };
 
     for (const wine of wines) {
