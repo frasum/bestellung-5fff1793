@@ -50,3 +50,16 @@ export function errorResponse(message: string, status = 500): Response {
 export function successResponse<T>(data?: T): Response {
   return jsonResponse({ success: true, ...data }, 200);
 }
+
+/**
+ * Safely extract error message from unknown error type.
+ * Use this in catch blocks instead of error: any.
+ */
+export function getErrorMessage(error: unknown): string {
+  if (error instanceof Error) return error.message;
+  if (typeof error === 'string') return error;
+  if (error && typeof error === 'object' && 'message' in error) {
+    return String((error as { message: unknown }).message);
+  }
+  return 'An unknown error occurred';
+}
