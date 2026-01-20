@@ -88,7 +88,7 @@ export function LiveDemoRestaurantPanel({ soundEnabled }: LiveDemoRestaurantPane
   };
 
   // Generate simulated email HTML for demo
-  const generateDemoEmailHtml = (supplier: any, items: LocalCartItem[], orderNumber: string) => {
+  const generateDemoEmailHtml = (supplier: { id: string; name: string }, items: LocalCartItem[], orderNumber: string) => {
     const totalAmount = items.reduce((sum, item) => sum + item.article.price * (Number(item.article.packaging_unit) || 1) * item.quantity, 0);
     const itemRows = items.map(item => `
       <tr>
