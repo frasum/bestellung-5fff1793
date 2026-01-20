@@ -183,7 +183,7 @@ export const generateInventoryListPdf = (
     });
 
     // Get the final Y position after the table
-    currentY = (doc as any).lastAutoTable.finalY + 2;
+    currentY = doc.lastAutoTable?.finalY + 2 || currentY + 50;
 
     // Category subtotal
     doc.setFontSize(9);

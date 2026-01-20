@@ -109,7 +109,7 @@ export const exportPrioritiesToPdf = (
       },
     });
 
-    yPos = (doc as jsPDF & { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 10;
+    yPos = doc.lastAutoTable?.finalY + 10 || yPos + 50;
   });
 
   doc.save(`system-prioritaeten-${new Date().toISOString().split('T')[0]}.pdf`);

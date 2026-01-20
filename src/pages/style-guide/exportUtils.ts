@@ -334,7 +334,7 @@ export const exportFullStyleGuidePDF = () => {
     alternateRowStyles: { fillColor: [245, 247, 250] },
   });
   
-  let finalY = (doc as any).lastAutoTable.finalY || 80;
+  let finalY = doc.lastAutoTable?.finalY || 80;
   doc.setFontSize(12);
   doc.setTextColor(33, 33, 33);
   doc.text('Button-Größen:', marginLeft, finalY + 15);
@@ -394,7 +394,7 @@ export const exportFullStyleGuidePDF = () => {
     alternateRowStyles: { fillColor: [245, 247, 250] },
   });
   
-  finalY = (doc as any).lastAutoTable.finalY || 120;
+  finalY = doc.lastAutoTable?.finalY || 120;
   doc.setFontSize(12);
   doc.text('Schriftgewichte:', marginLeft, finalY + 15);
   
@@ -453,7 +453,7 @@ export const exportFullStyleGuidePDF = () => {
     alternateRowStyles: { fillColor: [245, 247, 250] },
   });
   
-  finalY = (doc as any).lastAutoTable.finalY || 120;
+  finalY = doc.lastAutoTable?.finalY || 120;
   doc.setFontSize(10);
   doc.setTextColor(100, 100, 100);
   doc.text('Verwendung: gap-X, p-X, m-X, space-x-X, space-y-X', marginLeft, finalY + 12);
