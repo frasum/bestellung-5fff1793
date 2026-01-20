@@ -539,7 +539,7 @@ const WineCard = ({ wine, onEdit }: WineCardProps) => {
   const [showResearchDialog, setShowResearchDialog] = useState(false);
   const updateArticle = useUpdateArticle();
   
-  const sellingPrice = (wine as any).selling_price;
+  const sellingPrice = wine.selling_price;
   const hasSellingPrice = sellingPrice != null && sellingPrice > 0;
   
   // Check if wine data is incomplete
