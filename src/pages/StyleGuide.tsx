@@ -13,7 +13,6 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Separator } from '@/components/ui/separator';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import {
   Select,
@@ -74,680 +73,18 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
-import { AlertCircle, CheckCircle, Info, Palette, ArrowLeft, Sun, Moon, Sparkles, MoreHorizontal, ChevronDown, Settings, User, LogOut, HelpCircle, CalendarDays, ChevronsUpDown, Download, FileJson, FileCode, FileText, FlaskConical, Mic, Upload, Eye, Camera, Globe, TestTube, Layers, GripVertical, Users, BarChart3, Keyboard, Search, PanelLeftClose, Navigation, CircleHelp } from 'lucide-react';
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
+import { AlertCircle, CheckCircle, Info, Palette, ArrowLeft, Sun, Moon, Sparkles, MoreHorizontal, ChevronDown, Settings, User, LogOut, HelpCircle, CalendarDays, ChevronsUpDown, Download, FileJson, FileCode, FileText, FlaskConical, Keyboard } from 'lucide-react';
 import { useTheme } from 'next-themes';
-import { toast } from 'sonner';
 import { ComponentPlayground } from '@/components/style-guide/ComponentPlayground';
 
-// Design tokens data for export
-const designTokens = {
-  colors: {
-    light: {
-      background: "210 20% 98%",
-      foreground: "222 47% 11%",
-      card: "0 0% 100%",
-      cardForeground: "222 47% 11%",
-      popover: "0 0% 100%",
-      popoverForeground: "222 47% 11%",
-      primary: "217 91% 50%",
-      primaryForeground: "210 40% 98%",
-      secondary: "210 20% 96%",
-      secondaryForeground: "222 47% 11%",
-      muted: "210 20% 96%",
-      mutedForeground: "215 16% 47%",
-      accent: "210 20% 96%",
-      accentForeground: "222 47% 11%",
-      destructive: "0 84% 60%",
-      destructiveForeground: "210 40% 98%",
-      warning: "45 93% 47%",
-      warningForeground: "26 83% 14%",
-      success: "142 76% 36%",
-      successForeground: "355 100% 97%",
-      border: "220 13% 91%",
-      input: "220 13% 91%",
-      ring: "217 91% 50%",
-    },
-    dark: {
-      background: "224 71% 4%",
-      foreground: "213 31% 91%",
-      card: "224 71% 4%",
-      cardForeground: "213 31% 91%",
-      popover: "224 71% 4%",
-      popoverForeground: "213 31% 91%",
-      primary: "210 100% 52%",
-      primaryForeground: "222 47% 11%",
-      secondary: "223 47% 14%",
-      secondaryForeground: "213 31% 91%",
-      muted: "223 47% 14%",
-      mutedForeground: "215 16% 65%",
-      accent: "223 47% 14%",
-      accentForeground: "213 31% 91%",
-      destructive: "0 63% 45%",
-      destructiveForeground: "210 40% 98%",
-      warning: "45 93% 47%",
-      warningForeground: "26 83% 14%",
-      success: "142 70% 45%",
-      successForeground: "144 61% 20%",
-      border: "222 47% 18%",
-      input: "222 47% 18%",
-      ring: "212 100% 48%",
-    }
-  },
-  spacing: {
-    "1": "0.25rem",
-    "2": "0.5rem",
-    "3": "0.75rem",
-    "4": "1rem",
-    "5": "1.25rem",
-    "6": "1.5rem",
-    "8": "2rem",
-    "10": "2.5rem",
-    "12": "3rem",
-    "16": "4rem",
-  },
-  borderRadius: {
-    none: "0",
-    sm: "0.125rem",
-    md: "0.375rem",
-    lg: "0.5rem",
-    xl: "0.75rem",
-    "2xl": "1rem",
-    full: "9999px",
-  },
-  typography: {
-    fontFamily: {
-      sans: "Inter, system-ui, sans-serif",
-    },
-    fontSize: {
-      xs: "0.75rem",
-      sm: "0.875rem",
-      base: "1rem",
-      lg: "1.125rem",
-      xl: "1.25rem",
-      "2xl": "1.5rem",
-      "3xl": "1.875rem",
-    }
-  },
-  shadows: {
-    note: "Ultraminimalistisches Design verwendet keine Schatten. Nutze border-border stattdessen."
-  }
-};
-
-// Export functions
-const exportAsJSON = () => {
-  const dataStr = JSON.stringify(designTokens, null, 2);
-  const blob = new Blob([dataStr], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = 'design-tokens.json';
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  URL.revokeObjectURL(url);
-  toast.success('Design-Tokens als JSON exportiert');
-};
-
-const exportAsCSS = () => {
-  const generateCSSVariables = (colors: Record<string, string>, prefix: string = '') => {
-    return Object.entries(colors)
-      .map(([key, value]) => {
-        const cssKey = key.replace(/([A-Z])/g, '-$1').toLowerCase();
-        return `  --${cssKey}: ${value};`;
-      })
-      .join('\n');
-  };
-
-  const css = `/* Bestellung.pro Design Tokens */
-/* Generated: ${new Date().toISOString()} */
-
-:root {
-  /* Light Theme Colors */
-${generateCSSVariables(designTokens.colors.light)}
-
-  /* Border Radius */
-  --radius: 0.375rem;
-
-  /* Spacing Scale */
-${Object.entries(designTokens.spacing).map(([key, value]) => `  --spacing-${key}: ${value};`).join('\n')}
-}
-
-.dark {
-  /* Dark Theme Colors */
-${generateCSSVariables(designTokens.colors.dark)}
-}
-
-/* Typography */
-body {
-  font-family: ${designTokens.typography.fontFamily.sans};
-}
-
-/* Design Principles */
-/*
- * 1. Keine Schatten - nutze border-border für Tiefe
- * 2. Konsistente Radii - nur rounded-md (6px)
- * 3. 1 Primary Button pro Screen
- * 4. Dezente Backgrounds - bg-muted/30
- * 5. Touch-optimiert - min h-11 für Mobile-Buttons
- */
-`;
-
-  const blob = new Blob([css], { type: 'text/css' });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = 'design-tokens.css';
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  URL.revokeObjectURL(url);
-  toast.success('Design-Tokens als CSS exportiert');
-};
-
-// Advanced features data
-const advancedFeatures = [
-  {
-    category: 'Auth-Seite',
-    icon: User,
-    features: [
-      { name: 'Leere Demo', description: 'Erstellt Demo-Account ohne Beispieldaten zum Testen des Onboarding-Flows' },
-      { name: 'Sprach-Assistent', description: 'Voice-basiertes Katalog-Setup mit ElevenLabs AI für hands-free Onboarding' },
-    ]
-  },
-  {
-    category: 'Katalog (Lieferanten)',
-    icon: Upload,
-    features: [
-      { name: 'Export', description: 'Lieferantenliste als CSV, Excel oder PDF exportieren' },
-      { name: 'Import', description: 'Massenimport von Lieferanten aus CSV/Excel-Dateien' },
-      { name: 'Multi-Select', description: 'Mehrere Lieferanten gleichzeitig auswählen und bearbeiten' },
-    ]
-  },
-  {
-    category: 'Katalog (Artikel)',
-    icon: Layers,
-    features: [
-      { name: 'Export', description: 'Artikelliste als CSV, Excel oder PDF exportieren' },
-      { name: 'Import', description: 'Massenimport von Artikeln aus CSV/Excel-Dateien' },
-      { name: 'Erweiterte Ansicht', description: 'Zusätzliche Spalten in der Artikeltabelle anzeigen' },
-    ]
-  },
-  {
-    category: 'Artikel-Formular',
-    icon: Camera,
-    features: [
-      { name: 'KI-Foto-Erkennung', description: 'Automatische Artikelerkennung per Foto mittels AI-Bildanalyse' },
-    ]
-  },
-  {
-    category: 'Einstellungen - Profil',
-    icon: Settings,
-    features: [
-      { name: 'Style Guide Link', description: 'Zugang zur Design-System Dokumentation (diese Seite)' },
-      { name: 'i18n Check Tool', description: 'Übersetzungs-Vollständigkeit aller Sprachen prüfen' },
-      { name: 'Testmodus Karte', description: 'E-Mails an eine Test-Adresse umleiten statt an echte Lieferanten' },
-    ]
-  },
-  {
-    category: 'Einstellungen - Organisation',
-    icon: Layers,
-    features: [
-      { name: 'Artikel-Organisation', description: 'Kategorien und Sortierung der Artikel verwalten' },
-    ]
-  },
-  {
-    category: 'Einstellungen - Demo-Konten',
-    icon: Users,
-    features: [
-      { name: 'Demo-Konten Tab', description: 'Alle Demo-Accounts der Plattform verwalten (nur Admins)' },
-    ]
-  },
-  {
-    category: 'Einstellungen - EasyOrder',
-    icon: GripVertical,
-    features: [
-      { name: 'Reihenfolge Tab', description: 'Artikel-Reihenfolge per Drag & Drop anpassen' },
-    ]
-  },
-  {
-    category: 'Einstellungen - Nutzung',
-    icon: BarChart3,
-    features: [
-      { name: 'Tier Dropdown', description: 'Subscription-Tier manuell ändern (für Testzwecke)' },
-    ]
-  },
-];
-
-
-// Keyboard shortcuts data
-const keyboardShortcuts = [
-  {
-    category: 'Suche & Navigation',
-    icon: Search,
-    shortcuts: [
-      { keys: '⌘/Ctrl + K', action: 'Globale Suche öffnen', description: 'Schnellzugriff auf Suche nach Seiten, Lieferanten, Artikeln und Bestellungen' },
-      { keys: '⌘/Ctrl + B', action: 'Sidebar ein-/ausblenden', description: 'Wechselt die Sidebar-Ansicht zwischen erweitert und eingeklappt' },
-    ]
-  },
-  {
-    category: 'Seitennavigation',
-    icon: Navigation,
-    shortcuts: [
-      { keys: 'Alt + D', action: 'Dashboard', description: 'Navigiert zum Dashboard (Berichte)' },
-      { keys: 'Alt + S', action: 'Lieferanten', description: 'Navigiert zur Lieferanten-Übersicht' },
-      { keys: 'Alt + A', action: 'Artikel', description: 'Navigiert zur Artikel-Übersicht' },
-      { keys: 'Alt + O', action: 'Bestellungen', description: 'Navigiert zur Bestellungs-Übersicht' },
-      { keys: 'Alt + I', action: 'Inventur', description: 'Navigiert zur Inventur' },
-      { keys: 'Alt + R', action: 'Berichte', description: 'Navigiert zu den Berichten' },
-      { keys: 'Alt + C', action: 'Warenkorb', description: 'Navigiert zum Warenkorb' },
-      { keys: 'Ctrl + ,', action: 'Einstellungen', description: 'Navigiert zu den Einstellungen' },
-    ]
-  },
-  {
-    category: 'Hilfe',
-    icon: CircleHelp,
-    shortcuts: [
-      { keys: 'Shift + ?', action: 'Shortcuts anzeigen', description: 'Zeigt eine Toast-Benachrichtigung mit allen verfügbaren Shortcuts' },
-    ]
-  }
-];
-
-// Export full Style Guide as PDF
-const exportFullStyleGuidePDF = () => {
-  const doc = new jsPDF();
-  const pageWidth = doc.internal.pageSize.width;
-  const pageHeight = doc.internal.pageSize.height;
-  const marginLeft = 14;
-  const marginRight = 14;
-  const contentWidth = pageWidth - marginLeft - marginRight;
-  
-  // Helper to add page footer
-  const addFooter = () => {
-    const pageCount = doc.getNumberOfPages();
-    for (let i = 1; i <= pageCount; i++) {
-      doc.setPage(i);
-      doc.setFontSize(8);
-      doc.setTextColor(150, 150, 150);
-      doc.text(
-        `Generiert am ${new Date().toLocaleDateString('de-DE')} | Seite ${i} von ${pageCount}`,
-        marginLeft,
-        pageHeight - 10
-      );
-    }
-  };
-
-  // ===== COVER PAGE =====
-  doc.setFontSize(36);
-  doc.setTextColor(33, 33, 33);
-  doc.text('Style Guide', pageWidth / 2, 80, { align: 'center' });
-  
-  doc.setFontSize(18);
-  doc.setTextColor(100, 100, 100);
-  doc.text('Bestellung.pro', pageWidth / 2, 95, { align: 'center' });
-  
-  doc.setFontSize(12);
-  doc.text('Design-System Dokumentation', pageWidth / 2, 110, { align: 'center' });
-  
-  doc.setFontSize(11);
-  doc.setTextColor(150, 150, 150);
-  doc.text(`Generiert am ${new Date().toLocaleDateString('de-DE', { 
-    weekday: 'long', 
-    year: 'numeric', 
-    month: 'long', 
-    day: 'numeric' 
-  })}`, pageWidth / 2, 130, { align: 'center' });
-
-  // ===== TABLE OF CONTENTS =====
-  doc.addPage();
-  doc.setFontSize(20);
-  doc.setTextColor(33, 33, 33);
-  doc.text('Inhaltsverzeichnis', marginLeft, 25);
-  
-  const tocItems = [
-    '1. Erweiterte Features',
-    '2. Tastatur-Shortcuts',
-    '3. Design Tokens',
-    '4. Design-Prinzipien',
-    '5. Farb-Palette',
-    '6. Button-Varianten',
-    '7. Typografie',
-    '8. Spacing-Referenz',
-  ];
-  
-  doc.setFontSize(11);
-  doc.setTextColor(66, 66, 66);
-  tocItems.forEach((item, idx) => {
-    doc.text(item, marginLeft + 5, 45 + (idx * 10));
-  });
-
-  // ===== 1. ERWEITERTE FEATURES =====
-  doc.addPage();
-  doc.setFontSize(18);
-  doc.setTextColor(33, 33, 33);
-  doc.text('1. Erweiterte Features', marginLeft, 22);
-  
-  doc.setFontSize(10);
-  doc.setTextColor(100, 100, 100);
-  doc.text('Features hinter dem "Erweiterte Einstellungen" Toggle', marginLeft, 30);
-  
-  const featuresData: string[][] = [];
-  advancedFeatures.forEach(category => {
-    category.features.forEach((feature, index) => {
-      featuresData.push([
-        index === 0 ? category.category : '',
-        feature.name,
-        feature.description
-      ]);
-    });
-  });
-  
-  autoTable(doc, {
-    startY: 38,
-    head: [['Bereich', 'Feature', 'Beschreibung']],
-    body: featuresData,
-    styles: { fontSize: 9, cellPadding: 3 },
-    headStyles: { fillColor: [59, 130, 246], textColor: 255, fontStyle: 'bold' },
-    columnStyles: {
-      0: { cellWidth: 40, fontStyle: 'bold' },
-      1: { cellWidth: 35 },
-      2: { cellWidth: 'auto' },
-    },
-    alternateRowStyles: { fillColor: [245, 247, 250] },
-  });
-
-  // ===== 2. TASTATUR-SHORTCUTS =====
-  doc.addPage();
-  doc.setFontSize(18);
-  doc.setTextColor(33, 33, 33);
-  doc.text('2. Tastatur-Shortcuts', marginLeft, 22);
-  
-  doc.setFontSize(10);
-  doc.setTextColor(100, 100, 100);
-  doc.text('Schnelle Navigation mit Tastenkombinationen', marginLeft, 30);
-  
-  const shortcutsData: string[][] = [];
-  keyboardShortcuts.forEach(category => {
-    category.shortcuts.forEach((shortcut, index) => {
-      shortcutsData.push([
-        index === 0 ? category.category : '',
-        shortcut.keys,
-        shortcut.action,
-        shortcut.description
-      ]);
-    });
-  });
-  
-  autoTable(doc, {
-    startY: 38,
-    head: [['Kategorie', 'Tasten', 'Aktion', 'Beschreibung']],
-    body: shortcutsData,
-    styles: { fontSize: 9, cellPadding: 3 },
-    headStyles: { fillColor: [59, 130, 246], textColor: 255, fontStyle: 'bold' },
-    columnStyles: {
-      0: { cellWidth: 35, fontStyle: 'bold' },
-      1: { cellWidth: 30 },
-      2: { cellWidth: 30 },
-      3: { cellWidth: 'auto' },
-    },
-    alternateRowStyles: { fillColor: [245, 247, 250] },
-  });
-
-  // ===== 3. DESIGN TOKENS =====
-  doc.addPage();
-  doc.setFontSize(18);
-  doc.setTextColor(33, 33, 33);
-  doc.text('3. Design Tokens', marginLeft, 22);
-  
-  doc.setFontSize(10);
-  doc.setTextColor(100, 100, 100);
-  doc.text('CSS-Variablen des ultraminimalistischen B2B SaaS Design-Systems', marginLeft, 30);
-  
-  const colorTokens = [
-    ['--background', '210 20% 98%', '224 71% 4%'],
-    ['--foreground', '222 47% 11%', '213 31% 91%'],
-    ['--primary', '217 91% 50%', '210 100% 52%'],
-    ['--secondary', '210 20% 96%', '223 47% 14%'],
-    ['--muted', '210 20% 96%', '223 47% 14%'],
-    ['--muted-foreground', '215 16% 47%', '215 16% 65%'],
-    ['--border', '220 13% 91%', '222 47% 18%'],
-    ['--destructive', '0 84% 60%', '0 63% 45%'],
-    ['--warning', '45 93% 47%', '45 93% 47%'],
-    ['--success', '142 76% 36%', '142 70% 45%'],
-  ];
-  
-  autoTable(doc, {
-    startY: 38,
-    head: [['CSS Variable', 'Light (HSL)', 'Dark (HSL)']],
-    body: colorTokens,
-    styles: { fontSize: 9, cellPadding: 3, font: 'courier' },
-    headStyles: { fillColor: [59, 130, 246], textColor: 255, fontStyle: 'bold', font: 'helvetica' },
-    alternateRowStyles: { fillColor: [245, 247, 250] },
-  });
-
-  // ===== 4. DESIGN-PRINZIPIEN =====
-  doc.addPage();
-  doc.setFontSize(18);
-  doc.setTextColor(33, 33, 33);
-  doc.text('4. Design-Prinzipien', marginLeft, 22);
-  
-  const principles = [
-    ['1', 'Keine Schatten', 'Nutze border-border für Tiefe statt box-shadow'],
-    ['2', 'Konsistente Radii', 'Nur rounded-md (6px) für alle Komponenten'],
-    ['3', 'Ein Primary Button', 'Maximal ein Primary Button pro Screen'],
-    ['4', 'Dezente Backgrounds', 'bg-muted/30 für subtile Hervorhebungen'],
-    ['5', 'Touch-optimiert', 'Minimum h-11 (44px) für Mobile-Buttons'],
-    ['6', 'Minimaler Kontrast', 'Klare Hierarchie durch Schriftgewichte, nicht Farben'],
-  ];
-  
-  autoTable(doc, {
-    startY: 32,
-    head: [['#', 'Prinzip', 'Beschreibung']],
-    body: principles,
-    styles: { fontSize: 10, cellPadding: 4 },
-    headStyles: { fillColor: [59, 130, 246], textColor: 255, fontStyle: 'bold' },
-    columnStyles: {
-      0: { cellWidth: 15, halign: 'center' },
-      1: { cellWidth: 40, fontStyle: 'bold' },
-      2: { cellWidth: 'auto' },
-    },
-    alternateRowStyles: { fillColor: [245, 247, 250] },
-  });
-
-  // ===== 5. FARB-PALETTE =====
-  doc.addPage();
-  doc.setFontSize(18);
-  doc.setTextColor(33, 33, 33);
-  doc.text('5. Farb-Palette', marginLeft, 22);
-  
-  const colorPalette = [
-    ['Primary', 'bg-primary', 'Hauptaktionsfarbe (Blau)', '217 91% 50%'],
-    ['Secondary', 'bg-secondary', 'Sekundäre Elemente', '210 20% 96%'],
-    ['Muted', 'bg-muted', 'Dezente Hintergründe', '210 20% 96%'],
-    ['Accent', 'bg-accent', 'Akzent-Elemente', '210 20% 96%'],
-    ['Destructive', 'bg-destructive', 'Fehler und Löschen', '0 84% 60%'],
-    ['Warning', 'bg-warning', 'Warnungen', '45 93% 47%'],
-    ['Success', 'bg-success', 'Erfolg und Bestätigung', '142 76% 36%'],
-  ];
-  
-  autoTable(doc, {
-    startY: 32,
-    head: [['Name', 'Klasse', 'Verwendung', 'HSL']],
-    body: colorPalette,
-    styles: { fontSize: 9, cellPadding: 3 },
-    headStyles: { fillColor: [59, 130, 246], textColor: 255, fontStyle: 'bold' },
-    columnStyles: {
-      0: { fontStyle: 'bold', cellWidth: 30 },
-      1: { font: 'courier', cellWidth: 35 },
-      2: { cellWidth: 'auto' },
-      3: { font: 'courier', cellWidth: 35 },
-    },
-    alternateRowStyles: { fillColor: [245, 247, 250] },
-  });
-
-  // ===== 6. BUTTON-VARIANTEN =====
-  doc.addPage();
-  doc.setFontSize(18);
-  doc.setTextColor(33, 33, 33);
-  doc.text('6. Button-Varianten', marginLeft, 22);
-  
-  const buttonVariants = [
-    ['default', 'Primäre Aktionen', 'bg-primary text-primary-foreground'],
-    ['secondary', 'Sekundäre Aktionen', 'bg-secondary text-secondary-foreground'],
-    ['outline', 'Tertiäre Aktionen', 'border border-input bg-background'],
-    ['ghost', 'Dezente Aktionen', 'hover:bg-accent'],
-    ['link', 'Text-Links', 'text-primary underline'],
-    ['destructive', 'Lösch-Aktionen', 'bg-destructive text-destructive-foreground'],
-    ['success', 'Erfolgs-Aktionen', 'bg-success text-success-foreground'],
-    ['warning', 'Warn-Aktionen', 'bg-warning text-warning-foreground'],
-  ];
-  
-  autoTable(doc, {
-    startY: 32,
-    head: [['Variante', 'Verwendung', 'Styling']],
-    body: buttonVariants,
-    styles: { fontSize: 9, cellPadding: 3 },
-    headStyles: { fillColor: [59, 130, 246], textColor: 255, fontStyle: 'bold' },
-    columnStyles: {
-      0: { fontStyle: 'bold', cellWidth: 30 },
-      1: { cellWidth: 50 },
-      2: { font: 'courier', cellWidth: 'auto' },
-    },
-    alternateRowStyles: { fillColor: [245, 247, 250] },
-  });
-  
-  // Button sizes
-  let finalY = (doc as any).lastAutoTable.finalY || 80;
-  doc.setFontSize(12);
-  doc.setTextColor(33, 33, 33);
-  doc.text('Button-Größen:', marginLeft, finalY + 15);
-  
-  const buttonSizes = [
-    ['sm', 'Kleine Buttons', 'h-8 px-3 text-xs'],
-    ['default', 'Standard', 'h-10 px-4 py-2'],
-    ['lg', 'Große Buttons', 'h-11 px-8'],
-    ['icon', 'Icon-Buttons', 'h-10 w-10'],
-  ];
-  
-  autoTable(doc, {
-    startY: finalY + 20,
-    head: [['Größe', 'Verwendung', 'Klassen']],
-    body: buttonSizes,
-    styles: { fontSize: 9, cellPadding: 3 },
-    headStyles: { fillColor: [100, 116, 139], textColor: 255, fontStyle: 'bold' },
-    columnStyles: {
-      0: { fontStyle: 'bold', cellWidth: 30 },
-      1: { cellWidth: 50 },
-      2: { font: 'courier', cellWidth: 'auto' },
-    },
-    alternateRowStyles: { fillColor: [245, 247, 250] },
-  });
-
-  // ===== 7. TYPOGRAFIE =====
-  doc.addPage();
-  doc.setFontSize(18);
-  doc.setTextColor(33, 33, 33);
-  doc.text('7. Typografie', marginLeft, 22);
-  
-  doc.setFontSize(12);
-  doc.text('Schriftgrößen:', marginLeft, 35);
-  
-  const fontSizes = [
-    ['text-4xl', '2.25rem (36px)', 'Große Überschriften'],
-    ['text-3xl', '1.875rem (30px)', 'Seiten-Titel'],
-    ['text-2xl', '1.5rem (24px)', 'Abschnitt-Titel'],
-    ['text-xl', '1.25rem (20px)', 'Unter-Überschriften'],
-    ['text-lg', '1.125rem (18px)', 'Hervorgehobener Text'],
-    ['text-base', '1rem (16px)', 'Standard Body Text'],
-    ['text-sm', '0.875rem (14px)', 'Labels und Beschreibungen'],
-    ['text-xs', '0.75rem (12px)', 'Meta-Informationen'],
-  ];
-  
-  autoTable(doc, {
-    startY: 40,
-    head: [['Klasse', 'Größe', 'Verwendung']],
-    body: fontSizes,
-    styles: { fontSize: 9, cellPadding: 3 },
-    headStyles: { fillColor: [59, 130, 246], textColor: 255, fontStyle: 'bold' },
-    columnStyles: {
-      0: { font: 'courier', cellWidth: 35 },
-      1: { cellWidth: 40 },
-      2: { cellWidth: 'auto' },
-    },
-    alternateRowStyles: { fillColor: [245, 247, 250] },
-  });
-  
-  finalY = (doc as any).lastAutoTable.finalY || 120;
-  doc.setFontSize(12);
-  doc.text('Schriftgewichte:', marginLeft, finalY + 15);
-  
-  const fontWeights = [
-    ['font-normal', '400', 'Normaler Fließtext'],
-    ['font-medium', '500', 'Labels und betonte Texte'],
-    ['font-semibold', '600', 'Subheadings und Card-Titel'],
-    ['font-bold', '700', 'Headings und wichtige Elemente'],
-  ];
-  
-  autoTable(doc, {
-    startY: finalY + 20,
-    head: [['Klasse', 'Gewicht', 'Verwendung']],
-    body: fontWeights,
-    styles: { fontSize: 9, cellPadding: 3 },
-    headStyles: { fillColor: [100, 116, 139], textColor: 255, fontStyle: 'bold' },
-    columnStyles: {
-      0: { font: 'courier', cellWidth: 35 },
-      1: { cellWidth: 30 },
-      2: { cellWidth: 'auto' },
-    },
-    alternateRowStyles: { fillColor: [245, 247, 250] },
-  });
-
-  // ===== 8. SPACING-REFERENZ =====
-  doc.addPage();
-  doc.setFontSize(18);
-  doc.setTextColor(33, 33, 33);
-  doc.text('8. Spacing-Referenz', marginLeft, 22);
-  
-  const spacingValues = [
-    ['1', '0.25rem', '4px', 'Minimaler Abstand'],
-    ['2', '0.5rem', '8px', 'Enger Abstand'],
-    ['3', '0.75rem', '12px', 'Kompakter Abstand'],
-    ['4', '1rem', '16px', 'Standard-Abstand'],
-    ['5', '1.25rem', '20px', 'Mittlerer Abstand'],
-    ['6', '1.5rem', '24px', 'Großzügiger Abstand'],
-    ['8', '2rem', '32px', 'Großer Abstand'],
-    ['10', '2.5rem', '40px', 'Sehr großer Abstand'],
-    ['12', '3rem', '48px', 'Extra großer Abstand'],
-    ['16', '4rem', '64px', 'Maximaler Abstand'],
-  ];
-  
-  autoTable(doc, {
-    startY: 32,
-    head: [['Stufe', 'rem', 'px', 'Verwendung']],
-    body: spacingValues,
-    styles: { fontSize: 9, cellPadding: 3 },
-    headStyles: { fillColor: [59, 130, 246], textColor: 255, fontStyle: 'bold' },
-    columnStyles: {
-      0: { cellWidth: 25, halign: 'center' },
-      1: { font: 'courier', cellWidth: 30 },
-      2: { font: 'courier', cellWidth: 25 },
-      3: { cellWidth: 'auto' },
-    },
-    alternateRowStyles: { fillColor: [245, 247, 250] },
-  });
-  
-  finalY = (doc as any).lastAutoTable.finalY || 120;
-  doc.setFontSize(10);
-  doc.setTextColor(100, 100, 100);
-  doc.text('Verwendung: gap-X, p-X, m-X, space-x-X, space-y-X', marginLeft, finalY + 12);
-
-  // Add footers to all pages
-  addFooter();
-  
-  doc.save('style-guide-bestellung-pro.pdf');
-  toast.success('Style Guide als PDF exportiert');
-};
+// Import extracted data and utilities
+import {
+  advancedFeatures,
+  keyboardShortcuts,
+  exportAsJSON,
+  exportAsCSS,
+  exportFullStyleGuidePDF,
+} from './style-guide';
 
 // Color swatch component
 const ColorSwatch = ({ name, cssVar, className }: { name: string; cssVar: string; className: string }) => (
@@ -765,7 +102,6 @@ const StyleGuide = () => {
   const navigate = useNavigate();
   const { theme, setTheme } = useTheme();
   
-  // Check if advanced settings is enabled
   const [hasAccess, setHasAccess] = useState(() => 
     localStorage.getItem('advanced-settings-enabled') === 'true'
   );
@@ -951,8 +287,8 @@ const StyleGuide = () => {
                                   {shortcut.keys}
                                 </kbd>
                               </TableCell>
-                              <TableCell className="font-medium text-sm">{shortcut.action}</TableCell>
-                              <TableCell className="text-sm text-muted-foreground">{shortcut.description}</TableCell>
+                              <TableCell className="font-medium">{shortcut.action}</TableCell>
+                              <TableCell className="text-muted-foreground">{shortcut.description}</TableCell>
                             </TableRow>
                           ))}
                         </TableBody>
@@ -962,41 +298,40 @@ const StyleGuide = () => {
                 );
               })}
             </div>
-            
-            <Separator className="my-6" />
-            
-            <div className="bg-muted/30 rounded-md p-4">
-              <h4 className="font-medium text-sm mb-2 flex items-center gap-2">
-                <Info className="h-4 w-4" />
-                Hinweis
-              </h4>
-              <p className="text-sm text-muted-foreground">
-                Tastatur-Shortcuts funktionieren nicht in Eingabefeldern. 
-                Drücke <kbd className="px-1.5 py-0.5 bg-muted rounded text-xs font-mono">Shift + ?</kbd> um 
-                eine Kurzübersicht aller Shortcuts als Toast anzuzeigen.
-              </p>
-            </div>
           </CardContent>
         </Card>
 
         {/* Component Playground */}
-        <ComponentPlayground />
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Sparkles className="h-5 w-5" />
+              Component Playground
+            </CardTitle>
+            <CardDescription>
+              Interaktiver Playground für alle UI-Komponenten mit Live-Code-Generierung
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ComponentPlayground />
+          </CardContent>
+        </Card>
 
-        {/* Design Tokens Overview */}
+        {/* Design Tokens */}
         <Card>
           <CardHeader>
             <CardTitle>Design Tokens</CardTitle>
-            <CardDescription>Grundlegende CSS-Variablen des ultraminimalistischen B2B SaaS Design-Systems</CardDescription>
+            <CardDescription>CSS-Variablen des ultraminimalistischen B2B SaaS Design-Systems</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            {/* CSS Variables Table */}
+            {/* Color Tokens */}
             <div>
-              <h4 className="text-sm font-medium mb-3">Core CSS Variables</h4>
+              <h4 className="text-sm font-medium mb-3">Color Tokens (HSL)</h4>
               <div className="border rounded-md overflow-hidden">
                 <Table>
                   <TableHeader>
                     <TableRow className="bg-muted/30">
-                      <TableHead className="w-[180px]">Variable</TableHead>
+                      <TableHead>CSS Variable</TableHead>
                       <TableHead>HSL Value (Light)</TableHead>
                       <TableHead>HSL Value (Dark)</TableHead>
                       <TableHead className="w-[100px]">Preview</TableHead>
@@ -1110,40 +445,6 @@ const StyleGuide = () => {
                 </div>
               </div>
             </div>
-
-            <Separator />
-
-            {/* Shadows */}
-            <div>
-              <h4 className="text-sm font-medium mb-3">Shadows</h4>
-              <p className="text-xs text-muted-foreground mb-4">Ultraminimalistisches Design: Keine Schatten, nur Borders</p>
-              <div className="flex flex-wrap gap-6">
-                <div className="flex flex-col items-center gap-2">
-                  <div className="w-20 h-20 bg-card border border-border rounded-md flex items-center justify-center">
-                    <span className="text-xs text-muted-foreground">border</span>
-                  </div>
-                  <span className="text-xs font-mono text-primary">Empfohlen ✓</span>
-                </div>
-                <div className="flex flex-col items-center gap-2">
-                  <div className="w-20 h-20 bg-card shadow-sm rounded-md flex items-center justify-center opacity-50">
-                    <span className="text-xs text-muted-foreground">shadow-sm</span>
-                  </div>
-                  <span className="text-xs font-mono text-muted-foreground">Vermeiden</span>
-                </div>
-                <div className="flex flex-col items-center gap-2">
-                  <div className="w-20 h-20 bg-card shadow-md rounded-md flex items-center justify-center opacity-50">
-                    <span className="text-xs text-muted-foreground">shadow-md</span>
-                  </div>
-                  <span className="text-xs font-mono text-muted-foreground">Vermeiden</span>
-                </div>
-                <div className="flex flex-col items-center gap-2">
-                  <div className="w-20 h-20 bg-card shadow-lg rounded-md flex items-center justify-center opacity-50">
-                    <span className="text-xs text-muted-foreground">shadow-lg</span>
-                  </div>
-                  <span className="text-xs font-mono text-muted-foreground line-through">Nicht verwenden</span>
-                </div>
-              </div>
-            </div>
           </CardContent>
         </Card>
 
@@ -1191,7 +492,6 @@ const StyleGuide = () => {
           </CardHeader>
           <CardContent>
             <div className="space-y-6">
-              {/* Primary Colors */}
               <div>
                 <h4 className="text-sm font-medium mb-3">Primär-Farben</h4>
                 <div className="flex flex-wrap gap-4">
@@ -1203,8 +503,6 @@ const StyleGuide = () => {
                   <ColorSwatch name="Muted" cssVar="--muted" className="bg-muted" />
                 </div>
               </div>
-
-              {/* Status Colors */}
               <div>
                 <h4 className="text-sm font-medium mb-3">Status-Farben</h4>
                 <div className="flex flex-wrap gap-4">
@@ -1214,8 +512,6 @@ const StyleGuide = () => {
                   <ColorSwatch name="Info" cssVar="--info" className="bg-info" />
                 </div>
               </div>
-
-              {/* UI Element Colors */}
               <div>
                 <h4 className="text-sm font-medium mb-3">UI-Element-Farben</h4>
                 <div className="flex flex-wrap gap-4">
@@ -1237,7 +533,6 @@ const StyleGuide = () => {
             <CardDescription>Alle Button-Varianten und Größen</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            {/* Variants */}
             <div>
               <h4 className="text-sm font-medium mb-3">Varianten</h4>
               <div className="flex flex-wrap gap-3">
@@ -1253,8 +548,6 @@ const StyleGuide = () => {
                 <Button variant="info">Info</Button>
               </div>
             </div>
-
-            {/* Sizes */}
             <div>
               <h4 className="text-sm font-medium mb-3">Größen</h4>
               <div className="flex flex-wrap items-center gap-3">
@@ -1264,8 +557,6 @@ const StyleGuide = () => {
                 <Button size="icon"><Sparkles className="h-4 w-4" /></Button>
               </div>
             </div>
-
-            {/* States */}
             <div>
               <h4 className="text-sm font-medium mb-3">Zustände</h4>
               <div className="flex flex-wrap gap-3">
@@ -1284,7 +575,6 @@ const StyleGuide = () => {
             <CardDescription>Schriftgrößen und Heading-Hierarchie</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            {/* Headings */}
             <div>
               <h4 className="text-sm font-medium mb-4">Headings</h4>
               <div className="space-y-3">
@@ -1310,10 +600,7 @@ const StyleGuide = () => {
                 </div>
               </div>
             </div>
-
             <Separator />
-
-            {/* Body Text */}
             <div>
               <h4 className="text-sm font-medium mb-4">Body Text</h4>
               <div className="space-y-3">
@@ -1323,395 +610,18 @@ const StyleGuide = () => {
                 </div>
                 <div className="flex items-baseline gap-4">
                   <span className="text-xs text-muted-foreground w-20">text-sm</span>
-                  <p className="text-sm">Small text für Labels und Beschreibungen (14px)</p>
+                  <p className="text-sm">Small text for labels (14px)</p>
                 </div>
                 <div className="flex items-baseline gap-4">
                   <span className="text-xs text-muted-foreground w-20">text-xs</span>
-                  <p className="text-xs">Extra small für Hinweise und Meta-Info (12px)</p>
+                  <p className="text-xs">Extra small for metadata (12px)</p>
                 </div>
-              </div>
-            </div>
-
-            <Separator />
-
-            {/* Font Weights */}
-            <div>
-              <h4 className="text-sm font-medium mb-4">Schriftgewichte</h4>
-              <div className="space-y-2">
-                <p className="font-normal">font-normal (400) - Normaler Text</p>
-                <p className="font-medium">font-medium (500) - Labels und betonte Texte</p>
-                <p className="font-semibold">font-semibold (600) - Subheadings</p>
-                <p className="font-bold">font-bold (700) - Headings und wichtige Elemente</p>
-              </div>
-            </div>
-
-            <Separator />
-
-            {/* Text Colors */}
-            <div>
-              <h4 className="text-sm font-medium mb-4">Textfarben</h4>
-              <div className="space-y-2">
-                <p className="text-foreground">text-foreground - Primärer Text</p>
-                <p className="text-muted-foreground">text-muted-foreground - Sekundärer Text</p>
-                <p className="text-primary">text-primary - Akzent/Link-Farbe</p>
-                <p className="text-destructive">text-destructive - Fehler/Warnung</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        {/* Tables & Lists */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Tabellen & Listen</CardTitle>
-            <CardDescription>Daten-Darstellung in tabellarischer Form und Listen</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {/* Table */}
-            <div>
-              <h4 className="text-sm font-medium mb-3">Tabelle</h4>
-              <div className="border rounded-lg overflow-hidden">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="w-[100px]">ID</TableHead>
-                      <TableHead>Name</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead className="text-right">Betrag</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    <TableRow>
-                      <TableCell className="font-medium">INV001</TableCell>
-                      <TableCell>Max Mustermann</TableCell>
-                      <TableCell><Badge variant="default">Aktiv</Badge></TableCell>
-                      <TableCell className="text-right">€250.00</TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableCell className="font-medium">INV002</TableCell>
-                      <TableCell>Anna Schmidt</TableCell>
-                      <TableCell><Badge variant="secondary">Ausstehend</Badge></TableCell>
-                      <TableCell className="text-right">€150.00</TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableCell className="font-medium">INV003</TableCell>
-                      <TableCell>Peter Müller</TableCell>
-                      <TableCell><Badge variant="destructive">Storniert</Badge></TableCell>
-                      <TableCell className="text-right">€350.00</TableCell>
-                    </TableRow>
-                  </TableBody>
-                </Table>
-              </div>
-            </div>
-
-            <Separator />
-
-            {/* Lists */}
-            <div className="grid gap-6 sm:grid-cols-2">
-              <div>
-                <h4 className="text-sm font-medium mb-3">Ungeordnete Liste</h4>
-                <ul className="list-disc list-inside space-y-1 text-sm">
-                  <li>Erstes Listenelement</li>
-                  <li>Zweites Listenelement</li>
-                  <li>Drittes Listenelement mit längerem Text der umbricht</li>
-                  <li>Viertes Listenelement</li>
-                </ul>
-              </div>
-              <div>
-                <h4 className="text-sm font-medium mb-3">Geordnete Liste</h4>
-                <ol className="list-decimal list-inside space-y-1 text-sm">
-                  <li>Schritt eins</li>
-                  <li>Schritt zwei</li>
-                  <li>Schritt drei</li>
-                  <li>Schritt vier</li>
-                </ol>
-              </div>
-            </div>
-
-            <Separator />
-
-            {/* Scroll Area with List */}
-            <div>
-              <h4 className="text-sm font-medium mb-3">Scrollbare Liste (max. 200px)</h4>
-              <ScrollArea className="h-[200px] w-full rounded-md border p-4">
-                <div className="space-y-2">
-                  {Array.from({ length: 15 }).map((_, i) => (
-                    <div key={i} className="flex items-center justify-between py-2 border-b last:border-0">
-                      <span className="text-sm">Listeneintrag {i + 1}</span>
-                      <Badge variant="outline">{i + 1}</Badge>
-                    </div>
-                  ))}
-                </div>
-              </ScrollArea>
-            </div>
-
-            <Separator />
-
-            {/* Description List */}
-            <div>
-              <h4 className="text-sm font-medium mb-3">Beschreibungsliste</h4>
-              <dl className="space-y-2 text-sm">
-                <div className="flex gap-2">
-                  <dt className="font-medium w-24 shrink-0">Produkt:</dt>
-                  <dd className="text-muted-foreground">Premium Paket</dd>
-                </div>
-                <div className="flex gap-2">
-                  <dt className="font-medium w-24 shrink-0">Preis:</dt>
-                  <dd className="text-muted-foreground">€99.00 / Monat</dd>
-                </div>
-                <div className="flex gap-2">
-                  <dt className="font-medium w-24 shrink-0">Status:</dt>
-                  <dd className="text-muted-foreground">Aktiv seit 01.01.2024</dd>
-                </div>
-              </dl>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Selects, Radios, Dropdowns & Popovers */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Selects, Radios, Dropdowns & Popovers</CardTitle>
-            <CardDescription>Auswahl-Komponenten und Overlay-Elemente</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {/* Select */}
-            <div>
-              <h4 className="text-sm font-medium mb-3">Select</h4>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <Label>Standard Select</Label>
-                  <Select>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Option wählen..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="option1">Option 1</SelectItem>
-                      <SelectItem value="option2">Option 2</SelectItem>
-                      <SelectItem value="option3">Option 3</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label>Disabled Select</Label>
-                  <Select disabled>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Deaktiviert..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="option1">Option 1</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </div>
-
-            <Separator />
-
-            {/* Radio Group */}
-            <div>
-              <h4 className="text-sm font-medium mb-3">Radio Group</h4>
-              <RadioGroup defaultValue="option1" className="space-y-2">
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="option1" id="radio-option1" />
-                  <Label htmlFor="radio-option1">Option 1</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="option2" id="radio-option2" />
-                  <Label htmlFor="radio-option2">Option 2</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="option3" id="radio-option3" />
-                  <Label htmlFor="radio-option3">Option 3 (mit längerem Text)</Label>
-                </div>
-              </RadioGroup>
-            </div>
-
-            <Separator />
-
-            {/* Dropdown Menu */}
-            <div>
-              <h4 className="text-sm font-medium mb-3">Dropdown Menu</h4>
-              <div className="flex flex-wrap gap-3">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline">
-                      Dropdown öffnen
-                      <ChevronDown className="h-4 w-4 ml-2" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent>
-                    <DropdownMenuLabel>Mein Account</DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem>
-                      <User className="h-4 w-4 mr-2" />
-                      Profil
-                    </DropdownMenuItem>
-                    <DropdownMenuItem>
-                      <Settings className="h-4 w-4 mr-2" />
-                      Einstellungen
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem className="text-destructive">
-                      <LogOut className="h-4 w-4 mr-2" />
-                      Abmelden
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon">
-                      <MoreHorizontal className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem>Bearbeiten</DropdownMenuItem>
-                    <DropdownMenuItem>Duplizieren</DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem className="text-destructive">Löschen</DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-            </div>
-
-            <Separator />
-
-            {/* Popover */}
-            <div>
-              <h4 className="text-sm font-medium mb-3">Popover</h4>
-              <div className="flex flex-wrap gap-3">
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button variant="outline">Info Popover</Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-80">
-                    <div className="space-y-2">
-                      <h4 className="font-medium">Popover Titel</h4>
-                      <p className="text-sm text-muted-foreground">
-                        Ein Popover kann beliebige Inhalte enthalten und wird bei Klick angezeigt.
-                      </p>
-                    </div>
-                  </PopoverContent>
-                </Popover>
-
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button variant="outline">Formular Popover</Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-80">
-                    <div className="space-y-4">
-                      <h4 className="font-medium">Schnelleinstellung</h4>
-                      <div className="space-y-2">
-                        <Label htmlFor="popover-input">Name</Label>
-                        <Input id="popover-input" placeholder="Name eingeben..." />
-                      </div>
-                      <Button size="sm" className="w-full">Speichern</Button>
-                    </div>
-                  </PopoverContent>
-                </Popover>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Tooltips & Hover-Cards */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Tooltips & Hover-Cards</CardTitle>
-            <CardDescription>Kontextuelle Hinweise bei Hover und Fokus</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {/* Tooltips */}
-            <div>
-              <h4 className="text-sm font-medium mb-3">Tooltips</h4>
-              <div className="flex flex-wrap gap-4">
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button variant="outline" size="icon">
-                        <HelpCircle className="h-4 w-4" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Hilfe-Tooltip</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button variant="secondary">Hover für Info</Button>
-                    </TooltipTrigger>
-                    <TooltipContent side="bottom">
-                      <p>Tooltip unten positioniert</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button variant="ghost">Mit Beschreibung</Button>
-                    </TooltipTrigger>
-                    <TooltipContent side="right" className="max-w-[200px]">
-                      <p>Längerer Tooltip-Text mit mehr Details zur Funktion</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </div>
-            </div>
-
-            <Separator />
-
-            {/* Hover Cards */}
-            <div>
-              <h4 className="text-sm font-medium mb-3">Hover-Cards</h4>
-              <div className="flex flex-wrap gap-4">
-                <HoverCard>
-                  <HoverCardTrigger asChild>
-                    <Button variant="link" className="p-0 h-auto">@benutzer</Button>
-                  </HoverCardTrigger>
-                  <HoverCardContent className="w-80">
-                    <div className="flex justify-between space-x-4">
-                      <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                        <User className="h-5 w-5 text-primary" />
-                      </div>
-                      <div className="space-y-1 flex-1">
-                        <h4 className="text-sm font-semibold">@benutzer</h4>
-                        <p className="text-sm text-muted-foreground">
-                          Ein Beispielbenutzer für die Demo.
-                        </p>
-                        <div className="flex items-center pt-2">
-                          <CalendarDays className="mr-2 h-4 w-4 opacity-70" />
-                          <span className="text-xs text-muted-foreground">
-                            Beigetreten am 01.01.2024
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </HoverCardContent>
-                </HoverCard>
-
-                <HoverCard>
-                  <HoverCardTrigger asChild>
-                    <Badge variant="outline" className="cursor-pointer">Info Badge</Badge>
-                  </HoverCardTrigger>
-                  <HoverCardContent className="w-64">
-                    <div className="space-y-2">
-                      <h4 className="text-sm font-medium">Zusätzliche Details</h4>
-                      <p className="text-sm text-muted-foreground">
-                        Hover-Cards eignen sich für reichhaltigere Inhalte als Tooltips.
-                      </p>
-                    </div>
-                  </HoverCardContent>
-                </HoverCard>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
+        {/* Badges */}
         <Card>
           <CardHeader>
             <CardTitle>Badges</CardTitle>
@@ -1727,76 +637,13 @@ const StyleGuide = () => {
           </CardContent>
         </Card>
 
-        {/* Accordion & Collapsible */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Accordion & Collapsible</CardTitle>
-            <CardDescription>Auf- und zuklappbare Inhalte</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {/* Accordion */}
-            <div>
-              <h4 className="text-sm font-medium mb-3">Accordion</h4>
-              <Accordion type="single" collapsible className="w-full">
-                <AccordionItem value="item-1">
-                  <AccordionTrigger>Was ist ein Accordion?</AccordionTrigger>
-                  <AccordionContent>
-                    Ein Accordion ist eine vertikale Liste von Elementen, die einzeln aufgeklappt werden können.
-                  </AccordionContent>
-                </AccordionItem>
-                <AccordionItem value="item-2">
-                  <AccordionTrigger>Wann verwendet man Accordions?</AccordionTrigger>
-                  <AccordionContent>
-                    Accordions eignen sich besonders für FAQs, Einstellungsbereiche oder wenn viele Informationen platzsparend dargestellt werden sollen.
-                  </AccordionContent>
-                </AccordionItem>
-                <AccordionItem value="item-3">
-                  <AccordionTrigger>Können mehrere Einträge offen sein?</AccordionTrigger>
-                  <AccordionContent>
-                    Mit <code className="bg-muted px-1 rounded">type="multiple"</code> können mehrere Einträge gleichzeitig geöffnet sein.
-                  </AccordionContent>
-                </AccordionItem>
-              </Accordion>
-            </div>
-
-            <Separator />
-
-            {/* Collapsible */}
-            <div>
-              <h4 className="text-sm font-medium mb-3">Collapsible</h4>
-              <Collapsible className="w-full space-y-2">
-                <div className="flex items-center justify-between space-x-4 px-4 py-2 border rounded-lg">
-                  <h4 className="text-sm font-semibold">Erweiterte Optionen</h4>
-                  <CollapsibleTrigger asChild>
-                    <Button variant="ghost" size="sm">
-                      <ChevronsUpDown className="h-4 w-4" />
-                      <span className="sr-only">Toggle</span>
-                    </Button>
-                  </CollapsibleTrigger>
-                </div>
-                <CollapsibleContent className="space-y-2">
-                  <div className="rounded-md border px-4 py-2 text-sm">
-                    Option A: Erste erweiterte Einstellung
-                  </div>
-                  <div className="rounded-md border px-4 py-2 text-sm">
-                    Option B: Zweite erweiterte Einstellung
-                  </div>
-                  <div className="rounded-md border px-4 py-2 text-sm">
-                    Option C: Dritte erweiterte Einstellung
-                  </div>
-                </CollapsibleContent>
-              </Collapsible>
-            </div>
-          </CardContent>
-        </Card>
-
+        {/* Inputs & Forms */}
         <Card>
           <CardHeader>
             <CardTitle>Inputs & Formulare</CardTitle>
             <CardDescription>Formular-Elemente und Eingabefelder</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            {/* Text Inputs */}
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="input-normal">Normal Input</Label>
@@ -1807,14 +654,10 @@ const StyleGuide = () => {
                 <Input id="input-disabled" placeholder="Disabled..." disabled />
               </div>
             </div>
-
-            {/* Textarea */}
             <div className="space-y-2">
               <Label htmlFor="textarea">Textarea</Label>
               <Textarea id="textarea" placeholder="Mehrzeiliger Text..." />
             </div>
-
-            {/* Toggles */}
             <div className="space-y-4">
               <h4 className="text-sm font-medium">Toggle-Elemente</h4>
               <div className="flex flex-wrap gap-6">
@@ -1851,7 +694,6 @@ const StyleGuide = () => {
                   <Button size="sm">Aktion</Button>
                 </CardFooter>
               </Card>
-
               <Card className="border-primary">
                 <CardHeader>
                   <CardTitle className="text-lg">Highlighted Card</CardTitle>
@@ -1875,25 +717,17 @@ const StyleGuide = () => {
             <Alert>
               <Info className="h-4 w-4" />
               <AlertTitle>Info</AlertTitle>
-              <AlertDescription>
-                Standard-Information für den Benutzer.
-              </AlertDescription>
+              <AlertDescription>Standard-Information für den Benutzer.</AlertDescription>
             </Alert>
-
             <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />
               <AlertTitle>Fehler</AlertTitle>
-              <AlertDescription>
-                Etwas ist schief gelaufen. Bitte versuche es erneut.
-              </AlertDescription>
+              <AlertDescription>Etwas ist schief gelaufen. Bitte versuche es erneut.</AlertDescription>
             </Alert>
-
             <Alert className="border-green-500 bg-green-50 dark:bg-green-950/20">
               <CheckCircle className="h-4 w-4 text-green-600" />
               <AlertTitle className="text-green-800 dark:text-green-200">Erfolg</AlertTitle>
-              <AlertDescription className="text-green-700 dark:text-green-300">
-                Die Aktion wurde erfolgreich durchgeführt.
-              </AlertDescription>
+              <AlertDescription className="text-green-700 dark:text-green-300">Die Aktion wurde erfolgreich durchgeführt.</AlertDescription>
             </Alert>
           </CardContent>
         </Card>
@@ -1912,22 +746,15 @@ const StyleGuide = () => {
               <DialogContent>
                 <DialogHeader>
                   <DialogTitle>Dialog Titel</DialogTitle>
-                  <DialogDescription>
-                    Eine Beschreibung für den Dialog-Inhalt.
-                  </DialogDescription>
+                  <DialogDescription>Eine kurze Beschreibung des Dialogs.</DialogDescription>
                 </DialogHeader>
-                <div className="py-4">
-                  <p className="text-sm text-muted-foreground">
-                    Dialog-Inhalt mit beliebigen Komponenten.
-                  </p>
-                </div>
+                <p className="text-sm text-muted-foreground">Dialog-Inhalt hier.</p>
                 <DialogFooter>
                   <Button variant="outline">Abbrechen</Button>
                   <Button>Bestätigen</Button>
                 </DialogFooter>
               </DialogContent>
             </Dialog>
-
             <Sheet>
               <SheetTrigger asChild>
                 <Button variant="outline">Sheet öffnen</Button>
@@ -1935,81 +762,13 @@ const StyleGuide = () => {
               <SheetContent>
                 <SheetHeader>
                   <SheetTitle>Sheet Titel</SheetTitle>
-                  <SheetDescription>
-                    Seitliches Panel für zusätzliche Inhalte.
-                  </SheetDescription>
+                  <SheetDescription>Side-Panel für erweiterte Inhalte.</SheetDescription>
                 </SheetHeader>
-                <div className="py-4">
-                  <p className="text-sm text-muted-foreground">
-                    Sheet-Inhalt mit beliebigen Komponenten.
-                  </p>
-                </div>
+                <p className="text-sm text-muted-foreground mt-4">Sheet-Inhalt hier.</p>
               </SheetContent>
             </Sheet>
           </CardContent>
         </Card>
-
-        {/* Animations */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Animationen</CardTitle>
-            <CardDescription>Verfügbare Animation-Klassen (hover zum Testen)</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-4 sm:grid-cols-3">
-              <div className="p-4 border rounded-lg text-center hover:animate-fade-in cursor-pointer">
-                <p className="text-sm font-medium">animate-fade-in</p>
-                <p className="text-xs text-muted-foreground">Hover to see</p>
-              </div>
-              <div className="p-4 border rounded-lg text-center hover:animate-scale-in cursor-pointer">
-                <p className="text-sm font-medium">animate-scale-in</p>
-                <p className="text-xs text-muted-foreground">Hover to see</p>
-              </div>
-              <div className="p-4 border rounded-lg text-center hover-scale cursor-pointer">
-                <p className="text-sm font-medium">hover-scale</p>
-                <p className="text-xs text-muted-foreground">Hover to see</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Spacing Reference */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Spacing-Referenz</CardTitle>
-            <CardDescription>Standard-Abstände im Design-System</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="flex items-center gap-4">
-                <div className="w-2 h-8 bg-primary rounded" />
-                <span className="text-sm">gap-2 / p-2 (8px)</span>
-              </div>
-              <div className="flex items-center gap-4">
-                <div className="w-3 h-8 bg-primary rounded" />
-                <span className="text-sm">gap-3 / p-3 (12px)</span>
-              </div>
-              <div className="flex items-center gap-4">
-                <div className="w-4 h-8 bg-primary rounded" />
-                <span className="text-sm">gap-4 / p-4 (16px)</span>
-              </div>
-              <div className="flex items-center gap-4">
-                <div className="w-6 h-8 bg-primary rounded" />
-                <span className="text-sm">gap-6 / p-6 (24px)</span>
-              </div>
-              <div className="flex items-center gap-4">
-                <div className="w-8 h-8 bg-primary rounded" />
-                <span className="text-sm">gap-8 / p-8 (32px)</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Separator />
-
-        <p className="text-center text-sm text-muted-foreground">
-          Dokumentation: <code className="bg-muted px-1 py-0.5 rounded">DESIGN_TOKENS.md</code>
-        </p>
       </div>
     </DashboardLayout>
   );
