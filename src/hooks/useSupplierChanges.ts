@@ -211,8 +211,9 @@ export const useApproveChange = () => {
       queryClient.invalidateQueries({ queryKey: ['price-history'] });
       toast.success('Änderung übernommen');
     },
-    onError: (error: any) => {
-      toast.error('Fehler: ' + error.message);
+    onError: (error: unknown) => {
+      const message = error instanceof Error ? error.message : 'Unbekannter Fehler';
+      toast.error('Fehler: ' + message);
     },
   });
 };
@@ -239,8 +240,9 @@ export const useRejectChange = () => {
       queryClient.invalidateQueries({ queryKey: ['pending-article-ids'] });
       toast.success('Änderung abgelehnt');
     },
-    onError: (error: any) => {
-      toast.error('Fehler: ' + error.message);
+    onError: (error: unknown) => {
+      const message = error instanceof Error ? error.message : 'Unbekannter Fehler';
+      toast.error('Fehler: ' + message);
     },
   });
 };
@@ -300,8 +302,9 @@ export const useApproveAllChanges = () => {
       queryClient.invalidateQueries({ queryKey: ['price-history'] });
       toast.success('Alle Änderungen übernommen');
     },
-    onError: (error: any) => {
-      toast.error('Fehler: ' + error.message);
+    onError: (error: unknown) => {
+      const message = error instanceof Error ? error.message : 'Unbekannter Fehler';
+      toast.error('Fehler: ' + message);
     },
   });
 };
@@ -328,8 +331,9 @@ export const useRejectAllChanges = () => {
       queryClient.invalidateQueries({ queryKey: ['pending-article-ids'] });
       toast.success('Alle Änderungen abgelehnt');
     },
-    onError: (error: any) => {
-      toast.error('Fehler: ' + error.message);
+    onError: (error: unknown) => {
+      const message = error instanceof Error ? error.message : 'Unbekannter Fehler';
+      toast.error('Fehler: ' + message);
     },
   });
 };

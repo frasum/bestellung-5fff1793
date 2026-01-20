@@ -45,9 +45,10 @@ export const useSendSupplierInvitation = () => {
         toast.success(`Einladung an ${supplierEmail} gesendet`);
       }
       return { success: true };
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error sending invitation:', error);
-      toast.error('Fehler beim Senden der Einladung: ' + error.message);
+      const message = error instanceof Error ? error.message : 'Unbekannter Fehler';
+      toast.error('Fehler beim Senden der Einladung: ' + message);
       return { success: false, error };
     } finally {
       setLoading(false);

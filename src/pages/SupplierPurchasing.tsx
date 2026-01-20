@@ -66,9 +66,10 @@ const SupplierPurchasing = () => {
         
         // Remove token from URL
         window.history.replaceState({}, '', '/supplier-purchasing');
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error('Token verification failed:', error);
-        toast.error(error.message || 'Token ungültig');
+        const message = error instanceof Error ? error.message : 'Token ungültig';
+        toast.error(message);
         navigate('/supplier-login');
       } finally {
         setLoading(false);

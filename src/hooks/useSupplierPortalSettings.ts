@@ -115,8 +115,9 @@ export const useUpsertSupplierPortalSettings = () => {
       queryClient.invalidateQueries({ queryKey: ['supplier-portal-settings'] });
       toast.success('Portal-Einstellungen gespeichert');
     },
-    onError: (error: any) => {
-      toast.error('Fehler beim Speichern: ' + error.message);
+    onError: (error: unknown) => {
+      const message = error instanceof Error ? error.message : 'Unbekannter Fehler';
+      toast.error('Fehler beim Speichern: ' + message);
     },
   });
 };

@@ -93,9 +93,10 @@ export default function WineCatalog() {
       setWines(data.wines || []);
       setRequiresPin(false);
       setLoading(false);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Token verification error:', err);
-      setError(err.message || t('wineTokens.verificationFailed'));
+      const message = err instanceof Error ? err.message : t('wineTokens.verificationFailed');
+      setError(message);
       setLoading(false);
     }
   };

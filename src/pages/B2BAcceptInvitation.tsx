@@ -131,11 +131,12 @@ export default function B2BAcceptInvitation() {
 
       // Accept the invitation
       await acceptInvitation(authData.user!.id);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Registration error:', err);
+      const message = err instanceof Error ? err.message : 'Unbekannter Fehler';
       toast({ 
         title: 'Registrierung fehlgeschlagen', 
-        description: err.message,
+        description: message,
         variant: 'destructive' 
       });
     } finally {
@@ -157,11 +158,12 @@ export default function B2BAcceptInvitation() {
 
       // Accept the invitation
       await acceptInvitation(authData.user!.id);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Login error:', err);
+      const message = err instanceof Error ? err.message : 'Unbekannter Fehler';
       toast({ 
         title: 'Anmeldung fehlgeschlagen', 
-        description: err.message,
+        description: message,
         variant: 'destructive' 
       });
     } finally {
@@ -185,11 +187,12 @@ export default function B2BAcceptInvitation() {
       setTimeout(() => {
         navigate(target);
       }, 1500);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Accept invitation error:', err);
+      const message = err instanceof Error ? err.message : 'Unbekannter Fehler';
       toast({ 
         title: 'Fehler beim Annehmen der Einladung', 
-        description: err.message,
+        description: message,
         variant: 'destructive' 
       });
     }
