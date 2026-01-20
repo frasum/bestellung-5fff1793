@@ -43,7 +43,6 @@ export function useOrganizationEmailSettings() {
         throw error;
       }
 
-      console.log('Loaded email settings:', data ? { id: data.id, imap_host: data.imap_host, is_active: data.is_active } : 'null');
       return data as OrganizationEmailSettings | null;
     },
     enabled: !!session,

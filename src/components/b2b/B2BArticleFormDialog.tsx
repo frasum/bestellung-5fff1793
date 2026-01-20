@@ -233,9 +233,9 @@ const B2BArticleFormDialog = ({
 
       onSuccess();
       onOpenChange(false);
-    } catch (error: any) {
-      console.error('Error saving article:', error);
-      toast.error(error.message || 'Fehler beim Speichern');
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Fehler beim Speichern';
+      toast.error(message);
     } finally {
       setLoading(false);
     }

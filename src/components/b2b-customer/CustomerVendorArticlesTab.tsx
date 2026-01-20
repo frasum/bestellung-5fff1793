@@ -108,8 +108,9 @@ const CustomerVendorArticlesTab = ({ customerId }: CustomerVendorArticlesTabProp
 
       if (articlesError) throw articlesError;
       setArticles(articlesData || []);
-    } catch (error: any) {
-      console.error('Error loading data:', error);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unbekannter Fehler';
+      console.error('Error loading data:', message);
       toast.error('Fehler beim Laden der Daten');
     } finally {
       setLoading(false);
@@ -129,8 +130,9 @@ const CustomerVendorArticlesTab = ({ customerId }: CustomerVendorArticlesTabProp
 
       toast.success('Artikel gelöscht');
       loadData();
-    } catch (error: any) {
-      console.error('Error deleting article:', error);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unbekannter Fehler';
+      console.error('Error deleting article:', message);
       toast.error('Fehler beim Löschen');
     } finally {
       setDeleteDialogOpen(false);

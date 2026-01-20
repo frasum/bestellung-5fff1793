@@ -127,8 +127,8 @@ const B2BVendorArticleFormDialog = ({
 
       onSuccess();
       onOpenChange(false);
-    } catch (error: any) {
-      console.error('Error saving article:', error);
+    } catch (error: unknown) {
+      console.error('Error saving article:', error instanceof Error ? error.message : error);
       toast.error('Fehler beim Speichern');
     } finally {
       setLoading(false);

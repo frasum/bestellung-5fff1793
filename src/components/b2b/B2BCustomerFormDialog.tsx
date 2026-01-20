@@ -188,12 +188,12 @@ const B2BCustomerFormDialog = ({
 
       onSuccess();
       onOpenChange(false);
-    } catch (error: any) {
-      console.error('Error saving customer:', error);
-      if (error.message?.includes('duplicate')) {
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Fehler beim Speichern';
+      if (message.includes('duplicate')) {
         toast.error('Ein Kunde mit dieser E-Mail existiert bereits');
       } else {
-        toast.error(error.message || 'Fehler beim Speichern');
+        toast.error(message);
       }
     } finally {
       setLoading(false);

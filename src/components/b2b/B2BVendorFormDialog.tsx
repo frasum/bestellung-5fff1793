@@ -104,8 +104,8 @@ const B2BVendorFormDialog = ({
 
       onSuccess();
       onOpenChange(false);
-    } catch (error: any) {
-      console.error('Error saving vendor:', error);
+    } catch (error: unknown) {
+      console.error('Error saving vendor:', error instanceof Error ? error.message : error);
       toast.error('Fehler beim Speichern');
     } finally {
       setLoading(false);

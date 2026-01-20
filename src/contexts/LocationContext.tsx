@@ -29,10 +29,7 @@ export const LocationProvider = ({ children }: { children: ReactNode }) => {
   // Organization Consistency Guard: detect mismatch between org and location
   useEffect(() => {
     if (organizationId && activeLocation && activeLocation.organization_id !== organizationId) {
-      console.warn('Organization mismatch detected! Clearing location and refetching...', {
-        organizationId,
-        activeLocationOrgId: activeLocation.organization_id,
-      });
+      // Organization mismatch detected - clearing stale location data
       
       // Clear stale localStorage
       localStorage.removeItem('activeLocationId');

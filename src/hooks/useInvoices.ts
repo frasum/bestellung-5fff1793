@@ -344,7 +344,7 @@ export function useInvoiceProcessingStatus() {
           table: 'invoice_processing_status',
         },
         (payload) => {
-          console.log('Invoice processing status update:', payload);
+          // Invoice processing status realtime update received
           
           if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
             const status = payload.new as InvoiceProcessingStatus;

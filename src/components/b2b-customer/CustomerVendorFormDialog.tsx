@@ -95,9 +95,9 @@ const CustomerVendorFormDialog = ({
 
       onSuccess();
       onOpenChange(false);
-    } catch (error: any) {
-      console.error('Error saving vendor:', error);
-      toast.error('Fehler beim Speichern: ' + error.message);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unbekannter Fehler';
+      toast.error('Fehler beim Speichern: ' + message);
     } finally {
       setLoading(false);
     }
