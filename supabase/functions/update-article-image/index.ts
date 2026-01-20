@@ -1,6 +1,17 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
+interface EmployeeData {
+  id: string;
+  can_capture_photos: boolean;
+}
+
+interface TokenWithEmployee {
+  id: string;
+  organization_id: string;
+  employee: EmployeeData[];
+}
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -41,7 +52,8 @@ serve(async (req) => {
     }
 
     // Check if employee has permission
-    const canCapture = (tokenData.employee as any)?.can_capture_photos;
+    const typedTokenData = tokenData as TokenWithEmployee;
+    const canCapture = typedTokenData.employee?.[0]?.can_capture_photos;
     if (!canCapture) {
       return new Response(
         JSON.stringify({ error: 'Not authorized to capture photos' }),

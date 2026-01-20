@@ -2,6 +2,18 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import * as bcrypt from "https://deno.land/x/bcrypt@v0.4.1/mod.ts";
 
+interface EmployeeData {
+  id: string;
+  pin_code: string | null;
+  auto_approve_orders: boolean;
+}
+
+interface TokenWithEmployee {
+  id: string;
+  employee_id: string | null;
+  employee: EmployeeData[];
+}
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -83,7 +95,8 @@ serve(async (req) => {
       );
     }
 
-    const employee = tokenData.employee as any;
+    const typedToken = tokenData as TokenWithEmployee;
+    const employee = typedToken.employee?.[0];
     
     if (!employee?.pin_code) {
       console.log('No PIN configured for employee');

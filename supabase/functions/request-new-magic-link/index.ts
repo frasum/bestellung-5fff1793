@@ -51,6 +51,18 @@ interface RequestNewLinkBody {
   supplierId: string;
 }
 
+interface OrganizationData {
+  name: string;
+}
+
+interface SupplierWithOrg {
+  id: string;
+  name: string;
+  email: string;
+  organization_id: string;
+  organizations: OrganizationData[];
+}
+
 const RATE_LIMIT_MAX = 3;
 const RATE_LIMIT_WINDOW_MINUTES = 60;
 
@@ -150,7 +162,8 @@ serve(async (req: Request): Promise<Response> => {
 
     const appUrl = Deno.env.get("APP_URL") || "https://bestellung.pro";
     const magicLink = `${appUrl}/supplier-auth?token=${tokenData.token}`;
-    const organizationName = (supplier.organizations as any)?.name || "Restaurant";
+    const typedSupplier = supplier as SupplierWithOrg;
+    const organizationName = typedSupplier.organizations?.[0]?.name || "Restaurant";
 
     console.log(`New magic link created for ${supplier.name}`);
 
