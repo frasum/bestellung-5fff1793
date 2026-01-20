@@ -25,6 +25,29 @@ import { useQueryClient, useMutation } from '@tanstack/react-query';
 
 type OrderStatus = 'pending' | 'confirmed' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
 
+interface OrderItem {
+  article_name: string;
+  quantity: number;
+  unit: string;
+}
+
+interface DemoOrder {
+  id: string;
+  order_number: string;
+  status: OrderStatus | null;
+  total_amount: number | null;
+  created_at: string;
+  supplier_id: string;
+  organization_id: string;
+  is_test_order: boolean;
+  order_items?: OrderItem[];
+}
+
+interface Supplier {
+  id: string;
+  name: string;
+}
+
 const statusConfig: Record<string, { label: string; icon: typeof Clock; color: string }> = {
   pending: { label: 'Neu', icon: AlertCircle, color: 'text-orange-500 bg-orange-500/10' },
   confirmed: { label: 'Bestätigt', icon: CheckCircle2, color: 'text-blue-500 bg-blue-500/10' },
@@ -79,7 +102,7 @@ export function LiveDemoSupplierPanel({ soundEnabled, onOrderCreated }: LiveDemo
           refetch();
           
           if (payload.eventType === 'INSERT') {
-            const newOrder = payload.new as any;
+            const newOrder = payload.new as DemoOrder;
             // Only notify for test orders
             if (newOrder.is_test_order) {
               setHighlightedOrder(newOrder.id);
@@ -137,7 +160,7 @@ export function LiveDemoSupplierPanel({ soundEnabled, onOrderCreated }: LiveDemo
   };
 
   // Bestätigungs-E-Mail HTML generieren
-  const generateConfirmationEmailHtml = (order: any, supplier: any) => {
+  const generateConfirmationEmailHtml = (order: DemoOrder, supplier: Supplier | undefined) => {
     return `
       <!DOCTYPE html>
       <html>
@@ -156,7 +179,7 @@ export function LiveDemoSupplierPanel({ soundEnabled, onOrderCreated }: LiveDemo
     `;
   };
 
-  const handleUpdateStatus = async (orderId: string, newStatus: OrderStatus, order: any) => {
+  const handleUpdateStatus = async (orderId: string, newStatus: OrderStatus, order: DemoOrder) => {
     try {
       await updateOrder.mutateAsync({ id: orderId, status: newStatus });
       
@@ -270,7 +293,7 @@ export function LiveDemoSupplierPanel({ soundEnabled, onOrderCreated }: LiveDemo
                   {isExpanded && (
                     <div className="px-2.5 pb-2.5 pt-0">
                       <div className="border-t pt-2 space-y-1">
-                        {order.order_items?.map((item: any, idx: number) => (
+                        {order.order_items?.map((item: OrderItem, idx: number) => (
                           <div key={idx} className="flex justify-between text-xs">
                             <span className="truncate">{item.article_name}</span>
                             <span className="text-muted-foreground">

@@ -332,7 +332,7 @@ Die Lösung digitalisiert den gesamten Bestellprozess – von der Artikelverwalt
     sectionId: string;
     title: string; 
     description: string; 
-    features: Array<{ icon: any; name: string; desc: string }>;
+    features: Array<{ icon: React.ComponentType<{ className?: string }>; name: string; desc: string }>;
     accentColor?: string;
   }) => {
     const IconComponent = features[0]?.icon;

@@ -105,7 +105,7 @@ export default function B2BOffersTab({ accountId, selectedSupplierId = 'all', su
 
       // Load items for each offer
       const offersWithItems = await Promise.all(
-        (offersData || []).map(async (offer: any) => {
+        (offersData || []).map(async (offer) => {
           const { data: items } = await supabase
             .from('supplier_b2b_offer_items')
             .select('*')

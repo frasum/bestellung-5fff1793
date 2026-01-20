@@ -59,7 +59,7 @@ const B2BMobileInventoryTab = ({ accountId, supplierId, token }: B2BMobileInvent
   const [showNewSessionDialog, setShowNewSessionDialog] = useState(false);
   const [newSessionName, setNewSessionName] = useState('');
 
-  const callEdgeFunction = async (action: string, data?: any) => {
+  const callEdgeFunction = async (action: string, data?: Record<string, unknown>) => {
     const { data: response, error } = await supabase.functions.invoke('manage-b2b-mobile-inventory', {
       body: { token, action, data },
     });
