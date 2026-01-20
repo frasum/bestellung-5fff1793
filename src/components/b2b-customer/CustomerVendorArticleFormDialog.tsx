@@ -116,9 +116,9 @@ const CustomerVendorArticleFormDialog = ({
 
       onSuccess();
       onOpenChange(false);
-    } catch (error: any) {
-      console.error('Error saving article:', error);
-      toast.error('Fehler beim Speichern: ' + error.message);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unbekannter Fehler';
+      toast.error('Fehler beim Speichern: ' + message);
     } finally {
       setLoading(false);
     }

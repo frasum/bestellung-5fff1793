@@ -69,8 +69,9 @@ const CustomerPurchaseCartTab = ({ customerId, onOrderPlaced }: CustomerPurchase
 
       setVendors(vendorsRes.data || []);
       setArticles(articlesRes.data || []);
-    } catch (error: any) {
-      console.error('Error loading data:', error);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unbekannter Fehler';
+      console.error('Error loading data:', message);
       toast.error('Fehler beim Laden der Daten');
     } finally {
       setLoading(false);
@@ -199,9 +200,10 @@ const CustomerPurchaseCartTab = ({ customerId, onOrderPlaced }: CustomerPurchase
       setDeliveryDate('');
       setNotes('');
       onOrderPlaced?.();
-    } catch (error: any) {
-      console.error('Error submitting orders:', error);
-      toast.error('Fehler beim Absenden: ' + error.message);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unbekannter Fehler';
+      console.error('Error submitting orders:', message);
+      toast.error('Fehler beim Absenden: ' + message);
     } finally {
       setSubmitting(false);
     }

@@ -139,8 +139,8 @@ const B2BPurchaseCheckoutDialog = ({
       }
 
       onSuccess();
-    } catch (error: any) {
-      console.error('Error creating order:', error);
+    } catch (error: unknown) {
+      console.error('Error creating order:', error instanceof Error ? error.message : error);
       toast.error('Fehler beim Erstellen der Bestellung');
     } finally {
       setLoading(false);

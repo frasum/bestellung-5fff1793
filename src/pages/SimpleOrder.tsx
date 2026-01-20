@@ -320,16 +320,7 @@ const SimpleOrder = () => {
           // Multi-supplier: Start with location/date step
           setStatus('location-date');
         } else {
-          // DEBUG: We have wine access but did not match wine-catalog-only condition
-          if (wineAccess && wineAccess !== 'none') {
-            console.warn('[SimpleOrder] Expected wine-catalog but condition failed:', {
-              wine_catalog_access: wineAccess,
-              suppliers_length: suppliersLength,
-              supplier: supplierObj,
-              supplier_id: supplierObj?.id,
-              is_multi_supplier: isMultiSupplier,
-            });
-          }
+          // Wine access exists but didn't match wine-catalog-only condition - proceed to ready state
           setStatus('ready');
         }
       } catch (err) {

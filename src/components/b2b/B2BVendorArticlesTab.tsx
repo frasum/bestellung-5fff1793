@@ -152,8 +152,8 @@ const B2BVendorArticlesTab = ({ accountId, supplierId }: B2BVendorArticlesTabPro
       }));
 
       setArticles(articlesWithVendor);
-    } catch (error: any) {
-      console.error('Error loading data:', error);
+    } catch (error: unknown) {
+      console.error('Error loading data:', error instanceof Error ? error.message : error);
       toast.error('Fehler beim Laden');
     } finally {
       setLoading(false);
@@ -173,8 +173,8 @@ const B2BVendorArticlesTab = ({ accountId, supplierId }: B2BVendorArticlesTabPro
 
       toast.success('Artikel gelöscht');
       loadData();
-    } catch (error: any) {
-      console.error('Error deleting article:', error);
+    } catch (error: unknown) {
+      console.error('Error deleting article:', error instanceof Error ? error.message : error);
       toast.error('Fehler beim Löschen');
     } finally {
       setDeleteDialogOpen(false);

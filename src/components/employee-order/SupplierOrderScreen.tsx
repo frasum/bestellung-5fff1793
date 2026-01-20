@@ -259,8 +259,8 @@ export function SupplierOrderScreen({
       });
 
       onOrderSubmitted();
-    } catch (error: any) {
-      console.error('Order submission error:', error);
+    } catch (error: unknown) {
+      console.error('Order submission error:', error instanceof Error ? error.message : error);
       toast({
         title: 'Fehler',
         description: 'Bestellung konnte nicht gesendet werden',

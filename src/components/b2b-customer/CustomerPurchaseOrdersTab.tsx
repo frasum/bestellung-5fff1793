@@ -75,8 +75,8 @@ const CustomerPurchaseOrdersTab = ({ customerId }: CustomerPurchaseOrdersTabProp
       );
 
       setOrders(ordersWithItems);
-    } catch (error: any) {
-      console.error('Error loading orders:', error);
+    } catch (error: unknown) {
+      console.error('Error loading orders:', error instanceof Error ? error.message : error);
       toast.error('Fehler beim Laden der Bestellungen');
     } finally {
       setLoading(false);

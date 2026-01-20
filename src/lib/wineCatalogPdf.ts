@@ -59,8 +59,8 @@ const loadImageAsBase64 = async (url: string): Promise<string | null> => {
       reader.onerror = () => resolve(null);
       reader.readAsDataURL(blob);
     });
-  } catch (error) {
-    console.warn('Failed to load image as base64:', error);
+  } catch {
+    // Failed to load image as base64 - returning null
     return null;
   }
 };
@@ -83,8 +83,8 @@ export const generateWineCatalogPdf = async (
     doc.addFileToVFS('NotoSans-Regular.ttf', fontBase64);
     doc.addFont('NotoSans-Regular.ttf', 'NotoSans', 'normal');
     doc.setFont('NotoSans');
-  } catch (fontError) {
-    console.warn('Custom font loading failed, using helvetica:', fontError);
+  } catch {
+    // Custom font loading failed - using helvetica fallback
     doc.setFont('helvetica');
   }
 

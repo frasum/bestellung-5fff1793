@@ -85,8 +85,8 @@ const B2BArticleImportDialog = ({
 
       if (error) throw error;
       setArticles(data || []);
-    } catch (error: any) {
-      console.error('Error loading articles:', error);
+    } catch (error: unknown) {
+      console.error('Error loading articles:', error instanceof Error ? error.message : error);
       toast.error('Fehler beim Laden der Artikel');
     } finally {
       setLoading(false);
@@ -170,8 +170,8 @@ const B2BArticleImportDialog = ({
       setSelectedIds(new Set());
       onSuccess();
       onOpenChange(false);
-    } catch (error: any) {
-      console.error('Error importing articles:', error);
+    } catch (error: unknown) {
+      console.error('Error importing articles:', error instanceof Error ? error.message : error);
       toast.error('Fehler beim Importieren');
     } finally {
       setImporting(false);

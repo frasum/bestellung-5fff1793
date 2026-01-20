@@ -317,9 +317,9 @@ const B2BSettingsTab = ({ account, onUpdate, selectedSupplierId, suppliers: dash
       setInviteSupplierId('');
       setInviteRole('manager');
       loadSupplierUsers();
-    } catch (error: any) {
-      console.error('Error inviting supplier user:', error);
-      toast.error(error.message || 'Fehler beim Einladen');
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Fehler beim Einladen';
+      toast.error(message);
     } finally {
       setInviting(false);
     }
@@ -338,8 +338,8 @@ const B2BSettingsTab = ({ account, onUpdate, selectedSupplierId, suppliers: dash
 
       toast.success('Benutzer-Zugang entfernt');
       loadSupplierUsers();
-    } catch (error: any) {
-      console.error('Error deleting supplier user:', error);
+    } catch (error: unknown) {
+      console.error('Error deleting supplier user:', error instanceof Error ? error.message : error);
       toast.error('Fehler beim Entfernen');
     } finally {
       setDeleteUserToDelete(null);
@@ -368,8 +368,8 @@ const B2BSettingsTab = ({ account, onUpdate, selectedSupplierId, suppliers: dash
       loadB2bSuppliers();
       onSuppliersChange?.();
       onUpdate();
-    } catch (error: any) {
-      console.error('Error deleting supplier:', error);
+    } catch (error: unknown) {
+      console.error('Error deleting supplier:', error instanceof Error ? error.message : error);
       toast.error('Fehler beim Löschen');
     } finally {
       setDeleteSupplierToDelete(null);
@@ -398,8 +398,8 @@ const B2BSettingsTab = ({ account, onUpdate, selectedSupplierId, suppliers: dash
       loadB2bSuppliers();
       onSuppliersChange?.();
       onUpdate();
-    } catch (error: any) {
-      console.error('Error saving supplier:', error);
+    } catch (error: unknown) {
+      console.error('Error saving supplier:', error instanceof Error ? error.message : error);
       toast.error('Fehler beim Speichern');
     } finally {
       setSavingSupplier(false);
@@ -424,8 +424,8 @@ const B2BSettingsTab = ({ account, onUpdate, selectedSupplierId, suppliers: dash
 
       toast.success('Portal-Einstellungen gespeichert');
       onUpdate();
-    } catch (error: any) {
-      console.error('Error saving settings:', error);
+    } catch (error: unknown) {
+      console.error('Error saving settings:', error instanceof Error ? error.message : error);
       toast.error('Fehler beim Speichern');
     } finally {
       setLoading(false);
@@ -491,9 +491,9 @@ const B2BSettingsTab = ({ account, onUpdate, selectedSupplierId, suppliers: dash
       setLogoUrl(urlWithCacheBust);
       toast.success('Logo hochgeladen');
       onUpdate();
-    } catch (error: any) {
-      console.error('Error uploading logo:', error);
-      toast.error('Fehler beim Hochladen: ' + error.message);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unbekannter Fehler';
+      toast.error('Fehler beim Hochladen: ' + message);
     } finally {
       setUploadingLogo(false);
     }
