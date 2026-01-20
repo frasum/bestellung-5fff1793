@@ -121,12 +121,13 @@ export function VoiceOnboardingAssistant() {
       console.log("Disconnected from ElevenLabs agent");
     },
 
-    onMessage: (message: any) => {
+    onMessage: (message) => {
       console.log("Message from agent:", message);
-      if (message.type === "user_transcript") {
-        setTranscript(prev => [...prev, `Du: ${message.user_transcription_event?.user_transcript || ''}`]);
-      } else if (message.type === "agent_response") {
-        setTranscript(prev => [...prev, `Assistent: ${message.agent_response_event?.agent_response || ''}`]);
+      const msg = message as { type?: string; user_transcription_event?: { user_transcript?: string }; agent_response_event?: { agent_response?: string } };
+      if (msg.type === "user_transcript") {
+        setTranscript(prev => [...prev, `Du: ${msg.user_transcription_event?.user_transcript || ''}`]);
+      } else if (msg.type === "agent_response") {
+        setTranscript(prev => [...prev, `Assistent: ${msg.agent_response_event?.agent_response || ''}`]);
       }
     },
 

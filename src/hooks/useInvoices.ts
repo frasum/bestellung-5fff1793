@@ -22,7 +22,7 @@ export interface Invoice {
   pdf_url: string | null;
   status: 'pending' | 'processing' | 'matched' | 'discrepancy' | 'approved' | 'rejected';
   notes: string | null;
-  parsed_data: any;
+  parsed_data: Record<string, unknown> | null;
   created_at: string;
   updated_at: string;
   analysis_started_at?: string | null;

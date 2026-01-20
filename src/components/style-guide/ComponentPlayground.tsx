@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { Button, type ButtonProps } from '@/components/ui/button';
+import { Badge, type BadgeProps } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Label } from '@/components/ui/label';
@@ -36,6 +36,11 @@ import {
 } from '@/components/ui/select';
 import { AlertCircle, CheckCircle, Info, Copy, Check, Sparkles, Terminal, Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight, ChevronDown, User, Calendar, Settings } from 'lucide-react';
 import { toast } from 'sonner';
+
+type ButtonVariant = NonNullable<ButtonProps['variant']>;
+type ButtonSize = NonNullable<ButtonProps['size']>;
+type BadgeVariant = NonNullable<BadgeProps['variant']>;
+type SheetSide = 'left' | 'right' | 'top' | 'bottom';
 
 // Helper for code copy
 const useCopyCode = () => {
@@ -121,7 +126,7 @@ const ButtonPlayground = () => {
       </div>
       <Separator />
       <LivePreview>
-        <Button variant={variant as any} size={size as any} disabled={disabled}>
+        <Button variant={variant as ButtonVariant} size={size as ButtonSize} disabled={disabled}>
           {size === 'icon' ? <Sparkles className="h-4 w-4" /> : text}
         </Button>
       </LivePreview>
@@ -160,7 +165,7 @@ const BadgePlayground = () => {
       </div>
       <Separator />
       <LivePreview>
-        <Badge variant={variant as any}>{text}</Badge>
+        <Badge variant={variant as BadgeVariant}>{text}</Badge>
       </LivePreview>
       <CodePreview code={generateCode()} onCopy={() => copy(generateCode())} copied={copied} />
     </div>
@@ -342,7 +347,7 @@ const SheetPlayground = () => {
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-2">
           <Label>Side</Label>
-          <Select value={side} onValueChange={(v) => setSide(v as any)}>
+          <Select value={side} onValueChange={(v) => setSide(v as SheetSide)}>
             <SelectTrigger><SelectValue /></SelectTrigger>
             <SelectContent>
               {['left', 'right', 'top', 'bottom'].map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}

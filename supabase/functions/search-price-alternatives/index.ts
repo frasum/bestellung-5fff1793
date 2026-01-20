@@ -213,7 +213,7 @@ serve(async (req) => {
         console.log(`Perplexity response for ${article.name}:`, content);
 
         // Parse the response - try to extract JSON
-        let priceInfo: any = null;
+        let priceInfo: { found?: boolean; price?: number; supplier?: string; source_url?: string | null } | null = null;
         try {
           // Try to find JSON in the response
           const jsonMatch = content.match(/\{[\s\S]*\}/);
@@ -259,7 +259,7 @@ serve(async (req) => {
         }
 
         if (priceInfo?.found && priceInfo.price && priceInfo.price > 0) {
-          const foundPrice = parseFloat(priceInfo.price);
+          const foundPrice = typeof priceInfo.price === 'number' ? priceInfo.price : parseFloat(String(priceInfo.price));
           const currentPrice = parseFloat(String(article.price));
           
           if (foundPrice < currentPrice) {
