@@ -40,10 +40,11 @@ async function sendEmailViaSMTP(options: {
     });
     await client.close();
     return { success: true };
-  } catch (error: any) {
-    console.error("SMTP send error:", error);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    console.error("SMTP send error:", message);
     try { await client.close(); } catch {}
-    return { success: false, error: error.message };
+    return { success: false, error: message };
   }
 }
 

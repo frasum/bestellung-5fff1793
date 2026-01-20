@@ -59,8 +59,9 @@ const loadImageAsBase64 = async (url: string): Promise<string | null> => {
       reader.onerror = () => resolve(null);
       reader.readAsDataURL(blob);
     });
-  } catch {
+  } catch (error: unknown) {
     // Failed to load image as base64 - returning null
+    console.warn('[Wine PDF] Image load failed:', error instanceof Error ? error.message : error);
     return null;
   }
 };
@@ -83,8 +84,9 @@ export const generateWineCatalogPdf = async (
     doc.addFileToVFS('NotoSans-Regular.ttf', fontBase64);
     doc.addFont('NotoSans-Regular.ttf', 'NotoSans', 'normal');
     doc.setFont('NotoSans');
-  } catch {
+  } catch (error: unknown) {
     // Custom font loading failed - using helvetica fallback
+    console.warn('[Wine PDF] Font loading failed, using helvetica:', error instanceof Error ? error.message : error);
     doc.setFont('helvetica');
   }
 
