@@ -138,8 +138,11 @@ serve(async (req) => {
     const results: PriceResult[] = [];
 
     // Process articles in batches
-    for (const article of articles) {
-      const supplierName = (article as any).suppliers?.name || "";
+    interface ArticleWithSupplier extends Article {
+      suppliers?: { name: string }[] | null;
+    }
+    for (const article of (articles as ArticleWithSupplier[])) {
+      const supplierName = article.suppliers?.[0]?.name || "";
       
       // Build search query - include B2B, retail and online sources
       const searchQuery = `${article.name} Preis ${city} kaufen Großhandel Supermarkt Online`;

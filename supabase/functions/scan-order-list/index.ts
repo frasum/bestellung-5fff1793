@@ -19,7 +19,12 @@ serve(async (req) => {
     }
 
     // Create article list for context
-    const articleList = articles.map((a: any) => 
+    interface ArticleInput {
+      name: string;
+      sku?: string | null;
+      unit: string;
+    }
+    const articleList = (articles as ArticleInput[]).map((a) => 
       `- "${a.name}" (SKU: ${a.sku || 'N/A'}, Einheit: ${a.unit})`
     ).join('\n');
 
