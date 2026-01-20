@@ -1,31 +1,16 @@
-import { useState, useCallback, useEffect, useMemo } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDropzone } from 'react-dropzone';
-import { format } from 'date-fns';
-import { toast } from 'sonner';
-import { de, enUS } from 'date-fns/locale';
 import {
   Upload,
   FileText,
-  CheckCircle2,
-  AlertTriangle,
-  Clock,
-  XCircle,
   ChevronDown,
   ChevronRight,
-  TrendingUp,
-  TrendingDown,
-  Package,
   Loader2,
-  Eye,
-  Check,
-  X,
   Mail,
-  RefreshCw,
   Download,
   ExternalLink,
-  Plus,
-  Trash2,
+  Clock,
   Building2,
   Calendar,
   List,
@@ -34,14 +19,6 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
 import {
   Collapsible,
   CollapsibleContent,
@@ -69,70 +46,24 @@ import { PdfCanvasViewer } from './PdfCanvasViewer';
 import { cn } from '@/lib/utils';
 import {
   useInvoices,
-  useInvoice,
   useUploadInvoice,
   useUpdateInvoiceStatus,
-  useResolveDiscrepancy,
   useCheckInvoiceEmails,
   useReanalyzeInvoice,
   useCreateArticlesFromInvoice,
   useDeleteInvoice,
   useInvoiceProcessingStatus,
-  useResetStuckInvoice,
-  isInvoiceStuck,
   Invoice,
-  InvoiceDiscrepancy,
 } from '@/hooks/useInvoices';
 import { Progress } from '@/components/ui/progress';
-import { InvoiceProcessingSummary } from './InvoiceProcessingSummary';
 
-type ViewMode = 'supplier' | 'date' | 'flat';
-
-interface SupplierGroup {
-  supplierId: string | null;
-  supplierName: string;
-  invoices: Invoice[];
-  totalAmount: number;
-  pendingCount: number;
-  approvedCount: number;
-  discrepancyCount: number;
-}
-
-interface MonthGroup {
-  monthKey: string;
-  monthLabel: string;
-  invoices: Invoice[];
-  totalAmount: number;
-}
-
-interface ParsedItem {
-  position?: number;
-  articleName: string;
-  articleSku?: string;
-  quantity: number;
-  unit?: string;
-  unitPrice?: number;
-  totalPrice?: number;
-}
-
-const statusConfig: Record<Invoice['status'] | 'stuck', { icon: React.ElementType; color: string; label: string }> = {
-  pending: { icon: Clock, color: 'bg-muted text-muted-foreground', label: 'Neu' },
-  processing: { icon: Loader2, color: 'bg-blue-500/20 text-blue-600', label: 'Wird analysiert' },
-  stuck: { icon: AlertTriangle, color: 'bg-destructive/20 text-destructive', label: 'Hängt - Erneut versuchen?' },
-  matched: { icon: CheckCircle2, color: 'bg-success/20 text-success', label: 'Abgeglichen' },
-  discrepancy: { icon: AlertTriangle, color: 'bg-warning/20 text-warning', label: 'Abweichungen' },
-  approved: { icon: CheckCircle2, color: 'bg-success/20 text-success', label: 'Freigegeben' },
-  rejected: { icon: XCircle, color: 'bg-destructive/20 text-destructive', label: 'Abgelehnt' },
-};
-
-const discrepancyTypeConfig: Record<InvoiceDiscrepancy['discrepancy_type'], { icon: React.ElementType; color: string; label: string }> = {
-  price_increase: { icon: TrendingUp, color: 'text-destructive', label: 'Preiserhöhung' },
-  price_decrease: { icon: TrendingDown, color: 'text-success', label: 'Preissenkung' },
-  quantity_mismatch: { icon: Package, color: 'text-warning', label: 'Mengendifferenz' },
-  missing_item: { icon: XCircle, color: 'text-muted-foreground', label: 'Fehlender Artikel' },
-  extra_item: { icon: AlertTriangle, color: 'text-orange-500', label: 'Zusätzlicher Artikel' },
-  other: { icon: AlertTriangle, color: 'text-muted-foreground', label: 'Sonstige' },
-};
+import {
+  ViewMode,
+  useInvoiceGroups,
+  InvoiceStatsCards,
+  InvoiceRow,
+  InvoiceDetailsDialog,
+} from './invoice-verification';
 
 export function InvoiceVerificationTab() {
   const { t, i18n } = useTranslation();
@@ -141,6 +72,9 @@ export function InvoiceVerificationTab() {
   const updateStatus = useUpdateInvoiceStatus();
   const checkEmails = useCheckInvoiceEmails();
   const { status: processingStatus, isProcessing, progress } = useInvoiceProcessingStatus();
+  const reanalyzeInvoice = useReanalyzeInvoice();
+  const createArticlesFromInvoice = useCreateArticlesFromInvoice();
+  const deleteInvoice = useDeleteInvoice();
   
   // Timer for automatic email check (5 minutes = 300 seconds)
   const [nextCheckIn, setNextCheckIn] = useState<number>(5 * 60);
@@ -158,12 +92,6 @@ export function InvoiceVerificationTab() {
     
     return () => clearInterval(timer);
   }, []);
-  const reanalyzeInvoice = useReanalyzeInvoice();
-  const resetStuckInvoice = useResetStuckInvoice();
-  const createArticlesFromInvoice = useCreateArticlesFromInvoice();
-  const deleteInvoice = useDeleteInvoice();
-  
-  const locale = i18n.language === 'de' ? de : enUS;
   
   const [expandedInvoices, setExpandedInvoices] = useState<Set<string>>(new Set());
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
@@ -171,91 +99,14 @@ export function InvoiceVerificationTab() {
   const [selectedInvoiceId, setSelectedInvoiceId] = useState<string | null>(null);
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
   const [pdfDialogUrl, setPdfDialogUrl] = useState<string | null>(null);
+  const [pdfViewerError, setPdfViewerError] = useState<string | null>(null);
+  const [deletingInvoice, setDeletingInvoice] = useState<Invoice | null>(null);
 
-  // Grouping functions
-  const groupInvoicesBySupplier = useMemo((): SupplierGroup[] => {
-    if (!invoices) return [];
-    
-    const groups = new Map<string, SupplierGroup>();
-    
-    invoices.forEach(invoice => {
-      const supplierId = invoice.supplier_id || 'unknown';
-      const supplierName = invoice.suppliers?.name || t('invoices.unknownSupplier', 'Unbekannter Lieferant');
-      
-      if (!groups.has(supplierId)) {
-        groups.set(supplierId, {
-          supplierId: invoice.supplier_id,
-          supplierName,
-          invoices: [],
-          totalAmount: 0,
-          pendingCount: 0,
-          approvedCount: 0,
-          discrepancyCount: 0,
-        });
-      }
-      
-      const group = groups.get(supplierId)!;
-      group.invoices.push(invoice);
-      group.totalAmount += Number(invoice.gross_amount || 0);
-      
-      if (invoice.status === 'pending' || invoice.status === 'processing') {
-        group.pendingCount++;
-      } else if (invoice.status === 'approved' || invoice.status === 'matched') {
-        group.approvedCount++;
-      } else if (invoice.status === 'discrepancy') {
-        group.discrepancyCount++;
-      }
-    });
-    
-    // Sort groups by supplier name, sort invoices within by date (newest first)
-    return Array.from(groups.values())
-      .sort((a, b) => a.supplierName.localeCompare(b.supplierName))
-      .map(group => ({
-        ...group,
-        invoices: group.invoices.sort((a, b) => {
-          const dateA = a.invoice_date ? new Date(a.invoice_date).getTime() : 0;
-          const dateB = b.invoice_date ? new Date(b.invoice_date).getTime() : 0;
-          return dateB - dateA;
-        }),
-      }));
-  }, [invoices, t]);
-
-  const groupInvoicesByMonth = useMemo((): MonthGroup[] => {
-    if (!invoices) return [];
-    
-    const groups = new Map<string, MonthGroup>();
-    
-    invoices.forEach(invoice => {
-      const invoiceDate = invoice.invoice_date ? new Date(invoice.invoice_date) : new Date(invoice.created_at);
-      const monthKey = format(invoiceDate, 'yyyy-MM');
-      const monthLabel = format(invoiceDate, 'MMMM yyyy', { locale });
-      
-      if (!groups.has(monthKey)) {
-        groups.set(monthKey, {
-          monthKey,
-          monthLabel,
-          invoices: [],
-          totalAmount: 0,
-        });
-      }
-      
-      const group = groups.get(monthKey)!;
-      group.invoices.push(invoice);
-      group.totalAmount += Number(invoice.gross_amount || 0);
-    });
-    
-    // Sort groups by month (newest first), sort invoices within by supplier name
-    return Array.from(groups.values())
-      .sort((a, b) => b.monthKey.localeCompare(a.monthKey))
-      .map(group => ({
-        ...group,
-        invoices: group.invoices.sort((a, b) => {
-          const nameA = a.suppliers?.name || '';
-          const nameB = b.suppliers?.name || '';
-          return nameA.localeCompare(nameB);
-        }),
-      }));
-  }, [invoices, locale]);
+  const { groupInvoicesBySupplier, groupInvoicesByMonth, stats, locale } = useInvoiceGroups(
+    invoices,
+    i18n.language,
+    t
+  );
 
   const toggleGroup = (groupId: string) => {
     setExpandedGroups(prev => {
@@ -280,8 +131,6 @@ export function InvoiceVerificationTab() {
   const collapseAllGroups = () => {
     setExpandedGroups(new Set());
   };
-  const [pdfViewerError, setPdfViewerError] = useState<string | null>(null);
-  const [deletingInvoice, setDeletingInvoice] = useState<Invoice | null>(null);
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     acceptedFiles.forEach(file => {
@@ -331,48 +180,10 @@ export function InvoiceVerificationTab() {
     reanalyzeInvoice.mutate(invoiceId);
   };
 
-  const openDetails = (invoiceId: string) => {
-    setSelectedInvoiceId(invoiceId);
-    setShowDetailsDialog(true);
-  };
-
-  // Calculate stats
-  const stats = {
-    total: invoices?.length || 0,
-    pending: invoices?.filter(i => i.status === 'pending' || i.status === 'processing').length || 0,
-    discrepancies: invoices?.filter(i => i.status === 'discrepancy').length || 0,
-    approved: invoices?.filter(i => i.status === 'approved' || i.status === 'matched').length || 0,
-  };
-
   return (
     <div className="space-y-6">
       {/* Stats Overview */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <Card>
-          <CardContent className="p-4">
-            <div className="text-2xl font-bold">{stats.total}</div>
-            <div className="text-xs text-muted-foreground">{t('invoices.totalInvoices', 'Rechnungen gesamt')}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="text-2xl font-bold text-warning">{stats.pending}</div>
-            <div className="text-xs text-muted-foreground">{t('invoices.pending', 'Ausstehend')}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="text-2xl font-bold text-destructive">{stats.discrepancies}</div>
-            <div className="text-xs text-muted-foreground">{t('invoices.withDiscrepancies', 'Mit Abweichungen')}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="text-2xl font-bold text-success">{stats.approved}</div>
-            <div className="text-xs text-muted-foreground">{t('invoices.approved', 'Freigegeben')}</div>
-          </CardContent>
-        </Card>
-      </div>
+      <InvoiceStatsCards stats={stats} />
 
       {/* Email Check + Upload Area */}
       <Card>
@@ -801,358 +612,5 @@ export function InvoiceVerificationTab() {
         </AlertDialogContent>
       </AlertDialog>
     </div>
-  );
-}
-
-// Invoice row component for reuse in different views
-interface InvoiceRowProps {
-  invoice: Invoice;
-  isExpanded: boolean;
-  onToggle: () => void;
-  locale: typeof de | typeof enUS;
-  onOpenPdf: (url: string) => void;
-  onApprove: (id: string) => void;
-  onReject: (id: string) => void;
-  onReanalyze: (id: string) => void;
-  onDelete: (invoice: Invoice) => void;
-  onCreateArticles: (invoiceId: string, supplierId: string) => void;
-  isPending: {
-    update: boolean;
-    reanalyze: boolean;
-    createArticles: boolean;
-  };
-  showSupplierName: boolean;
-  t: ReturnType<typeof useTranslation>['t'];
-}
-
-function InvoiceRow({
-  invoice,
-  isExpanded,
-  onToggle,
-  locale,
-  onOpenPdf,
-  onApprove,
-  onReject,
-  onReanalyze,
-  onDelete,
-  onCreateArticles,
-  isPending,
-  showSupplierName,
-  t,
-}: InvoiceRowProps) {
-  // Check if invoice is stuck in processing
-  const isStuck = isInvoiceStuck(invoice);
-  const displayStatus = isStuck ? 'stuck' : invoice.status;
-  const StatusIcon = statusConfig[displayStatus].icon;
-  const discrepancyCount = invoice.invoice_discrepancies?.filter(d => !d.is_resolved).length || 0;
-
-  // Get items from invoice_items or fall back to parsed_data
-  const invoiceItems = invoice.invoice_items && invoice.invoice_items.length > 0
-    ? invoice.invoice_items
-    : ((invoice.parsed_data?.items as ParsedItem[]) || []).map((item, index) => ({
-        id: `parsed-${index}`,
-        invoice_id: invoice.id,
-        article_name: item.articleName,
-        article_sku: item.articleSku || null,
-        quantity: item.quantity,
-        unit: item.unit || null,
-        unit_price: item.unitPrice || null,
-        total_price: item.totalPrice || null,
-        position_number: item.position || index + 1,
-        matched_order_item_id: null,
-        matched_article_id: null,
-        created_at: invoice.created_at,
-      }));
-
-  return (
-    <Collapsible open={isExpanded} onOpenChange={onToggle}>
-      <CollapsibleTrigger asChild>
-        <div className="flex items-center justify-between p-4 hover:bg-muted/50 cursor-pointer pl-8">
-          <div className="flex items-center gap-3 min-w-0 flex-1">
-            {isExpanded ? (
-              <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />
-            ) : (
-              <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
-            )}
-            
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-2 flex-wrap">
-                {showSupplierName && (
-                  <span className="font-medium truncate">
-                    {invoice.suppliers?.name || t('invoices.unknownSupplier', 'Unbekannter Lieferant')}
-                  </span>
-                )}
-                <Badge 
-                  variant="outline" 
-                  className={cn(
-                    'text-xs', 
-                    statusConfig[displayStatus].color,
-                    isStuck && 'cursor-pointer hover:bg-destructive/30'
-                  )}
-                  onClick={isStuck ? (e) => {
-                    e.stopPropagation();
-                    onReanalyze(invoice.id);
-                  } : undefined}
-                >
-                  <StatusIcon className={cn('h-3 w-3 mr-1', invoice.status === 'processing' && !isStuck && 'animate-spin')} />
-                  {statusConfig[displayStatus].label}
-                </Badge>
-              </div>
-              <div className="text-xs text-muted-foreground mt-0.5 flex items-center gap-2">
-                {invoice.invoice_number && <span>{invoice.invoice_number}</span>}
-                {invoice.invoice_date && (
-                  <span>{format(new Date(invoice.invoice_date), 'dd.MM.yyyy', { locale })}</span>
-                )}
-              </div>
-              <InvoiceProcessingSummary 
-                parsedData={invoice.parsed_data}
-                matchedOrderNumber={invoice.orders?.order_number}
-                discrepancyCount={discrepancyCount}
-                className="mt-1.5"
-              />
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3">
-            {invoice.gross_amount && (
-              <span className="font-semibold">
-                €{Number(invoice.gross_amount).toLocaleString('de-DE', { minimumFractionDigits: 2 })}
-              </span>
-            )}
-          </div>
-        </div>
-      </CollapsibleTrigger>
-
-      <CollapsibleContent>
-        <div className="px-8 pb-4 pt-0 space-y-4">
-          {/* Invoice Items */}
-          {invoiceItems.length > 0 && (
-            <div className="rounded-md border">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-[40%]">{t('common.article', 'Artikel')}</TableHead>
-                    <TableHead className="text-right">{t('common.quantity', 'Menge')}</TableHead>
-                    <TableHead className="text-right">{t('common.unitPrice', 'Stückpreis')}</TableHead>
-                    <TableHead className="text-right">{t('common.total', 'Gesamt')}</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {invoiceItems.map((item) => (
-                    <TableRow key={item.id}>
-                      <TableCell className="font-medium">
-                        <div>{item.article_name}</div>
-                        {item.article_sku && (
-                          <div className="text-xs text-muted-foreground">{item.article_sku}</div>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        {item.quantity} {item.unit}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        €{Number(item.unit_price || 0).toFixed(2)}
-                      </TableCell>
-                      <TableCell className="text-right font-medium">
-                        €{Number(item.total_price || 0).toFixed(2)}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          )}
-
-          {/* Discrepancies */}
-          {invoice.invoice_discrepancies && invoice.invoice_discrepancies.length > 0 && (
-            <div className="space-y-2">
-              <h4 className="text-sm font-semibold text-destructive flex items-center gap-2">
-                <AlertTriangle className="h-4 w-4" />
-                {t('invoices.foundDiscrepancies', 'Gefundene Abweichungen')}
-              </h4>
-              <div className="space-y-2">
-                {invoice.invoice_discrepancies.map((disc) => {
-                  const config = discrepancyTypeConfig[disc.discrepancy_type];
-                  const DiscIcon = config.icon;
-                  
-                  return (
-                    <div
-                      key={disc.id}
-                      className={cn(
-                        'flex items-center justify-between p-3 rounded-md border',
-                        disc.is_resolved ? 'bg-muted/30 opacity-60' : 'bg-destructive/5 border-destructive/20'
-                      )}
-                    >
-                      <div className="flex items-center gap-3">
-                        <DiscIcon className={cn('h-5 w-5', config.color)} />
-                        <div>
-                          <div className="font-medium text-sm">{config.label}</div>
-                          <div className="text-xs text-muted-foreground">
-                            {t('invoices.expected', 'Erwartet')}: {disc.expected_value} → {t('invoices.actual', 'Tatsächlich')}: {disc.actual_value}
-                          </div>
-                          {disc.difference_percent && (
-                            <div className={cn('text-xs font-medium', config.color)}>
-                              {disc.difference_percent > 0 ? '+' : ''}{disc.difference_percent.toFixed(1)}%
-                              {disc.difference_amount && ` (€${disc.difference_amount.toFixed(2)})`}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                      {disc.is_resolved && (
-                        <Badge variant="secondary" className="text-xs">
-                          <Check className="h-3 w-3 mr-1" />
-                          {t('invoices.resolved', 'Geklärt')}
-                        </Badge>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-          {/* Actions */}
-          <div className="flex items-center gap-2 pt-2 flex-wrap">
-            {invoice.pdf_url && (
-              <>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={() => onOpenPdf(invoice.pdf_url!)}
-                >
-                  <Eye className="h-4 w-4 mr-2" />
-                  {t('invoices.viewPdf', 'PDF anzeigen')}
-                </Button>
-                <Button variant="ghost" size="sm" asChild>
-                  <a href={invoice.pdf_url} download>
-                    <Download className="h-4 w-4 mr-2" />
-                    {t('invoices.download', 'Download')}
-                  </a>
-                </Button>
-              </>
-            )}
-            {invoice.supplier_id && invoice.invoice_items && invoice.invoice_items.length > 0 && (
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={() => onCreateArticles(invoice.id, invoice.supplier_id!)}
-                disabled={isPending.createArticles}
-              >
-                {isPending.createArticles ? (
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                ) : (
-                  <Plus className="h-4 w-4 mr-2" />
-                )}
-                {t('invoices.addArticlesToCatalog', 'Artikel übernehmen')}
-              </Button>
-            )}
-            {invoice.status === 'pending' && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => onReanalyze(invoice.id)}
-                disabled={isPending.reanalyze}
-              >
-                {isPending.reanalyze ? (
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                ) : (
-                  <RefreshCw className="h-4 w-4 mr-2" />
-                )}
-                {t('invoices.reanalyze', 'Erneut analysieren')}
-              </Button>
-            )}
-            {(invoice.status === 'matched' || invoice.status === 'discrepancy') && (
-              <>
-                <Button
-                  variant="default"
-                  size="sm"
-                  onClick={() => onApprove(invoice.id)}
-                  disabled={isPending.update}
-                >
-                  <Check className="h-4 w-4 mr-2" />
-                  {t('invoices.approve', 'Freigeben')}
-                </Button>
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={() => onReject(invoice.id)}
-                  disabled={isPending.update}
-                >
-                  <X className="h-4 w-4 mr-2" />
-                  {t('invoices.reject', 'Ablehnen')}
-                </Button>
-              </>
-            )}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={(e) => {
-                e.stopPropagation();
-                onDelete(invoice);
-              }}
-              className="text-destructive hover:text-destructive hover:bg-destructive/10"
-            >
-              <Trash2 className="h-4 w-4 mr-2" />
-              {t('common.delete', 'Löschen')}
-            </Button>
-          </div>
-        </div>
-      </CollapsibleContent>
-    </Collapsible>
-  );
-}
-
-function InvoiceDetailsDialog({
-  invoiceId,
-  open,
-  onOpenChange,
-}: {
-  invoiceId: string | null;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-}) {
-  const { data: invoice, isLoading } = useInvoice(invoiceId);
-  const { t } = useTranslation();
-
-  if (!open) return null;
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>{t('invoices.invoiceDetails', 'Rechnungsdetails')}</DialogTitle>
-        </DialogHeader>
-        
-        {isLoading ? (
-          <div className="flex items-center justify-center p-8">
-            <Loader2 className="h-6 w-6 animate-spin" />
-          </div>
-        ) : invoice ? (
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <div className="text-sm text-muted-foreground">{t('invoices.supplier', 'Lieferant')}</div>
-                <div className="font-medium">{invoice.suppliers?.name || '-'}</div>
-              </div>
-              <div>
-                <div className="text-sm text-muted-foreground">{t('invoices.invoiceNumber', 'Rechnungsnummer')}</div>
-                <div className="font-medium">{invoice.invoice_number || '-'}</div>
-              </div>
-              <div>
-                <div className="text-sm text-muted-foreground">{t('invoices.invoiceDate', 'Rechnungsdatum')}</div>
-                <div className="font-medium">
-                  {invoice.invoice_date ? format(new Date(invoice.invoice_date), 'dd.MM.yyyy') : '-'}
-                </div>
-              </div>
-              <div>
-                <div className="text-sm text-muted-foreground">{t('invoices.grossAmount', 'Bruttobetrag')}</div>
-                <div className="font-medium">
-                  €{Number(invoice.gross_amount || 0).toLocaleString('de-DE', { minimumFractionDigits: 2 })}
-                </div>
-              </div>
-            </div>
-          </div>
-        ) : null}
-      </DialogContent>
-    </Dialog>
   );
 }
