@@ -122,7 +122,7 @@ const B2BOrdersTab = ({ accountId, selectedSupplierId = 'all', suppliers = [] }:
       );
 
       setOrders(ordersWithItems);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error loading orders:', error);
       toast.error('Fehler beim Laden der Bestellungen');
     } finally {
@@ -141,7 +141,7 @@ const B2BOrdersTab = ({ accountId, selectedSupplierId = 'all', suppliers = [] }:
 
       toast.success(`Status geändert zu "${STATUS_CONFIG[newStatus]?.label || newStatus}"`);
       loadOrders();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error updating status:', error);
       toast.error('Fehler beim Ändern des Status');
     }

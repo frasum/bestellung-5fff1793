@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { getErrorMessage } from '@/lib/errorUtils';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -64,7 +65,7 @@ export const SupplierPortalOwnVendorsTab = ({ session }: Props) => {
 
       if (error) throw error;
       setVendors(data?.vendors || []);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error fetching vendors:', error);
       toast.error('Fehler beim Laden der Lieferanten');
     } finally {
@@ -124,7 +125,7 @@ export const SupplierPortalOwnVendorsTab = ({ session }: Props) => {
       toast.success(selectedVendor ? 'Lieferant aktualisiert' : 'Lieferant angelegt');
       setDialogOpen(false);
       fetchVendors();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error saving vendor:', error);
       toast.error('Fehler beim Speichern');
     } finally {
@@ -152,7 +153,7 @@ export const SupplierPortalOwnVendorsTab = ({ session }: Props) => {
       setDeleteDialogOpen(false);
       setSelectedVendor(null);
       fetchVendors();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error deleting vendor:', error);
       toast.error('Fehler beim Löschen');
     }

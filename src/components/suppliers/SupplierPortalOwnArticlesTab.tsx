@@ -90,7 +90,7 @@ export const SupplierPortalOwnArticlesTab = ({ session }: Props) => {
       
       setArticles(articlesRes.data?.articles || []);
       setVendors(vendorsRes.data?.vendors || []);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error fetching data:', error);
       toast.error('Fehler beim Laden');
     } finally {
@@ -180,7 +180,7 @@ export const SupplierPortalOwnArticlesTab = ({ session }: Props) => {
       toast.success(selectedArticle ? 'Artikel aktualisiert' : 'Artikel angelegt');
       setDialogOpen(false);
       fetchData();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error saving article:', error);
       toast.error('Fehler beim Speichern');
     } finally {
@@ -208,7 +208,7 @@ export const SupplierPortalOwnArticlesTab = ({ session }: Props) => {
       setDeleteDialogOpen(false);
       setSelectedArticle(null);
       fetchData();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error deleting article:', error);
       toast.error('Fehler beim Löschen');
     }

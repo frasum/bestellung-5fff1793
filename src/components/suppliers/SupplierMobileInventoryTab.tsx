@@ -126,7 +126,7 @@ export const SupplierMobileInventoryTab = ({ session }: Props) => {
       if (inProgress) {
         await loadSession(inProgress);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error fetching data:', error);
       toast.error('Fehler beim Laden');
     } finally {
@@ -171,7 +171,7 @@ export const SupplierMobileInventoryTab = ({ session }: Props) => {
       if (inventorySession.vendor_id) {
         setVendorFilter(inventorySession.vendor_id);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error loading session:', error);
       toast.error('Fehler beim Laden der Sitzung');
     }
@@ -208,7 +208,7 @@ export const SupplierMobileInventoryTab = ({ session }: Props) => {
       if (data?.session) {
         await loadSession(data.session);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error creating session:', error);
       toast.error('Fehler beim Erstellen');
     }
@@ -255,7 +255,7 @@ export const SupplierMobileInventoryTab = ({ session }: Props) => {
       });
       
       toast.success(`${changedItems.length} Artikel gespeichert`);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error saving inventory:', error);
       toast.error('Fehler beim Speichern');
     } finally {
@@ -285,7 +285,7 @@ export const SupplierMobileInventoryTab = ({ session }: Props) => {
       setInventoryItems([]);
       setLocalItems({});
       fetchData();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error completing session:', error);
       toast.error('Fehler beim Abschließen');
     }
@@ -312,7 +312,7 @@ export const SupplierMobileInventoryTab = ({ session }: Props) => {
       setInventoryItems([]);
       setLocalItems({});
       fetchData();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error deleting session:', error);
       toast.error('Fehler beim Löschen');
     }

@@ -119,7 +119,7 @@ export const SupplierMobilePurchaseTab = ({ session }: Props) => {
       if (vendorsRes.data?.vendors?.length > 0 && !selectedVendor) {
         setSelectedVendor(vendorsRes.data.vendors[0].id);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error fetching data:', error);
       toast.error('Fehler beim Laden');
     } finally {
@@ -226,7 +226,7 @@ export const SupplierMobilePurchaseTab = ({ session }: Props) => {
       
       // Refresh orders
       fetchData();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error submitting order:', error);
       toast.error('Fehler beim Erstellen der Bestellung');
     } finally {

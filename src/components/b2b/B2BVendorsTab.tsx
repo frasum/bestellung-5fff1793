@@ -82,7 +82,7 @@ const B2BVendorsTab = ({ accountId, supplierId, onVendorChange }: B2BVendorsTabP
 
       if (error) throw error;
       setVendors(data || []);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error loading vendors:', error);
       toast.error('Fehler beim Laden der Lieferanten');
     } finally {
@@ -104,7 +104,7 @@ const B2BVendorsTab = ({ accountId, supplierId, onVendorChange }: B2BVendorsTabP
       toast.success('Lieferant gelöscht');
       loadVendors();
       onVendorChange?.();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error deleting vendor:', error);
       toast.error('Fehler beim Löschen');
     } finally {

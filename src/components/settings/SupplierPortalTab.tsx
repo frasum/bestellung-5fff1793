@@ -102,9 +102,10 @@ export const SupplierPortalTab = () => {
       await upsertSettings.mutateAsync({ logo_url: publicUrl });
       setLogoUrl(publicUrl);
       toast.success(t('settings.logoUploaded'));
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error uploading logo:', error);
-      toast.error(t('settings.logoUploadError') + ': ' + error.message);
+      const message = error instanceof Error ? error.message : 'Unbekannter Fehler';
+      toast.error(t('settings.logoUploadError') + ': ' + message);
     } finally {
       setUploadingLogo(false);
       e.target.value = '';
@@ -123,9 +124,10 @@ export const SupplierPortalTab = () => {
       await upsertSettings.mutateAsync({ logo_url: null });
       setLogoUrl(null);
       toast.success(t('settings.logoRemoved'));
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error removing logo:', error);
-      toast.error(t('settings.logoRemoveError') + ': ' + error.message);
+      const message = error instanceof Error ? error.message : 'Unbekannter Fehler';
+      toast.error(t('settings.logoRemoveError') + ': ' + message);
     }
   };
 
