@@ -38,8 +38,8 @@ async function sendEmailViaSMTP(options: {
       html: options.html,
     });
     await client.close();
-  } catch (error: any) {
-    console.error("SMTP send error:", error);
+  } catch (error: unknown) {
+    console.error("SMTP send error:", error instanceof Error ? error.message : error);
     try { await client.close(); } catch {}
     throw error;
   }
