@@ -45,9 +45,10 @@ export const SupplierQRCodeDialog = ({ supplier, open, onOpenChange }: SupplierQ
         },
       });
       setQrCodeDataUrl(qrDataUrl);
-    } catch (error: any) {
-      console.error('Error generating QR code:', error);
-      toast.error('Fehler beim Erstellen des QR-Codes: ' + error.message);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unbekannter Fehler';
+      console.error('Error generating QR code:', message);
+      toast.error('Fehler beim Erstellen des QR-Codes: ' + message);
     } finally {
       setIsLoading(false);
     }

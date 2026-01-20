@@ -93,9 +93,9 @@ export const WineCatalogView = ({ organizationId, permission, onBack, token, emp
       console.log('[WineCatalogView] Loaded wines:', data.wines?.length || 0);
       setWines(data.wines || []);
       setOrganizationName(data.organization_name || '');
-    } catch (err) {
-      console.error('[WineCatalogView] Unexpected error:', err);
+    } catch (err: unknown) {
       const errorMsg = err instanceof Error ? err.message : 'Unbekannter Fehler';
+      console.error('[WineCatalogView] Unexpected error:', errorMsg);
       setLoadError(errorMsg);
       toast.error(t('common.error', 'Fehler beim Laden'));
     } finally {
@@ -163,8 +163,9 @@ export const WineCatalogView = ({ organizationId, permission, onBack, token, emp
       setEditingWine(null);
       setEditForm({});
       loadData();
-    } catch (err) {
-      console.error('Error saving wine:', err);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Unbekannter Fehler';
+      console.error('Error saving wine:', message);
       toast.error(t('common.error', 'Fehler beim Speichern'));
     } finally {
       setIsSaving(false);
@@ -203,8 +204,9 @@ export const WineCatalogView = ({ organizationId, permission, onBack, token, emp
       );
       
       toast.success(t('wines.pdfExported', 'Weinkarte als PDF exportiert'));
-    } catch (err) {
-      console.error('Error exporting PDF:', err);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Unbekannter Fehler';
+      console.error('Error exporting PDF:', message);
       toast.error(t('common.error', 'Fehler beim Export'));
     } finally {
       setIsExportingPdf(false);

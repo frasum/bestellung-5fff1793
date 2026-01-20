@@ -27,7 +27,9 @@ export const ExportMenu = ({ filename, title, headers, getData, disabled }: Expo
       }
       exportData(format, { filename, title, headers, data });
       toast.success(`Exported as ${format.toUpperCase()}`);
-    } catch (error) {
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      console.error('Export failed:', message);
       toast.error('Export failed');
     }
   };

@@ -114,8 +114,9 @@ const PhotoCapture = () => {
         setCategories(data.categories || []);
         setUnits(data.units || []);
         setStep('photo');
-      } catch (err) {
-        console.error('Token verification error:', err);
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : 'Unbekannter Fehler';
+        console.error('Token verification error:', message);
         setErrorMessage(t('quickCapture.verificationError', 'Fehler bei der Token-Überprüfung'));
         setStep('error');
       }
@@ -195,8 +196,9 @@ const PhotoCapture = () => {
       }
 
       setStep('article');
-    } catch (err) {
-      console.error('Processing error:', err);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Unbekannter Fehler';
+      console.error('Processing error:', message);
       toast.error(t('quickCapture.processingError', 'Fehler bei der Bildverarbeitung'));
     } finally {
       setIsAnalyzing(false);
@@ -249,8 +251,9 @@ const PhotoCapture = () => {
           confidence: result?.confidence || 'low' as const,
           skipped: false,
         };
-      } catch (err) {
-        console.error('Batch processing error for image:', img.id, err);
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : 'Unbekannter Fehler';
+        console.error('Batch processing error for image:', img.id, message);
         return {
           imageId: img.id,
           imageBase64: img.base64,
@@ -346,8 +349,9 @@ const PhotoCapture = () => {
 
       toast.success(t('quickCapture.articleCreated', 'Artikel "{{name}}" erfolgreich erstellt!', { name: articleName }));
       setStep('confirm');
-    } catch (err) {
-      console.error('Save error:', err);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Unbekannter Fehler';
+      console.error('Save error:', message);
       toast.error(t('quickCapture.saveError', 'Fehler beim Speichern'));
     } finally {
       setIsSaving(false);
@@ -417,8 +421,9 @@ const PhotoCapture = () => {
       setStep('confirm');
       
       toast.success(t('batchCapture.batchSaved', '{{count}} Artikel erfolgreich erstellt!', { count: data.successCount }));
-    } catch (err) {
-      console.error('Batch save error:', err);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Unbekannter Fehler';
+      console.error('Batch save error:', message);
       toast.error(t('quickCapture.saveError', 'Fehler beim Speichern'));
     } finally {
       setIsSaving(false);

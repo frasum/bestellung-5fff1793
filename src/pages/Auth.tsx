@@ -114,8 +114,9 @@ const Auth = () => {
 
       toast.success(`Willkommen im Team von ${data.organizationName}!`);
       return true;
-    } catch (err) {
-      console.error('Accept invitation error:', err);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Unbekannter Fehler';
+      console.error('Accept invitation error:', message);
       toast.error('Fehler beim Annehmen der Einladung');
       return false;
     } finally {
@@ -277,8 +278,9 @@ const Auth = () => {
         setShowDemoDialog(false);
         setShowEmptyDemoDialog(false);
       }
-    } catch (err) {
-      console.error('Demo error:', err);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Unbekannter Fehler';
+      console.error('Demo error:', message);
       toast.error('Ein unerwarteter Fehler ist aufgetreten');
     }
     
@@ -322,8 +324,9 @@ const Auth = () => {
         toast.success('Demo-Account erstellt! Bitte melden Sie sich an.');
         setShowVoiceOnboardingDialog(false);
       }
-    } catch (err) {
-      console.error('Voice onboarding error:', err);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Unbekannter Fehler';
+      console.error('Voice onboarding error:', message);
       toast.error('Ein unerwarteter Fehler ist aufgetreten');
     }
     
@@ -363,8 +366,9 @@ const Auth = () => {
         toast.success('Demo-Account erstellt! Bitte melden Sie sich an.');
         setShowQuestionOnboardingDialog(false);
       }
-    } catch (err) {
-      console.error('Question onboarding error:', err);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Unbekannter Fehler';
+      console.error('Question onboarding error:', message);
       toast.error('Ein unerwarteter Fehler ist aufgetreten');
     }
     

@@ -154,9 +154,10 @@ export default function B2BUpgradePricingDialog({
       setStep('pricing');
       setPassword('');
       setConfirmPassword('');
-    } catch (error: any) {
-      console.error('Upgrade error:', error);
-      toast.error('Fehler beim Upgrade: ' + (error.message || 'Unbekannter Fehler'));
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unbekannter Fehler';
+      console.error('Upgrade error:', message);
+      toast.error('Fehler beim Upgrade: ' + message);
     } finally {
       setUpgrading(false);
     }

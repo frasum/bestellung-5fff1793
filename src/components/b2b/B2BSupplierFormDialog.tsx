@@ -103,9 +103,10 @@ const B2BSupplierFormDialog = ({
 
       onSuccess();
       onOpenChange(false);
-    } catch (error: any) {
-      console.error('Error saving supplier:', error);
-      toast.error(error.message || 'Fehler beim Speichern');
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unbekannter Fehler';
+      console.error('Error saving supplier:', message);
+      toast.error(message || 'Fehler beim Speichern');
     } finally {
       setLoading(false);
     }
