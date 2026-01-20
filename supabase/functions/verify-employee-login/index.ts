@@ -15,6 +15,39 @@ interface VerifySessionRequest {
   sessionToken: string;
 }
 
+interface EmployeeData {
+  id: string;
+  name: string;
+  email: string | null;
+  organization_id: string;
+  auto_approve_orders: boolean;
+  is_active: boolean;
+  pin_code?: string | null;
+}
+
+interface LocationData {
+  id: string;
+  name: string;
+  short_code: string;
+}
+
+interface EmployeeLocationResult {
+  location_id: string;
+  locations: LocationData | null;
+}
+
+interface LocationSupplierResult {
+  location_id: string;
+  supplier_id: string;
+}
+
+interface SessionWithEmployee {
+  id: string;
+  employee_id: string;
+  expires_at: string;
+  employees: EmployeeData | null;
+}
+
 Deno.serve(async (req) => {
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
@@ -70,7 +103,8 @@ Deno.serve(async (req) => {
         );
       }
 
-      const employee = session.employees as any;
+      const typedSession = session as unknown as SessionWithEmployee;
+      const employee = typedSession.employees;
       if (!employee || !employee.is_active) {
         return new Response(
           JSON.stringify({ success: false, error: 'Employee not active' }),
@@ -90,6 +124,9 @@ Deno.serve(async (req) => {
         .select('location_id, supplier_id')
         .eq('employee_id', employee.id);
 
+      const typedLocations = (employeeLocations || []) as unknown as EmployeeLocationResult[];
+      const typedLocationSuppliers = (locationSuppliers || []) as LocationSupplierResult[];
+
       return new Response(
         JSON.stringify({
           success: true,
@@ -100,8 +137,8 @@ Deno.serve(async (req) => {
             organizationId: employee.organization_id,
             autoApproveOrders: employee.auto_approve_orders,
           },
-          locations: employeeLocations?.map((el: any) => el.locations) || [],
-          locationSuppliers: locationSuppliers || [],
+          locations: typedLocations.map((el) => el.locations).filter(Boolean),
+          locationSuppliers: typedLocationSuppliers,
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
@@ -179,6 +216,9 @@ Deno.serve(async (req) => {
 
     console.log('Login successful for employee:', employee.id);
 
+    const loginTypedLocations = (employeeLocations || []) as unknown as EmployeeLocationResult[];
+    const loginTypedLocationSuppliers = (locationSuppliers || []) as LocationSupplierResult[];
+
     return new Response(
       JSON.stringify({
         success: true,
@@ -191,8 +231,8 @@ Deno.serve(async (req) => {
           organizationId: employee.organization_id,
           autoApproveOrders: employee.auto_approve_orders,
         },
-        locations: employeeLocations?.map((el: any) => el.locations) || [],
-        locationSuppliers: locationSuppliers || [],
+        locations: loginTypedLocations.map((el) => el.locations).filter(Boolean),
+        locationSuppliers: loginTypedLocationSuppliers,
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );

@@ -2,6 +2,33 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { handleCors, jsonResponse, errorResponse } from "../_shared/cors.ts";
 
+// Type definitions for Supabase relations
+interface OrderItem {
+  article_name: string;
+  quantity: number;
+  unit: string | null;
+  unit_price: number;
+  total_price: number;
+  article_id: string | null;
+}
+
+interface SupplierData {
+  name: string;
+}
+
+interface ArticleData {
+  id: string;
+  reference_price: number | null;
+  reference_unit: string | null;
+  order_unit_id: string | null;
+}
+
+interface OrderUnitData {
+  id: string;
+  name: string;
+  quantity: number;
+}
+
 serve(async (req) => {
   console.log("=== GET-ORDER-DETAILS START ===");
   console.log("Request URL:", req.url);
@@ -84,11 +111,12 @@ serve(async (req) => {
     }
 
     console.log("Order found:", order.order_number);
-    console.log("Order items count:", order.order_items?.length || 0);
+    const orderItems = (order.order_items || []) as OrderItem[];
+    console.log("Order items count:", orderItems.length);
 
     // Fetch reference prices and order units from articles
-    const articleIds = (order.order_items || []).map((item: any) => item.article_id).filter(Boolean);
-    let articleData = new Map<string, { reference_price: number | null; reference_unit: string | null; order_unit_id: string | null }>();
+    const articleIds = orderItems.map((item) => item.article_id).filter((id): id is string => id !== null);
+    const articleDataMap = new Map<string, { reference_price: number | null; reference_unit: string | null; order_unit_id: string | null }>();
     
     if (articleIds.length > 0) {
       const { data: articles } = await supabase
@@ -96,8 +124,9 @@ serve(async (req) => {
         .select("id, reference_price, reference_unit, order_unit_id")
         .in("id", articleIds);
       
-      articles?.forEach((a: any) => {
-        articleData.set(a.id, { 
+      const typedArticles = (articles || []) as ArticleData[];
+      typedArticles.forEach((a) => {
+        articleDataMap.set(a.id, { 
           reference_price: a.reference_price, 
           reference_unit: a.reference_unit,
           order_unit_id: a.order_unit_id
@@ -106,35 +135,38 @@ serve(async (req) => {
     }
 
     // Fetch order units to resolve order_unit_id to display format
-    const orderUnitIds = Array.from(articleData.values())
+    const orderUnitIds = Array.from(articleDataMap.values())
       .map(a => a.order_unit_id)
-      .filter(Boolean) as string[];
+      .filter((id): id is string => id !== null);
     
-    let orderUnitsMap = new Map<string, { name: string; quantity: number }>();
+    const orderUnitsMap = new Map<string, { name: string; quantity: number }>();
     if (orderUnitIds.length > 0) {
       const { data: orderUnits } = await supabase
         .from("order_units")
         .select("id, name, quantity")
         .in("id", orderUnitIds);
       
-      orderUnits?.forEach((ou: any) => {
+      const typedOrderUnits = (orderUnits || []) as OrderUnitData[];
+      typedOrderUnits.forEach((ou) => {
         orderUnitsMap.set(ou.id, { name: ou.name, quantity: ou.quantity });
       });
     }
 
     // Format the response - handle suppliers as relation
-    const supplierData = order.suppliers as unknown as { name: string } | null;
-    const itemsWithRefPrices = (order.order_items || []).map((item: any) => {
-      const artData = articleData.get(item.article_id) || { reference_price: null, reference_unit: null, order_unit_id: null };
-      const orderUnit = artData.order_unit_id ? orderUnitsMap.get(artData.order_unit_id) : null;
+    const supplierData = order.suppliers as unknown as SupplierData | null;
+    const itemsWithRefPrices = orderItems.map((item) => {
+      const artData = item.article_id ? articleDataMap.get(item.article_id) : null;
+      const defaultArtData = { reference_price: null, reference_unit: null, order_unit_id: null };
+      const finalArtData = artData || defaultArtData;
+      const orderUnit = finalArtData.order_unit_id ? orderUnitsMap.get(finalArtData.order_unit_id) : null;
       return {
         article_name: item.article_name,
         quantity: item.quantity,
         unit: item.unit,
         unit_price: item.unit_price,
         total_price: item.total_price,
-        reference_price: artData.reference_price,
-        reference_unit: artData.reference_unit,
+        reference_price: finalArtData.reference_price,
+        reference_unit: finalArtData.reference_unit,
         order_unit: orderUnit ? `${orderUnit.quantity}× ${orderUnit.name}` : null,
       };
     });

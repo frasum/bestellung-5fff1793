@@ -52,6 +52,31 @@ interface RequestBody {
   vendorName: string;
 }
 
+interface B2BCustomer {
+  company_name: string | null;
+  email: string | null;
+  phone: string | null;
+  delivery_address: string | null;
+}
+
+interface OrderWithCustomer {
+  id: string;
+  order_number: string;
+  delivery_address: string | null;
+  delivery_date: string | null;
+  notes: string | null;
+  total_amount: number;
+  supplier_b2b_customers: B2BCustomer | null;
+}
+
+interface OrderItem {
+  article_name: string;
+  quantity: number;
+  unit: string | null;
+  unit_price: number;
+  total_price: number;
+}
+
 const handler = async (req: Request): Promise<Response> => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -92,19 +117,21 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error("Fehler beim Laden der Bestellpositionen");
     }
 
-    const customer = order.supplier_b2b_customers as any;
+    const typedOrder = order as unknown as OrderWithCustomer;
+    const customer = typedOrder.supplier_b2b_customers;
     const customerName = customer?.company_name || "Kunde";
     const customerEmail = customer?.email || "";
-    const deliveryAddress = order.delivery_address || customer?.delivery_address || "Nicht angegeben";
+    const deliveryAddress = typedOrder.delivery_address || customer?.delivery_address || "Nicht angegeben";
 
-    const itemsHtml = items?.map((item: any) => `
+    const typedItems = (items || []) as OrderItem[];
+    const itemsHtml = typedItems.map((item) => `
       <tr>
         <td style="padding: 8px; border-bottom: 1px solid #eee;">${item.article_name}</td>
-        <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: center;">${item.quantity} ${item.unit}</td>
+        <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: center;">${item.quantity} ${item.unit || ''}</td>
         <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: right;">€${item.unit_price.toFixed(2)}</td>
         <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: right; font-weight: bold;">€${item.total_price.toFixed(2)}</td>
       </tr>
-    `).join("") || "";
+    `).join("");
 
     const deliveryDateText = order.delivery_date 
       ? new Date(order.delivery_date).toLocaleDateString("de-DE") 
