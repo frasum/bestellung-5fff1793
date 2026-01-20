@@ -168,8 +168,9 @@ export default function B2BCustomerPortal() {
         return;
       }
 
-      const supplierName = (customer.supplier_b2b_accounts as any)?.company_name as string;
-      const supplierSubdomain = (customer.supplier_b2b_accounts as any)?.subdomain as string | null | undefined;
+      const supplierAccount = customer.supplier_b2b_accounts as { company_name: string; subdomain: string | null } | null;
+      const supplierName = supplierAccount?.company_name ?? '';
+      const supplierSubdomain = supplierAccount?.subdomain;
 
       // If the URL contains a subdomain, ensure this user belongs to that portal
       if (subdomain && supplierSubdomain && subdomain !== supplierSubdomain) {

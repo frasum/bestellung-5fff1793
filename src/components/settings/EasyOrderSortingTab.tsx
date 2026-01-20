@@ -139,7 +139,7 @@ export function EasyOrderSortingTab() {
         id: a.id,
         name: a.name,
         description: a.description,
-        sort_order: (a as any).sort_order || 0,
+        sort_order: a.sort_order ?? 0,
       }));
 
     // Sort: by sort_order if set, otherwise alphabetically

@@ -82,7 +82,7 @@ export default function B2BAcceptInvitation() {
 
       setInvitationData({
         email: data.email,
-        supplierName: (data.supplier_b2b_accounts as any).company_name,
+        supplierName: (data.supplier_b2b_accounts as { company_name: string }).company_name,
         companyName: customerData?.company_name || '',
         isValid: true,
         isExpired,

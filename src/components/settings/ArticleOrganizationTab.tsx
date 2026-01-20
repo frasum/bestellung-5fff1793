@@ -15,7 +15,7 @@ import { Search, CheckSquare, Square, Loader2, BarChart3, ChevronUp, ChevronDown
 import { ArticlePreviewPanel } from './ArticlePreviewPanel';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { useArticles, useBulkUpdateArticles, useUpdateArticle, useDeleteArticle } from '@/hooks/useArticles';
+import { Article, useArticles, useBulkUpdateArticles, useUpdateArticle, useDeleteArticle } from '@/hooks/useArticles';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { useUnits } from '@/hooks/useUnits';
 import { useSuppliers, useUpdateSupplier, Supplier, SupplierInput } from '@/hooks/useSuppliers';
@@ -863,7 +863,7 @@ export const ArticleOrganizationTab = () => {
         suppliers={suppliers}
         categories={categories.map(c => c.name)}
         units={units.map(u => u.name)}
-        editingArticle={editingArticle as any}
+        editingArticle={editingArticle as Article | null}
         isPending={updateArticle.isPending}
       />
 

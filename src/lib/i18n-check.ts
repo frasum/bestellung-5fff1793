@@ -124,7 +124,7 @@ export function checkI18nCompleteness(): I18nCheckResult {
   }
   
   // Calculate completeness per language
-  const completeness: Record<LanguageCode, { total: number; missing: number; percentage: number }> = {} as any;
+  const completeness = {} as Record<LanguageCode, { total: number; missing: number; percentage: number }>;
   
   for (const lang of langCodes) {
     const missing = missingKeys.filter(mk => mk.missingIn.includes(lang)).length;

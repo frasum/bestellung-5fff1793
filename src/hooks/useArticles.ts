@@ -24,6 +24,8 @@ export interface Article {
   grape_variety?: string | null;
   flavor_profile?: string | null;
   food_pairings?: string | null;
+  special_attributes?: string | null;
+  sort_order?: number;
   is_active: boolean;
   created_at: string;
   updated_at: string;
