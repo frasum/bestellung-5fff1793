@@ -45,11 +45,6 @@ export const compressImage = (
       // Export as JPEG with quality setting
       const compressedBase64 = canvas.toDataURL('image/jpeg', quality);
       
-      // Log compression stats
-      const originalSize = Math.round(base64Image.length * 0.75 / 1024);
-      const compressedSize = Math.round(compressedBase64.length * 0.75 / 1024);
-      console.log(`Image compressed: ${originalSize}KB → ${compressedSize}KB (${Math.round((1 - compressedSize/originalSize) * 100)}% reduction)`);
-      
       resolve(compressedBase64);
     };
     

@@ -19,8 +19,7 @@ export function useArticlesRealtime() {
           schema: 'public',
           table: 'articles',
         },
-        (payload) => {
-          console.log('Article change detected:', payload);
+        () => {
           // Invalidate queries with organization-specific keys
           queryClient.invalidateQueries({ queryKey: ['articles', organizationId] });
           queryClient.invalidateQueries({ queryKey: ['articles', organizationId, 'supplier'] });
