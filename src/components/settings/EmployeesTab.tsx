@@ -1,39 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useTranslation } from 'react-i18next';
-import { Plus, Pencil, Trash2, Phone, Mail, User, UserCheck, UserX, MapPin, ChevronDown, ChevronRight, Package, Copy, MessageCircle, ExternalLink, QrCode, Zap, KeyRound, Shield, ShieldAlert, Mic, PlusCircle, Camera, Wine, X, Check, Loader2 } from 'lucide-react';
+import { Plus, User, UserCheck, UserX } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Badge } from '@/components/ui/badge';
-import { Switch } from '@/components/ui/switch';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from '@/components/ui/dialog';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import {
   useEmployees,
   useCreateEmployee,
@@ -52,22 +19,17 @@ import {
   LocationSupplierAssignment 
 } from '@/hooks/useEmployeeLocationSuppliers';
 import { useToast } from '@/hooks/use-toast';
-
-const LANGUAGES = [
-  { code: 'th', name: 'ไทย (Thai)' },
-  { code: 'de', name: 'Deutsch' },
-  { code: 'en', name: 'English' },
-  { code: 'vi', name: 'Tiếng Việt' },
-];
-
-interface LocationAssignment {
-  locationId: string;
-  enabled: boolean;
-  supplierIds: string[];
-}
+import {
+  EmployeeCard,
+  EmployeeFormDialog,
+  EmployeePinDialog,
+  EmployeeDeleteDialog,
+  LocationAssignment,
+  EmployeeFormData,
+  initialFormData,
+} from './employees';
 
 export function EmployeesTab() {
-  const { t } = useTranslation();
   const { toast } = useToast();
   const { data: employees = [], isLoading } = useEmployees();
   const { data: tokens = [], isLoading: isLoadingTokens } = useSimpleOrderTokens();
@@ -102,21 +64,7 @@ export function EmployeesTab() {
   const [pinValue, setPinValue] = useState('');
   const [isSavingPin, setIsSavingPin] = useState(false);
 
-  const [formData, setFormData] = useState({
-    name: '',
-    phone: '',
-    email: '',
-    notes: '',
-    language: 'th',
-    autoApprove: false,
-    pinCode: '',
-    voiceInputEnabled: false,
-    canAddFreeItems: false,
-    canCapturePhotos: false,
-    wineCatalogAccess: 'none' as 'none' | 'view' | 'edit',
-  });
-  
-  // New structure: location -> suppliers mapping
+  const [formData, setFormData] = useState<EmployeeFormData>(initialFormData);
   const [locationAssignments, setLocationAssignments] = useState<LocationAssignment[]>([]);
 
   // Listen for advanced settings changes
@@ -130,10 +78,14 @@ export function EmployeesTab() {
     return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
+  const activeSuppliers = useMemo(() => 
+    suppliers.filter(s => s.is_active), 
+    [suppliers]
+  );
+
   // Auto-migrate: Create missing tokens for employees with assignments but no token
   useEffect(() => {
     const createMissingTokens = async () => {
-      // Wait until ALL data is fully loaded
       if (isLoading || isLoadingTokens || isLoadingSuppliers || isLoadingELS) return;
       if (employees.length === 0 || isMigratingTokens || hasMigrated) return;
       
@@ -143,7 +95,6 @@ export function EmployeesTab() {
         const hasToken = tokens.some(t => t.employee_id === employee.id);
         if (hasToken) continue;
         
-        // Get supplier IDs from employee's location-supplier assignments
         const supplierIds = [...new Set(
           employeeLocationSuppliers
             .filter(els => els.employee_id === employee.id)
@@ -167,7 +118,6 @@ export function EmployeesTab() {
             .join(', ');
           const label = supplierNames || employee.name;
           
-          // Find location for this employee (use first if multiple)
           const employeeLocationIds = employeeLocations
             .filter(el => el.employee_id === employee.id)
             .map(el => el.location_id);
@@ -200,15 +150,9 @@ export function EmployeesTab() {
     createMissingTokens();
   }, [employees, tokens, employeeLocationSuppliers, suppliers, isLoading, isLoadingTokens, isLoadingSuppliers, isLoadingELS, isMigratingTokens, hasMigrated]);
 
-  const activeSuppliers = useMemo(() => 
-    suppliers.filter(s => s.is_active), 
-    [suppliers]
-  );
-
   const initializeLocationAssignments = (employeeId?: string) => {
     const assignments: LocationAssignment[] = locations.map(location => {
       if (employeeId) {
-        // Load existing assignments for this employee
         const isLocationEnabled = employeeLocations.some(
           el => el.employee_id === employeeId && el.location_id === location.id
         );
@@ -222,7 +166,6 @@ export function EmployeesTab() {
           supplierIds: assignedSupplierIds,
         };
       } else {
-        // New employee: all locations with all suppliers by default
         return {
           locationId: location.id,
           enabled: true,
@@ -231,7 +174,6 @@ export function EmployeesTab() {
       }
     });
     setLocationAssignments(assignments);
-    // Expand all enabled locations
     const enabledLocationIds = new Set(
       assignments.filter(a => a.enabled).map(a => a.locationId)
     );
@@ -240,7 +182,7 @@ export function EmployeesTab() {
 
   const openCreateDialog = () => {
     setEditingEmployee(null);
-    setFormData({ name: '', phone: '', email: '', notes: '', language: 'th', autoApprove: false, pinCode: '', voiceInputEnabled: false, canAddFreeItems: false, canCapturePhotos: false, wineCatalogAccess: 'none' });
+    setFormData(initialFormData);
     initializeLocationAssignments();
     setIsDialogOpen(true);
   };
@@ -254,8 +196,6 @@ export function EmployeesTab() {
       notes: employee.notes || '',
       language: employee.language || 'de',
       autoApprove: employee.auto_approve_orders || false,
-      // Don't pre-populate PIN - it's now hashed and not readable
-      // User can enter a new PIN or leave empty to keep existing
       pinCode: '',
       voiceInputEnabled: employee.voice_input_enabled || false,
       canAddFreeItems: employee.can_add_free_items || false,
@@ -266,7 +206,6 @@ export function EmployeesTab() {
     setIsDialogOpen(true);
   };
 
-  // Get or create token for employee
   const getTokenForEmployee = (employeeId: string) => {
     return tokens.find(t => t.employee_id === employeeId);
   };
@@ -299,7 +238,6 @@ export function EmployeesTab() {
   // PIN Quick-Edit handlers
   const openPinDialog = (employee: Employee) => {
     setPinDialogEmployee(employee);
-    // Don't pre-populate - PIN is now hashed and not readable
     setPinValue('');
   };
 
@@ -313,7 +251,6 @@ export function EmployeesTab() {
     
     setIsSavingPin(true);
     try {
-      // Use the secure hash function to store PIN
       await hashEmployeePin.mutateAsync({
         employeeId: pinDialogEmployee.id,
         pin: pinValue.length === 4 ? pinValue : null,
@@ -336,11 +273,6 @@ export function EmployeesTab() {
     }
   };
 
-  const generateRandomPin = () => {
-    const randomPin = String(Math.floor(1000 + Math.random() * 9000));
-    setPinValue(randomPin);
-  };
-
   const handleSubmit = async () => {
     if (!formData.name.trim()) return;
 
@@ -355,12 +287,9 @@ export function EmployeesTab() {
         supplierIds: a.supplierIds,
       }));
 
-    // Get all unique supplier IDs across all locations
     const allSupplierIds = [...new Set(supplierAssignments.flatMap(a => a.supplierIds))];
 
     if (editingEmployee) {
-      // PIN nur ändern wenn explizit ein neuer 4-stelliger PIN eingegeben wurde
-      // Leeres Feld = bestehender PIN bleibt erhalten
       const hasNewPin = formData.pinCode && formData.pinCode.length === 4;
       const pinChanged = hasNewPin;
       
@@ -376,10 +305,8 @@ export function EmployeesTab() {
         can_capture_photos: formData.canCapturePhotos,
         wine_catalog_access: formData.wineCatalogAccess,
         language: formData.language,
-        // Don't update pin_code directly - use the secure hash function below
       });
       
-      // Use secure hash function for PIN updates
       if (pinChanged) {
         await hashEmployeePin.mutateAsync({
           employeeId: editingEmployee.id,
@@ -387,18 +314,15 @@ export function EmployeesTab() {
         });
       }
       
-      // Update locations
       await updateEmployeeLocations.mutateAsync({
         employeeId: editingEmployee.id,
         locationIds: enabledLocationIds,
       });
-      // Update location-supplier assignments
       await updateEmployeeLocationSuppliers.mutateAsync({
         employeeId: editingEmployee.id,
         assignments: supplierAssignments,
       });
 
-      // Update or create token for this employee
       const existingToken = getTokenForEmployee(editingEmployee.id);
       if (allSupplierIds.length > 0) {
         const label = formData.name;
@@ -424,7 +348,6 @@ export function EmployeesTab() {
           });
         }
       } else if (existingToken) {
-        // No suppliers assigned, delete token
         await deleteToken.mutateAsync(existingToken.id);
       }
     } else {
@@ -436,7 +359,6 @@ export function EmployeesTab() {
         voice_input_enabled: formData.voiceInputEnabled,
         language: formData.language,
       });
-      // Assign locations to new employee
       if (newEmployee?.id) {
         await updateEmployeeLocations.mutateAsync({
           employeeId: newEmployee.id,
@@ -447,7 +369,6 @@ export function EmployeesTab() {
           assignments: supplierAssignments,
         });
 
-        // Create token for new employee if suppliers assigned
         if (allSupplierIds.length > 0) {
           const label = formData.name;
 
@@ -474,7 +395,6 @@ export function EmployeesTab() {
 
   const handleDelete = async () => {
     if (deleteConfirmEmployee) {
-      // Delete associated token first
       const token = getTokenForEmployee(deleteConfirmEmployee.id);
       if (token) {
         await deleteToken.mutateAsync(token.id);
@@ -513,13 +433,11 @@ export function EmployeesTab() {
         return {
           ...a,
           enabled: newEnabled,
-          // When enabling, select all suppliers by default
           supplierIds: newEnabled ? activeSuppliers.map(s => s.id) : [],
         };
       }
       return a;
     }));
-    // Toggle expansion when enabling
     setExpandedLocations(prev => {
       const newSet = new Set(prev);
       if (newSet.has(locationId)) {
@@ -625,697 +543,64 @@ export function EmployeesTab() {
           {employees.map((employee) => {
             const token = getTokenForEmployee(employee.id);
             const locationSuppliersInfo = getEmployeeLocationSuppliersInfo(employee.id);
-            const hasAssignments = locationSuppliersInfo.some(info => info.supplierNames.length > 0);
             
             return (
-              <div
+              <EmployeeCard
                 key={employee.id}
-                className={`border rounded-lg p-3 sm:p-4 ${
-                  !employee.is_active ? 'opacity-60 bg-muted/30' : ''
-                }`}
-              >
-              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
-                  {/* Mitarbeiter-Infos */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 sm:gap-4">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="font-medium">{employee.name}</span>
-                          {employee.auto_approve_orders && (
-                            <Badge variant="default" className="text-xs bg-green-600 hover:bg-green-600">
-                              <Zap className="h-3 w-3 mr-1" />
-                              Auto-Freigabe
-                            </Badge>
-                          )}
-                          {/* PIN Status Badge for Auto-Approve employees */}
-                          {employee.auto_approve_orders && (
-                            employee.pin_code ? (
-                              <Badge variant="outline" className="text-xs border-green-500 text-green-600">
-                                <Shield className="h-3 w-3 mr-1" />
-                                PIN aktiv
-                              </Badge>
-                            ) : (
-                              <Badge variant="outline" className="text-xs border-amber-500 text-amber-600">
-                                <ShieldAlert className="h-3 w-3 mr-1" />
-                                Kein PIN
-                              </Badge>
-                            )
-                          )}
-                          {/* Voice Input Badge */}
-                          {employee.voice_input_enabled && (
-                            <Badge variant="outline" className="text-xs border-amber-500 text-amber-600 bg-amber-50 dark:bg-amber-900/20">
-                              <Mic className="h-3 w-3 mr-1" />
-                              Spracheingabe
-                            </Badge>
-                          )}
-                          {/* Free Items Badge */}
-                          {employee.can_add_free_items && (
-                            <Badge variant="outline" className="text-xs border-blue-500 text-blue-600 bg-blue-50 dark:bg-blue-900/20">
-                              <PlusCircle className="h-3 w-3 mr-1" />
-                              Freie Artikel
-                            </Badge>
-                          )}
-                          {/* Photo Capture Badge */}
-                          {employee.can_capture_photos && (
-                            <Badge variant="outline" className="text-xs border-purple-500 text-purple-600 bg-purple-50 dark:bg-purple-900/20">
-                              <Camera className="h-3 w-3 mr-1" />
-                              Fotoerfassung
-                            </Badge>
-                          )}
-                          {/* Wine Catalog Badge */}
-                          {employee.wine_catalog_access && employee.wine_catalog_access !== 'none' && (
-                            <Badge variant="outline" className="text-xs border-rose-500 text-rose-600 bg-rose-50 dark:bg-rose-900/20">
-                              <Wine className="h-3 w-3 mr-1" />
-                              {employee.wine_catalog_access === 'edit' ? 'Wein-Editor' : 'Weinkarte'}
-                            </Badge>
-                          )}
-                          {!employee.is_active && (
-                            <Badge variant="secondary">Inaktiv</Badge>
-                          )}
-                        </div>
-                        {/* Location + Suppliers badges */}
-                        {locationSuppliersInfo.length > 0 && (
-                          <div className="mt-2 space-y-1">
-                            {locationSuppliersInfo.map((info, idx) => (
-                              <div key={idx} className="flex items-center gap-1 flex-wrap text-sm">
-                                <MapPin className="h-3 w-3 text-muted-foreground" />
-                                <span className="font-medium text-muted-foreground">{info.locationName}:</span>
-                                {info.supplierNames.length > 0 ? (
-                                  info.supplierNames.length > 3 ? (
-                                    <Badge variant="secondary" className="text-xs">
-                                      {info.supplierNames.length} Lieferanten
-                                    </Badge>
-                                  ) : (
-                                    info.supplierNames.map((name, sIdx) => (
-                                      <Badge key={sIdx} variant="secondary" className="text-xs">
-                                        {name}
-                                      </Badge>
-                                    ))
-                                  )
-                                ) : (
-                                  <span className="text-xs text-amber-600">Keine Lieferanten</span>
-                                )}
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                        <div className="flex flex-wrap gap-4 mt-2 text-sm text-muted-foreground">
-                          {employee.phone && (
-                            <div className="flex items-center gap-1">
-                              <Phone className="h-3 w-3" />
-                              <span>{employee.phone}</span>
-                            </div>
-                          )}
-                          {employee.email && (
-                            <div className="flex items-center gap-1">
-                              <Mail className="h-3 w-3" />
-                              <span>{employee.email}</span>
-                            </div>
-                          )}
-                        </div>
-                        {employee.notes && (
-                          <p className="text-sm text-muted-foreground mt-2">
-                            {employee.notes}
-                          </p>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-1 flex-shrink-0 flex-wrap justify-end">
-                        {/* Link Buttons - only show if token exists */}
-                        {token && (
-                          <>
-                            <Popover>
-                              <PopoverTrigger asChild>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-10 w-10"
-                                  title="QR-Code anzeigen"
-                                >
-                                  <QrCode className="h-4 w-4" />
-                                </Button>
-                              </PopoverTrigger>
-                              <PopoverContent className="w-auto p-2">
-                                <img 
-                                  src={generateQrCodeUrl(token.token)} 
-                                  alt="QR-Code" 
-                                  className="w-40 h-40 rounded border bg-white"
-                                />
-                              </PopoverContent>
-                            </Popover>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-10 w-10"
-                              onClick={() => copyToClipboard(token.token)}
-                              title="Link kopieren"
-                            >
-                              <Copy className="h-4 w-4" />
-                            </Button>
-                            {employee.phone && (
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-10 w-10"
-                                onClick={() => openWhatsApp(employee, token.token)}
-                                title="Per WhatsApp senden"
-                              >
-                                <MessageCircle className="h-4 w-4" />
-                              </Button>
-                            )}
-                            {advancedSettingsEnabled && (
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-10 w-10"
-                                onClick={() => window.open(getOrderUrl(token.token), '_blank')}
-                                title="EasyOrder direkt öffnen (Test)"
-                              >
-                                <ExternalLink className="h-4 w-4" />
-                              </Button>
-                            )}
-                          </>
-                        )}
-                        {/* PIN Quick-Edit Button for Auto-Approve employees */}
-                        {employee.auto_approve_orders && (
-                          <Button 
-                            variant="ghost" 
-                            size="icon"
-                            className={`h-10 w-10 ${employee.pin_code ? "text-green-600 hover:text-green-700" : "text-amber-600 hover:text-amber-700"}`}
-                            onClick={() => openPinDialog(employee)}
-                            title="PIN bearbeiten"
-                          >
-                            <KeyRound className="h-4 w-4" />
-                          </Button>
-                        )}
-                        <div className="hidden sm:block w-px h-6 bg-border mx-1" />
-                        <Switch
-                          checked={employee.is_active}
-                          onCheckedChange={() => handleToggleActive(employee)}
-                        />
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-10 w-10"
-                          onClick={() => openEditDialog(employee)}
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-10 w-10"
-                          onClick={() => setDeleteConfirmEmployee(employee)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
+                employee={employee}
+                token={token}
+                locationSuppliersInfo={locationSuppliersInfo}
+                advancedSettingsEnabled={advancedSettingsEnabled}
+                onEdit={openEditDialog}
+                onDelete={setDeleteConfirmEmployee}
+                onToggleActive={handleToggleActive}
+                onOpenPinDialog={openPinDialog}
+                onCopyLink={copyToClipboard}
+                onOpenWhatsApp={openWhatsApp}
+                getOrderUrl={getOrderUrl}
+                generateQrCodeUrl={generateQrCodeUrl}
+              />
             );
           })}
         </div>
       )}
 
       {/* Create/Edit Dialog */}
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-[calc(100vw-1rem)] sm:max-w-lg max-h-[90vh] p-0 gap-0 overflow-hidden">
-          <DialogHeader className="flex-shrink-0 px-6 pt-6 pb-4">
-            <DialogTitle>
-              {editingEmployee ? 'Mitarbeiter bearbeiten' : 'Neuen Mitarbeiter anlegen'}
-            </DialogTitle>
-          </DialogHeader>
-          <div className="overflow-y-auto px-6" style={{ maxHeight: 'calc(85vh - 150px)' }}>
-            <div className="space-y-4 pb-6">
-              <div>
-                <Label htmlFor="name">Name *</Label>
-                <Input
-                  id="name"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder="z.B. Somchai"
-                />
-              </div>
-              <div>
-                <Label htmlFor="phone">Telefon</Label>
-                <Input
-                  id="phone"
-                  type="tel"
-                  inputMode="tel"
-                  value={formData.phone}
-                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  placeholder="+49 151 12345678"
-                />
-              </div>
-              <div>
-                <Label htmlFor="email">E-Mail</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  inputMode="email"
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  placeholder="mitarbeiter@example.com"
-                />
-              </div>
-
-              {/* Language Selection */}
-              <div>
-                <Label>Sprache für Easy Order</Label>
-                <Select
-                  value={formData.language}
-                  onValueChange={(value) => setFormData({ ...formData, language: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {LANGUAGES.map((lang) => (
-                      <SelectItem key={lang.code} value={lang.code}>
-                        {lang.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Location + Supplier Assignment */}
-              {locations.length > 0 ? (
-                <div>
-                  <Label className="mb-2 block">Standorte & Lieferanten</Label>
-                  <div className="border rounded-lg divide-y">
-                    {locations.map((location) => {
-                      const assignment = locationAssignments.find(a => a.locationId === location.id);
-                      const isEnabled = assignment?.enabled ?? false;
-                      const isExpanded = expandedLocations.has(location.id);
-                      const selectedCount = assignment?.supplierIds.length ?? 0;
-
-                      return (
-                        <div key={location.id} className="p-3">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                              <Checkbox
-                                id={`location-${location.id}`}
-                                checked={isEnabled}
-                                onCheckedChange={() => toggleLocation(location.id)}
-                              />
-                              <label
-                                htmlFor={`location-${location.id}`}
-                                className="text-base font-semibold cursor-pointer"
-                              >
-                                {location.short_code || location.name}
-                              </label>
-                              {isEnabled && (
-                                <Badge variant="secondary" className="text-xs">
-                                  {selectedCount}/{activeSuppliers.length}
-                                </Badge>
-                              )}
-                            </div>
-                            {isEnabled && activeSuppliers.length > 0 && (
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => toggleExpandLocation(location.id)}
-                                className="h-7 w-7 p-0"
-                              >
-                                {isExpanded ? (
-                                  <ChevronDown className="h-4 w-4" />
-                                ) : (
-                                  <ChevronRight className="h-4 w-4" />
-                                )}
-                              </Button>
-                            )}
-                          </div>
-
-                          {isEnabled && isExpanded && activeSuppliers.length > 0 && (
-                            <div className="mt-3 ml-6 space-y-2">
-                              <div className="flex gap-2 mb-2">
-                                <Button
-                                  type="button"
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => selectAllSuppliersForLocation(location.id)}
-                                  className="text-xs h-6"
-                                >
-                                  Alle
-                                </Button>
-                                <Button
-                                  type="button"
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => deselectAllSuppliersForLocation(location.id)}
-                                  className="text-xs h-6"
-                                >
-                                  Keine
-                                </Button>
-                              </div>
-                              <div className="grid grid-cols-2 gap-2">
-                                {activeSuppliers.map((supplier) => (
-                                  <div key={supplier.id} className="flex items-center space-x-2">
-                                    <Checkbox
-                                      id={`supplier-${location.id}-${supplier.id}`}
-                                      checked={assignment?.supplierIds.includes(supplier.id) ?? false}
-                                      onCheckedChange={() => toggleSupplierForLocation(location.id, supplier.id)}
-                                    />
-                                    <label
-                                      htmlFor={`supplier-${location.id}-${supplier.id}`}
-                                      className="text-xs cursor-pointer truncate"
-                                    >
-                                      {supplier.name}
-                                    </label>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                  {locationAssignments.every(a => !a.enabled) && (
-                    <p className="text-xs text-amber-600 mt-1">
-                      Ohne Standortzuweisung kann der Mitarbeiter keine Bestellungen aufgeben
-                    </p>
-                  )}
-                </div>
-              ) : (
-                <div className="border rounded-lg p-4 bg-muted/50">
-                  <Label className="mb-2 block text-muted-foreground">Standorte & Lieferanten</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Noch keine Standorte angelegt.{' '}
-                    <a href="/settings?tab=locations" className="text-primary underline">
-                      Standort in den Einstellungen anlegen
-                    </a>
-                  </p>
-                </div>
-              )}
-
-              {/* Auto-Approve Toggle */}
-              <div className="flex items-center justify-between p-3 border rounded-lg bg-muted/30">
-                <div className="space-y-0.5">
-                  <Label htmlFor="auto-approve" className="text-sm font-medium">
-                    Bestellungen automatisch freigeben
-                  </Label>
-                  <p className="text-xs text-muted-foreground">
-                    EasyOrder-Bestellungen werden direkt an den Lieferanten gesendet
-                  </p>
-                </div>
-                <Switch
-                  id="auto-approve"
-                  checked={formData.autoApprove}
-                  onCheckedChange={(checked) => setFormData({ ...formData, autoApprove: checked, pinCode: checked ? formData.pinCode : '' })}
-                />
-              </div>
-
-              {/* PIN Code - optional when editing, required for new employees with auto-approve */}
-              {formData.autoApprove && (
-                <div className={`p-3 border rounded-lg space-y-3 ${!editingEmployee && formData.pinCode.length !== 4 ? 'border-destructive/50 bg-destructive/5' : 'bg-muted/30'}`}>
-                  <div className="space-y-0.5">
-                    <Label htmlFor="pin-code" className="text-sm font-medium flex items-center gap-1">
-                      PIN-Code {!editingEmployee && <span className="text-destructive">*</span>}
-                    </Label>
-                    <p className="text-xs text-muted-foreground">
-                      {editingEmployee?.pin_code 
-                        ? 'Leer lassen um bestehenden PIN zu behalten, oder neuen 4-stelligen Code eingeben'
-                        : '4-stelliger Code, den der Mitarbeiter eingeben muss'}
-                    </p>
-                  </div>
-                  {/* Show existing PIN indicator */}
-                  {editingEmployee?.pin_code && !formData.pinCode && (
-                    <div className="flex items-center gap-2 text-sm text-green-600 dark:text-green-400">
-                      <Shield className="w-4 h-4" />
-                      <span>PIN bereits gesetzt (••••)</span>
-                    </div>
-                  )}
-                  <div className="flex gap-2 items-center">
-                    <Input
-                      id="pin-code"
-                      type="text"
-                      inputMode="numeric"
-                      maxLength={4}
-                      pattern="[0-9]*"
-                      value={formData.pinCode}
-                      onChange={(e) => {
-                        const value = e.target.value.replace(/\D/g, '').slice(0, 4);
-                        setFormData({ ...formData, pinCode: value });
-                      }}
-                      placeholder={editingEmployee?.pin_code ? 'Neuer PIN...' : 'z.B. 1234'}
-                      className={`w-32 font-mono text-center tracking-widest ${!editingEmployee && formData.pinCode.length !== 4 ? 'border-destructive' : ''}`}
-                    />
-                  </div>
-                  {!editingEmployee && formData.pinCode.length !== 4 && (
-                    <p className="text-xs text-destructive">
-                      PIN muss genau 4 Ziffern haben
-                    </p>
-                  )}
-                  {formData.pinCode.length > 0 && formData.pinCode.length !== 4 && (
-                    <p className="text-xs text-amber-600">
-                      PIN muss genau 4 Ziffern haben
-                    </p>
-              )}
-
-                </div>
-              )}
-
-              {/* Voice Input Toggle (Prototype) - visible for all employees */}
-              <div className="flex items-center justify-between p-3 border rounded-lg bg-muted/30">
-                <div className="flex items-center gap-2">
-                  <div className="space-y-0.5">
-                    <div className="flex items-center gap-2">
-                      <Label htmlFor="voice-input" className="text-sm font-medium">
-                        {t('settings.employees.voiceInput', 'Voice Input')}
-                      </Label>
-                      <Badge variant="outline" className="text-xs bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400">
-                        {t('voice.prototype', 'Prototype')}
-                      </Badge>
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      {t('settings.employees.voiceInputDescription', 'Place orders by voice (Whisper + AI)')}
-                    </p>
-                  </div>
-                </div>
-                <Switch
-                  id="voice-input"
-                  checked={formData.voiceInputEnabled}
-                  onCheckedChange={(checked) => setFormData({ ...formData, voiceInputEnabled: checked })}
-                />
-              </div>
-
-              {/* Free Items Toggle - visible for all employees */}
-              <div className="flex items-center justify-between p-3 border rounded-lg bg-muted/30">
-                <div className="space-y-0.5">
-                  <div className="flex items-center gap-2">
-                    <Label htmlFor="free-items" className="text-sm font-medium">
-                      {t('settings.employees.canAddFreeItems', 'Freie Artikel erlauben')}
-                    </Label>
-                    <Badge variant="outline" className="text-xs bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
-                      Neu
-                    </Badge>
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    {t('settings.employees.canAddFreeItemsDescription', 'Mitarbeiter kann freie Artikel zur Bestellung hinzufügen')}
-                  </p>
-                </div>
-                <Switch
-                  id="free-items"
-                  checked={formData.canAddFreeItems}
-                  onCheckedChange={(checked) => setFormData({ ...formData, canAddFreeItems: checked })}
-                />
-              </div>
-
-              {/* Photo Capture Toggle - visible for all employees */}
-              <div className="flex items-center justify-between p-3 border rounded-lg bg-muted/30">
-                <div className="flex items-center gap-2">
-                  <div className="space-y-0.5">
-                    <div className="flex items-center gap-2">
-                      <Label htmlFor="photo-capture" className="text-sm font-medium">
-                        {t('settings.employees.canCapturePhotos', 'Foto-Erfassung')}
-                      </Label>
-                      <Badge variant="outline" className="text-xs bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400">
-                        Neu
-                      </Badge>
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      {t('settings.employees.canCapturePhotosDescription', 'Mitarbeiter kann Artikelfotos erfassen und zuweisen')}
-                    </p>
-                  </div>
-                </div>
-                <Switch
-                  id="photo-capture"
-                  checked={formData.canCapturePhotos}
-                  onCheckedChange={(checked) => setFormData({ ...formData, canCapturePhotos: checked })}
-                />
-              </div>
-
-              {/* Wine Catalog Access */}
-              <div className="p-3 border rounded-lg bg-muted/30">
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <Label htmlFor="wine-access" className="text-sm font-medium">
-                      {t('settings.employees.wineCatalogAccess', 'Weinkarten-Zugang')}
-                    </Label>
-                    <Badge variant="outline" className="text-xs bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-400">
-                      <Wine className="h-3 w-3 mr-1" />
-                      Wein
-                    </Badge>
-                  </div>
-                  <p className="text-xs text-muted-foreground mb-2">
-                    {t('settings.employees.wineCatalogAccessDescription', 'Weinkarte über Easy Order anzeigen oder bearbeiten')}
-                  </p>
-                  <Select
-                    value={formData.wineCatalogAccess}
-                    onValueChange={(value: 'none' | 'view' | 'edit') => setFormData({ ...formData, wineCatalogAccess: value })}
-                  >
-                    <SelectTrigger id="wine-access" className="w-full">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">{t('settings.employees.wineCatalogNone', 'Kein Zugang')}</SelectItem>
-                      <SelectItem value="view">{t('settings.employees.wineCatalogView', 'Nur ansehen')}</SelectItem>
-                      <SelectItem value="edit">{t('settings.employees.wineCatalogEdit', 'Ansehen & bearbeiten')}</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div>
-                <Label htmlFor="notes">Notizen</Label>
-                <Textarea
-                  id="notes"
-                  value={formData.notes}
-                  onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                  placeholder="z.B. Küche, nur vormittags erreichbar"
-                  rows={2}
-                />
-              </div>
-            </div>
-          </div>
-          <div className="flex justify-center items-center gap-6 px-6 pb-6 pt-4 border-t bg-background">
-            <Button 
-              type="button" 
-              variant="outline"
-              size="icon"
-              className="h-12 w-12 rounded-full border-2 text-muted-foreground hover:text-foreground"
-              onClick={() => setIsDialogOpen(false)}
-              title="Abbrechen"
-            >
-              <X className="h-5 w-5" />
-            </Button>
-            <Button 
-              type="button"
-              size="icon"
-              className="h-12 w-12 rounded-full bg-emerald-500 hover:bg-emerald-600 text-white"
-              onClick={handleSubmit}
-              disabled={!formData.name.trim() || (formData.autoApprove && !editingEmployee?.pin_code && formData.pinCode.length !== 4) || createEmployee.isPending || updateEmployee.isPending}
-              title={editingEmployee ? 'Speichern' : 'Anlegen'}
-            >
-              {(createEmployee.isPending || updateEmployee.isPending) ? <Loader2 className="h-5 w-5 animate-spin" /> : <Check className="h-5 w-5" />}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <EmployeeFormDialog
+        open={isDialogOpen}
+        onOpenChange={setIsDialogOpen}
+        editingEmployee={editingEmployee}
+        formData={formData}
+        setFormData={setFormData}
+        locationAssignments={locationAssignments}
+        expandedLocations={expandedLocations}
+        locations={locations}
+        activeSuppliers={activeSuppliers}
+        onSubmit={handleSubmit}
+        isSubmitting={createEmployee.isPending || updateEmployee.isPending}
+        onToggleLocation={toggleLocation}
+        onToggleSupplierForLocation={toggleSupplierForLocation}
+        onSelectAllSuppliers={selectAllSuppliersForLocation}
+        onDeselectAllSuppliers={deselectAllSuppliersForLocation}
+        onToggleExpandLocation={toggleExpandLocation}
+      />
 
       {/* Delete Confirmation */}
-      <AlertDialog
-        open={!!deleteConfirmEmployee}
-        onOpenChange={() => setDeleteConfirmEmployee(null)}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Mitarbeiter löschen?</AlertDialogTitle>
-            <AlertDialogDescription>
-              {deleteConfirmEmployee?.name} und der zugehörige Easy Order Link werden gelöscht.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete}>Löschen</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <EmployeeDeleteDialog
+        employee={deleteConfirmEmployee}
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteConfirmEmployee(null)}
+      />
 
       {/* PIN Quick-Edit Dialog */}
-      <Dialog open={!!pinDialogEmployee} onOpenChange={(open) => !open && closePinDialog()}>
-        <DialogContent className="max-w-xs">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <KeyRound className="h-5 w-5" />
-              PIN bearbeiten
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <p className="text-sm text-muted-foreground">
-              PIN für <span className="font-medium">{pinDialogEmployee?.name}</span>
-            </p>
-            <div className="space-y-2">
-              <Label htmlFor="pin-quick-edit">4-stelliger PIN-Code</Label>
-              <Input
-                id="pin-quick-edit"
-                type="text"
-                inputMode="numeric"
-                maxLength={4}
-                pattern="[0-9]*"
-                value={pinValue}
-                onChange={(e) => {
-                  const value = e.target.value.replace(/\D/g, '').slice(0, 4);
-                  setPinValue(value);
-                }}
-                placeholder="z.B. 1234"
-                className="font-mono text-center tracking-widest text-lg"
-              />
-              {pinValue && pinValue.length !== 4 && pinValue.length > 0 && (
-                <p className="text-xs text-destructive">
-                  PIN muss genau 4 Ziffern haben
-                </p>
-              )}
-            </div>
-            <div className="flex gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={generateRandomPin}
-                className="flex-1"
-              >
-                Generieren
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => setPinValue('')}
-                className="flex-1"
-                disabled={!pinValue}
-              >
-                Entfernen
-              </Button>
-            </div>
-          </div>
-          <div className="flex justify-center items-center gap-6 pt-4">
-            <Button 
-              type="button" 
-              variant="outline"
-              size="icon"
-              className="h-12 w-12 rounded-full border-2 text-muted-foreground hover:text-foreground"
-              onClick={closePinDialog}
-              title="Abbrechen"
-            >
-              <X className="h-5 w-5" />
-            </Button>
-            <Button 
-              type="button"
-              size="icon"
-              className="h-12 w-12 rounded-full bg-emerald-500 hover:bg-emerald-600 text-white"
-              onClick={handleSavePin} 
-              disabled={isSavingPin || (pinValue.length > 0 && pinValue.length !== 4)}
-              title="Speichern"
-            >
-              {isSavingPin ? <Loader2 className="h-5 w-5 animate-spin" /> : <Check className="h-5 w-5" />}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <EmployeePinDialog
+        employee={pinDialogEmployee}
+        pinValue={pinValue}
+        setPinValue={setPinValue}
+        isSaving={isSavingPin}
+        onSave={handleSavePin}
+        onClose={closePinDialog}
+      />
     </div>
   );
 }
