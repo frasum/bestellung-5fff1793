@@ -23,11 +23,19 @@ interface CustomerPurchaseCartTabProps {
   onOrderPlaced?: () => void;
 }
 
+interface VendorArticle {
+  id: string;
+  name: string;
+  price: number;
+  unit: string;
+  vendor_id: string;
+}
+
 const CART_STORAGE_KEY = 'b2b_customer_purchase_cart';
 
 const CustomerPurchaseCartTab = ({ customerId, onOrderPlaced }: CustomerPurchaseCartTabProps) => {
   const [cart, setCart] = useState<CartItem[]>([]);
-  const [articles, setArticles] = useState<any[]>([]);
+  const [articles, setArticles] = useState<VendorArticle[]>([]);
   const [vendors, setVendors] = useState<{ id: string; name: string; email: string | null }[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -78,7 +86,7 @@ const CustomerPurchaseCartTab = ({ customerId, onOrderPlaced }: CustomerPurchase
     }
   };
 
-  const addToCart = (article: any) => {
+  const addToCart = (article: VendorArticle) => {
     const vendor = vendors.find(v => v.id === article.vendor_id);
     if (!vendor) return;
 

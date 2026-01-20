@@ -286,7 +286,7 @@ export const FunctionsOverviewDiagram = () => {
     open: boolean;
     type: 'edge' | 'database';
     category: string;
-    data: { title: string; icon: React.ComponentType<{ className?: string }>; color: string; functions: Array<{ name: string; desc: string; jwt?: boolean }> } | null;
+    data: { title: string; icon: React.ComponentType<{ className?: string }>; color: string; functions: Array<{ name: string; desc: string; jwt?: boolean; returns?: string }> } | null;
   }>({ open: false, type: 'edge', category: '', data: null });
 
   useEffect(() => {
@@ -378,7 +378,7 @@ export const FunctionsOverviewDiagram = () => {
     }
   }, []);
 
-  const openCategoryDetail = (type: 'edge' | 'database', category: string, data: { title: string; icon: React.ComponentType<{ className?: string }>; color: string; functions: Array<{ name: string; desc: string; jwt?: boolean }> }) => {
+  const openCategoryDetail = (type: 'edge' | 'database', category: string, data: { title: string; icon: React.ComponentType<{ className?: string }>; color: string; functions: Array<{ name: string; desc: string; jwt?: boolean; returns?: string }> }) => {
     setDetailSheet({ open: true, type, category, data });
   };
 

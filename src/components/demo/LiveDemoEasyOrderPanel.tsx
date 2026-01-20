@@ -16,6 +16,24 @@ import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 
+interface OrderItem {
+  article_name: string;
+  quantity: number;
+  unit: string;
+}
+
+interface DemoOrder {
+  id: string;
+  order_number: string;
+  status: string;
+  total_amount: number | null;
+  created_at: string;
+  is_test_order?: boolean;
+  notes?: string | null;
+  suppliers?: { name: string } | null;
+  order_items?: OrderItem[];
+}
+
 interface LiveDemoEasyOrderPanelProps {
   soundEnabled?: boolean;
   onDirectOrderChange?: (isDirectOrder: boolean) => void;
@@ -34,7 +52,7 @@ export function LiveDemoEasyOrderPanel({ soundEnabled, onDirectOrderChange, onOr
   const [selectedSupplierId, setSelectedSupplierId] = useState<string | null>(null);
   const [isDirectOrder, setIsDirectOrder] = useState(false);
   const [activeTab, setActiveTab] = useState<'articles' | 'cart' | 'orders'>('articles');
-  const [myOrders, setMyOrders] = useState<any[]>([]);
+  const [myOrders, setMyOrders] = useState<DemoOrder[]>([]);
   const [ordersLoading, setOrdersLoading] = useState(false);
 
   // Fetch my orders (EasyOrder demo orders)
@@ -103,8 +121,8 @@ export function LiveDemoEasyOrderPanel({ soundEnabled, onDirectOrderChange, onOr
 
           // Special handling for confirmation
           if (payload.eventType === 'UPDATE') {
-            const oldOrder = payload.old as any;
-            const newOrder = payload.new as any;
+            const oldOrder = payload.old as { status?: string };
+            const newOrder = payload.new as { is_test_order?: boolean; status?: string; order_number?: string };
             
             if (newOrder.is_test_order && newOrder.status === 'confirmed' && oldOrder.status === 'pending') {
               if (soundEnabled) {
@@ -693,7 +711,7 @@ export function LiveDemoEasyOrderPanel({ soundEnabled, onDirectOrderChange, onOr
                     {order.order_items && order.order_items.length > 0 && (
                       <div className="mt-2 pt-2 border-t border-border/50">
                         <p className="text-[10px] text-muted-foreground mb-1">Artikel:</p>
-                        {order.order_items.slice(0, 3).map((item: any, idx: number) => (
+                        {order.order_items.slice(0, 3).map((item: OrderItem, idx: number) => (
                           <p key={idx} className="text-xs truncate">
                             {item.quantity}x {item.article_name}
                           </p>

@@ -232,7 +232,7 @@ export const ArticleOrganizationTab = () => {
   const handleBulkAssignTopCategory = (topCategory: TopCategory) => {
     if (selectedIds.size === 0) return;
     bulkUpdate.mutate(
-      { ids: Array.from(selectedIds), updates: { top_category: topCategory } as any },
+      { ids: Array.from(selectedIds), updates: { top_category: topCategory } as Partial<ArticleWithTopCategory> },
       {
         onSuccess: () => {
           setSelectedIds(new Set());
@@ -258,7 +258,7 @@ export const ArticleOrganizationTab = () => {
   const handleBulkAssignOrderUnit = (orderUnitId: string) => {
     if (selectedIds.size === 0) return;
     bulkUpdate.mutate(
-      { ids: Array.from(selectedIds), updates: { order_unit_id: orderUnitId } as any },
+      { ids: Array.from(selectedIds), updates: { order_unit_id: orderUnitId } as Partial<ArticleWithTopCategory> },
       {
         onSuccess: () => {
           setSelectedIds(new Set());
@@ -274,7 +274,7 @@ export const ArticleOrganizationTab = () => {
     if (isNaN(value) || value < 1) return;
     
     bulkUpdate.mutate(
-      { ids: Array.from(selectedIds), updates: { packaging_unit: value } as any },
+      { ids: Array.from(selectedIds), updates: { packaging_unit: value } as Partial<ArticleWithTopCategory> },
       {
         onSuccess: () => {
           setSelectedIds(new Set());
@@ -289,7 +289,7 @@ export const ArticleOrganizationTab = () => {
   const handleInlineUpdate = (id: string, field: 'top_category' | 'category' | 'order_unit_id' | 'packaging_unit' | 'unit' | 'price', value: string | number | null) => {
     bulkUpdate.mutate({
       ids: [id],
-      updates: { [field]: value } as any,
+      updates: { [field]: value } as Partial<ArticleWithTopCategory>,
     });
   };
 

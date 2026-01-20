@@ -66,7 +66,7 @@ export const AddArticleSheet = ({
     );
   }, [articles, searchQuery]);
 
-  const handleQuantityChange = (article: any, delta: number) => {
+  const handleQuantityChange = (article: NonNullable<typeof articles>[number], delta: number) => {
     lightTap();
     const currentQty = cartQuantities[article.id] || 0;
     const newQty = Math.max(0, currentQty + delta);

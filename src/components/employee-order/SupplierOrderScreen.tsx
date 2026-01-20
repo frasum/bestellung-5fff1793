@@ -85,7 +85,18 @@ export function SupplierOrderScreen({
   
   // Order history state
   const [showOrderHistory, setShowOrderHistory] = useState(false);
-  const [employeeOrders, setEmployeeOrders] = useState<any[]>([]);
+  const [employeeOrders, setEmployeeOrders] = useState<Array<{
+    id: string;
+    order_number: string;
+    status: string;
+    total_amount: number | null;
+    delivery_address: string | null;
+    notes: string | null;
+    created_at: string;
+    supplier?: { id: string; name: string } | null;
+    location?: { id: string; name: string; short_code: string } | null;
+    items?: Array<{ id: string; article_name: string; quantity: number; unit: string; unit_price: number; total_price: number }>;
+  }>>([]);
   const [isLoadingOrders, setIsLoadingOrders] = useState(false);
   const [expandedOrders, setExpandedOrders] = useState<Set<string>>(new Set());
 
