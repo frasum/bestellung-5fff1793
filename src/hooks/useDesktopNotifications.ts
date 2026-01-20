@@ -16,8 +16,9 @@ export const useDesktopNotifications = () => {
       const result = await Notification.requestPermission();
       setPermission(result);
       return result === 'granted';
-    } catch (error) {
-      console.error('Error requesting notification permission:', error);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      console.error('Error requesting notification permission:', message);
       return false;
     }
   }, []);

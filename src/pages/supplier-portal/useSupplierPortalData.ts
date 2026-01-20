@@ -158,8 +158,9 @@ export function useSupplierPortalData(): UseSupplierPortalDataReturn {
           setInitialDraftData(draftData.draft as DraftData);
           setHasDraft(true);
         }
-      } catch (error: any) {
-        console.error('Error fetching data:', error);
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : 'Unbekannter Fehler';
+        console.error('Error fetching data:', message);
         toast.error('Fehler beim Laden der Daten');
       } finally {
         setLoading(false);

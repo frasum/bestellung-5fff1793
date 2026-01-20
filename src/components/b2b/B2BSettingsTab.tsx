@@ -516,9 +516,10 @@ const B2BSettingsTab = ({ account, onUpdate, selectedSupplierId, suppliers: dash
       setLogoUrl(null);
       toast.success('Logo entfernt');
       onUpdate();
-    } catch (error: any) {
-      console.error('Error removing logo:', error);
-      toast.error('Fehler beim Entfernen: ' + error.message);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unbekannter Fehler';
+      console.error('Error removing logo:', message);
+      toast.error('Fehler beim Entfernen: ' + message);
     }
   };
 

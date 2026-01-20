@@ -214,8 +214,9 @@ export const QuickCaptureWizard = ({
       }
 
       setStep('article');
-    } catch (err) {
-      console.error('Processing error:', err);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Unbekannter Fehler';
+      console.error('Processing error:', message);
       toast.error(t('quickCapture.processingError', 'Fehler bei der Bildverarbeitung'));
     } finally {
       setIsAnalyzing(false);
@@ -292,8 +293,9 @@ export const QuickCaptureWizard = ({
       toast.success(t('quickCapture.articleCreated', 'Artikel "{{name}}" erfolgreich erstellt!', { name: articleName }));
       setCreatedArticlesCount(prev => prev + 1);
       return true;
-    } catch (err) {
-      console.error('Save error:', err);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Unbekannter Fehler';
+      console.error('Save error:', message);
       toast.error(t('quickCapture.saveError', 'Fehler beim Speichern'));
       return false;
     } finally {

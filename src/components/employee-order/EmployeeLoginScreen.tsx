@@ -65,8 +65,9 @@ export function EmployeeLoginScreen({ onLogin }: EmployeeLoginScreenProps) {
           variant: 'destructive',
         });
       }
-    } catch (error: any) {
-      console.error('Login error:', error);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Verbindungsfehler';
+      console.error('Login error:', message);
       toast({
         title: 'Fehler',
         description: 'Verbindungsfehler. Bitte versuchen Sie es erneut.',

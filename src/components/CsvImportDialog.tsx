@@ -364,7 +364,9 @@ export const CsvImportDialog = ({
         if (useAI && enableAI) {
           await runAIColumnMapping(csvHeaders);
         }
-      } catch (err) {
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : 'Unknown error';
+        console.error('Parse error:', message);
         setError('Failed to parse file. Please check the format.');
       }
     };
@@ -461,8 +463,9 @@ export const CsvImportDialog = ({
         onOpenChange(false);
         resetState();
       }, 1500);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Import failed');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Import failed';
+      setError(message);
     } finally {
       setIsImporting(false);
       setAiStatus(null);

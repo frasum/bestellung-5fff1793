@@ -95,7 +95,7 @@ export function useVoiceRecorder(): UseVoiceRecorderReturn {
         }
       }, MAX_RECORDING_TIME);
 
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Failed to start recording:', error);
       const errorMessage = error instanceof Error 
         ? error.message.includes('Permission denied') || error.message.includes('NotAllowedError')

@@ -73,8 +73,9 @@ const EmployeeOrder = () => {
           } else {
             localStorage.removeItem('employee_session_token');
           }
-        } catch (error) {
-          console.error('Session verification failed:', error);
+        } catch (error: unknown) {
+          const message = error instanceof Error ? error.message : 'Unbekannter Fehler';
+          console.error('Session verification failed:', message);
           localStorage.removeItem('employee_session_token');
         }
       }
