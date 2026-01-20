@@ -246,7 +246,8 @@ export const CsvImportDialog = ({
         setAiMapping(data.result.mappings);
         toast.success('KI hat Spalten automatisch zugeordnet');
       }
-    } catch {
+    } catch (error) {
+      console.warn('AI column mapping failed:', error);
       toast.error('KI-Zuordnung fehlgeschlagen, verwende Standard-Zuordnung');
     } finally {
       setIsAIProcessing(false);
@@ -279,8 +280,8 @@ export const CsvImportDialog = ({
           return cleaned ? { ...row, ...cleaned } : row;
         });
       }
-    } catch {
-      // AI cleaning failed, use original data
+    } catch (error) {
+      console.warn('AI data cleaning failed, using original data:', error);
     }
     
     return data;
@@ -313,8 +314,8 @@ export const CsvImportDialog = ({
           return row;
         });
       }
-    } catch {
-      // AI categorization failed, use original data
+    } catch (error) {
+      console.warn('AI categorization failed, using original data:', error);
     }
     
     return data;

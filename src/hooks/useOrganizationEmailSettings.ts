@@ -60,8 +60,8 @@ async function extractErrorMessage(error: unknown): Promise<string> {
       try {
         const body = await ctx.json();
         if (body?.error) return body.error;
-      } catch {
-        // ignore parse errors
+      } catch (parseError) {
+        console.warn('Failed to parse error response:', parseError);
       }
     }
   }

@@ -60,7 +60,8 @@ export const MobileQRCodeOption = ({ onBack }: MobileQRCodeOptionProps) => {
       setCopied(true);
       toast.success(t('quickCapture.linkCopied', 'Link kopiert'));
       setTimeout(() => setCopied(false), 2000);
-    } catch {
+    } catch (error) {
+      console.error('Failed to copy QR link to clipboard:', error);
       toast.error(t('quickCapture.copyError', 'Kopieren fehlgeschlagen'));
     }
   };

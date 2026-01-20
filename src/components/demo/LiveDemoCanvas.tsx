@@ -75,7 +75,8 @@ export function LiveDemoCanvas({ soundEnabled }: LiveDemoCanvasProps) {
           return parsed;
         }
         return defaultPositions;
-      } catch {
+      } catch (parseError) {
+        console.warn('Failed to parse saved tile positions:', parseError);
         return defaultPositions;
       }
     }
