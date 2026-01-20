@@ -73,7 +73,7 @@ const CustomerVendorsTab = ({ customerId, onVendorChange }: CustomerVendorsTabPr
 
       if (error) throw error;
       setVendors(data || []);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error loading vendors:', error);
       toast.error('Fehler beim Laden der Lieferanten');
     } finally {
@@ -95,7 +95,7 @@ const CustomerVendorsTab = ({ customerId, onVendorChange }: CustomerVendorsTabPr
       toast.success('Lieferant gelöscht');
       loadVendors();
       onVendorChange?.();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error deleting vendor:', error);
       toast.error('Fehler beim Löschen');
     } finally {

@@ -42,7 +42,7 @@ export const SupplierMobileQRDialog = ({ supplierId, supplierName, open, onOpenC
         },
       });
       setQrCodeDataUrl(qrDataUrl);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error generating token:', error);
       toast.error('Fehler beim Erstellen des QR-Codes');
     } finally {

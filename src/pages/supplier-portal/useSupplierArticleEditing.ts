@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import type { SupplierSession, Article, PendingChange, DraftData } from './types';
+import { getErrorMessage } from '@/lib/errorUtils';
 
 interface UseSupplierArticleEditingProps {
   session: SupplierSession | null;
@@ -80,7 +81,7 @@ export function useSupplierArticleEditing({
       if (error) throw error;
       setHasDraft(true);
       toast.success('Entwurf gespeichert');
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error saving draft:', error);
       toast.error('Fehler beim Speichern des Entwurfs');
     } finally {
@@ -195,7 +196,7 @@ export function useSupplierArticleEditing({
       }
 
       toast.success('Änderungen zur Genehmigung eingereicht');
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error saving article:', error);
       toast.error('Fehler beim Speichern');
     } finally {
@@ -285,7 +286,7 @@ export function useSupplierArticleEditing({
 
       const changeCount = data?.pendingChanges?.length || articleChanges.length;
       toast.success(`${changeCount} Änderung${changeCount > 1 ? 'en' : ''} zur Genehmigung eingereicht`);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error saving all articles:', error);
       toast.error('Fehler beim Einreichen der Änderungen');
     } finally {
@@ -316,7 +317,7 @@ export function useSupplierArticleEditing({
       ));
 
       toast.success('Foto hochgeladen');
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error uploading image:', error);
       toast.error('Fehler beim Hochladen des Fotos');
       throw error;
@@ -358,7 +359,7 @@ export function useSupplierArticleEditing({
       ));
 
       toast.success('Foto gelöscht');
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error deleting image:', error);
       toast.error('Fehler beim Löschen des Fotos');
     } finally {

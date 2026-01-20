@@ -98,7 +98,7 @@ const B2BPurchaseOrdersTab = ({ accountId, supplierId }: B2BPurchaseOrdersTabPro
       }));
 
       setOrders(ordersWithVendor);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error loading orders:', error);
       toast.error('Fehler beim Laden der Bestellungen');
     } finally {
@@ -149,7 +149,7 @@ const B2BPurchaseOrdersTab = ({ accountId, supplierId }: B2BPurchaseOrdersTabPro
 
       toast.success('Status aktualisiert');
       loadOrders();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error updating status:', error);
       toast.error('Fehler beim Aktualisieren');
     }

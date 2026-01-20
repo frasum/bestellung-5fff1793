@@ -98,7 +98,7 @@ const B2BSuppliersTab = ({ accountId, onStatsChange }: B2BSuppliersTabProps) => 
       }));
 
       setSuppliers(suppliersWithCounts);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error loading suppliers:', error);
       toast.error('Fehler beim Laden der Lieferanten');
     } finally {
@@ -127,7 +127,7 @@ const B2BSuppliersTab = ({ accountId, onStatsChange }: B2BSuppliersTabProps) => 
       toast.success('Lieferant gelöscht');
       loadSuppliers();
       onStatsChange?.();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error deleting supplier:', error);
       toast.error('Fehler beim Löschen');
     } finally {

@@ -6,6 +6,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
+import { getErrorMessage } from '@/lib/errorUtils';
 import {
   Plus,
   Search,
@@ -104,7 +105,7 @@ const B2BCustomersTab = ({
 
       if (error) throw error;
       setCustomers(data || []);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error loading customers:', error);
       toast.error('Fehler beim Laden der Kunden');
     } finally {
@@ -126,7 +127,7 @@ const B2BCustomersTab = ({
       toast.success('Kunde gelöscht');
       loadCustomers();
       onStatsChange();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error deleting customer:', error);
       toast.error('Fehler beim Löschen');
     } finally {
@@ -182,7 +183,7 @@ const B2BCustomersTab = ({
       if (emailError) throw emailError;
 
       toast.success('Einladung erneut gesendet');
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error resending invitation:', error);
       toast.error('Fehler beim Senden der Einladung');
     }
@@ -199,7 +200,7 @@ const B2BCustomersTab = ({
 
       toast.success(enabled ? '"Mein Einkauf" aktiviert' : '"Mein Einkauf" deaktiviert');
       loadCustomers();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error toggling purchase feature:', error);
       toast.error('Fehler beim Ändern der Einstellung');
     }

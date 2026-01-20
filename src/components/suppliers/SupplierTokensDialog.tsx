@@ -11,7 +11,7 @@ import { Loader2, Ban, Clock, RefreshCw, Trash2, Key } from 'lucide-react';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { Supplier } from '@/hooks/useSuppliers';
-
+import { getErrorMessage } from '@/lib/errorUtils';
 interface SupplierToken {
   id: string;
   token: string;
@@ -48,7 +48,7 @@ export const SupplierTokensDialog = ({ open, onOpenChange, supplier }: SupplierT
 
       if (error) throw error;
       setTokens(data || []);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error loading tokens:', error);
       toast.error('Fehler beim Laden der Tokens');
     } finally {
@@ -104,7 +104,7 @@ export const SupplierTokensDialog = ({ open, onOpenChange, supplier }: SupplierT
       if (error) throw error;
       toast.success('Token widerrufen');
       loadTokens();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error revoking token:', error);
       toast.error('Fehler beim Widerrufen des Tokens');
     } finally {
@@ -127,7 +127,7 @@ export const SupplierTokensDialog = ({ open, onOpenChange, supplier }: SupplierT
       if (error) throw error;
       toast.success('Alle Tokens widerrufen');
       loadTokens();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error revoking all tokens:', error);
       toast.error('Fehler beim Widerrufen aller Tokens');
     } finally {
@@ -150,7 +150,7 @@ export const SupplierTokensDialog = ({ open, onOpenChange, supplier }: SupplierT
       if (error) throw error;
       toast.success('Preisbearbeitungsfrist um 7 Tage verlängert');
       loadTokens();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error extending price edit:', error);
       toast.error('Fehler beim Verlängern der Frist');
     } finally {
@@ -196,9 +196,9 @@ export const SupplierTokensDialog = ({ open, onOpenChange, supplier }: SupplierT
       
       toast.success('Abgelaufene, widerrufene und unbenutzte Tokens gelöscht');
       loadTokens();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error deleting tokens:', error);
-      toast.error(error.message || 'Fehler beim Löschen');
+      toast.error(getErrorMessage(error));
     } finally {
       setActionLoading(null);
     }

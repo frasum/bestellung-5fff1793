@@ -120,7 +120,7 @@ const B2BArticlesTab = ({ accountId, linkedSupplierId, selectedSupplierId = 'all
       }));
 
       setArticles(articlesWithSupplier);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error loading articles:', error);
       toast.error('Fehler beim Laden der Artikel');
     } finally {
@@ -142,7 +142,7 @@ const B2BArticlesTab = ({ accountId, linkedSupplierId, selectedSupplierId = 'all
       toast.success('Artikel gelöscht');
       loadData();
       onStatsChange();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error deleting article:', error);
       toast.error('Fehler beim Löschen');
     } finally {
