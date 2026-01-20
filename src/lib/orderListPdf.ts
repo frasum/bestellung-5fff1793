@@ -312,7 +312,7 @@ export const generateCombinedOrderListPdf = async (
       },
     });
     
-    currentY = (doc as any).lastAutoTable.finalY + 10;
+    currentY = doc.lastAutoTable?.finalY + 10 || currentY + 50;
   });
   
   // Add page numbers and date

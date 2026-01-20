@@ -265,7 +265,7 @@ export const generateSystemOverviewPdf = async (contactInfo?: ContactInfo) => {
     },
   });
 
-  y = (doc as any).lastAutoTable.finalY + 20;
+  y = doc.lastAutoTable?.finalY + 20 || y + 50;
 
   doc.setFontSize(14);
   doc.setFont('helvetica', 'bold');
