@@ -29,6 +29,24 @@ export interface Article {
   is_active: boolean;
   created_at: string;
   updated_at: string;
+  // Translation fields - English
+  description_en?: string | null;
+  grape_variety_en?: string | null;
+  flavor_profile_en?: string | null;
+  food_pairings_en?: string | null;
+  origin_country_en?: string | null;
+  // Translation fields - Thai
+  description_th?: string | null;
+  grape_variety_th?: string | null;
+  flavor_profile_th?: string | null;
+  food_pairings_th?: string | null;
+  origin_country_th?: string | null;
+  // Translation fields - French
+  description_fr?: string | null;
+  grape_variety_fr?: string | null;
+  flavor_profile_fr?: string | null;
+  food_pairings_fr?: string | null;
+  origin_country_fr?: string | null;
   suppliers?: {
     id: string;
     name: string;

@@ -17,7 +17,7 @@ import { Check, ChevronsUpDown, Loader2, Plus, Package, Save, Globe, ChevronDown
 import { cn } from '@/lib/utils';
 import { Article } from '@/hooks/useArticles';
 import { Supplier } from '@/hooks/useSuppliers';
-import { articleSchema, ArticleFormData } from './schemas';
+import { articleSchema, ArticleFormData, getTranslationFieldKey } from './schemas';
 import { useOrderUnits, useCreateOrderUnit } from '@/hooks/useOrderUnits';
 import { ArticlePhotoCapture } from './ArticlePhotoCapture';
 import { supabase } from '@/integrations/supabase/client';
@@ -156,34 +156,34 @@ export const ArticleFormDialog = ({
         unit: editingArticle.unit,
         price: String(editingArticle.price),
         category: editingArticle.category || '',
-        origin_country: (editingArticle as any).origin_country || '',
+        origin_country: editingArticle.origin_country || '',
         packaging_unit: editingArticle.packaging_unit ? String(editingArticle.packaging_unit) : '',
         order_unit_id: editingArticle.order_unit_id || '',
         reference_price: editingArticle.reference_price ? String(editingArticle.reference_price).replace('.', ',') : '',
         reference_unit: editingArticle.reference_unit || '',
-        selling_price: (editingArticle as any).selling_price ? String((editingArticle as any).selling_price) : '',
-        grape_variety: (editingArticle as any).grape_variety || '',
-        flavor_profile: (editingArticle as any).flavor_profile || '',
-        food_pairings: (editingArticle as any).food_pairings || '',
-        special_attributes: (editingArticle as any).special_attributes || '',
+        selling_price: editingArticle.selling_price ? String(editingArticle.selling_price) : '',
+        grape_variety: editingArticle.grape_variety || '',
+        flavor_profile: editingArticle.flavor_profile || '',
+        food_pairings: editingArticle.food_pairings || '',
+        special_attributes: editingArticle.special_attributes || '',
         // Translation fields
-        description_en: (editingArticle as any).description_en || '',
-        grape_variety_en: (editingArticle as any).grape_variety_en || '',
-        flavor_profile_en: (editingArticle as any).flavor_profile_en || '',
-        food_pairings_en: (editingArticle as any).food_pairings_en || '',
-        origin_country_en: (editingArticle as any).origin_country_en || '',
-        description_th: (editingArticle as any).description_th || '',
-        grape_variety_th: (editingArticle as any).grape_variety_th || '',
-        flavor_profile_th: (editingArticle as any).flavor_profile_th || '',
-        food_pairings_th: (editingArticle as any).food_pairings_th || '',
-        origin_country_th: (editingArticle as any).origin_country_th || '',
-        description_fr: (editingArticle as any).description_fr || '',
-        grape_variety_fr: (editingArticle as any).grape_variety_fr || '',
-        flavor_profile_fr: (editingArticle as any).flavor_profile_fr || '',
-        food_pairings_fr: (editingArticle as any).food_pairings_fr || '',
-        origin_country_fr: (editingArticle as any).origin_country_fr || '',
+        description_en: editingArticle.description_en || '',
+        grape_variety_en: editingArticle.grape_variety_en || '',
+        flavor_profile_en: editingArticle.flavor_profile_en || '',
+        food_pairings_en: editingArticle.food_pairings_en || '',
+        origin_country_en: editingArticle.origin_country_en || '',
+        description_th: editingArticle.description_th || '',
+        grape_variety_th: editingArticle.grape_variety_th || '',
+        flavor_profile_th: editingArticle.flavor_profile_th || '',
+        food_pairings_th: editingArticle.food_pairings_th || '',
+        origin_country_th: editingArticle.origin_country_th || '',
+        description_fr: editingArticle.description_fr || '',
+        grape_variety_fr: editingArticle.grape_variety_fr || '',
+        flavor_profile_fr: editingArticle.flavor_profile_fr || '',
+        food_pairings_fr: editingArticle.food_pairings_fr || '',
+        origin_country_fr: editingArticle.origin_country_fr || '',
       });
-      setCapturedImage((editingArticle as any).image_url || null);
+      setCapturedImage(editingArticle.image_url || null);
     } else {
       form.reset({ 
         supplier_id: preselectedSupplierId || '', name: '', description: '', sku: '', unit: 'pcs', price: '', category: '', 
@@ -311,13 +311,12 @@ export const ArticleFormDialog = ({
 
       if (data.translations) {
         const translations = data.translations;
-        const suffix = `_${targetLanguage}` as const;
         
-        if (translations.description) form.setValue(`description${suffix}` as any, translations.description);
-        if (translations.grape_variety) form.setValue(`grape_variety${suffix}` as any, translations.grape_variety);
-        if (translations.flavor_profile) form.setValue(`flavor_profile${suffix}` as any, translations.flavor_profile);
-        if (translations.food_pairings) form.setValue(`food_pairings${suffix}` as any, translations.food_pairings);
-        if (translations.origin_country) form.setValue(`origin_country${suffix}` as any, translations.origin_country);
+        if (translations.description) form.setValue(getTranslationFieldKey('description', targetLanguage), translations.description);
+        if (translations.grape_variety) form.setValue(getTranslationFieldKey('grape_variety', targetLanguage), translations.grape_variety);
+        if (translations.flavor_profile) form.setValue(getTranslationFieldKey('flavor_profile', targetLanguage), translations.flavor_profile);
+        if (translations.food_pairings) form.setValue(getTranslationFieldKey('food_pairings', targetLanguage), translations.food_pairings);
+        if (translations.origin_country) form.setValue(getTranslationFieldKey('origin_country', targetLanguage), translations.origin_country);
         
         const langNames = { en: 'Englische', th: 'Thailändische', fr: 'Französische' };
         toast.success(`${langNames[targetLanguage]} Übersetzung erstellt`);
@@ -349,7 +348,7 @@ export const ArticleFormDialog = ({
             <ArticlePhotoCapture
               supplierId={form.watch('supplier_id') || null}
               organizationId={organizationId}
-              existingImageUrl={(editingArticle as any)?.image_url}
+              existingImageUrl={editingArticle?.image_url}
               onImageCaptured={handleImageCaptured}
               onImageCleared={() => {
                 setCapturedImage(null);

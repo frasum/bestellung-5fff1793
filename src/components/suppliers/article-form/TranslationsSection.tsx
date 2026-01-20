@@ -9,7 +9,7 @@ import { Globe, ChevronDown, Sparkles, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { ArticleFormData } from '../schemas';
+import { ArticleFormData, TranslationLanguage, getTranslationFieldKey } from '../schemas';
 
 interface TranslationsSectionProps {
   form: UseFormReturn<ArticleFormData>;
@@ -36,7 +36,7 @@ export function TranslationsSection({
     form.watch('flavor_profile_fr') || form.watch('food_pairings_fr'));
   const hasAnyTranslations = hasEnglishTranslations || hasThaiTranslations || hasFrenchTranslations;
 
-  const handleAutoTranslate = async (targetLanguage: 'en' | 'th' | 'fr') => {
+  const handleAutoTranslate = async (targetLanguage: TranslationLanguage) => {
     if (!editingArticleId) {
       toast.error('Bitte speichern Sie den Artikel zuerst, bevor Sie übersetzen');
       return;
@@ -59,13 +59,12 @@ export function TranslationsSection({
 
       if (data.translations) {
         const translations = data.translations;
-        const suffix = `_${targetLanguage}` as const;
         
-        if (translations.description) form.setValue(`description${suffix}` as any, translations.description);
-        if (translations.grape_variety) form.setValue(`grape_variety${suffix}` as any, translations.grape_variety);
-        if (translations.flavor_profile) form.setValue(`flavor_profile${suffix}` as any, translations.flavor_profile);
-        if (translations.food_pairings) form.setValue(`food_pairings${suffix}` as any, translations.food_pairings);
-        if (translations.origin_country) form.setValue(`origin_country${suffix}` as any, translations.origin_country);
+        if (translations.description) form.setValue(getTranslationFieldKey('description', targetLanguage), translations.description);
+        if (translations.grape_variety) form.setValue(getTranslationFieldKey('grape_variety', targetLanguage), translations.grape_variety);
+        if (translations.flavor_profile) form.setValue(getTranslationFieldKey('flavor_profile', targetLanguage), translations.flavor_profile);
+        if (translations.food_pairings) form.setValue(getTranslationFieldKey('food_pairings', targetLanguage), translations.food_pairings);
+        if (translations.origin_country) form.setValue(getTranslationFieldKey('origin_country', targetLanguage), translations.origin_country);
         
         const langNames = { en: 'Englische', th: 'Thailändische', fr: 'Französische' };
         toast.success(`${langNames[targetLanguage]} Übersetzung erstellt`);
@@ -79,7 +78,7 @@ export function TranslationsSection({
   };
 
   const renderLanguageSection = (
-    lang: 'en' | 'th' | 'fr',
+    lang: TranslationLanguage,
     label: string,
     flag: string,
     borderColor: string,
@@ -112,27 +111,27 @@ export function TranslationsSection({
         </Button>
       </div>
       <Textarea 
-        {...form.register(`description_${lang}` as any)} 
+        {...form.register(getTranslationFieldKey('description', lang))} 
         placeholder={placeholders.description}
         className="min-h-[50px] resize-none text-sm"
       />
       <Textarea 
-        {...form.register(`grape_variety_${lang}` as any)} 
+        {...form.register(getTranslationFieldKey('grape_variety', lang))} 
         placeholder={placeholders.grapeVariety}
         className="min-h-[40px] resize-none text-sm"
       />
       <Textarea 
-        {...form.register(`flavor_profile_${lang}` as any)} 
+        {...form.register(getTranslationFieldKey('flavor_profile', lang))} 
         placeholder={placeholders.flavorProfile}
         className="min-h-[40px] resize-none text-sm"
       />
       <Textarea 
-        {...form.register(`food_pairings_${lang}` as any)} 
+        {...form.register(getTranslationFieldKey('food_pairings', lang))} 
         placeholder={placeholders.foodPairings}
         className="min-h-[40px] resize-none text-sm"
       />
       <Input 
-        {...form.register(`origin_country_${lang}` as any)} 
+        {...form.register(getTranslationFieldKey('origin_country', lang))} 
         placeholder={placeholders.originCountry}
         className="text-sm"
       />

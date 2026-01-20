@@ -1,6 +1,54 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
+interface EmployeeData {
+  id: string;
+  name: string;
+  auto_approve_orders: boolean;
+  email: string | null;
+  pin_code: string | null;
+  voice_input_enabled: boolean;
+  can_add_free_items: boolean;
+  can_capture_photos: boolean;
+  wine_catalog_access: string;
+  language: string | null;
+}
+
+interface SupplierData {
+  id: string;
+  name: string;
+  email: string | null;
+  organization_id: string;
+}
+
+interface LocationData {
+  id: string;
+  name: string;
+  short_code?: string;
+}
+
+interface TokenData {
+  id: string;
+  token: string;
+  label: string | null;
+  language: string | null;
+  organization_id: string;
+  supplier_id: string | null;
+  employee_id: string | null;
+  employee_name: string | null;
+  is_multi_supplier: boolean;
+  expires_at: string | null;
+  supplier: SupplierData[];
+  location: LocationData[];
+  employee: EmployeeData[];
+}
+
+interface TokenSupplierData {
+  supplier_id: string;
+  sort_order: number | null;
+  supplier: SupplierData[];
+}
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -60,8 +108,12 @@ serve(async (req) => {
       );
     }
 
+    // Cast tokenData to typed version and extract employee (array from Supabase join)
+    const typedToken = tokenData as unknown as TokenData;
+    const employee = typedToken.employee?.[0];
+
     // Get employee wine catalog access early for get-wines action
-    const wineCatalogAccessEarly = (tokenData.employee as any)?.wine_catalog_access || 'none';
+    const wineCatalogAccessEarly = employee?.wine_catalog_access || 'none';
 
     // Handle get-wines action for wine catalog - early exit
     if (action === 'get-wines') {
@@ -123,13 +175,13 @@ serve(async (req) => {
     const isMultiSupplier = tokenData.is_multi_supplier === true;
     console.log('Is multi-supplier token:', isMultiSupplier);
 
-    let suppliers: any[] = [];
-    let articles: any[] = [];
+    let suppliers: Array<{ id: string; name: string; email: string | null; organization_id: string; sort_order?: number; article_count: number }> = [];
+    let articles: Array<{ id: string; name: string; supplier_id: string; [key: string]: unknown }> = [];
     let favoriteArticleIds: string[] = [];
 
     // Get employee_id and voice_input_enabled for favorites lookup
-    const employeeId = tokenData.employee_id || (tokenData.employee as any)?.id;
-    const voiceInputEnabled = (tokenData.employee as any)?.voice_input_enabled ?? false;
+    const employeeId = tokenData.employee_id || employee?.id;
+    const voiceInputEnabled = employee?.voice_input_enabled ?? false;
     
     // Load favorites if employee is assigned
     if (employeeId) {
@@ -191,13 +243,13 @@ serve(async (req) => {
         articles = allArticles || [];
 
         // Build suppliers array with article counts and sort_order
-        suppliers = tokenSuppliers?.map(ts => {
-          const sup = ts.supplier as any;
+        suppliers = (tokenSuppliers as TokenSupplierData[])?.map(ts => {
+          const sup = ts.supplier?.[0];
           return {
-            id: sup?.id,
-            name: sup?.name,
-            email: sup?.email,
-            organization_id: sup?.organization_id,
+            id: sup?.id || '',
+            name: sup?.name || '',
+            email: sup?.email || null,
+            organization_id: sup?.organization_id || '',
             sort_order: ts.sort_order || 0,
             article_count: articles.filter(a => a.supplier_id === ts.supplier_id).length,
           };
@@ -223,18 +275,19 @@ serve(async (req) => {
         }
 
         articles = singleArticles || [];
-        suppliers = tokenData.supplier ? [{
-          id: tokenData.supplier.id,
-          name: tokenData.supplier.name,
-          email: tokenData.supplier.email,
-          organization_id: tokenData.supplier.organization_id,
+        const singleSupplier = typedToken.supplier?.[0];
+        suppliers = singleSupplier ? [{
+          id: singleSupplier.id,
+          name: singleSupplier.name,
+          email: singleSupplier.email,
+          organization_id: singleSupplier.organization_id,
           article_count: articles.length,
         }] : [];
       }
     }
 
     // Get locations - filtered by employee_locations if employee is assigned
-    let locations: any[] = [];
+    let locations: LocationData[] = [];
     
     if (employeeId) {
       // Employee is assigned - only get their permitted locations
@@ -248,9 +301,9 @@ serve(async (req) => {
       } else if (employeeLocations && employeeLocations.length > 0) {
         // Use only employee's permitted locations
         locations = employeeLocations
-          .map(el => el.location)
-          .filter(Boolean)
-          .sort((a: any, b: any) => a.name.localeCompare(b.name));
+          .map(el => el.location as unknown as LocationData)
+          .filter((loc): loc is LocationData => Boolean(loc))
+          .sort((a, b) => a.name.localeCompare(b.name));
         console.log(`Employee ${employeeId} has ${locations.length} permitted locations`);
       } else {
         // Fallback: No employee_locations configured, show all
@@ -279,18 +332,18 @@ serve(async (req) => {
     console.log(`Token verified. Multi-supplier: ${isMultiSupplier}, Suppliers: ${suppliers.length}, Articles: ${articles.length}, Locations: ${locations?.length || 0}, Employee: ${tokenData.employee_name || 'not set'}`);
 
     // Get auto_approve status and PIN from employee
-    const autoApproveOrders = (tokenData.employee as any)?.auto_approve_orders || false;
-    const hasPinCode = !!(tokenData.employee as any)?.pin_code;
-    const canAddFreeItems = (tokenData.employee as any)?.can_add_free_items || false;
-    const canCapturePhotos = (tokenData.employee as any)?.can_capture_photos || false;
-    const wineCatalogAccess = (tokenData.employee as any)?.wine_catalog_access || 'none';
+    const autoApproveOrders = employee?.auto_approve_orders || false;
+    const hasPinCode = !!employee?.pin_code;
+    const canAddFreeItems = employee?.can_add_free_items || false;
+    const canCapturePhotos = employee?.can_capture_photos || false;
+    const wineCatalogAccess = employee?.wine_catalog_access || 'none';
     
     // Only require PIN if auto_approve is enabled AND a PIN is set
     const requiresPin = autoApproveOrders && hasPinCode;
 
     // Get articles without photos for photo capture feature
-    let articlesWithoutPhotos: any[] = [];
-    let categories: any[] = [];
+    let articlesWithoutPhotos: Array<{ id: string; name: string; supplier_id: string }> = [];
+    let categories: Array<{ id: string; name: string }> = [];
     
     if (canCapturePhotos) {
       // Get supplier IDs the employee can access
@@ -321,7 +374,7 @@ serve(async (req) => {
     }
 
     // Use employee language if assigned, otherwise fall back to token language
-    const effectiveLanguage = (tokenData.employee as any)?.language || tokenData.language;
+    const effectiveLanguage = employee?.language || tokenData.language;
 
     return new Response(
       JSON.stringify({
@@ -330,12 +383,12 @@ serve(async (req) => {
           id: tokenData.id,
           label: tokenData.label,
           language: effectiveLanguage,
-          supplier: isMultiSupplier ? null : (tokenData.supplier?.id ? tokenData.supplier : null),
+          supplier: isMultiSupplier ? null : (typedToken.supplier?.[0] || null),
           location: tokenData.location,
           organization_id: tokenData.organization_id,
           is_multi_supplier: isMultiSupplier,
           employee_id: employeeId || null,
-          employee_name: (tokenData.employee as any)?.name || tokenData.employee_name || null,
+          employee_name: employee?.name || tokenData.employee_name || null,
           has_employee: !!employeeId,
           auto_approve_orders: autoApproveOrders,
           requires_pin: requiresPin,

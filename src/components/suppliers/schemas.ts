@@ -60,3 +60,22 @@ export const articleSchema = z.object({
 
 export type SupplierFormData = z.infer<typeof supplierSchema>;
 export type ArticleFormData = z.infer<typeof articleSchema>;
+
+// Type-safe translation field name helpers
+export type TranslationLanguage = 'en' | 'th' | 'fr';
+export type TranslationField = 'description' | 'grape_variety' | 'flavor_profile' | 'food_pairings' | 'origin_country';
+
+export type TranslationFieldKey<L extends TranslationLanguage> = 
+  | `description_${L}`
+  | `grape_variety_${L}`
+  | `flavor_profile_${L}`
+  | `food_pairings_${L}`
+  | `origin_country_${L}`;
+
+// Helper to get typed field key
+export function getTranslationFieldKey<L extends TranslationLanguage>(
+  field: TranslationField,
+  lang: L
+): TranslationFieldKey<L> {
+  return `${field}_${lang}` as TranslationFieldKey<L>;
+}
