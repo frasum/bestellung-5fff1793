@@ -1,48 +1,52 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
-import { SMTPClient } from "https://deno.land/x/denomailer@1.6.0/mod.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// SMTP Configuration
-const smtpConfig = {
-  connection: {
-    hostname: Deno.env.get("SMTP_HOST") || "smtps.udag.de",
-    port: Number(Deno.env.get("SMTP_PORT")) || 465,
-    tls: true,
-    auth: {
-      username: Deno.env.get("SMTP_USERNAME") || "",
-      password: Deno.env.get("SMTP_PASSWORD") || "",
-    },
-  },
-};
-
 const smtpFrom = Deno.env.get("SMTP_FROM") || "yum@bestellung.pro";
+const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 
-async function sendEmailViaSMTP(options: {
+// Fast email sending via Resend API (much lower CPU usage than SMTP)
+async function sendEmailViaResend(options: {
   to: string[];
   subject: string;
   html: string;
   text?: string;
 }): Promise<{ success: boolean; error?: string }> {
-  const client = new SMTPClient(smtpConfig);
+  if (!RESEND_API_KEY) {
+    console.error("RESEND_API_KEY not configured");
+    return { success: false, error: "Email service not configured" };
+  }
+
   try {
-    await client.send({
-      from: `Bestellung.pro <${smtpFrom}>`,
-      to: options.to,
-      subject: options.subject,
-      content: options.text || "",
-      html: options.html,
+    const response = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${RESEND_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        from: `Bestellung.pro <${smtpFrom}>`,
+        to: options.to,
+        subject: options.subject,
+        html: options.html,
+        text: options.text,
+      }),
     });
-    await client.close();
+
+    if (!response.ok) {
+      const errorData = await response.text();
+      console.error("Resend API error:", errorData);
+      return { success: false, error: `Email API error: ${response.status}` };
+    }
+
     return { success: true };
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown error';
-    console.error("SMTP send error:", message);
-    try { await client.close(); } catch {}
+    console.error("Email send error:", message);
     return { success: false, error: message };
   }
 }
@@ -177,7 +181,7 @@ Wichtig: Dieser Link ist 7 Tage gültig.
 Falls Sie diesen Link nicht angefordert haben, können Sie diese E-Mail ignorieren.
     `;
 
-    const emailResult = await sendEmailViaSMTP({
+    const emailResult = await sendEmailViaResend({
       to: actualRecipients,
       subject: `${subjectPrefix}Zugang zum Lieferantenportal - ${organizationName}`,
       html: htmlContent,
@@ -188,7 +192,7 @@ Falls Sie diesen Link nicht angefordert haben, können Sie diese E-Mail ignorier
       throw new Error(`Failed to send email: ${emailResult.error}`);
     }
 
-    console.log("Email sent successfully via SMTP");
+    console.log("Email sent successfully via Resend API");
 
     return new Response(
       JSON.stringify({ 
