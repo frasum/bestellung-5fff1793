@@ -47,7 +47,7 @@ export function useSupplierArticleEditing({
     }
   }, [initialDraftData]);
 
-  const handleFieldChange = (articleId: string, field: keyof Article, value: any) => {
+  const handleFieldChange = (articleId: string, field: keyof Article, value: Article[keyof Article]) => {
     setEditedArticles(prev => ({
       ...prev,
       [articleId]: {
@@ -216,10 +216,10 @@ export function useSupplierArticleEditing({
         ...Object.keys(orderUnitInputs),
       ]);
 
-      const articleChanges: Array<{ articleId: string; changes: Record<string, any> }> = [];
+      const articleChanges: Array<{ articleId: string; changes: Partial<Article> }> = [];
       
       for (const articleId of changedIds) {
-        const changes: Record<string, any> = { ...editedArticles[articleId] };
+        const changes: Partial<Article> = { ...editedArticles[articleId] };
         
         if (priceInputs[articleId] !== undefined) {
           const priceValue = priceInputs[articleId].replace(',', '.');

@@ -25,11 +25,27 @@ interface B2BSupplier {
   name: string;
 }
 
+interface B2BOffer {
+  id: string;
+  supplier_id?: string;
+  valid_until?: string;
+  notes?: string;
+  customer: { id: string };
+  items: Array<{
+    id: string;
+    article_id: string | null;
+    article_name: string;
+    quantity: number;
+    unit: string;
+    unit_price: number;
+  }>;
+}
+
 interface B2BOfferFormDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   accountId: string;
-  offer?: any;
+  offer?: B2BOffer;
   selectedSupplierId?: string;
   suppliers?: B2BSupplier[];
   onSuccess: () => void;
@@ -92,7 +108,7 @@ export default function B2BOfferFormDialog({
         setValidUntil(offer.valid_until ? offer.valid_until.split('T')[0] : '');
         setNotes(offer.notes || '');
         setItems(
-          offer.items.map((item: any) => ({
+          offer.items.map((item) => ({
             id: item.id,
             article_id: item.article_id,
             article_name: item.article_name,

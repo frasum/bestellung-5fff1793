@@ -240,7 +240,7 @@ export const exportInventoryToExcel = async (
   // Group articles by category
   const categoryGroups = groupByCategory(articles, inventoryItems);
   
-  const data: any[] = [];
+  const data: Record<string, string | number>[] = [];
   let grandTotalQuantity = 0;
   let grandTotalValue = 0;
 

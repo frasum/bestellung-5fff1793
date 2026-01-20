@@ -5,9 +5,15 @@ import { Input } from '@/components/ui/input';
 import { Supplier } from '@/hooks/useSuppliers';
 import { ArticleFormData } from '../schemas';
 
+interface EditingArticle {
+  id: string;
+  name: string;
+  supplier_id?: string;
+}
+
 interface BasicInfoSectionProps {
   form: UseFormReturn<ArticleFormData>;
-  editingArticle: any;
+  editingArticle: EditingArticle | null;
   preselectedSupplierId?: string | null;
   suppliers: Supplier[];
 }

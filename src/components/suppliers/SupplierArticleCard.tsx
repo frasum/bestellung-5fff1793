@@ -69,7 +69,7 @@ interface SupplierArticleCardProps {
   uploadingImage?: string | null;
   /** Optional: External order units (used in supplier portal) */
   orderUnits?: MinimalOrderUnit[];
-  onFieldChange: (articleId: string, field: keyof Article, value: any) => void;
+  onFieldChange: (articleId: string, field: keyof Article, value: Article[keyof Article]) => void;
   onPriceChange: (articleId: string, value: string) => void;
   onAnnualOrderValueChange: (articleId: string, value: string) => void;
   onOrderUnitChange: (articleId: string, value: string) => void;

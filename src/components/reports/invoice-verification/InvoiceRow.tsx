@@ -1,5 +1,6 @@
 import { format } from 'date-fns';
 import { de, enUS } from 'date-fns/locale';
+import { TFunction } from 'i18next';
 import {
   ChevronDown,
   ChevronRight,
@@ -51,7 +52,7 @@ interface InvoiceRowProps {
     createArticles: boolean;
   };
   showSupplierName: boolean;
-  t: any;
+  t: TFunction<'translation', undefined>;
 }
 
 export function InvoiceRow({
