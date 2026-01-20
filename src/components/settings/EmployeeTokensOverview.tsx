@@ -11,10 +11,42 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { User, ChevronDown, ChevronRight, Copy, QrCode, Pencil, Trash2, ExternalLink, Printer, Package, Link2, Phone, Mail, MessageCircle, KeyRound, Shield, ShieldAlert, Camera, Wine } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+// Token type definitions
+interface TokenSupplier {
+  supplier?: { id: string; name: string } | null;
+}
+
+interface EmployeeToken {
+  id: string;
+  token: string;
+  is_active: boolean;
+  is_multi_supplier?: boolean;
+  wine_catalog_access?: string | null;
+  language?: string | null;
+  supplier_id?: string | null;
+  supplier?: { id: string; name: string } | null;
+  location?: { id: string; name: string; short_code?: string | null } | null;
+  employee_id?: string | null;
+  employee_name?: string | null;
+  employee?: {
+    id: string;
+    name: string;
+    phone?: string | null;
+    email?: string | null;
+    pin_code?: string | null;
+    voice_input_enabled?: boolean;
+    auto_approve_orders?: boolean;
+    can_add_free_items?: boolean;
+    can_capture_photos?: boolean;
+    language?: string | null;
+    wine_catalog_access?: string | null;
+  } | null;
+  token_suppliers?: TokenSupplier[];
+}
 
 interface EmployeeTokensOverviewProps {
-  tokens: any[];
-  onEdit: (token: any) => void;
+  tokens: EmployeeToken[];
+  onEdit: (token: EmployeeToken) => void;
   onToggleActive: (id: string, isActive: boolean) => void;
   onDelete: (id: string) => void;
   onUpdateEmployeePin?: (employeeId: string, pin: string | null) => Promise<void>;
@@ -35,11 +67,11 @@ export function EmployeeTokensOverview({ tokens, onEdit, onToggleActive, onDelet
   const [selectedQrToken, setSelectedQrToken] = useState<string | null>(null);
   
   // PIN Dialog state
-  const [pinDialogToken, setPinDialogToken] = useState<any | null>(null);
+  const [pinDialogToken, setPinDialogToken] = useState<EmployeeToken | null>(null);
   const [pinValue, setPinValue] = useState('');
   const [isSavingPin, setIsSavingPin] = useState(false);
 
-  const openPinDialog = (token: any) => {
+  const openPinDialog = (token: EmployeeToken) => {
     setPinDialogToken(token);
     // Don't pre-populate - PIN is now hashed and not readable
     setPinValue('');
@@ -84,13 +116,13 @@ export function EmployeeTokensOverview({ tokens, onEdit, onToggleActive, onDelet
 
   // Group tokens by supplier
   const groupedTokens = useMemo(() => {
-    const groups: Record<string, any[]> = {};
+    const groups: Record<string, EmployeeToken[]> = {};
     
     tokens.forEach(token => {
       let key: string;
       
       // Check if this is a wine-only token (has wine access but no suppliers)
-      const hasWineAccess = token.employee?.wine_catalog_access && token.employee?.wine_catalog_access !== 'none';
+      const hasWineAccess = token.wine_catalog_access && token.wine_catalog_access !== 'none';
       const hasNoSuppliers = !token.is_multi_supplier && !token.supplier_id && (!token.token_suppliers || token.token_suppliers.length === 0);
       
       if (hasWineAccess && hasNoSuppliers) {
@@ -177,14 +209,14 @@ export function EmployeeTokensOverview({ tokens, onEdit, onToggleActive, onDelet
     window.open(`https://wa.me/${cleanPhone}?text=${message}`, '_blank');
   };
 
-  const getLinkedSupplierNames = (token: any) => {
+  const getLinkedSupplierNames = (token: EmployeeToken) => {
     if (token.is_multi_supplier && token.token_suppliers) {
-      return token.token_suppliers.map((ts: any) => ts.supplier?.name).filter(Boolean).join(', ');
+      return token.token_suppliers.map((ts) => ts.supplier?.name).filter(Boolean).join(', ');
     }
     return '';
   };
 
-  const printAllQrCodes = (groupTokens: any[], supplierName: string) => {
+  const printAllQrCodes = (groupTokens: EmployeeToken[], supplierName: string) => {
     const printWindow = window.open('', '_blank');
     if (!printWindow) return;
 

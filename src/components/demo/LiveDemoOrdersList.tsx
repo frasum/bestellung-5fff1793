@@ -73,7 +73,17 @@ export function LiveDemoOrdersList() {
 
       if (error) throw error;
 
-      const formattedOrders = (data || []).map((o: any) => ({
+      const formattedOrders = (data || []).map((o: {
+        id: string;
+        order_number: string;
+        created_at: string;
+        total_amount: number;
+        status: string;
+        notes: string | null;
+        suppliers: { name: string } | null;
+        employees: { name: string } | null;
+        order_items: OrderItem[];
+      }) => ({
         ...o,
         supplier: o.suppliers,
         employee: o.employees,

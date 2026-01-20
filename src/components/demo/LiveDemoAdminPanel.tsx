@@ -81,7 +81,14 @@ const fetchEasyOrderDrafts = async (): Promise<CartDraft[]> => {
 
   return (data || []).map(d => ({
     ...d,
-    items: (d.cart_draft_items || []).map((item: any) => ({
+    items: (d.cart_draft_items || []).map((item: {
+      id: string;
+      article_id: string | null;
+      quantity: number;
+      supplier_id: string | null;
+      articles?: { id: string; name: string; unit: string; price: number } | null;
+      suppliers?: { id: string; name: string } | null;
+    }) => ({
       id: item.id,
       article_id: item.article_id,
       quantity: item.quantity,
@@ -153,7 +160,7 @@ export function LiveDemoAdminPanel({ soundEnabled, onOrderCreated }: LiveDemoAdm
         schema: 'public',
         table: 'cart_drafts'
       }, (payload) => {
-        const newDraft = payload.new as any;
+        const newDraft = payload.new as { name?: string };
         if (newDraft.name?.startsWith('EasyOrder:')) {
           console.log('🔔 LiveDemoAdminPanel: New EasyOrder draft detected, refetching...');
           refetchDrafts();
