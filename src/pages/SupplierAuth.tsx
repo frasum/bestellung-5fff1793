@@ -74,9 +74,10 @@ const SupplierAuth = () => {
         setTimeout(() => {
           navigate('/supplier-portal');
         }, 1500);
-      } catch {
-        setStatus('error');
-        setErrorMessage('Ein Fehler ist aufgetreten');
+    } catch (error) {
+      console.error('Token verification failed:', error);
+      setStatus('error');
+      setErrorMessage('Ein Fehler ist aufgetreten');
       }
     };
 
@@ -106,7 +107,8 @@ const SupplierAuth = () => {
         title: 'Link gesendet',
         description: 'Ein neuer Zugangslink wurde an Ihre E-Mail-Adresse gesendet.',
       });
-    } catch {
+    } catch (error) {
+      console.error('Failed to request new magic link:', error);
       toast({
         title: 'Fehler',
         description: 'Der Link konnte nicht gesendet werden. Bitte versuchen Sie es später erneut.',

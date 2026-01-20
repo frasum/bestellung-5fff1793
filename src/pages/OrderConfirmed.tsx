@@ -66,8 +66,8 @@ const OrderConfirmed = () => {
         const details = await response.json();
         setOrderDetails(details);
       }
-    } catch {
-      // Silently handle fetch errors
+    } catch (error) {
+      console.error('Failed to fetch order details:', error);
     } finally {
       setIsLoadingDetails(false);
     }

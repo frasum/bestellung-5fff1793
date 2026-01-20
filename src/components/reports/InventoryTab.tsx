@@ -539,7 +539,8 @@ export const InventoryTab = () => {
       toast.success(t('inventory.priceUpdated'));
       setEditingPriceId(null);
       setEditingPriceValue('');
-    } catch {
+    } catch (error) {
+      console.error('Failed to save price:', error);
       toast.error(t('inventory.saveError'));
     }
   };
@@ -565,7 +566,8 @@ export const InventoryTab = () => {
       toast.success(t('inventory.unitUpdated'));
       setEditingUnitId(null);
       setEditingUnitValue('');
-    } catch {
+    } catch (error) {
+      console.error('Failed to save unit:', error);
       toast.error(t('inventory.saveError'));
     }
   };
