@@ -323,8 +323,8 @@ export const ArticleTable = ({
                           <TableCell className="hidden sm:table-cell text-muted-foreground py-2">{article.suppliers?.name}</TableCell>
                           {/* STÜCK/BE Spalte */}
                           <TableCell className="text-center text-muted-foreground py-2 w-20">
-                            {(article as any).packaging_unit && (article as any).packaging_unit > 1 
-                              ? `${(article as any).packaging_unit}x` 
+                            {article.packaging_unit && article.packaging_unit > 1 
+                              ? `${article.packaging_unit}x` 
                               : '-'}
                           </TableCell>
                           <TableCell className="text-right font-medium py-2">
@@ -343,7 +343,7 @@ export const ArticleTable = ({
                                   ? orderUnits.find(u => u.id === article.order_unit_id)
                                   : null;
                                 // Berechne Multiplikator: packaging_unit falls vorhanden, sonst orderUnit.quantity
-                                const packagingUnit = (article as any).packaging_unit;
+                                const packagingUnit = article.packaging_unit;
                                 const multiplier = packagingUnit && packagingUnit > 0 
                                   ? packagingUnit 
                                   : (orderUnit?.quantity || 1);

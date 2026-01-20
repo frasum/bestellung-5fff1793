@@ -91,7 +91,7 @@ export const WinesTab = ({ articles, suppliers, onEditArticle }: WinesTabProps) 
     
     try {
       await generateWineCatalogPdf(
-        wineArticles as any,
+        wineArticles,
         suppliers,
         undefined,
         (current, total) => setPdfProgress({ current, total })

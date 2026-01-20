@@ -246,9 +246,10 @@ const Checkout = () => {
         .single();
 
       // Use location name as restaurant name if available, fallback to organization name
-      const restaurantName = activeLocation?.name || (profile?.organizations as any)?.name || 'Restaurant';
+      const organizations = profile?.organizations as { name: string; test_mode_enabled: boolean } | null;
+      const restaurantName = activeLocation?.name || organizations?.name || 'Restaurant';
       const locationEmail = activeLocation?.email || undefined;
-      const isTestMode = (profile?.organizations as any)?.test_mode_enabled || false;
+      const isTestMode = organizations?.test_mode_enabled || false;
 
       // Format delivery info for notes
       const deliveryDateStr = format(data.deliveryDate, 'dd.MM.yyyy', { locale: de });

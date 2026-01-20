@@ -555,7 +555,7 @@ export const FunctionsOverviewDiagram = () => {
           </SheetHeader>
           <ScrollArea className="h-[calc(100vh-10rem)] mt-4">
             <div className="space-y-3">
-              {detailSheet.data?.functions?.map((fn: any) => (
+              {detailSheet.data?.functions?.map((fn: { name: string; desc: string; jwt?: boolean; returns?: string }) => (
                 <Card key={fn.name}>
                   <CardHeader className="pb-2">
                     <div className="flex items-center justify-between">

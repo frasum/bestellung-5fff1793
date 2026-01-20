@@ -81,8 +81,8 @@ export const ArticleCard = memo(({
           <Badge variant="outline" className="text-xs gap-1 font-normal mt-1">
             <Package className="h-3 w-3" />
             {orderUnit ? orderUnit.name : article.unit}
-            {(article as any).packaging_unit && (article as any).packaging_unit > 1 && (
-              <span className="ml-0.5 text-muted-foreground">({(article as any).packaging_unit}x)</span>
+            {article.packaging_unit && article.packaging_unit > 1 && (
+              <span className="ml-0.5 text-muted-foreground">({article.packaging_unit}x)</span>
             )}
           </Badge>
           {article.reference_price && article.reference_unit && (
