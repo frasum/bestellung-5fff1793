@@ -69,7 +69,7 @@ interface SuppliersDialogsProps {
   onUpgradeDialogChange: (open: boolean) => void;
   subscriptionTier: string;
   suppliersCount: number;
-  suppliersLimit: number;
+  suppliersLimit: number | 'unlimited';
   
   // Quick capture
   isQuickCaptureOpen: boolean;
@@ -87,10 +87,10 @@ interface SuppliersDialogsProps {
   // Import dialogs
   isSupplierImportOpen: boolean;
   onSupplierImportChange: (open: boolean) => void;
-  onImportSuppliers: (data: any[]) => Promise<void>;
+  onImportSuppliers: (data: any[]) => Promise<number | void>;
   articleImportSupplierId: string | null;
   onArticleImportClose: () => void;
-  onImportArticlesData: (data: { articles: any[]; defaultSupplierId: string }) => Promise<void>;
+  onImportArticlesData: (data: { articles: any[]; defaultSupplierId: string }) => Promise<number | void>;
   
   // Add article sheet
   addArticleSheet: { open: boolean; supplierId: string; supplierName: string };
@@ -262,7 +262,7 @@ export const SuppliersDialogs = memo(function SuppliersDialogs({
         onOpenChange={onSupplierImportChange}
         title="Lieferanten importieren"
         fields={SUPPLIER_IMPORT_FIELDS}
-        onImport={onImportSuppliers}
+        onImport={async (data) => { await onImportSuppliers(data); }}
         templateFileName="suppliers_template.csv"
       />
 
