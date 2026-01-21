@@ -115,7 +115,7 @@ export function ArticlePreviewPanel({ articles, onArticleUpdate }: ArticlePrevie
     }
     
     bulkUpdate.mutate(
-      { ids: [selectedArticle.id], updates: updates as any },
+      { ids: [selectedArticle.id], updates },
       {
         onSuccess: () => {
           toast.success('Artikel aktualisiert');

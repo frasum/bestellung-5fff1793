@@ -557,7 +557,7 @@ const WineCard = ({ wine, onEdit }: WineCardProps) => {
       const { data, error } = await supabase.functions.invoke('research-wine', {
         body: {
           wineName: wine.name,
-          origin_country: (wine as any).origin_country,
+          origin_country: wine.origin_country,
         },
       });
 

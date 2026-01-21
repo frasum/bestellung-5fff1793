@@ -146,7 +146,19 @@ const B2BArticleImportDialog = ({
     try {
       const selectedArticles = articles.filter(a => selectedIds.has(a.id));
       
-      const articlesToImport = selectedArticles.map(article => ({
+      const articlesToImport: Array<{
+        supplier_account_id: string;
+        supplier_id: string | null;
+        name: string;
+        description: string | null;
+        sku: string | null;
+        unit: string;
+        base_price: number;
+        image_url: string | null;
+        category: string | null;
+        is_active: boolean;
+        source_article_id: string;
+      }> = selectedArticles.map(article => ({
         supplier_account_id: accountId,
         supplier_id: selectedSupplierId || null,
         name: article.name,
@@ -157,12 +169,12 @@ const B2BArticleImportDialog = ({
         image_url: article.image_url,
         category: article.category,
         is_active: true,
-        source_article_id: article.id, // Link to original Bestellung.pro article
+        source_article_id: article.id,
       }));
 
       const { error } = await supabase
         .from('supplier_b2b_articles')
-        .insert(articlesToImport as any);
+        .insert(articlesToImport);
 
       if (error) throw error;
 

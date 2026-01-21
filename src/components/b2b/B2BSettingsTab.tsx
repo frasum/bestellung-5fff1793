@@ -306,7 +306,7 @@ const B2BSettingsTab = ({ account, onUpdate, selectedSupplierId, suppliers: dash
           role: inviteRole as 'owner' | 'manager' | 'viewer',
           email: inviteEmail,
           name: inviteName || null,
-        } as any);
+        });
 
       if (insertError) throw insertError;
 
