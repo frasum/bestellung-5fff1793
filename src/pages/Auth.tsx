@@ -1,62 +1,33 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Mail, Lock, User, Building2, ArrowRight, Loader2, Play, Users, FlaskConical, Mic, ClipboardList } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { Users, Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
-import { supabase } from '@/integrations/supabase/client';
 import logoImage from '@/assets/logo.png';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import { useTranslation } from 'react-i18next';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
-const loginSchema = z.object({
-  email: z.string().email('Please enter a valid email address'),
-  password: z.string().min(6, 'Password must be at least 6 characters'),
-});
-
-const signupSchema = z.object({
-  fullName: z.string().min(2, 'Name must be at least 2 characters'),
-  email: z.string().email('Please enter a valid email address'),
-  password: z.string().min(6, 'Password must be at least 6 characters'),
-  confirmPassword: z.string(),
-}).refine((data) => data.password === data.confirmPassword, {
-  message: "Passwords don't match",
-  path: ['confirmPassword'],
-});
-
-const signupWithOrgSchema = z.object({
-  fullName: z.string().min(2, 'Name must be at least 2 characters'),
-  organizationName: z.string().min(2, 'Restaurant name must be at least 2 characters'),
-  email: z.string().email('Please enter a valid email address'),
-  password: z.string().min(6, 'Password must be at least 6 characters'),
-  confirmPassword: z.string(),
-}).refine((data) => data.password === data.confirmPassword, {
-  message: "Passwords don't match",
-  path: ['confirmPassword'],
-});
-
-const demoSchema = z.object({
-  email: z.string().email('Bitte geben Sie eine gültige E-Mail-Adresse ein'),
-});
-
-type LoginFormData = z.infer<typeof loginSchema>;
-type SignupFormData = z.infer<typeof signupSchema>;
-type SignupWithOrgFormData = z.infer<typeof signupWithOrgSchema>;
-type DemoFormData = z.infer<typeof demoSchema>;
-
-type AuthTab = 'login' | 'signup' | 'demo';
+// Refactored components
+import {
+  loginSchema,
+  signupSchema,
+  signupWithOrgSchema,
+  demoSchema,
+  LoginFormData,
+  SignupFormData,
+  SignupWithOrgFormData,
+  DemoFormData,
+  AuthTab,
+  useInvitation,
+  useDemoAccount,
+  LoginForm,
+  SignupForm,
+  SignupWithOrgForm,
+  DemoTab,
+  DemoDialogs,
+  AuthTabs,
+} from '@/components/auth';
 
 const Auth = () => {
   const [searchParams] = useSearchParams();
@@ -68,76 +39,20 @@ const Auth = () => {
   const [showEmptyDemoDialog, setShowEmptyDemoDialog] = useState(false);
   const [showVoiceOnboardingDialog, setShowVoiceOnboardingDialog] = useState(false);
   const [showQuestionOnboardingDialog, setShowQuestionOnboardingDialog] = useState(false);
-  const [isDemoLoading, setIsDemoLoading] = useState(false);
-  const [isEmptyDemoLoading, setIsEmptyDemoLoading] = useState(false);
-  const [isVoiceOnboardingLoading, setIsVoiceOnboardingLoading] = useState(false);
-  const [isQuestionOnboardingLoading, setIsQuestionOnboardingLoading] = useState(false);
-  const [isAcceptingInvitation, setIsAcceptingInvitation] = useState(false);
-  const [advancedSettingsEnabled, setAdvancedSettingsEnabled] = useState(() => {
-    return localStorage.getItem('advanced-settings-enabled') === 'true';
-  });
+
   const { user, signIn, signUp } = useAuth();
   const navigate = useNavigate();
-  const { t } = useTranslation();
+  
+  const { isAcceptingInvitation, acceptInvitation } = useInvitation(inviteToken);
+  const {
+    isDemoLoading,
+    isEmptyDemoLoading,
+    isVoiceOnboardingLoading,
+    isQuestionOnboardingLoading,
+    handleStartDemo,
+  } = useDemoAccount();
 
-  // Listen for advanced settings changes
-  useEffect(() => {
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'advanced-settings-enabled') {
-        setAdvancedSettingsEnabled(e.newValue === 'true');
-      }
-    };
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
-  }, []);
-
-  // Handle invitation acceptance after login/signup
-  const acceptInvitation = async () => {
-    if (!inviteToken) return true;
-    
-    setIsAcceptingInvitation(true);
-    try {
-      const { data, error } = await supabase.functions.invoke('accept-invitation', {
-        body: { token: inviteToken }
-      });
-
-      if (error) {
-        console.error('Accept invitation error:', error);
-        toast.error('Fehler beim Annehmen der Einladung');
-        return false;
-      }
-
-      if (data?.error) {
-        toast.error(data.error);
-        return false;
-      }
-
-      toast.success(`Willkommen im Team von ${data.organizationName}!`);
-      return true;
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Unbekannter Fehler';
-      console.error('Accept invitation error:', message);
-      toast.error('Fehler beim Annehmen der Einladung');
-      return false;
-    } finally {
-      setIsAcceptingInvitation(false);
-    }
-  };
-
-  useEffect(() => {
-    if (user && !inviteToken) {
-        navigate('/suppliers');
-    }
-    // If user is logged in and has invite token, accept the invitation
-    if (user && inviteToken) {
-      acceptInvitation().then((success) => {
-        if (success) {
-          navigate('/suppliers');
-        }
-      });
-    }
-  }, [user, navigate, inviteToken]);
-
+  // Forms
   const loginForm = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
     defaultValues: { email: '', password: '' },
@@ -158,6 +73,20 @@ const Auth = () => {
     defaultValues: { email: '' },
   });
 
+  // Handle user navigation
+  useEffect(() => {
+    if (user && !inviteToken) {
+      navigate('/suppliers');
+    }
+    if (user && inviteToken) {
+      acceptInvitation().then((success) => {
+        if (success) {
+          navigate('/suppliers');
+        }
+      });
+    }
+  }, [user, navigate, inviteToken]);
+
   const handleLogin = async (data: LoginFormData) => {
     setIsLoading(true);
     const { error } = await signIn(data.email, data.password);
@@ -174,29 +103,23 @@ const Auth = () => {
       return;
     }
 
-    // If there's an invite token, wait for the user state to update
-    // The useEffect will handle accepting the invitation
     if (inviteToken) {
-      // Wait a moment for auth state to propagate
       await new Promise(resolve => setTimeout(resolve, 500));
       const success = await acceptInvitation();
       setIsLoading(false);
       if (success) {
         toast.success('Erfolgreich angemeldet!');
-          navigate('/suppliers');
+        navigate('/suppliers');
       }
     } else {
       setIsLoading(false);
       toast.success('Welcome back!');
-          navigate('/suppliers');
+      navigate('/suppliers');
     }
   };
 
   const handleSignup = async (data: SignupFormData) => {
     setIsLoading(true);
-    
-    // For invited users, we create account without organization name
-    // The organization will be set by accept-invitation
     const { error } = await signUp(data.email, data.password, data.fullName, 'Pending Organization');
     
     if (error) {
@@ -210,14 +133,13 @@ const Auth = () => {
       return;
     }
 
-    // Wait for auth state to propagate
     await new Promise(resolve => setTimeout(resolve, 500));
     const success = await acceptInvitation();
     setIsLoading(false);
     
     if (success) {
       toast.success('Konto erstellt! Weiterleitung...');
-          navigate('/suppliers');
+      navigate('/suppliers');
     }
   };
 
@@ -234,148 +156,11 @@ const Auth = () => {
       }
     } else {
       toast.success('Account created! Redirecting...');
-          navigate('/suppliers');
+      navigate('/suppliers');
     }
   };
 
-  const handleStartDemo = async (data: DemoFormData, emptyAccount = false) => {
-    const setLoading = emptyAccount ? setIsEmptyDemoLoading : setIsDemoLoading;
-    setLoading(true);
-    
-    try {
-      const { data: result, error } = await supabase.functions.invoke('create-demo-account', {
-        body: { email: data.email, emptyAccount }
-      });
-
-      if (error) {
-        toast.error(error.message || 'Fehler beim Erstellen des Demo-Accounts');
-        setLoading(false);
-        return;
-      }
-
-      if (result?.error) {
-        toast.error(result.error);
-        setLoading(false);
-        return;
-      }
-
-      if (result?.session) {
-        // Set the session
-        await supabase.auth.setSession({
-          access_token: result.session.access_token,
-          refresh_token: result.session.refresh_token,
-        });
-        
-        toast.success(emptyAccount 
-          ? 'Leerer Demo-Account erstellt! Testen Sie das Onboarding.' 
-          : 'Demo-Account erstellt! Willkommen bei Bestellung.pro'
-        );
-        setShowDemoDialog(false);
-        setShowEmptyDemoDialog(false);
-        navigate('/suppliers');
-      } else if (result?.needsManualLogin) {
-        toast.success('Demo-Account erstellt! Bitte melden Sie sich mit der E-Mail an.');
-        setShowDemoDialog(false);
-        setShowEmptyDemoDialog(false);
-      }
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Unbekannter Fehler';
-      console.error('Demo error:', message);
-      toast.error('Ein unerwarteter Fehler ist aufgetreten');
-    }
-    
-    setLoading(false);
-  };
-
-  const handleStartEmptyDemo = async (data: DemoFormData) => {
-    await handleStartDemo(data, true);
-  };
-
-  const handleStartVoiceOnboarding = async (data: DemoFormData) => {
-    setIsVoiceOnboardingLoading(true);
-    
-    try {
-      const { data: result, error } = await supabase.functions.invoke('create-demo-account', {
-        body: { email: data.email, emptyAccount: true }
-      });
-
-      if (error) {
-        toast.error(error.message || 'Fehler beim Erstellen des Demo-Accounts');
-        setIsVoiceOnboardingLoading(false);
-        return;
-      }
-
-      if (result?.error) {
-        toast.error(result.error);
-        setIsVoiceOnboardingLoading(false);
-        return;
-      }
-
-      if (result?.session) {
-        await supabase.auth.setSession({
-          access_token: result.session.access_token,
-          refresh_token: result.session.refresh_token,
-        });
-        
-        toast.success('Demo-Account erstellt! Starte Sprach-Onboarding...');
-        setShowVoiceOnboardingDialog(false);
-        navigate('/onboarding');
-      } else if (result?.needsManualLogin) {
-        toast.success('Demo-Account erstellt! Bitte melden Sie sich an.');
-        setShowVoiceOnboardingDialog(false);
-      }
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Unbekannter Fehler';
-      console.error('Voice onboarding error:', message);
-      toast.error('Ein unerwarteter Fehler ist aufgetreten');
-    }
-    
-    setIsVoiceOnboardingLoading(false);
-  };
-
-  const handleStartQuestionOnboarding = async (data: DemoFormData) => {
-    setIsQuestionOnboardingLoading(true);
-    
-    try {
-      const { data: result, error } = await supabase.functions.invoke('create-demo-account', {
-        body: { email: data.email, emptyAccount: true }
-      });
-
-      if (error) {
-        toast.error(error.message || 'Fehler beim Erstellen des Demo-Accounts');
-        setIsQuestionOnboardingLoading(false);
-        return;
-      }
-
-      if (result?.error) {
-        toast.error(result.error);
-        setIsQuestionOnboardingLoading(false);
-        return;
-      }
-
-      if (result?.session) {
-        await supabase.auth.setSession({
-          access_token: result.session.access_token,
-          refresh_token: result.session.refresh_token,
-        });
-        
-        toast.success('Demo-Account erstellt! Starte Fragebogen-Onboarding...');
-        setShowQuestionOnboardingDialog(false);
-        navigate('/onboarding/questions');
-      } else if (result?.needsManualLogin) {
-        toast.success('Demo-Account erstellt! Bitte melden Sie sich an.');
-        setShowQuestionOnboardingDialog(false);
-      }
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Unbekannter Fehler';
-      console.error('Question onboarding error:', message);
-      toast.error('Ein unerwarteter Fehler ist aufgetreten');
-    }
-    
-    setIsQuestionOnboardingLoading(false);
-  };
-
-  // Show loading state while accepting invitation for logged-in user
+  // Show loading state while accepting invitation
   if (user && inviteToken && isAcceptingInvitation) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-accent/5 flex items-center justify-center p-4">
@@ -411,324 +196,37 @@ const Auth = () => {
 
         {/* Card */}
         <div className="bg-card border border-border rounded-2xl shadow-lg p-8">
-          {/* Tabs */}
-          <div className="flex gap-2 mb-8 p-1 bg-muted rounded-lg">
-            <button
-              onClick={() => setActiveTab('login')}
-              className={`flex-1 py-2.5 text-center font-medium rounded-md transition-all duration-200 ${
-                activeTab === 'login'
-                  ? 'bg-accent text-accent-foreground shadow-sm'
-                  : 'text-muted-foreground hover:text-accent'
-              }`}
-            >
-              {t('auth.signIn')}
-            </button>
-            <button
-              onClick={() => setActiveTab('signup')}
-              className={`flex-1 py-2.5 text-center font-medium rounded-md transition-all duration-200 ${
-                activeTab === 'signup'
-                  ? 'bg-accent text-accent-foreground shadow-sm'
-                  : 'text-muted-foreground hover:text-accent'
-              }`}
-            >
-              {t('auth.signUp')}
-            </button>
-            {!inviteToken && (
-              <button
-                onClick={() => setActiveTab('demo')}
-                className={`flex-1 py-2.5 text-center font-medium rounded-md transition-all duration-200 ${
-                  activeTab === 'demo'
-                    ? 'bg-accent text-accent-foreground shadow-sm'
-                    : 'text-muted-foreground hover:text-accent'
-                }`}
-              >
-                Demo
-              </button>
-            )}
-          </div>
+          <AuthTabs 
+            activeTab={activeTab} 
+            setActiveTab={setActiveTab} 
+            hideDemo={!!inviteToken} 
+          />
 
           {activeTab === 'login' ? (
-            /* Login Form */
-            <form onSubmit={loginForm.handleSubmit(handleLogin)} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="login-email">Email</Label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                  <Input
-                    id="login-email"
-                    type="email"
-                    placeholder="you@restaurant.com"
-                    className="pl-10"
-                    {...loginForm.register('email')}
-                  />
-                </div>
-                {loginForm.formState.errors.email && (
-                  <p className="text-sm text-destructive">{loginForm.formState.errors.email.message}</p>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="login-password">{t('auth.password')}</Label>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                  <Input
-                    id="login-password"
-                    type="password"
-                    placeholder="••••••••"
-                    className="pl-10"
-                    {...loginForm.register('password')}
-                  />
-                </div>
-                {loginForm.formState.errors.password && (
-                  <p className="text-sm text-destructive">{loginForm.formState.errors.password.message}</p>
-                )}
-              </div>
-
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <>
-                    {inviteToken ? 'Anmelden & Team beitreten' : t('auth.signIn')}
-                    <ArrowRight className="w-4 h-4 ml-2" />
-                  </>
-                )}
-              </Button>
-            </form>
+            <LoginForm
+              form={loginForm}
+              onSubmit={handleLogin}
+              isLoading={isLoading}
+              hasInviteToken={!!inviteToken}
+            />
           ) : activeTab === 'signup' && inviteToken ? (
-            /* Signup Form for Invited Users (no organization name) */
-            <form onSubmit={signupForm.handleSubmit(handleSignup)} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="signup-name">{t('auth.fullName')}</Label>
-                <div className="relative">
-                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                  <Input
-                    id="signup-name"
-                    type="text"
-                    placeholder="Max Mustermann"
-                    className="pl-10"
-                    {...signupForm.register('fullName')}
-                  />
-                </div>
-                {signupForm.formState.errors.fullName && (
-                  <p className="text-sm text-destructive">{signupForm.formState.errors.fullName.message}</p>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="signup-email">Email</Label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                  <Input
-                    id="signup-email"
-                    type="email"
-                    placeholder="you@restaurant.com"
-                    className="pl-10"
-                    {...signupForm.register('email')}
-                  />
-                </div>
-                {signupForm.formState.errors.email && (
-                  <p className="text-sm text-destructive">{signupForm.formState.errors.email.message}</p>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="signup-password">{t('auth.password')}</Label>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                  <Input
-                    id="signup-password"
-                    type="password"
-                    placeholder="••••••••"
-                    className="pl-10"
-                    {...signupForm.register('password')}
-                  />
-                </div>
-                {signupForm.formState.errors.password && (
-                  <p className="text-sm text-destructive">{signupForm.formState.errors.password.message}</p>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="signup-confirm">{t('settings.confirmPassword')}</Label>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                  <Input
-                    id="signup-confirm"
-                    type="password"
-                    placeholder="••••••••"
-                    className="pl-10"
-                    {...signupForm.register('confirmPassword')}
-                  />
-                </div>
-                {signupForm.formState.errors.confirmPassword && (
-                  <p className="text-sm text-destructive">{signupForm.formState.errors.confirmPassword.message}</p>
-                )}
-              </div>
-
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <>
-                    Konto erstellen & Team beitreten
-                    <ArrowRight className="w-4 h-4 ml-2" />
-                  </>
-                )}
-              </Button>
-            </form>
+            <SignupForm
+              form={signupForm}
+              onSubmit={handleSignup}
+              isLoading={isLoading}
+            />
           ) : activeTab === 'signup' ? (
-            /* Signup Form with Organization Name */
-            <form onSubmit={signupWithOrgForm.handleSubmit(handleSignupWithOrg)} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="signup-name">{t('auth.fullName')}</Label>
-                <div className="relative">
-                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                  <Input
-                    id="signup-name"
-                    type="text"
-                    placeholder="John Doe"
-                    className="pl-10"
-                    {...signupWithOrgForm.register('fullName')}
-                  />
-                </div>
-                {signupWithOrgForm.formState.errors.fullName && (
-                  <p className="text-sm text-destructive">{signupWithOrgForm.formState.errors.fullName.message}</p>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="signup-org">Restaurant Name</Label>
-                <div className="relative">
-                  <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                  <Input
-                    id="signup-org"
-                    type="text"
-                    placeholder="Bella Vista Restaurant"
-                    className="pl-10"
-                    {...signupWithOrgForm.register('organizationName')}
-                  />
-                </div>
-                {signupWithOrgForm.formState.errors.organizationName && (
-                  <p className="text-sm text-destructive">{signupWithOrgForm.formState.errors.organizationName.message}</p>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="signup-email">Email</Label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                  <Input
-                    id="signup-email"
-                    type="email"
-                    placeholder="you@restaurant.com"
-                    className="pl-10"
-                    {...signupWithOrgForm.register('email')}
-                  />
-                </div>
-                {signupWithOrgForm.formState.errors.email && (
-                  <p className="text-sm text-destructive">{signupWithOrgForm.formState.errors.email.message}</p>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="signup-password">{t('auth.password')}</Label>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                  <Input
-                    id="signup-password"
-                    type="password"
-                    placeholder="••••••••"
-                    className="pl-10"
-                    {...signupWithOrgForm.register('password')}
-                  />
-                </div>
-                {signupWithOrgForm.formState.errors.password && (
-                  <p className="text-sm text-destructive">{signupWithOrgForm.formState.errors.password.message}</p>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="signup-confirm">{t('settings.confirmPassword')}</Label>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                  <Input
-                    id="signup-confirm"
-                    type="password"
-                    placeholder="••••••••"
-                    className="pl-10"
-                    {...signupWithOrgForm.register('confirmPassword')}
-                  />
-                </div>
-                {signupWithOrgForm.formState.errors.confirmPassword && (
-                  <p className="text-sm text-destructive">{signupWithOrgForm.formState.errors.confirmPassword.message}</p>
-                )}
-              </div>
-
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <>
-                    {t('auth.createAccount')}
-                    <ArrowRight className="w-4 h-4 ml-2" />
-                  </>
-                )}
-              </Button>
-            </form>
+            <SignupWithOrgForm
+              form={signupWithOrgForm}
+              onSubmit={handleSignupWithOrg}
+              isLoading={isLoading}
+            />
           ) : (
-            /* Demo Tab Content */
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-foreground">Demo-Zugänge</h3>
-              
-              {/* Demo starten - Blue Card */}
-              <div
-                onClick={() => setShowDemoDialog(true)}
-                className="flex items-center gap-4 p-4 rounded-lg border-l-4 border-blue-500 bg-blue-50 dark:bg-blue-950/30 cursor-pointer hover:shadow-md transition-shadow"
-              >
-                <div className="flex-shrink-0">
-                  <Play className="h-6 w-6 text-blue-600" />
-                </div>
-                <div className="flex-1">
-                  <p className="font-medium text-blue-700 dark:text-blue-400">Demo starten</p>
-                  <p className="text-sm text-blue-600/70 dark:text-blue-400/70">
-                    7 Tage kostenlos mit Beispieldaten
-                  </p>
-                </div>
-              </div>
-
-              {/* Sprach-Onboarding - Green Card */}
-              <div
-                onClick={() => setShowVoiceOnboardingDialog(true)}
-                className="flex items-center gap-4 p-4 rounded-lg border-l-4 border-green-500 bg-green-50 dark:bg-green-950/30 cursor-pointer hover:shadow-md transition-shadow"
-              >
-                <div className="flex-shrink-0">
-                  <Mic className="h-6 w-6 text-green-600" />
-                </div>
-                <div className="flex-1">
-                  <p className="font-medium text-green-700 dark:text-green-400">Sprach-Onboarding</p>
-                  <p className="text-sm text-green-600/70 dark:text-green-400/70">
-                    Per Sprache einrichten
-                  </p>
-                </div>
-              </div>
-
-              {/* Fragebogen-Onboarding - Orange Card */}
-              <div
-                onClick={() => setShowQuestionOnboardingDialog(true)}
-                className="flex items-center gap-4 p-4 rounded-lg border-l-4 border-orange-500 bg-orange-50 dark:bg-orange-950/30 cursor-pointer hover:shadow-md transition-shadow"
-              >
-                <div className="flex-shrink-0">
-                  <ClipboardList className="h-6 w-6 text-orange-600" />
-                </div>
-                <div className="flex-1">
-                  <p className="font-medium text-orange-700 dark:text-orange-400">Fragebogen-Onboarding</p>
-                  <p className="text-sm text-orange-600/70 dark:text-orange-400/70">
-                    Schritt für Schritt einrichten
-                  </p>
-                </div>
-              </div>
-            </div>
+            <DemoTab
+              onOpenDemoDialog={() => setShowDemoDialog(true)}
+              onOpenVoiceDialog={() => setShowVoiceOnboardingDialog(true)}
+              onOpenQuestionDialog={() => setShowQuestionOnboardingDialog(true)}
+            />
           )}
 
           <p className="text-center text-sm text-muted-foreground mt-6">
@@ -740,278 +238,25 @@ const Auth = () => {
         </div>
       </div>
 
-      {/* Demo Dialog */}
-      <Dialog open={showDemoDialog} onOpenChange={setShowDemoDialog}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Play className="w-5 h-5 text-primary" />
-              Demo starten
-            </DialogTitle>
-            <DialogDescription>
-              Testen Sie Bestellung.pro 7 Tage kostenlos mit Beispieldaten. 
-              Geben Sie Ihre E-Mail-Adresse ein, um alle E-Mail-Funktionen live zu erleben.
-            </DialogDescription>
-          </DialogHeader>
-          
-          <form onSubmit={demoForm.handleSubmit((data) => handleStartDemo(data, false))} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="demo-email">E-Mail-Adresse</Label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input
-                  id="demo-email"
-                  type="email"
-                  placeholder="ihre@email.de"
-                  className="pl-10"
-                  {...demoForm.register('email')}
-                />
-              </div>
-              {demoForm.formState.errors.email && (
-                <p className="text-sm text-destructive">{demoForm.formState.errors.email.message}</p>
-              )}
-              <p className="text-xs text-muted-foreground">
-                Bestellungs-E-Mails werden an diese Adresse gesendet, damit Sie sehen, wie die Kommunikation mit Lieferanten aussieht.
-              </p>
-            </div>
-
-            <div className="bg-muted/50 rounded-lg p-3 text-sm">
-              <p className="font-medium mb-1">Was ist enthalten?</p>
-              <ul className="text-muted-foreground space-y-1 text-xs">
-                <li>• 4 Beispiel-Lieferanten mit 24 Artikeln</li>
-                <li>• Beispiel-Bestellungen zum Erkunden</li>
-                <li>• Alle Funktionen freigeschaltet</li>
-                <li>• Testmodus aktiv – E-Mails gehen an Sie</li>
-              </ul>
-            </div>
-
-            <div className="flex gap-3">
-              <Button 
-                type="button" 
-                variant="outline" 
-                className="flex-1"
-                onClick={() => setShowDemoDialog(false)}
-              >
-                Abbrechen
-              </Button>
-              <Button type="submit" className="flex-1" disabled={isDemoLoading}>
-                {isDemoLoading ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <>
-                    <Play className="w-4 h-4 mr-2" />
-                    Demo starten
-                  </>
-                )}
-              </Button>
-            </div>
-          </form>
-        </DialogContent>
-      </Dialog>
-
-      {/* Voice Onboarding Dialog */}
-      <Dialog open={showVoiceOnboardingDialog} onOpenChange={setShowVoiceOnboardingDialog}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Mic className="w-5 h-5 text-primary" />
-              Sprach-Onboarding starten
-            </DialogTitle>
-            <DialogDescription>
-              Unser KI-Assistent hilft Ihnen per Sprache, Ihre ersten Lieferanten 
-              und Artikel anzulegen. Einfach sprechen und fertig!
-            </DialogDescription>
-          </DialogHeader>
-          
-          <form onSubmit={demoForm.handleSubmit(handleStartVoiceOnboarding)} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="voice-demo-email">E-Mail-Adresse</Label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input
-                  id="voice-demo-email"
-                  type="email"
-                  placeholder="ihre@email.de"
-                  className="pl-10"
-                  {...demoForm.register('email')}
-                />
-              </div>
-              {demoForm.formState.errors.email && (
-                <p className="text-sm text-destructive">{demoForm.formState.errors.email.message}</p>
-              )}
-            </div>
-
-            <div className="bg-primary/5 border border-primary/20 rounded-lg p-3 text-sm">
-              <p className="font-medium mb-1 flex items-center gap-2">
-                <Mic className="w-4 h-4 text-primary" />
-                So funktioniert's
-              </p>
-              <ul className="text-muted-foreground space-y-1 text-xs">
-                <li>• Sprechen Sie mit unserem KI-Assistenten</li>
-                <li>• Nennen Sie Lieferanten und Artikel</li>
-                <li>• Der Assistent legt alles automatisch an</li>
-                <li>• Jederzeit pausieren oder stoppen</li>
-              </ul>
-            </div>
-
-            <div className="flex gap-3">
-              <Button 
-                type="button" 
-                variant="outline" 
-                className="flex-1"
-                onClick={() => setShowVoiceOnboardingDialog(false)}
-              >
-                Abbrechen
-              </Button>
-              <Button type="submit" className="flex-1" disabled={isVoiceOnboardingLoading}>
-                {isVoiceOnboardingLoading ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <>
-                    <Mic className="w-4 h-4 mr-2" />
-                    Jetzt starten
-                  </>
-                )}
-              </Button>
-            </div>
-          </form>
-        </DialogContent>
-      </Dialog>
-
-      {/* Empty Demo Dialog */}
-      <Dialog open={showEmptyDemoDialog} onOpenChange={setShowEmptyDemoDialog}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <FlaskConical className="w-5 h-5 text-primary" />
-              Leere Demo starten
-            </DialogTitle>
-            <DialogDescription>
-              Erstellen Sie einen Demo-Account ohne Beispieldaten, um das Onboarding 
-              mit Photo-Capture und Voice-Capture zu testen.
-            </DialogDescription>
-          </DialogHeader>
-          
-          <form onSubmit={demoForm.handleSubmit(handleStartEmptyDemo)} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="empty-demo-email">E-Mail-Adresse</Label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input
-                  id="empty-demo-email"
-                  type="email"
-                  placeholder="test@example.com"
-                  className="pl-10"
-                  {...demoForm.register('email')}
-                />
-              </div>
-              {demoForm.formState.errors.email && (
-                <p className="text-sm text-destructive">{demoForm.formState.errors.email.message}</p>
-              )}
-            </div>
-
-            <div className="bg-muted/50 rounded-lg p-3 text-sm">
-              <p className="font-medium mb-1">Was ist enthalten?</p>
-              <ul className="text-muted-foreground space-y-1 text-xs">
-                <li>• Leerer Katalog (keine Lieferanten/Artikel)</li>
-                <li>• 1 Standort + 1 Lieferadresse</li>
-                <li>• Testmodus aktiv – E-Mails gehen an Sie</li>
-                <li>• Onboarding-CTAs sichtbar</li>
-              </ul>
-            </div>
-
-            <div className="flex gap-3">
-              <Button 
-                type="button" 
-                variant="outline" 
-                className="flex-1"
-                onClick={() => setShowEmptyDemoDialog(false)}
-              >
-                Abbrechen
-              </Button>
-              <Button type="submit" className="flex-1" disabled={isEmptyDemoLoading}>
-                {isEmptyDemoLoading ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <>
-                    <FlaskConical className="w-4 h-4 mr-2" />
-                    Leere Demo starten
-                  </>
-                )}
-              </Button>
-            </div>
-          </form>
-        </DialogContent>
-      </Dialog>
-
-      {/* Question Onboarding Dialog */}
-      <Dialog open={showQuestionOnboardingDialog} onOpenChange={setShowQuestionOnboardingDialog}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <ClipboardList className="w-5 h-5 text-primary" />
-              Fragebogen-Onboarding starten
-            </DialogTitle>
-            <DialogDescription>
-              Richten Sie Ihren Katalog Schritt für Schritt ein. 
-              Wählen Sie Ihre Branche und wir laden passende Vorlagen.
-            </DialogDescription>
-          </DialogHeader>
-          
-          <form onSubmit={demoForm.handleSubmit(handleStartQuestionOnboarding)} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="question-demo-email">E-Mail-Adresse</Label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input
-                  id="question-demo-email"
-                  type="email"
-                  placeholder="ihre@email.de"
-                  className="pl-10"
-                  {...demoForm.register('email')}
-                />
-              </div>
-              {demoForm.formState.errors.email && (
-                <p className="text-sm text-destructive">{demoForm.formState.errors.email.message}</p>
-              )}
-            </div>
-
-            <div className="bg-primary/5 border border-primary/20 rounded-lg p-3 text-sm">
-              <p className="font-medium mb-1 flex items-center gap-2">
-                <ClipboardList className="w-4 h-4 text-primary" />
-                So funktioniert's
-              </p>
-              <ul className="text-muted-foreground space-y-1 text-xs">
-                <li>• Wählen Sie Ihre Branche (Gastronomie, Handwerk, etc.)</li>
-                <li>• Passende Kategorien und Einheiten werden geladen</li>
-                <li>• Fügen Sie Lieferanten und Artikel hinzu</li>
-                <li>• Fertig – Ihr Katalog ist einsatzbereit</li>
-              </ul>
-            </div>
-
-            <div className="flex gap-3">
-              <Button 
-                type="button" 
-                variant="outline" 
-                className="flex-1"
-                onClick={() => setShowQuestionOnboardingDialog(false)}
-              >
-                Abbrechen
-              </Button>
-              <Button type="submit" className="flex-1" disabled={isQuestionOnboardingLoading}>
-                {isQuestionOnboardingLoading ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <>
-                    <ClipboardList className="w-4 h-4 mr-2" />
-                    Jetzt starten
-                  </>
-                )}
-              </Button>
-            </div>
-          </form>
-        </DialogContent>
-      </Dialog>
+      <DemoDialogs
+        demoForm={demoForm}
+        showDemoDialog={showDemoDialog}
+        setShowDemoDialog={setShowDemoDialog}
+        showEmptyDemoDialog={showEmptyDemoDialog}
+        setShowEmptyDemoDialog={setShowEmptyDemoDialog}
+        showVoiceOnboardingDialog={showVoiceOnboardingDialog}
+        setShowVoiceOnboardingDialog={setShowVoiceOnboardingDialog}
+        showQuestionOnboardingDialog={showQuestionOnboardingDialog}
+        setShowQuestionOnboardingDialog={setShowQuestionOnboardingDialog}
+        isDemoLoading={isDemoLoading}
+        isEmptyDemoLoading={isEmptyDemoLoading}
+        isVoiceOnboardingLoading={isVoiceOnboardingLoading}
+        isQuestionOnboardingLoading={isQuestionOnboardingLoading}
+        onStartDemo={(data) => handleStartDemo(data, 'standard', () => setShowDemoDialog(false))}
+        onStartEmptyDemo={(data) => handleStartDemo(data, 'empty', () => setShowEmptyDemoDialog(false))}
+        onStartVoiceOnboarding={(data) => handleStartDemo(data, 'voice', () => setShowVoiceOnboardingDialog(false))}
+        onStartQuestionOnboarding={(data) => handleStartDemo(data, 'question', () => setShowQuestionOnboardingDialog(false))}
+      />
     </div>
   );
 };
