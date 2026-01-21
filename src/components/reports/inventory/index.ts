@@ -1,6 +1,12 @@
 export { useInventoryAutoSave } from './useInventoryAutoSave';
+export { useInventoryState } from './hooks/useInventoryState';
 export { InventorySessionHeader } from './InventorySessionHeader';
 export { InventoryFilters } from './InventoryFilters';
 export { InventoryHistoryDialog } from './InventoryHistoryDialog';
 export { NewSessionDialog } from './NewSessionDialog';
 export { DeleteSessionDialog, DeleteArticleDialog } from './DeleteConfirmationDialogs';
+export { InventoryCountInputs } from './InventoryCountInputs';
+export { SupplierInventoryCard } from './SupplierInventoryCard';
+export { PricesTabContent } from './PricesTabContent';
+export { InventoryTabContent } from './InventoryTabContent';
+export * from './types';
