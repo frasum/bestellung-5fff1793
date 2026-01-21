@@ -467,6 +467,7 @@ export const usePhotoCaptureState = () => {
     currentBatchIndex,
     setCurrentBatchIndex,
     batchProgress,
+    batchResult,
     handleAddBatchImage,
     handleRemoveBatchImage,
     processBatchImages,
