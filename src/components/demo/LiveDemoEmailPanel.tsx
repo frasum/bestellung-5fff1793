@@ -150,7 +150,8 @@ export function LiveDemoEmailPanel({ soundEnabled }: LiveDemoEmailPanelProps) {
           table: 'communication_logs',
         },
         (payload) => {
-          const deletedId = (payload.old as any).id;
+          const deletedId = (payload.old as { id?: string })?.id;
+          if (!deletedId) return;
           queryClient.setQueryData(['communication-logs-demo'], (oldData: CommunicationLog[] | undefined) => {
             if (!oldData) return oldData;
             return oldData.filter(e => e.id !== deletedId);
