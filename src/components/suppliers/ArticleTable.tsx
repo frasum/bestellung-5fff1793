@@ -1,4 +1,4 @@
-import { Fragment, useCallback } from 'react';
+import { Fragment, useCallback, memo } from 'react';
 import { ChevronRight, Trash2, Bell, Package, Plus, Minus, ShoppingCart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -41,7 +41,7 @@ interface ArticleTableProps {
   onRemoveFromCart?: (article: Article) => void;
 }
 
-export const ArticleTable = ({
+export const ArticleTable = memo(({
   groupedBySupplier,
   openSuppliers,
   selectedArticles,
@@ -387,4 +387,6 @@ export const ArticleTable = ({
       </div>
     </>
   );
-};
+});
+
+ArticleTable.displayName = 'ArticleTable';
