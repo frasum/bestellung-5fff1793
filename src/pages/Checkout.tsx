@@ -188,13 +188,6 @@ const Checkout = () => {
   const handlePreviewEmails = async (data: CheckoutFormData) => {
     const supplierOrders = Object.values(itemsBySupplier);
 
-    // Debug: Log what we have
-    console.log('📧 handlePreviewEmails - itemsBySupplier:', itemsBySupplier);
-    console.log('📧 handlePreviewEmails - freeItems from context:', freeItems);
-    supplierOrders.forEach(s => {
-      console.log(`📧 Supplier ${s.supplierName}: items=${s.items.length}, freeItems=${s.freeItems?.length || 0}`, s.freeItems);
-    });
-
     // Get selected address
     const selectedAddress = deliveryAddresses?.find(a => a.id === data.deliveryAddressId);
     if (!selectedAddress) {
