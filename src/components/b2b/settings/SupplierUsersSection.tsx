@@ -15,6 +15,7 @@ interface B2BSupplierUser {
   role: string;
   email: string;
   name: string | null;
+  created_at: string | null;
   supplier_name?: string;
 }
 
