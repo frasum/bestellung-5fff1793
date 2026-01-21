@@ -1,3 +1,4 @@
+import { memo, useMemo } from 'react';
 import { format } from 'date-fns';
 import { de, enUS } from 'date-fns/locale';
 import { TFunction } from 'i18next';
@@ -55,7 +56,7 @@ interface InvoiceRowProps {
   t: TFunction<'translation', undefined>;
 }
 
-export function InvoiceRow({
+export const InvoiceRow = memo(function InvoiceRow({
   invoice,
   isExpanded,
   onToggle,
@@ -73,24 +74,31 @@ export function InvoiceRow({
   const isStuck = isInvoiceStuck(invoice);
   const displayStatus = isStuck ? 'stuck' : invoice.status;
   const StatusIcon = statusConfig[displayStatus].icon;
-  const discrepancyCount = invoice.invoice_discrepancies?.filter(d => !d.is_resolved).length || 0;
+  
+  const discrepancyCount = useMemo(() => 
+    invoice.invoice_discrepancies?.filter(d => !d.is_resolved).length || 0,
+    [invoice.invoice_discrepancies]
+  );
 
-  const invoiceItems = invoice.invoice_items && invoice.invoice_items.length > 0
-    ? invoice.invoice_items
-    : ((invoice.parsed_data?.items as ParsedItem[]) || []).map((item, index) => ({
-        id: `parsed-${index}`,
-        invoice_id: invoice.id,
-        article_name: item.articleName,
-        article_sku: item.articleSku || null,
-        quantity: item.quantity,
-        unit: item.unit || null,
-        unit_price: item.unitPrice || null,
-        total_price: item.totalPrice || null,
-        position_number: item.position || index + 1,
-        matched_order_item_id: null,
-        matched_article_id: null,
-        created_at: invoice.created_at,
-      }));
+  const invoiceItems = useMemo(() => {
+    if (invoice.invoice_items && invoice.invoice_items.length > 0) {
+      return invoice.invoice_items;
+    }
+    return ((invoice.parsed_data?.items as ParsedItem[]) || []).map((item, index) => ({
+      id: `parsed-${index}`,
+      invoice_id: invoice.id,
+      article_name: item.articleName,
+      article_sku: item.articleSku || null,
+      quantity: item.quantity,
+      unit: item.unit || null,
+      unit_price: item.unitPrice || null,
+      total_price: item.totalPrice || null,
+      position_number: item.position || index + 1,
+      matched_order_item_id: null,
+      matched_article_id: null,
+      created_at: invoice.created_at,
+    }));
+  }, [invoice.invoice_items, invoice.parsed_data?.items, invoice.id, invoice.created_at]);
 
   return (
     <Collapsible open={isExpanded} onOpenChange={onToggle}>
@@ -327,4 +335,6 @@ export function InvoiceRow({
       </CollapsibleContent>
     </Collapsible>
   );
-}
+});
+
+InvoiceRow.displayName = 'InvoiceRow';

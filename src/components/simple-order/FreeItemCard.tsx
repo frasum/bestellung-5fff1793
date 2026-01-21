@@ -1,3 +1,4 @@
+import { memo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -16,7 +17,7 @@ interface FreeItemCardProps {
   onConvertToCatalog?: (item: FreeItem) => void;
 }
 
-export function FreeItemCard({ 
+export const FreeItemCard = memo(function FreeItemCard({ 
   item, 
   onQuantityChange, 
   onEdit,
@@ -26,28 +27,28 @@ export function FreeItemCard({
   const { t } = useTranslation();
   const { heavyTap } = useHapticFeedback();
 
-  const handleQuantityChange = (delta: number, e: React.MouseEvent) => {
+  const handleQuantityChange = useCallback((delta: number, e: React.MouseEvent) => {
     e.stopPropagation();
     heavyTap();
     onQuantityChange(item.id, delta);
-  };
+  }, [heavyTap, onQuantityChange, item.id]);
 
-  const handleEdit = () => {
+  const handleEdit = useCallback(() => {
     heavyTap();
     onEdit(item);
-  };
+  }, [heavyTap, onEdit, item]);
 
-  const handleDelete = (e: React.MouseEvent) => {
+  const handleDelete = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
     heavyTap();
     onDelete(item.id);
-  };
+  }, [heavyTap, onDelete, item.id]);
 
-  const handleConvertToCatalog = (e: React.MouseEvent) => {
+  const handleConvertToCatalog = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
     heavyTap();
     onConvertToCatalog?.(item);
-  };
+  }, [heavyTap, onConvertToCatalog, item]);
 
   return (
     <Card 
@@ -126,4 +127,6 @@ export function FreeItemCard({
       </div>
     </Card>
   );
-}
+});
+
+FreeItemCard.displayName = 'FreeItemCard';

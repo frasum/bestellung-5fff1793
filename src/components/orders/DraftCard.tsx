@@ -1,3 +1,4 @@
+import { memo, useMemo } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { format, Locale } from 'date-fns';
@@ -13,7 +14,7 @@ interface DraftCardProps {
   locale: Locale;
 }
 
-export const DraftCard = ({
+export const DraftCard = memo(({
   draft,
   onLoad,
   onDelete,
@@ -21,18 +22,16 @@ export const DraftCard = ({
 }: DraftCardProps) => {
   const { t } = useTranslation();
 
-  const getDraftTotal = () => {
+  const draftTotal = useMemo(() => {
     return draft.items?.reduce((sum, item) => {
       if (item.article) {
         return sum + Number(item.article.price) * (Number(item.article.packaging_unit) || 1) * item.quantity;
       }
       return sum;
     }, 0) || 0;
-  };
+  }, [draft.items]);
 
-  const getDraftItemCount = () => {
-    return draft.items?.length || 0;
-  };
+  const draftItemCount = draft.items?.length || 0;
 
   return (
     <div className="bg-card border border-border rounded-xl p-4 hover:border-primary/30 transition-colors">
@@ -40,9 +39,9 @@ export const DraftCard = ({
         <div className="flex-1 min-w-0">
           <h3 className="font-medium text-foreground truncate">{draft.name}</h3>
           <div className="flex flex-wrap items-center gap-2 mt-1 text-sm text-muted-foreground">
-            <span>{getDraftItemCount()} {t('drafts.articles')}</span>
+            <span>{draftItemCount} {t('drafts.articles')}</span>
             <span>•</span>
-            <span>€{getDraftTotal().toFixed(2)}</span>
+            <span>€{draftTotal.toFixed(2)}</span>
             {draft.desired_delivery_date && (
               <>
                 <span>•</span>
@@ -98,4 +97,6 @@ export const DraftCard = ({
       )}
     </div>
   );
-};
+});
+
+DraftCard.displayName = 'DraftCard';

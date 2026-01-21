@@ -1,3 +1,4 @@
+import { memo, forwardRef } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -21,7 +22,7 @@ import { useTranslation } from 'react-i18next';
 import { Order } from '@/hooks/useOrders';
 import { cn } from '@/lib/utils';
 import { statusColors, LocationOption, getLocationDisplayName } from './types';
-import { forwardRef } from 'react';
+
 
 const statusIconMap = {
   pending: Clock,
@@ -46,7 +47,7 @@ interface OrderItemProps {
   isHighlighted?: boolean;
 }
 
-export const OrderItem = forwardRef<HTMLDivElement, OrderItemProps>(({
+export const OrderItem = memo(forwardRef<HTMLDivElement, OrderItemProps>(({
   order,
   isOpen,
   onToggle,
@@ -306,6 +307,6 @@ export const OrderItem = forwardRef<HTMLDivElement, OrderItemProps>(({
       </div>
     </Collapsible>
   );
-});
+}));
 
 OrderItem.displayName = 'OrderItem';
