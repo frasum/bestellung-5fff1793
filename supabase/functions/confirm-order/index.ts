@@ -125,46 +125,31 @@ async function sendConfirmationNotification(
 }
 
 serve(async (req) => {
-  console.log("=== CONFIRM-ORDER DEBUG START ===");
-  console.log("Request method:", req.method);
-  console.log("Request URL:", req.url);
-
   if (req.method === "OPTIONS") {
-    console.log("Handling CORS preflight request");
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
     const url = new URL(req.url);
     const token = url.searchParams.get("token");
-    console.log("Token from query params:", token ? `${token.substring(0, 10)}... (length: ${token.length})` : "NULL");
 
     if (!token) {
-      console.log("ERROR: No token provided");
       return createRedirectResponse("error");
     }
 
-    console.log(`Processing confirmation for token: ${token.substring(0, 10)}...`);
-
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-    console.log("SUPABASE_URL configured:", supabaseUrl ? "YES" : "NO");
-    console.log("SERVICE_ROLE_KEY configured:", serviceRoleKey ? "YES" : "NO");
 
     const supabase = createClient(
       supabaseUrl ?? "",
       serviceRoleKey ?? ""
     );
 
-    console.log("Querying order_confirmation_tokens table for token...");
     const { data: tokenData, error: tokenError } = await supabase
       .from("order_confirmation_tokens")
       .select("*, orders(id, order_number, status, user_id, total_amount, suppliers(name), order_items(article_name, quantity, unit, order_unit, unit_price, total_price))")
       .eq("token", token)
       .single();
-
-    console.log("Token query result - data:", tokenData ? "FOUND" : "NULL");
-    console.log("Token query result - error:", tokenError ? JSON.stringify(tokenError) : "NONE");
 
     if (tokenError || !tokenData) {
       console.error("Token not found:", tokenError);
@@ -174,30 +159,18 @@ serve(async (req) => {
     const order = tokenData.orders;
     const orderNumber = order?.order_number || "";
     const supplierName = order?.suppliers?.name || "";
-    
-    console.log("Token found! Order ID:", tokenData.order_id);
-    console.log("Order number:", orderNumber);
-    console.log("Supplier:", supplierName);
-    console.log("Token expires_at:", tokenData.expires_at);
-    console.log("Token confirmed_at:", tokenData.confirmed_at);
 
     if (tokenData.confirmed_at) {
-      console.log("Token already used at:", tokenData.confirmed_at);
       return createRedirectResponse("already_confirmed", orderNumber, supplierName);
     }
 
     const expiresAt = new Date(tokenData.expires_at);
     const now = new Date();
-    console.log("Token expires at:", expiresAt.toISOString());
-    console.log("Current time:", now.toISOString());
-    console.log("Token expired?", now > expiresAt);
     
     if (now > expiresAt) {
-      console.log("Token has expired");
       return createRedirectResponse("expired", orderNumber, supplierName);
     }
 
-    console.log("Updating order status to 'confirmed'...");
     const { error: updateError } = await supabase
       .from("orders")
       .update({ status: "confirmed" })
@@ -207,14 +180,11 @@ serve(async (req) => {
       console.error("Failed to update order:", updateError);
       return createRedirectResponse("error", orderNumber, supplierName);
     }
-    console.log("Order status updated successfully");
 
-    console.log("Marking token as used...");
     await supabase
       .from("order_confirmation_tokens")
       .update({ confirmed_at: new Date().toISOString() })
       .eq("id", tokenData.id);
-    console.log("Token marked as used");
 
     const { data: orderForLog } = await supabase
       .from("orders")
@@ -234,14 +204,9 @@ serve(async (req) => {
 
       if (updateLogError) {
         console.error("Error updating communication log:", updateLogError);
-      } else {
-        console.log("Communication log updated to confirmed");
       }
     }
 
-    console.log(`Order ${orderNumber} confirmed successfully`);
-
-    console.log("Fetching order creator profile for notification...");
     const { data: profile } = await supabase
       .from("profiles")
       .select("email")
@@ -249,7 +214,6 @@ serve(async (req) => {
       .single();
 
     if (profile?.email) {
-      console.log("Sending confirmation notification to:", profile.email);
       const items = order.order_items || [];
       await sendConfirmationNotification(
         profile.email,
@@ -290,7 +254,6 @@ serve(async (req) => {
       }
     }
 
-    console.log("=== CONFIRM-ORDER SUCCESS ===");
     return createRedirectResponse("success", orderNumber, supplierName, tokenData.order_id);
 
   } catch (error: any) {

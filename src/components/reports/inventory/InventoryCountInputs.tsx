@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -15,7 +16,7 @@ interface InventoryCountInputsProps {
   disabled?: boolean;
 }
 
-export function InventoryCountInputs({
+export const InventoryCountInputs = memo(function InventoryCountInputs({
   articleId,
   storage1,
   storage2,
@@ -115,4 +116,4 @@ export function InventoryCountInputs({
       </div>
     </>
   );
-}
+});

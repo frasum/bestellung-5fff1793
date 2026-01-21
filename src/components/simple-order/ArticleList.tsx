@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -328,7 +328,7 @@ interface ArticleCardProps {
   selectedSupplierId?: string | null;
 }
 
-const ArticleCard = ({ 
+const ArticleCard = memo(({ 
   article, 
   quantity, 
   onQuantityChange, 
@@ -434,4 +434,6 @@ const ArticleCard = ({
       </div>
     </Card>
   );
-};
+});
+
+ArticleCard.displayName = 'ArticleCard';
