@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useRef, useState, memo } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -81,7 +81,7 @@ interface SupplierArticleCardProps {
   onImageDelete?: (articleId: string) => Promise<void>;
 }
 
-export function SupplierArticleCard({
+export const SupplierArticleCard = memo(function SupplierArticleCard({
   article,
   editedArticles,
   priceInputs,
@@ -496,4 +496,4 @@ export function SupplierArticleCard({
       </Button>
     </Card>
   );
-}
+});

@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Article } from '@/hooks/useArticles';
 import { Button } from '@/components/ui/button';
@@ -31,7 +32,7 @@ interface SupplierInventoryCardProps {
   isReadOnly?: boolean;
 }
 
-export function SupplierInventoryCard({
+export const SupplierInventoryCard = memo(function SupplierInventoryCard({
   group,
   isOpen,
   onToggle,
@@ -260,4 +261,4 @@ export function SupplierInventoryCard({
       </Card>
     </Collapsible>
   );
-}
+});
