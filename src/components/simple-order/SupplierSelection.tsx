@@ -1,3 +1,4 @@
+import { memo, useMemo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -33,32 +34,91 @@ const sortSuppliers = (suppliers: Supplier[]) => {
   });
 };
 
-export const SupplierSelection = ({
+// Memoized supplier card component
+interface SupplierCardProps {
+  supplier: Supplier;
+  cartCount: number;
+  articleCount: number;
+  onSelect: (supplierId: string) => void;
+}
+
+const SupplierCard = memo(function SupplierCard({
+  supplier,
+  cartCount,
+  articleCount,
+  onSelect,
+}: SupplierCardProps) {
+  const { t } = useTranslation();
+  const { heavyTap } = useHapticFeedback();
+  const hasItems = cartCount > 0;
+
+  const handleClick = useCallback(() => {
+    heavyTap();
+    onSelect(supplier.id);
+  }, [heavyTap, onSelect, supplier.id]);
+
+  return (
+    <Card
+      className={cn(
+        "p-5 min-h-[72px] cursor-pointer transition-colors active:scale-[0.98] touch-manipulation",
+        hasItems 
+          ? "border-primary bg-primary/5 hover:bg-primary/10" 
+          : "hover:bg-muted/50"
+      )}
+      onClick={handleClick}
+    >
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          {hasItems && (
+            <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+              <Check className="h-5 w-5 text-primary" />
+            </div>
+          )}
+          <div>
+            <h3 className="text-xl font-semibold">{supplier.name}</h3>
+            {hasItems && (
+              <span className="text-sm text-primary font-medium">
+                {cartCount} {t('simpleOrder.inCart', 'im Warenkorb')}
+              </span>
+            )}
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-base text-muted-foreground font-medium">
+            {articleCount} {t('simpleOrder.articles', 'Artikel')}
+          </span>
+          <ChevronRight className="h-5 w-5 text-muted-foreground" />
+        </div>
+      </div>
+    </Card>
+  );
+});
+
+export const SupplierSelection = memo(function SupplierSelection({
   suppliers,
   onSelect,
   getArticleCount,
   getCartCount,
   onViewCart,
   totalCartItems = 0,
-}: SupplierSelectionProps) => {
+}: SupplierSelectionProps) {
   const { t } = useTranslation();
   const { heavyTap } = useHapticFeedback();
-  const sortedSuppliers = sortSuppliers(suppliers);
+  
+  const sortedSuppliers = useMemo(() => sortSuppliers(suppliers), [suppliers]);
 
   // Count how many suppliers have items in cart
-  const suppliersWithItems = sortedSuppliers.filter(
-    (supplier) => (getCartCount?.(supplier.id) || 0) > 0
-  ).length;
+  const suppliersWithItems = useMemo(() => 
+    sortedSuppliers.filter(
+      (supplier) => (getCartCount?.(supplier.id) || 0) > 0
+    ).length,
+    [sortedSuppliers, getCartCount]
+  );
 
-  const handleSelect = (supplierId: string) => {
-    heavyTap();
-    onSelect(supplierId);
-  };
-
-  const handleViewCart = () => {
+  const handleViewCart = useCallback(() => {
     heavyTap();
     onViewCart?.();
-  };
+  }, [heavyTap, onViewCart]);
 
   return (
     <div className="max-w-2xl mx-auto p-4">
@@ -75,47 +135,15 @@ export const SupplierSelection = ({
         )}
       </div>
       <div className="space-y-3">
-        {sortedSuppliers.map((supplier) => {
-          const cartCount = getCartCount?.(supplier.id) || 0;
-          const hasItems = cartCount > 0;
-
-          return (
-            <Card
-              key={supplier.id}
-              className={cn(
-                "p-5 min-h-[72px] cursor-pointer transition-colors active:scale-[0.98] touch-manipulation",
-                hasItems 
-                  ? "border-primary bg-primary/5 hover:bg-primary/10" 
-                  : "hover:bg-muted/50"
-              )}
-              onClick={() => handleSelect(supplier.id)}
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  {hasItems && (
-                    <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
-                      <Check className="h-5 w-5 text-primary" />
-                    </div>
-                  )}
-                  <div>
-                    <h3 className="text-xl font-semibold">{supplier.name}</h3>
-                    {hasItems && (
-                      <span className="text-sm text-primary font-medium">
-                        {cartCount} {t('simpleOrder.inCart', 'im Warenkorb')}
-                      </span>
-                    )}
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-base text-muted-foreground font-medium">
-                    {getArticleCount(supplier.id)} {t('simpleOrder.articles', 'Artikel')}
-                  </span>
-                  <ChevronRight className="h-5 w-5 text-muted-foreground" />
-                </div>
-              </div>
-            </Card>
-          );
-        })}
+        {sortedSuppliers.map((supplier) => (
+          <SupplierCard
+            key={supplier.id}
+            supplier={supplier}
+            cartCount={getCartCount?.(supplier.id) || 0}
+            articleCount={getArticleCount(supplier.id)}
+            onSelect={onSelect}
+          />
+        ))}
       </div>
 
       {/* Floating Cart Button */}
@@ -137,4 +165,4 @@ export const SupplierSelection = ({
       )}
     </div>
   );
-};
+});
