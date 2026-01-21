@@ -1,3 +1,4 @@
+import { memo, useCallback } from 'react';
 import { ShoppingCart, Package, Plus, Minus, Trash2, Loader2, Send, Calendar as CalendarIcon, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -11,6 +12,65 @@ import { de } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import type { CartItem } from '@/pages/EmployeeOrder';
 import { TIME_WINDOW_OPTIONS } from './types';
+
+// Memoized cart item row
+interface CartItemRowProps {
+  item: CartItem;
+  onUpdateQuantity: (articleId: string, quantity: number) => void;
+}
+
+const CartItemRow = memo(function CartItemRow({ item, onUpdateQuantity }: CartItemRowProps) {
+  const handleDecrease = useCallback(() => {
+    onUpdateQuantity(item.articleId, item.quantity - 1);
+  }, [item.articleId, item.quantity, onUpdateQuantity]);
+
+  const handleIncrease = useCallback(() => {
+    onUpdateQuantity(item.articleId, item.quantity + 1);
+  }, [item.articleId, item.quantity, onUpdateQuantity]);
+
+  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = parseInt(e.target.value) || 0;
+    onUpdateQuantity(item.articleId, val);
+  }, [item.articleId, onUpdateQuantity]);
+
+  return (
+    <div className="flex items-center gap-3 p-2 bg-muted/50 rounded-lg">
+      <div className="flex-1 min-w-0">
+        <p className="font-medium truncate">{item.articleName}</p>
+        <p className="text-sm text-muted-foreground">
+          {item.orderUnit || item.unit}
+        </p>
+      </div>
+      <div className="flex items-center gap-2">
+        <Button
+          variant="outline"
+          size="icon"
+          className="h-8 w-8"
+          onClick={handleDecrease}
+        >
+          {item.quantity === 1 ? <Trash2 className="w-3 h-3" /> : <Minus className="w-3 h-3" />}
+        </Button>
+        <Input
+          type="number"
+          value={item.quantity}
+          className="w-14 h-8 text-center font-semibold p-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+          min={0}
+          onClick={(e) => e.currentTarget.select()}
+          onFocus={(e) => e.target.select()}
+          onChange={handleInputChange}
+        />
+        <Button
+          variant="outline"
+          size="icon"
+          className="h-8 w-8"
+          onClick={handleIncrease}
+        >
+          <Plus className="w-3 h-3" />
+        </Button>
+      </div>
+    </div>
+  );
+});
 
 interface CartSheetProps {
   cart: CartItem[];
@@ -27,7 +87,7 @@ interface CartSheetProps {
   onSubmitOrder: () => void;
 }
 
-export const CartSheet = ({
+export const CartSheet = memo(function CartSheet({
   cart,
   cartBySupplier,
   cartItemCount,
@@ -40,7 +100,7 @@ export const CartSheet = ({
   isSubmitting,
   onUpdateCartItem,
   onSubmitOrder,
-}: CartSheetProps) => {
+}: CartSheetProps) {
   return (
     <Sheet>
       <SheetTrigger asChild>
@@ -77,44 +137,11 @@ export const CartSheet = ({
                   </h3>
                   <div className="space-y-2">
                     {items.map(item => (
-                      <div key={item.articleId} className="flex items-center gap-3 p-2 bg-muted/50 rounded-lg">
-                        <div className="flex-1 min-w-0">
-                          <p className="font-medium truncate">{item.articleName}</p>
-                          <p className="text-sm text-muted-foreground">
-                            {item.orderUnit || item.unit}
-                          </p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            className="h-8 w-8"
-                            onClick={() => onUpdateCartItem(item.articleId, item.quantity - 1)}
-                          >
-                            {item.quantity === 1 ? <Trash2 className="w-3 h-3" /> : <Minus className="w-3 h-3" />}
-                          </Button>
-                          <Input
-                            type="number"
-                            value={item.quantity}
-                            className="w-14 h-8 text-center font-semibold p-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                            min={0}
-                            onClick={(e) => e.currentTarget.select()}
-                            onFocus={(e) => e.target.select()}
-                            onChange={(e) => {
-                              const val = parseInt(e.target.value) || 0;
-                              onUpdateCartItem(item.articleId, val);
-                            }}
-                          />
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            className="h-8 w-8"
-                            onClick={() => onUpdateCartItem(item.articleId, item.quantity + 1)}
-                          >
-                            <Plus className="w-3 h-3" />
-                          </Button>
-                        </div>
-                      </div>
+                      <CartItemRow
+                        key={item.articleId}
+                        item={item}
+                        onUpdateQuantity={onUpdateCartItem}
+                      />
                     ))}
                   </div>
                 </div>
@@ -209,4 +236,4 @@ export const CartSheet = ({
       </SheetContent>
     </Sheet>
   );
-};
+});
