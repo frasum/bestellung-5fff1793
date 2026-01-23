@@ -43,6 +43,7 @@ const DatabaseArchitecture = lazy(() => import("./pages/DatabaseArchitecture"));
 const Infrastructure = lazy(() => import("./pages/Infrastructure"));
 const FunctionsOverview = lazy(() => import("./pages/FunctionsOverview"));
 const SystemDescription = lazy(() => import("./pages/SystemDescription"));
+const SystemMindmap = lazy(() => import("./pages/SystemMindmap"));
 const Pricing = lazy(() => import("./pages/Pricing"));
 const Presentation = lazy(() => import("./pages/Presentation"));
 const Impressum = lazy(() => import("./pages/Impressum"));
@@ -118,6 +119,7 @@ const AppContent = () => {
           <Route path="/infrastructure" element={<Infrastructure />} />
           <Route path="/functions-overview" element={<FunctionsOverview />} />
           <Route path="/system-beschreibung" element={<SystemDescription />} />
+          <Route path="/system-mindmap" element={<SystemMindmap />} />
           <Route path="/pricing" element={<Pricing />} />
           <Route path="/presentation" element={<Presentation />} />
           <Route path="/impressum" element={<Impressum />} />
