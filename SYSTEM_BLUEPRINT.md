@@ -8,6 +8,7 @@
 
 ## 📋 Inhaltsverzeichnis
 
+0. [Wie du diesen Blueprint nutzt (Dev + KI)](#0-wie-du-diesen-blueprint-nutzt-dev--ki)
 1. [Projektübersicht](#1-projektübersicht)
 2. [Technologie-Stack](#2-technologie-stack)
 3. [Datenmodell (89 Tabellen)](#3-datenmodell-89-tabellen)
@@ -20,6 +21,53 @@
 10. [Integrationen](#10-integrationen)
 11. [Demo-Modus](#11-demo-modus)
 12. [Entwicklungs-Roadmap](#12-entwicklungs-roadmap)
+
+---
+
+## 0. Wie du diesen Blueprint nutzt (Dev + KI)
+
+Dieser Blueprint ist **zweigleisig** gedacht:
+
+### 0.1 Dev-Blueprint (Implementierung)
+Nutze die Kapitel **2–10** als technische Spezifikation:
+- **Datenmodell** (Tabellen, Beziehungen, RLS-Idee)
+- **Backend-Funktionen** (Automatisierungen, Mail, Parsing)
+- **Frontend** (Module, Routen, Portale)
+- **Integrationen** (E-Mail, KI, Voice, Export)
+
+**Empfehlung für Entwickler:**
+1) Starte mit Kapitel **1 (Ziel/Scope)**
+2) Implementiere zuerst **Auth + Multi-Tenant-Grundlage** (Organization/Profile/Rollen)
+3) Danach **Katalog → Warenkorb → Checkout/Orders → E-Mail → Status**
+4) Erst dann die Erweiterungen (EasyOrder, Supplier Portal, B2B, Invoice, Inventur)
+
+### 0.2 KI-Blueprint (Prompt/Context)
+Wenn du das System in eine KI-App einspeisen willst:
+- Verwende dieses Dokument als **vollständigen Referenz-Context**.
+- Für eine **strukturierte, kopierfertige Mermaid-Mindmap** nutze zusätzlich die Mindmap-Quelle (siehe 0.3).
+
+**Empfehlung für KI:**
+1) Zuerst „Purpose / Personas / Kernprozesse“ extrahieren
+2) Dann „Portale & Routen“
+3) Dann „Datenmodell“
+4) Abschließend „Integrationen & Automationen“
+
+### 0.3 Single Source of Truth (Artefakte im Repo)
+Neben diesem Blueprint existieren im Projekt mehrere „lebende“ Architektur-Artefakte, die sich gut zum Navigieren/Kopieren eignen:
+
+- **System Mindmap (Mermaid + Prompt)**
+  - Quelle: `src/data/systemMindmap.ts`
+  - UI: Route **`/system-mindmap`** (Advanced Settings)
+- **Systembeschreibung (produktnah, lesbar)**
+  - UI: Route **`/system-description`**
+- **Frontend/Routen-Architektur (Module & Routes)**
+  - UI: Route **`/system-architecture`**
+- **Datenbank-Architektur (Tabellen & Beziehungen)**
+  - UI: Route **`/database-architecture`**
+- **Infrastructure / Functions Overviews**
+  - UI: Routes **`/infrastructure`** und **`/functions-overview`**
+
+> Hinweis: Dieses Dokument ist bewusst „lang & vollständig“. Für Workshops/Brainstorming ist die Mindmap oft die schnellere Einstiegsebene.
 
 ---
 
