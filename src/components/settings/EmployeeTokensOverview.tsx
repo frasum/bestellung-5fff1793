@@ -11,6 +11,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { User, ChevronDown, ChevronRight, Copy, QrCode, Pencil, Trash2, ExternalLink, Printer, Package, Link2, Phone, Mail, MessageCircle, KeyRound, Shield, ShieldAlert, Camera, Wine } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { buildSimpleOrderUrl } from '@/lib/simpleOrderUrl';
 // Token type definitions
 interface TokenSupplier {
   supplier?: { id: string; name: string } | null;
@@ -186,7 +187,7 @@ export function EmployeeTokensOverview({ tokens, onEdit, onToggleActive, onDelet
     });
   };
 
-  const getOrderUrl = (token: string) => `https://bestellung.pro/simple-order/${token}`;
+  const getOrderUrl = (token: string) => buildSimpleOrderUrl(token);
 
   const generateQrCodeUrl = (token: string) => {
     const url = encodeURIComponent(getOrderUrl(token));
