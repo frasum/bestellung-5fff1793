@@ -23,6 +23,7 @@ import {
 } from '@/hooks/useEmployeeLocationSuppliers';
 import { useToast } from '@/hooks/use-toast';
 import { LocationAssignment, EmployeeFormData, initialFormData } from './types';
+import { buildSimpleOrderUrl } from '@/lib/simpleOrderUrl';
 
 export function useEmployeesTabState() {
   const { toast } = useToast();
@@ -225,7 +226,7 @@ export function useEmployeesTabState() {
   }, [tokens]);
 
   const getOrderUrl = useCallback((token: string) => {
-    return `https://bestellung.pro/simple-order/${token}`;
+    return buildSimpleOrderUrl(token);
   }, []);
 
   const copyToClipboard = useCallback((token: string) => {
