@@ -38,15 +38,24 @@ interface TokenData {
   employee_name: string | null;
   is_multi_supplier: boolean;
   expires_at: string | null;
-  supplier: SupplierData[];
-  location: LocationData[];
-  employee: EmployeeData[];
+  // Joined relations can come back as object OR array depending on metadata.
+  supplier: unknown;
+  location: unknown;
+  employee: unknown;
 }
 
 interface TokenSupplierData {
   supplier_id: string;
   sort_order: number | null;
-  supplier: SupplierData[];
+  // Joined relation can come back as object OR array.
+  supplier: unknown;
+}
+
+type JoinedOne<T> = T | T[] | null | undefined;
+
+function asSingle<T>(value: JoinedOne<T>): T | null {
+  if (!value) return null;
+  return Array.isArray(value) ? (value[0] ?? null) : value;
 }
 
 const corsHeaders = {
@@ -108,9 +117,11 @@ serve(async (req) => {
       );
     }
 
-    // Cast tokenData to typed version and extract employee (array from Supabase join)
+    // Normalize joins (object vs array) to a single record
     const typedToken = tokenData as unknown as TokenData;
-    const employee = typedToken.employee?.[0];
+    const employee = asSingle<EmployeeData>((typedToken as any).employee);
+    const singleSupplierForToken = asSingle<SupplierData>((typedToken as any).supplier);
+    const tokenLocation = asSingle<LocationData>((typedToken as any).location);
 
     // Get employee wine catalog access early for get-wines action
     const wineCatalogAccessEarly = employee?.wine_catalog_access || 'none';
@@ -243,8 +254,8 @@ serve(async (req) => {
         articles = allArticles || [];
 
         // Build suppliers array with article counts and sort_order
-        suppliers = (tokenSuppliers as TokenSupplierData[])?.map(ts => {
-          const sup = ts.supplier?.[0];
+         suppliers = (tokenSuppliers as TokenSupplierData[])?.map(ts => {
+           const sup = asSingle<SupplierData>((ts as any).supplier);
           return {
             id: sup?.id || '',
             name: sup?.name || '',
@@ -275,12 +286,11 @@ serve(async (req) => {
         }
 
         articles = singleArticles || [];
-        const singleSupplier = typedToken.supplier?.[0];
-        suppliers = singleSupplier ? [{
-          id: singleSupplier.id,
-          name: singleSupplier.name,
-          email: singleSupplier.email,
-          organization_id: singleSupplier.organization_id,
+        suppliers = singleSupplierForToken ? [{
+          id: singleSupplierForToken.id,
+          name: singleSupplierForToken.name,
+          email: singleSupplierForToken.email,
+          organization_id: singleSupplierForToken.organization_id,
           article_count: articles.length,
         }] : [];
       }
@@ -383,8 +393,8 @@ serve(async (req) => {
           id: tokenData.id,
           label: tokenData.label,
           language: effectiveLanguage,
-          supplier: isMultiSupplier ? null : (typedToken.supplier?.[0] || null),
-          location: tokenData.location,
+          supplier: isMultiSupplier ? null : (singleSupplierForToken || null),
+          location: tokenLocation,
           organization_id: tokenData.organization_id,
           is_multi_supplier: isMultiSupplier,
           employee_id: employeeId || null,
