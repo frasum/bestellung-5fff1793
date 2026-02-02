@@ -176,7 +176,7 @@ const generateModernEmail = (data: OrderEmailRequest, template: EmailTemplate): 
       </head>
       <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #1f2937; max-width: 650px; margin: 0 auto; padding: 20px; background: #f3f4f6;">
         <div style="background: linear-gradient(135deg, #1e3a5f 0%, #2563eb 100%); padding: 32px; border-radius: 16px 16px 0 0;">
-          <h1 style="color: white; margin: 0; font-size: 26px; font-weight: 700;">📦 Bestellung bei ${data.supplierName}</h1>
+          <h1 style="color: white; margin: 0; font-size: 26px; font-weight: 700;">Bestellung bei ${data.supplierName}</h1>
           <p style="color: rgba(255,255,255,0.9); margin: 12px 0 0 0; font-size: 16px;">${data.restaurantName}</p>
         </div>
         
@@ -213,13 +213,13 @@ const generateModernEmail = (data: OrderEmailRequest, template: EmailTemplate): 
           </div>
 
           <div style="margin-bottom: 28px; padding: 20px; background: #fafafa; border-radius: 12px;">
-            <h2 style="color: #1f2937; font-size: 14px; margin: 0 0 12px 0; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;">📍 Lieferadresse</h2>
+            <h2 style="color: #1f2937; font-size: 14px; margin: 0 0 12px 0; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;">Lieferadresse</h2>
             <p style="margin: 0; color: #374151; font-size: 14px; line-height: 1.7;">${data.deliveryAddress.replace(/\n/g, '<br>')}</p>
           </div>
 
           ${data.notes ? `
             <div style="margin-bottom: 28px; padding: 20px; background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border-radius: 12px; border: 1px solid #f59e0b;">
-              <h2 style="color: #92400e; font-size: 14px; margin: 0 0 8px 0; font-weight: 600;">📝 Hinweise</h2>
+              <h2 style="color: #92400e; font-size: 14px; margin: 0 0 8px 0; font-weight: 600;">Hinweise</h2>
               <p style="margin: 0; color: #78350f; font-size: 14px; white-space: pre-line;">${data.notes}</p>
             </div>
           ` : ''}
@@ -228,16 +228,16 @@ const generateModernEmail = (data: OrderEmailRequest, template: EmailTemplate): 
           <div style="margin-bottom: 28px; text-align: left;">
             <a href="${Deno.env.get("SUPABASE_URL")}/functions/v1/confirm-order?token=${data.confirmationToken}" 
                style="display: inline-block; background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); color: white; font-weight: 700; font-size: 18px; padding: 18px 48px; border-radius: 12px; text-decoration: none; box-shadow: 0 4px 14px rgba(37, 99, 235, 0.4);">
-              ✅ Bestellung bestätigen
+              Bestellung bestaetigen
             </a>
             <p style="margin-top: 12px; color: #6b7280; font-size: 13px;">
-              Mit Klick auf den Button bestätigen Sie den Eingang dieser Bestellung.
+              Mit Klick auf den Button bestaetigen Sie den Eingang dieser Bestellung.
             </p>
           </div>
           ` : ''}
 
           <div style="margin-bottom: 28px;">
-            <h2 style="color: #1f2937; font-size: 14px; margin: 0 0 16px 0; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;">🛒 Bestellte Artikel</h2>
+            <h2 style="color: #1f2937; font-size: 14px; margin: 0 0 16px 0; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;">Bestellte Artikel</h2>
             <table style="width: 100%; border-collapse: collapse; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
               <thead>
                 <tr style="background: #1e3a5f;">
@@ -330,7 +330,7 @@ const generateClassicEmail = (data: OrderEmailRequest, template: EmailTemplate):
           <div style="margin-bottom: 24px; text-align: left; padding: 20px; background: #eff6ff; border: 2px solid #2563eb;">
             <a href="${Deno.env.get("SUPABASE_URL")}/functions/v1/confirm-order?token=${data.confirmationToken}" 
                style="display: inline-block; background: #2563eb; color: white; font-weight: 700; font-size: 18px; padding: 16px 36px; text-decoration: none;">
-              ✅ Bestellung bestätigen
+              Bestellung bestaetigen
             </a>
           </div>
           ` : ''}
@@ -403,7 +403,7 @@ const generateMinimalistEmail = (data: OrderEmailRequest, template: EmailTemplat
         <div style="margin-bottom: 28px; text-align: left;">
           <a href="${Deno.env.get("SUPABASE_URL")}/functions/v1/confirm-order?token=${data.confirmationToken}" 
              style="display: inline-block; background: #2563eb; color: white; font-weight: 700; font-size: 18px; padding: 18px 36px; text-decoration: none; border-radius: 8px; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);">
-            ✅ Bestellung bestätigen
+            Bestellung bestaetigen
           </a>
         </div>
         ` : ''}
