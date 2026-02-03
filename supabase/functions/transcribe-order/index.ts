@@ -95,7 +95,7 @@ serve(async (req) => {
   }
 
   try {
-    const { audioBase64, articles, language = 'de', token } = await req.json();
+    const { audioBase64, articles, language = 'de', token, skipTranscription, transcript: providedTranscript } = await req.json();
 
     // Validate token first to prevent unauthorized API usage
     if (!token) {
@@ -115,17 +115,8 @@ serve(async (req) => {
       );
     }
 
-    if (!audioBase64) {
-      throw new Error('No audio data provided');
-    }
-
     if (!articles || articles.length === 0) {
       throw new Error('No articles provided for matching');
-    }
-
-    const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
-    if (!OPENAI_API_KEY) {
-      throw new Error('OPENAI_API_KEY is not configured');
     }
 
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
@@ -133,35 +124,54 @@ serve(async (req) => {
       throw new Error('LOVABLE_API_KEY is not configured');
     }
 
-    console.log(`[transcribe-order] Processing audio, language hint: ${language}, articles count: ${articles.length}`);
+    let transcript: string;
 
-    // Step 1: Transcribe audio with Whisper
-    const binaryAudio = processBase64Chunks(audioBase64);
-    const formData = new FormData();
-    const audioBuffer = new ArrayBuffer(binaryAudio.length);
-    new Uint8Array(audioBuffer).set(binaryAudio);
-    const blob = new Blob([audioBuffer], { type: 'audio/webm' });
-    formData.append('file', blob, 'audio.webm');
-    formData.append('model', 'whisper-1');
-    formData.append('language', language);
+    // If skipTranscription is true and we have a provided transcript, use it directly
+    if (skipTranscription && providedTranscript) {
+      console.log('[transcribe-order] Using provided transcript, skipping Whisper');
+      transcript = providedTranscript;
+    } else {
+      // Original Whisper transcription flow
+      if (!audioBase64) {
+        throw new Error('No audio data provided');
+      }
 
-    console.log('[transcribe-order] Sending to Whisper...');
-    const whisperResponse = await fetch('https://api.openai.com/v1/audio/transcriptions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${OPENAI_API_KEY}`,
-      },
-      body: formData,
-    });
+      const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
+      if (!OPENAI_API_KEY) {
+        throw new Error('OPENAI_API_KEY is not configured');
+      }
 
-    if (!whisperResponse.ok) {
-      const errorText = await whisperResponse.text();
-      console.error('[transcribe-order] Whisper error:', errorText);
-      throw new Error(`Whisper API error: ${errorText}`);
+      console.log(`[transcribe-order] Processing audio, language hint: ${language}, articles count: ${articles.length}`);
+
+      // Step 1: Transcribe audio with Whisper
+      const binaryAudio = processBase64Chunks(audioBase64);
+      const formData = new FormData();
+      const audioBuffer = new ArrayBuffer(binaryAudio.length);
+      new Uint8Array(audioBuffer).set(binaryAudio);
+      const blob = new Blob([audioBuffer], { type: 'audio/webm' });
+      formData.append('file', blob, 'audio.webm');
+      formData.append('model', 'whisper-1');
+      formData.append('language', language);
+
+      console.log('[transcribe-order] Sending to Whisper...');
+      const whisperResponse = await fetch('https://api.openai.com/v1/audio/transcriptions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${OPENAI_API_KEY}`,
+        },
+        body: formData,
+      });
+
+      if (!whisperResponse.ok) {
+        const errorText = await whisperResponse.text();
+        console.error('[transcribe-order] Whisper error:', errorText);
+        throw new Error(`Whisper API error: ${errorText}`);
+      }
+
+      const whisperResult = await whisperResponse.json();
+      transcript = whisperResult.text;
     }
 
-    const whisperResult = await whisperResponse.json();
-    const transcript = whisperResult.text;
     console.log('[transcribe-order] Transcript:', transcript);
 
     if (!transcript || transcript.trim() === '') {
