@@ -1,69 +1,155 @@
 
-# Problem: E-Mail wird als Roh-HTML/MIME-Code angezeigt
+# Echtzeit-Transkription mit ElevenLabs Scribe
 
-## Diagnose
+## Übersicht
 
-Die E-Mail-Vorschau in Apple Mail (iCloud) zeigt den rohen MIME-Inhalt statt gerendertem HTML:
-- Betreff zeigt encoded Text: `=?utf-8?Q?=e2=9c=85` (sollte ✅ sein)
-- Die MIME-Struktur (`multipart/mixed`, `boundary=attachment100`) wird angezeigt
-- Der HTML-Code ist sichtbar statt gerendert
+Diese Implementierung ersetzt die bisherige "Aufnehmen → Warten → Ergebnis"-Lösung durch **Live-Transkription während des Sprechens**. Der gesprochene Text erscheint sofort auf dem Bildschirm, ähnlich wie bei Sprachassistenten.
 
-**Ursache**: Die `denomailer`-Bibliothek (Version 1.6.0) verwendet intern `quoted-printable` Encoding, welches bei langen Zeilen oder Sonderzeichen (wie Emojis) problematisch sein kann. Manche Mail-Clients (besonders Apple Mail) interpretieren die MIME-Struktur dann nicht korrekt.
+## Aktueller vs. Neuer Ablauf
 
-## Lösungsansatz
+```text
+AKTUELL (Batch-Transkription):
+┌────────────────────────────────────────────────────────────┐
+│  [Mikrofon drücken] → [Sprechen] → [Loslassen] → [Warten]  │
+│                                      (3-5 Sek.)            │
+│  → [Ergebnis anzeigen]                                     │
+└────────────────────────────────────────────────────────────┘
 
-### 1. E-Mail-Betreff ohne Sonderzeichen
-
-Entferne das ✅ Emoji aus dem Betreff, da dies zu Q-Encoding führt:
-- **Vorher**: `✅ Bestellung ${orderNumber} wurde von ${supplierName} bestätigt`
-- **Nachher**: `Bestellung ${orderNumber} wurde von ${supplierName} bestätigt`
-
-**Betroffene Dateien**:
-- `supabase/functions/confirm-order/index.ts` (Zeile 118-119, 244)
-- `supabase/functions/send-order-email/index.ts` (bei Emojis im Header)
-
-### 2. HTML optimieren für besseres Encoding
-
-- Alle HTML-Emojis (📦, 🛒, etc.) aus dem Body entfernen oder durch Text ersetzen
-- Whitespace zwischen HTML-Tags minimieren, um `=20` Encoding zu vermeiden
-- Die `cleanHtmlContent()`-Funktion verbessern
-
-### 3. Plain-Text-Alternative hinzufügen
-
-Wo fehlt, eine Plain-Text-Alternative (`content`) hinzufügen, damit der Mail-Client eine Fallback-Option hat.
-
----
-
-## Technische Details
-
-### Änderungen in `confirm-order/index.ts`:
-
-```typescript
-// Zeile 118-119: Betreff ohne Emoji
-subject: `Bestellung ${orderNumber} wurde von ${supplierName} bestätigt`,
-
-// Zeile 244: Kommunikationslog ohne Emoji  
-subject: `Bestellung ${orderNumber} wurde von ${supplierName} bestätigt`,
+NEU (Echtzeit-Transkription):
+┌────────────────────────────────────────────────────────────┐
+│  [Mikrofon drücken] → [Sprechen] → [Text erscheint live!]  │
+│                        ↓                                   │
+│       "Drei Ananas und..." → Artikel werden erkannt        │
+│  → [Fertig] → [Artikel-Matching] → [Bestätigen]            │
+└────────────────────────────────────────────────────────────┘
 ```
 
-### Änderungen im HTML-Generator:
+## Technische Komponenten
 
-Ersetze Emojis durch Unicode-Text oder entferne sie:
-- `✅` → `[OK]` oder entfernen
-- `📦` → entfernen
-- `🛒` → entfernen  
-- `📝` → entfernen
-- `📍` → entfernen
+### 1. Neue Edge Function: `elevenlabs-scribe-token`
 
-### Optional: Wechsel zu `base64` Encoding
+Generiert ein Einmal-Token für die ElevenLabs Realtime Scribe API (WebSocket-basiert).
 
-Falls das Problem weiterhin besteht, könnte ein Wechsel zu einer anderen SMTP-Bibliothek oder manuelles Base64-Encoding des HTML-Bodys helfen. Dies ist jedoch aufwändiger.
+**API-Endpunkt**: `POST https://api.elevenlabs.io/v1/single-use-token/realtime_scribe`
 
----
+**Besonderheiten**:
+- Token ist 15 Minuten gültig
+- Unterstützt Deutsch als Sprache
+- Automatische Voice Activity Detection (VAD)
 
-## Erwartetes Ergebnis
+### 2. Neuer React Hook: `useRealtimeScribe`
 
-Nach den Änderungen:
-- Betreff wird korrekt angezeigt: "Bestellung ORD-2026-02-0133 wurde von Top Service GmbH bestätigt"
-- E-Mail-Body wird als formatiertes HTML gerendert
-- Keine sichtbaren MIME-Headers mehr
+Ersetzt `useVoiceRecorder` für den Live-Modus. Nutzt das `@elevenlabs/react` SDK mit dem `useScribe`-Hook.
+
+**Features**:
+- `partialTranscript`: Interim-Text während des Sprechens
+- `committedTranscripts`: Finalisierte Textsegmente
+- `isConnected`: Verbindungsstatus
+- VAD-basierte automatische Segment-Commits
+
+### 3. Überarbeitete UI: `VoiceOrderMode.tsx`
+
+Erweitert um Live-Transkriptionsanzeige:
+- **Live-Text-Bereich**: Zeigt den aktuellen Partial-Text an
+- **Committed-Text**: Finalisierte Segmente werden darunter gestapelt
+- **Visuelles Feedback**: Pulsierender Indikator bei aktivem Sprechen
+- **Übergang zu Ergebnissen**: Nach Beenden wird das AI-Matching ausgelöst
+
+## Implementierungsschritte
+
+### Schritt 1: Edge Function für Scribe-Token
+
+```
+supabase/functions/elevenlabs-scribe-token/index.ts
+```
+
+- Validiert den `simple_order_token` (wie bei `transcribe-order`)
+- Ruft die ElevenLabs API für ein Realtime-Scribe-Token auf
+- Gibt das Token an den Client zurück
+
+### Schritt 2: React Hook für Echtzeit-Transkription
+
+```
+src/hooks/useRealtimeScribe.ts
+```
+
+Wrapper um `@elevenlabs/react`'s `useScribe`:
+- Holt automatisch das Token von der Edge Function
+- Managed Mikrofon-Permissions
+- Sammelt alle Transcript-Segmente
+- Callback für finalen Text
+
+### Schritt 3: UI-Erweiterung
+
+```
+src/components/simple-order/VoiceOrderMode.tsx
+```
+
+Änderungen:
+- Import des neuen Hooks statt `useVoiceRecorder`
+- Neuer Status: `'transcribing'` (zwischen recording und processing)
+- Live-Text-Display mit Animation
+- "Fertig"-Button um die Transkription zu beenden und das Matching zu starten
+
+### Schritt 4: Artikel-Matching beibehalten
+
+Das bestehende AI-Matching (Gemini) bleibt erhalten:
+- Wird nach Beenden der Live-Transkription aufgerufen
+- Nutzt den gesammelten Text aus allen Segmenten
+- Zeigt Ergebnisse in `VoiceOrderResults.tsx`
+
+## UI-Mockup
+
+```
+┌─────────────────────────────────────┐
+│ ← Sprachbestellung        Prototyp  │
+├─────────────────────────────────────┤
+│                                     │
+│         ┌─────────────────┐         │
+│         │                 │         │
+│         │    🎤 (pulsiert)│         │
+│         │                 │         │
+│         └─────────────────┘         │
+│                                     │
+│    ┌─────────────────────────┐      │
+│    │ "Drei Ananas und zwei   │ ←    │
+│    │ Kisten Mangos..."       │ Live │
+│    └─────────────────────────┘      │
+│                                     │
+│    ════════════════════════════     │
+│    Drei Ananas                      │ ← Bereits
+│    Zwei Kisten Mangos               │   erkannt
+│    ════════════════════════════     │
+│                                     │
+│    ┌──────────────────────────┐     │
+│    │      ✓ Fertig            │     │
+│    └──────────────────────────┘     │
+│                                     │
+│    ┌──────────────────────────┐     │
+│    │ ← Zurück zur Artikelliste│     │
+│    └──────────────────────────┘     │
+└─────────────────────────────────────┘
+```
+
+## Fallback-Strategie
+
+Falls die WebSocket-Verbindung fehlschlägt:
+- Automatischer Rückfall auf die bestehende Batch-Transkription
+- Benutzer wird über den Wechsel informiert
+- Keine Unterbrechung des Bestellvorgangs
+
+## Benötigte Konfiguration
+
+- `ELEVENLABS_API_KEY`: ✅ Bereits vorhanden
+- `@elevenlabs/react`: ✅ Bereits installiert (Version ^0.12.1)
+- Keine neuen Secrets erforderlich
+
+## Dateien die erstellt/geändert werden
+
+| Datei | Aktion |
+|-------|--------|
+| `supabase/functions/elevenlabs-scribe-token/index.ts` | Neu |
+| `supabase/config.toml` | Erweitern |
+| `src/hooks/useRealtimeScribe.ts` | Neu |
+| `src/components/simple-order/VoiceOrderMode.tsx` | Ändern |
+| `src/components/simple-order/LiveTranscriptDisplay.tsx` | Neu |
