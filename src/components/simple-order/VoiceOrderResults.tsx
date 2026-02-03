@@ -4,6 +4,7 @@ import { ArrowLeft, RotateCcw, ShoppingCart, Plus, Minus, Check, AlertTriangle, 
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
+import { TtsReadbackButton } from './TtsReadbackButton';
 
 export interface MatchedItem {
   article_id: string;
@@ -24,6 +25,7 @@ interface VoiceOrderResultsProps {
   transcript: string;
   items: MatchedItem[];
   articles: Article[];
+  token: string;
   onConfirm: (items: MatchedItem[]) => void;
   onRetry: () => void;
   onBack: () => void;
@@ -33,6 +35,7 @@ export function VoiceOrderResults({
   transcript,
   items: initialItems,
   articles,
+  token,
   onConfirm,
   onRetry,
   onBack,
@@ -84,9 +87,15 @@ export function VoiceOrderResults({
         <Button variant="ghost" size="icon" onClick={onBack}>
           <ArrowLeft className="h-5 w-5" />
         </Button>
-        <h1 className="text-lg font-semibold">
+        <h1 className="text-lg font-semibold flex-1">
           {t('voice.results', 'Recognized Order')}
         </h1>
+        {/* TTS Readback Button */}
+        <TtsReadbackButton 
+          items={items} 
+          token={token} 
+          autoPlay={true} 
+        />
       </div>
 
       {/* Transcript */}

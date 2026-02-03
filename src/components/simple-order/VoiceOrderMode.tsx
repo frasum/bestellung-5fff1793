@@ -161,6 +161,7 @@ export function VoiceOrderMode({
         transcript={transcript}
         items={matchedItems}
         articles={articles}
+        token={token}
         onConfirm={handleConfirm}
         onRetry={handleRetry}
         onBack={onBack}
