@@ -24,12 +24,23 @@ interface UseRealtimeScribeReturn {
   error: string | null;
 }
 
+// Map internal language codes to ISO 639-3 codes for ElevenLabs Scribe
+const languageCodeToISO: Record<string, string> = {
+  de: 'deu',  // German
+  th: 'tha',  // Thai
+  en: 'eng',  // English
+  fr: 'fra',  // French
+  vi: 'vie',  // Vietnamese
+};
+
 export function useRealtimeScribe({
   token,
   language = 'de',
   onTranscriptUpdate,
   onError,
 }: UseRealtimeScribeOptions): UseRealtimeScribeReturn {
+  // Convert to ISO 639-3 code for ElevenLabs, fallback to original if not mapped
+  const scribeLanguageCode = languageCodeToISO[language.substring(0, 2)] || language.substring(0, 2);
   const [isConnecting, setIsConnecting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [committedTranscripts, setCommittedTranscripts] = useState<CommittedTranscript[]>([]);
@@ -38,7 +49,7 @@ export function useRealtimeScribe({
   const scribe = useScribe({
     modelId: 'scribe_v2_realtime',
     commitStrategy: CommitStrategy.VAD,
-    languageCode: language,
+    languageCode: scribeLanguageCode,
     onPartialTranscript: (data) => {
       console.log('[useRealtimeScribe] Partial:', data.text);
     },

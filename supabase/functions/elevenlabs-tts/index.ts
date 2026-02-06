@@ -40,7 +40,14 @@ async function validateToken(token: string): Promise<boolean> {
   return true;
 }
 
-// German voice - Laura (natural German voice)
+// Voice mapping by language (using multilingual model for all)
+const VOICE_BY_LANGUAGE: Record<string, string> = {
+  de: 'FGY2WhTYpPnrIDTdsKH5', // Laura - German
+  th: 'XrExE9yKIg1WjnnlVkGX', // Matilda - good multilingual voice for Thai
+  en: 'EXAVITQu4vr4xnSDxMaL', // Sarah - English
+  fr: 'XrExE9yKIg1WjnnlVkGX', // Matilda - French
+  vi: 'XrExE9yKIg1WjnnlVkGX', // Matilda - Vietnamese
+};
 const DEFAULT_VOICE_ID = 'FGY2WhTYpPnrIDTdsKH5';
 
 serve(async (req) => {
@@ -48,7 +55,7 @@ serve(async (req) => {
   if (corsRes) return corsRes;
 
   try {
-    const { token, text, voiceId } = await req.json();
+    const { token, text, voiceId, language } = await req.json();
 
     // Validate token first to prevent unauthorized API usage
     if (!token) {
@@ -71,7 +78,9 @@ serve(async (req) => {
       throw new Error('ELEVENLABS_API_KEY is not configured');
     }
 
-    const selectedVoiceId = voiceId || DEFAULT_VOICE_ID;
+    // Select voice based on language, fallback to provided voiceId or default
+    const langCode = language?.substring(0, 2) || 'de';
+    const selectedVoiceId = voiceId || VOICE_BY_LANGUAGE[langCode] || DEFAULT_VOICE_ID;
     
     console.log('[elevenlabs-tts] Generating speech for text:', text.substring(0, 50) + '...');
 

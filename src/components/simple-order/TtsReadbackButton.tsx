@@ -14,42 +14,81 @@ interface MatchedItem {
 interface TtsReadbackButtonProps {
   items: MatchedItem[];
   token: string;
+  language?: string;
   autoPlay?: boolean;
 }
 
-function formatItemsForSpeech(items: MatchedItem[]): string {
+// Localized phrases for TTS readback
+const readbackPhrases: Record<string, { prefix: string; and: string; noItems: string; skipUnits: string[] }> = {
+  de: { 
+    prefix: 'Ich habe erkannt:', 
+    and: 'und', 
+    noItems: 'Keine Artikel erkannt.',
+    skipUnits: ['stück', 'stk']
+  },
+  th: { 
+    prefix: 'ฉันได้รับ:', 
+    and: 'และ', 
+    noItems: 'ไม่พบรายการ',
+    skipUnits: ['ชิ้น']
+  },
+  en: { 
+    prefix: 'I recognized:', 
+    and: 'and', 
+    noItems: 'No items recognized.',
+    skipUnits: ['piece', 'pieces', 'pcs']
+  },
+  fr: { 
+    prefix: 'J\'ai reconnu:', 
+    and: 'et', 
+    noItems: 'Aucun article reconnu.',
+    skipUnits: ['pièce', 'pièces']
+  },
+  vi: { 
+    prefix: 'Tôi đã nhận:', 
+    and: 'và', 
+    noItems: 'Không có mặt hàng nào.',
+    skipUnits: ['cái', 'chiếc']
+  },
+};
+
+function formatItemsForSpeech(items: MatchedItem[], language: string): string {
+  const langCode = language.substring(0, 2);
+  const phrases = readbackPhrases[langCode] || readbackPhrases.de;
+  
   if (items.length === 0) {
-    return 'Keine Artikel erkannt.';
+    return phrases.noItems;
   }
 
   const itemTexts = items.map(item => {
-    // Use simplified unit names for speech
     const unit = item.unit.toLowerCase();
-    const unitText = unit === 'stück' || unit === 'stk' ? '' : ` ${item.unit}`;
+    const skipUnit = phrases.skipUnits.some(u => unit.includes(u));
+    const unitText = skipUnit ? '' : ` ${item.unit}`;
     return `${item.quantity}${unitText} ${item.name}`;
   });
 
   if (itemTexts.length === 1) {
-    return `Ich habe erkannt: ${itemTexts[0]}.`;
+    return `${phrases.prefix} ${itemTexts[0]}.`;
   }
 
   const lastItem = itemTexts.pop();
-  return `Ich habe erkannt: ${itemTexts.join(', ')} und ${lastItem}.`;
+  return `${phrases.prefix} ${itemTexts.join(', ')} ${phrases.and} ${lastItem}.`;
 }
 
-export function TtsReadbackButton({ items, token, autoPlay = true }: TtsReadbackButtonProps) {
+export function TtsReadbackButton({ items, token, language = 'de', autoPlay = true }: TtsReadbackButtonProps) {
   const { t } = useTranslation();
   const hasAutoPlayed = useRef(false);
   
   const { speak, stop, isPlaying, isLoading } = useTtsPlayback({
     token,
+    language,
     onError: (error) => {
       console.error('[TtsReadbackButton] TTS error:', error);
       // Silent fail - don't show toast for TTS errors as it's not critical
     },
   });
 
-  const speechText = formatItemsForSpeech(items);
+  const speechText = formatItemsForSpeech(items, language);
 
   // Auto-play on mount if enabled
   useEffect(() => {
