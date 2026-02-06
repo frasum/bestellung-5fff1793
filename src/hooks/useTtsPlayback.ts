@@ -4,6 +4,7 @@ import { getErrorMessage } from '@/lib/errorUtils';
 
 interface UseTtsPlaybackOptions {
   token: string;
+  language?: string;
   onError?: (error: string) => void;
 }
 
@@ -14,7 +15,7 @@ interface UseTtsPlaybackReturn {
   isLoading: boolean;
 }
 
-export function useTtsPlayback({ token, onError }: UseTtsPlaybackOptions): UseTtsPlaybackReturn {
+export function useTtsPlayback({ token, language = 'de', onError }: UseTtsPlaybackOptions): UseTtsPlaybackReturn {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -40,7 +41,7 @@ export function useTtsPlayback({ token, onError }: UseTtsPlaybackOptions): UseTt
 
     try {
       const { data, error } = await supabase.functions.invoke('elevenlabs-tts', {
-        body: { token, text },
+        body: { token, text, language },
       });
 
       if (error) {

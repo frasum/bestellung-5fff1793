@@ -162,6 +162,7 @@ export function VoiceOrderMode({
         items={matchedItems}
         articles={articles}
         token={token}
+        language={language}
         onConfirm={handleConfirm}
         onRetry={handleRetry}
         onBack={onBack}

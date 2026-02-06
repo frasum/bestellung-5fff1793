@@ -26,6 +26,7 @@ interface VoiceOrderResultsProps {
   items: MatchedItem[];
   articles: Article[];
   token: string;
+  language?: string;
   onConfirm: (items: MatchedItem[]) => void;
   onRetry: () => void;
   onBack: () => void;
@@ -36,6 +37,7 @@ export function VoiceOrderResults({
   items: initialItems,
   articles,
   token,
+  language = 'de',
   onConfirm,
   onRetry,
   onBack,
@@ -93,7 +95,8 @@ export function VoiceOrderResults({
         {/* TTS Readback Button */}
         <TtsReadbackButton 
           items={items} 
-          token={token} 
+          token={token}
+          language={language}
           autoPlay={true} 
         />
       </div>
