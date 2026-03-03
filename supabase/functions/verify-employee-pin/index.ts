@@ -11,7 +11,7 @@ interface EmployeeData {
 interface TokenWithEmployee {
   id: string;
   employee_id: string | null;
-  employee: EmployeeData[];
+  employee: EmployeeData | EmployeeData[];
 }
 
 const corsHeaders = {
@@ -96,7 +96,8 @@ serve(async (req) => {
     }
 
     const typedToken = tokenData as TokenWithEmployee;
-    const employee = typedToken.employee?.[0];
+    const emp = typedToken.employee;
+    const employee = Array.isArray(emp) ? emp[0] : emp;
     
     if (!employee?.pin_code) {
       console.log('No PIN configured for employee');
