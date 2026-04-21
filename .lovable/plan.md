@@ -1,40 +1,25 @@
 
 
-# Fix: verify-employee-pin gibt "No PIN configured" trotz vorhandenem PIN
+# Neuen Admin-Benutzer anlegen
 
-## Problem
+Ich lege einen neuen Admin-Account mit folgenden Daten an:
 
-Die Edge Function `verify-employee-pin` führt einen Join aus:
-```sql
-employee:employees(id, pin_code, auto_approve_orders)
-```
+- **E-Mail:** Lasse@founderblocks.io
+- **Passwort:** Lasse2026!
+- **Rolle:** Admin (wird automatisch via `handle_new_user` Trigger zugewiesen)
 
-Supabase gibt bei einer Many-to-One-Beziehung (foreign key `employee_id → employees.id`) ein **einzelnes Objekt** zurück, nicht ein Array. Der Code behandelt es aber als Array:
+## Vorgehen
 
-```typescript
-const employee = typedToken.employee?.[0]; // ← undefined!
-```
+1. Temporäre Edge Function `create-admin-user-temp` deployen (nutzt `SUPABASE_SERVICE_ROLE_KEY` für `auth.admin.createUser`)
+2. Function aufrufen mit den Zugangsdaten
+3. Der DB-Trigger `handle_new_user` erstellt automatisch:
+   - Eine neue Organisation ("Lasse Admin")
+   - Ein Profil
+   - Die Admin-Rolle in `user_roles`
+   - Eine Standard-Location
+4. Temporäre Function nach erfolgreicher Erstellung wieder löschen
 
-Deshalb kommt immer "No PIN configured", obwohl Andis PIN korrekt in der Datenbank steht (`$2a$10$...` bcrypt Hash).
+## Ergebnis
 
-Die `verify-employee-login` Function (Employee Portal) funktioniert korrekt — nur die Token-basierte PIN-Prüfung ist betroffen.
-
-## Lösung
-
-In `supabase/functions/verify-employee-pin/index.ts`:
-
-1. **Interface ändern**: `employee` von `EmployeeData[]` zu `EmployeeData | EmployeeData[]` 
-2. **Zugriff anpassen**: Sowohl Objekt als auch Array unterstützen:
-   ```typescript
-   const emp = typedToken.employee;
-   const employee = Array.isArray(emp) ? emp[0] : emp;
-   ```
-
-## Betroffene Datei
-
-| Datei | Änderung |
-|-------|----------|
-| `supabase/functions/verify-employee-pin/index.ts` | Interface + Zugriff auf employee-Daten fixen |
-
-Minimale Änderung, ~3 Zeilen Code.
+Lasse kann sich danach direkt unter `/auth` einloggen mit den o.g. Zugangsdaten und hat volle Admin-Rechte in seiner eigenen Organisation.
 
