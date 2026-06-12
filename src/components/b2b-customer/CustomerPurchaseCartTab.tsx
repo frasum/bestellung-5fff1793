@@ -26,8 +26,8 @@ interface CustomerPurchaseCartTabProps {
 interface VendorArticle {
   id: string;
   name: string;
-  price: number | null;
-  unit: string | null;
+  price: number;
+  unit: string;
   vendor_id: string;
 }
 
@@ -76,7 +76,13 @@ const CustomerPurchaseCartTab = ({ customerId, onOrderPlaced }: CustomerPurchase
       if (articlesRes.error) throw articlesRes.error;
 
       setVendors(vendorsRes.data || []);
-      setArticles(articlesRes.data || []);
+      setArticles((articlesRes.data || []).map(a => ({
+        id: a.id,
+        name: a.name,
+        price: a.price ?? 0,
+        unit: a.unit ?? '',
+        vendor_id: a.vendor_id,
+      })));
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'Unbekannter Fehler';
       console.error('Error loading data:', message);

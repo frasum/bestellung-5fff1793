@@ -12,12 +12,9 @@ interface OrderItem {
   id: string;
   article_name: string;
   quantity: number;
-  unit: string | null;
-  unit_price: number | null;
-  total_price: number | null;
-  article_id?: string | null;
-  order_id?: string;
-  created_at?: string | null;
+  unit: string;
+  unit_price: number;
+  total_price: number;
 }
 
 interface Order {
@@ -29,7 +26,7 @@ interface Order {
   total_amount: number;
   delivery_date: string | null;
   notes: string | null;
-  created_at: string | null;
+  created_at: string;
   items?: OrderItem[];
 }
 
@@ -61,7 +58,7 @@ const CustomerPurchaseOrdersTab = ({ customerId }: CustomerPurchaseOrdersTabProp
       if (ordersError) throw ordersError;
 
       // Load items for each order
-      const ordersWithItems = await Promise.all(
+      const ordersWithItems: Order[] = await Promise.all(
         (ordersData || []).map(async (order) => {
           const { data: items } = await supabase
             .from('b2b_customer_purchase_order_items')
@@ -69,10 +66,25 @@ const CustomerPurchaseOrdersTab = ({ customerId }: CustomerPurchaseOrdersTabProp
             .eq('order_id', order.id)
             .order('article_name');
 
+          const vendorRel = order.b2b_customer_vendors as { name?: string } | null;
           return {
-            ...order,
-            vendor_name: (order.b2b_customer_vendors as any)?.name,
-            items: items || [],
+            id: order.id,
+            order_number: order.order_number,
+            vendor_id: order.vendor_id,
+            vendor_name: vendorRel?.name,
+            status: order.status,
+            total_amount: order.total_amount,
+            delivery_date: order.delivery_date,
+            notes: order.notes,
+            created_at: order.created_at ?? '',
+            items: (items || []).map(it => ({
+              id: it.id,
+              article_name: it.article_name,
+              quantity: it.quantity,
+              unit: it.unit ?? '',
+              unit_price: it.unit_price ?? 0,
+              total_price: it.total_price ?? 0,
+            })),
           };
         })
       );

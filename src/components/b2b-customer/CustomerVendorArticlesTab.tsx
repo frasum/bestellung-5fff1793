@@ -52,10 +52,10 @@ export interface CustomerVendorArticle {
   description: string | null;
   sku: string | null;
   category: string | null;
-  price: number | null;
-  unit: string | null;
-  is_active: boolean | null;
-  created_at: string | null;
+  price: number;
+  unit: string;
+  is_active: boolean;
+  created_at: string;
 }
 
 interface CustomerVendorArticlesTabProps {
@@ -107,7 +107,13 @@ const CustomerVendorArticlesTab = ({ customerId }: CustomerVendorArticlesTabProp
         .order('name');
 
       if (articlesError) throw articlesError;
-      setArticles(articlesData || []);
+      setArticles((articlesData || []).map(a => ({
+        ...a,
+        price: a.price ?? 0,
+        unit: a.unit ?? '',
+        is_active: a.is_active ?? true,
+        created_at: a.created_at ?? '',
+      })));
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'Unbekannter Fehler';
       console.error('Error loading data:', message);
