@@ -305,7 +305,7 @@ const B2BSupplierDashboard = () => {
                 className="h-10 w-10 rounded-lg flex items-center justify-center"
                 style={{ backgroundColor: account.primary_color + '20' }}
               >
-                <Building2 className="h-5 w-5" style={{ color: account.primary_color }} />
+                <Building2 className="h-5 w-5" style={{ color: account.primary_color ?? undefined }} />
               </div>
             )}
             <div>
