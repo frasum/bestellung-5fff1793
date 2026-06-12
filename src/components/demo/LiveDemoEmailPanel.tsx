@@ -239,8 +239,7 @@ export function LiveDemoEmailPanel({ soundEnabled }: LiveDemoEmailPanelProps) {
                     key={email.id}
                     className={cn(
                       "p-2 rounded-md border cursor-pointer transition-all hover:bg-accent/50",
-                      highlightedEmail === email.id && "ring-2 ring-violet-500 animate-pulse bg-violet-500/10",
-                      (selectedEmail !== null && selectedEmail.id === email.id) && "bg-accent"
+                      highlightedEmail === email.id && "ring-2 ring-violet-500 animate-pulse bg-violet-500/10"
                     )}
                     onClick={() => setSelectedEmail(email)}
                   >
