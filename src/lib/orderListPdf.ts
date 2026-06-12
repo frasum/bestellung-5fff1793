@@ -109,7 +109,7 @@ export const generateOrderListPdf = async (
     : ['Artikel', 'Einheit', 'Letzte', 'Menge', 'Notiz'];
 
   // Dynamic column styles based on Thai content
-  const columnStyles = hasAnyThaiDescription
+  const columnStyles: Record<string, { cellWidth?: number | 'auto'; halign?: 'center' }> = hasAnyThaiDescription
     ? {
         0: { cellWidth: 'auto' as const },  // Artikel
         1: { cellWidth: 45 },               // Thai
