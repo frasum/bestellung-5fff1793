@@ -177,7 +177,7 @@ const Checkout = () => {
     return result;
   }, [items, freeItems]);
 
-  const formatAddress = (address: typeof deliveryAddresses[0]) => {
+  const formatAddress = (address: NonNullable<typeof deliveryAddresses>[number]) => {
     const parts = [address.address_line1];
     if (address.address_line2) parts.push(address.address_line2);
     parts.push(`${address.postal_code} ${address.city}`);
@@ -850,7 +850,7 @@ const Checkout = () => {
                 mode="single"
                 selected={form.watch('deliveryDate')}
                 onSelect={(date) => {
-                  form.setValue('deliveryDate', date);
+                  if (date) form.setValue('deliveryDate', date);
                   setShowMobileCalendar(false);
                 }}
                 disabled={(date) => date < new Date()}
