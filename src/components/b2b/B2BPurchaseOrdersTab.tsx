@@ -17,12 +17,9 @@ interface OrderItem {
   id: string;
   article_name: string;
   quantity: number;
-  unit: string | null;
-  unit_price: number | null;
-  total_price: number | null;
-  article_id?: string | null;
-  order_id?: string;
-  created_at?: string | null;
+  unit: string;
+  unit_price: number;
+  total_price: number;
 }
 
 interface PurchaseOrder {
@@ -35,9 +32,9 @@ interface PurchaseOrder {
   delivery_address: string | null;
   notes: string | null;
   total_amount: number;
-  email_sent: boolean | null;
+  email_sent: boolean;
   email_sent_at: string | null;
-  created_at: string | null;
+  created_at: string;
   items?: OrderItem[];
 }
 
@@ -95,9 +92,19 @@ const B2BPurchaseOrdersTab = ({ accountId, supplierId }: B2BPurchaseOrdersTabPro
 
       if (ordersError) throw ordersError;
 
-      const ordersWithVendor = (ordersData || []).map(order => ({
-        ...order,
+      const ordersWithVendor: PurchaseOrder[] = (ordersData || []).map(order => ({
+        id: order.id,
+        order_number: order.order_number,
+        vendor_id: order.vendor_id,
         vendor_name: vendorMap.get(order.vendor_id) || 'Unbekannt',
+        status: order.status,
+        delivery_date: order.delivery_date,
+        delivery_address: order.delivery_address,
+        notes: order.notes,
+        total_amount: order.total_amount,
+        email_sent: order.email_sent ?? false,
+        email_sent_at: order.email_sent_at,
+        created_at: order.created_at ?? '',
       }));
 
       setOrders(ordersWithVendor);
