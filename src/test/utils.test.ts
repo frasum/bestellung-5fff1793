@@ -55,7 +55,7 @@ describe('utils', () => {
     });
 
     it('handles predominantly uppercase (>70%)', () => {
-      expect(toTitleCase('HELLO world')).toBe('Hello World');
+      expect(toTitleCase('HELLO WORld')).toBe('Hello World');
     });
 
     it('preserves text when less than 70% uppercase', () => {
