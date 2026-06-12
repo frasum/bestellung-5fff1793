@@ -519,7 +519,8 @@ export function useCreateArticlesFromInvoice() {
         .eq('id', user.id)
         .single();
 
-      if (!profile?.organization_id) {
+      const organizationId = profile?.organization_id;
+      if (!organizationId) {
         throw new Error('Keine Organisation gefunden');
       }
 
