@@ -48,14 +48,11 @@ interface B2BOrder {
   } | null;
   items: {
     id: string;
-    article_id?: string | null;
     article_name: string;
     quantity: number;
     unit: string;
     unit_price: number;
     total_price: number;
-    order_id?: string;
-    created_at?: string;
   }[];
 }
 
