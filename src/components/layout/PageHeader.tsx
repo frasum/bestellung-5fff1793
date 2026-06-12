@@ -133,7 +133,7 @@ export const PageHeader = ({
     // Get tab config
     const tabConfig = activeTab && config?.tabs ? config.tabs[activeTab] : null;
     const isTabWithSubTabs = tabConfig && typeof tabConfig === 'object' && 'subTabs' in tabConfig;
-    const hasActiveSubTab = isTabWithSubTabs && activeSubTab && activeSubTab !== DEFAULT_SUB_TABS[activeTab];
+    const hasActiveSubTab = !!activeTab && isTabWithSubTabs && activeSubTab && activeSubTab !== DEFAULT_SUB_TABS[activeTab];
 
     // Level 1: Current page (e.g., "Einstellungen")
     if (config) {

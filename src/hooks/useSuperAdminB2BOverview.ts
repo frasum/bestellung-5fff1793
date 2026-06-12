@@ -59,7 +59,9 @@ export function useB2BAccountsOverview() {
         email: account.email,
         created_at: account.created_at,
         is_active: account.is_active ?? true,
-        suppliers: (suppliers || []).filter(s => s.account_id === account.id),
+        suppliers: (suppliers || [])
+          .filter(s => s.account_id === account.id)
+          .map(s => ({ id: s.id, name: s.name, is_active: s.is_active ?? true })),
         supplier_users: (supplierUsers || []).filter(u => u.account_id === account.id),
       }));
 

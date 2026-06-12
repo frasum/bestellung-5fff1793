@@ -123,7 +123,11 @@ const B2BVendorArticlesTab = ({ accountId, supplierId }: B2BVendorArticlesTabPro
       const { data: vendorsData, error: vendorsError } = await vendorsQuery;
 
       if (vendorsError) throw vendorsError;
-      setVendors(vendorsData || []);
+      setVendors((vendorsData || []).map(v => ({
+        ...v,
+        is_active: v.is_active ?? true,
+        created_at: v.created_at ?? '',
+      })));
 
       // Get vendor IDs for filtering articles
       const vendorIds = vendorsData?.map(v => v.id) || [];
@@ -146,8 +150,17 @@ const B2BVendorArticlesTab = ({ accountId, supplierId }: B2BVendorArticlesTabPro
 
       // Map vendor names
       const vendorMap = new Map(vendorsData?.map(v => [v.id, v.name]) || []);
-      const articlesWithVendor = (articlesData || []).map(a => ({
-        ...a,
+      const articlesWithVendor: B2BVendorArticle[] = (articlesData || []).map(a => ({
+        id: a.id,
+        vendor_id: a.vendor_id,
+        name: a.name,
+        description: a.description,
+        price: a.price ?? 0,
+        unit: a.unit ?? '',
+        sku: a.sku,
+        category: a.category,
+        is_active: a.is_active ?? true,
+        created_at: a.created_at ?? '',
         vendor_name: vendorMap.get(a.vendor_id) || 'Unbekannt',
       }));
 

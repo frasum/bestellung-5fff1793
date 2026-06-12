@@ -29,16 +29,22 @@ export function useSponsoredAccounts() {
       if (orgsError) throw orgsError;
 
       // Fetch admin emails for each org
-      const orgsWithEmails = await Promise.all(
+      const orgsWithEmails: SponsoredAccount[] = await Promise.all(
         (orgs || []).map(async (org) => {
           const { data: profiles } = await supabase
             .from('profiles')
             .select('email')
             .eq('organization_id', org.id)
             .limit(1);
-          
+
           return {
-            ...org,
+            id: org.id,
+            name: org.name,
+            is_sponsored: org.is_sponsored ?? false,
+            sponsored_note: org.sponsored_note,
+            is_demo: org.is_demo ?? false,
+            subscription_tier: org.subscription_tier ?? 'free',
+            created_at: org.created_at,
             email: profiles?.[0]?.email || null,
           };
         })

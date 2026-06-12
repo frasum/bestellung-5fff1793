@@ -175,7 +175,8 @@ export function LiveDemoRestaurantPanel({ soundEnabled }: LiveDemoRestaurantPane
 
       // Generate order number
       const { data: orderNumber } = await supabase.rpc('generate_order_number');
-      
+      if (!orderNumber) throw new Error('Failed to generate order number');
+
       const totalAmount = supplierItems.reduce((sum, item) => sum + item.article.price * (Number(item.article.packaging_unit) || 1) * item.quantity, 0);
 
       // Create order directly in DB (no email function)

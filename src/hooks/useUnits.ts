@@ -34,10 +34,11 @@ export const useCreateUnit = () => {
 
   return useMutation({
     mutationFn: async (name: string) => {
+      if (!user?.id) throw new Error('Not authenticated');
       const { data: profile } = await supabase
         .from('profiles')
         .select('organization_id')
-        .eq('id', user?.id)
+        .eq('id', user.id)
         .single();
 
       if (!profile?.organization_id) throw new Error('No organization found');

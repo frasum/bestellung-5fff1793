@@ -172,6 +172,7 @@ export const useCreateB2BInventorySession = () => {
       notes?: string;
       supplierId?: string;
     }) => {
+      if (!user?.id) throw new Error('Not authenticated');
       const { data, error } = await supabase
         .from('b2b_inventory_sessions')
         .insert({
@@ -179,7 +180,7 @@ export const useCreateB2BInventorySession = () => {
           notes,
           supplier_account_id: accountId,
           supplier_id: supplierId || null,
-          user_id: user?.id,
+          user_id: user.id,
         })
         .select()
         .single();

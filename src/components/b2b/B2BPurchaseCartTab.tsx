@@ -56,8 +56,12 @@ const B2BPurchaseCartTab = ({ accountId, supplierId, onOrderPlaced }: B2BPurchas
       }
 
       const { data: vendorsData } = await vendorsQuery;
-      
-      setVendors(vendorsData || []);
+
+      setVendors((vendorsData || []).map(v => ({
+        ...v,
+        is_active: v.is_active ?? true,
+        created_at: v.created_at ?? '',
+      })));
 
       // Load articles
       const { data: articlesData, error } = await supabase
@@ -69,7 +73,16 @@ const B2BPurchaseCartTab = ({ accountId, supplierId, onOrderPlaced }: B2BPurchas
 
       const vendorMap = new Map(vendorsData?.map(v => [v.id, v.name]) || []);
       const items: CartItem[] = (articlesData || []).map(article => ({
-        ...article,
+        id: article.id,
+        vendor_id: article.vendor_id,
+        name: article.name,
+        description: article.description,
+        price: article.price ?? 0,
+        unit: article.unit ?? '',
+        sku: article.sku,
+        category: article.category,
+        is_active: article.is_active ?? true,
+        created_at: article.created_at ?? '',
         vendor_name: vendorMap.get(article.vendor_id) || 'Unbekannt',
         quantity: cart[article.id] || 1,
       }));

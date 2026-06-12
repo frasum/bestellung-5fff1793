@@ -45,7 +45,7 @@ interface B2BOrder {
     company_name: string;
     email: string;
     customer_number: string | null;
-  };
+  } | null;
   items: {
     id: string;
     article_name: string;
@@ -107,16 +107,33 @@ const B2BOrdersTab = ({ accountId, selectedSupplierId = 'all', suppliers = [] }:
       if (ordersError) throw ordersError;
 
       // Load items for each order
-      const ordersWithItems = await Promise.all(
+      const ordersWithItems: B2BOrder[] = await Promise.all(
         (ordersData || []).map(async (order) => {
           const { data: items } = await supabase
             .from('supplier_b2b_order_items')
             .select('*')
             .eq('order_id', order.id);
-          
+
+          const customerRel = Array.isArray(order.customer) ? order.customer[0] : order.customer;
           return {
-            ...order,
-            items: items || [],
+            id: order.id,
+            order_number: order.order_number,
+            total_amount: order.total_amount ?? 0,
+            status: order.status ?? 'pending',
+            notes: order.notes,
+            delivery_date: order.delivery_date,
+            delivery_address: order.delivery_address,
+            created_at: order.created_at ?? '',
+            supplier_id: order.supplier_id,
+            customer: customerRel ?? null,
+            items: (items || []).map(it => ({
+              id: it.id,
+              article_name: it.article_name,
+              quantity: it.quantity,
+              unit: it.unit,
+              unit_price: it.unit_price,
+              total_price: it.total_price,
+            })),
           };
         })
       );

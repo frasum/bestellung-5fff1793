@@ -113,10 +113,11 @@ const Orders = () => {
   const { data: orgData } = useQuery({
     queryKey: ['organization-test-mode', user?.id],
     queryFn: async () => {
+      if (!user?.id) return { name: 'Restaurant', testModeEnabled: false, testEmail: '' };
       const { data } = await supabase
         .from('profiles')
         .select('organization_id, organizations(name, test_mode_enabled, test_email)')
-        .eq('id', user?.id)
+        .eq('id', user.id)
         .maybeSingle();
       return {
         name: data?.organizations?.name || 'Restaurant',

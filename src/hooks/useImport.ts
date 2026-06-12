@@ -18,15 +18,17 @@ export const useImportSuppliers = () => {
 
       if (!profile?.organization_id) throw new Error('No organization found');
 
-      const suppliersToInsert = suppliers.map(s => ({
-        organization_id: profile.organization_id,
-        name: s.name?.trim(),
-        email: s.email?.trim(),
-        phone: s.phone?.trim() || null,
-        address: s.address?.trim() || null,
-        contact_person: s.contact_person?.trim() || null,
-        is_active: true,
-      })).filter(s => s.name && s.email);
+      const suppliersToInsert = suppliers
+        .map(s => ({
+          organization_id: profile.organization_id,
+          name: s.name?.trim() ?? '',
+          email: s.email?.trim() ?? '',
+          phone: s.phone?.trim() || null,
+          address: s.address?.trim() || null,
+          contact_person: s.contact_person?.trim() || null,
+          is_active: true,
+        }))
+        .filter(s => s.name && s.email);
 
       if (suppliersToInsert.length === 0) {
         throw new Error('No valid suppliers to import');
@@ -87,11 +89,11 @@ export const useImportArticles = () => {
         return {
           organization_id: profile.organization_id,
           supplier_id: supplierId,
-          name: a.name?.trim(),
+          name: a.name?.trim() ?? '',
           description: a.description?.trim() || null,
           sku: a.sku?.trim() || null,
           unit: a.unit?.trim() || 'pcs',
-          price: parseFloat(a.price?.replace(',', '.')) || 0,
+          price: parseFloat(a.price?.replace(',', '.') ?? '') || 0,
           category: a.category?.trim() || null,
           reference_price: a.reference_price ? parseFloat(a.reference_price.replace(',', '.')) : null,
           reference_unit: a.reference_unit?.trim() || null,

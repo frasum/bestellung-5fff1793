@@ -81,7 +81,11 @@ const B2BVendorsTab = ({ accountId, supplierId, onVendorChange }: B2BVendorsTabP
       const { data, error } = await query;
 
       if (error) throw error;
-      setVendors(data || []);
+      setVendors((data || []).map(v => ({
+        ...v,
+        is_active: v.is_active ?? true,
+        created_at: v.created_at ?? '',
+      })));
     } catch (error: unknown) {
       console.error('Error loading vendors:', error);
       toast.error('Fehler beim Laden der Lieferanten');

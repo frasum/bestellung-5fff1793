@@ -71,6 +71,7 @@ export function useLastOrderByArticle() {
       const lastOrderMap: Record<string, LastOrderInfo> = {};
       
       for (const item of data || []) {
+        if (!item.article_id) continue;
         if (!lastOrderMap[item.article_id]) {
           const orderData = item.orders as unknown as { 
             created_at: string; 

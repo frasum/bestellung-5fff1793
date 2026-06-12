@@ -72,7 +72,11 @@ const CustomerVendorsTab = ({ customerId, onVendorChange }: CustomerVendorsTabPr
         .order('name', { ascending: true });
 
       if (error) throw error;
-      setVendors(data || []);
+      setVendors((data || []).map(v => ({
+        ...v,
+        is_active: v.is_active ?? true,
+        created_at: v.created_at ?? '',
+      })));
     } catch (error: unknown) {
       console.error('Error loading vendors:', error);
       toast.error('Fehler beim Laden der Lieferanten');

@@ -102,7 +102,7 @@ const B2BArticleImportDialog = ({
         .not('sku', 'is', null);
 
       if (error) throw error;
-      setExistingSkus(new Set((data || []).map(a => a.sku).filter(Boolean)));
+      setExistingSkus(new Set((data || []).map(a => a.sku).filter((s): s is string => !!s)));
     } catch (error) {
       console.error('Error loading existing SKUs:', error);
     }

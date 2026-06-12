@@ -58,7 +58,7 @@ const CustomerPurchaseOrdersTab = ({ customerId }: CustomerPurchaseOrdersTabProp
       if (ordersError) throw ordersError;
 
       // Load items for each order
-      const ordersWithItems = await Promise.all(
+      const ordersWithItems: Order[] = await Promise.all(
         (ordersData || []).map(async (order) => {
           const { data: items } = await supabase
             .from('b2b_customer_purchase_order_items')
@@ -66,10 +66,25 @@ const CustomerPurchaseOrdersTab = ({ customerId }: CustomerPurchaseOrdersTabProp
             .eq('order_id', order.id)
             .order('article_name');
 
+          const vendorRel = order.b2b_customer_vendors as { name?: string } | null;
           return {
-            ...order,
-            vendor_name: (order.b2b_customer_vendors as any)?.name,
-            items: items || [],
+            id: order.id,
+            order_number: order.order_number,
+            vendor_id: order.vendor_id,
+            vendor_name: vendorRel?.name,
+            status: order.status ?? 'pending',
+            total_amount: order.total_amount ?? 0,
+            delivery_date: order.delivery_date,
+            notes: order.notes,
+            created_at: order.created_at ?? '',
+            items: (items || []).map(it => ({
+              id: it.id,
+              article_name: it.article_name,
+              quantity: it.quantity,
+              unit: it.unit ?? '',
+              unit_price: it.unit_price ?? 0,
+              total_price: it.total_price ?? 0,
+            })),
           };
         })
       );

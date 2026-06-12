@@ -92,8 +92,17 @@ const B2BSuppliersTab = ({ accountId, onStatsChange }: B2BSuppliersTabProps) => 
         }
       });
 
-      const suppliersWithCounts = (suppliersData || []).map(s => ({
-        ...s,
+      const suppliersWithCounts: B2BSupplier[] = (suppliersData || []).map(s => ({
+        id: s.id,
+        account_id: s.account_id,
+        name: s.name,
+        contact_email: s.contact_email,
+        contact_phone: s.contact_phone,
+        logo_url: s.logo_url,
+        description: s.description,
+        is_active: s.is_active ?? true,
+        sort_order: s.sort_order ?? 0,
+        created_at: s.created_at ?? '',
         article_count: counts[s.id] || 0,
       }));
 

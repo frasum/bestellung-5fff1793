@@ -53,81 +53,101 @@ export function WineDetailsSection({
       {/* Description - full width auto-grow */}
       <div className="space-y-2">
         <Label htmlFor="article-description">Beschreibung</Label>
-        <Textarea 
-          ref={descriptionRef}
-          id="article-description" 
-          {...form.register('description')} 
-          placeholder="Weingut, Jahrgang, Qualitätsstufe, besondere Merkmale..."
-          className="min-h-[80px] resize-none"
-          onInput={(e) => {
-            const target = e.target as HTMLTextAreaElement;
-            target.style.height = 'auto';
-            target.style.height = `${Math.max(80, target.scrollHeight)}px`;
-          }}
-        />
+        {(() => {
+          const { ref: registerRef, ...rest } = form.register('description');
+          return (
+            <Textarea
+              {...rest}
+              ref={(el) => { registerRef(el); (descriptionRef as React.MutableRefObject<HTMLTextAreaElement | null>).current = el; }}
+              id="article-description"
+              placeholder="Weingut, Jahrgang, Qualitätsstufe, besondere Merkmale..."
+              className="min-h-[80px] resize-none"
+              onInput={(e) => {
+                const target = e.target as HTMLTextAreaElement;
+                target.style.height = 'auto';
+                target.style.height = `${Math.max(80, target.scrollHeight)}px`;
+              }}
+            />
+          );
+        })()}
       </div>
 
       {/* Grape Variety - auto-grow */}
       <div className="space-y-2">
         <Label htmlFor="article-grape-variety">Traubensorte 🍇</Label>
-        <Textarea 
-          ref={grapeVarietyRef}
-          id="article-grape-variety" 
-          {...form.register('grape_variety')} 
-          placeholder="z.B. Riesling, Spätburgunder, Cuvée aus Merlot und Cabernet..."
-          className={cn(
-            "min-h-[60px] resize-none",
-            editingArticle && !form.watch('grape_variety')?.trim() && 
-            'border-orange-400 bg-orange-50/50 dark:bg-orange-950/20'
-          )}
-          onInput={(e) => {
-            const target = e.target as HTMLTextAreaElement;
-            target.style.height = 'auto';
-            target.style.height = `${Math.max(60, target.scrollHeight)}px`;
-          }}
-        />
+        {(() => {
+          const { ref: registerRef, ...rest } = form.register('grape_variety');
+          return (
+            <Textarea
+              {...rest}
+              ref={(el) => { registerRef(el); (grapeVarietyRef as React.MutableRefObject<HTMLTextAreaElement | null>).current = el; }}
+              id="article-grape-variety"
+              placeholder="z.B. Riesling, Spätburgunder, Cuvée aus Merlot und Cabernet..."
+              className={cn(
+                "min-h-[60px] resize-none",
+                editingArticle && !form.watch('grape_variety')?.trim() &&
+                'border-orange-400 bg-orange-50/50 dark:bg-orange-950/20'
+              )}
+              onInput={(e) => {
+                const target = e.target as HTMLTextAreaElement;
+                target.style.height = 'auto';
+                target.style.height = `${Math.max(60, target.scrollHeight)}px`;
+              }}
+            />
+          );
+        })()}
       </div>
 
       {/* Flavor Profile - auto-grow */}
       <div className="space-y-2">
         <Label htmlFor="article-flavor-profile">Geschmacksprofil 🍷</Label>
-        <Textarea 
-          ref={flavorProfileRef}
-          id="article-flavor-profile" 
-          {...form.register('flavor_profile')} 
-          placeholder="z.B. fruchtig mit Noten von Kirsche und Vanille, samtige Tannine..."
-          className={cn(
-            "min-h-[60px] resize-none",
-            editingArticle && !form.watch('flavor_profile')?.trim() && 
-            'border-orange-400 bg-orange-50/50 dark:bg-orange-950/20'
-          )}
-          onInput={(e) => {
-            const target = e.target as HTMLTextAreaElement;
-            target.style.height = 'auto';
-            target.style.height = `${Math.max(60, target.scrollHeight)}px`;
-          }}
-        />
+        {(() => {
+          const { ref: registerRef, ...rest } = form.register('flavor_profile');
+          return (
+            <Textarea
+              {...rest}
+              ref={(el) => { registerRef(el); (flavorProfileRef as React.MutableRefObject<HTMLTextAreaElement | null>).current = el; }}
+              id="article-flavor-profile"
+              placeholder="z.B. fruchtig mit Noten von Kirsche und Vanille, samtige Tannine..."
+              className={cn(
+                "min-h-[60px] resize-none",
+                editingArticle && !form.watch('flavor_profile')?.trim() &&
+                'border-orange-400 bg-orange-50/50 dark:bg-orange-950/20'
+              )}
+              onInput={(e) => {
+                const target = e.target as HTMLTextAreaElement;
+                target.style.height = 'auto';
+                target.style.height = `${Math.max(60, target.scrollHeight)}px`;
+              }}
+            />
+          );
+        })()}
       </div>
 
       {/* Food Pairings - auto-grow */}
       <div className="space-y-2">
         <Label htmlFor="article-food-pairings">Speiseempfehlungen 🍽️</Label>
-        <Textarea 
-          ref={foodPairingsRef}
-          id="article-food-pairings" 
-          {...form.register('food_pairings')} 
-          placeholder="z.B. Passt hervorragend zu Lamm, gegrilltem Gemüse, reifem Käse..."
-          className={cn(
-            "min-h-[60px] resize-none",
-            editingArticle && !form.watch('food_pairings')?.trim() && 
-            'border-orange-400 bg-orange-50/50 dark:bg-orange-950/20'
-          )}
-          onInput={(e) => {
-            const target = e.target as HTMLTextAreaElement;
-            target.style.height = 'auto';
-            target.style.height = `${Math.max(60, target.scrollHeight)}px`;
-          }}
-        />
+        {(() => {
+          const { ref: registerRef, ...rest } = form.register('food_pairings');
+          return (
+            <Textarea
+              {...rest}
+              ref={(el) => { registerRef(el); (foodPairingsRef as React.MutableRefObject<HTMLTextAreaElement | null>).current = el; }}
+              id="article-food-pairings"
+              placeholder="z.B. Passt hervorragend zu Lamm, gegrilltem Gemüse, reifem Käse..."
+              className={cn(
+                "min-h-[60px] resize-none",
+                editingArticle && !form.watch('food_pairings')?.trim() &&
+                'border-orange-400 bg-orange-50/50 dark:bg-orange-950/20'
+              )}
+              onInput={(e) => {
+                const target = e.target as HTMLTextAreaElement;
+                target.style.height = 'auto';
+                target.style.height = `${Math.max(60, target.scrollHeight)}px`;
+              }}
+            />
+          );
+        })()}
       </div>
 
       {/* Special Attributes (Bio, Vegan, etc.) */}

@@ -37,11 +37,13 @@ export const useArticleLocationsByLocation = (locationId?: string) => {
     queryKey: ['article-locations-by-location', locationId],
     enabled: !!locationId,
     queryFn: async () => {
+      if (!locationId) return [];
       const { data, error } = await supabase
         .from('article_locations')
         .select('*')
         .eq('location_id', locationId)
         .eq('is_active', true);
+
 
       if (error) throw error;
       return data as ArticleLocation[];
@@ -55,12 +57,14 @@ export const useArticlesByLocation = (locationId?: string) => {
     queryKey: ['articles-by-location', locationId],
     enabled: !!locationId,
     queryFn: async () => {
+      if (!locationId) return [];
       // Get article IDs for this location
       const { data: articleLocations, error: alError } = await supabase
         .from('article_locations')
         .select('article_id')
         .eq('location_id', locationId)
         .eq('is_active', true);
+
 
       if (alError) throw alError;
 

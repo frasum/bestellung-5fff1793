@@ -13,12 +13,20 @@ import {
 } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { X, Check, Loader2 } from 'lucide-react';
-import type { B2BSupplier } from './B2BSuppliersTab';
+
+interface B2BSupplierLike {
+  id: string;
+  name: string;
+  contact_email: string | null;
+  contact_phone: string | null;
+  description: string | null;
+  is_active: boolean | null;
+}
 
 interface B2BSupplierFormDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  supplier: B2BSupplier | null;
+  supplier: B2BSupplierLike | null;
   accountId: string;
   onSuccess: () => void;
 }
@@ -43,7 +51,7 @@ const B2BSupplierFormDialog = ({
       setContactEmail(supplier.contact_email || '');
       setContactPhone(supplier.contact_phone || '');
       setDescription(supplier.description || '');
-      setIsActive(supplier.is_active);
+      setIsActive(supplier.is_active ?? true);
     } else {
       setName('');
       setContactEmail('');

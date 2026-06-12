@@ -92,9 +92,19 @@ const B2BPurchaseOrdersTab = ({ accountId, supplierId }: B2BPurchaseOrdersTabPro
 
       if (ordersError) throw ordersError;
 
-      const ordersWithVendor = (ordersData || []).map(order => ({
-        ...order,
+      const ordersWithVendor: PurchaseOrder[] = (ordersData || []).map(order => ({
+        id: order.id,
+        order_number: order.order_number,
+        vendor_id: order.vendor_id,
         vendor_name: vendorMap.get(order.vendor_id) || 'Unbekannt',
+        status: order.status ?? 'pending',
+        delivery_date: order.delivery_date,
+        delivery_address: order.delivery_address,
+        notes: order.notes,
+        total_amount: order.total_amount ?? 0,
+        email_sent: order.email_sent ?? false,
+        email_sent_at: order.email_sent_at,
+        created_at: order.created_at ?? '',
       }));
 
       setOrders(ordersWithVendor);
@@ -118,8 +128,17 @@ const B2BPurchaseOrdersTab = ({ accountId, supplierId }: B2BPurchaseOrdersTabPro
       return;
     }
 
-    setOrders(prev => prev.map(order => 
-      order.id === orderId ? { ...order, items: data } : order
+    const mappedItems: OrderItem[] = (data || []).map(it => ({
+      id: it.id,
+      article_name: it.article_name,
+      quantity: it.quantity,
+      unit: it.unit ?? '',
+      unit_price: it.unit_price ?? 0,
+      total_price: it.total_price ?? 0,
+    }));
+
+    setOrders(prev => prev.map(order =>
+      order.id === orderId ? { ...order, items: mappedItems } : order
     ));
   };
 

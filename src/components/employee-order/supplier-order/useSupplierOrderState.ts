@@ -202,7 +202,25 @@ export const useSupplierOrderState = (
         .limit(20);
 
       if (!error) {
-        setEmployeeOrders(data || []);
+        const normalized: EmployeeOrder[] = (data || []).map((o) => {
+          const supplierRel = Array.isArray(o.supplier) ? o.supplier[0] : o.supplier;
+          const locationRel = Array.isArray(o.location) ? o.location[0] : o.location;
+          return {
+            id: o.id,
+            order_number: o.order_number,
+            status: o.status,
+            total_amount: o.total_amount,
+            delivery_address: o.delivery_address,
+            notes: o.notes,
+            created_at: o.created_at,
+            supplier: supplierRel ?? null,
+            location: locationRel
+              ? { id: locationRel.id, name: locationRel.name, short_code: locationRel.short_code ?? '' }
+              : null,
+            items: o.items ?? [],
+          };
+        });
+        setEmployeeOrders(normalized);
       }
     } catch (error) {
       console.error('Error loading orders:', error);

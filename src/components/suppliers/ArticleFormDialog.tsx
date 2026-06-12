@@ -183,7 +183,7 @@ export const ArticleFormDialog = ({
           <CategorySection
             form={form}
             categories={categories}
-            isWineCategory={isWineCategory}
+            isWineCategory={!!isWineCategory}
           />
 
           {/* Wine Details Section */}
