@@ -123,7 +123,11 @@ const B2BVendorArticlesTab = ({ accountId, supplierId }: B2BVendorArticlesTabPro
       const { data: vendorsData, error: vendorsError } = await vendorsQuery;
 
       if (vendorsError) throw vendorsError;
-      setVendors(vendorsData || []);
+      setVendors((vendorsData || []).map(v => ({
+        ...v,
+        is_active: v.is_active ?? true,
+        created_at: v.created_at ?? '',
+      })));
 
       // Get vendor IDs for filtering articles
       const vendorIds = vendorsData?.map(v => v.id) || [];

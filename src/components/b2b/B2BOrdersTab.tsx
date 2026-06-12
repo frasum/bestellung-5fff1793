@@ -118,8 +118,8 @@ const B2BOrdersTab = ({ accountId, selectedSupplierId = 'all', suppliers = [] }:
           return {
             id: order.id,
             order_number: order.order_number,
-            total_amount: order.total_amount,
-            status: order.status,
+            total_amount: order.total_amount ?? 0,
+            status: order.status ?? 'pending',
             notes: order.notes,
             delivery_date: order.delivery_date,
             delivery_address: order.delivery_address,
