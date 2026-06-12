@@ -115,9 +115,9 @@ const B2BSettingsTab = ({
 
           {/* Branding */}
           <BrandingSection
-            primaryColor={state.primaryColor}
+            primaryColor={state.primaryColor ?? ''}
             setPrimaryColor={state.setPrimaryColor}
-            secondaryColor={state.secondaryColor}
+            secondaryColor={state.secondaryColor ?? ''}
             setSecondaryColor={state.setSecondaryColor}
             logoUrl={state.logoUrl}
             uploadingLogo={state.uploadingLogo}
