@@ -181,7 +181,7 @@ export default function B2BAcceptInvitation() {
 
       toast({ title: 'Einladung angenommen!', description: 'Sie werden weitergeleitet...' });
       
-      const subdomain = (data as any)?.subdomain as string | undefined;
+      const subdomain = (data as { subdomain?: string } | null)?.subdomain;
       const target = subdomain ? `/b2b/portal/${subdomain}` : '/b2b/portal';
 
       setTimeout(() => {

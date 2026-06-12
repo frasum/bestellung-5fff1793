@@ -22,7 +22,7 @@ export interface QuickCaptureWizardProps {
   categories: string[];
   units: string[];
   onCreateSupplier: (input: SupplierInput) => Promise<Supplier>;
-  onCreateArticle: (input: ArticleInput) => Promise<any>;
+  onCreateArticle: (input: ArticleInput) => Promise<{ id: string } & Record<string, unknown>>;
   onUploadImage: (base64: string, orgId: string, articleId: string) => Promise<string | null>;
   organizationId: string | null;
 }
