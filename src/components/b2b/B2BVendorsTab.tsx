@@ -41,9 +41,8 @@ export interface B2BVendor {
   phone: string | null;
   address: string | null;
   notes: string | null;
-  is_active: boolean | null;
-  created_at: string | null;
-  supplier_account_id?: string;
+  is_active: boolean;
+  created_at: string;
   supplier_id?: string | null;
 }
 
@@ -82,7 +81,11 @@ const B2BVendorsTab = ({ accountId, supplierId, onVendorChange }: B2BVendorsTabP
       const { data, error } = await query;
 
       if (error) throw error;
-      setVendors(data || []);
+      setVendors((data || []).map(v => ({
+        ...v,
+        is_active: v.is_active ?? true,
+        created_at: v.created_at ?? '',
+      })));
     } catch (error: unknown) {
       console.error('Error loading vendors:', error);
       toast.error('Fehler beim Laden der Lieferanten');

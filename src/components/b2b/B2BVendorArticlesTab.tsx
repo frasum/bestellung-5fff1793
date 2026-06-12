@@ -47,13 +47,12 @@ export interface B2BVendorArticle {
   vendor_id: string;
   name: string;
   description: string | null;
-  price: number | null;
-  unit: string | null;
+  price: number;
+  unit: string;
   sku: string | null;
   category: string | null;
-  is_active: boolean | null;
-  created_at: string | null;
-  supplier_account_id?: string;
+  is_active: boolean;
+  created_at: string;
   vendor_name?: string;
 }
 
@@ -147,8 +146,17 @@ const B2BVendorArticlesTab = ({ accountId, supplierId }: B2BVendorArticlesTabPro
 
       // Map vendor names
       const vendorMap = new Map(vendorsData?.map(v => [v.id, v.name]) || []);
-      const articlesWithVendor = (articlesData || []).map(a => ({
-        ...a,
+      const articlesWithVendor: B2BVendorArticle[] = (articlesData || []).map(a => ({
+        id: a.id,
+        vendor_id: a.vendor_id,
+        name: a.name,
+        description: a.description,
+        price: a.price ?? 0,
+        unit: a.unit ?? '',
+        sku: a.sku,
+        category: a.category,
+        is_active: a.is_active ?? true,
+        created_at: a.created_at ?? '',
         vendor_name: vendorMap.get(a.vendor_id) || 'Unbekannt',
       }));
 
