@@ -16,11 +16,12 @@ export const useImportSuppliers = () => {
         .eq('id', user.id)
         .single();
 
-      if (!profile?.organization_id) throw new Error('No organization found');
+      const organizationId = profile?.organization_id;
+      if (!organizationId) throw new Error('No organization found');
 
       const suppliersToInsert = suppliers
         .map(s => ({
-          organization_id: profile.organization_id,
+          organization_id: organizationId,
           name: s.name?.trim() ?? '',
           email: s.email?.trim() ?? '',
           phone: s.phone?.trim() || null,
@@ -65,13 +66,14 @@ export const useImportArticles = () => {
         .eq('id', user.id)
         .single();
 
-      if (!profile?.organization_id) throw new Error('No organization found');
+      const organizationId = profile?.organization_id;
+      if (!organizationId) throw new Error('No organization found');
 
       // Get suppliers for mapping
       const { data: suppliers } = await supabase
         .from('suppliers')
         .select('id, name')
-        .eq('organization_id', profile.organization_id);
+        .eq('organization_id', organizationId);
 
       const supplierMap = new Map(suppliers?.map(s => [s.name.toLowerCase(), s.id]) || []);
 
@@ -87,7 +89,7 @@ export const useImportArticles = () => {
         if (!supplierId) return null;
 
         return {
-          organization_id: profile.organization_id,
+          organization_id: organizationId,
           supplier_id: supplierId,
           name: a.name?.trim() ?? '',
           description: a.description?.trim() || null,

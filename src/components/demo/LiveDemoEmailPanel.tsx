@@ -228,7 +228,7 @@ export function LiveDemoEmailPanel({ soundEnabled }: LiveDemoEmailPanelProps) {
                 <p className="text-xs mt-1">E-Mails erscheinen sobald sie generiert werden</p>
               </div>
             ) : (
-              emails.map((email) => {
+              emails.map((email: CommunicationLog) => {
                 const status = email.status || 'pending';
                 const config = statusConfig[status] || statusConfig.pending;
                 const StatusIcon = config.icon;
@@ -239,8 +239,7 @@ export function LiveDemoEmailPanel({ soundEnabled }: LiveDemoEmailPanelProps) {
                     key={email.id}
                     className={cn(
                       "p-2 rounded-md border cursor-pointer transition-all hover:bg-accent/50",
-                      highlightedEmail === email.id && "ring-2 ring-violet-500 animate-pulse bg-violet-500/10",
-                      selectedEmail?.id === email.id && "bg-accent"
+                      highlightedEmail === email.id && "ring-2 ring-violet-500 animate-pulse bg-violet-500/10"
                     )}
                     onClick={() => setSelectedEmail(email)}
                   >

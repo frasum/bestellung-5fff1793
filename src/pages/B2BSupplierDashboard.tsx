@@ -38,10 +38,10 @@ interface B2BAccount {
   subdomain: string;
   email: string;
   logo_url: string | null;
-  primary_color: string;
-  secondary_color: string;
+  primary_color: string | null;
+  secondary_color: string | null;
   welcome_message: string | null;
-  subscription_tier: string;
+  subscription_tier: string | null;
   is_active: boolean | null;
   linked_supplier_id: string | null;
   upgraded_organization_id: string | null;
@@ -305,7 +305,7 @@ const B2BSupplierDashboard = () => {
                 className="h-10 w-10 rounded-lg flex items-center justify-center"
                 style={{ backgroundColor: account.primary_color + '20' }}
               >
-                <Building2 className="h-5 w-5" style={{ color: account.primary_color }} />
+                <Building2 className="h-5 w-5" style={{ color: account.primary_color ?? undefined }} />
               </div>
             )}
             <div>

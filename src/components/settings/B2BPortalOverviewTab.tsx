@@ -234,7 +234,7 @@ export function B2BPortalOverviewTab() {
                               </Badge>
                             </TableCell>
                             <TableCell className="text-muted-foreground text-sm">
-                              {formatDistanceToNow(new Date(user.created_at), { addSuffix: true, locale })}
+                              {user.created_at ? formatDistanceToNow(new Date(user.created_at), { addSuffix: true, locale }) : '—'}
                             </TableCell>
                           </TableRow>
                         );
