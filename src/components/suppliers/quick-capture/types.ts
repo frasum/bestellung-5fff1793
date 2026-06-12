@@ -1,5 +1,5 @@
 import { Supplier, SupplierInput } from '@/hooks/useSuppliers';
-import { ArticleInput } from '@/hooks/useArticles';
+import { Article, ArticleInput } from '@/hooks/useArticles';
 import { ExtractedArticle } from '../VoiceInventoryCapture';
 
 export interface IdentificationResult {
@@ -22,7 +22,7 @@ export interface QuickCaptureWizardProps {
   categories: string[];
   units: string[];
   onCreateSupplier: (input: SupplierInput) => Promise<Supplier>;
-  onCreateArticle: (input: ArticleInput) => Promise<{ id: string } & Record<string, unknown>>;
+  onCreateArticle: (input: ArticleInput) => Promise<Article>;
   onUploadImage: (base64: string, orgId: string, articleId: string) => Promise<string | null>;
   organizationId: string | null;
 }
