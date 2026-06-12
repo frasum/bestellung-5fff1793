@@ -546,7 +546,7 @@ export function useCreateArticlesFromInvoice() {
 
       // Create new articles
       const articlesToCreate = newItems.map(item => ({
-        organization_id: profile.organization_id,
+        organization_id: organizationId,
         supplier_id: supplierId,
         name: item.article_name,
         sku: item.article_sku,
