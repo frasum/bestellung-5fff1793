@@ -45,7 +45,6 @@ export const useEmployeeOrderNotifications = ({
       return;
     }
 
-    console.log('[EmployeeOrderNotifications] Setting up subscription for employee:', employeeId);
 
     const channel = supabase
       .channel(`employee-notifications-${employeeId}`)
@@ -58,7 +57,6 @@ export const useEmployeeOrderNotifications = ({
           filter: `employee_id=eq.${employeeId}`,
         },
         (payload) => {
-          console.log('[EmployeeOrderNotifications] Received notification:', payload);
           
           const notification = payload.new as {
             id: string;
@@ -94,11 +92,9 @@ export const useEmployeeOrderNotifications = ({
         }
       )
       .subscribe((status) => {
-        console.log('[EmployeeOrderNotifications] Subscription status:', status);
       });
 
     return () => {
-      console.log('[EmployeeOrderNotifications] Cleaning up subscription');
       supabase.removeChannel(channel);
     };
   }, [employeeId, enabled, playNotificationSound, t]);

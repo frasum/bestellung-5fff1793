@@ -26,7 +26,6 @@ export const useRealtimeNotifications = () => {
     // Only subscribe when user is authenticated
     if (!user) return;
 
-    console.log('🔔 Setting up realtime notifications channel...');
 
     const channelName = `global-notifications-${user.id}`;
     let isActive = true;
@@ -42,7 +41,6 @@ export const useRealtimeNotifications = () => {
         },
         (payload) => {
           if (!isActive) return;
-          console.log('🔔 Realtime INSERT received:', payload);
           // Invalidate all cart-drafts queries regardless of locationId
           queryClient.invalidateQueries({
             predicate: (query) => query.queryKey[0] === 'cart-drafts',
@@ -144,7 +142,6 @@ export const useRealtimeNotifications = () => {
         },
         (payload) => {
           if (!isActive) return;
-          console.log('🔔 New order INSERT received:', payload);
           // Invalidate orders queries to refresh the list
           queryClient.invalidateQueries({
             predicate: (query) => query.queryKey[0] === 'orders',
@@ -186,7 +183,6 @@ export const useRealtimeNotifications = () => {
         }
       )
       .subscribe((status, err) => {
-        console.log('🔔 Realtime subscription status:', status);
         if (err) {
           console.error('🔔 Realtime subscription error:', err);
         }

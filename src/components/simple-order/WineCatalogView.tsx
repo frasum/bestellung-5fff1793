@@ -55,7 +55,6 @@ export const WineCatalogView = ({ organizationId, permission, onBack, token, emp
   const [showQuiz, setShowQuiz] = useState(false);
 
   useEffect(() => {
-    console.log('[WineCatalogView] component mounted', { token });
     if (token) {
       loadData();
     }
@@ -64,17 +63,14 @@ export const WineCatalogView = ({ organizationId, permission, onBack, token, emp
   const [loadError, setLoadError] = useState<string | null>(null);
  
   const loadData = useCallback(async () => {
-    console.log('[WineCatalogView] loadData start');
     setIsLoading(true);
     setLoadError(null);
     try {
       // Load wines via Edge Function (bypasses RLS)
-      console.log('[WineCatalogView] Calling Edge Function with token:', token.substring(0, 8) + '...');
       const { data, error } = await supabase.functions.invoke('verify-simple-order-token', {
         body: { token, action: 'get-wines' },
       });
 
-      console.log('[WineCatalogView] Edge Function response:', { data, error });
  
       if (error) {
         console.error('[WineCatalogView] Network/invoke error:', error);
@@ -90,7 +86,6 @@ export const WineCatalogView = ({ organizationId, permission, onBack, token, emp
         return;
       }
  
-      console.log('[WineCatalogView] Loaded wines:', data.wines?.length || 0);
       setWines(data.wines || []);
       setOrganizationName(data.organization_name || '');
     } catch (err: unknown) {
@@ -99,7 +94,6 @@ export const WineCatalogView = ({ organizationId, permission, onBack, token, emp
       setLoadError(errorMsg);
       toast.error(t('common.error', 'Fehler beim Laden'));
     } finally {
-      console.log('[WineCatalogView] loadData finished');
       setIsLoading(false);
     }
   }, [token, t]);

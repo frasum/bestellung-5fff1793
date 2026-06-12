@@ -51,10 +51,8 @@ export function useRealtimeScribe({
     commitStrategy: CommitStrategy.VAD,
     languageCode: scribeLanguageCode,
     onPartialTranscript: (data) => {
-      console.log('[useRealtimeScribe] Partial:', data.text);
     },
     onCommittedTranscript: (data) => {
-      console.log('[useRealtimeScribe] Committed:', data.text);
       const newTranscript: CommittedTranscript = {
         id: `transcript-${transcriptIdCounter.current++}`,
         text: data.text,
@@ -112,7 +110,6 @@ export function useRealtimeScribe({
         throw new Error('No token received from server');
       }
 
-      console.log('[useRealtimeScribe] Connecting with token...');
 
       // Start the scribe session
       await scribe.connect({
@@ -124,7 +121,6 @@ export function useRealtimeScribe({
         },
       });
 
-      console.log('[useRealtimeScribe] Connected successfully');
 
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to connect';
@@ -139,7 +135,6 @@ export function useRealtimeScribe({
   const disconnect = useCallback(async () => {
     try {
       scribe.disconnect();
-      console.log('[useRealtimeScribe] Disconnected');
     } catch (err) {
       console.error('[useRealtimeScribe] Disconnect error:', err);
     }

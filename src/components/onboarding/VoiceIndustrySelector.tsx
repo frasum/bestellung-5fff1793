@@ -22,7 +22,6 @@ export function VoiceIndustrySelector({ open, onClose, onIndustrySelected }: Voi
   const conversation = useConversation({
     clientTools: {
       select_industry: (params: { industry_id: string; industry_name: string }) => {
-        console.log('Industry selected:', params);
         setSelectedIndustryName(params.industry_name);
         
         // Delay to let the agent finish speaking
@@ -39,16 +38,13 @@ export function VoiceIndustrySelector({ open, onClose, onIndustrySelected }: Voi
       },
     },
     onConnect: () => {
-      console.log('Connected to ElevenLabs');
       setIsConnecting(false);
       setError(null);
     },
     onDisconnect: () => {
-      console.log('Disconnected from ElevenLabs');
       setIsConnecting(false);
     },
     onMessage: (message) => {
-      console.log('Message:', message);
       const msg = message as unknown as { type?: string; user_transcription_event?: { user_transcript?: string }; agent_response_event?: { agent_response?: string } };
       if (msg.type === 'user_transcript') {
         const userText = msg.user_transcription_event?.user_transcript;

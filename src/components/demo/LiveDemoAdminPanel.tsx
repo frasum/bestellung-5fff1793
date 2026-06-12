@@ -162,7 +162,6 @@ export function LiveDemoAdminPanel({ soundEnabled, onOrderCreated }: LiveDemoAdm
       }, (payload) => {
         const newDraft = payload.new as { name?: string };
         if (newDraft.name?.startsWith('EasyOrder:')) {
-          console.log('🔔 LiveDemoAdminPanel: New EasyOrder draft detected, refetching...');
           refetchDrafts();
           
           toast.info('Neue Vorbestellung eingegangen!', {
@@ -175,7 +174,6 @@ export function LiveDemoAdminPanel({ soundEnabled, onOrderCreated }: LiveDemoAdm
         schema: 'public',
         table: 'cart_drafts'
       }, () => {
-        console.log('🔔 LiveDemoAdminPanel: Draft deleted, refetching...');
         refetchDrafts();
       })
       .on('postgres_changes', {
@@ -193,7 +191,6 @@ export function LiveDemoAdminPanel({ soundEnabled, onOrderCreated }: LiveDemoAdm
         refetchOrdersCount();
       })
       .subscribe((status) => {
-        console.log('🔔 LiveDemoAdminPanel realtime status:', status);
       });
 
     return () => {

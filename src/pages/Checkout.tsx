@@ -268,7 +268,6 @@ const Checkout = () => {
         
         // Freie Artikel DIREKT aus dem Context filtern (nicht aus supplier.freeItems)
         const supplierFreeItems = freeItems.filter(f => f.supplier_id === supplier.supplierId);
-        console.log(`📧 Direct freeItems filter for ${supplier.supplierName}:`, supplierFreeItems);
         
         const freeItemsForEmail = supplierFreeItems.map(freeItem => ({
           article_name: `${freeItem.name} [Frei]`,
@@ -281,7 +280,6 @@ const Checkout = () => {
           order_unit: freeItem.unit,
         }));
         
-        console.log(`📧 ${supplier.supplierName}: regularItems=${regularItems.length}, freeItemsForEmail=${freeItemsForEmail.length}`);
         
         return {
           supplierName: supplier.supplierName,

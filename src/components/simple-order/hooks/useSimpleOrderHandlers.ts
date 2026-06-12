@@ -262,15 +262,12 @@ export const useSimpleOrderHandlers = ({
       });
     });
 
-    console.log('🟡 Free items state:', freeItems);
-    console.log('🟡 Free items by supplier:', freeItemsBySupplier);
 
     const allSupplierIds = new Set([
       ...Object.keys(itemsBySupplier),
       ...Object.keys(freeItemsBySupplier),
     ]);
     const supplierIds = Array.from(allSupplierIds);
-    console.log('🟡 Supplier IDs to submit:', supplierIds);
     
     try {
       const results = await Promise.all(
@@ -278,11 +275,6 @@ export const useSimpleOrderHandlers = ({
           const items = itemsBySupplier[supplierId] || [];
           const freeItemsForSupplier = freeItemsBySupplier[supplierId] || [];
           
-          console.log(`📦 Sending to supplier ${supplierId}:`, {
-            regularItems: items.length,
-            freeItems: freeItemsForSupplier.length,
-            freeItemsData: freeItemsForSupplier
-          });
           
           const { data, error: submitError } = await supabase.functions.invoke('submit-simple-order', {
             body: { 
@@ -300,12 +292,6 @@ export const useSimpleOrderHandlers = ({
         })
       );
 
-      console.log('Submit results:', results.map(r => ({
-        supplierId: r.supplierId,
-        success: r.data?.success,
-        error: r.error?.message,
-        dataError: r.data?.error,
-      })));
 
       const errors = results.filter(r => {
         if (r.error) return true;
