@@ -322,10 +322,10 @@ export const SupplierMobileInventoryTab = ({ session }: Props) => {
     setLocalItems(prev => ({
       ...prev,
       [articleId]: {
-        storage_1: prev[articleId]?.storage_1 || 0,
-        storage_2: prev[articleId]?.storage_2 || 0,
-        unit_price: prev[articleId]?.unit_price || null,
         ...prev[articleId],
+        storage_1: prev[articleId]?.storage_1 ?? 0,
+        storage_2: prev[articleId]?.storage_2 ?? 0,
+        unit_price: prev[articleId]?.unit_price ?? null,
         [field]: value,
         changed: true,
       },
