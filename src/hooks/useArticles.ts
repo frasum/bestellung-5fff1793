@@ -61,9 +61,10 @@ export interface ArticleInput {
   sku?: string;
   unit: string;
   price: number;
-  category?: string;
+  category?: string | null;
+  top_category?: string | null;
   origin_country?: string;
-  packaging_unit?: number;
+  packaging_unit?: number | null;
   order_unit_id?: string | null;
   reference_price?: number;
   reference_unit?: string;
