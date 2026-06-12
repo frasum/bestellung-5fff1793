@@ -41,7 +41,7 @@ interface B2BAccount {
   primary_color: string | null;
   secondary_color: string | null;
   welcome_message: string | null;
-  subscription_tier: string;
+  subscription_tier: string | null;
   is_active: boolean | null;
   linked_supplier_id: string | null;
   upgraded_organization_id: string | null;
