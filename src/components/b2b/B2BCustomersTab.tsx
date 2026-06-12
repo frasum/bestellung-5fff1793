@@ -52,11 +52,11 @@ interface B2BCustomer {
   contact_person: string | null;
   phone: string | null;
   delivery_address: string | null;
-  is_active: boolean | null;
+  is_active: boolean;
   user_id: string | null;
   created_at: string;
   supplier_id: string | null;
-  has_purchase_feature: boolean | null;
+  has_purchase_feature: boolean;
   upgraded_organization_id: string | null;
   upgraded_at: string | null;
 }
@@ -104,7 +104,11 @@ const B2BCustomersTab = ({
       const { data, error } = await query;
 
       if (error) throw error;
-      setCustomers(data || []);
+      setCustomers((data || []).map(c => ({
+        ...c,
+        is_active: c.is_active ?? true,
+        has_purchase_feature: c.has_purchase_feature ?? false,
+      })));
     } catch (error: unknown) {
       console.error('Error loading customers:', error);
       toast.error('Fehler beim Laden der Kunden');

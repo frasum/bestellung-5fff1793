@@ -42,8 +42,8 @@ interface B2BArticle {
   base_price: number;
   image_url: string | null;
   category: string | null;
-  is_active: boolean | null;
-  sort_order: number | null;
+  is_active: boolean;
+  sort_order: number;
   supplier_id: string | null;
   source_article_id: string | null;
   supplier_name?: string;
@@ -114,8 +114,19 @@ const B2BArticlesTab = ({ accountId, linkedSupplierId, selectedSupplierId = 'all
 
       // Map supplier names to articles
       const supplierMap = new Map(suppliers.map(s => [s.id, s.name]));
-      const articlesWithSupplier = (data || []).map(a => ({
-        ...a,
+      const articlesWithSupplier: B2BArticle[] = (data || []).map(a => ({
+        id: a.id,
+        name: a.name,
+        description: a.description,
+        sku: a.sku,
+        unit: a.unit,
+        base_price: a.base_price,
+        image_url: a.image_url,
+        category: a.category,
+        is_active: a.is_active ?? true,
+        sort_order: a.sort_order ?? 0,
+        supplier_id: a.supplier_id,
+        source_article_id: a.source_article_id,
         supplier_name: a.supplier_id ? supplierMap.get(a.supplier_id) : undefined,
       }));
 
