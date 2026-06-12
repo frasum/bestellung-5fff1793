@@ -53,18 +53,23 @@ export function WineDetailsSection({
       {/* Description - full width auto-grow */}
       <div className="space-y-2">
         <Label htmlFor="article-description">Beschreibung</Label>
-        <Textarea 
-          ref={descriptionRef}
-          id="article-description" 
-          {...form.register('description')} 
-          placeholder="Weingut, Jahrgang, Qualitätsstufe, besondere Merkmale..."
-          className="min-h-[80px] resize-none"
-          onInput={(e) => {
-            const target = e.target as HTMLTextAreaElement;
-            target.style.height = 'auto';
-            target.style.height = `${Math.max(80, target.scrollHeight)}px`;
-          }}
-        />
+        {(() => {
+          const { ref: registerRef, ...rest } = form.register('description');
+          return (
+            <Textarea
+              {...rest}
+              ref={(el) => { registerRef(el); (descriptionRef as React.MutableRefObject<HTMLTextAreaElement | null>).current = el; }}
+              id="article-description"
+              placeholder="Weingut, Jahrgang, Qualitätsstufe, besondere Merkmale..."
+              className="min-h-[80px] resize-none"
+              onInput={(e) => {
+                const target = e.target as HTMLTextAreaElement;
+                target.style.height = 'auto';
+                target.style.height = `${Math.max(80, target.scrollHeight)}px`;
+              }}
+            />
+          );
+        })()}
       </div>
 
       {/* Grape Variety - auto-grow */}
