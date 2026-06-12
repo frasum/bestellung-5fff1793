@@ -128,8 +128,17 @@ const B2BPurchaseOrdersTab = ({ accountId, supplierId }: B2BPurchaseOrdersTabPro
       return;
     }
 
-    setOrders(prev => prev.map(order => 
-      order.id === orderId ? { ...order, items: data } : order
+    const mappedItems: OrderItem[] = (data || []).map(it => ({
+      id: it.id,
+      article_name: it.article_name,
+      quantity: it.quantity,
+      unit: it.unit ?? '',
+      unit_price: it.unit_price ?? 0,
+      total_price: it.total_price ?? 0,
+    }));
+
+    setOrders(prev => prev.map(order =>
+      order.id === orderId ? { ...order, items: mappedItems } : order
     ));
   };
 
