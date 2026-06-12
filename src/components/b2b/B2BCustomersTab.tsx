@@ -52,11 +52,11 @@ interface B2BCustomer {
   contact_person: string | null;
   phone: string | null;
   delivery_address: string | null;
-  is_active: boolean;
+  is_active: boolean | null;
   user_id: string | null;
   created_at: string;
   supplier_id: string | null;
-  has_purchase_feature: boolean;
+  has_purchase_feature: boolean | null;
   upgraded_organization_id: string | null;
   upgraded_at: string | null;
 }

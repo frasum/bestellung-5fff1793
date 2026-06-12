@@ -41,8 +41,9 @@ export interface B2BVendor {
   phone: string | null;
   address: string | null;
   notes: string | null;
-  is_active: boolean;
-  created_at: string;
+  is_active: boolean | null;
+  created_at: string | null;
+  supplier_account_id?: string;
   supplier_id?: string | null;
 }
 

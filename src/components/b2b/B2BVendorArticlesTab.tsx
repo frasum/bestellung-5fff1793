@@ -47,12 +47,13 @@ export interface B2BVendorArticle {
   vendor_id: string;
   name: string;
   description: string | null;
-  price: number;
-  unit: string;
+  price: number | null;
+  unit: string | null;
   sku: string | null;
   category: string | null;
-  is_active: boolean;
-  created_at: string;
+  is_active: boolean | null;
+  created_at: string | null;
+  supplier_account_id?: string;
   vendor_name?: string;
 }
 

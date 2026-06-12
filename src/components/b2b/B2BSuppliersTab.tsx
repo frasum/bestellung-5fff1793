@@ -41,9 +41,9 @@ export interface B2BSupplier {
   contact_phone: string | null;
   logo_url: string | null;
   description: string | null;
-  is_active: boolean;
-  sort_order: number;
-  created_at: string;
+  is_active: boolean | null;
+  sort_order: number | null;
+  created_at: string | null;
   article_count?: number;
 }
 

@@ -42,8 +42,8 @@ interface B2BArticle {
   base_price: number;
   image_url: string | null;
   category: string | null;
-  is_active: boolean;
-  sort_order: number;
+  is_active: boolean | null;
+  sort_order: number | null;
   supplier_id: string | null;
   source_article_id: string | null;
   supplier_name?: string;
