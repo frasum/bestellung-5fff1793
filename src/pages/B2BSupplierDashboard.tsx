@@ -38,8 +38,8 @@ interface B2BAccount {
   subdomain: string;
   email: string;
   logo_url: string | null;
-  primary_color: string;
-  secondary_color: string;
+  primary_color: string | null;
+  secondary_color: string | null;
   welcome_message: string | null;
   subscription_tier: string;
   is_active: boolean | null;
