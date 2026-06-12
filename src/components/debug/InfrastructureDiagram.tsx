@@ -682,6 +682,8 @@ export function InfrastructureDiagram() {
   // Add click handlers to nodes and clusters after rendering
   useEffect(() => {
     if (isRendered && diagramRef.current) {
+      const handlers = new WeakMap<Element, (e: Event) => void>();
+
       // Handle regular nodes
       const nodes = diagramRef.current.querySelectorAll('.node');
       nodes.forEach((node) => {
@@ -692,13 +694,13 @@ export function InfrastructureDiagram() {
           if (nodeDetails[nodeId]) {
             nodeElement.style.cursor = 'pointer';
             nodeElement.classList.add('interactive-node');
-            
+
             const clickHandler = (e: Event) => {
               e.stopPropagation();
               handleNodeClick(nodeId);
             };
             nodeElement.addEventListener('click', clickHandler);
-            (nodeElement as any)._clickHandler = clickHandler;
+            handlers.set(nodeElement, clickHandler);
           }
         }
       });
@@ -707,25 +709,23 @@ export function InfrastructureDiagram() {
       const clusters = diagramRef.current.querySelectorAll('.cluster');
       clusters.forEach((cluster) => {
         const clusterElement = cluster as HTMLElement;
-        // Cluster IDs have format: flowchart-Frontend-123 or similar
         const idMatch = clusterElement.id.match(/flowchart-(\w+)-\d+/);
         if (idMatch) {
           const clusterId = idMatch[1];
           if (nodeDetails[clusterId]) {
-            // Make the cluster label clickable
             const labelElement = clusterElement.querySelector('.cluster-label');
             if (labelElement) {
               (labelElement as HTMLElement).style.cursor = 'pointer';
               (labelElement as HTMLElement).style.textDecoration = 'underline';
               (labelElement as HTMLElement).style.textDecorationStyle = 'dotted';
               labelElement.classList.add('interactive-cluster');
-              
+
               const clickHandler = (e: Event) => {
                 e.stopPropagation();
                 handleNodeClick(clusterId);
               };
               labelElement.addEventListener('click', clickHandler);
-              (labelElement as any)._clickHandler = clickHandler;
+              handlers.set(labelElement, clickHandler);
             }
           }
         }
@@ -733,18 +733,19 @@ export function InfrastructureDiagram() {
 
       // Cleanup function
       return () => {
-        const nodes = diagramRef.current?.querySelectorAll('.interactive-node');
-        nodes?.forEach((node) => {
-          const nodeElement = node as HTMLElement;
-          if ((nodeElement as any)._clickHandler) {
-            nodeElement.removeEventListener('click', (nodeElement as any)._clickHandler);
+        const interactiveNodes = diagramRef.current?.querySelectorAll('.interactive-node');
+        interactiveNodes?.forEach((node) => {
+          const handler = handlers.get(node);
+          if (handler) {
+            node.removeEventListener('click', handler);
           }
         });
-        
-        const clusters = diagramRef.current?.querySelectorAll('.interactive-cluster');
-        clusters?.forEach((cluster) => {
-          if ((cluster as any)._clickHandler) {
-            cluster.removeEventListener('click', (cluster as any)._clickHandler);
+
+        const interactiveClusters = diagramRef.current?.querySelectorAll('.interactive-cluster');
+        interactiveClusters?.forEach((cluster) => {
+          const handler = handlers.get(cluster);
+          if (handler) {
+            cluster.removeEventListener('click', handler);
           }
         });
       };

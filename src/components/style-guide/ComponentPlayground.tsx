@@ -467,7 +467,7 @@ const PopoverPlayground = () => {
         </div>
         <div className="space-y-2">
           <Label>Side</Label>
-          <Select value={side} onValueChange={(v) => setSide(v as any)}>
+          <Select value={side} onValueChange={(v) => setSide(v as 'top' | 'right' | 'bottom' | 'left')}>
             <SelectTrigger><SelectValue /></SelectTrigger>
             <SelectContent>
               {['top', 'right', 'bottom', 'left'].map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
@@ -517,7 +517,7 @@ const TooltipPlayground = () => {
         </div>
         <div className="space-y-2">
           <Label>Side</Label>
-          <Select value={side} onValueChange={(v) => setSide(v as any)}>
+          <Select value={side} onValueChange={(v) => setSide(v as 'top' | 'right' | 'bottom' | 'left')}>
             <SelectTrigger><SelectValue /></SelectTrigger>
             <SelectContent>
               {['top', 'right', 'bottom', 'left'].map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
@@ -701,7 +701,7 @@ const RadioGroupPlayground = () => {
       <div className="grid gap-4 sm:grid-cols-3">
         <div className="space-y-2">
           <Label>Orientation</Label>
-          <Select value={orientation} onValueChange={(v) => setOrientation(v as any)}>
+          <Select value={orientation} onValueChange={(v) => setOrientation(v as 'horizontal' | 'vertical')}>
             <SelectTrigger><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="vertical">Vertical</SelectItem>
@@ -904,7 +904,7 @@ const AccordionPlayground = () => {
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-2">
           <Label>Type</Label>
-          <Select value={type} onValueChange={(v) => setType(v as any)}>
+          <Select value={type} onValueChange={(v) => setType(v as 'single' | 'multiple')}>
             <SelectTrigger><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="single">Single</SelectItem>
@@ -1011,7 +1011,7 @@ const SeparatorPlayground = () => {
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-2">
           <Label>Orientation</Label>
-          <Select value={orientation} onValueChange={(v) => setOrientation(v as any)}>
+          <Select value={orientation} onValueChange={(v) => setOrientation(v as 'horizontal' | 'vertical')}>
             <SelectTrigger><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="horizontal">Horizontal</SelectItem>
@@ -1231,7 +1231,7 @@ const AlertPlayground = () => {
       </div>
       <Separator />
       <LivePreview>
-        <Alert variant={variant as any} className="max-w-md">
+        <Alert variant={variant as 'default' | 'destructive'} className="max-w-md">
           {variant === 'destructive' ? <AlertCircle className="h-4 w-4" /> : <Terminal className="h-4 w-4" />}
           <AlertTitle>{title}</AlertTitle>
           <AlertDescription>{description}</AlertDescription>
@@ -1385,7 +1385,7 @@ const TogglePlayground = () => {
       <div className="grid gap-4 sm:grid-cols-3">
         <div className="space-y-2">
           <Label>Variant</Label>
-          <Select value={variant} onValueChange={(v) => setVariant(v as any)}>
+          <Select value={variant} onValueChange={(v) => setVariant(v as 'default' | 'outline')}>
             <SelectTrigger><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="default">Default</SelectItem>
@@ -1395,7 +1395,7 @@ const TogglePlayground = () => {
         </div>
         <div className="space-y-2">
           <Label>Size</Label>
-          <Select value={size} onValueChange={(v) => setSize(v as any)}>
+          <Select value={size} onValueChange={(v) => setSize(v as 'default' | 'sm' | 'lg')}>
             <SelectTrigger><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="sm">Small</SelectItem>
@@ -1442,7 +1442,7 @@ const ToggleGroupPlayground = () => {
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-2">
           <Label>Type</Label>
-          <Select value={type} onValueChange={(v) => setType(v as any)}>
+          <Select value={type} onValueChange={(v) => setType(v as 'single' | 'multiple')}>
             <SelectTrigger><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="single">Single</SelectItem>
@@ -1452,7 +1452,7 @@ const ToggleGroupPlayground = () => {
         </div>
         <div className="space-y-2">
           <Label>Variant</Label>
-          <Select value={variant} onValueChange={(v) => setVariant(v as any)}>
+          <Select value={variant} onValueChange={(v) => setVariant(v as 'default' | 'outline')}>
             <SelectTrigger><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="default">Default</SelectItem>
