@@ -81,7 +81,7 @@ export const useSuppliersByLocation = (locationId?: string) => {
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
     queryFn: async (): Promise<SupplierWithAssignment[]> => {
-      if (!organizationId) return [];
+      if (!organizationId || !locationId) return [];
 
       // 1. Get all active suppliers in the user's organization
       const { data: allSuppliers, error: suppliersError } = await supabase
@@ -100,6 +100,7 @@ export const useSuppliersByLocation = (locationId?: string) => {
         .select('supplier_id')
         .eq('location_id', locationId)
         .eq('is_active', true);
+
 
       if (laError) throw laError;
 

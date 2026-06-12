@@ -137,11 +137,12 @@ export function useUploadInvoice() {
 
   return useMutation({
     mutationFn: async (file: File) => {
+      if (!user?.id) throw new Error('Not authenticated');
       // Get organization ID
       const { data: profile } = await supabase
         .from('profiles')
         .select('organization_id')
-        .eq('id', user?.id)
+        .eq('id', user.id)
         .single();
 
       if (!profile?.organization_id) {
@@ -511,10 +512,11 @@ export function useCreateArticlesFromInvoice() {
 
       // Get organization ID
       const { data: { user } } = await supabase.auth.getUser();
+      if (!user?.id) throw new Error('Not authenticated');
       const { data: profile } = await supabase
         .from('profiles')
         .select('organization_id')
-        .eq('id', user?.id)
+        .eq('id', user.id)
         .single();
 
       if (!profile?.organization_id) {

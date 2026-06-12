@@ -177,11 +177,12 @@ export const useCreateInventorySession = () => {
   return useMutation({
     mutationFn: async ({ name, notes }: { name: string; notes?: string }) => {
       if (!activeLocation) throw new Error('No location selected');
+      if (!user?.id) throw new Error('Not authenticated');
 
       const { data: profile } = await supabase
         .from('profiles')
         .select('organization_id')
-        .eq('id', user?.id)
+        .eq('id', user.id)
         .single();
 
       if (!profile?.organization_id) throw new Error('No organization found');
@@ -193,7 +194,7 @@ export const useCreateInventorySession = () => {
           notes,
           organization_id: profile.organization_id,
           location_id: activeLocation.id,
-          user_id: user?.id,
+          user_id: user.id,
         })
         .select()
         .single();
