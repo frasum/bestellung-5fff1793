@@ -123,7 +123,7 @@ const B2BSupplierDashboard = () => {
       const { data: supplierUserData } = await supabase
         .from('b2b_supplier_users')
         .select('name')
-        .eq('user_id', user?.id)
+        .eq('user_id', user?.id ?? '')
         .maybeSingle();
       
       if (supplierUserData?.name) {
@@ -155,7 +155,7 @@ const B2BSupplierDashboard = () => {
       const { data: accountData, error } = await supabase
         .from('supplier_b2b_accounts')
         .select('*')
-        .eq('email', user?.email)
+        .eq('email', user?.email ?? '')
         .maybeSingle();
 
       if (error) throw error;
@@ -171,7 +171,7 @@ const B2BSupplierDashboard = () => {
       const { data: supplierUser } = await supabase
         .from('b2b_supplier_users')
         .select('supplier_id, account_id, role, name')
-        .eq('user_id', user?.id)
+        .eq('user_id', user?.id ?? '')
         .maybeSingle();
 
       if (supplierUser) {
