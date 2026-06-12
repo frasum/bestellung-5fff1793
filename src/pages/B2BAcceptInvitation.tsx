@@ -54,7 +54,7 @@ export default function B2BAcceptInvitation() {
           supplier_account_id,
           supplier_b2b_accounts!inner(company_name)
         `)
-        .eq('token', token)
+        .eq('token', token ?? '')
         .single();
 
       if (error || !data) {

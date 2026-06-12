@@ -282,6 +282,7 @@ export function LiveDemoAdminPanel({ soundEnabled, onOrderCreated }: LiveDemoAdm
       if (!supplierId) throw new Error('No supplier found');
 
       const { data: orderNumber } = await supabase.rpc('generate_order_number');
+      if (!orderNumber) throw new Error('Failed to generate order number');
 
       const totalAmount = draft.items.reduce((sum, item) => {
         return sum + (item.article?.price || 0) * item.quantity;

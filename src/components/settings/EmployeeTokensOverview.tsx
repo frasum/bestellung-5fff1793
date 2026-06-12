@@ -448,7 +448,7 @@ export function EmployeeTokensOverview({ tokens, onEdit, onToggleActive, onDelet
                                 <Button 
                                   variant="ghost" 
                                   size="icon" 
-                                  onClick={() => sendViaWhatsApp(token.token, token.employee.phone, employeeName)}
+                                  onClick={() => sendViaWhatsApp(token.token, token.employee?.phone ?? '', employeeName)}
                                   title="Per WhatsApp senden"
                                   className="text-green-600 hover:text-green-700 hover:bg-green-50"
                                 >
