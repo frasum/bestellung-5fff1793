@@ -41,8 +41,8 @@ export interface CustomerVendor {
   phone: string | null;
   address: string | null;
   notes: string | null;
-  is_active: boolean;
-  created_at: string;
+  is_active: boolean | null;
+  created_at: string | null;
 }
 
 interface CustomerVendorsTabProps {

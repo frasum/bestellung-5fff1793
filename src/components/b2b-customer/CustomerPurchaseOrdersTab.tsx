@@ -12,9 +12,12 @@ interface OrderItem {
   id: string;
   article_name: string;
   quantity: number;
-  unit: string;
-  unit_price: number;
-  total_price: number;
+  unit: string | null;
+  unit_price: number | null;
+  total_price: number | null;
+  article_id?: string | null;
+  order_id?: string;
+  created_at?: string | null;
 }
 
 interface Order {
@@ -26,7 +29,7 @@ interface Order {
   total_amount: number;
   delivery_date: string | null;
   notes: string | null;
-  created_at: string;
+  created_at: string | null;
   items?: OrderItem[];
 }
 

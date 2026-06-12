@@ -52,10 +52,10 @@ export interface CustomerVendorArticle {
   description: string | null;
   sku: string | null;
   category: string | null;
-  price: number;
-  unit: string;
-  is_active: boolean;
-  created_at: string;
+  price: number | null;
+  unit: string | null;
+  is_active: boolean | null;
+  created_at: string | null;
 }
 
 interface CustomerVendorArticlesTabProps {

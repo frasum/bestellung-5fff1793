@@ -26,8 +26,8 @@ interface CustomerPurchaseCartTabProps {
 interface VendorArticle {
   id: string;
   name: string;
-  price: number;
-  unit: string;
+  price: number | null;
+  unit: string | null;
   vendor_id: string;
 }
 
