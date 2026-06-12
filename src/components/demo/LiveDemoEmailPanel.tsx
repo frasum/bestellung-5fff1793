@@ -62,7 +62,7 @@ export function LiveDemoEmailPanel({ soundEnabled }: LiveDemoEmailPanelProps) {
   const [highlightedEmail, setHighlightedEmail] = useState<string | null>(null);
 
   // Fetch communication logs
-  const { data: emails = [] as CommunicationLog[], isLoading } = useQuery<CommunicationLog[]>({
+  const emailsQuery = useQuery<CommunicationLog[]>({
     queryKey: ['communication-logs-demo'],
     queryFn: async () => {
       // Get emails from the last 24 hours
