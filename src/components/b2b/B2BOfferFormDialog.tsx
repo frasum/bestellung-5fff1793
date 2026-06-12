@@ -27,9 +27,9 @@ interface B2BSupplier {
 
 interface B2BOffer {
   id: string;
-  supplier_id?: string;
-  valid_until?: string;
-  notes?: string;
+  supplier_id?: string | null;
+  valid_until?: string | null;
+  notes?: string | null;
   customer: { id: string };
   items: Array<{
     id: string;
