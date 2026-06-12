@@ -1,6 +1,6 @@
 import React, { memo } from 'react';
 import { Supplier, SupplierInput } from '@/hooks/useSuppliers';
-import { Article } from '@/hooks/useArticles';
+import { Article, ArticleInput } from '@/hooks/useArticles';
 import { ArticleFormData } from '@/components/suppliers/schemas';
 import { SupplierFormDialog } from '@/components/suppliers/SupplierFormDialog';
 import { ArticleFormDialog } from '@/components/suppliers/ArticleFormDialog';
@@ -75,7 +75,7 @@ interface SuppliersDialogsProps {
   isQuickCaptureOpen: boolean;
   onQuickCaptureChange: (open: boolean) => void;
   onCreateSupplier: (input: SupplierInput) => Promise<Supplier>;
-  onCreateArticle: (input: any) => Promise<Article>;
+  onCreateArticle: (input: ArticleInput) => Promise<Article>;
   onUploadImage: (base64: string, orgId: string, articleId: string) => Promise<string | null>;
   organizationId: string | null;
   
@@ -87,10 +87,10 @@ interface SuppliersDialogsProps {
   // Import dialogs
   isSupplierImportOpen: boolean;
   onSupplierImportChange: (open: boolean) => void;
-  onImportSuppliers: (data: any[]) => Promise<number | void>;
+  onImportSuppliers: (data: Record<string, string>[]) => Promise<number | void>;
   articleImportSupplierId: string | null;
   onArticleImportClose: () => void;
-  onImportArticlesData: (data: { articles: any[]; defaultSupplierId: string }) => Promise<number | void>;
+  onImportArticlesData: (data: { articles: Record<string, string>[]; defaultSupplierId: string }) => Promise<number | void>;
   
   // Add article sheet
   addArticleSheet: { open: boolean; supplierId: string; supplierName: string };

@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Article, TokenData, Draft, OrderStatus } from '../types';
+import { Article, TokenData, Draft, OrderStatus, CompletedOrder } from '../types';
 import { FreeItem } from '../FreeItemDialog';
 
 interface UseSimpleOrderHandlersProps {
@@ -32,7 +32,7 @@ interface UseSimpleOrderHandlersProps {
   setFavoriteIds: React.Dispatch<React.SetStateAction<Set<string>>>;
   drafts: Draft[];
   setDrafts: React.Dispatch<React.SetStateAction<Draft[]>>;
-  setCompletedOrders: React.Dispatch<React.SetStateAction<any[]>>;
+  setCompletedOrders: React.Dispatch<React.SetStateAction<CompletedOrder[]>>;
   setIsLoadingDrafts: React.Dispatch<React.SetStateAction<boolean>>;
   setIsDeletingDraft: React.Dispatch<React.SetStateAction<string | null>>;
   editingDraft: Draft | null;

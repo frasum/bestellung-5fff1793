@@ -167,7 +167,7 @@ export const useApproveChange = () => {
       if (fetchError || !change) throw new Error('Change not found');
 
       // Apply the change to the article - convert price to number
-      let valueToUpdate: any = change.new_value;
+      let valueToUpdate: string | number | null = change.new_value;
       if (change.field_name === 'price' && change.new_value !== null) {
         valueToUpdate = parseFloat(change.new_value);
         
@@ -263,7 +263,7 @@ export const useApproveAllChanges = () => {
         if (fetchError || !change) continue;
 
         // Apply the change to the article - convert price to number
-        let valueToUpdate: any = change.new_value;
+        let valueToUpdate: string | number | null = change.new_value;
         if (change.field_name === 'price' && change.new_value !== null) {
           valueToUpdate = parseFloat(change.new_value);
           
