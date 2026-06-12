@@ -228,7 +228,7 @@ export function LiveDemoEmailPanel({ soundEnabled }: LiveDemoEmailPanelProps) {
                 <p className="text-xs mt-1">E-Mails erscheinen sobald sie generiert werden</p>
               </div>
             ) : (
-              emails.map((email) => {
+              emails.map((email: CommunicationLog) => {
                 const status = email.status || 'pending';
                 const config = statusConfig[status] || statusConfig.pending;
                 const StatusIcon = config.icon;
