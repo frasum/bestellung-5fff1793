@@ -18,7 +18,7 @@ export interface B2BAccountOverview {
     email: string;
     role: string;
     supplier_id: string;
-    created_at: string;
+    created_at: string | null;
   }[];
 }
 
