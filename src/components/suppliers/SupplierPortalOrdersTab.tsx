@@ -100,7 +100,6 @@ export const SupplierPortalOrdersTab = ({ session }: SupplierPortalOrdersTabProp
           filter: `supplier_id=eq.${session.supplierId}`,
         },
         async (payload) => {
-          console.log('Neue Bestellung empfangen:', payload);
           // Reload orders to get full data with items
           await fetchOrders();
           
@@ -124,7 +123,6 @@ export const SupplierPortalOrdersTab = ({ session }: SupplierPortalOrdersTabProp
           filter: `supplier_id=eq.${session.supplierId}`,
         },
         async (payload) => {
-          console.log('Bestellung aktualisiert:', payload);
           // Update local state
           setOrders(prev => prev.map(o => 
             o.id === payload.new.id 
@@ -134,7 +132,6 @@ export const SupplierPortalOrdersTab = ({ session }: SupplierPortalOrdersTabProp
         }
       )
       .subscribe((status) => {
-        console.log('Realtime subscription status:', status);
         setIsConnected(status === 'SUBSCRIBED');
       });
 

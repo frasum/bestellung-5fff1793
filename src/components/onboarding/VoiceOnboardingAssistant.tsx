@@ -37,7 +37,6 @@ export function VoiceOnboardingAssistant() {
   const conversation = useConversation({
     clientTools: {
       create_supplier: async (params: { name: string; email?: string; customer_number?: string }) => {
-        console.log("Creating supplier:", params);
         try {
           const result = await createSupplier.mutateAsync({
             name: params.name,
@@ -55,7 +54,6 @@ export function VoiceOnboardingAssistant() {
       },
 
       create_article: async (params: { name: string; unit: string; price?: number; category?: string; supplier_id?: string }) => {
-        console.log("Creating article:", params);
         try {
           const supplierId = params.supplier_id || currentSupplier;
           if (!supplierId) {
@@ -113,16 +111,13 @@ export function VoiceOnboardingAssistant() {
     },
 
     onConnect: () => {
-      console.log("Connected to ElevenLabs agent");
       toast.success("Verbunden mit Sprach-Assistent");
     },
 
     onDisconnect: () => {
-      console.log("Disconnected from ElevenLabs agent");
     },
 
     onMessage: (message) => {
-      console.log("Message from agent:", message);
       const msg = message as { type?: string; user_transcription_event?: { user_transcript?: string }; agent_response_event?: { agent_response?: string } };
       if (msg.type === "user_transcript") {
         setTranscript(prev => [...prev, `Du: ${msg.user_transcription_event?.user_transcript || ''}`]);

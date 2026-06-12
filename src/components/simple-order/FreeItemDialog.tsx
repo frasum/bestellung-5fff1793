@@ -221,7 +221,6 @@ export function FreeItemDialog({
         if (response.error) {
           console.error('Error creating suggestion:', response.error);
         } else {
-          console.log('Photo suggestion created successfully');
         }
       } catch (error) {
         console.error('Error creating photo suggestion:', error);

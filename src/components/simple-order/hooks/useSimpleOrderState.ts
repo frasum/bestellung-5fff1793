@@ -86,13 +86,6 @@ export const useSimpleOrderState = ({ token }: UseSimpleOrderStateProps) => {
           return;
         }
 
-        console.log('[SimpleOrder] Token verification response:', {
-          can_capture_photos: data.tokenData?.can_capture_photos,
-          can_add_free_items: data.tokenData?.can_add_free_items,
-          has_employee: data.tokenData?.has_employee,
-          employee_name: data.tokenData?.employee_name,
-          full_tokenData: data.tokenData,
-        });
         
         setTokenData(data.tokenData);
         setAllArticles(data.articles || []);
@@ -142,14 +135,6 @@ export const useSimpleOrderState = ({ token }: UseSimpleOrderStateProps) => {
         const supplierObj = data.tokenData?.supplier;
         const isMultiSupplier = !!data.tokenData?.is_multi_supplier;
 
-        console.log('[SimpleOrder] Status decision:', {
-          requires_pin: requiresPinFlag,
-          wine_catalog_access: wineAccess,
-          suppliers_length: suppliersLength,
-          supplier: supplierObj,
-          supplier_id: supplierObj?.id,
-          is_multi_supplier: isMultiSupplier,
-        });
 
         if (requiresPinFlag) {
           setRequiresPin(true);
@@ -160,7 +145,6 @@ export const useSimpleOrderState = ({ token }: UseSimpleOrderStateProps) => {
           suppliersLength === 0 &&
           (!supplierObj || !supplierObj.id)
         ) {
-          console.log('[SimpleOrder] Wine catalog only mode detected');
           setStatus('wine-catalog');
         } else if (isMultiSupplier) {
           setStatus('location-date');
