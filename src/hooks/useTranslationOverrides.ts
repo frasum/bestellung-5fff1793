@@ -131,7 +131,10 @@ export const useBulkSaveTranslationOverrides = () => {
       if (!profile?.organization_id) throw new Error('No organization found');
 
       const overridesWithOrg = overrides.map(o => ({
-        ...o,
+        language_code: o.language_code,
+        translation_key: o.translation_key,
+        original_value: o.original_value ?? '',
+        override_value: o.override_value,
         organization_id: profile.organization_id,
         created_by: user.id,
       }));
