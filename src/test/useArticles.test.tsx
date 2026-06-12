@@ -170,65 +170,67 @@ describe('useArticlesBySupplier', () => {
   });
 
   it('should filter by supplier_id when provided', async () => {
-    const eqMock = vi.fn().mockImplementation((field: string) => {
-      if (field === 'supplier_id') {
-        return { data: [mockArticle], error: null };
-      }
-      return {
-        eq: eqMock,
-        order: vi.fn().mockResolvedValue({ data: [mockArticle], error: null }),
-      };
-    });
-    
-    mockSupabaseFrom.mockReturnValue({
-      select: vi.fn().mockReturnValue({
-        eq: eqMock,
+    const result = { data: [mockArticle], error: null };
+    const calls: Array<[string, unknown]> = [];
+    const builder: Record<string, unknown> = {
+      eq: vi.fn((field: string, value: unknown) => {
+        calls.push([field, value]);
+        return builder;
       }),
+      order: vi.fn(() => builder),
+      then: (resolve: (v: typeof result) => void) => resolve(result),
+    };
+    mockSupabaseFrom.mockReturnValue({
+      select: vi.fn().mockReturnValue(builder),
     });
 
-    const { result } = renderHook(() => useArticlesBySupplier('sup-1'), { wrapper: createWrapper() });
+    const { result: hookResult } = renderHook(() => useArticlesBySupplier('sup-1'), { wrapper: createWrapper() });
 
-    await waitForQuerySuccess(result);
-    expect(result.current.isSuccess).toBe(true);
+    await waitForQuerySuccess(hookResult);
+    expect(hookResult.current.isSuccess).toBe(true);
+    expect(calls).toContainEqual(['supplier_id', 'sup-1']);
   });
 
   it('should only fetch active articles', async () => {
-    const eqMock = vi.fn().mockReturnValue({
-      eq: vi.fn().mockReturnValue({
-        order: vi.fn().mockResolvedValue({ data: [], error: null }),
+    const result = { data: [], error: null };
+    const calls: Array<[string, unknown]> = [];
+    const builder: Record<string, unknown> = {
+      eq: vi.fn((field: string, value: unknown) => {
+        calls.push([field, value]);
+        return builder;
       }),
-    });
-    
+      order: vi.fn(() => builder),
+      then: (resolve: (v: typeof result) => void) => resolve(result),
+    };
     mockSupabaseFrom.mockReturnValue({
-      select: vi.fn().mockReturnValue({
-        eq: eqMock,
-      }),
+      select: vi.fn().mockReturnValue(builder),
     });
 
-    const { result } = renderHook(() => useArticlesBySupplier(null), { wrapper: createWrapper() });
+    const { result: hookResult } = renderHook(() => useArticlesBySupplier(null), { wrapper: createWrapper() });
 
-    await waitForQuerySuccess(result);
+    await waitForQuerySuccess(hookResult);
 
-    expect(result.current.isSuccess).toBe(true);
-    expect(eqMock).toHaveBeenCalledWith('organization_id', 'org-456');
+    expect(hookResult.current.isSuccess).toBe(true);
+    expect(calls).toContainEqual(['organization_id', 'org-456']);
+    expect(calls).toContainEqual(['is_active', true]);
   });
 
   it('should fetch all articles when supplierId is null', async () => {
+    const result = { data: [mockArticle], error: null };
+    const builder: Record<string, unknown> = {
+      eq: vi.fn(() => builder),
+      order: vi.fn(() => builder),
+      then: (resolve: (v: typeof result) => void) => resolve(result),
+    };
     mockSupabaseFrom.mockReturnValue({
-      select: vi.fn().mockReturnValue({
-        eq: vi.fn().mockReturnValue({
-          eq: vi.fn().mockReturnValue({
-            order: vi.fn().mockResolvedValue({ data: [mockArticle], error: null }),
-          }),
-        }),
-      }),
+      select: vi.fn().mockReturnValue(builder),
     });
 
-    const { result } = renderHook(() => useArticlesBySupplier(null), { wrapper: createWrapper() });
+    const { result: hookResult } = renderHook(() => useArticlesBySupplier(null), { wrapper: createWrapper() });
 
-    await waitForQuerySuccess(result);
+    await waitForQuerySuccess(hookResult);
 
-    expect(result.current.isSuccess).toBe(true);
-    expect(result.current.data).toBeDefined();
+    expect(hookResult.current.isSuccess).toBe(true);
+    expect(hookResult.current.data).toEqual([mockArticle]);
   });
 });
