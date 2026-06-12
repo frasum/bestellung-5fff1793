@@ -52,11 +52,12 @@ export const UnitsTab = () => {
         .eq('id', user.id)
         .single();
 
-      if (!profile?.organization_id) throw new Error('No organization found');
+      const organizationId = profile?.organization_id;
+      if (!organizationId) throw new Error('No organization found');
 
       const unitsToAdd = articleUnits.map(name => ({
         name,
-        organization_id: profile.organization_id,
+        organization_id: organizationId,
       }));
 
       const { error } = await supabase
