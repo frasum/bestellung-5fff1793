@@ -20,6 +20,11 @@ export default defineMcp({
   auth: auth.oauth.issuer({
     issuer: `https://${projectRef}.supabase.co/auth/v1`,
     acceptedAudiences: "authenticated",
+    // Accept plain Supabase session tokens in addition to OAuth-client tokens
+    // so the in-app "MCP Tools testen" page can invoke tools as the signed-in
+    // user. RLS on the forwarded bearer token still enforces per-user data
+    // isolation — this only relaxes the client_id/azp claim requirement.
+    requireOAuthClientClaim: false,
   }),
   tools: [
     listSuppliersTool,
