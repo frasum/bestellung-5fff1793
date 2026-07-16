@@ -32,7 +32,17 @@ import {
 const Auth = () => {
   const [searchParams] = useSearchParams();
   const inviteToken = searchParams.get('invite');
-  
+  const nextParam = searchParams.get('next');
+
+  // Only allow same-origin relative paths, so /auth?next=... cannot be turned
+  // into an open redirect. Everything else falls back to /suppliers.
+  const safeNext = (() => {
+    if (!nextParam) return null;
+    if (!nextParam.startsWith('/') || nextParam.startsWith('//')) return null;
+    return nextParam;
+  })();
+  const postAuthTarget = safeNext ?? '/suppliers';
+
   const [activeTab, setActiveTab] = useState<AuthTab>(inviteToken ? 'signup' : 'login');
   const [isLoading, setIsLoading] = useState(false);
   const [showDemoDialog, setShowDemoDialog] = useState(false);
@@ -76,16 +86,23 @@ const Auth = () => {
   // Handle user navigation
   useEffect(() => {
     if (user && !inviteToken) {
-      navigate('/suppliers');
+      // If an OAuth consent flow (or other) sent us here with ?next=..., use
+      // an absolute-URL navigate so the browser reloads the target route; this
+      // avoids replaying state from the /auth SPA screen on the consent page.
+      if (safeNext) {
+        window.location.replace(safeNext);
+        return;
+      }
+      navigate(postAuthTarget);
     }
     if (user && inviteToken) {
       acceptInvitation().then((success) => {
         if (success) {
-          navigate('/suppliers');
+          navigate(postAuthTarget);
         }
       });
     }
-  }, [user, navigate, inviteToken]);
+  }, [user, navigate, inviteToken, safeNext, postAuthTarget]);
 
   const handleLogin = async (data: LoginFormData) => {
     setIsLoading(true);
