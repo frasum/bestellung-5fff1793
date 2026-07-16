@@ -62,6 +62,7 @@ const DemoShowcase = lazy(() => import("./pages/DemoShowcase"));
 const LiveDemo = lazy(() => import("./pages/LiveDemo"));
 const EmployeeOrder = lazy(() => import("./pages/EmployeeOrder"));
 const NotFound = lazy(() => import("./pages/NotFound"));
+const OAuthConsent = lazy(() => import("./pages/OAuthConsent"));
 
 const queryClient = new QueryClient();
 
@@ -144,6 +145,8 @@ const AppContent = () => {
           <Route path="/b2b/mobile" element={<B2BMobile />} />
           {/* Employee Order Portal */}
           <Route path="/employee-order" element={<EmployeeOrder />} />
+          {/* OAuth 2.1 consent screen (for external MCP / API clients) */}
+          <Route path="/.lovable/oauth/consent" element={<OAuthConsent />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
