@@ -122,6 +122,75 @@
           "$schema": "http://json-schema.org/draft-07/schema#"
         },
         "outputSchema": null
+      },
+      {
+        "name": "create_order",
+        "title": "Create order",
+        "description": "Create a new order for a supplier with one or more line items. Prices, units and totals are looked up from the article records — never trusted from the caller. Runs as the signed-in user; RLS enforces that the supplier and articles belong to the user's organization. If no delivery_address is provided, the organization's default location address is used.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "supplier_id": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Supplier UUID the order is placed with."
+            },
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "article_id": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Article UUID."
+                  },
+                  "quantity": {
+                    "type": "integer",
+                    "exclusiveMinimum": 0,
+                    "description": "Quantity of packaging units to order."
+                  }
+                },
+                "required": [
+                  "article_id",
+                  "quantity"
+                ],
+                "additionalProperties": false
+              },
+              "minItems": 1,
+              "description": "Line items. At least one required."
+            },
+            "location_id": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Optional location UUID this order is booked against."
+            },
+            "delivery_address": {
+              "type": "string",
+              "description": "Delivery address. Defaults to the organization's default location address."
+            },
+            "notes": {
+              "type": "string",
+              "description": "Optional free-text note attached to the order."
+            },
+            "is_test_order": {
+              "type": "boolean",
+              "description": "Mark as test order (safely deletable by admins/managers). Defaults to false."
+            }
+          },
+          "required": [
+            "supplier_id",
+            "items"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
       }
     ]
   }

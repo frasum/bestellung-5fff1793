@@ -301,3 +301,70 @@ falsche `client_id`/DCR-Konfiguration.
 Das maschinenlesbare Manifest (mit JSON-Schemas aller Tools) liegt versioniert
 im Repo unter `.lovable/mcp/manifest.json` und wird bei jedem Build
 regeneriert.
+
+## Tool: `create_order`
+
+Legt eine neue Bestellung mit Positionen an. Preise, Einheiten und Summen
+werden **serverseitig** aus den Artikel-Datensätzen ermittelt – der Caller
+darf keine Preise mitschicken. RLS erzwingt, dass Lieferant und Artikel zur
+Organisation des angemeldeten Nutzers gehören.
+
+**Input**
+
+| Feld | Typ | Pflicht | Beschreibung |
+| --- | --- | --- | --- |
+| `supplier_id` | uuid | ja | Lieferant, an den die Bestellung geht. |
+| `items` | array | ja | Mind. 1 Position `{ article_id: uuid, quantity: int > 0 }`. |
+| `location_id` | uuid | nein | Standort, dem die Bestellung zugeordnet wird. |
+| `delivery_address` | string | nein | Lieferadresse. Default: Adresse des Default-Standorts der Organisation. |
+| `notes` | string | nein | Freitext-Notiz. |
+| `is_test_order` | boolean | nein | Als Test markieren (durch Admin/Manager löschbar). Default `false`. |
+
+**Output** (`structuredContent.order`)
+
+```json
+{
+  "id": "uuid",
+  "order_number": "ORD-2026-07-0042",
+  "status": "pending",
+  "total_amount": 128.4,
+  "created_at": "2026-07-16T09:12:33.000Z",
+  "item_count": 3
+}
+```
+
+**Beispiel-Call**
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "method": "tools/call",
+  "params": {
+    "name": "create_order",
+    "arguments": {
+      "supplier_id": "3f5a...supplier-uuid",
+      "items": [
+        { "article_id": "a1b2...article-uuid", "quantity": 2 },
+        { "article_id": "c3d4...article-uuid", "quantity": 5 }
+      ],
+      "notes": "Bitte am Vormittag liefern"
+    }
+  }
+}
+```
+
+**Fehler**
+
+- `Article <uuid> not found or not accessible.` – Artikel gehört nicht zur
+  Organisation oder existiert nicht.
+- `Article <uuid> does not belong to supplier <uuid>.` – Cross-Supplier-Position.
+- `Article <uuid> is inactive.` – Artikel soft-deleted (`is_active = false`).
+- `delivery_address is required (no default location address available).` –
+  Weder Input noch Default-Standort liefern eine Adresse.
+
+Der Server ruft **nicht** die Lieferanten-E-Mail-Benachrichtigung auf – dies
+bleibt dem UI vorbehalten. Die Bestellung liegt anschließend im Status
+`pending` und kann über das UI oder `list_orders` / `get_order` weiterverarbeitet
+werden.
+
