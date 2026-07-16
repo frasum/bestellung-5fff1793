@@ -1,0 +1,128 @@
+{
+  "version": 1,
+  "sdk_version": "0.22.2",
+  "path": "/functions/v1/mcp",
+  "auth": {
+    "type": "oauth",
+    "issuer": "https://lclhwmxpbpmqtiwmgmgm.supabase.co/auth/v1",
+    "accepted_audiences": [
+      "authenticated"
+    ]
+  },
+  "mcp": {
+    "server": {
+      "name": "bestellung-pro-mcp",
+      "version": "0.1.0",
+      "title": "Bestellung.pro MCP"
+    },
+    "tools": [
+      {
+        "name": "list_suppliers",
+        "title": "List suppliers",
+        "description": "List active suppliers in the signed-in user's organization. Returns id, name, email, phone, and contact_person.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "limit": {
+              "type": "integer",
+              "description": "Max number of suppliers to return. Defaults to 50."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_orders",
+        "title": "List recent orders",
+        "description": "List recent orders for the signed-in user's organization, newest first. Optionally filter by status.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "limit": {
+              "type": "integer",
+              "description": "Max orders to return. Defaults to 20."
+            },
+            "status": {
+              "type": "string",
+              "description": "Optional status filter (e.g. pending, confirmed, delivered, cancelled)."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "search_articles",
+        "title": "Search articles",
+        "description": "Search articles in the signed-in user's organization by name (case-insensitive). Optionally filter by supplier_id.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "query": {
+              "type": "string",
+              "description": "Substring to match against the article name."
+            },
+            "supplier_id": {
+              "type": "string",
+              "description": "Optional supplier UUID filter."
+            },
+            "limit": {
+              "type": "integer",
+              "description": "Max results. Defaults to 25."
+            }
+          },
+          "required": [
+            "query"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "get_order",
+        "title": "Get order details",
+        "description": "Fetch a single order (with its line items) by order id or order_number, scoped to the signed-in user's organization.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "order_id": {
+              "type": "string",
+              "description": "Order UUID."
+            },
+            "order_number": {
+              "type": "string",
+              "description": "Human-readable order number (e.g. ORD-2026-01-0001)."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      }
+    ]
+  }
+}
