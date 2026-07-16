@@ -63,6 +63,7 @@ const LiveDemo = lazy(() => import("./pages/LiveDemo"));
 const EmployeeOrder = lazy(() => import("./pages/EmployeeOrder"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const OAuthConsent = lazy(() => import("./pages/OAuthConsent"));
+const McpTest = lazy(() => import("./pages/McpTest"));
 
 const queryClient = new QueryClient();
 
@@ -120,6 +121,7 @@ const AppContent = () => {
           <Route path="/infrastructure" element={<Infrastructure />} />
           <Route path="/functions-overview" element={<FunctionsOverview />} />
           <Route path="/system-beschreibung" element={<SystemDescription />} />
+          <Route path="/mcp-test" element={<McpTest />} />
           <Route path="/system-mindmap" element={<SystemMindmap />} />
           <Route path="/pricing" element={<Pricing />} />
           <Route path="/presentation" element={<Presentation />} />
